@@ -2,15 +2,15 @@
 
 ## Rolverdeling
 
-| Rol           | Naam     |
-|---------------|----------|
-| Leader        | Tobit    |
-| Tech Lead     | Elias    |
-| SysAdmin      | Jasper   |
-| Communicatie  | Arne     |
-| Test          | Florian  |
-| DB            | Daan     |
-| Frontend      | Noah     |
-| Backend       | Prince   |
+| Rol                        | Naam    |
+| -------------------------- | ------- |
+| Group Leader               | Tobit   |
+| Technical Lead             | Elias   |
+| SysAdmin                   | Jasper  |
+| Customer Relations Officer | Arne    |
+| Test Manager               | Florian |
+| Database Manager           | Daan    |
+| Frontend Manager           | Noah    |
+| Backend Manager            | Prince  |
 
 ---
