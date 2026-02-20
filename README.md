@@ -15,6 +15,11 @@
 
 ## Backend
 
+### Important things to change
+
+- TODOS
+- Test folder nice structure
+
 ### Packages
 
 - django
