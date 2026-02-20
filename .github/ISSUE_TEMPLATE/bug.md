@@ -7,22 +7,30 @@ assignees: ''
 
 ---
 
-## Description
-What is the problem?
+## Problem Statement
+Describe the bug that needs to be fixed.
 
-## Steps to reproduce
+## Scope
+What areas of the system are affected? (e.g., API, Frontend, Database)
+
+## Steps to Reproduce
 1. 
 2. 
 3. 
 
-## Expected behavior
+## Expected Behavior
 What should happen?
 
-## Actual behavior
+## Actual Behavior
 What is actually happening?
 
 ## Screenshots
 Use images if they help
 
-## Notes
-Additional information.
+## Acceptance Criteria
+- [ ] Bug is fixed and verified
+- [ ] Existing tests still pass
+
+
+## Discussion
+Any additional context, workarounds, or technical notes?

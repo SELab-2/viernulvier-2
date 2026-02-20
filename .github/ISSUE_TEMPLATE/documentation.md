@@ -7,19 +7,23 @@ assignees: ''
 
 ---
 
-## Description
-What documentation needs to be updated/added?
+## Problem Statement
+What documentation needs to be updated or added?
 
-## Current status
-What is currently documented? (or what is missing?)
+## Current Status
+What is currently documented? What is missing?
 
-## What needs to be added?
-- [ ]
-- [ ]
-- [ ]
+## Scope
+Which pages or sections need updates? What areas are out of scope?
 
-## Related links
+## Acceptance Criteria
+- [ ] Content is clear and accurate
+- [ ] Examples are provided where needed
+- [ ] Links are tested and working
+- [ ] Documentation is reviewed and approved
+
+## Related Links
 Links to relevant pages, code, or documentation.
 
-## Notes
-Additional information.
+## Discussion
+Any additional context or writing guidelines?

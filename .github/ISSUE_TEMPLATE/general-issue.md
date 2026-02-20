@@ -7,8 +7,15 @@ assignees: ''
 
 ---
 
-## Description
-What is this issue about?
+## Problem Statement
+What is this issue about? Why does it need attention?
 
-## Notes
-Additional information.
+## Scope
+What is included in this issue? What is out of scope?
+
+## Acceptance Criteria
+- [ ] Criterium 1 (e.g., "user can achieve X outcome)
+- [ ] Criterium 2 (e.g., "System behaves as expected under Y condition)
+
+## Discussion
+Any additional context or notes?
