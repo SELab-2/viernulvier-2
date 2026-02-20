@@ -14,9 +14,9 @@ Why is this feature needed? What problem does it solve?
 What is included in this feature? What is explicitly excluded?
 
 ## Acceptance Criteria
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ] Criterium 1: <clearly defines, testable outcome>
+- [ ] Criterium 2: <another outcome or edge case>
+- [ ] Criterium 3: <additional requirement, if needed>
 
 ## Design/Technical Approach
 How do we approach this?
