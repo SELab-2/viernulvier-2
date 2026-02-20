@@ -1,5 +1,7 @@
 from django.db import models
 from apps.core.model import BaseModel
+from apps.languages.models import Language
+from apps.events.models import Event
 
 class UitDatabaseTheme(BaseModel):
     """Model representing a theme in the UIT database."""
@@ -154,3 +156,99 @@ class Production(BaseModel):
     def __str__(self):
         return f"Production {self.id}" # TODO: change if we know how to do translations
 
+class ProductionTranslation(BaseModel):
+    """Model representing a translation of a production."""
+    production = models.ForeignKey(
+        Production,
+        on_delete=models.CASCADE,
+        db_comment="The production that the translation belongs to.",
+        related_name="translations",
+    )
+
+    language = models.ForeignKey(
+        Language,
+        on_delete=models.CASCADE,
+        db_comment="The language of the translation.",
+        db_column="language_code",
+    )
+
+    supertitle = models.CharField(
+        max_length=200,
+        db_comment="The supertitle of the production in the given language.",
+        blank=True
+    )
+
+    title = models.CharField(
+        max_length=200,
+        db_comment="The title of the production in the given language."
+        blank=True
+    )
+
+    artist_name = models.CharField(
+        max_length=200,
+        db_comment="The name of the artist of the production in the given language.",
+        blank=True
+    )
+
+    tagline = models.CharField(
+        max_length=200,
+        db_comment="The tagline of the production in the given language.",
+        blank=True
+    )
+
+    teaser = models.TextField(
+        db_comment="The teaser of the production in the given language.",
+        blank=True
+    )
+
+    description = models.TextField(
+        db_comment="The description of the production in the given language.",
+        blank=True
+    )
+
+    description_short = models.TextField(
+        db_comment="The short description of the production in the given language.",
+        blank=True
+    )
+
+    description_extra = models.TextField(
+        db_comment="The extra description of the production in the given language.",
+        blank=True
+    )
+
+    description_2 = models.TextField(
+        db_comment="The second description of the production in the given language.",
+        blank=True
+    )
+
+    video_1 = models.URLField(
+        db_comment="The URL of the first video of the production in the given language.",
+        blank=True
+    )
+
+    video_2 = models.URLField(
+        db_comment="The URL of the second video of the production in the given language.",
+        blank=True
+    )
+
+    meta_title = models.CharField(
+        max_length=200,
+        db_comment="The meta title of the production in the given language.",
+        blank=True
+    )
+
+    meta_description = models.TextField(
+        db_comment="The meta description of the production in the given language.",
+        blank=True
+    )
+
+    class Meta(BaseModel.Meta):
+        db_table = "production_translation"
+        unique_together = ('production', 'language')
+        verbose_name = "Production Translation"
+        verbose_name_plural = "Production Translations"
+
+    # TODO Add in save method html sanitization for the text fields to prevent XSS attacks, or use a library like bleach to sanitize the HTML content.
+
+    def __str__(self):
+        return f"Translation of Production {self.production.id} in {self.language.code}"
