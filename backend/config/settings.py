@@ -44,6 +44,8 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'apps.core',
     'apps.languages',
+    'apps.productions',
+    'apps.events',
     # TODO add more local apps here
 ]
 
