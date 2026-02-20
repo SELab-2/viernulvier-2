@@ -3,7 +3,7 @@ name: Feature
 about: A new feature for development
 title: "[LAYER][FEATURE]"
 labels: ''
-assignees: xxxxnoahboyxxxx
+assignees: ''
 
 ---
 
