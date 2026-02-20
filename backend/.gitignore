@@ -1,5 +1,7 @@
 venv
-.env
+#.env # TODO add .env to .gitignore and use it for local development secrets
 
 *__pycache__
 *migrations
+
+db.sqlite3
