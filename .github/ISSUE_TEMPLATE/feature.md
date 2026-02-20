@@ -7,19 +7,22 @@ assignees: ''
 
 ---
 
-## Description
-What is the feature that needs to be built?
+## Problem Statement
+Why is this feature needed? What problem does it solve?
 
-## Requirements
+## Scope
+What is included in this feature? What is explicitly excluded?
+
+## Acceptance Criteria
 - [ ] 
 - [ ] 
 - [ ] 
 
-## Design/Technical approach
+## Design/Technical Approach
 How do we approach this?
 
 ## Dependencies
 Subtasks or other issues that need to be completed first.
 
-## Notes
-Additional information.
+## Discussion
+Any design decisions, trade-offs, or technical considerations?

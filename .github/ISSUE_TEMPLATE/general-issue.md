@@ -7,8 +7,15 @@ assignees: ''
 
 ---
 
-## Description
-What is this issue about?
+## Problem Statement
+What is this issue about? Why does it need attention?
 
-## Notes
-Additional information.
+## Scope
+What is included in this issue? What is out of scope?
+
+## Acceptance Criteria
+- [ ] 
+- [ ] 
+
+## Discussion
+Any additional context or notes?
