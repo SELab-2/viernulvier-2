@@ -15,6 +15,11 @@
 
 ## Backend
 
+### Important things to change
+
+- TODOS
+- Test folder nice structure
+
 ### Packages
 
 - django
@@ -24,9 +29,10 @@
 
 ### Belangrijke commands:
 
-- start de dev server: ```python manage.py runserver```
-- migrations aanmaken voor X: ```python manage.py makemigrations X```
-    -- bv. ```python manage.py makemigrations languages```
-- migrate: ```python manage.py migrate```
+- make an app (i.e. genres): python manage.py startapp genres apps/genres
+- start de dev server: python manage.py runserver
+- migrations aanmaken voor X: python manage.py makemigrations X
+    -- bv. python manage.py makemigrations languages
+- migrate: python manage.py migrate
 
 ---
