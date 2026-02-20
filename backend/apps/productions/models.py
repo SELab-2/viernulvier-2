@@ -31,6 +31,49 @@ class UitDatabaseType(BaseModel):
     def __str__(self):
         return self.name
 
+class ProductionTag(BaseModel):
+    """Model representing the many-to-many relationship between productions and tags."""
+    production = models.ForeignKey(
+        Production, 
+        on_delete=models.CASCADE
+    )
+
+    tag = models.ForeignKey(
+        TAG, # TODO: implement TAG model
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        db_table = "production_tag" 
+        unique_together = ('production', 'tag')
+        verbose_name = "Production Tag"
+        verbose_name_plural = "Production Tags"
+
+class ProductionGenre(BaseModel):
+    """Model representing a genre of a production."""
+    production = models.ForeignKey(
+        Production,
+        on_delete=models.CASCADE,
+        db_comment="The production that the genre belongs to.",
+    )
+
+    genre = models.ForeignKey(
+        Genre, # TODO: implement Genre model
+        on_delete=models.CASCADE,
+        db_comment="The genre of the production.",
+    )
+
+    position = models.PositiveIntegerField(
+        db_comment="The position of the genre in the list of genres for the production.",
+        # default=0, # TODO in viewset ordering definieren
+    )
+
+    class Meta(BaseModel.Meta):
+        db_table = "production_genre"
+        unique_together = ('production', 'genre')
+        verbose_name = "Production Genre"
+        verbose_name_plural = "Production Genres"
+
 class Production(BaseModel):
     """Model representing a production."""
 
@@ -64,6 +107,15 @@ class Production(BaseModel):
         related_name="productions",
     )
 
+    media_gallery = models.ForeignKey(
+        MediaGallery, # TODO: implement MediaGallery model
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        db_comment="The media gallery of the production.",
+        related_name="productions",
+    )
+
     attendance_mode = models.CharField(
         max_length=20,
         choices=AttendanceMode.choices,
@@ -82,13 +134,15 @@ class Production(BaseModel):
         Genre, # TODO: implement Genre model
         blank=True,
         db_comment="The genres of the production.",
+        through=ProductionGenre,
         related_name="productionGenres",
     )
 
     tags = models.ManyToManyField(
-        Tag, # TODO: implement Tag model
+        TAG, # TODO: implement TAG model
         blank=True,
-        db_comment="The tags associated with the production.",
+        db_comment="The tags of the production.",
+        through=ProductionTag,
         related_name="productionTags",
     )
 
@@ -99,3 +153,4 @@ class Production(BaseModel):
 
     def __str__(self):
         return f"Production {self.id}" # TODO: change if we know how to do translations
+
