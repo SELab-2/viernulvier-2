@@ -3,7 +3,7 @@ name: Documentation
 about: Improve or add documentation
 title: "[DOC] "
 labels: documentation
-assignees: xxxxnoahboyxxxx
+assignees: ''
 
 ---
 
