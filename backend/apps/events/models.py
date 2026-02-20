@@ -33,8 +33,7 @@ class Event(BaseModel):
 
     ticketing_url = models.URLField(
         db_comment="The URL leading to the ticket reservations.",
-        blank=True,
-        null=True,
+        blank=True
     )
 
     class Meta(BaseModel.Meta):
@@ -47,6 +46,7 @@ class Event(BaseModel):
                 name="event_ends_after_starts",
             )
         ]
+        ordering = ["starts_at"]
 
 class EventPrice(BaseModel):
     event = models.ForeignKey(
@@ -57,10 +57,12 @@ class EventPrice(BaseModel):
     )
 
     price_rank = models.ForeignKey(
-        "pricing.PriceRank",
-        on_delete=models.PROTECT,
+        PriceRank, #TODO: implement PriceRank model
+        on_delete=models.SET_NULL,
         db_comment="The rank corresponding to the price.",
         related_name="event_prices",
+        null=True,
+        blank=True
     )
 
     amount = models.DecimalField(
