@@ -7,14 +7,9 @@ from django.utils import timezone
 
 from apps.events.models import Event, EventPrice
 
-# from apps.productions.models import Production
-# from apps.halls.models import Hall
-# from apps.priceranks.models import PriceRank
-
 
 class EventModelTests(TestCase):
     def setUp(self):
-        # Maak minimale geldige related objects
         self.production = Production.objects.create(
             # TODO: fill in necessary fields for production object
             # example: title="Hamlet"
@@ -103,7 +98,7 @@ class EventPriceModelTests(TestCase):
             with self.assertRaises(IntegrityError):
                 EventPrice.objects.create(
                     event=self.event,
-                    price_rank=self.rank,  # zelfde combo => moet falen
+                    price_rank=self.rank,
                     amount=Decimal("15.00"),
                     available=50,
                 )
