@@ -15,3 +15,18 @@ class UitDatabaseTheme(BaseModel):
 
     def __str__(self):
         return self.name
+
+class UitDatabaseType(BaseModel):
+    """Model representing a type in the UIT database."""
+    name = models.CharField(
+        max_length=200,
+        db_comment="The name of the type."
+    )
+
+    class Meta(BaseModel.Meta):
+        db_table = "uit_database_type"
+        verbose_name = "UIT Database Type"
+        verbose_name_plural = "UIT Database Types"
+
+    def __str__(self):
+        return self.name
