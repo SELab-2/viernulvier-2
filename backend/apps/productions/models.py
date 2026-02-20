@@ -252,4 +252,3 @@ class ProductionTranslation(BaseModel):
 
     def __str__(self):
         return f"Translation of Production {self.production.id} in {self.language.code}"
-    
