@@ -19,12 +19,14 @@
 
 - django
 - djangorestframework
+- pytest
+- pytest-django
 
 ### Belangrijke commands:
 
-- start de dev server: python manage.py runserver
-- migrations aanmaken voor X: python manage.py makemigrations X
-    -- bv. python manage.py makemigrations languages
-- migrate: python manage.py migrate
+- start de dev server: ```python manage.py runserver```
+- migrations aanmaken voor X: ```python manage.py makemigrations X```
+    -- bv. ```python manage.py makemigrations languages```
+- migrate: ```python manage.py migrate```
 
 ---

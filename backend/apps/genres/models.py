@@ -1,8 +1,15 @@
+"""
+Definitions of the models related to genres.
+"""
+
 from django.db import models
 from apps.core.model import BaseModel
 from apps.languages.models import Language
 
 class GenreUseAs(BaseModel):
+    """
+    Model to define the use cases for genres. Like used in the existing viernulvier API.
+    """
     name = models.CharField(
         max_length=50,
         null=False,
@@ -15,7 +22,11 @@ class GenreUseAs(BaseModel):
         verbose_name = "Genre Use As"
         verbose_name_plural = "Genres Used As"
 
+
 class Genre(BaseModel):
+    """
+    Model to define genres.
+    """
     type = models.CharField(
         max_length=50,
         null=False,
@@ -38,20 +49,26 @@ class Genre(BaseModel):
         verbose_name_plural = "Genres"
 
     def __str__(self):
+        # Get the English name for the genre
         english_name = GenreTranslation.objects.filter(
             genre=self,
             language_id="en"
-        )
+        ).first()
 
+        # Get the Dutch name for the genre
         dutch_name = GenreTranslation.objects.filter(
             genre=self,
             language_id="nl"
-        )
+        ).first()
 
-        return f"{self.type} - {str(english_name)} - {str(dutch_name)}"
+        # Show both translations in the string representation of the genre
+        return f"{self.type} - [{str(english_name)}] - [{str(dutch_name)}]"
 
 
 class GenreTranslation(BaseModel):
+    """
+    Model to define different translations for genre names.
+    """
     name = models.CharField(
         max_length=50,
         null=False,
