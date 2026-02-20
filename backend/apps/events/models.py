@@ -5,14 +5,14 @@ from apps.core.model import BaseModel
 
 class Event(BaseModel):
     production = models.ForeignKey(
-        Production, # TO DO: implement Production model
+        Production, # TODO: implement Production model
         on_delete=models.CASCADE,
         db_comment="The production that the event is organized for.",
         related_name="events",
     )
 
     hall = models.ForeignKey(
-        Hall, # TO DO: implement Hall model
+        Hall, # TODO: implement Hall model
         on_delete=models.PROTECT,
         db_comment="The hall which the event is organized in.",
         related_name="events",
