@@ -1,9 +1,9 @@
 ---
 name: Bug
 about: A bug that needs to be fixed
-title: "[BUG]"
+title: "[BUG] "
 labels: documentation
-assignees: xxxxnoahboyxxxx
+assignees: ''
 
 ---
 
