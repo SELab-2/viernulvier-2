@@ -42,9 +42,9 @@ class Production(BaseModel):
         OFFLINE = "offline", "Offline"
         ONLINE = "online", "Online"
 
-    # TODO: add more choices for performance model if needed (look at the api responses)
-    class PerformanceType(models.TextChoices):
-        """Enum representing the performance model of a production."""
+    # TODO: add more choices for performer model if needed (look at the api responses)
+    class PerformerType(models.TextChoices):
+        """Enum representing the performer type of a production."""
         GROUP = "group", "Group"
         SOLO = "solo", "Solo"
 
@@ -82,11 +82,11 @@ class Production(BaseModel):
         db_comment="The attendance mode of the production."
     )
 
-    performance_type = models.CharField(
+    performer_type = models.CharField(
         max_length=20,
-        choices=PerformanceType.choices,
+        choices=PerformerType.choices,
         blank=True,
-        db_comment="The performance type of the production."
+        db_comment="The performer type of the production."
     )
 
     genres = models.ManyToManyField(
