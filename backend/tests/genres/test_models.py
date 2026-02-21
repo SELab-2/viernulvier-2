@@ -1,128 +1,108 @@
-"""
-Test file for Genre related models
-"""
 import pytest
 from django.core.exceptions import ValidationError
+from apps.genres.models import Genre, GenreTranslation
 
-from apps.genres.models import Genre, GenreTranslation, GenreUseAs
-from apps.languages.models import Language
+# Use the factories to create test data
+from tests.factories.genre import (
+    GenreFactory,
+    GenreUseAsFactory,
+    GenreTranslationFactory,
+)
+from tests.factories.language import LanguageFactory
 
+pytestmark = pytest.mark.django_db
 
-@pytest.mark.django_db
-def test_genre_use_as_requires_name() -> None:
-    """Ensure GenreUseAs validation rejects an empty name."""
-    with pytest.raises(ValidationError):
-        GenreUseAs(name="").save()
+# =====================================================
+# GenreUseAs
+# =====================================================
 
+class TestGenreUseAs:
 
-@pytest.mark.django_db
-def test_genre_requires_use_as() -> None:
-    """Ensure a Genre cannot be saved without a GenreUseAs relation."""
-    with pytest.raises(ValidationError):
-        Genre(type="Rock", use_as=None).save()
+    def test_requires_name(self):
+        instance = GenreUseAsFactory.build(name="")
+        with pytest.raises(ValidationError):
+            instance.full_clean()
 
-
-@pytest.mark.django_db
-def test_genre_translation_str() -> None:
-    """Verify GenreTranslation.__str__ returns '<language code> - <name>'."""
-    language = Language.objects.create(code="en", name="English", is_active=True)
-    use_as = GenreUseAs.objects.create(name="tag")
-    genre = Genre.objects.create(type="Rock", use_as=use_as)
-
-    translation = GenreTranslation.objects.create(
-        name="Rock",
-        language=language,
-        genre=genre,
-    )
-
-    assert str(translation) == "en - Rock"
+    def test_reverse_relation_genres(self):
+        use_as = GenreUseAsFactory()
+        GenreFactory.create_batch(3, use_as=use_as)
+        
+        assert use_as.genres.count() == 3
 
 
-@pytest.mark.django_db
-def test_deleting_genre_use_as_cascades_to_genre() -> None:
-    """Verify deleting GenreUseAs cascades and removes related Genre records."""
-    use_as = GenreUseAs.objects.create(name="tag")
-    Genre.objects.create(type="Rock", use_as=use_as)
+# =====================================================
+# Genre
+# =====================================================
 
-    use_as.delete()
+class TestGenre:
 
-    assert Genre.objects.count() == 0
+    def test_requires_use_as(self):
+        genre = GenreFactory.build(use_as=None)
+        with pytest.raises(ValidationError):
+            genre.full_clean()
 
+    def test_str_representation_contains_translations(self):
+        genre = GenreFactory(type="Festival")
+        GenreTranslationFactory(genre=genre, language__code="en", name="Festival")
+        GenreTranslationFactory(genre=genre, language__code="nl", name="Festival NL")
 
-@pytest.mark.django_db
-def test_deleting_language_cascades_to_genre_translation() -> None:
-    """Verify deleting Language cascades and removes related GenreTranslation records."""
-    language = Language.objects.create(code="nl", name="Dutch", is_active=True)
-    use_as = GenreUseAs.objects.create(name="genre")
-    genre = Genre.objects.create(type="Theater", use_as=use_as)
-    GenreTranslation.objects.create(name="Theater", language=language, genre=genre)
+        assert str(genre) == "Festival - [en - Festival] - [nl - Festival NL]"
 
-    language.delete()
+    def test_delete_cascades_to_translations(self):
+        genre = GenreFactory()
+        GenreTranslationFactory.create_batch(2, genre=genre) # Create 2 translations for the genre
 
-    assert GenreTranslation.objects.count() == 0
+        genre.delete() # Delete the genre, which should cascade to the translations
 
-
-@pytest.mark.django_db
-def test_genre_str() -> None:
-    """Ensure Genre.__str__ includes is correct."""
-    use_as = GenreUseAs.objects.create(name="tag")
-    genre = Genre.objects.create(type="Festival", use_as=use_as)
-    english = Language.objects.create(code="en", name="English", is_active=True)
-    dutch = Language.objects.create(code="nl", name="Dutch", is_active=True)
-
-    GenreTranslation.objects.create(name="Festival", language=english, genre=genre)
-    GenreTranslation.objects.create(name="Festival NL", language=dutch, genre=genre)
-
-    result = str(genre)
-
-    assert "Festival - [en - Festival] - [nl - Festival NL]" in result
-
-@pytest.mark.django_db
-def test_genre_has_multiple_translations() -> None:
-    """Ensure a Genre can have multiple related GenreTranslation entries."""
-    language_en = Language.objects.create(code="en", name="English", is_active=True)
-    language_nl = Language.objects.create(code="nl", name="Dutch", is_active=True)
-
-    use_as = GenreUseAs.objects.create(name="genre")
-    genre = Genre.objects.create(type="Theater", use_as=use_as)
-
-    GenreTranslation.objects.create(name="Theater", language=language_en, genre=genre)
-    GenreTranslation.objects.create(name="Theater NL", language=language_nl, genre=genre)
-
-    translations = genre.genre_translations.all()
-
-    assert translations.count() == 2
-
-@pytest.mark.django_db
-def test_language_has_related_genre_translations() -> None:
-    """Ensure Language exposes related GenreTranslation records via related_name."""
-    language = Language.objects.create(code="fr", name="French", is_active=True)
-    use_as = GenreUseAs.objects.create(name="tag")
-    genre = Genre.objects.create(type="Dance", use_as=use_as)
-
-    GenreTranslation.objects.create(name="Danse", language=language, genre=genre)
-
-    assert language.genre_translations.count() == 1
-
-@pytest.mark.django_db
-def test_genre_use_as_has_related_genres() -> None:
-    """Ensure GenreUseAs exposes related Genre records via related_name."""
-    use_as = GenreUseAs.objects.create(name="tag")
-    Genre.objects.create(type="Rock", use_as=use_as)
-    Genre.objects.create(type="Jazz", use_as=use_as)
-
-    assert use_as.genres.count() == 2
+        assert GenreTranslation.objects.count() == 0
 
 
-@pytest.mark.django_db
-def test_deleting_genre_cascades_to_translations() -> None:
-    """Verify deleting Genre cascades and removes its GenreTranslation records."""
-    language = Language.objects.create(code="en", name="English", is_active=True)
-    use_as = GenreUseAs.objects.create(name="genre")
-    genre = Genre.objects.create(type="Opera", use_as=use_as)
+# =====================================================
+# GenreTranslation
+# =====================================================
 
-    GenreTranslation.objects.create(name="Opera", language=language, genre=genre)
+class TestGenreTranslation:
 
-    genre.delete()
+    def test_str(self):
+        translation = GenreTranslationFactory(
+            language__code="en",
+            name="Rock",
+        )
+        assert str(translation) == "en - Rock"
 
-    assert GenreTranslation.objects.count() == 0
+    def test_language_reverse_relation(self):
+        language = LanguageFactory()
+        GenreTranslationFactory.create_batch(2, language=language)
+        
+        assert language.genre_translations.count() == 2
+
+
+# =====================================================
+# Cascade behaviour
+# =====================================================
+
+class TestCascadeBehaviour:
+
+    def test_deleting_use_as_cascades_to_genres(self):
+        use_as = GenreUseAsFactory()
+        GenreFactory(use_as=use_as)
+
+        # Check if the setup is correct
+        assert Genre.objects.count() == 1
+        
+        use_as.delete()
+
+        # Check if the genre was deleted
+        assert Genre.objects.count() == 0
+
+    def test_deleting_language_cascades_to_translations(self):
+        language = LanguageFactory()
+        GenreTranslationFactory(language=language)
+
+        # Check if the setup is correct
+        assert GenreTranslation.objects.count() == 1
+
+        language.delete()
+
+        # Check if the translation was deleted
+        assert GenreTranslation.objects.count() == 0
