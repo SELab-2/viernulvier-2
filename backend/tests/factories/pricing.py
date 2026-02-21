@@ -36,8 +36,8 @@ class PriceRankFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = PriceRank
 
-    position = factory.Sequence(lambda n: n + 1)
-    sold_out_buffer = 0
+    position = factory.Faker('random_int', min=0, max=10)
+    sold_out_buffer = factory.Faker('random_int', min=0, max=10)
 
 
 class PriceRankTranslationFactory(factory.django.DjangoModelFactory):

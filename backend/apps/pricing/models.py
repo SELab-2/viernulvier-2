@@ -24,17 +24,15 @@ class Price(BaseModel):
         default="",
     ) 
 
-    minimum = models.IntegerField(
+    minimum = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
-        validators=[MinValueValidator(0)], # TODO: determine minimal value
         db_comment="Minimum allowed amount (if applicable).",
     )
 
-    maximum = models.IntegerField(
+    maximum = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
-        validators=[MaxValueValidator(0)], # TODO: determine maximal value
         db_comment="Maximum allowed amount (if applicable).",
     )
 
@@ -62,12 +60,12 @@ class Price(BaseModel):
         ordering = ["sort_order"]
         constraints = [
             models.CheckConstraint(
-                check=Q(minimum__isnull=True, maximum__isnull=True)
+                condition=Q(minimum__isnull=True, maximum__isnull=True)
                 | Q(minimum__isnull=False, maximum__isnull=False),
                 name="price_min_max_both_null_or_both_set",
             ),
             models.CheckConstraint(
-                check=Q(minimum__isnull=True, maximum__isnull=True) | Q(minimum__lte=F("maximum")),
+                condition=Q(minimum__isnull=True, maximum__isnull=True) | Q(minimum__lte=F("maximum")),
                 name="price_min_lte_max",
             ),
         ]
@@ -82,12 +80,14 @@ class PriceTranslation(BaseModel):
         Price,
         on_delete=models.CASCADE,
         db_comment="The price that this is a translation of.",
+        related_name="translations"
     )
 
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
         db_comment="The language that corresponds to the translation.",
+        related_name="translations"
     )
 
     description = models.CharField(
@@ -101,12 +101,7 @@ class PriceTranslation(BaseModel):
         db_table = "price_translation"
         verbose_name = "Price Translation"
         verbose_name_plural = "Price Translations"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["price", "language"],
-                name="uniq_price_translation_per_language",
-            ),
-        ]
+        unique_together = [("price", "language")]
         indexes = [
             models.Index(fields=["price", "language"], name="idx_price_lang"),
         ]
@@ -164,12 +159,7 @@ class PriceRankTranslation(BaseModel):
         db_table = "price_rank_translation"
         verbose_name = "Price Rank Translation"
         verbose_name_plural = "Price Rank Translations"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["price_rank", "language"],
-                name="uniq_price_rank_translation_per_language",
-            ),
-        ]
+        unique_together = [("price_rank", "language")]
         indexes = [
             models.Index(fields=["price_rank", "language"], name="idx_price_rank_lang"),
         ]
