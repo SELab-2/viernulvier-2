@@ -12,6 +12,9 @@ module.exports = [
   js.configs.recommended,
   prettierConfig,
   {
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', '*.config.js', '*.config.cjs'],
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsParser,
