@@ -48,7 +48,7 @@ class Genre(BaseModel):
         verbose_name = "Genre"
         verbose_name_plural = "Genres"
 
-    def __str__(self):
+    def __str__(self): # TODO maybe this can be better, but for now it shows the type and the translations of the genre
         # Get the English name for the genre
         english_name = GenreTranslation.objects.filter(
             genre=self,
