@@ -222,7 +222,7 @@ class ProductionTag(BaseModel):
         on_delete=models.CASCADE
     )
 
-    class Meta:
+    class Meta(BaseModel.Meta):
         db_table = "production_tag" 
         unique_together = ('production', 'tag')
         verbose_name = "Production Tag"
