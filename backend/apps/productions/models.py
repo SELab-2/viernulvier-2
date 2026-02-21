@@ -2,6 +2,7 @@ from django.db import models
 from apps.core.model import BaseModel
 from apps.languages.models import Language
 from apps.genres.models import Genre
+from apps.media_library.models import MediaGallery
 
 class UitDatabaseTheme(BaseModel):
     """Model representing a theme in the UIT database."""
@@ -67,7 +68,7 @@ class Production(BaseModel):
     )
 
     media_gallery = models.ForeignKey(
-        MediaGallery, # TODO: implement MediaGallery model
+        MediaGallery,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
