@@ -37,7 +37,6 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'rest_framework',
     'drf_spectacular',
-    'debug_toolbar',
     'django_filters',
 ]
 
