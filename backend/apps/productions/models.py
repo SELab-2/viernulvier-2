@@ -82,7 +82,7 @@ class Production(BaseModel):
         db_comment="The attendance mode of the production."
     )
 
-    performance_type = models.CharField(
+    performer_type = models.CharField(
         max_length=20,
         choices=PerformanceType.choices,
         blank=True,
