@@ -47,6 +47,7 @@ Thumbs.db
 *.tmp
 *.temp
 .cache/
+*.tsbuildinfo
 
 # Optional ESLint cache
 .eslintcache
