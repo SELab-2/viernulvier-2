@@ -18,11 +18,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+DEBUG = False
+ALLOWED_HOSTS = []
 
 # Application definition
 DJANGO_APPS = [
@@ -46,6 +46,7 @@ LOCAL_APPS = [
     'apps.languages',
     'apps.productions',
     'apps.events',
+    'apps.genres',
     # TODO add more local apps here
 ]
 
