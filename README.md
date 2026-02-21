@@ -35,6 +35,5 @@
 
 ## Frontend
 
-See the frontend setup guide: [FRONTEND.md](FRONTEND.md)
-
+See wiki pages
 ---
