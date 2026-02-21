@@ -42,13 +42,12 @@ class Event(BaseModel):
         db_table = "event"
         verbose_name = "Event"
         verbose_name_plural = "Events"
-        # TODO I get an error because of this, maybe it's better to use the clean method instead of a constraint for this?
-        #constraints = [
-        #    models.CheckConstraint(
-        #        check=Q(ends_at__gt=F("starts_at")),
-        #        name="event_ends_after_starts",
-        #    )
-        #]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(ends_at__gt=F("starts_at")),
+                name="event_ends_after_starts",
+            )
+        ]
         ordering = ["starts_at"]
 
     def clean(self):
