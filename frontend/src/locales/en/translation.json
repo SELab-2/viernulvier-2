@@ -1,6 +1,25 @@
 {
-  "title": "Archive workspace",
-  "subtitle": "Catalog and preserve items.",
-  "english": "English",
-  "dutch": "Dutch"
+    "title": "Archive workspace",
+    "subtitle": "Catalog and preserve items.",
+    "english": "English",
+    "dutch": "Dutch",
+    "nav": {
+        "home": "Home",
+        "events": "Events",
+        "productions": "Productions"
+    },
+    "events": {
+        "title": "Events",
+        "listPlaceholder": "Events list will be displayed here.",
+        "detailTitle": "Event Detail",
+        "detailPlaceholder": "Event details for ID {{id}} will be displayed here.",
+        "backToEvents": "Back to Events"
+    },
+    "productions": {
+        "title": "Productions",
+        "listPlaceholder": "Productions list will be displayed here.",
+        "detailTitle": "Production Detail",
+        "detailPlaceholder": "Production details for ID {{id}} will be displayed here.",
+        "backToProductions": "Back to Productions"
+    }
 }
