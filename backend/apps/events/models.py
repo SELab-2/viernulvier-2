@@ -1,18 +1,20 @@
 from django.db import models
 from django.db.models import Q, F
 from apps.core.model import BaseModel
+from apps.productions.models import Production
+from apps.locations.models import Hall
 
 
 class Event(BaseModel):
     production = models.ForeignKey(
-        Production, # TODO: implement Production model
+        Production,
         on_delete=models.CASCADE,
         db_comment="The production that the event is organized for.",
         related_name="events",
     )
 
     hall = models.ForeignKey(
-        Hall, # TODO: implement Hall model
+        Hall,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -40,13 +42,19 @@ class Event(BaseModel):
         db_table = "event"
         verbose_name = "Event"
         verbose_name_plural = "Events"
-        constraints = [
-            models.CheckConstraint(
-                check=Q(ends_at__gt=F("starts_at")),
-                name="event_ends_after_starts",
-            )
-        ]
+        # TODO I get an error because of this, maybe it's better to use the clean method instead of a constraint for this?
+        #constraints = [
+        #    models.CheckConstraint(
+        #        check=Q(ends_at__gt=F("starts_at")),
+        #        name="event_ends_after_starts",
+        #    )
+        #]
         ordering = ["starts_at"]
+
+    def clean(self):
+        super().clean()
+        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
+            raise ValidationError("Event end time must be after start time.")
 
 class EventPrice(BaseModel):
     event = models.ForeignKey(
@@ -57,7 +65,7 @@ class EventPrice(BaseModel):
     )
 
     price_rank = models.ForeignKey(
-        PriceRank, #TODO: implement PriceRank model
+        'PriceRank', #TODO: implement PriceRank model
         on_delete=models.SET_NULL,
         db_comment="The rank corresponding to the price.",
         related_name="event_prices",

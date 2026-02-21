@@ -37,7 +37,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'rest_framework',
     'drf_spectacular',
-    'debug_toolbar',
+    #'debug_toolbar', TODO: there is a bug here because debug_toolbar is added twice (once here in base and once in dev.py). I think it should only be added in dev.py, but I am not 100% sure.
     'django_filters',
 ]
 
@@ -47,6 +47,7 @@ LOCAL_APPS = [
     'apps.productions',
     'apps.events',
     'apps.genres',
+    'apps.locations',
     # TODO add more local apps here
 ]
 
