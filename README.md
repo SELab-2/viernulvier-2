@@ -33,4 +33,8 @@
     -- bv. ```python manage.py makemigrations languages```
 - migrate: ```python manage.py migrate```
 
+## Frontend
+
+See the frontend setup guide: [FRONTEND.md](FRONTEND.md)
+
 ---
