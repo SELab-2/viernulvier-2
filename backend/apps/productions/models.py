@@ -33,49 +33,6 @@ class UitDatabaseType(BaseModel):
     def __str__(self):
         return self.name
 
-class ProductionTag(BaseModel):
-    """Model representing the many-to-many relationship between productions and tags."""
-    production = models.ForeignKey(
-        Production, 
-        on_delete=models.CASCADE
-    )
-
-    tag = models.ForeignKey(
-        TAG, # TODO: implement TAG model
-        on_delete=models.CASCADE
-    )
-
-    class Meta:
-        db_table = "production_tag" 
-        unique_together = ('production', 'tag')
-        verbose_name = "Production Tag"
-        verbose_name_plural = "Production Tags"
-
-class ProductionGenre(BaseModel):
-    """Model representing a genre of a production."""
-    production = models.ForeignKey(
-        Production,
-        on_delete=models.CASCADE,
-        db_comment="The production that the genre belongs to.",
-    )
-
-    genre = models.ForeignKey(
-        Genre, # TODO: implement Genre model
-        on_delete=models.CASCADE,
-        db_comment="The genre of the production.",
-    )
-
-    position = models.PositiveIntegerField(
-        db_comment="The position of the genre in the list of genres for the production.",
-        # default=0, # TODO in viewset ordering definieren
-    )
-
-    class Meta(BaseModel.Meta):
-        db_table = "production_genre"
-        unique_together = ('production', 'genre')
-        verbose_name = "Production Genre"
-        verbose_name_plural = "Production Genres"
-
 class Production(BaseModel):
     """Model representing a production."""
 
@@ -136,7 +93,7 @@ class Production(BaseModel):
         Genre, # TODO: implement Genre model
         blank=True,
         db_comment="The genres of the production.",
-        through=ProductionGenre,
+        through="ProductionGenre",
         related_name="productionGenres",
     )
 
@@ -144,7 +101,7 @@ class Production(BaseModel):
         TAG, # TODO: implement TAG model
         blank=True,
         db_comment="The tags of the production.",
-        through=ProductionTag,
+        through="ProductionTag",
         related_name="productionTags",
     )
 
@@ -180,7 +137,7 @@ class ProductionTranslation(BaseModel):
 
     title = models.CharField(
         max_length=200,
-        db_comment="The title of the production in the given language."
+        db_comment="The title of the production in the given language.",
         blank=True
     )
 
@@ -252,3 +209,52 @@ class ProductionTranslation(BaseModel):
 
     def __str__(self):
         return f"Translation of Production {self.production.id} in {self.language.code}"
+    
+class ProductionTag(BaseModel):
+    """Model representing the many-to-many relationship between productions and tags."""
+    production = models.ForeignKey(
+        Production, 
+        on_delete=models.CASCADE
+    )
+
+    tag = models.ForeignKey(
+        TAG, # TODO: implement TAG model
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        db_table = "production_tag" 
+        unique_together = ('production', 'tag')
+        verbose_name = "Production Tag"
+        verbose_name_plural = "Production Tags"
+
+    def __str__(self):
+        return f"Tag {self.tag.name} for Production {self.production.id}"
+
+class ProductionGenre(BaseModel):
+    """Model representing a genre of a production."""
+    production = models.ForeignKey(
+        Production,
+        on_delete=models.CASCADE,
+        db_comment="The production that the genre belongs to.",
+    )
+
+    genre = models.ForeignKey(
+        Genre, # TODO: implement Genre model
+        on_delete=models.CASCADE,
+        db_comment="The genre of the production.",
+    )
+
+    position = models.PositiveIntegerField(
+        db_comment="The position of the genre in the list of genres for the production.",
+        # default=0, # TODO in viewset ordering definieren
+    )
+
+    class Meta(BaseModel.Meta):
+        db_table = "production_genre"
+        unique_together = ('production', 'genre')
+        verbose_name = "Production Genre"
+        verbose_name_plural = "Production Genres"
+
+    def __str__(self):
+        return f"Genre {self.genre.name} for Production {self.production.id}"
