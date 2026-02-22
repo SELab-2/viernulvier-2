@@ -100,7 +100,7 @@ class Production(BaseModel):
     )
 
     tags = models.ManyToManyField(
-        TAG, # TODO: implement TAG model
+        Tag,
         blank=True,
         db_comment="The tags of the production.",
         through="ProductionTag",
