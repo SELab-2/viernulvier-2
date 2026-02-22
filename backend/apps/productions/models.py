@@ -220,7 +220,7 @@ class ProductionTag(BaseModel):
     )
 
     tag = models.ForeignKey(
-        TAG, # TODO: implement TAG model
+        Tag,
         on_delete=models.CASCADE
     )
 
