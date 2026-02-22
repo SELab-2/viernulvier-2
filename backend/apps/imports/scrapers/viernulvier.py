@@ -35,7 +35,7 @@ class ViernulvierScraper:
     - Session management
     """
 
-    BASE_URL = getattr(settings, 'VIERNULVIER_API_URL', 'https://viernulvier.gent/api')
+    BASE_URL = getattr(settings, 'VIERNULVIER_API_URL', 'https://viernulvier.gent/api') # TODO: add this to django settings
     TIMEOUT = 30
     MAX_RETRIES = 3
     RETRY_BACKOFF_SECONDS = 1.0
@@ -48,7 +48,7 @@ class ViernulvierScraper:
         if self.api_key:
             self.session.headers.update({'Authorization': f'Token {self.api_key}'})
 
-    def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
+    def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> Any:
         """Make a GET request to the Viernulvier API."""
         url = f"{self.BASE_URL}/{endpoint.lstrip('/')}"
 
@@ -76,11 +76,12 @@ class ViernulvierScraper:
             except ValueError as e:
                 logger.error(f"Invalid JSON: {str(e)}")
                 raise ViernulvierAPIError(f"Invalid JSON response: {str(e)}")
+        return None
 
     def fetch_events(self, limit: Optional[int] = None, **kwargs) -> List[Dict[str, Any]]:
         """Fetch events from the Viernulvier API."""
         params = kwargs.copy()
-        if limit:
+        if limit is not None:
             params['limit'] = limit
 
         try:
@@ -101,11 +102,11 @@ class ViernulvierScraper:
         try:
             transformed = {
                 'external_id': str(raw_event.get('id', '')),
-                'title': raw_event.get('title', '').strip(),
-                'description': raw_event.get('description', '').strip(),
+                'title': (raw_event.get('title') or '').strip(),
+                'description': (raw_event.get('description') or '').strip(),
                 'start_date': self._parse_datetime(raw_event.get('start_date')),
                 'end_date': self._parse_datetime(raw_event.get('end_date')),
-                'location': raw_event.get('location', '').strip(),
+                'location': (raw_event.get('location') or '').strip(),
                 'url': raw_event.get('url', ''),
                 'source': 'viernulvier',
                 'raw_data': raw_event,
@@ -124,7 +125,8 @@ class ViernulvierScraper:
             logger.warning(f"Error transforming event {event_id}: {str(e)}")
             raise ViernulvierScraperError(f"Failed to transform event: {str(e)}")
 
-    def _parse_datetime(self, date_string: Optional[str]) -> Optional[datetime]:
+    @staticmethod
+    def _parse_datetime(date_string: Optional[str]) -> Optional[datetime]:
         """Parse datetime string from API."""
         if not date_string:
             return None
@@ -155,7 +157,8 @@ class ViernulvierScraper:
         logger.info(f"Transformed {len(transformed_events)}/{len(raw_events)} events")
         return transformed_events
 
-    def persist_events(self, events: List[Dict[str, Any]], saver) -> int:
+    @staticmethod
+    def persist_events(events: List[Dict[str, Any]], saver) -> int:
         """Persist transformed events using the provided saver callable."""
         if not callable(saver):
             raise ViernulvierPersistenceError("No valid saver callable provided")
