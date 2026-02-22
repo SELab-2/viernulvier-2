@@ -92,7 +92,7 @@ class Production(BaseModel):
     )
 
     genres = models.ManyToManyField(
-        Genre, # TODO: implement Genre model
+        Genre,
         blank=True,
         db_comment="The genres of the production.",
         through="ProductionGenre",
@@ -242,7 +242,7 @@ class ProductionGenre(BaseModel):
     )
 
     genre = models.ForeignKey(
-        Genre, # TODO: implement Genre model
+        Genre,
         on_delete=models.CASCADE,
         db_comment="The genre of the production.",
     )
