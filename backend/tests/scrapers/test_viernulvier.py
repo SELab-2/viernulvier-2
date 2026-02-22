@@ -8,15 +8,17 @@ Tests cover:
 - Session management
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
 import requests
 
 from apps.imports.scrapers.viernulvier import (
     ViernulvierScraper,
     ViernulvierScraperError,
     ViernulvierAPIError,
+    ViernulvierPersistenceError,
 )
 
 
@@ -138,6 +140,32 @@ class TestMakeRequest:
 
         with pytest.raises(ViernulvierAPIError, match='API request failed'):
             scraper._make_request('events')
+
+    @patch('apps.imports.scrapers.viernulvier.requests.Session.get')
+    def test_request_retries_then_success(self, mock_get, scraper):
+        """Test retry logic on transient timeout."""
+        mock_response = Mock()
+        mock_response.json.return_value = {'data': 'ok'}
+        mock_response.raise_for_status = Mock()
+        mock_get.side_effect = [
+            requests.exceptions.Timeout(),
+            mock_response,
+        ]
+
+        result = scraper._make_request('events')
+
+        assert result == {'data': 'ok'}
+        assert mock_get.call_count == 2
+
+    @patch('apps.imports.scrapers.viernulvier.requests.Session.get')
+    def test_request_retries_exhausted(self, mock_get, scraper):
+        """Test retry exhaustion on repeated timeouts."""
+        mock_get.side_effect = requests.exceptions.Timeout()
+
+        with pytest.raises(ViernulvierAPIError, match='Request timeout'):
+            scraper._make_request('events')
+
+        assert mock_get.call_count == scraper.MAX_RETRIES
 
 
 class TestFetchEvents:
@@ -365,25 +393,80 @@ class TestFetchAndTransformEvents:
         mock_fetch.assert_called_once_with(limit=10, category='music')
 
 
+class TestPersistEvents:
+    """Test persist_events method."""
+
+    def test_persist_events_success(self, scraper):
+        saved = []
+
+        def saver(event):
+            saved.append(event)
+
+        events = [{'external_id': '1'}, {'external_id': '2'}]
+        result = scraper.persist_events(events, saver=saver)
+
+        assert result == 2
+        assert len(saved) == 2
+
+    def test_persist_events_partial_failure(self, scraper):
+        calls = []
+
+        def saver(event):
+            calls.append(event['external_id'])
+            if event['external_id'] == '2':
+                raise ValueError("fail")
+
+        events = [{'external_id': '1'}, {'external_id': '2'}, {'external_id': '3'}]
+        result = scraper.persist_events(events, saver=saver)
+
+        assert result == 2
+        assert calls == ['1', '2', '3']
+
+    def test_persist_events_invalid_saver(self, scraper):
+        with pytest.raises(ViernulvierPersistenceError):
+            scraper.persist_events([], saver=None)
+
+
+class TestFetchTransformPersist:
+    """Test fetch_transform_and_persist method."""
+
+    @patch.object(ViernulvierScraper, 'fetch_and_transform_events')
+    def test_fetch_transform_and_persist_success(self, mock_fetch, scraper):
+        mock_fetch.return_value = [{'external_id': '1'}, {'external_id': '2'}]
+        saved = []
+
+        def saver(event):
+            saved.append(event)
+
+        result = scraper.fetch_transform_and_persist(saver=saver)
+
+        assert result == 2
+        assert len(saved) == 2
+
+    def test_fetch_transform_and_persist_missing_saver(self, scraper):
+        with pytest.raises(ViernulvierPersistenceError):
+            scraper.fetch_transform_and_persist()
+
+
 class TestContextManager:
     """Test context manager functionality."""
 
-    def test_context_manager_enter_exit(self):
+    @patch('apps.imports.scrapers.viernulvier.requests.Session.close')
+    def test_context_manager_enter_exit(self, mock_close):
         """Test context manager properly closes session."""
         with ViernulvierScraper() as scraper:
             assert scraper.session is not None
-            session = scraper.session
 
-        # Session should be closed after exiting context
-        assert session._original_close  # Session's close method was called
+        # Session's close method should be called after exiting context
+        mock_close.assert_called_once()
 
-    def test_close_method(self, scraper):
+    @patch('apps.imports.scrapers.viernulvier.requests.Session.close')
+    def test_close_method(self, mock_close, scraper):
         """Test close method."""
-        session = scraper.session
         scraper.close()
 
         # Verify close was called
-        assert session._original_close
+        mock_close.assert_called_once()
 
 
 class TestIntegration:

@@ -1,28 +1,9 @@
-"""
-Viernulvier API Scraper
-
-Centralized scraper for fetching and transforming data from the Viernulvier API.
-This module handles external data integration in a structured, maintainable way.
-
-Architecture Decision: Centralized scraper module
-Location: backend/apps/imports/scrapers/viernulvier.py
-
-Usage:
-    from apps.imports.scrapers.viernulvier import ViernulvierScraper
-
-    # Basic usage
-    scraper = ViernulvierScraper()
-    events = scraper.fetch_and_transform_events(limit=100)
-
-    # With context manager
-    with ViernulvierScraper() as scraper:
-        events = scraper.fetch_and_transform_events()
-"""
-
 import logging
-import requests
-from typing import Dict, List, Optional, Any
+import time
 from datetime import datetime
+from typing import Dict, List, Optional, Any
+
+import requests
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -35,6 +16,11 @@ class ViernulvierScraperError(Exception):
 
 class ViernulvierAPIError(ViernulvierScraperError):
     """Raised when the Viernulvier API returns an error."""
+    pass
+
+
+class ViernulvierPersistenceError(ViernulvierScraperError):
+    """Raised when persisting data fails or is misconfigured."""
     pass
 
 
@@ -51,35 +37,45 @@ class ViernulvierScraper:
 
     BASE_URL = getattr(settings, 'VIERNULVIER_API_URL', 'https://viernulvier.gent/api')
     TIMEOUT = 30
+    MAX_RETRIES = 3
+    RETRY_BACKOFF_SECONDS = 1.0
 
     def __init__(self, api_key: Optional[str] = None):
         """Initialize the scraper with optional API key."""
         self.api_key = api_key or getattr(settings, 'VIERNULVIER_API_KEY', None)
         self.session = requests.Session()
+
         if self.api_key:
-            self.session.headers.update({'Authorization': f'Bearer {self.api_key}'})
+            self.session.headers.update({'Authorization': f'Token {self.api_key}'})
 
     def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
         """Make a GET request to the Viernulvier API."""
         url = f"{self.BASE_URL}/{endpoint.lstrip('/')}"
 
-        try:
-            logger.info(f"Fetching data from: {url}")
-            response = self.session.get(url, params=params, timeout=self.TIMEOUT)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.Timeout:
-            logger.error(f"Timeout for {url}")
-            raise ViernulvierAPIError(f"Request timeout for {url}")
-        except requests.exceptions.HTTPError as e:
-            logger.error(f"HTTP error: {e.response.status_code}")
-            raise ViernulvierAPIError(f"HTTP {e.response.status_code}: {str(e)}")
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Request error: {str(e)}")
-            raise ViernulvierAPIError(f"API request failed: {str(e)}")
-        except ValueError as e:
-            logger.error(f"Invalid JSON: {str(e)}")
-            raise ViernulvierAPIError(f"Invalid JSON response: {str(e)}")
+        for attempt in range(1, self.MAX_RETRIES + 1):
+            try:
+                logger.info(f"Fetching data from: {url}")
+                response = self.session.get(url, params=params, timeout=self.TIMEOUT)
+                response.raise_for_status()
+                return response.json()
+            except requests.exceptions.Timeout:
+                logger.warning(f"Timeout for {url} (attempt {attempt}/{self.MAX_RETRIES})")
+                if attempt == self.MAX_RETRIES:
+                    logger.error(f"Timeout for {url}")
+                    raise ViernulvierAPIError(f"Request timeout for {url}")
+                time.sleep(self.RETRY_BACKOFF_SECONDS * attempt)
+            except requests.exceptions.HTTPError as e:
+                logger.error(f"HTTP error: {e.response.status_code}")
+                raise ViernulvierAPIError(f"HTTP {e.response.status_code}: {str(e)}")
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Request error: {str(e)} (attempt {attempt}/{self.MAX_RETRIES})")
+                if attempt == self.MAX_RETRIES:
+                    logger.error(f"Request error: {str(e)}")
+                    raise ViernulvierAPIError(f"API request failed: {str(e)}")
+                time.sleep(self.RETRY_BACKOFF_SECONDS * attempt)
+            except ValueError as e:
+                logger.error(f"Invalid JSON: {str(e)}")
+                raise ViernulvierAPIError(f"Invalid JSON response: {str(e)}")
 
     def fetch_events(self, limit: Optional[int] = None, **kwargs) -> List[Dict[str, Any]]:
         """Fetch events from the Viernulvier API."""
@@ -124,7 +120,7 @@ class ViernulvierScraper:
 
             return transformed
         except Exception as e:
-            event_id = raw_event.get('id', 'unknown')
+            event_id = raw_event.get('id', 'unknown') if isinstance(raw_event, dict) else 'unknown'
             logger.warning(f"Error transforming event {event_id}: {str(e)}")
             raise ViernulvierScraperError(f"Failed to transform event: {str(e)}")
 
@@ -158,6 +154,36 @@ class ViernulvierScraper:
 
         logger.info(f"Transformed {len(transformed_events)}/{len(raw_events)} events")
         return transformed_events
+
+    def persist_events(self, events: List[Dict[str, Any]], saver) -> int:
+        """Persist transformed events using the provided saver callable."""
+        if not callable(saver):
+            raise ViernulvierPersistenceError("No valid saver callable provided")
+
+        saved_count = 0
+        error_count = 0
+
+        for event in events:
+            try:
+                saver(event)
+                saved_count += 1
+            except Exception as e:
+                error_count += 1
+                logger.warning(f"Failed to persist event {event.get('external_id', 'unknown')}: {str(e)}")
+
+        if error_count > 0:
+            logger.warning(f"Failed to persist {error_count} events")
+
+        logger.info(f"Persisted {saved_count}/{len(events)} events")
+        return saved_count
+
+    def fetch_transform_and_persist(self, limit: Optional[int] = None, saver=None, **kwargs) -> int:
+        """Fetch, transform, and persist events in one call."""
+        if saver is None:
+            raise ViernulvierPersistenceError("Saver callable is required")
+
+        transformed_events = self.fetch_and_transform_events(limit=limit, **kwargs)
+        return self.persist_events(transformed_events, saver=saver)
 
     def close(self):
         """Close the HTTP session."""
