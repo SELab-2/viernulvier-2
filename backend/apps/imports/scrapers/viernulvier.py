@@ -48,7 +48,7 @@ class ViernulvierScraper:
         if self.api_key:
             self.session.headers.update({'Authorization': f'Token {self.api_key}'})
 
-    def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
+    def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> Any:
         """Make a GET request to the Viernulvier API."""
         url = f"{self.BASE_URL}/{endpoint.lstrip('/')}"
 
@@ -80,7 +80,7 @@ class ViernulvierScraper:
     def fetch_events(self, limit: Optional[int] = None, **kwargs) -> List[Dict[str, Any]]:
         """Fetch events from the Viernulvier API."""
         params = kwargs.copy()
-        if limit:
+        if limit is not None:
             params['limit'] = limit
 
         try:
@@ -101,11 +101,11 @@ class ViernulvierScraper:
         try:
             transformed = {
                 'external_id': str(raw_event.get('id', '')),
-                'title': raw_event.get('title', '').strip(),
-                'description': raw_event.get('description', '').strip(),
+                'title': (raw_event.get('title') or '').strip(),
+                'description': (raw_event.get('description') or '').strip(),
                 'start_date': self._parse_datetime(raw_event.get('start_date')),
                 'end_date': self._parse_datetime(raw_event.get('end_date')),
-                'location': raw_event.get('location', '').strip(),
+                'location': (raw_event.get('location') or '').strip(),
                 'url': raw_event.get('url', ''),
                 'source': 'viernulvier',
                 'raw_data': raw_event,
