@@ -1,6 +1,8 @@
 from django.db import models
 from apps.core.model import BaseModel
 from apps.languages.models import Language
+from apps.events.models import Event
+from apps.tags.models import Tag
 from apps.genres.models import Genre
 from apps.media_library.models import MediaGallery
 
@@ -99,7 +101,7 @@ class Production(BaseModel):
     )
 
     tags = models.ManyToManyField(
-        TAG, # TODO: implement TAG model
+        Tag,
         blank=True,
         db_comment="The tags of the production.",
         through="ProductionTag",
@@ -219,7 +221,7 @@ class ProductionTag(BaseModel):
     )
 
     tag = models.ForeignKey(
-        TAG, # TODO: implement TAG model
+        Tag,
         on_delete=models.CASCADE
     )
 
