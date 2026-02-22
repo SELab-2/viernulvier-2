@@ -1,7 +1,6 @@
 from django.db import models
 from apps.core.model import BaseModel
 from apps.languages.models import Language
-from apps.events.models import Event
 from apps.tags.models import Tag
 from apps.genres.models import Genre
 from apps.media_library.models import MediaGallery
