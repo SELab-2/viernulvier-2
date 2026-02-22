@@ -386,3 +386,34 @@ def test_sync_raises_on_integrity_error(monkeypatch):
 
         with pytest.raises(viernulvier.ScraperError):
             viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+
+def test_fetch_raises_on_connection_error(monkeypatch):
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    def fake_get(url, headers, timeout):
+        raise requests.ConnectionError()
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    with pytest.raises(viernulvier.ScraperError):
+        viernulvier.fetch_viernulvier(endpoint="/events")
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_raises_on_transform_exception(monkeypatch):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"id": 1, "title": "A"}],
+        )
+
+        def bad_transform(_item):
+            raise ValueError("bad transform")
+
+        with pytest.raises(viernulvier.ScraperError):
+            viernulvier.sync_viernulvier(
+                ViernulvierItem, endpoint="/events", transform=bad_transform
+            )

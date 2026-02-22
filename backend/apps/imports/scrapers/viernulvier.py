@@ -79,7 +79,11 @@ def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transfo
     seen = set()
 
     for item in items:
-        data = transform(item)
+        try:
+            data = transform(item)
+        except Exception as exc:
+            logger.exception("Transform error for item: %s", item)
+            raise ScraperError("Transform error while syncing item") from exc
         external_id = data.pop("external_id", None)
         if not external_id:
             logger.warning("Skipping item without external_id: %s", item)
