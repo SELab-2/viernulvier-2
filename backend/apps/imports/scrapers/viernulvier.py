@@ -61,6 +61,8 @@ def fetch_viernulvier(endpoint=DEFAULT_ENDPOINT):
 
 
 def default_transform(item):
+    if not isinstance(item, dict):
+        raise ScraperError("Invalid item type for default_transform")
     if "id" in item and item.get("id") is not None:
         external_id = item.get("id")
     elif "uuid" in item and item.get("uuid") is not None:
@@ -84,6 +86,10 @@ def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transfo
         except Exception as exc:
             logger.exception("Transform error for item: %s", item)
             raise ScraperError("Transform error while syncing item") from exc
+        if not isinstance(data, dict):
+            raise ScraperError("Transform must return a dict")
+        if "payload" not in data:
+            raise ScraperError("Transform must include payload")
         external_id = data.pop("external_id", None)
         if not external_id:
             logger.warning("Skipping item without external_id: %s", item)

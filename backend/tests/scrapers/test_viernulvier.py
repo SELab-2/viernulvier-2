@@ -417,3 +417,56 @@ def test_sync_raises_on_transform_exception(monkeypatch):
             viernulvier.sync_viernulvier(
                 ViernulvierItem, endpoint="/events", transform=bad_transform
             )
+
+
+def test_fetch_allows_empty_endpoint(monkeypatch):
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    def fake_get(url, headers, timeout):
+        assert url.endswith("/api/")
+        response = Mock(ok=True, status_code=200)
+        response.json.return_value = []
+        return response
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    assert viernulvier.fetch_viernulvier(endpoint="") == []
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_raises_on_transform_non_dict(monkeypatch):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"id": 1, "title": "A"}],
+        )
+
+        def bad_transform(_item):
+            return "not-a-dict"
+
+        with pytest.raises(viernulvier.ScraperError):
+            viernulvier.sync_viernulvier(
+                ViernulvierItem, endpoint="/events", transform=bad_transform
+            )
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_raises_on_transform_missing_payload(monkeypatch):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"id": 1, "title": "A"}],
+        )
+
+        def bad_transform(_item):
+            return {"external_id": "1"}
+
+        with pytest.raises(viernulvier.ScraperError):
+            viernulvier.sync_viernulvier(
+                ViernulvierItem, endpoint="/events", transform=bad_transform
+            )
+
