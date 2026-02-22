@@ -9,11 +9,11 @@ class ImportLog(BaseModel):
     """
     
     class Status(models.TextChoices):
-        PENDING = 'PENDING', 'Pending', 'pending'
-        IN_PROGRESS = 'IN_PROGRESS', 'In Progress', 'in progress'
-        PARTIAL_SUCCESS = 'PARTIAL_SUCCESS', 'Partial Success', 'partial success'
-        SUCCESS = 'SUCCESS', 'Success', 'success'
-        FAILED = 'FAILED', 'Failed', 'failed'
+        PENDING = 'PENDING', 'Pending'
+        IN_PROGRESS = 'IN_PROGRESS', 'In Progress'
+        PARTIAL_SUCCESS = 'PARTIAL_SUCCESS', 'Partial Success'
+        SUCCESS = 'SUCCESS', 'Success'
+        FAILED = 'FAILED', 'Failed'
     
     source = models.CharField(
         max_length=255,

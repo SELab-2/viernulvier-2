@@ -1,11 +1,11 @@
 import pytest
 from django.core.exceptions import ValidationError
-
-from backend.tests.factories.import_log import ImportLogFactory
 from apps.import_log.models import ImportLog
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
+
+from tests.factories.import_log import ImportLogFactory
 
 
 pytestmark = pytest.mark.django_db
@@ -38,16 +38,17 @@ class TestImportLog:
 
         log = ImportLogFactory(
             started_at=started,
-            finished_at=finished
+            finished_at=finished,
+            status=ImportLog.Status.SUCCESS
         )
 
         assert log.finished_at > log.started_at
 
-    def test_finished_before_started_raises_integrity_error(self):
+    def test_finished_before_started_raises_validation_error(self):
         started = timezone.now()
         finished = started - timedelta(minutes=10)
 
-        with pytest.raises(IntegrityError):
+        with pytest.raises(ValidationError):
             with transaction.atomic():
                 ImportLogFactory(
                     started_at=started,

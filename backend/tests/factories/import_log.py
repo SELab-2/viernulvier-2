@@ -11,8 +11,9 @@ faker = Faker()
 
 
 class ImportLogFactory(factory.django.DjangoModelFactory):
-    class Meta(factory.django.DjangoModelFactory.Meta):
+    class Meta:
         model = ImportLog
+        skip_postgeneration_save = True
 
     source = LazyFunction(lambda: faker.file_name(extension="csv"))
 
