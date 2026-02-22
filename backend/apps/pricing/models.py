@@ -101,7 +101,9 @@ class PriceTranslation(BaseModel):
         db_table = "price_translation"
         verbose_name = "Price Translation"
         verbose_name_plural = "Price Translations"
-        unique_together = [("price", "language")]
+        constraints = [
+            models.UniqueConstraint(fields=['price', 'language'], name='unique_price_language')
+        ]
         indexes = [
             models.Index(fields=["price", "language"], name="idx_price_lang"),
         ]
@@ -159,7 +161,9 @@ class PriceRankTranslation(BaseModel):
         db_table = "price_rank_translation"
         verbose_name = "Price Rank Translation"
         verbose_name_plural = "Price Rank Translations"
-        unique_together = [("price_rank", "language")]
+        constraints = [
+            models.UniqueConstraint(fields=['price_rank', 'language'], name='unique_price_rank_language')
+        ]
         indexes = [
             models.Index(fields=["price_rank", "language"], name="idx_price_rank_lang"),
         ]
