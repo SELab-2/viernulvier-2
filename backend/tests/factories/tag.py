@@ -13,7 +13,7 @@ faker = Faker()
 
 class TagFactory(factory.django.DjangoModelFactory):
     
-    class Meta(factory.django.DjangoModelFactory.Meta):
+    class Meta:
         model = Tag
 
     url = LazyFunction(faker.url)
@@ -29,7 +29,7 @@ class TagFactory(factory.django.DjangoModelFactory):
 
 class TagTranslationFactory(factory.django.DjangoModelFactory):
 
-    class Meta(factory.django.DjangoModelFactory.Meta):
+    class Meta:
         model = TagTranslation
 
     tag = SubFactory(TagFactory)
