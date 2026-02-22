@@ -92,7 +92,9 @@ class TagTranslation(BaseModel):
         db_table = "tag_translation"
         verbose_name = "Tag Translation"
         verbose_name_plural = "Tag Translations"
-        unique_together = ("tag", "language")
+        constraints = [
+            models.UniqueConstraint(fields=['tag', 'language'], name='unique_tag_language')
+        ]
     
     def __str__(self):
         return f"{self.language.code} - {self.name}"

@@ -84,7 +84,9 @@ class LocationTranslation(BaseModel):
         db_table = "location_translation"
         verbose_name = "Location Translation"
         verbose_name_plural = "Location Translations"
-        unique_together = ("location", "language")
+        constraints = [
+            models.UniqueConstraint(fields=['location', 'language'], name='unique_location_language')
+        ]
 
     def __str__(self):
         return f"{self.language.code} - {self.name}"
@@ -135,7 +137,9 @@ class SpaceTranslation(BaseModel):
         db_table = "space_translation"
         verbose_name = "Space Translation"
         verbose_name_plural = "Space Translations"
-        unique_together = ("space", "language")
+        constraints = [
+            models.UniqueConstraint(fields=['space', 'language'], name='unique_space_language')
+        ]
 
     def __str__(self):
         return f"Space - {self.language.code} - {self.name}"
@@ -202,7 +206,9 @@ class HallTranslation(BaseModel):
         db_table = "hall_translation"
         verbose_name = "Hall Translation"
         verbose_name_plural = "Hall Translations"
-        unique_together = ("hall", "language")
+        constraints = [
+            models.UniqueConstraint(fields=['hall', 'language'], name='unique_hall_language')
+        ]
 
     def __str__(self):
         return f"{self.language.code} - {self.name}"

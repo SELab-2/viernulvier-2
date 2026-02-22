@@ -203,7 +203,9 @@ class ProductionTranslation(BaseModel):
 
     class Meta(BaseModel.Meta):
         db_table = "production_translation"
-        unique_together = ('production', 'language')
+        constraints = [
+            models.UniqueConstraint(fields=['production', 'language'], name='unique_production_language')
+        ]
         verbose_name = "Production Translation"
         verbose_name_plural = "Production Translations"
 
@@ -226,7 +228,9 @@ class ProductionTag(BaseModel):
 
     class Meta(BaseModel.Meta):
         db_table = "production_tag" 
-        unique_together = ('production', 'tag')
+        constraints = [
+            models.UniqueConstraint(fields=['production', 'tag'], name='unique_production_tag')
+        ]
         verbose_name = "Production Tag"
         verbose_name_plural = "Production Tags"
 
@@ -254,7 +258,9 @@ class ProductionGenre(BaseModel):
 
     class Meta(BaseModel.Meta):
         db_table = "production_genre"
-        unique_together = ('production', 'genre')
+        constraints = [
+            models.UniqueConstraint(fields=['production', 'genre'], name='unique_production_genre')
+        ]
         verbose_name = "Production Genre"
         verbose_name_plural = "Production Genres"
 
