@@ -35,7 +35,7 @@ class ViernulvierScraper:
     - Session management
     """
 
-    BASE_URL = getattr(settings, 'VIERNULVIER_API_URL', 'https://viernulvier.gent/api')
+    BASE_URL = getattr(settings, 'VIERNULVIER_API_URL', 'https://viernulvier.gent/api') # TODO: add this to django settings
     TIMEOUT = 30
     MAX_RETRIES = 3
     RETRY_BACKOFF_SECONDS = 1.0
@@ -76,6 +76,7 @@ class ViernulvierScraper:
             except ValueError as e:
                 logger.error(f"Invalid JSON: {str(e)}")
                 raise ViernulvierAPIError(f"Invalid JSON response: {str(e)}")
+        return None
 
     def fetch_events(self, limit: Optional[int] = None, **kwargs) -> List[Dict[str, Any]]:
         """Fetch events from the Viernulvier API."""
@@ -124,7 +125,8 @@ class ViernulvierScraper:
             logger.warning(f"Error transforming event {event_id}: {str(e)}")
             raise ViernulvierScraperError(f"Failed to transform event: {str(e)}")
 
-    def _parse_datetime(self, date_string: Optional[str]) -> Optional[datetime]:
+    @staticmethod
+    def _parse_datetime(date_string: Optional[str]) -> Optional[datetime]:
         """Parse datetime string from API."""
         if not date_string:
             return None
@@ -155,7 +157,8 @@ class ViernulvierScraper:
         logger.info(f"Transformed {len(transformed_events)}/{len(raw_events)} events")
         return transformed_events
 
-    def persist_events(self, events: List[Dict[str, Any]], saver) -> int:
+    @staticmethod
+    def persist_events(events: List[Dict[str, Any]], saver) -> int:
         """Persist transformed events using the provided saver callable."""
         if not callable(saver):
             raise ViernulvierPersistenceError("No valid saver callable provided")
