@@ -16,8 +16,7 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 from django.core.exceptions import FieldError
-from django.db import DatabaseError, IntegrityError
-
+from django.db import DatabaseError, IntegrityError, transaction
 
 logger = logging.getLogger(__name__)
 
@@ -79,16 +78,28 @@ def fetch_viernulvier(endpoint=DEFAULT_ENDPOINT):
 def default_transform(item):
     if not isinstance(item, dict):
         raise ScraperError("Invalid item type for default_transform")
-    if "id" in item and item.get("id") is not None:
-        external_id = item.get("id")
-    elif "uuid" in item and item.get("uuid") is not None:
-        external_id = item.get("uuid")
-    else:
-        external_id = item.get("slug")
+
+    external_id = next((item.get(key) for key in ("id", "uuid", "slug") if item.get(key) is not None), None)
+
     return {
         "external_id": str(external_id) if external_id is not None else None,
         "payload": item,
     }
+
+
+def _validate_transformed_data(data, item):
+    """Validate that transformed data has the correct structure.
+
+    Returns: (external_id, is_valid, error_message)
+    """
+    if not isinstance(data, dict) or "payload" not in data:
+        return None, False, f"Invalid transform output for item: {item}"
+
+    external_id = data.pop("external_id", None)
+    if external_id is None or str(external_id).strip() == "":
+        return None, False, f"Skipping item without external_id: {item}"
+
+    return str(external_id), True, None
 
 
 def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transform):
@@ -99,37 +110,63 @@ def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transfo
         sync_viernulvier(ViernulvierItem, endpoint="/events")
     """
     items = fetch_viernulvier(endpoint=endpoint)
+
     saved = 0
+    errors = 0
     seen = set()
 
-    for item in items:
-        try:
-            data = transform(item)
-        except ScraperError:
-            raise
-        except Exception as exc:
-            logger.exception("Transform error for item: %s", item)
-            raise ScraperError("Transform error while syncing item") from exc
-        if not isinstance(data, dict):
-            raise ScraperError("Transform must return a dict")
-        if "payload" not in data:
-            raise ScraperError("Transform must include payload")
-        external_id = data.pop("external_id", None)
-        if external_id is None or external_id == "":
-            logger.warning("Skipping item without external_id: %s", item)
-            continue
-        if external_id in seen:
-            logger.warning("Duplicate external_id in batch: %s", external_id)
-            continue
-        seen.add(external_id)
+    with transaction.atomic():
+        for item in items:
+            # Transform item
+            try:
+                data = transform(item)
+            except Exception:
+                logger.exception(
+                    "Unexpected error while transforming item %s",
+                    item.get("id") if isinstance(item, dict) else item,
+                )
+                errors += 1
+                continue
 
-        try:
-            model.objects.update_or_create(external_id=external_id, defaults=data)
-        except (IntegrityError, DatabaseError, FieldError) as exc:
-            logger.exception("Database error while syncing item: %s", external_id)
-            raise ScraperError("Database error while syncing item") from exc
+            # Validate transformed data
+            external_id, is_valid, error_msg = _validate_transformed_data(data, item)
 
-        saved += 1
+            if not is_valid:
+                if "without external_id" in error_msg:
+                    logger.warning(error_msg)
+                else:
+                    logger.error(error_msg)
+                errors += 1
+                continue
 
-    logger.info("Synced %s items from Viernulvier", saved)
+            # Check for duplicates in current batch
+            if external_id in seen:
+                logger.warning("Duplicate external_id in batch: %s", external_id)
+                continue
+
+            seen.add(external_id)
+
+            # Persist item with savepoint isolation
+            sid = transaction.savepoint()
+            try:
+                model.objects.update_or_create(
+                    external_id=external_id,
+                    defaults=data,
+                )
+                transaction.savepoint_commit(sid)
+                saved += 1
+            except (IntegrityError, DatabaseError, FieldError):
+                transaction.savepoint_rollback(sid)
+                logger.error(
+                    "Database error while syncing item with external_id=%s. Continuing.",
+                    external_id,
+                    exc_info=True,
+                )
+                errors += 1
+
+    logger.info(
+        "Viernulvier sync finished: Saved=%s, Errors=%s",
+        saved,
+        errors,
+    )
     return saved
