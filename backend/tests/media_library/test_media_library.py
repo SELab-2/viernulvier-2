@@ -121,7 +121,7 @@ class TestMediaItemTranslation:
 
         MediaItemTranslationFactory(media_item=item, language=language)
 
-        with pytest.raises(IntegrityError):
+        with pytest.raises(ValidationError):
             MediaItemTranslationFactory(media_item=item, language=language)
 
     def test_str_representation(self):
@@ -173,7 +173,7 @@ class TestMediaItemCrop:
 
         MediaItemCropFactory(media_item=item, name="thumbnail")
 
-        with pytest.raises(IntegrityError):
+        with pytest.raises(ValidationError):
             MediaItemCropFactory(media_item=item, name="thumbnail")
 
     def test_str_representation(self):

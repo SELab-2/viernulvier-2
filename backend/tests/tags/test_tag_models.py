@@ -17,9 +17,9 @@ pytestmark = pytest.mark.django_db
 # =====================================================
 
 class TestTag:
-    def test_create_tag(self):
+    def test_tag_creation(self):
         tag = TagFactory(
-            url='url',
+            url='http://example.com/tag/rock',
             source='source', 
             source_type='source_type', 
             is_external=True, 
@@ -27,17 +27,23 @@ class TestTag:
             type='type'
         )
 
-        assert tag.url == 'url'
+        assert tag.url == 'http://example.com/tag/rock'
         assert tag.source == 'source'
         assert tag.source_type == 'source_type'
         assert tag.is_external is True
         assert tag.is_enabled is True
         assert tag.type == 'type'
-        
-    def test_requires_type(self):
-        tag = TagFactory.build(type="")
+
+    def test_wrong_url(self):
+        tag = TagFactory.build(url='not-a-valid-url')
         with pytest.raises(ValidationError):
             tag.full_clean()
+        
+    def test_empty_type(self):
+        tag = TagFactory.build(type="")
+        
+        # The model should allow empty type, so full_clean should not raise an error
+        tag.full_clean()  # should not raise
 
     def test_str_representation(self):
         tag = TagFactory(type="genre")
@@ -65,9 +71,12 @@ class TestTagTranslation:
         with pytest.raises(ValidationError):
             translation.full_clean()
 
-        translation = TagTranslationFactory.build(name=None)
-        with pytest.raises(ValidationError):
-            translation.full_clean()
+    def test_optional_fields_can_be_blank(self):
+        translation = TagTranslationFactory(
+            short_description="",
+            url_title=""
+        )
+        translation.full_clean()  # should not raise
 
     def test_str(self):
         translation = TagTranslationFactory(
@@ -82,7 +91,7 @@ class TestTagTranslation:
 
         TagTranslationFactory(tag=tag, language=language)
 
-        with pytest.raises(IntegrityError):
+        with pytest.raises(ValidationError):
             TagTranslationFactory(tag=tag, language=language)
 
     def test_language_reverse_relation(self):

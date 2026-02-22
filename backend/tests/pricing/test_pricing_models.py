@@ -1,5 +1,5 @@
 import pytest
-from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 
 from tests.factories.language import LanguageFactory
 from tests.factories.pricing import (
@@ -27,7 +27,7 @@ def test_price_default_ordering_by_sort_order():
 
 
 def test_price_check_constraint_min_max_both_null_or_both_set():
-    with pytest.raises(IntegrityError):
+    with pytest.raises(ValidationError):
         PriceFactory(minimum=0, maximum=None)
 
     p = PriceFactory(minimum=0, maximum=10)
@@ -39,7 +39,7 @@ def test_price_check_constraint_min_max_both_null_or_both_set():
 
 def test_price_check_constraint_min_lte_max():
     # minimum > maximum => moet falen
-    with pytest.raises(IntegrityError):
+    with pytest.raises(ValidationError):
         PriceFactory(minimum=20, maximum=10)
 
 
@@ -49,7 +49,7 @@ def test_price_translation_unique_per_price_and_language():
 
     PriceTranslationFactory(price=p, language=lang)
 
-    with pytest.raises(IntegrityError):
+    with pytest.raises(ValidationError):
         PriceTranslationFactory(price=p, language=lang)
 
 
@@ -64,7 +64,7 @@ def test_price_translation_str_contains_price_type_and_language_code():
 def test_price_rank_unique_position():
     PriceRankFactory(position=1)
 
-    with pytest.raises(IntegrityError):
+    with pytest.raises(ValidationError):
         PriceRankFactory(position=1)
 
 
@@ -79,7 +79,7 @@ def test_price_rank_translation_unique_per_rank_and_language():
 
     PriceRankTranslationFactory(price_rank=pr, language=lang)
 
-    with pytest.raises(IntegrityError):
+    with pytest.raises(ValidationError):
         PriceRankTranslationFactory(price_rank=pr, language=lang)
 
 

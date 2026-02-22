@@ -116,7 +116,9 @@ class MediaItemTranslation(BaseModel):
 
     class Meta(BaseModel.Meta):
         db_table = "media_item_translation"
-        unique_together = (("media_item", "language"),)
+        constraints = [
+            models.UniqueConstraint(fields=['media_item', 'language'], name='unique_media_language')
+        ]
         verbose_name = "Media Item Translation"
         verbose_name_plural = "Media Item Translations"
     
@@ -143,7 +145,9 @@ class MediaItemCrop(BaseModel):
 
     class Meta(BaseModel.Meta):
         db_table = "media_item_crop"
-        unique_together = (("media_item", "name"),)
+        constraints = [
+            models.UniqueConstraint(fields=['media_item', 'name'], name='unique_crop_name_per_media_item')
+        ]
         verbose_name = "Media Item Crop"
         verbose_name_plural = "Media Item Crops"
     

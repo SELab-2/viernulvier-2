@@ -1,7 +1,6 @@
 from django.db import models
 from apps.core.model import BaseModel
 from apps.languages.models import Language
-from apps.events.models import Event
 from apps.tags.models import Tag
 from apps.genres.models import Genre
 from apps.media_library.models import MediaGallery
@@ -93,7 +92,7 @@ class Production(BaseModel):
     )
 
     genres = models.ManyToManyField(
-        Genre, # TODO: implement Genre model
+        Genre,
         blank=True,
         db_comment="The genres of the production.",
         through="ProductionGenre",
@@ -204,7 +203,9 @@ class ProductionTranslation(BaseModel):
 
     class Meta(BaseModel.Meta):
         db_table = "production_translation"
-        unique_together = ('production', 'language')
+        constraints = [
+            models.UniqueConstraint(fields=['production', 'language'], name='unique_production_language')
+        ]
         verbose_name = "Production Translation"
         verbose_name_plural = "Production Translations"
 
@@ -227,7 +228,9 @@ class ProductionTag(BaseModel):
 
     class Meta(BaseModel.Meta):
         db_table = "production_tag" 
-        unique_together = ('production', 'tag')
+        constraints = [
+            models.UniqueConstraint(fields=['production', 'tag'], name='unique_production_tag')
+        ]
         verbose_name = "Production Tag"
         verbose_name_plural = "Production Tags"
 
@@ -243,7 +246,7 @@ class ProductionGenre(BaseModel):
     )
 
     genre = models.ForeignKey(
-        Genre, # TODO: implement Genre model
+        Genre,
         on_delete=models.CASCADE,
         db_comment="The genre of the production.",
     )
@@ -255,7 +258,9 @@ class ProductionGenre(BaseModel):
 
     class Meta(BaseModel.Meta):
         db_table = "production_genre"
-        unique_together = ('production', 'genre')
+        constraints = [
+            models.UniqueConstraint(fields=['production', 'genre'], name='unique_production_genre')
+        ]
         verbose_name = "Production Genre"
         verbose_name_plural = "Production Genres"
 

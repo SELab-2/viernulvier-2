@@ -3,7 +3,8 @@ from django.db.models import Q, F
 from apps.core.model import BaseModel
 from apps.productions.models import Production
 from apps.locations.models import Hall
-
+from apps.pricing.models import PriceRank
+from django.core.exceptions import ValidationError
 
 class Event(BaseModel):
     production = models.ForeignKey(
@@ -64,7 +65,7 @@ class EventPrice(BaseModel):
     )
 
     price_rank = models.ForeignKey(
-        'PriceRank', #TODO: implement PriceRank model
+        PriceRank,
         on_delete=models.SET_NULL,
         db_comment="The rank corresponding to the price.",
         related_name="event_prices",
