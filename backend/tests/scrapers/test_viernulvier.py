@@ -220,6 +220,15 @@ class TestFetchEvents:
         assert events == []
 
     @patch.object(ViernulvierScraper, '_make_request')
+    def test_fetch_events_with_limit_zero(self, mock_request, scraper, mock_api_response):
+        """Test that limit=0 is passed through as a valid parameter (not skipped)."""
+        mock_request.return_value = mock_api_response
+
+        scraper.fetch_events(limit=0)
+
+        mock_request.assert_called_once_with('events', params={'limit': 0})
+
+    @patch.object(ViernulvierScraper, '_make_request')
     def test_fetch_events_api_error(self, mock_request, scraper):
         """Test error propagation from API."""
         mock_request.side_effect = ViernulvierAPIError('API Error')
@@ -289,6 +298,22 @@ class TestTransformEvent:
         assert result['description'] == ''
         assert result['location'] == ''
         assert result['start_date'] is None
+
+    def test_transform_event_none_string_fields(self, scraper):
+        """Test that None values for title/description/location are treated as empty strings."""
+        raw_event = {
+            'id': '123',
+            'title': None,
+            'description': None,
+            'location': None,
+            'start_date': '2024-01-15T20:00:00Z',
+        }
+
+        result = scraper.transform_event(raw_event)
+
+        assert result['title'] == ''
+        assert result['description'] == ''
+        assert result['location'] == ''
 
     def test_transform_event_error(self, scraper):
         """Test transformation error handling."""
