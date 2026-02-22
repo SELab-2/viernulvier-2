@@ -1,5 +1,6 @@
 """Tests for Viernulvier scraper fetch, error handling, and persistence."""
 from contextlib import contextmanager
+import logging
 
 import pytest
 from unittest.mock import Mock
@@ -170,6 +171,8 @@ def test_sync_skips_items_without_external_id(monkeypatch, caplog):
 def test_sync_logs_info_on_empty_response(monkeypatch, caplog):
     with _temp_viernulvier_model() as ViernulvierItem:
         monkeypatch.setattr(viernulvier, "fetch_viernulvier", lambda endpoint="/events": [])
+
+        caplog.set_level(logging.INFO, logger=viernulvier.logger.name)
 
         count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
 

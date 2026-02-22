@@ -29,6 +29,7 @@ def _build_headers():
 
 def fetch_viernulvier(endpoint=DEFAULT_ENDPOINT):
     url = urljoin(BASE_URL + "/", endpoint.lstrip("/"))
+    logger.debug("Fetching Viernulvier endpoint: %s", url)
     try:
         response = requests.get(url, headers=_build_headers(), timeout=DEFAULT_TIMEOUT)
     except requests.RequestException as exc:
