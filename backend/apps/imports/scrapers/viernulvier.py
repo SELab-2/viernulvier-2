@@ -12,10 +12,11 @@ Usage:
 
 import logging
 import os
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
-from django.db import IntegrityError
+from django.core.exceptions import FieldError
+from django.db import DatabaseError, IntegrityError
 
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,9 @@ def _build_headers():
 
 
 def fetch_viernulvier(endpoint=DEFAULT_ENDPOINT):
+    parsed = urlparse(endpoint)
+    if parsed.scheme or parsed.netloc:
+        raise ScraperError(f"endpoint must be a relative path, got: {endpoint!r}")
     url = urljoin(BASE_URL + "/", endpoint.lstrip("/"))
     logger.debug("Fetching Viernulvier endpoint: %s", url)
     try:
@@ -101,6 +105,8 @@ def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transfo
     for item in items:
         try:
             data = transform(item)
+        except ScraperError:
+            raise
         except Exception as exc:
             logger.exception("Transform error for item: %s", item)
             raise ScraperError("Transform error while syncing item") from exc
@@ -109,7 +115,7 @@ def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transfo
         if "payload" not in data:
             raise ScraperError("Transform must include payload")
         external_id = data.pop("external_id", None)
-        if not external_id:
+        if external_id is None or external_id == "":
             logger.warning("Skipping item without external_id: %s", item)
             continue
         if external_id in seen:
@@ -119,7 +125,7 @@ def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transfo
 
         try:
             model.objects.update_or_create(external_id=external_id, defaults=data)
-        except IntegrityError as exc:
+        except (IntegrityError, DatabaseError, FieldError) as exc:
             logger.exception("Database error while syncing item: %s", external_id)
             raise ScraperError("Database error while syncing item") from exc
 
