@@ -48,6 +48,7 @@ LOCAL_APPS = [
     'apps.genres',
     'apps.pricing'
     'apps.locations',
+    'apps.media_library',
     # TODO add more local apps here
 ]
 
