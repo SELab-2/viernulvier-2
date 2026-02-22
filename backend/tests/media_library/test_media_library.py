@@ -62,7 +62,8 @@ class TestMediaItem:
             item.full_clean()
 
     def test_position_defaults_to_zero(self):
-        item = MediaItemFactory()
+        gallery = MediaGalleryFactory()
+        item = MediaItem.objects.create(gallery=gallery, type="image")
         assert item.position == 0
 
     def test_ordering_by_position(self):
