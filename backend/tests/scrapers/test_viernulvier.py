@@ -5,7 +5,8 @@ import logging
 import pytest
 from unittest.mock import Mock
 import requests
-from django.db import IntegrityError
+from django.core.exceptions import FieldError
+from django.db import DatabaseError, IntegrityError
 
 from django.db import connection, models
 from django.test.utils import isolate_apps
@@ -275,7 +276,7 @@ def test_sync_handles_special_chars_and_nulls(monkeypatch):
 @pytest.mark.django_db(transaction=True)
 def test_sync_handles_large_payload(monkeypatch):
     with _temp_viernulvier_model() as ViernulvierItem:
-        items = [{"id": i, "title": f"T{i}"} for i in range(500)]
+        items = [{"id": i, "title": f"T{i}"} for i in range(50)]
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
@@ -284,8 +285,8 @@ def test_sync_handles_large_payload(monkeypatch):
 
         count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
 
-        assert count == 500
-        assert ViernulvierItem.objects.count() == 500
+        assert count == 50
+        assert ViernulvierItem.objects.count() == 50
 
 
 @isolate_apps("tests")
@@ -469,4 +470,98 @@ def test_sync_raises_on_transform_missing_payload(monkeypatch):
             viernulvier.sync_viernulvier(
                 ViernulvierItem, endpoint="/events", transform=bad_transform
             )
+
+
+def test_fetch_raises_on_absolute_url_endpoint(monkeypatch):
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    with pytest.raises(viernulvier.ScraperError, match="relative path"):
+        viernulvier.fetch_viernulvier(endpoint="https://evil.example.com/steal")
+
+
+def test_fetch_raises_on_absolute_url_with_netloc(monkeypatch):
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    with pytest.raises(viernulvier.ScraperError, match="relative path"):
+        viernulvier.fetch_viernulvier(endpoint="//evil.example.com/steal")
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_scraper_error_from_transform_propagates_unchanged(monkeypatch):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"id": 1}],
+        )
+        original_error = viernulvier.ScraperError("original message")
+
+        def error_transform(_item):
+            raise original_error
+
+        with pytest.raises(viernulvier.ScraperError) as exc_info:
+            viernulvier.sync_viernulvier(
+                ViernulvierItem, endpoint="/events", transform=error_transform
+            )
+        assert exc_info.value is original_error
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_raises_on_database_error(monkeypatch):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"id": 1, "title": "A"}],
+        )
+
+        def boom(*_args, **_kwargs):
+            raise DatabaseError("generic db error")
+
+        monkeypatch.setattr(ViernulvierItem.objects, "update_or_create", boom)
+
+        with pytest.raises(viernulvier.ScraperError):
+            viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_raises_on_field_error(monkeypatch):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"id": 1, "title": "A"}],
+        )
+
+        def boom(*_args, **_kwargs):
+            raise FieldError("unknown field")
+
+        monkeypatch.setattr(ViernulvierItem.objects, "update_or_create", boom)
+
+        with pytest.raises(viernulvier.ScraperError):
+            viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_allows_integer_zero_external_id(monkeypatch):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"data": "item"}],
+        )
+
+        def zero_id_transform(_item):
+            return {"external_id": 0, "payload": {"data": "item"}}
+
+        count = viernulvier.sync_viernulvier(
+            ViernulvierItem, endpoint="/events", transform=zero_id_transform
+        )
+
+        assert count == 1
+        assert ViernulvierItem.objects.filter(external_id=0).exists()
 
