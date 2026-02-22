@@ -40,6 +40,7 @@ class Tag(BaseModel):
 
     type = models.CharField(
         max_length=100,
+        blank=True,
         db_comment="Type/category of the tag"
     )
 
