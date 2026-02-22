@@ -3,6 +3,7 @@ from apps.core.model import BaseModel
 from apps.languages.models import Language
 from apps.events.models import Event
 from apps.tags.models import Tag
+from apps.genres.models import Genre
 
 class UitDatabaseTheme(BaseModel):
     """Model representing a theme in the UIT database."""

@@ -47,6 +47,7 @@ LOCAL_APPS = [
     'apps.events',
     'apps.genres',
     'apps.tags'
+    'apps.locations',
     # TODO add more local apps here
 ]
 
