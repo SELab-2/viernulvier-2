@@ -114,6 +114,13 @@ def test_default_transform_uses_id():
     assert data["payload"]["title"] == "A"
 
 
+def test_default_transform_allows_zero_id():
+    item = {"id": 0, "title": "Zero"}
+    data = viernulvier.default_transform(item)
+
+    assert data["external_id"] == "0"
+
+
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
 def test_sync_persists_items(monkeypatch):
@@ -159,6 +166,8 @@ def test_sync_skips_items_without_external_id(monkeypatch, caplog):
             lambda endpoint="/events": [{"title": "no id"}],
         )
 
+        caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
+
         count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
 
         assert count == 0
@@ -178,3 +187,81 @@ def test_sync_logs_info_on_empty_response(monkeypatch, caplog):
 
         assert count == 0
         assert any("Synced 0 items" in r.message for r in caplog.records)
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_uses_custom_transform(monkeypatch):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"custom_id": "x-1", "name": "X"}],
+        )
+
+        def custom_transform(item):
+            return {"external_id": item["custom_id"], "payload": {"name": item["name"]}}
+
+        count = viernulvier.sync_viernulvier(
+            ViernulvierItem, endpoint="/events", transform=custom_transform
+        )
+
+        assert count == 1
+        obj = ViernulvierItem.objects.get(external_id="x-1")
+        assert obj.payload == {"name": "X"}
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_handles_special_chars_and_nulls(monkeypatch):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        payload = {"id": 9, "title": "Café 🎭", "desc": None}
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [payload],
+        )
+
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        assert count == 1
+        obj = ViernulvierItem.objects.get(external_id="9")
+        assert obj.payload["title"] == "Café 🎭"
+        assert obj.payload["desc"] is None
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_handles_large_payload(monkeypatch):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        items = [{"id": i, "title": f"T{i}"} for i in range(500)]
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": items,
+        )
+
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        assert count == 500
+        assert ViernulvierItem.objects.count() == 500
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_logs_exact_message_format(monkeypatch, caplog):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"id": 1, "title": "A"}],
+        )
+
+        caplog.set_level(logging.INFO, logger=viernulvier.logger.name)
+
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        assert count == 1
+        assert any(
+            r.message == "Synced 1 items from Viernulvier" for r in caplog.records
+        )

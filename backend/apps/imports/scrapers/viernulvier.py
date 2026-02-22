@@ -55,7 +55,12 @@ def fetch_viernulvier(endpoint=DEFAULT_ENDPOINT):
 
 
 def default_transform(item):
-    external_id = item.get("id") or item.get("uuid") or item.get("slug")
+    if "id" in item and item.get("id") is not None:
+        external_id = item.get("id")
+    elif "uuid" in item and item.get("uuid") is not None:
+        external_id = item.get("uuid")
+    else:
+        external_id = item.get("slug")
     return {
         "external_id": str(external_id) if external_id is not None else None,
         "payload": item,
