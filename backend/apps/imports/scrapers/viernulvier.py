@@ -37,7 +37,10 @@ def _get_api_key():
 
 
 def _build_headers():
-    return {"X-Api-Key": _get_api_key()}
+    return {
+        "X-AUTH-TOKEN": api_key,
+        "accept": "application/ld+json"
+    }
 
 
 def fetch_viernulvier(endpoint=DEFAULT_ENDPOINT):
