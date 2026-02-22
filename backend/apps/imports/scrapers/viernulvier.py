@@ -38,7 +38,7 @@ def _get_api_key():
 
 def _build_headers():
     return {
-        "X-AUTH-TOKEN": api_key,
+        "X-AUTH-TOKEN":  _get_api_key(),
         "accept": "application/ld+json"
     }
 
