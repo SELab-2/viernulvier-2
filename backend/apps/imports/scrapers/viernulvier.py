@@ -1,3 +1,15 @@
+"""Viernulvier scraper module.
+
+Architecture: centralized scrapers live in apps/imports/scrapers/.
+This allows multiple apps to reuse scraping logic without duplication.
+
+Usage:
+    from apps.imports.scrapers.viernulvier import sync_viernulvier
+    from apps.events.models import Event
+
+    sync_viernulvier(Event, endpoint="/events")
+"""
+
 import logging
 import os
 from urllib.parse import urljoin
@@ -76,6 +88,12 @@ def default_transform(item):
 
 
 def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transform):
+    """Fetch and persist Viernulvier data into a Django model.
+
+    Example:
+        from apps.events.models import ViernulvierItem
+        sync_viernulvier(ViernulvierItem, endpoint="/events")
+    """
     items = fetch_viernulvier(endpoint=endpoint)
     saved = 0
     seen = set()
