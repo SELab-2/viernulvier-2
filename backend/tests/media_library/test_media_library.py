@@ -84,11 +84,11 @@ class TestMediaItem:
         item.full_clean()  # should not raise
 
     def test_str_with_filename(self):
-        item = MediaItemFactory(type="image", original_filename="banner.jpg")
+        item = MediaItemFactory(type=MediaItem.MediaItemType.IMAGE, original_filename="banner.jpg")
         assert str(item) == "image - banner.jpg"
 
     def test_str_without_filename(self):
-        item = MediaItemFactory(type="video", original_filename="")
+        item = MediaItemFactory(type=MediaItem.MediaItemType.VIDEO, original_filename="")
         assert str(item) == "video - Unnamed"
 
     def test_delete_cascades_to_translations(self):
@@ -125,7 +125,7 @@ class TestMediaItemTranslation:
 
     def test_str_representation(self):
         language = LanguageFactory(code="en")
-        item = MediaItemFactory(type="image")
+        item = MediaItemFactory(type=MediaItem.MediaItemType.IMAGE)
         translation = MediaItemTranslationFactory(
             media_item=item,
             language=language,
@@ -134,7 +134,7 @@ class TestMediaItemTranslation:
 
         result = str(translation)
 
-        assert "image" in result
+        assert MediaItem.MediaItemType.IMAGE in result
         assert "en" in result
 
     def test_optional_fields_can_be_blank(self):
@@ -176,12 +176,12 @@ class TestMediaItemCrop:
             MediaItemCropFactory(media_item=item, name="thumbnail")
 
     def test_str_representation(self):
-        item = MediaItemFactory(type="image")
+        item = MediaItemFactory(type=MediaItem.MediaItemType.IMAGE)
         crop = MediaItemCropFactory(media_item=item, name="thumbnail")
 
         result = str(crop)
 
-        assert "image" in result
+        assert MediaItem.MediaItemType.IMAGE in result
         assert "thumbnail" in result
 
     def test_requires_name(self):

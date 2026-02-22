@@ -26,9 +26,16 @@ class MediaItem(BaseModel):
         db_comment="The media gallery this item belongs to.",
     )
 
+    class MediaItemType(models.TextChoices):
+        IMAGE = "image", "Image"
+        VIDEO = "video", "Video"
+        AUDIO = "audio", "Audio"
+
+
     type = models.CharField(
-        max_length=50,
-        db_comment="Type of media item (e.g., image, video).",
+        max_length=20,
+        choices=MediaItemType.choices,
+        db_comment="Type of media item."
     )
 
     format = models.CharField(

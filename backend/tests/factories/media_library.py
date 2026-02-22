@@ -23,7 +23,7 @@ class MediaItemFactory(factory.django.DjangoModelFactory):
         model = MediaItem
 
     gallery = factory.SubFactory(MediaGalleryFactory)
-    type = "image"
+    type = MediaItem.MediaItemType.IMAGE
     format = "jpg"
     original_filename = factory.LazyAttribute(lambda _: faker.file_name())
     position = factory.Sequence(lambda n: n)
