@@ -4,6 +4,8 @@ import logging
 
 import pytest
 from unittest.mock import Mock
+import requests
+from django.db import IntegrityError
 
 from django.db import connection, models
 from django.test.utils import isolate_apps
@@ -52,6 +54,45 @@ def test_fetch_raises_on_invalid_json(monkeypatch):
     def fake_get(url, headers, timeout):
         response = Mock(ok=True, status_code=200)
         response.json.side_effect = ValueError("invalid json")
+        return response
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    with pytest.raises(viernulvier.ScraperError):
+        viernulvier.fetch_viernulvier(endpoint="/events")
+
+
+def test_fetch_raises_on_timeout(monkeypatch):
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    def fake_get(url, headers, timeout):
+        raise requests.Timeout()
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    with pytest.raises(viernulvier.ScraperError):
+        viernulvier.fetch_viernulvier(endpoint="/events")
+
+
+def test_fetch_allows_data_key_payload(monkeypatch):
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    def fake_get(url, headers, timeout):
+        response = Mock(ok=True, status_code=200)
+        response.json.return_value = {"data": [{"id": 1}]}
+        return response
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    assert viernulvier.fetch_viernulvier(endpoint="/events") == [{"id": 1}]
+
+
+def test_fetch_raises_on_none_payload(monkeypatch):
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    def fake_get(url, headers, timeout):
+        response = Mock(ok=True, status_code=200)
+        response.json.return_value = None
         return response
 
     monkeypatch.setattr(viernulvier.requests, "get", fake_get)
@@ -265,3 +306,83 @@ def test_sync_logs_exact_message_format(monkeypatch, caplog):
         assert any(
             r.message == "Synced 1 items from Viernulvier" for r in caplog.records
         )
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_skips_duplicate_external_ids_in_batch(monkeypatch, caplog):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"id": 1, "title": "A"}, {"id": 1, "title": "B"}],
+        )
+
+        caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
+
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        assert count == 1
+        assert ViernulvierItem.objects.count() == 1
+        assert any("Duplicate external_id in batch" in r.message for r in caplog.records)
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_skips_when_transform_missing_external_id(monkeypatch, caplog):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"id": 1, "title": "A"}],
+        )
+
+        def bad_transform(_item):
+            return {"payload": {"title": "A"}}
+
+        caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
+
+        count = viernulvier.sync_viernulvier(
+            ViernulvierItem, endpoint="/events", transform=bad_transform
+        )
+
+        assert count == 0
+        assert any("Skipping item without external_id" in r.message for r in caplog.records)
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_skips_empty_string_external_id(monkeypatch, caplog):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"id": "", "title": "A"}],
+        )
+
+        caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
+
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        assert count == 0
+        assert ViernulvierItem.objects.count() == 0
+        assert any("Skipping item without external_id" in r.message for r in caplog.records)
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_raises_on_integrity_error(monkeypatch):
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events": [{"id": 1, "title": "A"}],
+        )
+
+        def boom(*_args, **_kwargs):
+            raise IntegrityError("boom")
+
+        monkeypatch.setattr(ViernulvierItem.objects, "update_or_create", boom)
+
+        with pytest.raises(viernulvier.ScraperError):
+            viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")

@@ -3,6 +3,7 @@ import os
 from urllib.parse import urljoin
 
 import requests
+from django.db import IntegrityError
 
 
 logger = logging.getLogger(__name__)
@@ -46,8 +47,13 @@ def fetch_viernulvier(endpoint=DEFAULT_ENDPOINT):
         logger.exception("Invalid JSON from Viernulvier API")
         raise ScraperError("Invalid JSON from Viernulvier API") from exc
 
+    if data is None:
+        raise ScraperError("Unexpected Viernulvier API payload")
+
     if isinstance(data, dict) and "items" in data:
         return data["items"]
+    if isinstance(data, dict) and "data" in data:
+        return data["data"]
     if isinstance(data, list):
         return data
 
@@ -70,6 +76,7 @@ def default_transform(item):
 def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transform):
     items = fetch_viernulvier(endpoint=endpoint)
     saved = 0
+    seen = set()
 
     for item in items:
         data = transform(item)
@@ -77,8 +84,17 @@ def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transfo
         if not external_id:
             logger.warning("Skipping item without external_id: %s", item)
             continue
+        if external_id in seen:
+            logger.warning("Duplicate external_id in batch: %s", external_id)
+            continue
+        seen.add(external_id)
 
-        model.objects.update_or_create(external_id=external_id, defaults=data)
+        try:
+            model.objects.update_or_create(external_id=external_id, defaults=data)
+        except IntegrityError as exc:
+            logger.exception("Database error while syncing item: %s", external_id)
+            raise ScraperError("Database error while syncing item") from exc
+
         saved += 1
 
     logger.info("Synced %s items from Viernulvier", saved)
