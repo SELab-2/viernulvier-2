@@ -33,14 +33,15 @@ class TestLanguageModel:
         assert lang.is_active is False
         
 
-    def test_language_creation_error(self):
-        """Test that creating a language with invalid data raises an error."""
+    def test_language_code_too_long_raises_validation_error(self):
+        """Code exceeding max_length=2 should raise ValidationError."""
         with pytest.raises(ValidationError):
-            LanguageFactory.create(code='invalidCodeLength', name='English')
+            LanguageFactory.create(code="invalidCodeLength", name="English")
 
+    def test_language_name_too_long_raises_validation_error(self):
+        """Name exceeding max_length=15 should raise ValidationError."""
         with pytest.raises(ValidationError):
-            LanguageFactory.create(code='en', name='InvalidNameLength')
-
+            LanguageFactory.create(code="en", name="A" * 16)
 
     def test_language_str(self):
         """Test the string representation of the Language model."""
