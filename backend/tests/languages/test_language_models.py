@@ -89,16 +89,20 @@ class TestLanguageModel:
 
     def test_location_space_hall_translations_related_names(self):
         """Language should expose location, space, and hall translations via <location|space|hall>_translations."""
-        language = LanguageFactory.create(code='de', name='German')
+        language = LanguageFactory.create(code="de", name="German")
 
-        LocationTranslationFactory.create_batch(2, language=language)
-        SpaceTranslationFactory.create(language=language)
-        HallTranslationFactory.create(language=language)
+        location_translations = LocationTranslationFactory.create_batch(2, language=language)
+        space_translation = SpaceTranslationFactory.create(language=language)
+        hall_translation = HallTranslationFactory.create(language=language)
 
         assert language.location_translations.count() == 2
-        assert language.space_translations.count() == 1
-        assert language.hall_translations.count() == 1
+        assert all(tr.language == language for tr in location_translations)
 
+        assert language.space_translations.count() == 1
+        assert space_translation.language == language
+
+        assert language.hall_translations.count() == 1
+        assert hall_translation.language == language
 
     def test_price_translation_related_name(self):
         """Language should expose price translations via price_translations."""
