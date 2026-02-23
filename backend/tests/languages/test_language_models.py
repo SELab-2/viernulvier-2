@@ -15,19 +15,22 @@ from tests.factories.tag import TagTranslationFactory
 pytestmark = pytest.mark.django_db
 
 class TestLanguageModel:
-    def test_language_creation(self):
-        """Test that a language can be created successfully."""
-        lang = LanguageFactory.create()
+    def test_language_creation_defaults(self):
+        """Test that a language can be created with expected default values."""
+        lang = LanguageFactory.create(code="nl", name="Dutch")
 
         assert lang.pk is not None
-        assert lang.code == 'nl'
-        assert lang.name == 'Dutch'
-        assert lambda: lang.is_active == True
-        
-        lang2 = LanguageFactory.create(code='en', name='English', is_active=False)
-        assert lang2.code == 'en'
-        assert lang2.name == 'English'
-        assert lang2.is_active == False
+        assert lang.code == "nl"
+        assert lang.name == "Dutch"
+        assert lang.is_active is True  # default defined in factory
+
+    def test_language_creation_inactive(self):
+        """Test that is_active can be explicitly set to False."""
+        lang = LanguageFactory.create(code="en", name="English", is_active=False)
+
+        assert lang.code == "en"
+        assert lang.name == "English"
+        assert lang.is_active is False
         
 
     def test_language_creation_error(self):
