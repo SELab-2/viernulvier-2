@@ -67,7 +67,7 @@ class TagTranslation(BaseModel):
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
-        related_name="tagTranslations",
+        related_name="tag_translations",
         db_comment="The language of the translation."
     )
 
