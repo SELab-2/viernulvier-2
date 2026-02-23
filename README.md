@@ -35,7 +35,7 @@
     -- bv. ```python manage.py makemigrations languages```
 - migrate: ```python manage.py migrate```
 
-### Adding a Pull Request
+## Adding a Pull Request
 
 When creating a PR, please follow these guidelines:
 
