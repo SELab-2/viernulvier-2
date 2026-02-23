@@ -107,10 +107,10 @@ class TestLanguageModel:
     def test_price_translation_related_name(self):
         """Language should expose price translations via price_translations."""
         language = LanguageFactory.create(code='it', name='Italian')
-        PriceTranslationFactory.create_batch(2, language=language)
+        translations = PriceTranslationFactory.create_batch(2, language=language)
 
         assert language.price_translations.count() == 2
-
+        assert all(tr.language == language for tr in translations)
 
     def test_price_rank_translation_reverse_manager(self):
         """Language should expose price rank translations via pricerank_translations."""
