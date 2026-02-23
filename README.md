@@ -24,6 +24,8 @@
 
 - django
 - djangorestframework
+- pytest
+- pytest-django
 
 ### Belangrijke commands:
 
