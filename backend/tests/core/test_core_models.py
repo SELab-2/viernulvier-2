@@ -8,7 +8,6 @@ from tests.factories.core import CoreDummy, CoreDummyFactory
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
-
 @pytest.fixture(autouse=False)
 def core_dummy_table():
     """Create the CoreDummy table before each test and drop it afterward."""
