@@ -81,11 +81,11 @@ class TestLanguageModel:
 
     def test_media_item_translations_related_name(self):
         """Language should expose media item translations via media_item_translations."""
-        language = LanguageFactory.create(code='fr', name='French')
-        MediaItemTranslationFactory.create_batch(2, language=language)
+        language = LanguageFactory.create(code="fr", name="French")
+        translations = MediaItemTranslationFactory.create_batch(2, language=language)
 
         assert language.media_item_translations.count() == 2
-
+        assert all(tr.language == language for tr in translations)
 
     def test_location_space_hall_translations_related_names(self):
         """Language should expose location, space, and hall translations via <location|space|hall>_translations."""
