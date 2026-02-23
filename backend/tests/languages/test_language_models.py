@@ -58,13 +58,15 @@ class TestLanguageModel:
         assert lang2.pk == 'nl'
 
 
-    def test_blank_and_null_constraints(self):
-        """Test that blank and null constraints are enforced."""
+    def test_name_null_raises_validation_error(self):
+        """name=None should raise ValidationError."""
         with pytest.raises(ValidationError):
-            LanguageFactory.create(code='en', name=None)
+            LanguageFactory.create(code="en", name=None)
 
+    def test_name_blank_raises_validation_error(self):
+        """name='' should raise ValidationError."""
         with pytest.raises(ValidationError):
-            LanguageFactory.create(code='en', name='')
+            LanguageFactory.create(code="en", name="")
 
 
     def test_genre_translations(self):
