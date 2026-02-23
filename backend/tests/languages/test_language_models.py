@@ -76,7 +76,7 @@ class TestLanguageModel:
 
         assert language.genre_translations.count() == 3
         assert all(tr.language == language for tr in translations)
-        assert str(translations[0]).startswith('en - ')
+        assert all(str(tr).startswith("en - ") for tr in translations)
 
 
     def test_media_item_translations_related_name(self):
