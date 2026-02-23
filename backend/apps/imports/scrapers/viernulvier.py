@@ -20,7 +20,7 @@ from django.db import DatabaseError, IntegrityError, transaction
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://viernulvier.gent/api/v1"
+BASE_URL = "https://www.viernulvier.gent/api/v1"
 DEFAULT_ENDPOINT = "/productions"
 DEFAULT_TIMEOUT = 10
 
@@ -39,7 +39,7 @@ def _get_api_key():
 def _build_headers():
     return {
         "X-AUTH-TOKEN":  _get_api_key(),
-        "accept": "application/ld+json"
+        "accept": "application/json"
     }
 
 
