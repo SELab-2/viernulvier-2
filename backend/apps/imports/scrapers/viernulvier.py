@@ -20,8 +20,8 @@ from django.db import DatabaseError, IntegrityError, transaction
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://viernulvier.gent/api"
-DEFAULT_ENDPOINT = "/events"
+BASE_URL = "https://viernulvier.gent/api/v1"
+DEFAULT_ENDPOINT = "/productions"
 DEFAULT_TIMEOUT = 10
 
 
@@ -79,6 +79,11 @@ def fetch_viernulvier(endpoint=DEFAULT_ENDPOINT):
 
 
 def default_transform(item):
+    """Transform a raw API item into a standard payload dict.
+
+    Expects a dict and returns {"external_id": str|None, "payload": item}.
+    Raises ScraperError for non-dict inputs.
+    """
     if not isinstance(item, dict):
         raise ScraperError("Invalid item type for default_transform")
 

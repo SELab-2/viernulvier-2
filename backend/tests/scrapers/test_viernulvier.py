@@ -19,7 +19,7 @@ def test_fetch_uses_api_key_header(monkeypatch):
 
     def fake_get(url, headers, timeout):
         assert url.endswith("/events")
-        assert headers["X-Api-Key"] == "test-key"
+        assert headers["X-AUTH-TOKEN"] == "test-key"
         response = Mock(ok=True, status_code=200)
         response.json.return_value = []
         return response
