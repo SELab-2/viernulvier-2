@@ -16,11 +16,6 @@ def core_dummy_table():
     with connection.schema_editor() as schema_editor:
         schema_editor.delete_model(CoreDummy)
 
-def drop_core_dummy_table():
-    with connection.schema_editor() as schema_editor:
-        schema_editor.delete_model(CoreDummy)
-
-
 class TestBaseModel:
     def test_basemodel_is_abstract(self):
         from apps.core.model import BaseModel
