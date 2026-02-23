@@ -51,7 +51,6 @@ LOCAL_APPS = [
     'apps.pricing',
     'apps.locations',
     'apps.media_library',
-    'apps.core'
     # TODO add more local apps here
 ]
 
