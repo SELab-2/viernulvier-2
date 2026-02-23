@@ -123,6 +123,7 @@ class TestLanguageModel:
     def test_tag_translations_related_name(self):
         """Language should expose tag translations via tag_translations."""
         language = LanguageFactory.create(code='pt', name='Portuguese')
-        TagTranslationFactory.create_batch(2, language=language)
+        translations = TagTranslationFactory.create_batch(2, language=language)
 
         assert language.tag_translations.count() == 2
+        assert all(tr.language == language for tr in translations)
