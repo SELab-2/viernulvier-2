@@ -3,11 +3,16 @@ from .models import Language
 
 
 class LanguageSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Language model.
+
+    All fields are exposed.
+    """
+
     class Meta:
         model = Language
         fields = [
             "code",
             "name",
-            "is_active"
+            "is_active",
         ]
-        read_only_fields = fields
