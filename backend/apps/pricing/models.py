@@ -87,7 +87,7 @@ class PriceTranslation(BaseModel):
         Language,
         on_delete=models.CASCADE,
         db_comment="The language that corresponds to the translation.",
-        related_name="translations"
+        related_name="price_translations"
     )
 
     description = models.CharField(
@@ -147,6 +147,7 @@ class PriceRankTranslation(BaseModel):
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
+        related_name="pricerank_translations",
         db_comment="The language that corresponds to the translation of the price rank.",
     ) 
 
