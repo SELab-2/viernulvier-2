@@ -22,7 +22,7 @@ class HasPublicApiKey(BaseApiKeyPermission):
     """
     Allows READ-ONLY access (GET, HEAD, OPTIONS) using the PUBLIC_API_KEY.
     """
-    def has_permission(self, request, view):
+    def has_permission(self, request, _):
         if request.method not in SAFE_METHODS:
             return False # Only allow safe methods
 
@@ -42,7 +42,7 @@ class HasInternalApiKey(BaseApiKeyPermission):
     Allows full CRUD access (POST, PUT, PATCH, DELETE, etc.) using the INTERNAL_API_KEY.
     Intended for sync services or internal CLI tools.
     """
-    def has_permission(self, request, view):
+    def has_permission(self, request, _):
         key = self.get_api_key(request)
         expected_key = getattr(settings, "INTERNAL_API_KEY", None)
 
