@@ -21,6 +21,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
+PUBLIC_API_KEY = os.getenv("PUBLIC_API_KEY", "dev-key-for-local") # API key for our API
 DEBUG = False
 ALLOWED_HOSTS = []
 
@@ -147,6 +148,8 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.HasStaticApiKey"],
 }
 
 # drf-spectacular settings
