@@ -22,7 +22,9 @@ class EventFactory(factory.django.DjangoModelFactory):
 	production = SubFactory(ProductionFactory)
 	hall = SubFactory(HallFactory)
 	starts_at = LazyFunction(timezone.now)
-	ends_at = LazyAttribute(lambda obj: obj.starts_at + timedelta(hours=2))
+	ends_at = LazyAttribute(
+		lambda obj: (obj.starts_at + timedelta(hours=2)) if obj.starts_at else None
+	)
 	ticketing_url = LazyFunction(lambda: faker.url())
 
 
