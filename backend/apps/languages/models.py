@@ -26,6 +26,7 @@ class Language(BaseModel):
         db_table = "language"
         verbose_name = "Language"
         verbose_name_plural = "Languages"
+        ordering = ['code']
 
     def __str__(self):
         return f"{self.code} - {self.name}"
