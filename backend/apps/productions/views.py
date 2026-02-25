@@ -1,9 +1,10 @@
-from rest_framework.viewsets import ModelViewSet
-from .models import Production
+from django.db.models import Prefetch
+from apps.core.views import ApiModelViewSet
+from .models import Production, ProductionGenre
 from .serializers import ProductionSerializer
 
 
-class ProductionViewSet(ModelViewSet):
+class ProductionViewSet(ApiModelViewSet):
     """
     API endpoint for managing Productions.
 
@@ -11,14 +12,27 @@ class ProductionViewSet(ModelViewSet):
         - Public API key  -> read-only
         - Internal API key -> full CRUD
 
-    Optimized with prefetch_related to avoid N+1 queries
-    when accessing translations.
+    Fully optimized to prevent N+1 queries.
     """
 
-    queryset = Production.objects.prefetch_related(
-        'translations', 
-        'tags', 
-        'uit_database_theme', 
-        'uit_database_type'
-    ).all()
     serializer_class = ProductionSerializer
+
+    queryset = (
+        Production.objects
+        .select_related(
+            "uit_database_theme",
+            "uit_database_type",
+        )
+        .prefetch_related(
+            "translations__language",
+            "tags",
+            "tags__translations__language",
+            Prefetch(
+                "productiongenre_set",
+                queryset=ProductionGenre.objects
+                    .select_related("genre")
+                    .order_by("position"),
+                to_attr="prefetched_production_genres",
+            ),
+        )
+    )

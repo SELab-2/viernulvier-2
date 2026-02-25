@@ -111,6 +111,7 @@ class Production(BaseModel):
         db_table = "production"
         verbose_name = "Production"
         verbose_name_plural = "Productions"
+        ordering = ["-id"]
 
     def __str__(self):
         return f"Production {self.id}" # TODO: change if we know how to do translations
@@ -208,6 +209,7 @@ class ProductionTranslation(BaseModel):
         ]
         verbose_name = "Production Translation"
         verbose_name_plural = "Production Translations"
+        ordering = ["language__code"]
 
     # TODO Add in save method html sanitization for the text fields to prevent XSS attacks, or use a library like bleach to sanitize the HTML content.
 
@@ -233,9 +235,10 @@ class ProductionTag(BaseModel):
         ]
         verbose_name = "Production Tag"
         verbose_name_plural = "Production Tags"
+        ordering = ["tag__type", "id"]
 
     def __str__(self):
-        return f"Tag {self.tag.name} for Production {self.production.id}"
+        return f"Tag {self.tag.type} for Production {self.production.id}"
 
 class ProductionGenre(BaseModel):
     """Model representing a genre of a production."""
@@ -263,6 +266,7 @@ class ProductionGenre(BaseModel):
         ]
         verbose_name = "Production Genre"
         verbose_name_plural = "Production Genres"
+        ordering = ["position", "id"]
 
     def __str__(self):
         return f"Genre {self.genre.name} for Production {self.production.id}"
