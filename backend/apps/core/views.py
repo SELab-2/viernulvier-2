@@ -15,7 +15,7 @@ class ApiModelViewSet(ModelViewSet):
         Instantiates and returns the list of permissions that this view requires.
         """
         if self.request.method in SAFE_METHODS:
-            return [HasPublicApiKey()]
+            return [HasPublicApiKey() | HasInternalApiKey()]
         
         # For all other methods (POST, PUT, DELETE, etc.)
         return [HasInternalApiKey()]
