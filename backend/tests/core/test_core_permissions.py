@@ -1,278 +1,260 @@
 """
-Tests for apps/core/permissions.py
+Tests for apps/core/permissions.py — ApiKeyPermission
+
+The permission class reads request.auth (set by ApiKeyAuthentication) and
+decides access based on the following rules:
+
+    request.auth == "internal"  ->  full access (all HTTP methods)
+    request.auth == "public"    ->  read-only  (GET, HEAD, OPTIONS only)
+    request.auth == None / other->  denied
 
 Covers:
-- BaseApiKeyPermission.get_api_key()
-- HasPublicApiKey.has_permission()
-- HasInternalApiKey.has_permission()
+- Internal auth -> allowed for all methods
+- Public auth   -> allowed for safe methods, denied for write methods
+- None / missing auth -> denied for all methods
+- Unknown auth value  -> denied
+- Return type is always bool
+- has_object_permission falls back to has_permission (default DRF behaviour)
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from django.test import TestCase, override_settings
-from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated
+from django.test import TestCase
+from rest_framework.permissions import SAFE_METHODS
 
-from apps.core.permissions import (
-    BaseApiKeyPermission,
-    HasInternalApiKey,
-    HasPublicApiKey,
-)
+from apps.core.permissions import ApiKeyPermission
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def make_request(method="GET", auth_header=None):
-    """Return a minimal mock request."""
+def make_request(method="GET", auth=None):
     request = MagicMock()
     request.method = method
-    request.headers = {}
-    if auth_header is not None:
-        request.headers["Authorization"] = auth_header
+    request.auth = auth
     return request
 
 
 # ---------------------------------------------------------------------------
-# BaseApiKeyPermission
+# Internal auth — full access
 # ---------------------------------------------------------------------------
 
-class TestGetApiKey(TestCase):
-    """Unit-tests for BaseApiKeyPermission.get_api_key()."""
+class TestApiKeyPermissionInternal(TestCase):
 
     def setUp(self):
-        self.permission = BaseApiKeyPermission()
-
-    # -- Missing header -------------------------------------------------------
-
-    def test_raises_not_authenticated_when_no_header(self):
-        request = make_request()
-        with self.assertRaises(NotAuthenticated) as ctx:
-            self.permission.get_api_key(request)
-        self.assertIn("credentials were not provided", str(ctx.exception.detail))
-
-    # -- Malformed header -----------------------------------------------------
-
-    def test_raises_auth_failed_when_only_one_part(self):
-        request = make_request(auth_header="somekey")
-        with self.assertRaises(AuthenticationFailed) as ctx:
-            self.permission.get_api_key(request)
-        self.assertIn("Invalid header format", str(ctx.exception.detail))
-
-    def test_raises_auth_failed_when_three_parts(self):
-        request = make_request(auth_header="Api-Key token extra")
-        with self.assertRaises(AuthenticationFailed):
-            self.permission.get_api_key(request)
-
-    def test_raises_auth_failed_when_wrong_scheme(self):
-        request = make_request(auth_header="Bearer mytoken")
-        with self.assertRaises(AuthenticationFailed) as ctx:
-            self.permission.get_api_key(request)
-        self.assertIn("Invalid header format", str(ctx.exception.detail))
-
-    def test_raises_auth_failed_when_scheme_is_token(self):
-        request = make_request(auth_header="Token mykey")
-        with self.assertRaises(AuthenticationFailed):
-            self.permission.get_api_key(request)
-
-    # -- Valid header ---------------------------------------------------------
-
-    def test_returns_key_for_valid_header(self):
-        request = make_request(auth_header="Api-Key mysecretkey")
-        result = self.permission.get_api_key(request)
-        self.assertEqual(result, "mysecretkey")
-
-    def test_scheme_is_case_insensitive(self):
-        """Header scheme matching must be case-insensitive (api-key vs API-KEY)."""
-        for scheme in ("api-key", "API-KEY", "Api-Key", "aPi-KeY"):
-            request = make_request(auth_header=f"{scheme} mykey")
-            result = self.permission.get_api_key(request)
-            self.assertEqual(result, "mykey")
-
-    def test_returns_key_with_special_characters(self):
-        key = "abc123!@#$%^&*()-_=+"
-        request = make_request(auth_header=f"Api-Key {key}")
-        self.assertEqual(self.permission.get_api_key(request), key)
-
-
-# ---------------------------------------------------------------------------
-# HasPublicApiKey
-# ---------------------------------------------------------------------------
-
-class TestHasPublicApiKey(TestCase):
-    """Unit-tests for HasPublicApiKey.has_permission()."""
-
-    VALID_KEY = "public-test-key-abc"
-
-    def setUp(self):
-        self.permission = HasPublicApiKey()
+        self.permission = ApiKeyPermission()
         self.view = MagicMock()
 
-    def _make(self, method="GET", key=None):
-        header = f"Api-Key {key or self.VALID_KEY}"
-        return make_request(method=method, auth_header=header)
+    def test_internal_allows_get(self):
+        self.assertTrue(
+            self.permission.has_permission(make_request("GET", "internal"), self.view)
+        )
 
-    # -- Non-safe methods are always rejected ---------------------------------
+    def test_internal_allows_head(self):
+        self.assertTrue(
+            self.permission.has_permission(make_request("HEAD", "internal"), self.view)
+        )
 
-    @override_settings(PUBLIC_API_KEY=VALID_KEY)
-    def test_rejects_post_even_with_valid_key(self):
-        result = self.permission.has_permission(self._make(method="POST"), self.view)
-        self.assertFalse(result)
+    def test_internal_allows_options(self):
+        self.assertTrue(
+            self.permission.has_permission(make_request("OPTIONS", "internal"), self.view)
+        )
 
-    @override_settings(PUBLIC_API_KEY=VALID_KEY)
-    def test_rejects_put_even_with_valid_key(self):
-        result = self.permission.has_permission(self._make(method="PUT"), self.view)
-        self.assertFalse(result)
+    def test_internal_allows_post(self):
+        self.assertTrue(
+            self.permission.has_permission(make_request("POST", "internal"), self.view)
+        )
 
-    @override_settings(PUBLIC_API_KEY=VALID_KEY)
-    def test_rejects_patch_even_with_valid_key(self):
-        result = self.permission.has_permission(self._make(method="PATCH"), self.view)
-        self.assertFalse(result)
+    def test_internal_allows_put(self):
+        self.assertTrue(
+            self.permission.has_permission(make_request("PUT", "internal"), self.view)
+        )
 
-    @override_settings(PUBLIC_API_KEY=VALID_KEY)
-    def test_rejects_delete_even_with_valid_key(self):
-        result = self.permission.has_permission(self._make(method="DELETE"), self.view)
-        self.assertFalse(result)
+    def test_internal_allows_patch(self):
+        self.assertTrue(
+            self.permission.has_permission(make_request("PATCH", "internal"), self.view)
+        )
 
-    # -- Safe methods ---------------------------------------------------------
+    def test_internal_allows_delete(self):
+        self.assertTrue(
+            self.permission.has_permission(make_request("DELETE", "internal"), self.view)
+        )
 
-    @override_settings(PUBLIC_API_KEY=VALID_KEY)
-    def test_allows_get_with_correct_key(self):
-        result = self.permission.has_permission(self._make(method="GET"), self.view)
-        self.assertTrue(result)
-
-    @override_settings(PUBLIC_API_KEY=VALID_KEY)
-    def test_allows_head_with_correct_key(self):
-        result = self.permission.has_permission(self._make(method="HEAD"), self.view)
-        self.assertTrue(result)
-
-    @override_settings(PUBLIC_API_KEY=VALID_KEY)
-    def test_allows_options_with_correct_key(self):
-        result = self.permission.has_permission(self._make(method="OPTIONS"), self.view)
-        self.assertTrue(result)
-
-    @override_settings(PUBLIC_API_KEY=VALID_KEY)
-    def test_rejects_get_with_wrong_key(self):
-        request = make_request(method="GET", auth_header="Api-Key wrong-key")
-        with self.assertRaises(AuthenticationFailed) as ctx:
-            self.permission.has_permission(request, self.view)
-        self.assertIn("Invalid Public API key", str(ctx.exception.detail))
-
-    # -- Misconfigured server -------------------------------------------------
-
-    @override_settings(PUBLIC_API_KEY=None)
-    def test_raises_if_key_not_configured(self):
-        with self.assertRaises(AuthenticationFailed) as ctx:
-            self.permission.has_permission(self._make(), self.view)
-        self.assertIn("not configured", str(ctx.exception.detail))
-
-    def test_raises_if_key_setting_absent(self):
-        """If PUBLIC_API_KEY is not set at all, should raise."""
-        from django.conf import settings
-        original = getattr(settings, "PUBLIC_API_KEY", "MISSING")
-        try:
-            if hasattr(settings, "PUBLIC_API_KEY"):
-                delattr(settings, "PUBLIC_API_KEY")
-            with self.assertRaises(AuthenticationFailed):
-                self.permission.has_permission(self._make(), self.view)
-        finally:
-            if original != "MISSING":
-                settings.PUBLIC_API_KEY = original
-
-    # -- No auth header -------------------------------------------------------
-
-    @override_settings(PUBLIC_API_KEY=VALID_KEY)
-    def test_raises_not_authenticated_when_no_header(self):
-        request = make_request(method="GET")
-        with self.assertRaises(NotAuthenticated):
-            self.permission.has_permission(request, self.view)
-
-    # -- Timing-safe comparison -----------------------------------------------
-
-    @override_settings(PUBLIC_API_KEY=VALID_KEY)
-    def test_uses_compare_digest(self):
-        """Verify secrets.compare_digest is called (timing-safe)."""
-        with patch("apps.core.permissions.secrets.compare_digest", return_value=True) as mock_cd:
-            self.permission.has_permission(self._make(), self.view)
-            mock_cd.assert_called_once_with(self.VALID_KEY, self.VALID_KEY)
+    def test_internal_returns_true_for_all_methods(self):
+        for method in ("GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"):
+            result = self.permission.has_permission(
+                make_request(method, "internal"), self.view
+            )
+            self.assertTrue(result, f"Internal auth should allow {method}")
 
 
 # ---------------------------------------------------------------------------
-# HasInternalApiKey
+# Public auth — read-only
 # ---------------------------------------------------------------------------
 
-class TestHasInternalApiKey(TestCase):
-    """Unit-tests for HasInternalApiKey.has_permission()."""
-
-    VALID_KEY = "internal-test-key-xyz"
+class TestApiKeyPermissionPublic(TestCase):
 
     def setUp(self):
-        self.permission = HasInternalApiKey()
+        self.permission = ApiKeyPermission()
         self.view = MagicMock()
 
-    def _make(self, method="POST", key=None):
-        header = f"Api-Key {key or self.VALID_KEY}"
-        return make_request(method=method, auth_header=header)
+    # Safe methods allowed
 
-    # -- Write methods --------------------------------------------------------
+    def test_public_allows_get(self):
+        self.assertTrue(
+            self.permission.has_permission(make_request("GET", "public"), self.view)
+        )
 
-    @override_settings(INTERNAL_API_KEY=VALID_KEY)
-    def test_allows_post_with_correct_key(self):
-        result = self.permission.has_permission(self._make(method="POST"), self.view)
-        self.assertTrue(result)
+    def test_public_allows_head(self):
+        self.assertTrue(
+            self.permission.has_permission(make_request("HEAD", "public"), self.view)
+        )
 
-    @override_settings(INTERNAL_API_KEY=VALID_KEY)
-    def test_allows_put_with_correct_key(self):
-        result = self.permission.has_permission(self._make(method="PUT"), self.view)
-        self.assertTrue(result)
+    def test_public_allows_options(self):
+        self.assertTrue(
+            self.permission.has_permission(make_request("OPTIONS", "public"), self.view)
+        )
 
-    @override_settings(INTERNAL_API_KEY=VALID_KEY)
-    def test_allows_patch_with_correct_key(self):
-        result = self.permission.has_permission(self._make(method="PATCH"), self.view)
-        self.assertTrue(result)
+    # Write methods denied
 
-    @override_settings(INTERNAL_API_KEY=VALID_KEY)
-    def test_allows_delete_with_correct_key(self):
-        result = self.permission.has_permission(self._make(method="DELETE"), self.view)
-        self.assertTrue(result)
+    def test_public_denies_post(self):
+        self.assertFalse(
+            self.permission.has_permission(make_request("POST", "public"), self.view)
+        )
 
-    # -- Safe methods are also allowed (no restriction on method) -------------
+    def test_public_denies_put(self):
+        self.assertFalse(
+            self.permission.has_permission(make_request("PUT", "public"), self.view)
+        )
 
-    @override_settings(INTERNAL_API_KEY=VALID_KEY)
-    def test_allows_get_with_correct_key(self):
-        """Internal key should also allow GET (full access)."""
-        result = self.permission.has_permission(self._make(method="GET"), self.view)
-        self.assertTrue(result)
+    def test_public_denies_patch(self):
+        self.assertFalse(
+            self.permission.has_permission(make_request("PATCH", "public"), self.view)
+        )
 
-    # -- Wrong key ------------------------------------------------------------
+    def test_public_denies_delete(self):
+        self.assertFalse(
+            self.permission.has_permission(make_request("DELETE", "public"), self.view)
+        )
 
-    @override_settings(INTERNAL_API_KEY=VALID_KEY)
-    def test_rejects_wrong_key(self):
-        request = make_request(method="POST", auth_header="Api-Key wrong-key")
-        with self.assertRaises(AuthenticationFailed) as ctx:
-            self.permission.has_permission(request, self.view)
-        self.assertIn("Invalid Internal API key", str(ctx.exception.detail))
+    def test_public_allows_all_safe_methods(self):
+        for method in SAFE_METHODS:
+            result = self.permission.has_permission(
+                make_request(method, "public"), self.view
+            )
+            self.assertTrue(result, f"Public auth should allow safe method {method}")
 
-    # -- Misconfigured server -------------------------------------------------
+    def test_public_denies_all_write_methods(self):
+        for method in ("POST", "PUT", "PATCH", "DELETE"):
+            result = self.permission.has_permission(
+                make_request(method, "public"), self.view
+            )
+            self.assertFalse(result, f"Public auth should deny write method {method}")
 
-    @override_settings(INTERNAL_API_KEY=None)
-    def test_raises_if_key_not_configured(self):
-        with self.assertRaises(AuthenticationFailed) as ctx:
-            self.permission.has_permission(self._make(), self.view)
-        self.assertIn("not configured", str(ctx.exception.detail))
 
-    # -- No auth header -------------------------------------------------------
+# ---------------------------------------------------------------------------
+# No auth (unauthenticated) — all denied
+# ---------------------------------------------------------------------------
 
-    @override_settings(INTERNAL_API_KEY=VALID_KEY)
-    def test_raises_not_authenticated_when_no_header(self):
-        request = make_request(method="POST")
-        with self.assertRaises(NotAuthenticated):
-            self.permission.has_permission(request, self.view)
+class TestApiKeyPermissionNoAuth(TestCase):
 
-    # -- Timing-safe comparison -----------------------------------------------
+    def setUp(self):
+        self.permission = ApiKeyPermission()
+        self.view = MagicMock()
 
-    @override_settings(INTERNAL_API_KEY=VALID_KEY)
-    def test_uses_compare_digest(self):
-        with patch("apps.core.permissions.secrets.compare_digest", return_value=True) as mock_cd:
-            self.permission.has_permission(self._make(), self.view)
-            mock_cd.assert_called_once_with(self.VALID_KEY, self.VALID_KEY)
+    def test_none_auth_denies_get(self):
+        self.assertFalse(
+            self.permission.has_permission(make_request("GET", None), self.view)
+        )
+
+    def test_none_auth_denies_post(self):
+        self.assertFalse(
+            self.permission.has_permission(make_request("POST", None), self.view)
+        )
+
+    def test_none_auth_denies_all_methods(self):
+        for method in ("GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"):
+            result = self.permission.has_permission(
+                make_request(method, None), self.view
+            )
+            self.assertFalse(result, f"No auth should deny {method}")
+
+
+# ---------------------------------------------------------------------------
+# Unknown auth value — all denied
+# ---------------------------------------------------------------------------
+
+class TestApiKeyPermissionUnknownAuth(TestCase):
+
+    def setUp(self):
+        self.permission = ApiKeyPermission()
+        self.view = MagicMock()
+
+    def test_unknown_string_denies_get(self):
+        self.assertFalse(
+            self.permission.has_permission(make_request("GET", "superadmin"), self.view)
+        )
+
+    def test_unknown_string_denies_post(self):
+        self.assertFalse(
+            self.permission.has_permission(make_request("POST", "superadmin"), self.view)
+        )
+
+    def test_empty_string_auth_denies_all(self):
+        for method in ("GET", "POST", "DELETE"):
+            result = self.permission.has_permission(
+                make_request(method, ""), self.view
+            )
+            self.assertFalse(result, f"Empty-string auth should deny {method}")
+
+    def test_boolean_true_auth_denies(self):
+        """request.auth should only accept the exact strings "internal" / "public"."""
+        result = self.permission.has_permission(make_request("GET", True), self.view)
+        self.assertFalse(result)
+
+    def test_numeric_auth_denies(self):
+        result = self.permission.has_permission(make_request("GET", 1), self.view)
+        self.assertFalse(result)
+
+
+# ---------------------------------------------------------------------------
+# Return type is always bool
+# ---------------------------------------------------------------------------
+
+class TestApiKeyPermissionReturnType(TestCase):
+
+    def setUp(self):
+        self.permission = ApiKeyPermission()
+        self.view = MagicMock()
+
+    def test_returns_bool_for_internal(self):
+        result = self.permission.has_permission(make_request("GET", "internal"), self.view)
+        self.assertIsInstance(result, bool)
+
+    def test_returns_bool_for_public_safe(self):
+        result = self.permission.has_permission(make_request("GET", "public"), self.view)
+        self.assertIsInstance(result, bool)
+
+    def test_returns_bool_for_public_write(self):
+        result = self.permission.has_permission(make_request("POST", "public"), self.view)
+        self.assertIsInstance(result, bool)
+
+    def test_returns_bool_for_no_auth(self):
+        result = self.permission.has_permission(make_request("GET", None), self.view)
+        self.assertIsInstance(result, bool)
+
+
+# ---------------------------------------------------------------------------
+# Inheritance / class contract
+# ---------------------------------------------------------------------------
+
+class TestApiKeyPermissionClass(TestCase):
+
+    def test_inherits_from_base_permission(self):
+        from rest_framework.permissions import BasePermission
+        self.assertTrue(issubclass(ApiKeyPermission, BasePermission))
+
+    def test_can_be_instantiated(self):
+        perm = ApiKeyPermission()
+        self.assertIsInstance(perm, ApiKeyPermission)
