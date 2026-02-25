@@ -96,7 +96,7 @@ class Production(BaseModel):
         blank=True,
         db_comment="The genres of the production.",
         through="ProductionGenre",
-        related_name="productionGenres",
+        related_name="productions",
     )
 
     tags = models.ManyToManyField(
@@ -104,7 +104,7 @@ class Production(BaseModel):
         blank=True,
         db_comment="The tags of the production.",
         through="ProductionTag",
-        related_name="productionTags",
+        related_name="productions",
     )
 
     class Meta(BaseModel.Meta):
