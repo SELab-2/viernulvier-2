@@ -1,5 +1,4 @@
 from rest_framework.viewsets import ModelViewSet
-from apps.core.permissions import HasPublicApiKey, HasInternalApiKey
 from .models import Production
 from .serializers import ProductionSerializer
 

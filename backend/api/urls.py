@@ -7,7 +7,7 @@ from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from apps.languages.views import LanguageViewSet
 from apps.tags.views import TagViewSet
-from apps.tags.views import ProductionViewSet
+from apps.productions.views import ProductionViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
