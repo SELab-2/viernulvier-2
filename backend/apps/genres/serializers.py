@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Genre, GenreTranslation, GenreUseAs
+from apps.core.serializers import TranslatableSerializerMixin
 
 
 class GenreUseAsSerializer(serializers.ModelSerializer):
@@ -15,10 +16,12 @@ class GenreUseAsSerializer(serializers.ModelSerializer):
 		]
 
 
-class GenreSerializer(serializers.ModelSerializer):
+class GenreSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
 	"""
 	Serializer for the Genre model.
 	"""
+
+	name = serializers.SerializerMethodField()
 
 	class Meta:
 		model = Genre
@@ -26,7 +29,11 @@ class GenreSerializer(serializers.ModelSerializer):
 			"id",
 			"type",
 			"use_as",
+			"name",
 		]
+
+	def get_name(self, obj):
+		return self.get_translated_field(obj, "name")
 
 
 class GenreTranslationSerializer(serializers.ModelSerializer):

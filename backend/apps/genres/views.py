@@ -1,3 +1,42 @@
-from django.shortcuts import render
+from apps.core.views import ApiModelViewSet
+from .models import Genre, GenreTranslation, GenreUseAs
+from .serializers import GenreSerializer, GenreTranslationSerializer, GenreUseAsSerializer
 
-# Create your views here.
+
+class GenreUseAsViewSet(ApiModelViewSet):
+	"""
+	API endpoint for managing GenreUseAs entries.
+
+	Access rules:
+		- Public API key -> read-only
+		- Internal API key -> full CRUD
+	"""
+
+	queryset = GenreUseAs.objects.all()
+	serializer_class = GenreUseAsSerializer
+
+
+class GenreViewSet(ApiModelViewSet):
+	"""
+	API endpoint for managing genres.
+
+	Access rules:
+		- Public API key -> read-only
+		- Internal API key -> full CRUD
+	"""
+
+	queryset = Genre.objects.all()
+	serializer_class = GenreSerializer
+
+
+class GenreTranslationViewSet(ApiModelViewSet):
+	"""
+	API endpoint for managing genre translations.
+
+	Access rules:
+		- Public API key -> read-only
+		- Internal API key -> full CRUD
+	"""
+
+	queryset = GenreTranslation.objects.all()
+	serializer_class = GenreTranslationSerializer

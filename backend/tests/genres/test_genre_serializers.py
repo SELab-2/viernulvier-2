@@ -79,42 +79,55 @@ class TestGenreUseAsSerializerDeserialization(TestCase):
 class TestGenreSerializerFields(TestCase):
     """Field exposure for GenreSerializer."""
     def setUp(self):
-        self.use_as = GenreUseAs(name="genre")
-        self.genre = Genre(type="Theater", use_as=self.use_as)
+        self.use_as = GenreUseAs.objects.create(name="genre")
+        self.genre = Genre.objects.create(type="Theater", use_as=self.use_as)
 
     def test_expected_fields_are_present(self):
         data = GenreSerializer(self.genre).data
-        self.assertEqual(set(data.keys()), {"id", "type", "use_as"})
+        self.assertEqual(set(data.keys()), {"id", "type", "use_as", "name"})
 
 
 class TestGenreSerializerSerialization(TestCase):
     """Model → dict serialization for GenreSerializer."""
     def setUp(self):
         self.use_as = GenreUseAs.objects.create(name="genre")
+        self.lang_en = Language.objects.create(code="en", name="English", is_active=True)
+        self.lang_nl = Language.objects.create(code="nl", name="Dutch", is_active=True)
 
     def test_serializes_instance(self):
         genre = Genre.objects.create(type="Theater", use_as=self.use_as)
+        GenreTranslation.objects.create(name="Theatre", language=self.lang_en, genre=genre)
+        GenreTranslation.objects.create(name="Theater", language=self.lang_nl, genre=genre)
+
         data = GenreSerializer(genre).data
-        
+
         self.assertEqual(data["type"], "Theater")
         self.assertEqual(data["use_as"], self.use_as.id)
         self.assertIsInstance(data["id"], int)
+        self.assertEqual(data["name"], {"en": "Theatre", "nl": "Theater"})
 
     def test_serializes_queryset(self):
-        Genre.objects.create(type="Festival", use_as=self.use_as)
-        Genre.objects.create(type="Concert", use_as=self.use_as)
-        
+        g1 = Genre.objects.create(type="Festival", use_as=self.use_as)
+        g2 = Genre.objects.create(type="Concert", use_as=self.use_as)
+
+        GenreTranslation.objects.create(name="Festival", language=self.lang_en, genre=g1)
+        GenreTranslation.objects.create(name="Concert", language=self.lang_en, genre=g2)
+
         data = GenreSerializer(Genre.objects.all(), many=True).data
         types = {item["type"] for item in data}
-        
+
         self.assertIn("Festival", types)
         self.assertIn("Concert", types)
+        # name field is a dict, ensure present and keyed by language
+        for item in data:
+            self.assertIsInstance(item["name"], dict)
 
 
 class TestGenreSerializerDeserialization(TestCase):
     """dict → model validation for GenreSerializer."""
     def setUp(self):
         self.use_as = GenreUseAs.objects.create(name="genre")
+        self.lang_en = Language.objects.create(code="en", name="English", is_active=True)
 
     def test_valid_data_creates(self):
         serializer = GenreSerializer(data={"type": "Theater", "use_as": self.use_as.id})
@@ -123,6 +136,7 @@ class TestGenreSerializerDeserialization(TestCase):
         instance = serializer.save()
         self.assertEqual(instance.type, "Theater")
         self.assertEqual(instance.use_as, self.use_as)
+        # name is read-only (computed), so not required in input
 
     def test_missing_type_is_invalid(self):
         serializer = GenreSerializer(data={"use_as": self.use_as.id})
