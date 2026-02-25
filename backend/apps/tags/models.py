@@ -48,7 +48,6 @@ class Tag(BaseModel):
         db_table = "tag"
         verbose_name = "Tag"
         verbose_name_plural = "Tags"
-        ordering = ['id']
 
     def __str__(self):
         return f"Tag of type ({self.type})"
