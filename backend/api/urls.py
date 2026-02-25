@@ -11,6 +11,7 @@ from apps.pricing.views import PriceViewSet, PriceRankViewSet
 router = DefaultRouter()
 
 # TODO register viewsets here
+router.register(r'languages', LanguageViewSet, basename='language')
 #router.register(r'productions', ProductionViewSet, basename='production')
 #router.register("events", EventViewSet, basename="event")
 #router.register("locations", LocationViewSet, basename="location")
