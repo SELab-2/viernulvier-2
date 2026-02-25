@@ -149,8 +149,8 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
-    "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.HasPublicApiKey"],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.core.authentications.ApiKeyAuthentication"],
+    "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.ApiKeyPermission"],
 }
 
 # drf-spectacular settings

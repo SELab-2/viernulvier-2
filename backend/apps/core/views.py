@@ -1,21 +1,20 @@
 from rest_framework.viewsets import ModelViewSet
-from .permissions import HasPublicApiKey, HasInternalApiKey
-from rest_framework.permissions import SAFE_METHODS
+from .authentications import ApiKeyAuthentication
+from .permissions import ApiKeyPermission
 
 
 class ApiModelViewSet(ModelViewSet):
     """
-    Base API ViewSet with dynamic permission switching.
-    - Read-only methods (GET/HEAD/OPTIONS) require a Public Key.
-    - Write methods (POST/PUT/PATCH/DELETE) require an Internal Key.
-    """
-
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.request.method in SAFE_METHODS:
-            return [HasPublicApiKey()]
+    Base API ViewSet.
+    
+    Authentication:
+        - Validates the 'Api-Key' via the Authorization header.
+        - Sets request.auth to "public" or "internal".
         
-        # For all other methods (POST, PUT, DELETE, etc.)
-        return [HasInternalApiKey()]
+    Permissions:
+        - "internal" has full CRUD access.
+        - "public" has read-only access (GET, HEAD, OPTIONS).
+        - No valid key results in a 401 (via Auth) or 403 (via Permission).
+    """
+    authentication_classes = [ApiKeyAuthentication]
+    permission_classes = [ApiKeyPermission]

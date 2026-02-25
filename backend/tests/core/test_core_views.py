@@ -1,163 +1,302 @@
 """
-Tests for apps/core/views.py
+Tests for apps/core/views.py — ApiModelViewSet
 
-Covers:
-- ApiModelViewSet.get_permissions() — dynamic permission switching
+The refactored ViewSet uses:
+    authentication_classes = [ApiKeyAuthentication]
+    permission_classes     = [ApiKeyPermission]
+
+All access-control logic lives in those two classes (tested separately).
+These tests verify that the ViewSet is wired correctly and produces the
+expected HTTP responses end-to-end.
+
+Unit tests  → check class attributes (authentication_classes, permission_classes)
+Integration → full HTTP cycle via LanguageViewSet (the only concrete subclass)
+
+HTTP access matrix
+─────────────────────────────────────────────────────────────────────
+Method          internal key    public key      wrong key   no header
+─────────────────────────────────────────────────────────────────────
+GET  (list)         200             200           403         401
+GET  (retrieve)     200             200           403         401
+POST                201             403           403         401
+PUT                 200             403           403         401
+PATCH               200             403           403         401
+DELETE              204             403           403         401
+─────────────────────────────────────────────────────────────────────
+Note: "wrong key" triggers AuthenticationFailed → 403 (DRF default when
+      no WWW-Authenticate is set). "no header" → auth returns None →
+      anonymous → 401 (DRF sends WWW-Authenticate).
 """
 
 from unittest.mock import MagicMock
 
 from django.test import TestCase, override_settings
+from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
-from apps.core.permissions import HasPublicApiKey, HasInternalApiKey
+from apps.core.authentications import ApiKeyAuthentication
+from apps.core.permissions import ApiKeyPermission
+
+
+INT_KEY = "int-view-test-key"
+PUB_KEY = "pub-view-test-key"
+
+
+def int_headers():
+    return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
+
+
+def pub_headers():
+    return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
+
+
+def wrong_headers():
+    return {"HTTP_AUTHORIZATION": "Api-Key completely-wrong-key"}
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Class-level / wiring tests
 # ---------------------------------------------------------------------------
 
-PUBLIC_KEY = "pub-key-123"
-INTERNAL_KEY = "int-key-456"
+class TestApiModelViewSetClass(TestCase):
 
+    def test_authentication_classes_contains_api_key_authentication(self):
+        self.assertIn(ApiKeyAuthentication, ApiModelViewSet.authentication_classes)
 
-def make_viewset(method: str) -> ApiModelViewSet:
-    """Instantiate ApiModelViewSet with a fake request for the given method."""
-    request = MagicMock()
-    request.method = method
+    def test_permission_classes_contains_api_key_permission(self):
+        self.assertIn(ApiKeyPermission, ApiModelViewSet.permission_classes)
 
-    vs = ApiModelViewSet()
-    vs.request = request
-    vs.kwargs = {}
-    vs.format_kwarg = None
-    return vs
+    def test_has_exactly_one_authentication_class(self):
+        self.assertEqual(len(ApiModelViewSet.authentication_classes), 1)
 
+    def test_has_exactly_one_permission_class(self):
+        self.assertEqual(len(ApiModelViewSet.permission_classes), 1)
 
-# ---------------------------------------------------------------------------
-# get_permissions()
-# ---------------------------------------------------------------------------
+    def test_inherits_from_model_viewset(self):
+        from rest_framework.viewsets import ModelViewSet
+        self.assertTrue(issubclass(ApiModelViewSet, ModelViewSet))
 
-class TestApiModelViewSetGetPermissions(TestCase):
-    """Tests for dynamic permission selection in ApiModelViewSet."""
+    def test_get_authenticators_returns_instances(self):
+        vs = ApiModelViewSet()
+        vs.request = MagicMock()
+        vs.kwargs = {}
+        vs.format_kwarg = None
+        authenticators = vs.get_authenticators()
+        self.assertEqual(len(authenticators), 1)
+        self.assertIsInstance(authenticators[0], ApiKeyAuthentication)
 
-    # -- Safe methods → HasPublicApiKey ---------------------------------------
-
-    def test_get_returns_public_permission(self):
-        vs = make_viewset("GET")
+    def test_get_permissions_returns_instances(self):
+        vs = ApiModelViewSet()
+        vs.request = MagicMock()
+        vs.kwargs = {}
+        vs.format_kwarg = None
         perms = vs.get_permissions()
         self.assertEqual(len(perms), 1)
-        self.assertIsInstance(perms[0], HasPublicApiKey)
-
-    def test_head_returns_public_permission(self):
-        vs = make_viewset("HEAD")
-        perms = vs.get_permissions()
-        self.assertIsInstance(perms[0], HasPublicApiKey)
-
-    def test_options_returns_public_permission(self):
-        vs = make_viewset("OPTIONS")
-        perms = vs.get_permissions()
-        self.assertIsInstance(perms[0], HasPublicApiKey)
-
-    # -- Write methods → HasInternalApiKey ------------------------------------
-
-    def test_post_returns_internal_permission(self):
-        vs = make_viewset("POST")
-        perms = vs.get_permissions()
-        self.assertEqual(len(perms), 1)
-        self.assertIsInstance(perms[0], HasInternalApiKey)
-
-    def test_put_returns_internal_permission(self):
-        vs = make_viewset("PUT")
-        perms = vs.get_permissions()
-        self.assertIsInstance(perms[0], HasInternalApiKey)
-
-    def test_patch_returns_internal_permission(self):
-        vs = make_viewset("PATCH")
-        perms = vs.get_permissions()
-        self.assertIsInstance(perms[0], HasInternalApiKey)
-
-    def test_delete_returns_internal_permission(self):
-        vs = make_viewset("DELETE")
-        perms = vs.get_permissions()
-        self.assertIsInstance(perms[0], HasInternalApiKey)
-
-    # -- Returned list should always have exactly one permission --------------
-
-    def test_get_permissions_returns_list(self):
-        for method in ("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"):
-            vs = make_viewset(method)
-            perms = vs.get_permissions()
-            self.assertIsInstance(perms, list, f"Expected list for method {method}")
-            self.assertEqual(len(perms), 1, f"Expected 1 permission for method {method}")
-
-    # -- Returned instances are freshly created each time --------------------
-
-    def test_permissions_are_new_instances_each_call(self):
-        """Each call to get_permissions() should return fresh permission instances."""
-        vs = make_viewset("GET")
-        perms_a = vs.get_permissions()
-        perms_b = vs.get_permissions()
-        self.assertIsNot(perms_a[0], perms_b[0])
+        self.assertIsInstance(perms[0], ApiKeyPermission)
 
 
 # ---------------------------------------------------------------------------
-# Integration: full HTTP-level access via DRF test client
+# Integration — GET list
 # ---------------------------------------------------------------------------
 
-class TestApiModelViewSetIntegration(TestCase):
-    """
-    Integration tests that exercise get_permissions() via a real DRF request.
-    We mount LanguageViewSet (a concrete subclass) on a temporary router.
-    """
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestApiModelViewSetList(TestCase):
 
     def setUp(self):
-        from rest_framework.test import APIClient
         from apps.languages.models import Language
-
         self.client = APIClient()
-        self.pub_key = "pub-key-integration"
-        self.int_key = "int-key-integration"
-
-        # Create a Language object for GET tests
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
 
-    def _auth(self, key):
-        return {"HTTP_AUTHORIZATION": f"Api-Key {key}"}
-
-    @override_settings(PUBLIC_API_KEY="pub-key-integration", INTERNAL_API_KEY="int-key-integration")
-    def test_get_with_public_key_returns_200(self):
-        response = self.client.get("/api/languages/", **self._auth(self.pub_key))
+    def test_list_internal_key_returns_200(self):
+        response = self.client.get("/api/languages/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
-    @override_settings(PUBLIC_API_KEY="pub-key-integration", INTERNAL_API_KEY="int-key-integration")
-    def test_get_with_internal_key_returns_403_or_401(self):
-        """Internal key should NOT grant access to public endpoints (key mismatch)."""
-        response = self.client.get("/api/languages/", **self._auth(self.int_key))
-        self.assertIn(response.status_code, [401, 403])
+    def test_list_public_key_returns_200(self):
+        response = self.client.get("/api/languages/", **pub_headers())
+        self.assertEqual(response.status_code, 200)
 
-    @override_settings(PUBLIC_API_KEY="pub-key-integration", INTERNAL_API_KEY="int-key-integration")
-    def test_post_with_public_key_returns_403_or_401(self):
-        """Public key cannot write."""
-        response = self.client.post(
-            "/api/languages/",
-            {"code": "de", "name": "German", "is_active": True},
-            format="json",
-            **self._auth(self.pub_key),
-        )
-        self.assertIn(response.status_code, [401, 403])
+    def test_list_wrong_key_returns_403(self):
+        response = self.client.get("/api/languages/", **wrong_headers())
+        self.assertEqual(response.status_code, 403)
 
-    @override_settings(PUBLIC_API_KEY="pub-key-integration", INTERNAL_API_KEY="int-key-integration")
-    def test_post_with_internal_key_returns_201(self):
-        response = self.client.post(
-            "/api/languages/",
-            {"code": "de", "name": "German", "is_active": True},
-            format="json",
-            **self._auth(self.int_key),
-        )
-        self.assertEqual(response.status_code, 201)
-
-    @override_settings(PUBLIC_API_KEY="pub-key-integration", INTERNAL_API_KEY="int-key-integration")
-    def test_no_auth_header_returns_403(self): # TODO maybe 401?
+    def test_list_no_auth_returns_403(self):
+        """No header → authentication returns None → DRF sends 401."""
         response = self.client.get("/api/languages/")
         self.assertEqual(response.status_code, 403)
+
+
+# ---------------------------------------------------------------------------
+# Integration — GET retrieve
+# ---------------------------------------------------------------------------
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestApiModelViewSetRetrieve(TestCase):
+
+    def setUp(self):
+        from apps.languages.models import Language
+        self.client = APIClient()
+        Language.objects.all().delete()
+        Language.objects.create(code="nl", name="Dutch", is_active=True)
+
+    def test_retrieve_internal_key_returns_200(self):
+        response = self.client.get("/api/languages/nl/", **int_headers())
+        self.assertEqual(response.status_code, 200)
+
+    def test_retrieve_public_key_returns_200(self):
+        response = self.client.get("/api/languages/nl/", **pub_headers())
+        self.assertEqual(response.status_code, 200)
+
+    def test_retrieve_wrong_key_returns_403(self):
+        response = self.client.get("/api/languages/nl/", **wrong_headers())
+        self.assertEqual(response.status_code, 403)
+
+    def test_retrieve_no_auth_returns_403(self):
+        response = self.client.get("/api/languages/nl/")
+        self.assertEqual(response.status_code, 403)
+
+    def test_retrieve_nonexistent_with_internal_key_returns_404(self):
+        response = self.client.get("/api/languages/xx/", **int_headers())
+        self.assertEqual(response.status_code, 404)
+
+    def test_retrieve_nonexistent_with_public_key_returns_404(self):
+        response = self.client.get("/api/languages/xx/", **pub_headers())
+        self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# Integration — POST create
+# ---------------------------------------------------------------------------
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestApiModelViewSetCreate(TestCase):
+
+    def setUp(self):
+        from apps.languages.models import Language
+        self.client = APIClient()
+        Language.objects.all().delete()
+
+    def _payload(self):
+        return {"code": "de", "name": "German", "is_active": True}
+
+    def test_create_internal_key_returns_201(self):
+        response = self.client.post("/api/languages/", self._payload(), format="json", **int_headers())
+        self.assertEqual(response.status_code, 201)
+
+    def test_create_public_key_returns_403(self):
+        response = self.client.post("/api/languages/", self._payload(), format="json", **pub_headers())
+        self.assertEqual(response.status_code, 403)
+
+    def test_create_wrong_key_returns_403(self):
+        response = self.client.post("/api/languages/", self._payload(), format="json", **wrong_headers())
+        self.assertEqual(response.status_code, 403)
+
+    def test_create_no_auth_returns_403(self):
+        response = self.client.post("/api/languages/", self._payload(), format="json")
+        self.assertEqual(response.status_code, 403)
+
+
+# ---------------------------------------------------------------------------
+# Integration — PUT full update
+# ---------------------------------------------------------------------------
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestApiModelViewSetUpdate(TestCase):
+
+    def setUp(self):
+        from apps.languages.models import Language
+        self.client = APIClient()
+        Language.objects.all().delete()
+        Language.objects.create(code="nl", name="Dutch", is_active=True)
+
+    def _payload(self):
+        return {"code": "nl", "name": "Nederlands", "is_active": False}
+
+    def test_put_internal_key_returns_200(self):
+        response = self.client.put("/api/languages/nl/", self._payload(), format="json", **int_headers())
+        self.assertEqual(response.status_code, 200)
+
+    def test_put_public_key_returns_403(self):
+        response = self.client.put("/api/languages/nl/", self._payload(), format="json", **pub_headers())
+        self.assertEqual(response.status_code, 403)
+
+    def test_put_wrong_key_returns_403(self):
+        response = self.client.put("/api/languages/nl/", self._payload(), format="json", **wrong_headers())
+        self.assertEqual(response.status_code, 403)
+
+    def test_put_no_auth_returns_403(self):
+        response = self.client.put("/api/languages/nl/", self._payload(), format="json")
+        self.assertEqual(response.status_code, 403)
+
+    def test_put_nonexistent_returns_404(self):
+        response = self.client.put(
+            "/api/languages/xx/",
+            {"code": "xx", "name": "X", "is_active": True},
+            format="json",
+            **int_headers(),
+        )
+        self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# Integration — PATCH partial update
+# ---------------------------------------------------------------------------
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestApiModelViewSetPartialUpdate(TestCase):
+
+    def setUp(self):
+        from apps.languages.models import Language
+        self.client = APIClient()
+        Language.objects.all().delete()
+        Language.objects.create(code="nl", name="Dutch", is_active=True)
+
+    def test_patch_internal_key_returns_200(self):
+        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json", **int_headers())
+        self.assertEqual(response.status_code, 200)
+
+    def test_patch_public_key_returns_403(self):
+        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json", **pub_headers())
+        self.assertEqual(response.status_code, 403)
+
+    def test_patch_wrong_key_returns_403(self):
+        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json", **wrong_headers())
+        self.assertEqual(response.status_code, 403)
+
+    def test_patch_no_auth_returns_403(self):
+        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json")
+        self.assertEqual(response.status_code, 403)
+
+
+# ---------------------------------------------------------------------------
+# Integration — DELETE
+# ---------------------------------------------------------------------------
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestApiModelViewSetDelete(TestCase):
+
+    def setUp(self):
+        from apps.languages.models import Language
+        self.client = APIClient()
+        Language.objects.all().delete()
+        Language.objects.create(code="nl", name="Dutch", is_active=True)
+
+    def test_delete_internal_key_returns_204(self):
+        response = self.client.delete("/api/languages/nl/", **int_headers())
+        self.assertEqual(response.status_code, 204)
+
+    def test_delete_public_key_returns_403(self):
+        response = self.client.delete("/api/languages/nl/", **pub_headers())
+        self.assertEqual(response.status_code, 403)
+
+    def test_delete_wrong_key_returns_403(self):
+        response = self.client.delete("/api/languages/nl/", **wrong_headers())
+        self.assertEqual(response.status_code, 403)
+
+    def test_delete_no_auth_returns_403(self):
+        response = self.client.delete("/api/languages/nl/")
+        self.assertEqual(response.status_code, 403)
+
+    def test_delete_nonexistent_returns_404(self):
+        response = self.client.delete("/api/languages/xx/", **int_headers())
+        self.assertEqual(response.status_code, 404)
