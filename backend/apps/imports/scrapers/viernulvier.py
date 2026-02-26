@@ -39,7 +39,7 @@ def _get_api_key():
 def _build_headers():
     return {
         "X-AUTH-TOKEN":  _get_api_key(),
-        "accept": "application/json"
+        "accept": "application/ld+json"
     }
 
 
@@ -68,49 +68,32 @@ def fetch_viernulvier(endpoint=DEFAULT_ENDPOINT):
     if data is None:
         raise ScraperError("Unexpected Viernulvier API payload")
 
-    if isinstance(data, dict) and "items" in data:
-        return data["items"]
-    if isinstance(data, dict) and "data" in data:
-        return data["data"]
+    # Handle JSON-LD error responses
+    if isinstance(data, dict):
+        if data.get("@context") == "/api/contexts/Error":
+            status = data.get("status", "unknown")
+            detail = data.get("detail", "no detail provided")
+            error_msg = f"Viernulvier API error: status={status}, detail={detail}"
+            logger.error(error_msg)
+            raise ScraperError(error_msg)
+
+    # Handle JSON-LD @graph member extraction
+    if isinstance(data, dict):
+        if "member" in data:
+            return data["member"]
+        # For other dict responses without 'member', wrap in a list
+        if "@context" in data:
+            # This is likely a single JSON-LD item, wrap it
+            return [data]
+
+    # Handle list responses
     if isinstance(data, list):
         return data
 
     raise ScraperError("Unexpected Viernulvier API payload")
 
 
-def default_transform(item):
-    """Transform a raw API item into a standard payload dict.
-
-    Expects a dict and returns {"external_id": str|None, "payload": item}.
-    Raises ScraperError for non-dict inputs.
-    """
-    if not isinstance(item, dict):
-        raise ScraperError("Invalid item type for default_transform")
-
-    external_id = next((item.get(key) for key in ("id", "uuid", "slug") if item.get(key) is not None), None)
-
-    return {
-        "external_id": str(external_id) if external_id is not None else None,
-        "payload": item,
-    }
-
-
-def _validate_transformed_data(data, item):
-    """Validate that transformed data has the correct structure.
-
-    Returns: (external_id, is_valid, error_message)
-    """
-    if not isinstance(data, dict) or "payload" not in data:
-        return None, False, f"Invalid transform output for item: {item}"
-
-    external_id = data.pop("external_id", None)
-    if external_id is None or str(external_id).strip() == "":
-        return None, False, f"Skipping item without external_id: {item}"
-
-    return str(external_id), True, None
-
-
-def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transform):
+def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT):
     """Fetch and persist Viernulvier data into a Django model.
 
     Example:
@@ -125,49 +108,49 @@ def sync_viernulvier(model, endpoint=DEFAULT_ENDPOINT, transform=default_transfo
 
     with transaction.atomic():
         for item in items:
-            # Transform item
-            try:
-                data = transform(item)
-            except Exception:
-                logger.exception(
-                    "Unexpected error while transforming item %s",
-                    item.get("id") if isinstance(item, dict) else item,
+            # Validate item is a dict
+            if not isinstance(item, dict):
+                logger.error(
+                    "Unexpected error while processing item: item is not a dict: %s",
+                    item,
                 )
                 errors += 1
                 continue
 
-            # Validate transformed data
-            external_id, is_valid, error_msg = _validate_transformed_data(data, item)
+            # Extract @id
+            item_id = item.get("@id")
 
-            if not is_valid:
-                if "without external_id" in error_msg:
-                    logger.warning(error_msg)
-                else:
-                    logger.error(error_msg)
+            # Validate item_id is not empty
+            if item_id is None or str(item_id).strip() == "":
+                logger.warning("Skipping item without @id: %s", item)
                 errors += 1
                 continue
 
+            item_id = str(item_id)
+
             # Check for duplicates in current batch
-            if external_id in seen:
-                logger.warning("Duplicate external_id in batch: %s", external_id)
+            if item_id in seen:
+                logger.warning("Duplicate @id in batch: %s", item_id)
                 continue
 
-            seen.add(external_id)
+            seen.add(item_id)
 
             # Persist item with savepoint isolation
             sid = transaction.savepoint()
             try:
+                # Prepare defaults without @id since it's used as the lookup key
+                defaults = {k: v for k, v in item.items() if k != "@id"}
                 model.objects.update_or_create(
-                    external_id=external_id,
-                    defaults=data,
+                    id=item_id,
+                    defaults=defaults,
                 )
                 transaction.savepoint_commit(sid)
                 saved += 1
             except (IntegrityError, DatabaseError, FieldError):
                 transaction.savepoint_rollback(sid)
                 logger.error(
-                    "Database error while syncing item with external_id=%s. Continuing.",
-                    external_id,
+                    "Database error while syncing item with @id=%s. Continuing.",
+                    item_id,
                     exc_info=True,
                 )
                 errors += 1
