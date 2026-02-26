@@ -1,4 +1,5 @@
 """Tests for Viernulvier scraper fetch, error handling, and persistence."""
+
 import logging
 from contextlib import contextmanager
 from unittest.mock import Mock
@@ -123,7 +124,7 @@ def test_fetch_raises_on_json_ld_error_context(monkeypatch):
         response.json.return_value = {
             "@context": "/api/contexts/Error",
             "status": 400,
-            "detail": "Invalid request parameters"
+            "detail": "Invalid request parameters",
         }
         return response
 
@@ -142,7 +143,7 @@ def test_fetch_extracts_error_details_from_json_ld(monkeypatch, caplog):
         response.json.return_value = {
             "@context": "/api/contexts/Error",
             "status": 403,
-            "detail": "Forbidden: access denied"
+            "detail": "Forbidden: access denied",
         }
         return response
 
@@ -153,7 +154,9 @@ def test_fetch_extracts_error_details_from_json_ld(monkeypatch, caplog):
     with pytest.raises(viernulvier.ScraperError):
         viernulvier.fetch_viernulvier(endpoint="/events")
 
-    assert any("status=403" in r.message and "detail=Forbidden: access denied" in r.message for r in caplog.records)
+    assert any(
+        "status=403" in r.message and "detail=Forbidden: access denied" in r.message for r in caplog.records
+    )
 
 
 @contextmanager
@@ -216,7 +219,7 @@ def test_fetch_extracts_member_collection(monkeypatch):
             "member": [
                 {"@id": "https://example.com/1", "title": "Event A"},
                 {"@id": "https://example.com/2", "title": "Event B"},
-            ]
+            ],
         }
         return response
 
@@ -231,7 +234,6 @@ def test_fetch_extracts_member_collection(monkeypatch):
     assert result[1]["external_id"] == "https://example.com/2"
     assert result[1]["title"] == "Event B"
     assert raises(KeyError, lambda: result[0]["@id"])
-
 
 
 @isolate_apps("tests")
@@ -269,9 +271,7 @@ def test_sync_updates_existing_item(monkeypatch):
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
-        assert (
-            ViernulvierItem.objects.get(id="https://example.com/1").title == "new"
-        )
+        assert ViernulvierItem.objects.get(id="https://example.com/1").title == "new"
 
 
 @isolate_apps("tests")
@@ -304,8 +304,9 @@ def test_sync_logs_info_on_empty_response(monkeypatch, caplog):
         count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
 
         assert count == 0
-        assert any("Viernulvier sync finished" in r.message and "Saved=0" in r.message for r in caplog.records)
-
+        assert any(
+            "Viernulvier sync finished" in r.message and "Saved=0" in r.message for r in caplog.records
+        )
 
 
 @isolate_apps("tests")
@@ -387,7 +388,6 @@ def test_sync_skips_duplicate_ids_in_batch(monkeypatch, caplog):
         assert any("Duplicate @id in batch" in r.message for r in caplog.records)
 
 
-
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
 def test_sync_skips_empty_string_id(monkeypatch, caplog):
@@ -439,7 +439,6 @@ def test_sync_continues_on_integrity_error(monkeypatch, caplog):
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
         assert any("Database error" in r.message for r in caplog.records)
-
 
 
 @isolate_apps("tests")
@@ -557,7 +556,10 @@ def test_sync_logs_finish_message_with_error_count(monkeypatch, caplog):
 
         assert count == 1
         info_records = [r for r in caplog.records if r.levelname == "INFO"]
-        assert any("Viernulvier sync finished" in r.message and "Saved=1" in r.message and "Errors=1" in r.message for r in info_records)
+        assert any(
+            "Viernulvier sync finished" in r.message and "Saved=1" in r.message and "Errors=1" in r.message
+            for r in info_records
+        )
 
 
 @isolate_apps("tests")
@@ -578,7 +580,9 @@ def test_sync_continues_when_item_is_not_dict(monkeypatch, caplog):
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
         # Check that an error was logged for the non-dict item
-        assert any("Unexpected error while processing item: item is not a dict" in r.message for r in caplog.records)
+        assert any(
+            "Unexpected error while processing item: item is not a dict" in r.message for r in caplog.records
+        )
 
 
 def test_fetch_live_events():
@@ -717,4 +721,3 @@ class TestFlexibleFieldMapping:
         assert "price_rank_id" in defaults
         assert "event_id" in defaults
         assert "amount" in defaults
-

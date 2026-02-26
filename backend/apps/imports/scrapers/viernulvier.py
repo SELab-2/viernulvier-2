@@ -199,7 +199,7 @@ def _camel_to_snake_case(value: str) -> str:
         None. Pure string transformation.
     """
     # Insert underscore before uppercase letters and convert to lowercase
-    snake = re.sub(r'(?<!^)(?=[A-Z])', '_', value).lower()
+    snake = re.sub(r"(?<!^)(?=[A-Z])", "_", value).lower()
     return snake
 
 
@@ -339,7 +339,9 @@ def _extract_item_pk_value(model: Type[models.Model], item: Mapping[str, Any]) -
     return str(raw_id)
 
 
-def _build_model_defaults(model: Type[models.Model], item: Mapping[str, Any], depth: int = 0) -> Dict[str, Any]:
+def _build_model_defaults(
+    model: Type[models.Model], item: Mapping[str, Any], depth: int = 0
+) -> Dict[str, Any]:
     """Build a defaults dict for update_or_create from an API item.
 
     This function attempts to map every field from the API response to the model,
@@ -366,7 +368,7 @@ def _build_model_defaults(model: Type[models.Model], item: Mapping[str, Any], de
     # Try to map every field from the API response
     for key, value in item.items():
         # Skip JSON-LD metadata fields
-        if key.startswith('@') or key in ('external_id',):
+        if key.startswith("@") or key in ("external_id",):
             continue
 
         if value is None:
@@ -401,9 +403,7 @@ def _build_model_defaults(model: Type[models.Model], item: Mapping[str, Any], de
     # Validate that all required fields are present
     missing = _missing_required_fields(model, defaults)
     if missing:
-        raise ScraperError(
-            f"Missing required fields for {model.__name__}: {', '.join(missing)}"
-        )
+        raise ScraperError(f"Missing required fields for {model.__name__}: {', '.join(missing)}")
 
     return defaults
 
