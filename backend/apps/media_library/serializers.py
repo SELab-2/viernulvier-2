@@ -32,6 +32,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
         model = MediaItem
         fields = [
             "id",
+            "gallery",
             "type",
             "format",
             "original_filename",
