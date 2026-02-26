@@ -34,5 +34,3 @@ class GenreSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
 
 	def get_name(self, obj):
 		return self.get_translated_field(obj, "name")
-
-

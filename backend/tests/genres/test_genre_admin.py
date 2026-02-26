@@ -14,7 +14,12 @@ from django.test import TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
-from apps.genres.admin import GenreAdmin, GenreTranslationAdmin, GenreUseAsAdmin
+from apps.genres.admin import (
+	GenreAdmin,
+	GenreTranslationAdmin,
+	GenreTranslationInline,
+	GenreUseAsAdmin,
+)
 from apps.genres.models import Genre, GenreTranslation, GenreUseAs
 from apps.languages.models import Language
 
@@ -102,6 +107,26 @@ class TestGenreAdminConfig(TestCase):
 	def test_ordering(self):
 		self.assertIn("id", self.admin.ordering)
 
+	def test_inlines_include_translation_inline(self):
+		self.assertIn(GenreTranslationInline, self.admin.inlines)
+
+
+class TestGenreTranslationInlineConfig(TestCase):
+	def setUp(self):
+		self.inline = GenreTranslationInline(Genre, admin.site)
+
+	def test_model(self):
+		self.assertIs(self.inline.model, GenreTranslation)
+
+	def test_fields(self):
+		self.assertEqual(tuple(self.inline.fields), ("language", "name"))
+
+	def test_autocomplete_fields(self):
+		self.assertIn("language", self.inline.autocomplete_fields)
+
+	def test_extra(self):
+		self.assertEqual(self.inline.extra, 1)
+
 
 class TestGenreTranslationAdminConfig(TestCase):
 	def setUp(self):
@@ -182,7 +207,17 @@ class TestGenreAdminFunctional(TestCase):
 		url = reverse("admin:genres_genre_add")
 		response = self.client.post(
 			url,
-			{"type": "Festival", "use_as": self.use_as.pk},
+			{
+				"type": "Festival",
+				"use_as": self.use_as.pk,
+				"translations-TOTAL_FORMS": 1,
+				"translations-INITIAL_FORMS": 0,
+				"translations-MIN_NUM_FORMS": 0,
+				"translations-MAX_NUM_FORMS": 1000,
+				"translations-0-id": "",
+				"translations-0-language": "",
+				"translations-0-name": "",
+			},
 			follow=True,
 		)
 		self.assertEqual(response.status_code, 200)
@@ -192,7 +227,17 @@ class TestGenreAdminFunctional(TestCase):
 		url = reverse("admin:genres_genre_change", args=[self.genre.pk])
 		response = self.client.post(
 			url,
-			{"type": "Opera", "use_as": self.use_as.pk},
+			{
+				"type": "Opera",
+				"use_as": self.use_as.pk,
+				"translations-TOTAL_FORMS": 1,
+				"translations-INITIAL_FORMS": 1,
+				"translations-MIN_NUM_FORMS": 0,
+				"translations-MAX_NUM_FORMS": 1000,
+				"translations-0-id": self.translation.pk,
+				"translations-0-language": self.language.pk,
+				"translations-0-name": self.translation.name,
+			},
 			follow=True,
 		)
 		self.assertEqual(response.status_code, 200)

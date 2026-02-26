@@ -3,7 +3,7 @@ Tests for apps/genres/views.py — Genre viewsets
 
 Covers:
 - ViewSet inheritance from ApiModelViewSet
-- Endpoints for GenreUseAs, Genre, GenreTranslation
+- Endpoints for GenreUseAs, Genre
 - GET list/retrieve with public or internal key
 - POST/PUT/PATCH/DELETE only with internal key
 - Rejects missing/wrong auth
@@ -14,8 +14,8 @@ from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
-from apps.genres.models import Genre, GenreTranslation, GenreUseAs
-from apps.genres.views import GenreUseAsViewSet, GenreViewSet, GenreTranslationViewSet
+from apps.genres.models import Genre, GenreUseAs
+from apps.genres.views import GenreUseAsViewSet, GenreViewSet
 from apps.languages.models import Language
 
 
@@ -61,16 +61,6 @@ class TestGenreViewSetClass(TestCase):
 
     def test_queryset_model(self):
         self.assertEqual(GenreViewSet.queryset.model, Genre)
-
-
-class TestGenreTranslationViewSetClass(TestCase):
-    """Class-level checks for GenreTranslationViewSet."""
-
-    def test_inherits_from_api_model_viewset(self):
-        self.assertTrue(issubclass(GenreTranslationViewSet, ApiModelViewSet))
-
-    def test_queryset_model(self):
-        self.assertEqual(GenreTranslationViewSet.queryset.model, GenreTranslation)
 
 
 # ---------------------------------------------------------------------------
@@ -313,152 +303,4 @@ class TestGenreViewSet(TestCase):
 
     def test_delete_without_auth_denied(self):
         response = self.client.delete(f"/api/genres/{self.genre.id}/")
-        self.assertEqual(response.status_code, 403)
-
-
-# ---------------------------------------------------------------------------
-# GenreTranslation endpoints
-# ---------------------------------------------------------------------------
-
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestGenreTranslationViewSet(TestCase):
-    """CRUD tests for GenreTranslation endpoints."""
-
-    def setUp(self):
-        self.client = APIClient()
-        GenreTranslation.objects.all().delete()
-        Genre.objects.all().delete()
-        GenreUseAs.objects.all().delete()
-        Language.objects.all().delete()
-
-        self.language = Language.objects.create(code="en", name="English", is_active=True)
-        self.use_as = GenreUseAs.objects.create(name="genre")
-        self.genre = Genre.objects.create(type="Theater", use_as=self.use_as)
-        self.translation = GenreTranslation.objects.create(
-            name="Theater",
-            language=self.language,
-            genre=self.genre,
-        )
-
-    # list
-    def test_list_public_key(self):
-        response = self.client.get("/api/genre-translations/?ordering=id", **pub_headers())
-        self.assertEqual(response.status_code, 200)
-
-    def test_list_internal_key(self):
-        response = self.client.get("/api/genre-translations/?ordering=id", **int_headers())
-        self.assertEqual(response.status_code, 200)
-
-    def test_list_without_auth(self):
-        response = self.client.get("/api/genre-translations/?ordering=id")
-        self.assertEqual(response.status_code, 403)
-
-    # retrieve
-    def test_retrieve_public_key(self):
-        response = self.client.get(
-            f"/api/genre-translations/{self.translation.id}/",
-            **pub_headers(),
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["name"], "Theater")
-
-    def test_retrieve_internal_key(self):
-        response = self.client.get(
-            f"/api/genre-translations/{self.translation.id}/",
-            **int_headers(),
-        )
-        self.assertEqual(response.status_code, 200)
-
-    def test_retrieve_with_wrong_key(self):
-        response = self.client.get(
-            f"/api/genre-translations/{self.translation.id}/",
-            **wrong_headers(),
-        )
-        self.assertIn(response.status_code, [401, 403])
-
-    # create
-    def test_create_internal_key(self):
-        response = self.client.post(
-            "/api/genre-translations/",
-            {
-                "name": "Teater",
-                "language": self.language.code,
-                "genre": self.genre.id,
-            },
-            format="json",
-            **int_headers(),
-        )
-        self.assertEqual(response.status_code, 201)
-        self.assertTrue(GenreTranslation.objects.filter(name="Teater").exists())
-
-    def test_create_public_key_denied(self):
-        response = self.client.post(
-            "/api/genre-translations/",
-            {
-                "name": "Teater",
-                "language": self.language.code,
-                "genre": self.genre.id,
-            },
-            format="json",
-            **pub_headers(),
-        )
-        self.assertIn(response.status_code, [401, 403])
-
-    def test_create_without_auth_denied(self):
-        response = self.client.post(
-            "/api/genre-translations/",
-            {
-                "name": "Teater",
-                "language": self.language.code,
-                "genre": self.genre.id,
-            },
-            format="json",
-        )
-        self.assertEqual(response.status_code, 403)
-
-    # update
-    def test_patch_internal_key(self):
-        response = self.client.patch(
-            f"/api/genre-translations/{self.translation.id}/",
-            {"name": "Theatre"},
-            format="json",
-            **int_headers(),
-        )
-        self.assertEqual(response.status_code, 200)
-        self.translation.refresh_from_db()
-        self.assertEqual(self.translation.name, "Theatre")
-
-    def test_put_internal_key(self):
-        response = self.client.put(
-            f"/api/genre-translations/{self.translation.id}/",
-            {
-                "name": "Theatre",
-                "language": self.language.code,
-                "genre": self.genre.id,
-            },
-            format="json",
-            **int_headers(),
-        )
-        self.assertEqual(response.status_code, 200)
-
-    # delete
-    def test_delete_internal_key(self):
-        response = self.client.delete(
-            f"/api/genre-translations/{self.translation.id}/",
-            **int_headers(),
-        )
-        self.assertEqual(response.status_code, 204)
-        self.assertFalse(GenreTranslation.objects.filter(id=self.translation.id).exists())
-
-    def test_delete_public_key_denied(self):
-        response = self.client.delete(
-            f"/api/genre-translations/{self.translation.id}/",
-            **pub_headers(),
-        )
-        self.assertIn(response.status_code, [401, 403])
-
-    def test_delete_without_auth_denied(self):
-        response = self.client.delete(
-            f"/api/genre-translations/{self.translation.id}/",
-        )
         self.assertEqual(response.status_code, 403)

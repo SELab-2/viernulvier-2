@@ -29,6 +29,7 @@ class GenreAdmin(BaseAdmin):
 	search_fields = ("type",)
 	ordering = ("id",)
 	autocomplete_fields = ("use_as",)
+	inlines = [GenreTranslationInline]
 
 
 @admin.register(GenreTranslation)
