@@ -1,14 +1,13 @@
 """Tests for Viernulvier scraper fetch, error handling, and persistence."""
-from contextlib import contextmanager
 import logging
+from contextlib import contextmanager
+from unittest.mock import Mock
 
 import pytest
-from unittest.mock import Mock
 import requests
 from _pytest.raises import raises
 from django.core.exceptions import FieldError
 from django.db import DatabaseError, IntegrityError
-
 from django.db import connection, models
 from django.test.utils import isolate_apps
 
@@ -588,3 +587,134 @@ def test_fetch_live_events():
     assert isinstance(result, list)
     if result:
         assert all(isinstance(item, dict) for item in result)
+
+
+# =============================================================================
+# Flexible Field Mapping Tests
+# =============================================================================
+
+
+class TestCamelToSnakeCase:
+    """Test camelCase to snake_case conversion."""
+
+    def test_simple_camel_case(self):
+        assert viernulvier._camel_to_snake_case("startsAt") == "starts_at"
+
+    def test_multiple_words(self):
+        assert viernulvier._camel_to_snake_case("ticketingUrl") == "ticketing_url"
+
+    def test_consecutive_capitals(self):
+        # The regex inserts _ before each capital, so URLPath becomes U_R_L_path
+        assert viernulvier._camel_to_snake_case("URLPath") == "u_r_l_path"
+
+    def test_already_snake_case(self):
+        assert viernulvier._camel_to_snake_case("already_snake") == "already_snake"
+
+    def test_single_word(self):
+        assert viernulvier._camel_to_snake_case("word") == "word"
+
+
+@pytest.mark.django_db
+class TestFlexibleFieldMapping:
+    """Test that the scraper tries every API field and skips unknown ones."""
+
+    def test_throws_error_for_missing_required_fields(self):
+        """Should raise ScraperError if required fields are missing."""
+        from apps.events.models import Event
+
+        item = {
+            "external_id": "/api/events/1",
+            "ticketingUrl": "https://example.com",
+            # Missing required field: production
+        }
+
+        with pytest.raises(viernulvier.ScraperError) as exc_info:
+            viernulvier._build_model_defaults(Event, item)
+
+        assert "Missing required fields" in str(exc_info.value)
+        assert "production" in str(exc_info.value)
+
+    def test_skips_unknown_fields_event_price(self):
+        """Unknown fields in the API response should be silently skipped."""
+        from apps.events.models import Event, EventPrice
+        from apps.productions.models import Production
+        from tests.factories.pricing import PriceRankFactory
+
+        # Create dependencies
+        production = Production.objects.create(id=1)
+        event = Event.objects.create(id=1, production=production)
+        price_rank = PriceRankFactory()
+
+        item = {
+            "external_id": "/api/event_prices/1",
+            "event": event.pk,
+            "priceRank": price_rank.pk,
+            "amount": "25.50",
+            "available": 100,
+            "unknownField": "should be ignored",
+            "anotherUnknownField": 123,
+            "yetAnotherField": {"nested": "object"},
+        }
+
+        defaults = viernulvier._build_model_defaults(EventPrice, item)
+
+        # Should have mapped known fields
+        assert "event_id" in defaults
+        assert "price_rank_id" in defaults
+        assert "amount" in defaults
+        assert "available" in defaults
+
+        # Should NOT have unknown fields
+        assert "unknownField" not in defaults
+        assert "unknown_field" not in defaults
+        assert "anotherUnknownField" not in defaults
+        assert "another_unknown_field" not in defaults
+
+    def test_converts_camel_case_to_snake_case_event_price(self):
+        """API fields in camelCase should be converted to snake_case."""
+        from apps.events.models import Event, EventPrice
+        from apps.productions.models import Production
+        from tests.factories.pricing import PriceRankFactory
+
+        production = Production.objects.create(id=2)
+        event = Event.objects.create(id=2, production=production)
+        price_rank = PriceRankFactory()
+
+        item = {
+            "external_id": "/api/event_prices/2",
+            "event": event.pk,
+            "priceRank": price_rank.pk,
+            "amount": "30.00",
+            "available": 50,
+        }
+
+        defaults = viernulvier._build_model_defaults(EventPrice, item)
+
+        # Should have converted camelCase to snake_case
+        assert "price_rank_id" in defaults
+        assert "event_id" in defaults
+
+    def test_handles_snake_case_fields_directly(self):
+        """Should handle snake_case fields without conversion."""
+        from apps.events.models import Event, EventPrice
+        from apps.productions.models import Production
+        from tests.factories.pricing import PriceRankFactory
+
+        production = Production.objects.create(id=3)
+        event = Event.objects.create(id=3, production=production)
+        price_rank = PriceRankFactory()
+
+        item = {
+            "external_id": "/api/event_prices/3",
+            "event": event.pk,
+            "price_rank": price_rank.pk,
+            "amount": "20.00",
+            "available": 75,
+        }
+
+        defaults = viernulvier._build_model_defaults(EventPrice, item)
+
+        assert "price_rank_id" in defaults
+        assert "event_id" in defaults
+        assert "amount" in defaults
+

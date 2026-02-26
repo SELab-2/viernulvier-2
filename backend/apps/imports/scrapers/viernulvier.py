@@ -12,11 +12,12 @@ Usage:
 
 import logging
 import os
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type
+import re
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Type
 from urllib.parse import urljoin, urlparse
 
 import requests
-from django.core.exceptions import FieldError, ValidationError
+from django.core.exceptions import FieldDoesNotExist, FieldError, ValidationError
 from django.db import DatabaseError, IntegrityError, transaction, models
 from django.utils.dateparse import parse_datetime, parse_date
 
@@ -185,6 +186,60 @@ def _snake_case_to_camel(value: str) -> str:
     return parts[0] + "".join(part.title() for part in parts[1:])
 
 
+def _camel_to_snake_case(value: str) -> str:
+    """Convert lowerCamelCase or UpperCamelCase to snake_case.
+
+    Args:
+        value: camelCase string.
+
+    Returns:
+        snake_case string.
+
+    Side Effects:
+        None. Pure string transformation.
+    """
+    # Insert underscore before uppercase letters and convert to lowercase
+    snake = re.sub(r'(?<!^)(?=[A-Z])', '_', value).lower()
+    return snake
+
+
+def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optional[Any]:
+    """Convert an API value to the appropriate type for a Django model field.
+
+    Args:
+        field: Django model field.
+        value: Raw API field value.
+        depth: Current traversal depth for FK resolution.
+
+    Returns:
+        Converted value suitable for the field type, or None if conversion fails.
+
+    Side Effects:
+        May perform database reads and writes for related objects.
+    """
+    if value is None:
+        return None
+
+    # Handle foreign key fields
+    if field.is_relation and field.many_to_one:
+        return _resolve_fk_value(field, value, depth)
+
+    # Handle datetime fields
+    if isinstance(field, models.DateTimeField):
+        if isinstance(value, str):
+            return parse_datetime(value)
+        return value
+
+    # Handle date fields
+    if isinstance(field, models.DateField):
+        if isinstance(value, str):
+            return parse_date(value)
+        return value
+
+    # Handle all other field types - return as-is
+    return value
+
+
 def _get_item_value(item: Mapping[str, Any], field_name: str) -> Any:
     """Read a value by snake_case or lowerCamelCase field name.
 
@@ -287,9 +342,10 @@ def _extract_item_pk_value(model: Type[models.Model], item: Mapping[str, Any]) -
 def _build_model_defaults(model: Type[models.Model], item: Mapping[str, Any], depth: int = 0) -> Dict[str, Any]:
     """Build a defaults dict for update_or_create from an API item.
 
-    This function maps model fields to their JSON-LD equivalents, performs
-    type conversions for date/time fields, and resolves foreign keys using
-    bounded recursion to avoid deep object graphs.
+    This function attempts to map every field from the API response to the model,
+    automatically handling type conversions for date/time fields and resolving
+    foreign keys using bounded recursion. Fields present in the API but not in
+    the model are silently skipped.
 
     Args:
         model: Django model class to map the item onto.
@@ -299,35 +355,56 @@ def _build_model_defaults(model: Type[models.Model], item: Mapping[str, Any], de
     Returns:
         A dict suitable for update_or_create(..., defaults=...).
 
+    Raises:
+        ScraperError: If required model fields are missing from the API data.
+
     Side Effects:
-        None directly. It may trigger related object lookups via helpers.
+        May trigger database lookups and writes for related objects.
     """
     defaults: Dict[str, Any] = {}
-    for field in model._meta.fields:
+
+    # Try to map every field from the API response
+    for key, value in item.items():
+        # Skip JSON-LD metadata fields
+        if key.startswith('@') or key in ('external_id',):
+            continue
+
+        if value is None:
+            continue
+
+        # Try to find the corresponding model field
+        # First try snake_case (direct match)
+        try:
+            field = model._meta.get_field(key)
+        except FieldDoesNotExist:
+            # Try converting from camelCase to snake_case
+            snake_key = _camel_to_snake_case(key)
+            try:
+                field = model._meta.get_field(snake_key)
+            except FieldDoesNotExist:
+                # Field doesn't exist in model, skip it silently
+                logger.debug("Skipping unknown field '%s' for model %s", key, model.__name__)
+                continue
+
+        # Skip primary key fields
         if field.primary_key:
             continue
-        raw_value = _get_item_value(item, field.name)
-        if raw_value is None:
-            continue
-        if field.is_relation and field.many_to_one:
-            rel_id = _resolve_fk_value(field, raw_value, depth)
-            if rel_id is None:
-                continue
-            defaults[f"{field.name}_id"] = rel_id
-            continue
-        if isinstance(field, models.DateTimeField):
-            if isinstance(raw_value, str):
-                defaults[field.name] = parse_datetime(raw_value)
+
+        # Convert the value based on field type
+        converted_value = _convert_field_value(field, value, depth)
+        if converted_value is not None:
+            if field.is_relation and field.many_to_one:
+                defaults[f"{field.name}_id"] = converted_value
             else:
-                defaults[field.name] = raw_value
-            continue
-        if isinstance(field, models.DateField):
-            if isinstance(raw_value, str):
-                defaults[field.name] = parse_date(raw_value)
-            else:
-                defaults[field.name] = raw_value
-            continue
-        defaults[field.name] = raw_value
+                defaults[field.name] = converted_value
+
+    # Validate that all required fields are present
+    missing = _missing_required_fields(model, defaults)
+    if missing:
+        raise ScraperError(
+            f"Missing required fields for {model.__name__}: {', '.join(missing)}"
+        )
+
     return defaults
 
 
