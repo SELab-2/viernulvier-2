@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from apps.pricing.models import Price, PriceTranslation, PriceRank, PriceRankTranslation
 from apps.languages.models import Language
-
+from apps.core.serializers import TranslatableSerializerMixin
 
 class PriceTranslationSerializer(serializers.ModelSerializer):
     """Serializer for PriceTranslation model."""
@@ -53,18 +53,8 @@ class PriceSerializer(serializers.ModelSerializer):
 
     def get_description(self, obj) -> str:
         """Retrieve the price's description in the requested language (if given)."""
-        request = self.context.get("request")
-        lang = request.query_params.get("lang") if request else None
+                return self.get_translated_field(obj, "description")
 
-        qs = obj.translations.all()
-
-        if lang:
-            match = next((t for t in qs if t.language_id == lang and t.description), None)
-            if match:
-                return match.description
-
-        first = next((t for t in qs if t.description), None)
-        return first.description if first else ""
     
 
 class PriceRankSerializer(serializers.ModelSerializer): 

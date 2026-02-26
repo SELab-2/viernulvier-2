@@ -34,15 +34,16 @@ class PriceAdmin(BaseAdmin):
         "cineville_box",
     )
     list_filter = ("type", "visibility", "membership", "cineville_box")
-    search_fields = ("id",)  # ✅ required for autocomplete on FK to Price
+    search_fields = ("id", "type")
     ordering = ("sort_order",)
     inlines = [PriceTranslationInline]
-
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("translations")
 
 @admin.register(PriceRank)
 class PriceRankAdmin(BaseAdmin):
     list_display = ("id", "position", "sold_out_buffer")
-    search_fields = ("id", "position")  # ✅ required for autocomplete on FK to PriceRank
+    search_fields = ("id", "position") 
     ordering = ("position",)
     inlines = [PriceRankTranslationInline]
 
@@ -50,7 +51,7 @@ class PriceRankAdmin(BaseAdmin):
 @admin.register(PriceTranslation)
 class PriceTranslationAdmin(BaseAdmin):
     list_display = ("id", "price", "language", "description")
-    list_filter = ("language",)  # ✅ tuple
+    list_filter = ("language",)
     search_fields = ("price__id", "language__code", "description")
     autocomplete_fields = ["price", "language"]
     ordering = ("price", "language")
@@ -62,7 +63,7 @@ class PriceTranslationAdmin(BaseAdmin):
 @admin.register(PriceRankTranslation)
 class PriceRankTranslationAdmin(BaseAdmin):
     list_display = ("id", "price_rank", "language", "description")
-    list_filter = ("language",)  # ✅ tuple
+    list_filter = ("language",)
     search_fields = ("price_rank__id", "language__code", "description")
     autocomplete_fields = ["price_rank", "language"]
     ordering = ("price_rank", "language")

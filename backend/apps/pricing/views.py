@@ -20,7 +20,7 @@ class PriceViewSet(ApiModelViewSet):
     """Prices endpoint."""
     serializer_class = PriceSerializer
     queryset = (
-        Price.objects.all()
+        Price.objects
         .prefetch_related(
             Prefetch(
                 "translations",
@@ -45,14 +45,14 @@ class PriceRankViewSet(ApiModelViewSet):
     """PriceRanks endpoint."""
     serializer_class = PriceRankSerializer
     queryset = (
-        PriceRank.objects.all()
+        PriceRank.objects
         .prefetch_related(
             Prefetch(
                 "translations",
                 queryset=PriceRankTranslation.objects.select_related("language"),
             )
         )
-        .order_by("id")
+        .order_by("position", "id")
     )
 
 
