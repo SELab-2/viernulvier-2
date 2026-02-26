@@ -16,7 +16,7 @@ class PriceSerializerTests(TestCase):
         cls.price = Price.objects.create(
             type="Standard",
             visibility="public",
-            membership="",
+            membership="Member",
             minimum=None,
             maximum=None,
             step=None,
@@ -34,10 +34,6 @@ class PriceSerializerTests(TestCase):
         return Request(django_req)
 
     def test_price_serializer_description_prefers_requested_lang(self):
-        """
-        Description is returned as a dict of translations (language_code -> value),
-        even when a lang= query param is provided.
-        """
         request = self._drf_request("/dummy?lang=nl")
         ser = PriceSerializer(instance=self.price, context={"request": request})
 
@@ -47,9 +43,6 @@ class PriceSerializerTests(TestCase):
         )
 
     def test_price_serializer_description_falls_back_to_first_non_empty(self):
-        """
-        Without a requested language, description is still a dict of translations.
-        """
         request = self._drf_request("/dummy")
         ser = PriceSerializer(instance=self.price, context={"request": request})
 
@@ -59,9 +52,6 @@ class PriceSerializerTests(TestCase):
         )
 
     def test_price_serializer_description_returns_empty_if_no_translations(self):
-        """
-        If there are no translations, description is an empty dict.
-        """
         p2 = Price.objects.create(
             type="NoTrans",
             visibility="public",
@@ -77,13 +67,28 @@ class PriceSerializerTests(TestCase):
         self.assertEqual(ser.data["description"], {})
 
     def test_price_serializer_does_not_include_translations_field(self):
-        """
-        The serializer no longer exposes a separate `translations` field.
-        """
         request = self._drf_request("/dummy?lang=en")
         ser = PriceSerializer(instance=self.price, context={"request": request})
 
         self.assertNotIn("translations", ser.data)
+
+    def test_price_serializer_type_is_not_translated_and_ignores_requested_lang(self):
+        request = self._drf_request("/dummy?lang=nl")
+        ser = PriceSerializer(instance=self.price, context={"request": request})
+
+        self.assertEqual(ser.data["type"], "Standard")
+
+    def test_price_serializer_visibility_is_not_translated_and_ignores_requested_lang(self):
+        request = self._drf_request("/dummy?lang=nl")
+        ser = PriceSerializer(instance=self.price, context={"request": request})
+
+        self.assertEqual(ser.data["visibility"], "public")
+
+    def test_price_serializer_membership_is_not_translated_and_ignores_requested_lang(self):
+        request = self._drf_request("/dummy?lang=nl")
+        ser = PriceSerializer(instance=self.price, context={"request": request})
+
+        self.assertEqual(ser.data["membership"], "Member")
 
 
 class PriceRankSerializerTests(TestCase):

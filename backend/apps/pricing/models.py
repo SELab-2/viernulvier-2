@@ -10,12 +10,12 @@ class Price(BaseModel):
     type = models.CharField(
         max_length=50, 
         db_comment="Price type/category."
-    ) # TODO: maybe define an enum for a limited set of price ranks
+    )
 
     visibility = models.CharField(
         max_length=50,
         db_comment="Visibility of the price.", 
-    ) # TODO: maybe define an enum for a limited set of visibility modes
+    )
 
     membership = models.CharField(
         max_length=50,
@@ -39,7 +39,7 @@ class Price(BaseModel):
     step = models.IntegerField(
         null=True,
         blank=True,
-        validators=[MinValueValidator(1)], # TODO: determine whether minimal/maximal validator is actually needed
+        validators=[MinValueValidator(1)],
         db_comment="Step size for variable pricing (if applicable).",
     )
 
