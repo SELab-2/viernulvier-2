@@ -1,0 +1,4 @@
+# which files/folders to skip when formatting
+dist
+coverage
+node_modules
