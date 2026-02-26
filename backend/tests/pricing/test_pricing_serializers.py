@@ -34,16 +34,34 @@ class PriceSerializerTests(TestCase):
         return Request(django_req)
 
     def test_price_serializer_description_prefers_requested_lang(self):
+        """
+        Description is returned as a dict of translations (language_code -> value),
+        even when a lang= query param is provided.
+        """
         request = self._drf_request("/dummy?lang=nl")
         ser = PriceSerializer(instance=self.price, context={"request": request})
-        self.assertEqual(ser.data["description"], "Standaard ticket")
+
+        self.assertEqual(
+            ser.data["description"],
+            {"en": "Standard ticket", "nl": "Standaard ticket"},
+        )
 
     def test_price_serializer_description_falls_back_to_first_non_empty(self):
+        """
+        Without a requested language, description is still a dict of translations.
+        """
         request = self._drf_request("/dummy")
         ser = PriceSerializer(instance=self.price, context={"request": request})
-        self.assertIn(ser.data["description"], {"Standard ticket", "Standaard ticket"})
+
+        self.assertEqual(
+            ser.data["description"],
+            {"en": "Standard ticket", "nl": "Standaard ticket"},
+        )
 
     def test_price_serializer_description_returns_empty_if_no_translations(self):
+        """
+        If there are no translations, description is an empty dict.
+        """
         p2 = Price.objects.create(
             type="NoTrans",
             visibility="public",
@@ -55,13 +73,17 @@ class PriceSerializerTests(TestCase):
         )
         request = self._drf_request("/dummy?lang=en")
         ser = PriceSerializer(instance=p2, context={"request": request})
-        self.assertEqual(ser.data["description"], "")
 
-    def test_price_serializer_includes_translations_read_only(self):
+        self.assertEqual(ser.data["description"], {})
+
+    def test_price_serializer_does_not_include_translations_field(self):
+        """
+        The serializer no longer exposes a separate `translations` field.
+        """
         request = self._drf_request("/dummy?lang=en")
         ser = PriceSerializer(instance=self.price, context={"request": request})
-        self.assertIn("translations", ser.data)
-        self.assertEqual(len(ser.data["translations"]), 2)
+
+        self.assertNotIn("translations", ser.data)
 
 
 class PriceRankSerializerTests(TestCase):
