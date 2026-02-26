@@ -21,6 +21,10 @@ class GenreUseAs(BaseModel):
         db_table = "genre_use_as"
         verbose_name = "Genre Use As"
         verbose_name_plural = "Genres Used As"
+        ordering = ["id"]
+    
+    def __str__(self):
+        return self.name
 
 
 class Genre(BaseModel):
@@ -47,6 +51,7 @@ class Genre(BaseModel):
         db_table = "genre"
         verbose_name = "Genre"
         verbose_name_plural = "Genres"
+        ordering = ["id"]
 
     def __str__(self): # TODO maybe this can be better, but for now it shows the type and the translations of the genre
         # Get the English name for the genre
@@ -86,7 +91,7 @@ class GenreTranslation(BaseModel):
     genre = models.ForeignKey(
         Genre,
         on_delete=models.CASCADE,
-        related_name="genre_translations",
+        related_name="translations",
         db_comment="Reference to the genre."
     )
 
@@ -94,6 +99,7 @@ class GenreTranslation(BaseModel):
         db_table = "genre_translation"
         verbose_name = "Genre Translation"
         verbose_name_plural = "Genre Translations"
+        ordering = ["id"]
     
     def __str__(self) -> str:
         return f"{self.language.code} - {self.name}"
