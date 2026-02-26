@@ -38,5 +38,5 @@ class GenreTranslationViewSet(ApiModelViewSet):
 		- Internal API key -> full CRUD
 	"""
 
-	queryset = GenreTranslation.objects.all()
+	queryset = GenreTranslation.objects.select_related("genre", "language").all()
 	serializer_class = GenreTranslationSerializer
