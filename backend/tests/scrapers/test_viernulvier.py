@@ -5,6 +5,7 @@ import logging
 import pytest
 from unittest.mock import Mock
 import requests
+from _pytest.raises import raises
 from django.core.exceptions import FieldError
 from django.db import DatabaseError, IntegrityError
 
@@ -87,9 +88,6 @@ def test_fetch_raises_on_generic_request_exception(monkeypatch):
 
     with pytest.raises(viernulvier.ScraperError):
         viernulvier.fetch_viernulvier(endpoint="/events")
-
-
-
 
 
 def test_fetch_raises_on_none_payload(monkeypatch):
@@ -228,10 +226,12 @@ def test_fetch_extracts_member_collection(monkeypatch):
     result = viernulvier.fetch_viernulvier(endpoint="/events")
 
     assert len(result) == 2
-    assert result[0]["@id"] == "https://example.com/1"
+    assert result[0]["external_id"] == "https://example.com/1"
     assert result[0]["title"] == "Event A"
-    assert result[1]["@id"] == "https://example.com/2"
+    assert raises(KeyError, lambda: result[0]["@id"])
+    assert result[1]["external_id"] == "https://example.com/2"
     assert result[1]["title"] == "Event B"
+    assert raises(KeyError, lambda: result[0]["@id"])
 
 
 
@@ -580,3 +580,11 @@ def test_sync_continues_when_item_is_not_dict(monkeypatch, caplog):
         assert ViernulvierItem.objects.count() == 1
         # Check that an error was logged for the non-dict item
         assert any("Unexpected error while processing item: item is not a dict" in r.message for r in caplog.records)
+
+
+def test_fetch_live_events():
+    """Fetch live events from the real API (opt-in, requires API key)."""
+    result = viernulvier.fetch_viernulvier(endpoint="/events")
+    assert isinstance(result, list)
+    if result:
+        assert all(isinstance(item, dict) for item in result)
