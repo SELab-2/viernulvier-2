@@ -6,6 +6,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from apps.languages.views import LanguageViewSet
+from apps.import_log.views import ImportLogViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -20,7 +21,7 @@ router.register(r'languages', LanguageViewSet, basename='language')
 #router.register("tags", TagViewSet, basename="tag")
 #router.register("prices", PriceViewSet, basename="price")
 #router.register("price-ranks", PriceRankViewSet, basename="price-rank")
-#router.register("import-logs", ImportLogViewSet, basename="import-log")
+router.register("import-logs", ImportLogViewSet, basename="import-log")
 
 urlpatterns = [
     path('', include(router.urls)), # Include the router URLs
