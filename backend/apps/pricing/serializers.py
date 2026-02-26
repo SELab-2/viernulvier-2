@@ -32,7 +32,7 @@ class PriceSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "description",
             "translations",
         ]
-        read_only_fields = ["id", "translations", "description"]
+        read_only_fields = ["id", "description"]
 
     def get_translated_field(self, obj, field_name: str) -> str:
         """
@@ -82,13 +82,19 @@ class PriceSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         return self.get_translated_field(obj, "description")
 
 
-class PriceRankSerializer(serializers.ModelSerializer):
+class PriceRankSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """Serializer for PriceRank model."""
+    description = serializers.SerializerMethodField()
+
     class Meta:
         model = PriceRank
         fields = [
             "id",
             "position",
-            "sold_out_buffer"
+            "sold_out_buffer",
+            "description"
         ]
         read_only_fields = ["id"]
+
+    def get_description(self, obj):
+        return self.get_translated_field(obj, "description")
