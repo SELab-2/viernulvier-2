@@ -2,56 +2,8 @@ from django.test import TestCase
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 from apps.languages.models import Language
-from apps.pricing.models import Price, PriceTranslation, PriceRank, PriceRankTranslation
-from apps.pricing.serializers import (
-    PriceSerializer,
-    PriceTranslationSerializer,
-    PriceRankSerializer,
-    PriceRankTranslationSerializer,
-)
-
-
-class PriceTranslationSerializerTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.lang_en = Language.objects.create(code="en", name="English")
-        cls.lang_nl = Language.objects.create(code="nl", name="Nederlands")
-        cls.price = Price.objects.create(
-            type="Standard",
-            visibility="public",
-            membership="",
-            minimum=None,
-            maximum=None,
-            step=None,
-            sort_order=0,
-        )
-
-    def test_price_translation_serializer_accepts_language_code(self):
-        data = {
-            "price": self.price.id,
-            "language": "en",
-            "description": "Standard ticket",
-        }
-        ser = PriceTranslationSerializer(data=data)
-        self.assertTrue(ser.is_valid(), ser.errors)
-
-        obj = ser.save()
-        self.assertEqual(obj.language.code, "en")
-        self.assertEqual(obj.description, "Standard ticket")
-
-    def test_price_translation_serializer_unique_together_validator(self):
-        PriceTranslation.objects.create(
-            price=self.price, language=self.lang_en, description="Standard ticket"
-        )
-
-        data = {
-            "price": self.price.id,
-            "language": "en",
-            "description": "Duplicate",
-        }
-        ser = PriceTranslationSerializer(data=data)
-        self.assertFalse(ser.is_valid())
-        self.assertTrue(any("non_field_errors" in ser.errors for _ in [0]) or ser.errors)
+from apps.pricing.models import Price, PriceTranslation, PriceRank
+from apps.pricing.serializers import PriceSerializer, PriceRankSerializer
 
 
 class PriceSerializerTests(TestCase):
@@ -117,38 +69,5 @@ class PriceRankSerializerTests(TestCase):
         PriceRank.objects.create(position=1, sold_out_buffer=0)
 
         ser = PriceRankSerializer(data={"position": 1, "sold_out_buffer": 0})
-        self.assertFalse(ser.is_valid())
-        self.assertTrue(ser.errors)
-
-
-class PriceRankTranslationSerializerTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.lang_en = Language.objects.create(code="en", name="English")
-        cls.rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
-
-    def test_price_rank_translation_serializer_accepts_language_code(self):
-        data = {
-            "price_rank": self.rank.id,
-            "language": "en",
-            "description": "First rank",
-        }
-        ser = PriceRankTranslationSerializer(data=data)
-        self.assertTrue(ser.is_valid(), ser.errors)
-
-        obj = ser.save()
-        self.assertEqual(obj.language.code, "en")
-
-    def test_price_rank_translation_serializer_unique_together_validator(self):
-        PriceRankTranslation.objects.create(
-            price_rank=self.rank, language=self.lang_en, description="First rank"
-        )
-
-        data = {
-            "price_rank": self.rank.id,
-            "language": "en",
-            "description": "Duplicate",
-        }
-        ser = PriceRankTranslationSerializer(data=data)
         self.assertFalse(ser.is_valid())
         self.assertTrue(ser.errors)

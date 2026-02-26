@@ -10,9 +10,7 @@ from apps.pricing.models import (
 )
 from apps.pricing.serializers import (
     PriceSerializer,
-    PriceTranslationSerializer,
-    PriceRankSerializer,
-    PriceRankTranslationSerializer
+    PriceRankSerializer
 )
 
 
@@ -31,16 +29,6 @@ class PriceViewSet(ApiModelViewSet):
     )
 
 
-class PriceTranslationViewSet(ApiModelViewSet):
-    """PriceTranslations endpoint."""
-    serializer_class = PriceTranslationSerializer
-    queryset = (
-        PriceTranslation.objects.all()
-        .select_related("price", "language")
-        .order_by("price_id", "language_id", "id")
-    )
-
-
 class PriceRankViewSet(ApiModelViewSet):
     """PriceRanks endpoint."""
     serializer_class = PriceRankSerializer
@@ -53,14 +41,4 @@ class PriceRankViewSet(ApiModelViewSet):
             )
         )
         .order_by("position", "id")
-    )
-
-
-class PriceRankTranslationViewSet(ApiModelViewSet):
-    """PriceRankTranslations endpoint."""
-    serializer_class = PriceRankTranslationSerializer
-    queryset = (
-        PriceRankTranslation.objects.all()
-        .select_related("price_rank", "language")
-        .order_by("price_rank_id", "language_id", "id")
     )

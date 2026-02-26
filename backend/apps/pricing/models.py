@@ -142,6 +142,7 @@ class PriceRankTranslation(BaseModel):
         PriceRank,
         on_delete=models.CASCADE,
         db_comment="The price rank that this is a translation of.",
+        related_name="translations"
     ) 
 
     language = models.ForeignKey(
