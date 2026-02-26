@@ -6,7 +6,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from apps.languages.views import LanguageViewSet
-from apps.genres.views import GenreUseAsViewSet, GenreViewSet, GenreTranslationViewSet
+from apps.genres.views import GenreUseAsViewSet, GenreViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
