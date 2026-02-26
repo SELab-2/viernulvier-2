@@ -36,17 +36,3 @@ class GenreSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
 		return self.get_translated_field(obj, "name")
 
 
-class GenreTranslationSerializer(serializers.ModelSerializer):
-	"""
-	Serializer for the GenreTranslation model.
-	"""
-
-	class Meta:
-		model = GenreTranslation
-		fields = [
-			"id",
-			"name",
-			"language",
-			"genre",
-		]
-
