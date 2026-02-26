@@ -5,11 +5,13 @@ URL configuration for the API app.
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from apps.languages.views import LanguageViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
 
 # TODO register viewsets here
+router.register(r'languages', LanguageViewSet, basename='language')
 #router.register(r'productions', ProductionViewSet, basename='production')
 #router.register("events", EventViewSet, basename="event")
 #router.register("locations", LocationViewSet, basename="location")
