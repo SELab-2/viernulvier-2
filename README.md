@@ -50,3 +50,8 @@ When creating a PR, please follow these guidelines:
    - **Checklist for Reviewers:** Confirm that all required tasks are complete before submission.
 
 Thanks! ^^
+
+## Frontend
+
+See wiki pages
+---

@@ -1,0 +1,25 @@
+{
+    "title": "Archiefomgeving",
+    "subtitle": "Catalogiseer en bewaar items.",
+    "english": "Engels",
+    "dutch": "Nederlands",
+    "nav": {
+        "home": "Home",
+        "events": "Evenementen",
+        "productions": "Producties"
+    },
+    "events": {
+        "title": "Evenementen",
+        "listPlaceholder": "Lijst met evenementen wordt hier weergegeven.",
+        "detailTitle": "Evenement Detail",
+        "detailPlaceholder": "Details van evenement met ID {{id}} worden hier weergegeven.",
+        "backToEvents": "Terug naar Evenementen"
+    },
+    "productions": {
+        "title": "Producties",
+        "listPlaceholder": "Lijst met producties wordt hier weergegeven.",
+        "detailTitle": "Productie Detail",
+        "detailPlaceholder": "Details van productie met ID {{id}} worden hier weergegeven.",
+        "backToProductions": "Terug naar Producties"
+    }
+}
