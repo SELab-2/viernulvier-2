@@ -208,6 +208,30 @@ def test_fetch_returns_wrapped_dict_without_context(monkeypatch):
         viernulvier.fetch_viernulvier(endpoint="/events")
 
 
+def test_fetch_extracts_member_collection(monkeypatch):
+    """Test that member collections in JSON-LD responses are properly extracted."""
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    def fake_get(url, headers, timeout):
+        response = Mock(ok=True, status_code=200)
+        response.json.return_value = {
+            "@context": "https://example.com/context.jsonld",
+            "member": [
+                {"@id": "https://example.com/1", "title": "Event A"},
+                {"@id": "https://example.com/2", "title": "Event B"},
+            ]
+        }
+        return response
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    result = viernulvier.fetch_viernulvier(endpoint="/events")
+
+    assert len(result) == 2
+    assert result[0]["@id"] == "https://example.com/1"
+    assert result[0]["title"] == "Event A"
+    assert result[1]["@id"] == "https://example.com/2"
+    assert result[1]["title"] == "Event B"
 
 
 
