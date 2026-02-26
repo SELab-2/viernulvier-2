@@ -4,5 +4,6 @@ venv/
 
 *__pycache__
 *migrations
+.pytest_cache
 
 db.sqlite3
