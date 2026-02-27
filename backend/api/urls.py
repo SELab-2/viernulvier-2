@@ -26,12 +26,12 @@ router.register(r'productions', ProductionViewSet, basename='production')
 router.register(r"genre-use-as", GenreUseAsViewSet, basename="genre-use-as")
 router.register(r"genres", GenreViewSet, basename="genre")
 #router.register("events", EventViewSet, basename="event")
-router.register("import-logs", ImportLogViewSet, basename="import-log")
-router.register("locations", LocationViewSet, basename="location")
-router.register("spaces", SpaceViewSet, basename="space")
-router.register("halls", HallViewSet, basename="hall")
-router.register("prices", PriceViewSet, basename="price")
-router.register("price-ranks", PriceRankViewSet, basename="price-rank")
+router.register(r"import-logs", ImportLogViewSet, basename="import-log")
+router.register(r"locations", LocationViewSet, basename="location")
+router.register(r"spaces", SpaceViewSet, basename="space")
+router.register(r"halls", HallViewSet, basename="hall")
+router.register(r"prices", PriceViewSet, basename="price")
+router.register(r"price-ranks", PriceRankViewSet, basename="price-rank")
 
 urlpatterns = [
     path('', include(router.urls)), # Include the router URLs
