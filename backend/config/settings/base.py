@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import textwrap
 
 # Load environment variables from .env file
 load_dotenv()
@@ -91,22 +92,22 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME", "viernulvier_archief"),
-        "USER": os.environ.get("DB_USER", "postgres"),
-        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": os.environ.get("DB_PORT", "5432"),
-    }
-}
 # DATABASES = {
 #     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.environ.get("DB_NAME", "viernulvier_archief"),
+#         "USER": os.environ.get("DB_USER", "postgres"),
+#         "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+#         "HOST": os.environ.get("DB_HOST", "localhost"),
+#         "PORT": os.environ.get("DB_PORT", "5432"),
 #     }
 # }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -162,16 +163,14 @@ REST_FRAMEWORK = {
 # drf-spectacular settings
 SPECTACULAR_SETTINGS = {
     "TITLE": "Viernulvier Archive API",
-    "DESCRIPTION": """
-        The Viernulvier Archive API provides structured access to productions,
-        events, media assets, locations, genres, tags, and pricing data.
+    "DESCRIPTION": textwrap.dedent("""        
+        This API provides structured access to the digital archive, including productions, events, media, and locations.
 
-        Authentication determines access level:
-        - Public API key -> read-only access
-        - Internal API key -> full CRUD access
-
-        All endpoints return JSON responses.
-    """,
+        ### Authentication
+        Access is determined by your API key:
+        * **Public API key**: Read-only.
+        * **Internal API key**: Full rights (CRUD).
+    """).strip(),
     "VERSION": "1.0.0",
     "CONTACT": { # TODO change this
         'name': 'Support Team',
@@ -184,6 +183,11 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": r'/api/v1/',
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "displayOperationId": False,
+        "defaultModelsExpandDepth": 1, # Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
+    },
     "TAGS": [
         {"name": "Productions", "description": "Production management and translations."},
         {"name": "Events", "description": "Event instances and pricing information."},
