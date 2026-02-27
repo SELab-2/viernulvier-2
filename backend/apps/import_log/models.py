@@ -70,9 +70,10 @@ class ImportLog(BaseModel):
                 condition=(
                     Q(started_at__isnull=True) |
                     Q(finished_at__isnull=True) |
-                    Q(finished_at__gt=F("started_at")) # If both timestamps are set, finished_at must be after started_at
+                    # finished_at must be greater than or equal to started_at
+                    Q(finished_at__gte=F("started_at"))
                 ),
-                name="importlog_finished_after_started",
+                name="importlog_finished_after_or_equal_started",
             )
         ]
 

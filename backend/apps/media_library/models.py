@@ -13,6 +13,7 @@ class MediaGallery(BaseModel):
         db_table = "media_gallery"
         verbose_name = "Media Gallery"
         verbose_name_plural = "Media Galleries"
+        ordering = ['name']
     
     def __str__(self):
         return self.name
