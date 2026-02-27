@@ -1,0 +1,42 @@
+from django.db.models import Prefetch
+from apps.core.views import ApiModelViewSet
+from apps.pricing.models import (
+    Price,
+    PriceTranslation,
+    PriceRank,
+    PriceRankTranslation,
+)
+from apps.pricing.serializers import (
+    PriceSerializer,
+    PriceRankSerializer
+)
+
+
+class PriceViewSet(ApiModelViewSet):
+    """Prices endpoint."""
+    serializer_class = PriceSerializer
+    queryset = (
+        Price.objects
+        .prefetch_related(
+            Prefetch(
+                "translations",
+                queryset=PriceTranslation.objects.select_related("language"),
+            )
+        )
+        .order_by("sort_order", "id")
+    )
+
+
+class PriceRankViewSet(ApiModelViewSet):
+    """PriceRanks endpoint."""
+    serializer_class = PriceRankSerializer
+    queryset = (
+        PriceRank.objects
+        .prefetch_related(
+            Prefetch(
+                "translations",
+                queryset=PriceRankTranslation.objects.select_related("language"),
+            )
+        )
+        .order_by("position", "id")
+    )
