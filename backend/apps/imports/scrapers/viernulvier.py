@@ -100,11 +100,12 @@ def _normalize_items(items: Sequence[Any]) -> List[Any]:
     return normalized
 
 
-def _fetch_single_page(url: str) -> Dict[str, Any]:
+def _fetch_single_page(url: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """Fetch a single page from the Viernulvier API.
 
     Args:
         url: Full URL to fetch (absolute).
+        params: Optional query parameters dict to include in the request.
 
     Returns:
         Parsed JSON response as a dict.
@@ -117,7 +118,12 @@ def _fetch_single_page(url: str) -> Dict[str, Any]:
     """
     logger.debug("Fetching Viernulvier page: %s", url)
     try:
-        response = requests.get(url, headers=_build_request_headers(), timeout=DEFAULT_TIMEOUT)
+        response = requests.get(
+            url,
+            headers=_build_request_headers(),
+            params=params,
+            timeout=DEFAULT_TIMEOUT,
+        )
     except requests.RequestException as exc:
         logger.exception("Viernulvier API request failed")
         raise ScraperError("Request to Viernulvier API failed") from exc
@@ -147,7 +153,10 @@ def _fetch_single_page(url: str) -> Dict[str, Any]:
     return data
 
 
-def fetch_viernulvier(endpoint: str = DEFAULT_ENDPOINT) -> List[Any]:
+def fetch_viernulvier(
+    endpoint: str = DEFAULT_ENDPOINT,
+    params: Optional[Dict[str, str]] = None,
+) -> List[Any]:
     """Fetch items from the Viernulvier JSON-LD API endpoint.
 
     The endpoint must be a relative API path. The response is expected to be
@@ -159,6 +168,9 @@ def fetch_viernulvier(endpoint: str = DEFAULT_ENDPOINT) -> List[Any]:
 
     Args:
         endpoint: Relative API path (e.g., "/events"). Absolute URLs are rejected.
+        params: Optional query parameters dict (e.g., {"createdAt[after]": "2024-01-01T00:00:00Z"}).
+            Parameters are only applied to the initial request; pagination links from the API
+            are followed as-is.
 
     Returns:
         A list of items from the endpoint (all pages if paginated), normalized
@@ -178,9 +190,11 @@ def fetch_viernulvier(endpoint: str = DEFAULT_ENDPOINT) -> List[Any]:
 
     all_items: List[Any] = []
     current_url = url
+    first_iteration = True
 
     while current_url:
-        data = _fetch_single_page(current_url)
+        data = _fetch_single_page(current_url, params=params if first_iteration else None)
+        first_iteration = False
 
         # Handle JSON-LD @graph member extraction
         if isinstance(data, dict):
@@ -561,7 +575,11 @@ def _missing_required_fields(model: Type[models.Model], defaults: Mapping[str, A
     return missing
 
 
-def sync_viernulvier(model: Type[models.Model], endpoint: str = DEFAULT_ENDPOINT) -> int:
+def sync_viernulvier(
+    model: Type[models.Model],
+    endpoint: str = DEFAULT_ENDPOINT,
+    params: Optional[Dict[str, str]] = None,
+) -> int:
     """Fetch and persist Viernulvier data into a Django model.
 
     Items are fetched via `fetch_viernulvier`, validated, and then persisted
@@ -570,6 +588,8 @@ def sync_viernulvier(model: Type[models.Model], endpoint: str = DEFAULT_ENDPOINT
     Args:
         model: Django model class receiving the API data.
         endpoint: Relative API endpoint (e.g., "/events").
+        params: Optional query parameters dict (e.g., {"createdAt[after]": "2024-01-01T00:00:00Z"})
+            to filter results at the API level.
 
     Returns:
         Number of records created or updated.
@@ -580,7 +600,7 @@ def sync_viernulvier(model: Type[models.Model], endpoint: str = DEFAULT_ENDPOINT
     Side Effects:
         Performs database writes, logs summary and error details.
     """
-    items = fetch_viernulvier(endpoint=endpoint)
+    items = fetch_viernulvier(endpoint=endpoint, params=params)
 
     saved = 0
     errors = 0

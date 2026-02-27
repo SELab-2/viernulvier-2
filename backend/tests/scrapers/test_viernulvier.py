@@ -18,7 +18,7 @@ from apps.imports.scrapers import viernulvier
 def test_fetch_uses_api_key_header(monkeypatch):
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout):
+    def fake_get(url, headers, timeout=None, params=None):
         assert url.endswith("/events")
         assert headers["X-AUTH-TOKEN"] == "test-key"
         assert headers["accept"] == "application/ld+json"
@@ -34,7 +34,7 @@ def test_fetch_uses_api_key_header(monkeypatch):
 def test_fetch_raises_on_http_error(monkeypatch):
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout):
+    def fake_get(url, headers, timeout=None, params=None):
         response = Mock(ok=False, status_code=500, text="boom")
         return response
 
@@ -54,7 +54,7 @@ def test_fetch_raises_when_api_key_missing(monkeypatch):
 def test_fetch_raises_on_invalid_json(monkeypatch):
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout):
+    def fake_get(url, headers, timeout=None, params=None):
         response = Mock(ok=True, status_code=200)
         response.json.side_effect = ValueError("invalid json")
         return response
@@ -68,7 +68,7 @@ def test_fetch_raises_on_invalid_json(monkeypatch):
 def test_fetch_raises_on_timeout(monkeypatch):
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout):
+    def fake_get(url, headers, timeout=None, params=None):
         raise requests.Timeout()
 
     monkeypatch.setattr(viernulvier.requests, "get", fake_get)
@@ -81,7 +81,7 @@ def test_fetch_raises_on_generic_request_exception(monkeypatch):
     """Test that generic RequestException is caught and wrapped."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout):
+    def fake_get(url, headers, timeout=None, params=None):
         raise requests.RequestException("connection failed")
 
     monkeypatch.setattr(viernulvier.requests, "get", fake_get)
@@ -93,7 +93,7 @@ def test_fetch_raises_on_generic_request_exception(monkeypatch):
 def test_fetch_raises_on_none_payload(monkeypatch):
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout):
+    def fake_get(url, headers, timeout=None, params=None):
         response = Mock(ok=True, status_code=200)
         response.json.return_value = None
         return response
@@ -119,7 +119,7 @@ def test_fetch_raises_on_json_ld_error_context(monkeypatch):
     """Test that JSON-LD error context is detected and error details are extracted."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout):
+    def fake_get(url, headers, timeout=None, params=None):
         response = Mock(ok=True, status_code=200)
         response.json.return_value = {
             "@context": "/api/contexts/Error",
@@ -138,7 +138,7 @@ def test_fetch_extracts_error_details_from_json_ld(monkeypatch, caplog):
     """Test that error details are properly logged from JSON-LD error responses."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout):
+    def fake_get(url, headers, timeout=None, params=None):
         response = Mock(ok=True, status_code=200)
         response.json.return_value = {
             "@context": "/api/contexts/Error",
@@ -181,7 +181,7 @@ def _temp_viernulvier_model():
 def test_fetch_allows_different_endpoint_paths(monkeypatch):
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout):
+    def fake_get(url, headers, timeout=None, params=None):
         assert url.endswith("/venues")
         response = Mock(ok=True, status_code=200)
         response.json.return_value = []
@@ -196,7 +196,7 @@ def test_fetch_returns_wrapped_dict_without_context(monkeypatch):
     """Test that payloads without member/context are wrapped as a single-item list."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout):
+    def fake_get(url, headers, timeout=None, params=None):
         response = Mock(ok=True, status_code=200)
         response.json.return_value = {"foo": "bar"}
         return response
@@ -212,7 +212,7 @@ def test_fetch_extracts_member_collection(monkeypatch):
     """Test that member collections in JSON-LD responses are properly extracted."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout):
+    def fake_get(url, headers, timeout=None, params=None):
         response = Mock(ok=True, status_code=200)
         response.json.return_value = {
             "@context": "https://example.com/context.jsonld",
@@ -243,7 +243,7 @@ def test_sync_persists_items(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [
+            lambda endpoint="/events", params=None: [
                 {"@id": "https://example.com/1", "title": "A"},
                 {"@id": "https://example.com/2", "title": "B"},
             ],
@@ -264,7 +264,7 @@ def test_sync_updates_existing_item(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [{"@id": "https://example.com/1", "title": "new"}],
+            lambda endpoint="/events", params=None: [{"@id": "https://example.com/1", "title": "new"}],
         )
 
         count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
@@ -281,7 +281,7 @@ def test_sync_skips_items_without_id(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [{"title": "no id"}],
+            lambda endpoint="/events", params=None: [{"title": "no id"}],
         )
 
         caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
@@ -297,7 +297,7 @@ def test_sync_skips_items_without_id(monkeypatch, caplog):
 @pytest.mark.django_db(transaction=True)
 def test_sync_logs_info_on_empty_response(monkeypatch, caplog):
     with _temp_viernulvier_model() as ViernulvierItem:
-        monkeypatch.setattr(viernulvier, "fetch_viernulvier", lambda endpoint="/events": [])
+        monkeypatch.setattr(viernulvier, "fetch_viernulvier", lambda endpoint="/events", params=None: [])
 
         caplog.set_level(logging.INFO, logger=viernulvier.logger.name)
 
@@ -317,7 +317,7 @@ def test_sync_handles_special_chars_and_nulls(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [payload],
+            lambda endpoint="/events", params=None: [payload],
         )
 
         count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
@@ -336,7 +336,7 @@ def test_sync_handles_large_payload(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": items,
+            lambda endpoint="/events", params=None: items,
         )
 
         count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
@@ -352,7 +352,7 @@ def test_sync_logs_exact_message_format(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [{"@id": "https://example.com/1", "title": "A"}],
+            lambda endpoint="/events", params=None: [{"@id": "https://example.com/1", "title": "A"}],
         )
 
         caplog.set_level(logging.INFO, logger=viernulvier.logger.name)
@@ -373,7 +373,7 @@ def test_sync_skips_duplicate_ids_in_batch(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [
+            lambda endpoint="/events", params=None: [
                 {"@id": "https://example.com/1", "title": "A"},
                 {"@id": "https://example.com/1", "title": "B"},
             ],
@@ -395,7 +395,7 @@ def test_sync_skips_empty_string_id(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [{"@id": "", "title": "A"}],
+            lambda endpoint="/events", params=None: [{"@id": "", "title": "A"}],
         )
 
         caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
@@ -415,7 +415,7 @@ def test_sync_continues_on_integrity_error(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [
+            lambda endpoint="/events", params=None: [
                 {"@id": "https://example.com/1", "title": "A"},
                 {"@id": "https://example.com/2", "title": "B"},
             ],
@@ -449,7 +449,7 @@ def test_sync_continues_on_database_error(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [
+            lambda endpoint="/events", params=None: [
                 {"@id": "https://example.com/1", "title": "A"},
                 {"@id": "https://example.com/2", "title": "B"},
             ],
@@ -483,7 +483,7 @@ def test_sync_continues_on_field_error(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [
+            lambda endpoint="/events", params=None: [
                 {"@id": "https://example.com/1", "title": "A"},
                 {"@id": "https://example.com/2", "title": "B"},
             ],
@@ -517,7 +517,7 @@ def test_sync_all_items_fail_returns_zero(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [
+            lambda endpoint="/events", params=None: [
                 {"@id": "https://example.com/1", "title": "A"},
                 {"@id": "https://example.com/2", "title": "B"},
             ],
@@ -544,7 +544,7 @@ def test_sync_logs_finish_message_with_error_count(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": [
+            lambda endpoint="/events", params=None: [
                 {"@id": "https://example.com/1", "title": "A"},
                 {"title": "no id"},
             ],
@@ -570,7 +570,7 @@ def test_sync_continues_when_item_is_not_dict(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events": ["not-a-dict", {"@id": "https://example.com/2", "title": "B"}],
+            lambda endpoint="/events", params=None: ["not-a-dict", {"@id": "https://example.com/2", "title": "B"}],
         )
 
         caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
@@ -601,15 +601,15 @@ def test_fetch_live_events(monkeypatch):
     original_fetch_single_page = viernulvier._fetch_single_page
     pages_fetched = [0]
 
-    def limited_fetch_single_page(url):
+    def limited_fetch_single_page(url, params=None):
         pages_fetched[0] += 1
         if pages_fetched[0] > 3:  # 3 pages * 30+ items
             # Return a response without a "next" link to stop pagination
-            data = original_fetch_single_page(url)
+            data = original_fetch_single_page(url, params=params)
             if isinstance(data, dict) and "view" in data:
                 data["view"] = {k: v for k, v in data["view"].items() if k != "next"}
             return data
-        return original_fetch_single_page(url)
+        return original_fetch_single_page(url, params=params)
 
     monkeypatch.setattr(viernulvier, "_fetch_single_page", limited_fetch_single_page)
 
@@ -748,3 +748,246 @@ class TestFlexibleFieldMapping:
         assert "price_rank_id" in defaults
         assert "event_id" in defaults
         assert "amount" in defaults
+
+
+# ============================================================================
+# Tests for Query Parameter Support (createdAt, updatedAt filtering)
+# ============================================================================
+
+
+def test_fetch_accepts_query_params(monkeypatch):
+    """Test that fetch_viernulvier accepts optional query parameters."""
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    captured_params = {}
+
+    def fake_get(url, headers, params=None, timeout=None):
+        captured_params["params"] = params
+        response = Mock(ok=True, status_code=200)
+        response.json.return_value = {"member": []}
+        return response
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    viernulvier.fetch_viernulvier(
+        endpoint="/events", params={"createdAt[after]": "2024-01-01T00:00:00Z"}
+    )
+
+    assert captured_params["params"] == {"createdAt[after]": "2024-01-01T00:00:00Z"}
+
+
+def test_fetch_params_applied_to_initial_request_only(monkeypatch):
+    """Test that query params are only applied to the first request, not pagination."""
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    request_count = [0]
+    captured_params_list = []
+
+    def fake_get(url, headers, params=None, timeout=None):
+        request_count[0] += 1
+        captured_params_list.append(params)
+        response = Mock(ok=True, status_code=200)
+
+        if request_count[0] == 1:
+            # First response with pagination
+            response.json.return_value = {
+                "@context": "https://example.com/context.jsonld",
+                "member": [{"@id": "https://example.com/1", "title": "Event A"}],
+                "view": {"next": "/api/v1/events?page=2"},
+            }
+        else:
+            # Paginated response (next)
+            response.json.return_value = {
+                "@context": "https://example.com/context.jsonld",
+                "member": [{"@id": "https://example.com/2", "title": "Event B"}],
+            }
+
+        return response
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    result = viernulvier.fetch_viernulvier(
+        endpoint="/events", params={"createdAt[after]": "2024-01-01T00:00:00Z"}
+    )
+
+    assert len(result) == 2
+    # First request should have params
+    assert captured_params_list[0] == {"createdAt[after]": "2024-01-01T00:00:00Z"}
+    # Second request (pagination) should not have params
+    assert captured_params_list[1] is None
+
+
+def test_fetch_with_multiple_query_params(monkeypatch):
+    """Test that multiple query parameters are passed correctly."""
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    captured_params = {}
+
+    def fake_get(url, headers, params=None, timeout=None):
+        captured_params["params"] = params
+        response = Mock(ok=True, status_code=200)
+        response.json.return_value = {"member": []}
+        return response
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    params = {
+        "createdAt[after]": "2024-01-01T00:00:00Z",
+        "updatedAt[before]": "2024-12-31T23:59:59Z",
+    }
+
+    viernulvier.fetch_viernulvier(endpoint="/events", params=params)
+
+    assert captured_params["params"] == params
+
+
+def test_fetch_without_params_works_as_before(monkeypatch):
+    """Test backward compatibility: fetch works without query parameters."""
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    captured_params = {}
+
+    def fake_get(url, headers, params=None, timeout=None):
+        captured_params["params"] = params
+        response = Mock(ok=True, status_code=200)
+        response.json.return_value = {"member": [{"@id": "https://example.com/1"}]}
+        return response
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    result = viernulvier.fetch_viernulvier(endpoint="/events")
+
+    assert len(result) == 1
+    assert captured_params["params"] is None
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_passes_params_to_fetch(monkeypatch):
+    """Test that sync_viernulvier passes query parameters to fetch_viernulvier."""
+    with _temp_viernulvier_model() as ViernulvierItem:
+        captured_call_args = {}
+
+        original_fetch = viernulvier.fetch_viernulvier
+
+        def mock_fetch(endpoint=None, params=None):
+            captured_call_args["endpoint"] = endpoint
+            captured_call_args["params"] = params
+            return [{"@id": "https://example.com/1", "title": "Item"}]
+
+        monkeypatch.setattr(viernulvier, "fetch_viernulvier", mock_fetch)
+
+        params = {"createdAt[after]": "2024-01-01T00:00:00Z"}
+        viernulvier.sync_viernulvier(
+            ViernulvierItem, endpoint="/events", params=params
+        )
+
+        assert captured_call_args["endpoint"] == "/events"
+        assert captured_call_args["params"] == params
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_with_timestamp_filtering(monkeypatch):
+    """Test end-to-end sync with timestamp filtering parameters."""
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events", params=None: [
+                {"@id": "https://example.com/recent", "title": "Recent Event"},
+            ],
+        )
+
+        params = {"updatedAt[after]": "2024-06-01T00:00:00Z"}
+        count = viernulvier.sync_viernulvier(
+            ViernulvierItem, endpoint="/events", params=params
+        )
+
+        assert count == 1
+        assert ViernulvierItem.objects.count() == 1
+
+
+def test_fetch_params_none_by_default(monkeypatch):
+    """Test that params parameter defaults to None."""
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    captured_params = {}
+
+    def fake_get(url, headers, params=None, timeout=None):
+        captured_params["params"] = params
+        response = Mock(ok=True, status_code=200)
+        response.json.return_value = {"member": []}
+        return response
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    # Call without params argument
+    viernulvier.fetch_viernulvier(endpoint="/events")
+
+    assert captured_params["params"] is None
+
+
+def test_fetch_with_empty_params_dict(monkeypatch):
+    """Test that an empty params dict is passed as-is."""
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    captured_params = {}
+
+    def fake_get(url, headers, params=None, timeout=None):
+        captured_params["params"] = params
+        response = Mock(ok=True, status_code=200)
+        response.json.return_value = {"member": []}
+        return response
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    # Call with empty params dict
+    viernulvier.fetch_viernulvier(endpoint="/events", params={})
+
+    # Empty dict should be passed
+    assert captured_params["params"] == {}
+
+
+def test_fetch_preserves_timestamp_format(monkeypatch):
+    """Test that timestamp query parameters preserve ISO 8601 format."""
+    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+    captured_params = {}
+
+    def fake_get(url, headers, params=None, timeout=None):
+        captured_params["params"] = params
+        response = Mock(ok=True, status_code=200)
+        response.json.return_value = {"member": []}
+        return response
+
+    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
+
+    iso_timestamp = "2024-12-25T10:30:45Z"
+    viernulvier.fetch_viernulvier(
+        endpoint="/events", params={"createdAt[after]": iso_timestamp}
+    )
+
+    assert captured_params["params"]["createdAt[after]"] == iso_timestamp
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_without_params_still_works(monkeypatch):
+    """Test backward compatibility: sync without params parameter."""
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events", params=None: [
+                {"@id": "https://example.com/1", "title": "Item"},
+            ],
+        )
+
+        # Call sync without params argument
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        assert count == 1
+        assert ViernulvierItem.objects.count() == 1
+
+
