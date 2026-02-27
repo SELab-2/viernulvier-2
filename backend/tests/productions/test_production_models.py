@@ -288,3 +288,4 @@ class TestProductionGenre:
 		genre.delete()
 
 		assert ProductionGenre.objects.count() == 0
+
