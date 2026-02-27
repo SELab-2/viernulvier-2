@@ -269,4 +269,4 @@ class ProductionGenre(BaseModel):
         ordering = ["position", "id"]
 
     def __str__(self):
-        return f"Genre {self.genre.name} for Production {self.production.id}"
+        return f"{self.genre.type}"
