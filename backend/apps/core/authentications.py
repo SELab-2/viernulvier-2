@@ -1,74 +1,48 @@
 import secrets
 from django.conf import settings
-from rest_framework import authentication
+from rest_framework.authentication import BaseAuthentication, get_authorization_header
 from rest_framework.exceptions import AuthenticationFailed
 
 
-class ApiKeyAuthentication(authentication.BaseAuthentication):
+class ApiKeyAuthentication(BaseAuthentication):
     """
-    Custom DRF authentication class for API Key validation.
+    Production-ready API Key authentication using:
 
-    This authentication backend expects the following header format:
+        Authorization: Bearer <API_KEY>
 
-        Authorization: Api-Key <KEY>
+    Supports:
+        - INTERNAL_API_KEY (full access)
+        - PUBLIC_API_KEY (read-only)
 
-    It supports two different API keys defined in Django settings:
-
-        - INTERNAL_API_KEY -> full access (write + read)
-        - PUBLIC_API_KEY   -> read-only access
-
-    On successful authentication, it returns:
-        (user, auth)
-
-    Where:
-        - user = None (no Django user model is used)
-        - auth = "internal" or "public"
-
-    The value stored in `request.auth` can later be used in
-    permission classes to decide access level.
-
-    Behavior:
-        - No header -> returns None (authentication not attempted)
-        - Invalid format -> raises AuthenticationFailed
-        - Invalid key -> raises AuthenticationFailed
+    Returns:
+        (None, "internal") or (None, "public")
     """
 
-    keyword = "api-key"
+    keyword = "Bearer"
 
     def authenticate(self, request):
-        """
-        Attempts to authenticate the request using an API key.
+        auth = get_authorization_header(request).split()
 
-        Returns:
-            tuple: (user, auth_type) if successful
-            None: if no authentication header is present
-
-        Raises:
-            AuthenticationFailed: if header format is invalid
-                                  or key does not match.
-        """
-        auth_header = request.headers.get("Authorization")
-
-        # Case 1: Header completely missing -> do nothing
-        if auth_header is None:
+        # No header -> skip authentication
+        if not auth:
             return None
 
-        parts = auth_header.split()
+        # Must be: Bearer <token>
+        if len(auth) != 2 or auth[0].decode().lower() != self.keyword.lower():
+            raise AuthenticationFailed("Invalid Authorization header format.")
 
-        if len(parts) != 2 or parts[0].lower() != self.keyword:
-            raise AuthenticationFailed(
-                "Invalid header format. Use: Api-Key <KEY>"
-            )
-
-        key = parts[1]
+        try:
+            key = auth[1].decode('utf-8')
+        except UnicodeDecodeError:
+            raise AuthenticationFailed("Invalid characters in API key.")
 
         internal_key = getattr(settings, "INTERNAL_API_KEY", None)
         public_key = getattr(settings, "PUBLIC_API_KEY", None)
 
-        if internal_key and secrets.compare_digest(key, internal_key):
+        if internal_key and secrets.compare_digest(key.encode('utf-8'), internal_key.encode('utf-8')):
             return (None, "internal")
 
-        if public_key and secrets.compare_digest(key, public_key):
+        if public_key and secrets.compare_digest(key.encode('utf-8'), public_key.encode('utf-8')):
             return (None, "public")
 
         raise AuthenticationFailed("Invalid API key.")

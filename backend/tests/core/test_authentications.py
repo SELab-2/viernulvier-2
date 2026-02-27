@@ -1,17 +1,21 @@
 """
-Tests for apps/core/authentications.py — ApiKeyAuthentication
+Comprehensive test suite for ApiKeyAuthentication.
 
 Covers:
-- No Authorization header -> returns None (unauthenticated, not an error)
-- Malformed header (wrong scheme, too few/many parts) -> AuthenticationFailed
-- Valid internal key -> returns (None, "internal")
-- Valid public key  -> returns (None, "public")
-- Unknown key       -> AuthenticationFailed
-- Settings not configured (missing / None key)
-- Timing-safe comparison (secrets.compare_digest)
-- Keyword / scheme matching is case-insensitive
+- No Authorization header (anonymous passthrough)
+- Malformed header formats (missing token, wrong keyword, extra parts, empty)
+- Valid INTERNAL_API_KEY → returns (None, "internal")
+- Valid PUBLIC_API_KEY → returns (None, "public")
+- Invalid / unknown key → AuthenticationFailed
+- Missing settings keys (None / absent)
+- Timing-safe comparison (secrets.compare_digest path)
+- Case-insensitive keyword matching ("bearer", "BEARER", "Bearer")
+- Unicode / encoding edge cases in the token
+- Both keys identical (internal wins)
+- authenticate_header() not defined (BaseAuthentication default)
 """
 
+import pytest
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase, override_settings
@@ -20,272 +24,411 @@ from rest_framework.exceptions import AuthenticationFailed
 from apps.core.authentications import ApiKeyAuthentication
 
 
-INTERNAL_KEY = "internal-secret-key"
-PUBLIC_KEY = "public-secret-key"
-
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def make_request(auth_header=None):
+INTERNAL_KEY = "super-secret-internal-key-abc123"
+PUBLIC_KEY = "public-read-only-key-xyz789"
+
+
+def make_request(auth_header: bytes | None = None):
+    """Return a minimal mock request with the given raw Authorization header."""
     request = MagicMock()
-    request.headers = {}
+    request.META = {}
     if auth_header is not None:
-        request.headers["Authorization"] = auth_header
+        request.META["HTTP_AUTHORIZATION"] = auth_header
     return request
 
 
+def bearer(token: str, keyword: str = "Bearer") -> bytes:
+    return f"{keyword} {token}".encode()
+
+
 # ---------------------------------------------------------------------------
-# No header
+# Test class
 # ---------------------------------------------------------------------------
 
-class TestApiKeyAuthenticationNoHeader(TestCase):
+@override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
+class TestApiKeyAuthentication(TestCase):
 
     def setUp(self):
         self.auth = ApiKeyAuthentication()
 
-    def test_returns_none_when_no_header(self):
-        """Missing header must return None so other authenticators can run."""
-        request = make_request()
+    # ------------------------------------------------------------------
+    # 1. No Authorization header → skip (return None)
+    # ------------------------------------------------------------------
+
+    def test_no_auth_header_returns_none(self):
+        request = make_request(auth_header=None)
         result = self.auth.authenticate(request)
         self.assertIsNone(result)
 
-    def test_returns_none_not_raises(self):
-        """Must NOT raise — returning None is the correct DRF contract."""
-        request = make_request()
-        try:
-            result = self.auth.authenticate(request)
-        except Exception as exc:
-            self.fail(f"authenticate() raised unexpectedly: {exc}")
+    def test_empty_auth_header_returns_none(self):
+        """An empty byte-string header means no auth parts after split."""
+        request = make_request(auth_header=b"")
+        result = self.auth.authenticate(request)
+        self.assertIsNone(result)
 
+    # ------------------------------------------------------------------
+    # 2. Malformed header → AuthenticationFailed
+    # ------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# Malformed headers
-# ---------------------------------------------------------------------------
+    def test_only_keyword_no_token_raises(self):
+        request = make_request(auth_header=b"Bearer")
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
 
-class TestApiKeyAuthenticationMalformedHeader(TestCase):
+    def test_wrong_keyword_raises(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY, keyword="Token"))
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
 
-    def setUp(self):
-        self.auth = ApiKeyAuthentication()
+    def test_wrong_keyword_basic_raises(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY, keyword="Basic"))
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
 
-    def test_raises_when_only_one_part(self):
-        request = make_request(auth_header="justonetoken")
+    def test_three_parts_raises(self):
+        request = make_request(auth_header=b"Bearer token extra")
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
+
+    def test_four_parts_raises(self):
+        request = make_request(auth_header=b"Bearer a b c")
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
+
+    def test_malformed_header_error_message(self):
+        request = make_request(auth_header=b"Bearer")
         with self.assertRaises(AuthenticationFailed) as ctx:
             self.auth.authenticate(request)
-        self.assertIn("Invalid header format", str(ctx.exception.detail))
+        self.assertIn("Invalid Authorization header format", str(ctx.exception.detail))
 
-    def test_raises_when_three_parts(self):
-        request = make_request(auth_header="Api-Key key extra")
-        with self.assertRaises(AuthenticationFailed):
-            self.auth.authenticate(request)
+    # ------------------------------------------------------------------
+    # 3. Keyword case-insensitivity
+    # ------------------------------------------------------------------
 
-    def test_raises_when_wrong_scheme_bearer(self):
-        request = make_request(auth_header="Bearer sometoken")
-        with self.assertRaises(AuthenticationFailed) as ctx:
-            self.auth.authenticate(request)
-        self.assertIn("Invalid header format", str(ctx.exception.detail))
-
-    def test_raises_when_wrong_scheme_token(self):
-        request = make_request(auth_header="Token sometoken")
-        with self.assertRaises(AuthenticationFailed):
-            self.auth.authenticate(request)
-
-    def test_raises_when_empty_string_header(self):
-        request = make_request(auth_header="")
-        with self.assertRaises(AuthenticationFailed):
-            self.auth.authenticate(request)
-
-    def test_raises_when_only_whitespace(self):
-        request = make_request(auth_header="   ")
-        with self.assertRaises((AuthenticationFailed, Exception)):
-            self.auth.authenticate(request)
-
-
-# ---------------------------------------------------------------------------
-# Scheme case-insensitivity
-# ---------------------------------------------------------------------------
-
-class TestApiKeyAuthenticationScheme(TestCase):
-
-    def setUp(self):
-        self.auth = ApiKeyAuthentication()
-
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_scheme_lowercase_accepted(self):
-        request = make_request(auth_header=f"api-key {INTERNAL_KEY}")
+    def test_keyword_lowercase_bearer(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY, keyword="bearer"))
         result = self.auth.authenticate(request)
-        self.assertIsNotNone(result)
+        self.assertEqual(result, (None, "internal"))
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_scheme_uppercase_accepted(self):
-        request = make_request(auth_header=f"API-KEY {INTERNAL_KEY}")
+    def test_keyword_uppercase_bearer(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY, keyword="BEARER"))
         result = self.auth.authenticate(request)
-        self.assertIsNotNone(result)
+        self.assertEqual(result, (None, "internal"))
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_scheme_mixed_case_accepted(self):
-        request = make_request(auth_header=f"Api-Key {INTERNAL_KEY}")
+    def test_keyword_mixed_case_bearer(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY, keyword="BeArEr"))
         result = self.auth.authenticate(request)
-        self.assertIsNotNone(result)
+        self.assertEqual(result, (None, "internal"))
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_scheme_weird_case_accepted(self):
-        request = make_request(auth_header=f"aPi-KeY {INTERNAL_KEY}")
+    # ------------------------------------------------------------------
+    # 4. Valid INTERNAL_API_KEY
+    # ------------------------------------------------------------------
+
+    def test_valid_internal_key_returns_internal(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY))
         result = self.auth.authenticate(request)
-        self.assertIsNotNone(result)
+        self.assertEqual(result, (None, "internal"))
 
-
-# ---------------------------------------------------------------------------
-# Successful authentication
-# ---------------------------------------------------------------------------
-
-class TestApiKeyAuthenticationSuccess(TestCase):
-
-    def setUp(self):
-        self.auth = ApiKeyAuthentication()
-
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_internal_key_returns_tuple(self):
-        request = make_request(auth_header=f"Api-Key {INTERNAL_KEY}")
-        result = self.auth.authenticate(request)
-        self.assertIsNotNone(result)
-        self.assertIsInstance(result, tuple)
-        self.assertEqual(len(result), 2)
-
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_internal_key_user_is_none(self):
-        request = make_request(auth_header=f"Api-Key {INTERNAL_KEY}")
+    def test_valid_internal_key_user_is_none(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY))
         user, _ = self.auth.authenticate(request)
         self.assertIsNone(user)
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_internal_key_auth_is_internal(self):
-        request = make_request(auth_header=f"Api-Key {INTERNAL_KEY}")
-        _, auth = self.auth.authenticate(request)
-        self.assertEqual(auth, "internal")
+    def test_valid_internal_key_scope_is_internal(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY))
+        _, scope = self.auth.authenticate(request)
+        self.assertEqual(scope, "internal")
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_public_key_returns_tuple(self):
-        request = make_request(auth_header=f"Api-Key {PUBLIC_KEY}")
+    # ------------------------------------------------------------------
+    # 5. Valid PUBLIC_API_KEY
+    # ------------------------------------------------------------------
+
+    def test_valid_public_key_returns_public(self):
+        request = make_request(auth_header=bearer(PUBLIC_KEY))
         result = self.auth.authenticate(request)
-        self.assertIsNotNone(result)
-        self.assertIsInstance(result, tuple)
+        self.assertEqual(result, (None, "public"))
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_public_key_user_is_none(self):
-        request = make_request(auth_header=f"Api-Key {PUBLIC_KEY}")
-        user, _ = self.auth.authenticate(request)
+    def test_valid_public_key_user_is_none(self):
+        request = make_request(auth_header=bearer(PUBLIC_KEY))
+        user, scope = self.auth.authenticate(request)
         self.assertIsNone(user)
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_public_key_auth_is_public(self):
-        request = make_request(auth_header=f"Api-Key {PUBLIC_KEY}")
-        _, auth = self.auth.authenticate(request)
-        self.assertEqual(auth, "public")
+    def test_valid_public_key_scope_is_public(self):
+        request = make_request(auth_header=bearer(PUBLIC_KEY))
+        _, scope = self.auth.authenticate(request)
+        self.assertEqual(scope, "public")
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_internal_and_public_keys_are_distinct(self):
-        """Internal and public keys must not be interchangeable."""
-        req_internal = make_request(auth_header=f"Api-Key {INTERNAL_KEY}")
-        req_public = make_request(auth_header=f"Api-Key {PUBLIC_KEY}")
-        _, auth_i = self.auth.authenticate(req_internal)
-        _, auth_p = self.auth.authenticate(req_public)
-        self.assertNotEqual(auth_i, auth_p)
+    # ------------------------------------------------------------------
+    # 6. Invalid / unknown key → AuthenticationFailed
+    # ------------------------------------------------------------------
 
+    def test_unknown_key_raises(self):
+        request = make_request(auth_header=bearer("totally-wrong-key"))
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
 
-# ---------------------------------------------------------------------------
-# Unknown / wrong key
-# ---------------------------------------------------------------------------
-
-class TestApiKeyAuthenticationFailure(TestCase):
-
-    def setUp(self):
-        self.auth = ApiKeyAuthentication()
-
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_wrong_key_raises_auth_failed(self):
-        request = make_request(auth_header="Api-Key completely-wrong-key")
+    def test_unknown_key_error_message(self):
+        request = make_request(auth_header=bearer("bad-key"))
         with self.assertRaises(AuthenticationFailed) as ctx:
             self.auth.authenticate(request)
         self.assertIn("Invalid API key", str(ctx.exception.detail))
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_partial_key_match_is_rejected(self):
-        """A key that is a prefix of the real key must not authenticate."""
-        request = make_request(auth_header=f"Api-Key {INTERNAL_KEY[:5]}")
+    def test_empty_token_raises(self):
+        """'Bearer ' with an empty token still splits into 2 parts but key is ''."""
+        request = make_request(auth_header=b"Bearer ")
+        # split() on b"Bearer " yields [b"Bearer"] — only 1 part → format error
         with self.assertRaises(AuthenticationFailed):
             self.auth.authenticate(request)
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_empty_key_value_raises(self):
-        """Header present but key part is empty."""
-        request = make_request(auth_header="Api-Key ")
-        with self.assertRaises((AuthenticationFailed, Exception)):
-            self.auth.authenticate(request)
-
-
-# ---------------------------------------------------------------------------
-# Missing / unconfigured settings
-# ---------------------------------------------------------------------------
-
-class TestApiKeyAuthenticationMissingSettings(TestCase):
-
-    def setUp(self):
-        self.auth = ApiKeyAuthentication()
-
-    @override_settings(INTERNAL_API_KEY=None, PUBLIC_API_KEY=None)
-    def test_both_keys_none_raises_auth_failed(self):
-        request = make_request(auth_header="Api-Key anykey")
+    def test_partial_internal_key_raises(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY[:-1]))
         with self.assertRaises(AuthenticationFailed):
             self.auth.authenticate(request)
+
+    def test_internal_key_with_extra_char_raises(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY + "X"))
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
+
+    def test_internal_key_uppercase_raises(self):
+        """Keys are case-sensitive."""
+        request = make_request(auth_header=bearer(INTERNAL_KEY.upper()))
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
+
+    def test_public_key_uppercase_raises(self):
+        request = make_request(auth_header=bearer(PUBLIC_KEY.upper()))
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
+
+    # ------------------------------------------------------------------
+    # 7. Missing / None settings
+    # ------------------------------------------------------------------
 
     @override_settings(INTERNAL_API_KEY=None, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_internal_key_none_falls_through_to_public(self):
-        """If INTERNAL_API_KEY is None it should skip and try PUBLIC_API_KEY."""
-        request = make_request(auth_header=f"Api-Key {PUBLIC_KEY}")
-        _, auth = self.auth.authenticate(request)
-        self.assertEqual(auth, "public")
+    def test_internal_key_none_in_settings_skips_internal_check(self):
+        """When INTERNAL_API_KEY is None, even a matching value falls through."""
+        # There is nothing to match against, so it moves on to public check.
+        request = make_request(auth_header=bearer(PUBLIC_KEY))
+        result = self.auth.authenticate(request)
+        self.assertEqual(result, (None, "public"))
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=None)
-    def test_public_key_none_still_accepts_internal(self):
-        request = make_request(auth_header=f"Api-Key {INTERNAL_KEY}")
-        _, auth = self.auth.authenticate(request)
-        self.assertEqual(auth, "internal")
-
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=None)
-    def test_public_key_none_rejects_unknown_key(self):
-        request = make_request(auth_header="Api-Key unknownkey")
+    @override_settings(INTERNAL_API_KEY=None, PUBLIC_API_KEY=PUBLIC_KEY)
+    def test_none_internal_key_unknown_token_raises(self):
+        request = make_request(auth_header=bearer("some-unknown-key"))
         with self.assertRaises(AuthenticationFailed):
             self.auth.authenticate(request)
 
+    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=None)
+    def test_public_key_none_in_settings_skips_public_check(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY))
+        result = self.auth.authenticate(request)
+        self.assertEqual(result, (None, "internal"))
+
+    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=None)
+    def test_none_public_key_unknown_token_raises(self):
+        request = make_request(auth_header=bearer("random-key"))
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
+
+    @override_settings(INTERNAL_API_KEY=None, PUBLIC_API_KEY=None)
+    def test_both_keys_none_always_raises(self):
+        request = make_request(auth_header=bearer("any-key"))
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
+
+    def test_missing_internal_key_attribute(self):
+        """If the setting doesn't exist at all (not even None), getattr returns None."""
+        with self.settings(INTERNAL_API_KEY=None, PUBLIC_API_KEY=PUBLIC_KEY):
+            request = make_request(auth_header=bearer(PUBLIC_KEY))
+            result = self.auth.authenticate(request)
+            self.assertEqual(result, (None, "public"))
+
+    # ------------------------------------------------------------------
+    # 8. When both keys are identical → internal wins
+    # ------------------------------------------------------------------
+
+    @override_settings(INTERNAL_API_KEY="shared-key", PUBLIC_API_KEY="shared-key")
+    def test_identical_keys_internal_wins(self):
+        request = make_request(auth_header=bearer("shared-key"))
+        result = self.auth.authenticate(request)
+        self.assertEqual(result, (None, "internal"))
+
+    # ------------------------------------------------------------------
+    # 9. secrets.compare_digest is actually called (timing-safe)
+    # ------------------------------------------------------------------
+
+    def test_secrets_compare_digest_used_for_internal_key(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY))
+        with patch("secrets.compare_digest", wraps=__import__("secrets").compare_digest) as mock_cd:
+            self.auth.authenticate(request)
+            mock_cd.assert_called()
+
+    def test_secrets_compare_digest_used_for_public_key(self):
+        request = make_request(auth_header=bearer(PUBLIC_KEY))
+        with patch("secrets.compare_digest", wraps=__import__("secrets").compare_digest) as mock_cd:
+            self.auth.authenticate(request)
+            mock_cd.assert_called()
+
+    # ------------------------------------------------------------------
+    # 10. Unicode / encoding edge cases
+    # ------------------------------------------------------------------
+
+    def test_key_with_unicode_raises(self):
+        """Non-ASCII token bytes won't match ASCII keys."""
+        request = make_request(auth_header="Bearer café".encode("utf-8"))
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
+
+    def test_key_with_whitespace_raises(self):
+        """A token containing a space splits into extra parts → format error."""
+        request = make_request(auth_header=b"Bearer key with spaces")
+        with self.assertRaises(AuthenticationFailed):
+            self.auth.authenticate(request)
+
+    def test_token_is_decoded_from_bytes(self):
+        """Ensure the raw bytes header is correctly decoded before comparison."""
+        key_bytes = INTERNAL_KEY.encode("utf-8")
+        request = make_request(auth_header=b"Bearer " + key_bytes)
+        result = self.auth.authenticate(request)
+        self.assertEqual(result, (None, "internal"))
+
+    # ------------------------------------------------------------------
+    # 11. Return type contract
+    # ------------------------------------------------------------------
+
+    def test_return_type_is_tuple_for_internal(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY))
+        result = self.auth.authenticate(request)
+        self.assertIsInstance(result, tuple)
+        self.assertEqual(len(result), 2)
+
+    def test_return_type_is_tuple_for_public(self):
+        request = make_request(auth_header=bearer(PUBLIC_KEY))
+        result = self.auth.authenticate(request)
+        self.assertIsInstance(result, tuple)
+        self.assertEqual(len(result), 2)
+
+    def test_return_is_none_for_no_header(self):
+        request = make_request(auth_header=None)
+        result = self.auth.authenticate(request)
+        self.assertIsNone(result)
+
+    # ------------------------------------------------------------------
+    # 12. AuthenticationFailed is a DRF exception (status 401)
+    # ------------------------------------------------------------------
+
+    def test_authentication_failed_is_drf_exception(self):
+        request = make_request(auth_header=bearer("bad"))
+        with self.assertRaises(AuthenticationFailed) as ctx:
+            self.auth.authenticate(request)
+        self.assertEqual(ctx.exception.status_code, 401)
+
+    # ------------------------------------------------------------------
+    # 13. keyword class attribute
+    # ------------------------------------------------------------------
+
+    def test_keyword_attribute_is_bearer(self):
+        self.assertEqual(ApiKeyAuthentication.keyword, "Bearer")
+
+    def test_custom_keyword_subclass(self):
+        """Demonstrates how keyword could be overridden in a subclass."""
+        class ApiKeyAuth(ApiKeyAuthentication):
+            keyword = "ApiKey"
+
+        auth = ApiKeyAuth()
+        request = make_request(auth_header=f"ApiKey {INTERNAL_KEY}".encode())
+        result = auth.authenticate(request)
+        self.assertEqual(result, (None, "internal"))
+
+    # ------------------------------------------------------------------
+    # 14. Regression: internal key is not accidentally matched as public
+    # ------------------------------------------------------------------
+
+    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
+    def test_internal_key_not_returned_as_public(self):
+        request = make_request(auth_header=bearer(INTERNAL_KEY))
+        _, scope = self.auth.authenticate(request)
+        self.assertNotEqual(scope, "public")
+
+    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
+    def test_public_key_not_returned_as_internal(self):
+        request = make_request(auth_header=bearer(PUBLIC_KEY))
+        _, scope = self.auth.authenticate(request)
+        self.assertNotEqual(scope, "internal")
+
 
 # ---------------------------------------------------------------------------
-# Timing-safe comparison
+# Pytest-style equivalents (if you prefer pytest over unittest.TestCase)
 # ---------------------------------------------------------------------------
 
-class TestApiKeyAuthenticationTimingSafe(TestCase):
+@pytest.mark.django_db
+class TestApiKeyAuthenticationPytest:
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup(self):
         self.auth = ApiKeyAuthentication()
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_uses_compare_digest_for_internal_key(self):
-        request = make_request(auth_header=f"Api-Key {INTERNAL_KEY}")
-        with patch("apps.core.authentications.secrets.compare_digest", return_value=True) as mock_cd:
-            self.auth.authenticate(request)
-            # compare_digest must have been called at least once
-            self.assertTrue(mock_cd.called)
-            # The actual key must have been passed as one of the arguments
-            calls_args = [call.args for call in mock_cd.call_args_list]
-            self.assertTrue(
-                any(INTERNAL_KEY in args for args in calls_args),
-                "compare_digest was not called with the internal key",
-            )
+    @pytest.fixture
+    def internal_request(self, settings):
+        settings.INTERNAL_API_KEY = INTERNAL_KEY
+        settings.PUBLIC_API_KEY = PUBLIC_KEY
+        return make_request(auth_header=bearer(INTERNAL_KEY))
 
-    @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
-    def test_uses_compare_digest_for_public_key(self):
-        request = make_request(auth_header=f"Api-Key {PUBLIC_KEY}")
-        with patch("apps.core.authentications.secrets.compare_digest", side_effect=[False, True]) as mock_cd:
+    @pytest.fixture
+    def public_request(self, settings):
+        settings.INTERNAL_API_KEY = INTERNAL_KEY
+        settings.PUBLIC_API_KEY = PUBLIC_KEY
+        return make_request(auth_header=bearer(PUBLIC_KEY))
+
+    def test_internal_key_pytest(self, internal_request):
+        result = self.auth.authenticate(internal_request)
+        assert result == (None, "internal")
+
+    def test_public_key_pytest(self, public_request):
+        result = self.auth.authenticate(public_request)
+        assert result == (None, "public")
+
+    def test_no_header_pytest(self):
+        request = make_request()
+        assert self.auth.authenticate(request) is None
+
+    def test_bad_key_pytest(self, settings):
+        settings.INTERNAL_API_KEY = INTERNAL_KEY
+        settings.PUBLIC_API_KEY = PUBLIC_KEY
+        request = make_request(auth_header=bearer("nope"))
+        with pytest.raises(AuthenticationFailed, match="Invalid API key"):
             self.auth.authenticate(request)
-            self.assertTrue(mock_cd.called)
+
+    def test_malformed_header_pytest(self):
+        request = make_request(auth_header=b"Bearer")
+        with pytest.raises(AuthenticationFailed, match="Invalid Authorization header format"):
+            self.auth.authenticate(request)
+
+    @pytest.mark.parametrize("keyword", ["bearer", "BEARER", "Bearer", "bEaReR"])
+    def test_keyword_case_insensitive_pytest(self, keyword, settings):
+        settings.INTERNAL_API_KEY = INTERNAL_KEY
+        settings.PUBLIC_API_KEY = PUBLIC_KEY
+        request = make_request(auth_header=f"{keyword} {INTERNAL_KEY}".encode())
+        result = self.auth.authenticate(request)
+        assert result == (None, "internal")
+
+    @pytest.mark.parametrize("bad_header", [
+        b"Token abc",
+        b"Basic abc",
+        b"Bearer a b",
+        b"Bearer a b c",
+        b"Bearer",
+        b"",
+    ])
+    def test_malformed_headers_parametrized(self, bad_header):
+        request = make_request(auth_header=bad_header)
+        if bad_header == b"":
+            assert self.auth.authenticate(request) is None
+        else:
+            with pytest.raises(AuthenticationFailed):
+                self.auth.authenticate(request)

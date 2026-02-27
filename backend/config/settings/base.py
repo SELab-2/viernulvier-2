@@ -188,6 +188,21 @@ SPECTACULAR_SETTINGS = {
         "displayOperationId": False,
         "defaultModelsExpandDepth": 1, # Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
     },
+    "SECURITY": [
+        {
+            "BearerAuth": [],
+        }
+    ],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "API-KEY",
+                "description": "Enter your internal or public API key.",
+            }
+        }
+    },
     "TAGS": [
         {"name": "Productions", "description": "Production management and translations."},
         {"name": "Events", "description": "Event instances and pricing information."},

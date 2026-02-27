@@ -38,15 +38,13 @@ INT_KEY = "int-production-view-test-key"
 # ---------------------------------------------------------------------------
 
 def pub_headers():
-    return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
-
+    return {"HTTP_AUTHORIZATION": f"Bearer {PUB_KEY}"}
 
 def int_headers():
-    return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
-
+    return {"HTTP_AUTHORIZATION": f"Bearer {INT_KEY}"}
 
 def wrong_headers():
-    return {"HTTP_AUTHORIZATION": "Api-Key completely-wrong-key"}
+    return {"HTTP_AUTHORIZATION": "Bearer completely-wrong-key"}
 
 
 def make_production(**kwargs):
