@@ -180,7 +180,7 @@ SPECTACULAR_SETTINGS = {
     "LICENSE": {
         "name": "MIT License",
     },
-    "SCHEMA_PATH_PREFIX": r'/api/v1/',
+    "SCHEMA_PATH_PREFIX": r'/api/',
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SWAGGER_UI_SETTINGS": {
