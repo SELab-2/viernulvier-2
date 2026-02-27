@@ -300,6 +300,9 @@ def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optiona
     Returns:
         Converted value suitable for the field type, or None if conversion fails.
 
+    Raises:
+        ValueError: If a datetime string cannot be parsed.
+
     Side Effects:
         May perform database reads and writes for related objects.
     """
@@ -313,7 +316,11 @@ def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optiona
     # Handle datetime fields
     if isinstance(field, models.DateTimeField):
         if isinstance(value, str):
-            return parse_datetime(value)
+            try:
+                return parse_datetime(value)
+            except ValueError as e:
+                logger.warning("Failed to parse datetime value '%s' for field '%s'", value, field.name)
+                raise ScraperError(e)
         return value
 
     # Handle date fields

@@ -550,6 +550,18 @@ class TestCamelToSnakeCase:
 class TestFlexibleFieldMapping:
     """Test that the scraper tries every API field and skips unknown ones."""
 
+    def test_throws_error_for_year_zero_date(self):
+        """Should raise ScraperError if date fields have year 0000."""
+        from apps.events.models import Event
+
+        item = {
+            "external_id": "/api/events/1",
+            "startsAt": "0000-01-01T00:00:00Z",
+            "production": 1,  # Assuming this is a valid foreign key
+        }
+
+        assert raises(viernulvier.ScraperError, lambda: viernulvier._build_model_defaults(Event, item))
+
     def test_throws_error_for_missing_required_fields(self):
         """Should raise ScraperError if required fields are missing."""
         from apps.events.models import Event
