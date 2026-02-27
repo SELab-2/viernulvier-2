@@ -991,3 +991,253 @@ def test_sync_without_params_still_works(monkeypatch):
         assert ViernulvierItem.objects.count() == 1
 
 
+# =====================================================
+# ImportLog Integration Tests
+# =====================================================
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_creates_import_log_on_success(monkeypatch):
+    """Test that sync_viernulvier creates an ImportLog entry on successful import."""
+    from apps.import_log.models import ImportLog
+
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events", params=None: [
+                {"@id": "https://example.com/1", "title": "Event A"},
+                {"@id": "https://example.com/2", "title": "Event B"},
+            ],
+        )
+
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        assert count == 2
+
+        # Verify ImportLog entry was created
+        assert ImportLog.objects.count() == 1
+        log = ImportLog.objects.first()
+
+        assert log.source == "viernulvier:/events"
+        assert log.status == ImportLog.Status.SUCCESS
+        assert log.records_total == 2
+        assert log.records_imported == 2
+        assert log.records_failed == 0
+        assert log.started_at is not None
+        assert log.finished_at is not None
+        assert log.finished_at >= log.started_at
+        assert log.error_message is None
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_creates_import_log_with_params_in_source(monkeypatch):
+    """Test that sync_viernulvier includes params in the ImportLog source."""
+    from apps.import_log.models import ImportLog
+
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events", params=None: [
+                {"@id": "https://example.com/1", "title": "Event A"},
+            ],
+        )
+
+        params = {"createdAt[after]": "2024-01-01T00:00:00Z", "page": "1"}
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events", params=params)
+
+        assert count == 1
+
+        log = ImportLog.objects.first()
+        assert "viernulvier:/events?" in log.source
+        # Params should be sorted
+        assert "createdAt[after]=2024-01-01T00:00:00Z" in log.source
+        assert "page=1" in log.source
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_creates_import_log_on_partial_success(monkeypatch):
+    """Test that sync_viernulvier creates a PARTIAL_SUCCESS log when some items fail."""
+    from apps.import_log.models import ImportLog
+
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events", params=None: [
+                {"@id": "https://example.com/1", "title": "Event A"},
+                {"title": "Event B"},  # Missing @id, should fail
+                {"@id": "https://example.com/3", "title": "Event C"},
+            ],
+        )
+
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        assert count == 2
+
+        log = ImportLog.objects.first()
+        assert log.status == ImportLog.Status.PARTIAL_SUCCESS
+        assert log.records_total == 3
+        assert log.records_imported == 2
+        assert log.records_failed == 1
+        assert log.error_message is None
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_creates_import_log_on_all_failures(monkeypatch):
+    """Test that sync_viernulvier creates a FAILED log when all items fail."""
+    from apps.import_log.models import ImportLog
+
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events", params=None: [
+                {"title": "Event A"},  # Missing @id
+                {"title": "Event B"},  # Missing @id
+            ],
+        )
+
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        assert count == 0
+
+        log = ImportLog.objects.first()
+        assert log.status == ImportLog.Status.FAILED
+        assert log.records_total == 2
+        assert log.records_imported == 0
+        assert log.records_failed == 2
+        assert log.error_message == "All 2 records failed to import"
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_creates_import_log_on_fetch_exception(monkeypatch):
+    """Test that sync_viernulvier creates a FAILED log when fetch_viernulvier raises an exception."""
+    from apps.import_log.models import ImportLog
+
+    with _temp_viernulvier_model() as ViernulvierItem:
+        def failing_fetch(endpoint="/events", params=None):
+            raise viernulvier.ScraperError("API connection failed")
+
+        monkeypatch.setattr(viernulvier, "fetch_viernulvier", failing_fetch)
+
+        with pytest.raises(viernulvier.ScraperError):
+            viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        log = ImportLog.objects.first()
+        assert log.status == ImportLog.Status.FAILED
+        assert log.started_at is not None
+        assert log.finished_at is not None
+        assert log.error_message == "API connection failed"
+        assert log.records_total == 0
+        assert log.records_imported == 0
+        assert log.records_failed == 0
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_creates_import_log_on_empty_response(monkeypatch):
+    """Test that sync_viernulvier creates a SUCCESS log even with empty response."""
+    from apps.import_log.models import ImportLog
+
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events", params=None: [],
+        )
+
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        assert count == 0
+
+        log = ImportLog.objects.first()
+        assert log.status == ImportLog.Status.SUCCESS
+        assert log.records_total == 0
+        assert log.records_imported == 0
+        assert log.records_failed == 0
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_import_log_timestamps_are_sequential(monkeypatch):
+    """Test that ImportLog started_at and finished_at are properly set and sequential."""
+    from apps.import_log.models import ImportLog
+
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events", params=None: [
+                {"@id": "https://example.com/1", "title": "Event A"},
+            ],
+        )
+
+        viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        log = ImportLog.objects.first()
+        assert log.started_at is not None
+        assert log.finished_at is not None
+        assert log.finished_at >= log.started_at
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_import_log_tracks_multiple_syncs(monkeypatch):
+    """Test that multiple sync operations create separate ImportLog entries."""
+    from apps.import_log.models import ImportLog
+
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events", params=None: [
+                {"@id": "https://example.com/1", "title": "Event A"},
+            ],
+        )
+
+        # First sync
+        viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        # Second sync
+        viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        assert ImportLog.objects.count() == 2
+        logs = ImportLog.objects.all().order_by('started_at')
+        assert logs[0].source == "viernulvier:/events"
+        assert logs[1].source == "viernulvier:/events"
+        assert logs[0].records_imported == 1
+        assert logs[1].records_imported == 1
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_import_log_different_endpoints_tracked_separately(monkeypatch):
+    """Test that syncs to different endpoints are tracked with different sources."""
+    from apps.import_log.models import ImportLog
+
+    with _temp_viernulvier_model() as ViernulvierItem:
+        monkeypatch.setattr(
+            viernulvier,
+            "fetch_viernulvier",
+            lambda endpoint="/events", params=None: [
+                {"@id": "https://example.com/1", "title": "Event A"},
+            ],
+        )
+
+        # Sync to /events
+        viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+
+        # Sync to /venues
+        viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/venues")
+
+        assert ImportLog.objects.count() == 2
+        sources = list(ImportLog.objects.values_list('source', flat=True))
+        assert "viernulvier:/events" in sources
+        assert "viernulvier:/venues" in sources

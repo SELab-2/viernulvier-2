@@ -19,6 +19,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from django.core.exceptions import FieldDoesNotExist, FieldError, ValidationError
 from django.db import DatabaseError, IntegrityError, transaction, models
+from django.utils import timezone
 from django.utils.dateparse import parse_datetime, parse_date
 
 logger = logging.getLogger(__name__)
@@ -585,6 +586,8 @@ def sync_viernulvier(
     Items are fetched via `fetch_viernulvier`, validated, and then persisted
     with per-item savepoints to isolate errors without aborting the batch.
 
+    An ImportLog entry is created to track the import operation.
+
     Args:
         model: Django model class receiving the API data.
         endpoint: Relative API endpoint (e.g., "/events").
@@ -598,74 +601,115 @@ def sync_viernulvier(
         ScraperError: When fetch_viernulvier fails.
 
     Side Effects:
-        Performs database writes, logs summary and error details.
+        Performs database writes, logs summary and error details, creates ImportLog entry.
     """
-    items = fetch_viernulvier(endpoint=endpoint, params=params)
+    # Import here to avoid circular dependency
+    from apps.import_log.models import ImportLog
 
-    saved = 0
-    errors = 0
-    seen = set()
+    # Build source name from endpoint and params
+    source = f"viernulvier:{endpoint}"
+    if params:
+        params_str = ",".join(f"{k}={v}" for k, v in sorted(params.items()))
+        source = f"{source}?{params_str}"
 
-    with transaction.atomic():
-        for item in items:
-            # Validate item is a dict
-            if not isinstance(item, dict):
-                logger.error(
-                    "Unexpected error while processing item: item is not a dict: %s",
-                    item,
-                )
-                errors += 1
-                continue
+    # Create import log entry
+    import_log = ImportLog.objects.create(
+        source=source,
+        status=ImportLog.Status.IN_PROGRESS,
+        started_at=timezone.now(),
+    )
 
-            # Extract @id
-            item_id = _extract_item_pk_value(model, item)
+    try:
+        items = fetch_viernulvier(endpoint=endpoint, params=params)
 
-            # Validate item_id is not empty
-            if item_id is None:
-                logger.warning("Skipping item without @id: %s", item)
-                errors += 1
-                continue
+        saved = 0
+        errors = 0
+        seen = set()
 
-            # Check for duplicates in current batch
-            if item_id in seen:
-                logger.warning("Duplicate @id in batch: %s", item_id)
-                continue
-
-            seen.add(item_id)
-
-            # Persist item with savepoint isolation
-            sid = transaction.savepoint()
-            try:
-                defaults = _build_model_defaults(model, item)
-                missing = _missing_required_fields(model, defaults)
-                if missing:
-                    logger.warning(
-                        "Skipping item @id=%s due to missing fields: %s",
-                        item_id,
-                        ", ".join(missing),
+        with transaction.atomic():
+            for item in items:
+                # Validate item is a dict
+                if not isinstance(item, dict):
+                    logger.error(
+                        "Unexpected error while processing item: item is not a dict: %s",
+                        item,
                     )
-                    transaction.savepoint_rollback(sid)
                     errors += 1
                     continue
 
-                model.objects.update_or_create(
-                    **{model._meta.pk.name: item_id},
-                    defaults=defaults,
-                )
-                transaction.savepoint_commit(sid)
-                saved += 1
-            except (IntegrityError, DatabaseError, FieldError, ValidationError):
-                transaction.savepoint_rollback(sid)
-                logger.error(
-                    "Database error while syncing item with @id=%s. Continuing.",
-                    item_id,
-                    exc_info=True,
-                )
-                errors += 1
+                # Extract @id
+                item_id = _extract_item_pk_value(model, item)
 
-    logger.info(
-        "Viernulvier sync finished: Saved=%s, Errors=%s",
-        saved,
-        errors,
-    )
-    return saved
+                # Validate item_id is not empty
+                if item_id is None:
+                    logger.warning("Skipping item without @id: %s", item)
+                    errors += 1
+                    continue
+
+                # Check for duplicates in current batch
+                if item_id in seen:
+                    logger.warning("Duplicate @id in batch: %s", item_id)
+                    continue
+
+                seen.add(item_id)
+
+                # Persist item with savepoint isolation
+                sid = transaction.savepoint()
+                try:
+                    defaults = _build_model_defaults(model, item)
+                    missing = _missing_required_fields(model, defaults)
+                    if missing:
+                        logger.warning(
+                            "Skipping item @id=%s due to missing fields: %s",
+                            item_id,
+                            ", ".join(missing),
+                        )
+                        transaction.savepoint_rollback(sid)
+                        errors += 1
+                        continue
+
+                    model.objects.update_or_create(
+                        **{model._meta.pk.name: item_id},
+                        defaults=defaults,
+                    )
+                    transaction.savepoint_commit(sid)
+                    saved += 1
+                except (IntegrityError, DatabaseError, FieldError, ValidationError):
+                    transaction.savepoint_rollback(sid)
+                    logger.error(
+                        "Database error while syncing item with @id=%s. Continuing.",
+                        item_id,
+                        exc_info=True,
+                    )
+                    errors += 1
+
+        # Update import log with final status
+        import_log.records_total = len(items)
+        import_log.records_imported = saved
+        import_log.records_failed = errors
+        import_log.finished_at = timezone.now()
+
+        if errors == 0:
+            import_log.status = ImportLog.Status.SUCCESS
+        elif saved > 0:
+            import_log.status = ImportLog.Status.PARTIAL_SUCCESS
+        else:
+            import_log.status = ImportLog.Status.FAILED
+            import_log.error_message = f"All {errors} records failed to import"
+
+        import_log.save()
+
+        logger.info(
+            "Viernulvier sync finished: Saved=%s, Errors=%s",
+            saved,
+            errors,
+        )
+        return saved
+
+    except Exception as exc:
+        # Update import log with error status
+        import_log.status = ImportLog.Status.FAILED
+        import_log.finished_at = timezone.now()
+        import_log.error_message = str(exc)
+        import_log.save()
+        raise
