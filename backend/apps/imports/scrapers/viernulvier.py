@@ -24,10 +24,28 @@ from django.utils.dateparse import parse_datetime, parse_date
 
 logger = logging.getLogger(__name__)
 
+# API Configuration
 BASE_URL = "https://www.viernulvier.gent/api/v1"
+BASE_DOMAIN = "https://www.viernulvier.gent"
 DEFAULT_ENDPOINT = "/productions"
 DEFAULT_TIMEOUT = 10
 MAX_RELATION_DEPTH = 2
+
+# JSON-LD Constants
+ERROR_CONTEXT_PATH = "/api/contexts/Error"
+JSON_LD_ID_FIELDS = ("external_id", "@id", "id")
+JSON_LD_METADATA_FIELDS = ("external_id",)
+
+# Django Integer Field Types
+INTEGER_FIELD_TYPES = (
+    models.AutoField,
+    models.BigAutoField,
+    models.IntegerField,
+    models.BigIntegerField,
+    models.SmallIntegerField,
+    models.PositiveIntegerField,
+    models.PositiveSmallIntegerField,
+)
 
 
 class ScraperError(Exception):
@@ -144,7 +162,7 @@ def _fetch_single_page(url: str, params: Optional[Dict[str, str]] = None) -> Dic
 
     # Handle JSON-LD error responses
     if isinstance(data, dict):
-        if data.get("@context") == "/api/contexts/Error":
+        if data.get("@context") == ERROR_CONTEXT_PATH:
             status = data.get("status", "unknown")
             detail = data.get("detail", "no detail provided")
             error_msg = f"Viernulvier API error: status={status}, detail={detail}"
@@ -218,7 +236,7 @@ def fetch_viernulvier(
                     current_url = next_url
                 else:
                     # It's a relative path, join it with the base domain
-                    current_url = urljoin("https://www.viernulvier.gent", next_url)
+                    current_url = urljoin(BASE_DOMAIN, next_url)
             else:
                 # No more pages
                 current_url = None
@@ -247,7 +265,6 @@ def _snake_case_to_camel(value: str) -> str:
     parts = value.split("_")
     return parts[0] + "".join(part.title() for part in parts[1:])
 
-
 def _camel_to_snake_case(value: str) -> str:
     """Convert lowerCamelCase or UpperCamelCase to snake_case.
 
@@ -263,6 +280,21 @@ def _camel_to_snake_case(value: str) -> str:
     # Insert underscore before uppercase letters and convert to lowercase
     snake = re.sub(r"(?<!^)(?=[A-Z])", "_", value).lower()
     return snake
+
+
+def _is_integer_field(field: models.Field) -> bool:
+    """Check if a Django field is an integer type.
+
+    Args:
+        field: Django model field to check.
+
+    Returns:
+        True if the field is an integer type, False otherwise.
+
+    Side Effects:
+        None. Pure type checking.
+    """
+    return isinstance(field, INTEGER_FIELD_TYPES)
 
 
 def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optional[Any]:
@@ -354,7 +386,9 @@ def _extract_api_id(value: Any) -> Optional[int]:
         tail = path.rstrip("/").split("/")[-1]
         return int(tail) if tail.isdigit() else None
     if isinstance(value, dict):
-        return _extract_api_id(value.get("external_id") or value.get("@id") or value.get("id"))
+        for field_name in JSON_LD_ID_FIELDS:
+            if field_value := value.get(field_name):
+                return _extract_api_id(field_value)
     return None
 
 
@@ -387,18 +421,7 @@ def _extract_item_pk_value(model: Type[models.Model], item: Mapping[str, Any]) -
     if raw_id in (None, ""):
         return None
     pk_field = model._meta.pk
-    if isinstance(
-        pk_field,
-        (
-            models.AutoField,
-            models.BigAutoField,
-            models.IntegerField,
-            models.BigIntegerField,
-            models.SmallIntegerField,
-            models.PositiveIntegerField,
-            models.PositiveSmallIntegerField,
-        ),
-    ):
+    if _is_integer_field(pk_field):
         return _extract_api_id(raw_id)
     return str(raw_id)
 
@@ -432,7 +455,7 @@ def _build_model_defaults(
     # Try to map every field from the API response
     for key, value in item.items():
         # Skip JSON-LD metadata fields
-        if key.startswith("@") or key in ("external_id",):
+        if key.startswith("@") or key in JSON_LD_METADATA_FIELDS:
             continue
 
         if value is None:
@@ -523,18 +546,7 @@ def _resolve_fk_value(field: models.Field, raw_value: Any, depth: int) -> Option
 
     if isinstance(raw_value, (str, int)):
         pk_field = related_model._meta.pk
-        if isinstance(
-            pk_field,
-            (
-                models.AutoField,
-                models.BigAutoField,
-                models.IntegerField,
-                models.BigIntegerField,
-                models.SmallIntegerField,
-                models.PositiveIntegerField,
-                models.PositiveSmallIntegerField,
-            ),
-        ):
+        if _is_integer_field(pk_field):
             rel_id = _extract_api_id(raw_value)
         else:
             rel_id = str(raw_value)

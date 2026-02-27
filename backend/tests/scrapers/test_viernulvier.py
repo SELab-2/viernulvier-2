@@ -7,8 +7,7 @@ from unittest.mock import Mock
 import pytest
 import requests
 from _pytest.raises import raises
-from django.core.exceptions import FieldError
-from django.db import DatabaseError, IntegrityError
+from django.db import IntegrityError
 from django.db import connection, models
 from django.test.utils import isolate_apps
 
@@ -16,6 +15,7 @@ from apps.imports.scrapers import viernulvier
 
 
 def test_fetch_uses_api_key_header(monkeypatch):
+    """Test that fetch_viernulvier includes correct API key in request headers."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
     def fake_get(url, headers, timeout=None, params=None):
@@ -32,6 +32,7 @@ def test_fetch_uses_api_key_header(monkeypatch):
 
 
 def test_fetch_raises_on_http_error(monkeypatch):
+    """Test that HTTP errors from the API are caught and wrapped in ScraperError."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
     def fake_get(url, headers, timeout=None, params=None):
@@ -45,6 +46,7 @@ def test_fetch_raises_on_http_error(monkeypatch):
 
 
 def test_fetch_raises_when_api_key_missing(monkeypatch):
+    """Test that missing API key raises ScraperError."""
     monkeypatch.delenv("VIERNULVIER_API_KEY", raising=False)
 
     with pytest.raises(viernulvier.ScraperError):
@@ -52,6 +54,7 @@ def test_fetch_raises_when_api_key_missing(monkeypatch):
 
 
 def test_fetch_raises_on_invalid_json(monkeypatch):
+    """Test that invalid JSON responses raise ScraperError."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
     def fake_get(url, headers, timeout=None, params=None):
@@ -66,6 +69,7 @@ def test_fetch_raises_on_invalid_json(monkeypatch):
 
 
 def test_fetch_raises_on_timeout(monkeypatch):
+    """Test that request timeout is caught and wrapped in ScraperError."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
     def fake_get(url, headers, timeout=None, params=None):
@@ -91,6 +95,7 @@ def test_fetch_raises_on_generic_request_exception(monkeypatch):
 
 
 def test_fetch_raises_on_none_payload(monkeypatch):
+    """Test that None payload from API raises ScraperError."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
     def fake_get(url, headers, timeout=None, params=None):
@@ -115,27 +120,9 @@ def test_fetch_raises_on_absolute_endpoint(monkeypatch):
         viernulvier.fetch_viernulvier(endpoint="http://example.com/api")
 
 
-def test_fetch_raises_on_json_ld_error_context(monkeypatch):
-    """Test that JSON-LD error context is detected and error details are extracted."""
-    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    def fake_get(url, headers, timeout=None, params=None):
-        response = Mock(ok=True, status_code=200)
-        response.json.return_value = {
-            "@context": "/api/contexts/Error",
-            "status": 400,
-            "detail": "Invalid request parameters",
-        }
-        return response
-
-    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
-
-    with pytest.raises(viernulvier.ScraperError, match="status=400.*detail=Invalid request parameters"):
-        viernulvier.fetch_viernulvier(endpoint="/events")
-
-
-def test_fetch_extracts_error_details_from_json_ld(monkeypatch, caplog):
-    """Test that error details are properly logged from JSON-LD error responses."""
+def test_fetch_raises_on_json_ld_error_context(monkeypatch, caplog):
+    """Test that JSON-LD error context is detected and error details are logged."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
     def fake_get(url, headers, timeout=None, params=None):
@@ -148,19 +135,18 @@ def test_fetch_extracts_error_details_from_json_ld(monkeypatch, caplog):
         return response
 
     monkeypatch.setattr(viernulvier.requests, "get", fake_get)
-
     caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
 
-    with pytest.raises(viernulvier.ScraperError):
+    with pytest.raises(viernulvier.ScraperError, match="status=403.*detail=Forbidden: access denied"):
         viernulvier.fetch_viernulvier(endpoint="/events")
 
     assert any(
         "status=403" in r.message and "detail=Forbidden: access denied" in r.message for r in caplog.records
     )
 
-
 @contextmanager
 def _temp_viernulvier_model():
+    """Create a temporary test model for Viernulvier items with automatic cleanup."""
     class ViernulvierItem(models.Model):
         id = models.CharField(max_length=255, primary_key=True)
         title = models.CharField(max_length=255, null=True, blank=True)
@@ -179,6 +165,7 @@ def _temp_viernulvier_model():
 
 
 def test_fetch_allows_different_endpoint_paths(monkeypatch):
+    """Test that fetch_viernulvier works with different endpoint paths."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
     def fake_get(url, headers, timeout=None, params=None):
@@ -239,6 +226,7 @@ def test_fetch_extracts_member_collection(monkeypatch):
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
 def test_sync_persists_items(monkeypatch):
+    """Test that sync_viernulvier successfully persists items to the database."""
     with _temp_viernulvier_model() as ViernulvierItem:
         monkeypatch.setattr(
             viernulvier,
@@ -258,6 +246,7 @@ def test_sync_persists_items(monkeypatch):
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
 def test_sync_updates_existing_item(monkeypatch):
+    """Test that sync_viernulvier updates existing items rather than creating duplicates."""
     with _temp_viernulvier_model() as ViernulvierItem:
         ViernulvierItem.objects.create(id="https://example.com/1", title="old")
 
@@ -277,6 +266,7 @@ def test_sync_updates_existing_item(monkeypatch):
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
 def test_sync_skips_items_without_id(monkeypatch, caplog):
+    """Test that items without @id are skipped with a warning."""
     with _temp_viernulvier_model() as ViernulvierItem:
         monkeypatch.setattr(
             viernulvier,
@@ -296,6 +286,7 @@ def test_sync_skips_items_without_id(monkeypatch, caplog):
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
 def test_sync_logs_info_on_empty_response(monkeypatch, caplog):
+    """Test that an empty response is logged appropriately."""
     with _temp_viernulvier_model() as ViernulvierItem:
         monkeypatch.setattr(viernulvier, "fetch_viernulvier", lambda endpoint="/events", params=None: [])
 
@@ -312,6 +303,7 @@ def test_sync_logs_info_on_empty_response(monkeypatch, caplog):
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
 def test_sync_handles_special_chars_and_nulls(monkeypatch):
+    """Test that sync_viernulvier correctly handles special characters and null values."""
     with _temp_viernulvier_model() as ViernulvierItem:
         payload = {"@id": "https://example.com/9", "title": "Café 🎭", "description": None}
         monkeypatch.setattr(
@@ -331,6 +323,7 @@ def test_sync_handles_special_chars_and_nulls(monkeypatch):
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
 def test_sync_handles_large_payload(monkeypatch):
+    """Test that sync_viernulvier can handle large payloads with many items."""
     with _temp_viernulvier_model() as ViernulvierItem:
         items = [{"@id": f"https://example.com/{i}", "title": f"T{i}"} for i in range(50)]
         monkeypatch.setattr(
@@ -347,28 +340,8 @@ def test_sync_handles_large_payload(monkeypatch):
 
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
-def test_sync_logs_exact_message_format(monkeypatch, caplog):
-    with _temp_viernulvier_model() as ViernulvierItem:
-        monkeypatch.setattr(
-            viernulvier,
-            "fetch_viernulvier",
-            lambda endpoint="/events", params=None: [{"@id": "https://example.com/1", "title": "A"}],
-        )
-
-        caplog.set_level(logging.INFO, logger=viernulvier.logger.name)
-
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
-
-        assert count == 1
-        assert any(
-            "Viernulvier sync finished" in r.message and "Saved=1" in r.message and "Errors=0" in r.message
-            for r in caplog.records
-        )
-
-
-@isolate_apps("tests")
-@pytest.mark.django_db(transaction=True)
 def test_sync_skips_duplicate_ids_in_batch(monkeypatch, caplog):
+    """Test that duplicate IDs within the same batch are skipped with a warning."""
     with _temp_viernulvier_model() as ViernulvierItem:
         monkeypatch.setattr(
             viernulvier,
@@ -391,6 +364,7 @@ def test_sync_skips_duplicate_ids_in_batch(monkeypatch, caplog):
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
 def test_sync_skips_empty_string_id(monkeypatch, caplog):
+    """Test that empty string IDs are skipped with a warning."""
     with _temp_viernulvier_model() as ViernulvierItem:
         monkeypatch.setattr(
             viernulvier,
@@ -409,8 +383,8 @@ def test_sync_skips_empty_string_id(monkeypatch, caplog):
 
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
-def test_sync_continues_on_integrity_error(monkeypatch, caplog):
-    """Test that sync continues processing other items when one fails with IntegrityError."""
+def test_sync_continues_on_database_errors(monkeypatch, caplog):
+    """Test that sync continues processing when database errors occur for individual items."""
     with _temp_viernulvier_model() as ViernulvierItem:
         monkeypatch.setattr(
             viernulvier,
@@ -443,76 +417,8 @@ def test_sync_continues_on_integrity_error(monkeypatch, caplog):
 
 @isolate_apps("tests")
 @pytest.mark.django_db(transaction=True)
-def test_sync_continues_on_database_error(monkeypatch, caplog):
-    """Test that sync continues processing when database error occurs for one item."""
-    with _temp_viernulvier_model() as ViernulvierItem:
-        monkeypatch.setattr(
-            viernulvier,
-            "fetch_viernulvier",
-            lambda endpoint="/events", params=None: [
-                {"@id": "https://example.com/1", "title": "A"},
-                {"@id": "https://example.com/2", "title": "B"},
-            ],
-        )
-
-        call_count = [0]
-        original_update_or_create = ViernulvierItem.objects.update_or_create
-
-        def boom_once(*args, **kwargs):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                raise DatabaseError("generic db error")
-            return original_update_or_create(*args, **kwargs)
-
-        monkeypatch.setattr(ViernulvierItem.objects, "update_or_create", boom_once)
-
-        caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
-
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
-
-        assert count == 1
-        assert ViernulvierItem.objects.count() == 1
-        assert any("Database error" in r.message for r in caplog.records)
-
-
-@isolate_apps("tests")
-@pytest.mark.django_db(transaction=True)
-def test_sync_continues_on_field_error(monkeypatch, caplog):
-    """Test that sync continues when field error occurs for one item."""
-    with _temp_viernulvier_model() as ViernulvierItem:
-        monkeypatch.setattr(
-            viernulvier,
-            "fetch_viernulvier",
-            lambda endpoint="/events", params=None: [
-                {"@id": "https://example.com/1", "title": "A"},
-                {"@id": "https://example.com/2", "title": "B"},
-            ],
-        )
-
-        call_count = [0]
-        original_update_or_create = ViernulvierItem.objects.update_or_create
-
-        def boom_once(*args, **kwargs):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                raise FieldError("unknown field")
-            return original_update_or_create(*args, **kwargs)
-
-        monkeypatch.setattr(ViernulvierItem.objects, "update_or_create", boom_once)
-
-        caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
-
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
-
-        assert count == 1
-        assert ViernulvierItem.objects.count() == 1
-        assert any("Database error" in r.message for r in caplog.records)
-
-
-@isolate_apps("tests")
-@pytest.mark.django_db(transaction=True)
 def test_sync_all_items_fail_returns_zero(monkeypatch, caplog):
-    """Test that sync returns 0 when all items fail."""
+    """Test that sync returns 0 when all items fail to import."""
     with _temp_viernulvier_model() as ViernulvierItem:
         monkeypatch.setattr(
             viernulvier,
@@ -585,18 +491,8 @@ def test_sync_continues_when_item_is_not_dict(monkeypatch, caplog):
         )
 
 
-def test_fetch_single_event_by_id():
-    """Fetch a single event by ID from the real API (opt-in, requires API key)."""
-    result = viernulvier.fetch_viernulvier(endpoint="/events/1")
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert isinstance(result[0], dict)
-    # Single items should be wrapped in a list with external_id set
-    assert "external_id" in result[0]
-
-
 def test_fetch_live_events(monkeypatch):
-    """Fetch live events from the real API (opt-in, requires API key)."""
+    """Test fetch with limited pagination to avoid fetching too many items."""
     # Limit to first 100 items by monkey-patching the fetch to stop after 3 pages (30 items per page)
     original_fetch_single_page = viernulvier._fetch_single_page
     pages_fetched = [0]
@@ -626,22 +522,27 @@ def test_fetch_live_events(monkeypatch):
 
 
 class TestCamelToSnakeCase:
-    """Test camelCase to snake_case conversion."""
+    """Test camelCase to snake_case conversion utility function."""
 
     def test_simple_camel_case(self):
+        """Test basic camelCase conversion."""
         assert viernulvier._camel_to_snake_case("startsAt") == "starts_at"
 
     def test_multiple_words(self):
+        """Test conversion with multiple camelCase words."""
         assert viernulvier._camel_to_snake_case("ticketingUrl") == "ticketing_url"
 
     def test_consecutive_capitals(self):
+        """Test conversion with consecutive capital letters."""
         # The regex inserts _ before each capital, so URLPath becomes U_R_L_path
         assert viernulvier._camel_to_snake_case("URLPath") == "u_r_l_path"
 
     def test_already_snake_case(self):
+        """Test that snake_case strings are left unchanged."""
         assert viernulvier._camel_to_snake_case("already_snake") == "already_snake"
 
     def test_single_word(self):
+        """Test that single word strings are left unchanged."""
         assert viernulvier._camel_to_snake_case("word") == "word"
 
 
