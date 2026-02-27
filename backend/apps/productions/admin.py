@@ -30,7 +30,7 @@ class ProductionGenreInline(admin.TabularInline):
 
     model = ProductionGenre
     extra = 1
-    # autocomplete_fields = ("genre",) TODO if model implemented, add this
+    autocomplete_fields = ("genre",)
 
 
 class ProductionTagInline(admin.TabularInline):
@@ -112,7 +112,7 @@ class ProductionAdmin(BaseAdmin):
     autocomplete_fields = (
         "uit_database_theme",
         "uit_database_type",
-        #"media_gallery", TODO if model implemented, add this
+        "media_gallery"
     )
 
     inlines = [
@@ -179,7 +179,7 @@ class ProductionGenreAdmin(BaseAdmin):
 
     autocomplete_fields = (
         "production",
-        # "genre", TODO if model implemented, add this
+        "genre"
     )
 
 

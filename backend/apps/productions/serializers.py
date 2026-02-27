@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.tags.serializers import TagSerializer
-#from apps.genres.serializers import GenreSerializer TODO import
+from apps.genres.serializers import GenreSerializer
 from .models import Production, UitDatabaseTheme, UitDatabaseType
 
 
@@ -61,16 +61,15 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         to avoid additional database queries.
         """
 
-        # production_genres = getattr(obj, "prefetched_production_genres", None)
+        production_genres = getattr(obj, "prefetched_production_genres", None)
 
-        # if production_genres is not None:
-        #     genres = [pg.genre for pg in production_genres]
-        # else:
-        #     # Fallback (will trigger query)
-        #     genres = obj.genres.all().order_by("productiongenre__position")
+        if production_genres is not None:
+            genres = [pg.genre for pg in production_genres]
+        else:
+            # Fallback (will trigger query)
+            genres = obj.genres.all().order_by("productiongenre__position")
 
-        # return GenreSerializer(genres, many=True).data TODO add
-        return None
+        return GenreSerializer(genres, many=True).data
 
 
     def get_title(self, obj):
