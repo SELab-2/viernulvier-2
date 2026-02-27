@@ -585,10 +585,37 @@ def test_sync_continues_when_item_is_not_dict(monkeypatch, caplog):
         )
 
 
-def test_fetch_live_events():
+def test_fetch_single_event_by_id():
+    """Fetch a single event by ID from the real API (opt-in, requires API key)."""
+    result = viernulvier.fetch_viernulvier(endpoint="/events/1")
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert isinstance(result[0], dict)
+    # Single items should be wrapped in a list with external_id set
+    assert "external_id" in result[0]
+
+
+def test_fetch_live_events(monkeypatch):
     """Fetch live events from the real API (opt-in, requires API key)."""
+    # Limit to first 100 items by monkey-patching the fetch to stop after 3 pages (30 items per page)
+    original_fetch_single_page = viernulvier._fetch_single_page
+    pages_fetched = [0]
+
+    def limited_fetch_single_page(url):
+        pages_fetched[0] += 1
+        if pages_fetched[0] > 3:  # 3 pages * 30+ items
+            # Return a response without a "next" link to stop pagination
+            data = original_fetch_single_page(url)
+            if isinstance(data, dict) and "view" in data:
+                data["view"] = {k: v for k, v in data["view"].items() if k != "next"}
+            return data
+        return original_fetch_single_page(url)
+
+    monkeypatch.setattr(viernulvier, "_fetch_single_page", limited_fetch_single_page)
+
     result = viernulvier.fetch_viernulvier(endpoint="/events")
     assert isinstance(result, list)
+    assert len(result) <= 150  # ~3 pages * ~40-50 items per page max
     if result:
         assert all(isinstance(item, dict) for item in result)
 

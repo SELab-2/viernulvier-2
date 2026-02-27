@@ -100,32 +100,22 @@ def _normalize_items(items: Sequence[Any]) -> List[Any]:
     return normalized
 
 
-def fetch_viernulvier(endpoint: str = DEFAULT_ENDPOINT) -> List[Any]:
-    """Fetch items from the Viernulvier JSON-LD API endpoint.
-
-    The endpoint must be a relative API path. The response is expected to be
-    JSON-LD, either a collection with a "member" field or a single item with
-    an "@context". JSON-LD error payloads are detected and surfaced.
+def _fetch_single_page(url: str) -> Dict[str, Any]:
+    """Fetch a single page from the Viernulvier API.
 
     Args:
-        endpoint: Relative API path (e.g., "/events"). Absolute URLs are rejected.
+        url: Full URL to fetch (absolute).
 
     Returns:
-        A list of items from the endpoint, normalized to include external_id when
-        @id is present.
+        Parsed JSON response as a dict.
 
     Raises:
-        ScraperError: On missing API key, request failures, invalid JSON, JSON-LD
-            error payloads, or unexpected payload shapes.
+        ScraperError: On request failures, invalid JSON, or JSON-LD error payloads.
 
     Side Effects:
         Performs an HTTP GET request to the Viernulvier API.
     """
-    parsed = urlparse(endpoint)
-    if parsed.scheme or parsed.netloc:
-        raise ScraperError(f"endpoint must be a relative path, got: {endpoint!r}")
-    url = urljoin(BASE_URL + "/", endpoint.lstrip("/"))
-    logger.debug("Fetching Viernulvier endpoint: %s", url)
+    logger.debug("Fetching Viernulvier page: %s", url)
     try:
         response = requests.get(url, headers=_build_request_headers(), timeout=DEFAULT_TIMEOUT)
     except requests.RequestException as exc:
@@ -154,20 +144,77 @@ def fetch_viernulvier(endpoint: str = DEFAULT_ENDPOINT) -> List[Any]:
             logger.error(error_msg)
             raise ScraperError(error_msg)
 
-    # Handle JSON-LD @graph member extraction
-    if isinstance(data, dict):
-        if "member" in data:
-            return _normalize_items(data["member"])
-        # For other dict responses without 'member', wrap in a list
-        if "@context" in data:
-            # This is likely a single JSON-LD item, wrap it
-            return _normalize_items([data])
+    return data
 
-    # Handle list responses
-    if isinstance(data, list):
-        return _normalize_items(data)
 
-    raise ScraperError("Unexpected Viernulvier API payload")
+def fetch_viernulvier(endpoint: str = DEFAULT_ENDPOINT) -> List[Any]:
+    """Fetch items from the Viernulvier JSON-LD API endpoint.
+
+    The endpoint must be a relative API path. The response is expected to be
+    JSON-LD, either a collection with a "member" field or a single item with
+    an "@context". JSON-LD error payloads are detected and surfaced.
+
+    For paginated endpoints (those with a "view" property), this function
+    automatically fetches all pages by following the "next" link.
+
+    Args:
+        endpoint: Relative API path (e.g., "/events"). Absolute URLs are rejected.
+
+    Returns:
+        A list of items from the endpoint (all pages if paginated), normalized
+        to include external_id when @id is present.
+
+    Raises:
+        ScraperError: On missing API key, request failures, invalid JSON, JSON-LD
+            error payloads, or unexpected payload shapes.
+
+    Side Effects:
+        Performs HTTP GET requests to the Viernulvier API (possibly multiple for pagination).
+    """
+    parsed = urlparse(endpoint)
+    if parsed.scheme or parsed.netloc:
+        raise ScraperError(f"endpoint must be a relative path, got: {endpoint!r}")
+    url = urljoin(BASE_URL + "/", endpoint.lstrip("/"))
+
+    all_items: List[Any] = []
+    current_url = url
+
+    while current_url:
+        data = _fetch_single_page(current_url)
+
+        # Handle JSON-LD @graph member extraction
+        if isinstance(data, dict):
+            if "member" in data:
+                all_items.extend(_normalize_items(data["member"]))
+            elif "@context" in data:
+                # This is likely a single JSON-LD item, wrap it
+                all_items.extend(_normalize_items([data]))
+            else:
+                # Dict without @context or member is unexpected
+                raise ScraperError("Unexpected Viernulvier API payload")
+
+            # Check if there's a "next" page in the view property
+            view = data.get("view")
+            if isinstance(view, dict) and "next" in view:
+                next_url = view["next"]
+                # The next_url from the API is an absolute path like /api/v1/events?page=2
+                # Construct the full URL correctly
+                if next_url.startswith("http"):
+                    current_url = next_url
+                else:
+                    # It's a relative path, join it with the base domain
+                    current_url = urljoin("https://www.viernulvier.gent", next_url)
+            else:
+                # No more pages
+                current_url = None
+        elif isinstance(data, list):
+            # Handle list responses (non-paginated)
+            all_items.extend(_normalize_items(data))
+            current_url = None
+        else:
+            raise ScraperError("Unexpected Viernulvier API payload")
+
+    return all_items
 
 
 def _snake_case_to_camel(value: str) -> str:
@@ -317,9 +364,11 @@ def _extract_item_pk_value(model: Type[models.Model], item: Mapping[str, Any]) -
     if raw_id is None:
         raw_id = _get_item_value(item, model._meta.pk.name)
     if isinstance(raw_id, dict):
-        raw_id = raw_id.get("external_id") or raw_id.get("@id") or raw_id.get("id")
-        if raw_id is None:
+        extracted_id = raw_id.get("external_id") or raw_id.get("@id") or raw_id.get("id")
+        if extracted_id is None:
             raw_id = _get_item_value(raw_id, model._meta.pk.name)
+        else:
+            raw_id = extracted_id
     if raw_id in (None, ""):
         return None
     pk_field = model._meta.pk
@@ -387,6 +436,11 @@ def _build_model_defaults(
                 # Field doesn't exist in model, skip it silently
                 logger.debug("Skipping unknown field '%s' for model %s", key, model.__name__)
                 continue
+
+        # Skip reverse relations (e.g., ManyToOneRel) that aren't real model fields
+        if not isinstance(field, models.Field):
+            logger.debug("Skipping reverse relation '%s' for model %s", key, model.__name__)
+            continue
 
         # Skip primary key fields
         if field.primary_key:
