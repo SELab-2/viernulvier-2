@@ -161,8 +161,37 @@ REST_FRAMEWORK = {
 
 # drf-spectacular settings
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Viernulvier Archief API',
-    'DESCRIPTION': 'API documentation for the Viernulvier Archief project.',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    "TITLE": "Viernulvier Archive API",
+    "DESCRIPTION": """
+        The Viernulvier Archive API provides structured access to productions,
+        events, media assets, locations, genres, tags, and pricing data.
+
+        Authentication determines access level:
+        - Public API key → read-only access
+        - Internal API key → full CRUD access
+
+        All endpoints return JSON responses.
+    """,
+    "VERSION": "1.0.0",
+    "CONTACT": { # TODO change this
+        'name': 'Support Team',
+        'url': 'https://www.viernulvier.gent/',
+        "email": "info@viernulvier.gent",
+    },
+    "LICENSE": {
+        "name": "MIT License",
+    },
+    "SCHEMA_PATH_PREFIX": r'/api/',
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "TAGS": [
+        {"name": "Productions", "description": "Production management and translations."},
+        {"name": "Events", "description": "Event instances and pricing information."},
+        {"name": "Media Library", "description": "Media galleries, items and crops."},
+        {"name": "Locations", "description": "Locations, halls and spaces."},
+        {"name": "Genres", "description": "Genre taxonomy and usage types."},
+        {"name": "Tags", "description": "Tag management and production tagging."},
+        {"name": "Pricing", "description": "Price ranks and price structures."},
+        {"name": "Languages", "description": "Supported languages."},
+    ],
 }
