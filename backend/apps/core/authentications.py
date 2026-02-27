@@ -32,7 +32,7 @@ class ApiKeyAuthentication(BaseAuthentication):
             raise AuthenticationFailed("Invalid Authorization header format.")
 
         try:
-            key = auth[1].decode('utf-8')
+            key = auth[1].decode('utf-8', errors='replace')
         except UnicodeDecodeError:
             raise AuthenticationFailed("Invalid characters in API key.")
 
