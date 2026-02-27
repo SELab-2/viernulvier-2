@@ -167,8 +167,8 @@ SPECTACULAR_SETTINGS = {
         events, media assets, locations, genres, tags, and pricing data.
 
         Authentication determines access level:
-        - Public API key → read-only access
-        - Internal API key → full CRUD access
+        - Public API key -> read-only access
+        - Internal API key -> full CRUD access
 
         All endpoints return JSON responses.
     """,
@@ -181,7 +181,7 @@ SPECTACULAR_SETTINGS = {
     "LICENSE": {
         "name": "MIT License",
     },
-    "SCHEMA_PATH_PREFIX": r'/api/',
+    "SCHEMA_PATH_PREFIX": r'/api/v1/',
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "TAGS": [
