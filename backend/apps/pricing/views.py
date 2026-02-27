@@ -1,6 +1,4 @@
 from django.db.models import Prefetch
-from rest_framework import mixins
-from rest_framework.viewsets import ReadOnlyModelViewSet
 from apps.core.views import ApiModelViewSet
 from apps.pricing.models import (
     Price,

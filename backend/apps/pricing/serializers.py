@@ -23,18 +23,6 @@ class PriceSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "description"]
 
-    def get_type(self, obj):
-        """Retrieve the price's type in the requested language (if given)."""
-        return self.get_translated_field(obj, "type")
-    
-    def get_visibility(self, obj):
-        """Retrieve the price's visibility in the requested language (if given)."""
-        return self.get_translated_field(obj, "visibility")
-    
-    def get_membership(self, obj):
-        """Retrieve the membership corresponding to the price in the requested language (if given)."""
-        return self.get_translated_field(obj, "membership")
-
     def get_description(self, obj):
         """Retrieve the price's description in the requested language (if given)."""
         return self.get_translated_field(obj, "description")
