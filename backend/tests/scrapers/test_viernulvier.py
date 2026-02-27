@@ -497,15 +497,15 @@ def test_fetch_live_events(monkeypatch):
     original_fetch_single_page = viernulvier._fetch_single_page
     pages_fetched = [0]
 
-    def limited_fetch_single_page(url, params=None):
+    def limited_fetch_single_page(url):
         pages_fetched[0] += 1
         if pages_fetched[0] > 3:  # 3 pages * 30+ items
             # Return a response without a "next" link to stop pagination
-            data = original_fetch_single_page(url, params=params)
+            data = original_fetch_single_page(url)
             if isinstance(data, dict) and "view" in data:
                 data["view"] = {k: v for k, v in data["view"].items() if k != "next"}
             return data
-        return original_fetch_single_page(url, params=params)
+        return original_fetch_single_page(url)
 
     monkeypatch.setattr(viernulvier, "_fetch_single_page", limited_fetch_single_page)
 
@@ -651,247 +651,6 @@ class TestFlexibleFieldMapping:
         assert "amount" in defaults
 
 
-# ============================================================================
-# Tests for Query Parameter Support (createdAt, updatedAt filtering)
-# ============================================================================
-
-
-def test_fetch_accepts_query_params(monkeypatch):
-    """Test that fetch_viernulvier accepts optional query parameters."""
-    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
-
-    captured_params = {}
-
-    def fake_get(url, headers, params=None, timeout=None):
-        captured_params["params"] = params
-        response = Mock(ok=True, status_code=200)
-        response.json.return_value = {"member": []}
-        return response
-
-    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
-
-    viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"createdAt[after]": "2024-01-01T00:00:00Z"}
-    )
-
-    assert captured_params["params"] == {"createdAt[after]": "2024-01-01T00:00:00Z"}
-
-
-def test_fetch_params_applied_to_initial_request_only(monkeypatch):
-    """Test that query params are only applied to the first request, not pagination."""
-    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
-
-    request_count = [0]
-    captured_params_list = []
-
-    def fake_get(url, headers, params=None, timeout=None):
-        request_count[0] += 1
-        captured_params_list.append(params)
-        response = Mock(ok=True, status_code=200)
-
-        if request_count[0] == 1:
-            # First response with pagination
-            response.json.return_value = {
-                "@context": "https://example.com/context.jsonld",
-                "member": [{"@id": "https://example.com/1", "title": "Event A"}],
-                "view": {"next": "/api/v1/events?page=2"},
-            }
-        else:
-            # Paginated response (next)
-            response.json.return_value = {
-                "@context": "https://example.com/context.jsonld",
-                "member": [{"@id": "https://example.com/2", "title": "Event B"}],
-            }
-
-        return response
-
-    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
-
-    result = viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"createdAt[after]": "2024-01-01T00:00:00Z"}
-    )
-
-    assert len(result) == 2
-    # First request should have params
-    assert captured_params_list[0] == {"createdAt[after]": "2024-01-01T00:00:00Z"}
-    # Second request (pagination) should not have params
-    assert captured_params_list[1] is None
-
-
-def test_fetch_with_multiple_query_params(monkeypatch):
-    """Test that multiple query parameters are passed correctly."""
-    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
-
-    captured_params = {}
-
-    def fake_get(url, headers, params=None, timeout=None):
-        captured_params["params"] = params
-        response = Mock(ok=True, status_code=200)
-        response.json.return_value = {"member": []}
-        return response
-
-    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
-
-    params = {
-        "createdAt[after]": "2024-01-01T00:00:00Z",
-        "updatedAt[before]": "2024-12-31T23:59:59Z",
-    }
-
-    viernulvier.fetch_viernulvier(endpoint="/events", params=params)
-
-    assert captured_params["params"] == params
-
-
-def test_fetch_without_params_works_as_before(monkeypatch):
-    """Test backward compatibility: fetch works without query parameters."""
-    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
-
-    captured_params = {}
-
-    def fake_get(url, headers, params=None, timeout=None):
-        captured_params["params"] = params
-        response = Mock(ok=True, status_code=200)
-        response.json.return_value = {"member": [{"@id": "https://example.com/1"}]}
-        return response
-
-    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
-
-    result = viernulvier.fetch_viernulvier(endpoint="/events")
-
-    assert len(result) == 1
-    assert captured_params["params"] is None
-
-
-@isolate_apps("tests")
-@pytest.mark.django_db(transaction=True)
-def test_sync_passes_params_to_fetch(monkeypatch):
-    """Test that sync_viernulvier passes query parameters to fetch_viernulvier."""
-    with _temp_viernulvier_model() as ViernulvierItem:
-        captured_call_args = {}
-
-        original_fetch = viernulvier.fetch_viernulvier
-
-        def mock_fetch(endpoint=None, params=None):
-            captured_call_args["endpoint"] = endpoint
-            captured_call_args["params"] = params
-            return [{"@id": "https://example.com/1", "title": "Item"}]
-
-        monkeypatch.setattr(viernulvier, "fetch_viernulvier", mock_fetch)
-
-        params = {"createdAt[after]": "2024-01-01T00:00:00Z"}
-        viernulvier.sync_viernulvier(
-            ViernulvierItem, endpoint="/events", params=params
-        )
-
-        assert captured_call_args["endpoint"] == "/events"
-        assert captured_call_args["params"] == params
-
-
-@isolate_apps("tests")
-@pytest.mark.django_db(transaction=True)
-def test_sync_with_timestamp_filtering(monkeypatch):
-    """Test end-to-end sync with timestamp filtering parameters."""
-    with _temp_viernulvier_model() as ViernulvierItem:
-        monkeypatch.setattr(
-            viernulvier,
-            "fetch_viernulvier",
-            lambda endpoint="/events", params=None: [
-                {"@id": "https://example.com/recent", "title": "Recent Event"},
-            ],
-        )
-
-        params = {"updatedAt[after]": "2024-06-01T00:00:00Z"}
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, endpoint="/events", params=params
-        )
-
-        assert count == 1
-        assert ViernulvierItem.objects.count() == 1
-
-
-def test_fetch_params_none_by_default(monkeypatch):
-    """Test that params parameter defaults to None."""
-    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
-
-    captured_params = {}
-
-    def fake_get(url, headers, params=None, timeout=None):
-        captured_params["params"] = params
-        response = Mock(ok=True, status_code=200)
-        response.json.return_value = {"member": []}
-        return response
-
-    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
-
-    # Call without params argument
-    viernulvier.fetch_viernulvier(endpoint="/events")
-
-    assert captured_params["params"] is None
-
-
-def test_fetch_with_empty_params_dict(monkeypatch):
-    """Test that an empty params dict is passed as-is."""
-    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
-
-    captured_params = {}
-
-    def fake_get(url, headers, params=None, timeout=None):
-        captured_params["params"] = params
-        response = Mock(ok=True, status_code=200)
-        response.json.return_value = {"member": []}
-        return response
-
-    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
-
-    # Call with empty params dict
-    viernulvier.fetch_viernulvier(endpoint="/events", params={})
-
-    # Empty dict should be passed
-    assert captured_params["params"] == {}
-
-
-def test_fetch_preserves_timestamp_format(monkeypatch):
-    """Test that timestamp query parameters preserve ISO 8601 format."""
-    monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
-
-    captured_params = {}
-
-    def fake_get(url, headers, params=None, timeout=None):
-        captured_params["params"] = params
-        response = Mock(ok=True, status_code=200)
-        response.json.return_value = {"member": []}
-        return response
-
-    monkeypatch.setattr(viernulvier.requests, "get", fake_get)
-
-    iso_timestamp = "2024-12-25T10:30:45Z"
-    viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"createdAt[after]": iso_timestamp}
-    )
-
-    assert captured_params["params"]["createdAt[after]"] == iso_timestamp
-
-
-@isolate_apps("tests")
-@pytest.mark.django_db(transaction=True)
-def test_sync_without_params_still_works(monkeypatch):
-    """Test backward compatibility: sync without params parameter."""
-    with _temp_viernulvier_model() as ViernulvierItem:
-        monkeypatch.setattr(
-            viernulvier,
-            "fetch_viernulvier",
-            lambda endpoint="/events", params=None: [
-                {"@id": "https://example.com/1", "title": "Item"},
-            ],
-        )
-
-        # Call sync without params argument
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
-
-        assert count == 1
-        assert ViernulvierItem.objects.count() == 1
-
-
 # =====================================================
 # ImportLog Integration Tests
 # =====================================================
@@ -942,21 +701,17 @@ def test_sync_creates_import_log_with_params_in_source(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events", params=None: [
+            lambda endpoint="/events": [
                 {"@id": "https://example.com/1", "title": "Event A"},
             ],
         )
 
-        params = {"createdAt[after]": "2024-01-01T00:00:00Z", "page": "1"}
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events", params=params)
+        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
 
         assert count == 1
 
         log = ImportLog.objects.first()
-        assert "viernulvier:/events?" in log.source
-        # Params should be sorted
-        assert "createdAt[after]=2024-01-01T00:00:00Z" in log.source
-        assert "page=1" in log.source
+        assert "viernulvier:/events" in log.source
 
 
 @isolate_apps("tests")
