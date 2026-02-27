@@ -10,12 +10,12 @@ class Price(BaseModel):
     type = models.CharField(
         max_length=50, 
         db_comment="Price type/category."
-    ) # TODO: maybe define an enum for a limited set of price ranks
+    )
 
     visibility = models.CharField(
         max_length=50,
         db_comment="Visibility of the price.", 
-    ) # TODO: maybe define an enum for a limited set of visibility modes
+    )
 
     membership = models.CharField(
         max_length=50,
@@ -39,7 +39,7 @@ class Price(BaseModel):
     step = models.IntegerField(
         null=True,
         blank=True,
-        validators=[MinValueValidator(1)], # TODO: determine whether minimal/maximal validator is actually needed
+        validators=[MinValueValidator(1)],
         db_comment="Step size for variable pricing (if applicable).",
     )
 
@@ -87,7 +87,7 @@ class PriceTranslation(BaseModel):
         Language,
         on_delete=models.CASCADE,
         db_comment="The language that corresponds to the translation.",
-        related_name="translations"
+        related_name="price_translations"
     )
 
     description = models.CharField(
@@ -142,11 +142,13 @@ class PriceRankTranslation(BaseModel):
         PriceRank,
         on_delete=models.CASCADE,
         db_comment="The price rank that this is a translation of.",
+        related_name="translations"
     ) 
 
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
+        related_name="pricerank_translations",
         db_comment="The language that corresponds to the translation of the price rank.",
     ) 
 

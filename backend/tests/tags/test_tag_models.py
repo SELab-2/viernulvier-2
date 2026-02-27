@@ -98,7 +98,7 @@ class TestTagTranslation:
         language = LanguageFactory()
         TagTranslationFactory.create_batch(3, language=language)
 
-        assert language.tagTranslations.count() == 3
+        assert language.tag_translations.count() == 3
 
     def test_tag_reverse_relation(self):
         tag = TagFactory()

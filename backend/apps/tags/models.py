@@ -48,6 +48,7 @@ class Tag(BaseModel):
         db_table = "tag"
         verbose_name = "Tag"
         verbose_name_plural = "Tags"
+        ordering = ["id"]
 
     def __str__(self):
         return f"Tag of type ({self.type})"
@@ -67,7 +68,7 @@ class TagTranslation(BaseModel):
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
-        related_name="tagTranslations",
+        related_name="tag_translations",
         db_comment="The language of the translation."
     )
 
