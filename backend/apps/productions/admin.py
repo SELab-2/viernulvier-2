@@ -94,6 +94,7 @@ class ProductionAdmin(BaseAdmin):
         "performer_type",
         "uit_database_theme",
         "uit_database_type",
+        "media_gallery"
     )
 
     list_filter = (
@@ -101,6 +102,7 @@ class ProductionAdmin(BaseAdmin):
         "performer_type",
         "uit_database_theme",
         "uit_database_type",
+        "media_gallery"
     )
 
     search_fields = (
@@ -129,6 +131,7 @@ class ProductionAdmin(BaseAdmin):
         return super().get_queryset(request).select_related(
             "uit_database_theme",
             "uit_database_type",
+            "media_gallery"
         ).prefetch_related("translations")
 
 
