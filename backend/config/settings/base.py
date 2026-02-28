@@ -190,8 +190,11 @@ SPECTACULAR_SETTINGS = {
         "filter": False,
         "showRequestDuration": True,
         "persistAuthorization": True,
+        "tagsSorter": "alpha", # Sort tags alfabetically
+        "operationsSorter": "method", # Sort endpoints on HTTP method
+        "tryItOutEnabled": True,
         "docExpansion": "none", # Collapsed by default for a cleaner look (set to 'list' to expand tags and endpoints, or 'full' to expand everything)
-        "defaultModelsExpandDepth": 1, # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
+        "defaultModelsExpandDepth": 0, # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
     },
     "SECURITY": [
         {
