@@ -190,7 +190,7 @@ SPECTACULAR_SETTINGS = {
         "filter": True,
         "showRequestDuration": True,
         "persistAuthorization": True,
-        "docExpansion": "list", # Show only top-level endpoints by default (other options: 'none', 'full')
+        "docExpansion": "none", # Collapsed by default for a cleaner look (set to 'list' to expand tags and endpoints, or 'full' to expand everything)
         "defaultModelsExpandDepth": 1, # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
     },
     "SECURITY": [
@@ -211,7 +211,7 @@ SPECTACULAR_SETTINGS = {
     "TAGS": [
         {"name": "Productions", "description": "Production management and translations."},
         {"name": "Events", "description": "Event instances and pricing information."},
-        {"name": "Media Library", "description": "Media galleries, items and crops."},
+        {"name": "Media", "description": "Media galleries, items and crops."},
         {"name": "Locations", "description": "Locations, halls and spaces."},
         {"name": "Genres", "description": "Genre taxonomy and usage types."},
         {"name": "Tags", "description": "Tag management and production tagging."},
