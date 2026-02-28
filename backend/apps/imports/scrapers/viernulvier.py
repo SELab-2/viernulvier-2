@@ -324,11 +324,11 @@ def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optiona
     # Handle datetime fields
     if isinstance(field, models.DateTimeField):
         if isinstance(value, str):
-            try:
-                return parse_datetime(value)
-            except ValueError as e:
-                logger.warning("Failed to parse datetime value '%s' for field '%s'", value, field.name)
-                raise ScraperError(e) # TODO: should not throw error
+            if value.startswith("-0001"):
+                value = value[1:]
+            if value[:4] == "0000":
+                value = "1970" + value[4:]
+            return parse_datetime(value)
         return value
 
     # Handle date fields

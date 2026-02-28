@@ -1,5 +1,5 @@
 """Tests for Viernulvier scraper fetch, error handling, and persistence."""
-
+import datetime
 import logging
 from contextlib import contextmanager
 from unittest.mock import Mock
@@ -12,6 +12,7 @@ from django.db import connection, models
 from django.test.utils import isolate_apps
 
 from apps.imports.scrapers import viernulvier
+from apps.imports.scrapers.viernulvier import _convert_field_value
 
 
 def test_fetch_uses_api_key_header(monkeypatch):
@@ -550,17 +551,15 @@ class TestCamelToSnakeCase:
 class TestFlexibleFieldMapping:
     """Test that the scraper tries every API field and skips unknown ones."""
 
-    def test_throws_error_for_year_zero_date(self):
+    def test_throws_no_error_for_year_zero_date(self):
         """Should raise ScraperError if date fields have year 0000."""
         from apps.events.models import Event
 
-        item = {
-            "external_id": "/api/events/1",
-            "startsAt": "0000-01-01T00:00:00Z",
-            "production": 1,  # Assuming this is a valid foreign key
-        }
+        field = Event._meta.get_field("starts_at")
+        value = "0000-01-01T00:00:00+00:00"
+        parsed = _convert_field_value(field, value, 2)
 
-        assert raises(viernulvier.ScraperError, lambda: viernulvier._build_model_defaults(Event, item))
+        assert parsed == datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
 
     def test_throws_error_for_missing_required_fields(self):
         """Should raise ScraperError if required fields are missing."""
