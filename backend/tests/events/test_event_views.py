@@ -140,15 +140,15 @@ class TestEventViewSetList(_EventSetupMixin):
         self.assertIn("ticketing_url", item)
         self.assertIn("prices", item)
 
-    def test_list_without_auth_returns_403(self):
-        """Test case for test_list_without_auth_returns_403."""
+    def test_list_without_auth_returns_401(self):
+        """Test case for test_list_without_auth_returns_401."""
         response = self.client.get("/api/events/")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
-    def test_list_with_wrong_key_returns_401_or_403(self):
-        """Test case for test_list_with_wrong_key_returns_401_or_403."""
+    def test_list_with_wrong_key_returns_401(self):
+        """Test case for test_list_with_wrong_key_returns_401."""
         response = self.client.get("/api/events/", **wrong_headers())
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 401)
 
 
 # ---------------------------------------------------------------------------
@@ -178,15 +178,15 @@ class TestEventViewSetRetrieve(_EventSetupMixin):
         response = self.client.get("/api/events/999999/", **pub_headers())
         self.assertEqual(response.status_code, 404)
 
-    def test_retrieve_without_auth_returns_403(self):
-        """Test case for test_retrieve_without_auth_returns_403."""
+    def test_retrieve_without_auth_returns_401(self):
+        """Test case for test_retrieve_without_auth_returns_401."""
         response = self.client.get(f"/api/events/{self.e1.id}/")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
-    def test_retrieve_with_wrong_key_returns_401_or_403(self):
-        """Test case for test_retrieve_with_wrong_key_returns_401_or_403."""
+    def test_retrieve_with_wrong_key_returns_401(self):
+        """Test case for test_retrieve_with_wrong_key_returns_401."""
         response = self.client.get(f"/api/events/{self.e1.id}/", **wrong_headers())
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 401)
 
 
 # ---------------------------------------------------------------------------
@@ -228,8 +228,8 @@ class TestEventViewSetCreate(_EventSetupMixin):
         )
         self.assertTrue(Event.objects.filter(ticketing_url="https://example.com/new").exists())
 
-    def test_create_with_public_key_returns_401_or_403(self):
-        """Test case for test_create_with_public_key_returns_401_or_403."""
+    def test_create_with_public_key_returns_403(self):
+        """Test case for test_create_with_public_key_returns_403."""
         now = timezone.now()
         response = self.client.post(
             "/api/events/",
@@ -243,10 +243,10 @@ class TestEventViewSetCreate(_EventSetupMixin):
             format="json",
             **pub_headers(),
         )
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 403)
 
-    def test_create_without_auth_returns_403(self):
-        """Test case for test_create_without_auth_returns_403."""
+    def test_create_without_auth_returns_401(self):
+        """Test case for test_create_without_auth_returns_401."""
         now = timezone.now()
         response = self.client.post(
             "/api/events/",
@@ -259,10 +259,10 @@ class TestEventViewSetCreate(_EventSetupMixin):
             },
             format="json",
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
-    def test_create_with_wrong_key_returns_401_or_403(self):
-        """Test case for test_create_with_wrong_key_returns_401_or_403."""
+    def test_create_with_wrong_key_returns_401(self):
+        """Test case for test_create_with_wrong_key_returns_401."""
         now = timezone.now()
         response = self.client.post(
             "/api/events/",
@@ -276,7 +276,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
             format="json",
             **wrong_headers(),
         )
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 401)
 
     def test_create_missing_required_field_returns_400(self):
         """Test case for test_create_missing_required_field_returns_400."""
@@ -335,8 +335,8 @@ class TestEventViewSetUpdate(_EventSetupMixin):
         self.e1.refresh_from_db()
         self.assertEqual(self.e1.ticketing_url, "https://example.com/updated")
 
-    def test_put_with_public_key_returns_401_or_403(self):
-        """Test case for test_put_with_public_key_returns_401_or_403."""
+    def test_put_with_public_key_returns_403(self):
+        """Test case for test_put_with_public_key_returns_403."""
         now = timezone.now()
         response = self.client.put(
             f"/api/events/{self.e1.id}/",
@@ -350,7 +350,7 @@ class TestEventViewSetUpdate(_EventSetupMixin):
             format="json",
             **pub_headers(),
         )
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 403)
 
     def test_put_nonexistent_returns_404(self):
         """Test case for test_put_nonexistent_returns_404."""
@@ -396,34 +396,34 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
         self.e1.refresh_from_db()
         self.assertEqual(self.e1.ticketing_url, "https://example.com/patched")
 
-    def test_patch_with_public_key_returns_401_or_403(self):
-        """Test case for test_patch_with_public_key_returns_401_or_403."""
+    def test_patch_with_public_key_returns_403(self):
+        """Test case for test_patch_with_public_key_returns_403."""
         response = self.client.patch(
             f"/api/events/{self.e1.id}/",
             {"ticketing_url": "https://example.com/patched"},
             format="json",
             **pub_headers(),
         )
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 403)
 
-    def test_patch_without_auth_returns_403(self):
-        """Test case for test_patch_without_auth_returns_403."""
+    def test_patch_without_auth_returns_401(self):
+        """Test case for test_patch_without_auth_returns_401."""
         response = self.client.patch(
             f"/api/events/{self.e1.id}/",
             {"ticketing_url": "https://example.com/patched"},
             format="json",
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
-    def test_patch_with_wrong_key_returns_401_or_403(self):
-        """Test case for test_patch_with_wrong_key_returns_401_or_403."""
+    def test_patch_with_wrong_key_returns_401(self):
+        """Test case for test_patch_with_wrong_key_returns_401."""
         response = self.client.patch(
             f"/api/events/{self.e1.id}/",
             {"ticketing_url": "https://example.com/patched"},
             format="json",
             **wrong_headers(),
         )
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 401)
 
 
 # ---------------------------------------------------------------------------
@@ -441,15 +441,15 @@ class TestEventViewSetDelete(_EventSetupMixin):
         self.client.delete(f"/api/events/{self.e1.id}/", **int_headers())
         self.assertFalse(Event.objects.filter(id=self.e1.id).exists())
 
-    def test_delete_with_public_key_returns_401_or_403(self):
-        """Test case for test_delete_with_public_key_returns_401_or_403."""
+    def test_delete_with_public_key_returns_403(self):
+        """Test case for test_delete_with_public_key_returns_403."""
         response = self.client.delete(f"/api/events/{self.e1.id}/", **pub_headers())
-        self.assertIn(response.status_code, [401, 403])
-
-    def test_delete_without_auth_returns_403(self):
-        """Test case for test_delete_without_auth_returns_403."""
-        response = self.client.delete(f"/api/events/{self.e1.id}/")
         self.assertEqual(response.status_code, 403)
+
+    def test_delete_without_auth_returns_401(self):
+        """Test case for test_delete_without_auth_returns_401."""
+        response = self.client.delete(f"/api/events/{self.e1.id}/")
+        self.assertEqual(response.status_code, 401)
 
     def test_delete_nonexistent_returns_404(self):
         """Test case for test_delete_nonexistent_returns_404."""
