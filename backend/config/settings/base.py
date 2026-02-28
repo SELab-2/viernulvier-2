@@ -158,13 +158,9 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
     "DEFAULT_AUTHENTICATION_CLASSES": ["apps.core.authentications.ApiKeyAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.ApiKeyPermission"],
-    'DEFAULT_THROTTLE_CLASSES': [
-        'apps.core.throttles.IPMinuteThrottle',
-        'apps.core.throttles.IPHourThrottle',
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'ip_minute': '5/minute',
-        'ip_hour': '500/hour',
+    "DEFAULT_THROTTLE_CLASSES": ["apps.core.throttles.PublicKeyThrottle"],
+    "DEFAULT_THROTTLE_RATES": {
+        "public": "1000/day",
     },
 }
 

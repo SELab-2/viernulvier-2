@@ -1,25 +1,44 @@
-"""
-Custom throttling classes for the API.
-"""
+import hashlib
 from rest_framework.throttling import SimpleRateThrottle
 
 
-class BaseIPThrottle(SimpleRateThrottle):
-    """Base class for IP-based throttling."""
+class PublicKeyThrottle(SimpleRateThrottle):
+    """
+    Rate limiting for the shared public API key, differentiated per client.
+
+    Uses DRF's built-in get_ident() for IP resolution (handles
+    X-Forwarded-For and REMOTE_ADDR automatically), combined with the
+    User-Agent header to distinguish clients sharing the same IP.
+    """
+
+    scope = "public"
 
     def get_cache_key(self, request, view):
-        ident = self.get_ident(request)
+        if request.auth != "public":
+            return None
+
+        ip = self.get_ident(request)
+        ua = request.META.get("HTTP_USER_AGENT", "")
+
+        # Hash the combination so the cache key has a fixed length (also avoids leaking raw IPs and UAs into the cache).
+        fingerprint = hashlib.sha256(f"{ip}|{ua}".encode()).hexdigest()
+
         return self.cache_format % {
             "scope": self.scope,
-            "ident": ident,
+            "ident": fingerprint,
         }
 
+class InternalKeyThrottle(SimpleRateThrottle):
+    """No-op throttle for the internal API key."""
+    scope = "internal"
+    def get_cache_key(self, request, view):
+        return None
+    
+    
+class PublicKeyMinuteThrottle(PublicKeyThrottle):
+    """Throttling for the public API key, limited to x requests per minute per client."""
+    scope = "public_min"
 
-class IPMinuteThrottle(BaseIPThrottle):
-    """Throttle based on client IP address - per minute burst limit."""
-    scope = "ip_minute"
-
-
-class IPHourThrottle(BaseIPThrottle):
-    """Throttle based on client IP address - per hour sustained limit."""
-    scope = "ip_hour"
+class PublicKeyHourThrottle(PublicKeyThrottle):
+    """Throttling for the public API key, limited to x requests per hour per client."""
+    scope = "public_hour"
