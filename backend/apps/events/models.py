@@ -3,7 +3,7 @@ Models for the Events app.
 
 Events are scheduled occurrences of productions:
 
-    Event  ->  EventPrice
+    Event  ->  Production
 
 - An **Event** links a :class:`~apps.productions.models.Production` to a
   :class:`~apps.locations.models.Hall` and defines the time window during
