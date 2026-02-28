@@ -1,5 +1,5 @@
 from django.db import models
-from apps.core.model import BaseModel
+from apps.core.models import BaseModel
 from django.db.models import Q, F
 
 # Create your models here.

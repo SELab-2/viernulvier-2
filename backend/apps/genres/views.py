@@ -1,29 +1,46 @@
+"""
+ViewSets for the Genre app.
+
+Schema annotations are kept in schemas.py so this file stays focused
+on routing and queryset configuration only.
+"""
+
 from apps.core.views import ApiModelViewSet
+
 from .models import Genre, GenreUseAs
+from .schemas import genre_schema, genre_use_as_schema, extend_schema
 from .serializers import GenreSerializer, GenreUseAsSerializer
 
+_TAG = "Genres"  # Reusable tag for all genre-related endpoints in the OpenAPI docs
 
+@extend_schema(tags=[_TAG])
+@genre_use_as_schema
 class GenreUseAsViewSet(ApiModelViewSet):
-	"""
-	API endpoint for managing GenreUseAs entries.
+    """
+    CRUD endpoints for GenreUseAs objects.
 
-	Access rules:
-		- Public API key -> read-only
-		- Internal API key -> full CRUD
-	"""
+    A GenreUseAs defines the role a genre plays in the system,
+    for example as a production classification or as a tag.
+    """
 
-	queryset = GenreUseAs.objects.all()
-	serializer_class = GenreUseAsSerializer
+    queryset = GenreUseAs.objects.all()
+    serializer_class = GenreUseAsSerializer
 
 
+@extend_schema(tags=[_TAG])
+@genre_schema
 class GenreViewSet(ApiModelViewSet):
-	"""
-	API endpoint for managing genres.
+    """
+    CRUD endpoints for Genre objects.
 
-	Access rules:
-		- Public API key -> read-only
-		- Internal API key -> full CRUD
-	"""
+    Genres categorise productions (e.g. Theater, Festival, Book Presentation).
+    Each genre links to a usage context and supports multiple translations.
+    """
 
-	queryset = Genre.objects.select_related("use_as").prefetch_related("translations__language").all()
-	serializer_class = GenreSerializer
+    queryset = (
+        Genre.objects
+        .select_related("use_as")
+        .prefetch_related("translations__language")
+        .all()
+    )
+    serializer_class = GenreSerializer

@@ -19,7 +19,7 @@ def core_dummy_table():
 
 class TestBaseModel:
     def test_basemodel_is_abstract(self):
-        from apps.core.model import BaseModel
+        from apps.core.models import BaseModel
         assert BaseModel._meta.abstract is True
 
     def test_save_calls_full_clean(self, core_dummy_table):

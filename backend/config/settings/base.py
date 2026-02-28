@@ -158,6 +158,9 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
     "DEFAULT_AUTHENTICATION_CLASSES": ["apps.core.authentications.ApiKeyAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.ApiKeyPermission"],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ],
 }
 
 # drf-spectacular settings
@@ -186,7 +189,11 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,
         "displayOperationId": False,
-        "defaultModelsExpandDepth": 1, # Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
+        "filter": True,
+        "showRequestDuration": True,
+        "persistAuthorization": True,
+        "docExpansion": "list", # Show only top-level endpoints by default (other options: 'none', 'full')
+        "defaultModelsExpandDepth": 1, # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
     },
     "SECURITY": [
         {
@@ -198,11 +205,10 @@ SPECTACULAR_SETTINGS = {
             "ApiKeyAuth": {
                 "type": "apiKey",
                 "in": "header",
-                "scheme": "Api-Key",
                 "name": "Authorization",
                 "description": "Enter your key as: Api-Key <your_key>",
             }
-        }
+        },
     },
     "TAGS": [
         {"name": "Productions", "description": "Production management and translations."},

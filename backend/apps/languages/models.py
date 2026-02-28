@@ -1,5 +1,5 @@
 from django.db import models
-from apps.core.model import BaseModel
+from apps.core.models import BaseModel
 
 # Create your models here.
 class Language(BaseModel):

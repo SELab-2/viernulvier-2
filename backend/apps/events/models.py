@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import Q, F
-from apps.core.model import BaseModel
+from apps.core.models import BaseModel
 from apps.productions.models import Production
 from apps.locations.models import Hall
 from apps.pricing.models import PriceRank

@@ -9,7 +9,7 @@ class TranslatableSerializerMixin:
     }
     """
 
-    def get_translated_field(self, obj, field_name, related_name="translations"):
+    def get_translated_field(self, obj, field_name, related_name="translations"): # Maybe look at language code in the request header to return a single value instead of a dict? --- IGNORE ---
         """
         Converts translations into a dictionary mapping language codes to values.
         Example: {"nl": "Titel", "en": "Title"}
