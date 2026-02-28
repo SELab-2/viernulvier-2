@@ -1,16 +1,39 @@
 """
-Shared OpenAPI building blocks used across all apps.
+Shared OpenAPI building blocks for the core app.
 
-Import from here instead of redefining error responses and common
-parameters in every individual schema file.
+This module defines reusable :class:`~drf_spectacular.utils.OpenApiResponse`
+objects for the HTTP status codes that appear across multiple apps. Importing
+from here instead of re-declaring them per-app ensures that response
+descriptions stay consistent throughout the generated schema.
+
+Usage
+-----
+Import the constants you need at the top of any ``schemas.py`` file::
+
+    from apps.core.openapi import (
+        RESPONSE_400,
+        RESPONSE_401,
+        RESPONSE_403,
+        RESPONSE_404,
+        RESPONSE_204_DELETED,
+    )
+
+Then reference them in ``extend_schema`` decorators::
+
+    _MY_ACTION = extend_schema(
+        responses={
+            200: MySerializer,
+            400: RESPONSE_400,
+            401: RESPONSE_401,
+        }
+    )
 """
 
-from drf_spectacular.utils import OpenApiExample, OpenApiParameter, OpenApiResponse
-from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiResponse
 
 
 # ---------------------------------------------------------------------------
-# Reusable error responses
+# 400 Bad Request
 # ---------------------------------------------------------------------------
 
 RESPONSE_400 = OpenApiResponse(
@@ -19,6 +42,14 @@ RESPONSE_400 = OpenApiResponse(
         "The response body contains field-level error details under `errors`."
     )
 )
+"""
+Returned when the request payload does not pass serializer validation.
+Field-level messages are nested under the relevant field name.
+"""
+
+# ---------------------------------------------------------------------------
+# 401 Unauthorized
+# ---------------------------------------------------------------------------
 
 RESPONSE_401 = OpenApiResponse(
     description=(
@@ -29,6 +60,15 @@ RESPONSE_401 = OpenApiResponse(
         "```"
     )
 )
+"""
+Returned when the ``Authorization`` header is absent, malformed, or contains
+an unrecognised key. The ``WWW-Authenticate: Api-Key`` header is included
+in the response so clients know which scheme to use.
+"""
+
+# ---------------------------------------------------------------------------
+# 403 Forbidden
+# ---------------------------------------------------------------------------
 
 RESPONSE_403 = OpenApiResponse(
     description=(
@@ -36,11 +76,30 @@ RESPONSE_403 = OpenApiResponse(
         "Write operations require an **internal** key. Public keys are read-only."
     )
 )
+"""
+Returned when the key is valid but the caller's scope does not permit the
+requested action (e.g. a public key attempting a POST, PUT, PATCH, or DELETE).
+"""
+
+# ---------------------------------------------------------------------------
+# 404 Not Found
+# ---------------------------------------------------------------------------
 
 RESPONSE_404 = OpenApiResponse(
     description="**Not Found** — No resource exists with the given identifier."
 )
+"""
+Returned when the requested primary key does not match any record in the
+database.
+"""
+
+# ---------------------------------------------------------------------------
+# 204 No Content (successful deletion)
+# ---------------------------------------------------------------------------
 
 RESPONSE_204_DELETED = OpenApiResponse(
     description="**No Content** — The resource was permanently deleted."
 )
+"""
+Returned on successful ``DELETE`` requests. The response body is empty.
+"""

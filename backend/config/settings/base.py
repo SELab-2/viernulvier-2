@@ -163,8 +163,9 @@ REST_FRAMEWORK = {
 # drf-spectacular settings
 SPECTACULAR_SETTINGS = {
     "TITLE": "Viernulvier Archive API",
-    "DESCRIPTION": textwrap.dedent("""        
-        This API provides structured access to the digital archive, including productions, events, media, and locations.
+    "DESCRIPTION": textwrap.dedent("""
+        This API provides structured access to the digital archive, including
+        productions, events, media, and locations.
 
         ### Authentication
         Access is determined by your API key:
@@ -216,5 +217,6 @@ SPECTACULAR_SETTINGS = {
         {"name": "Tags", "description": "Tag management and production tagging."},
         {"name": "Pricing", "description": "Price ranks and price structures."},
         {"name": "Languages", "description": "Supported languages."},
+        {"name": "Imports", "description": "Import pipeline audit logs."},
     ],
 }
