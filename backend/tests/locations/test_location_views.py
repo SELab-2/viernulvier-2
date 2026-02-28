@@ -21,14 +21,16 @@ PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"
 
 
-def pub_headers():
-    return {"HTTP_AUTHORIZATION": f"Bearer {PUB_KEY}"}
-
 def int_headers():
-    return {"HTTP_AUTHORIZATION": f"Bearer {INT_KEY}"}
+    return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
+
+
+def pub_headers():
+    return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
+
 
 def wrong_headers():
-    return {"HTTP_AUTHORIZATION": "Bearer completely-wrong-key"}
+    return {"HTTP_AUTHORIZATION": "Api-Key completely-wrong-key"}
 
 
 # ---------------------------------------------------------------------------
@@ -107,7 +109,7 @@ class TestLocationViewSet(TestCase):
 
 	def test_list_without_auth(self):
 		response = self.client.get("/api/locations/")
-		self.assertEqual(response.status_code, 403)
+		self.assertEqual(response.status_code, 401)
 
 	def test_retrieve_public(self):
 		response = self.client.get(f"/api/locations/{self.location.id}/", **pub_headers())
@@ -116,7 +118,7 @@ class TestLocationViewSet(TestCase):
 
 	def test_retrieve_wrong_key(self):
 		response = self.client.get(f"/api/locations/{self.location.id}/", **wrong_headers())
-		self.assertIn(response.status_code, [401, 403])
+		self.assertEqual(response.status_code, 401)
 
 	def test_create_internal(self):
 		payload = {
@@ -142,7 +144,7 @@ class TestLocationViewSet(TestCase):
 			"country": "Belgium",
 		}
 		response = self.client.post("/api/locations/", payload, format="json", **pub_headers())
-		self.assertIn(response.status_code, [401, 403])
+		self.assertEqual(response.status_code, 403)
 
 	def test_update_internal(self):
 		payload = {

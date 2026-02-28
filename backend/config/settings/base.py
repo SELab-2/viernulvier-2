@@ -190,16 +190,17 @@ SPECTACULAR_SETTINGS = {
     },
     "SECURITY": [
         {
-            "BearerAuth": [],
+            "ApiKeyAuth": [],
         }
     ],
     "APPEND_COMPONENTS": {
         "securitySchemes": {
-            "BearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "API-KEY",
-                "description": "Enter your internal or public API key.",
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "scheme": "Api-Key",
+                "name": "Authorization",
+                "description": "Enter your key as: Api-Key <your_key>",
             }
         }
     },
