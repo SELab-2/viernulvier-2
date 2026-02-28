@@ -27,12 +27,12 @@ INT_KEY = "int-view-test-key"
 # Helpers
 # ---------------------------------------------------------------------------
 
-def pub_headers():
-    return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
-
-
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
+
+
+def pub_headers():
+    return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
 
 
 def wrong_headers():
@@ -87,7 +87,7 @@ class TestGenreUseAsViewSet(TestCase):
 
     def test_list_without_auth(self):
         response = self.client.get("/api/genre-use-as/")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     # retrieve
     def test_retrieve_public_key(self):
@@ -101,7 +101,7 @@ class TestGenreUseAsViewSet(TestCase):
 
     def test_retrieve_wrong_key(self):
         response = self.client.get(f"/api/genre-use-as/{self.use_as.id}/", **wrong_headers())
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 401)
 
     # create
     def test_create_internal_key(self):
@@ -121,7 +121,7 @@ class TestGenreUseAsViewSet(TestCase):
             format="json",
             **pub_headers(),
         )
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 403)
 
     def test_create_without_auth_denied(self):
         response = self.client.post(
@@ -129,7 +129,7 @@ class TestGenreUseAsViewSet(TestCase):
             {"name": "tag"},
             format="json",
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     # update
     def test_put_internal_key(self):
@@ -161,7 +161,7 @@ class TestGenreUseAsViewSet(TestCase):
             format="json",
             **pub_headers(),
         )
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 403)
 
     def test_delete_internal_key(self):
         response = self.client.delete(f"/api/genre-use-as/{self.use_as.id}/", **int_headers())
@@ -170,7 +170,7 @@ class TestGenreUseAsViewSet(TestCase):
 
     def test_delete_public_key_denied(self):
         response = self.client.delete(f"/api/genre-use-as/{self.use_as.id}/", **pub_headers())
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 403)
 
 
 # ---------------------------------------------------------------------------
@@ -207,7 +207,7 @@ class TestGenreViewSet(TestCase):
 
     def test_list_without_auth(self):
         response = self.client.get("/api/genres/")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     # retrieve
     def test_retrieve_public_key(self):
@@ -221,7 +221,7 @@ class TestGenreViewSet(TestCase):
 
     def test_retrieve_with_wrong_key(self):
         response = self.client.get(f"/api/genres/{self.genre.id}/", **wrong_headers())
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 401)
 
     # create
     def test_create_internal_key(self):
@@ -241,7 +241,7 @@ class TestGenreViewSet(TestCase):
             format="json",
             **pub_headers(),
         )
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 403)
 
     def test_create_without_auth_denied(self):
         response = self.client.post(
@@ -249,7 +249,7 @@ class TestGenreViewSet(TestCase):
             {"type": "Festival", "use_as": self.use_as.id},
             format="json",
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     # update
     def test_put_internal_key(self):
@@ -281,7 +281,7 @@ class TestGenreViewSet(TestCase):
             format="json",
             **pub_headers(),
         )
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 403)
 
     def test_put_without_auth_denied(self):
         response = self.client.put(
@@ -289,7 +289,7 @@ class TestGenreViewSet(TestCase):
             {"type": "Opera", "use_as": self.use_as.id},
             format="json",
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     # delete
     def test_delete_internal_key(self):
@@ -299,8 +299,8 @@ class TestGenreViewSet(TestCase):
 
     def test_delete_public_key_denied(self):
         response = self.client.delete(f"/api/genres/{self.genre.id}/", **pub_headers())
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 403)
 
     def test_delete_without_auth_denied(self):
         response = self.client.delete(f"/api/genres/{self.genre.id}/")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
