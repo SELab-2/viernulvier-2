@@ -101,7 +101,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
 
-    def get_short_description(self, obj: Tag):
+    def get_short_description(self, obj: Tag) -> str:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "short_description")
 
