@@ -35,14 +35,14 @@ class GenreSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """
     Represents a Genre.
 
-    The `name` field is localised: its value is resolved from the genre's
-    translation table based on the `Accept-Language` request header.
+    The `name` field contains all available translations as a dictionary,
+    for example: {"en": "Theatre", "fr": "Théâtre"}.
     """
 
     name = serializers.SerializerMethodField(
         help_text=(
-            "Localised display name resolved via the `Accept-Language` header. "
-            "Falls back to the default language when no translation is available. "
+            "Dictionary containing all available translations of the genre name, "
+            "e.g. {\"en\": \"Theatre\", \"fr\": \"Théâtre\"}. "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -66,6 +66,6 @@ class GenreSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             },
         }
 
-    def get_name(self, obj: Genre) -> str | None:
-        """Resolve the localised display name via TranslatableSerializerMixin."""
+    def get_name(self, obj: Genre) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")

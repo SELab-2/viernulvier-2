@@ -24,8 +24,10 @@ class PriceViewSet(ApiModelViewSet):
 
     A price defines a ticket category (e.g. full price, student, Cineville).
     Variable pricing is supported via the `minimum`, `maximum`, and `step`
-    fields. The localised `description` is resolved from the `Accept-Language`
-    header.
+    fields.
+
+    The `description` field returns all available translations as a
+    language-code dictionary.
 
     Uses an explicit `Prefetch` to eagerly load translations with their related
     language in a single query.
@@ -51,8 +53,10 @@ class PriceRankViewSet(ApiModelViewSet):
     CRUD endpoints for PriceRank objects.
 
     A price rank defines an ordered availability tier that controls when a
-    price level is considered sold out. The localised `description` is
-    resolved from the `Accept-Language` header.
+    price level is considered sold out.
+
+    The `description` field returns all available translations as a
+    language-code dictionary.
 
     Uses an explicit `Prefetch` to eagerly load translations with their related
     language in a single query.

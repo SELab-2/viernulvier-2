@@ -5,8 +5,9 @@ Field-level `help_text` and `extra_kwargs` are picked up automatically
 by drf-spectacular and rendered in the Swagger UI, so descriptions do
 not need to be repeated inside the schema decorators.
 
-Translated fields (`title`, `description`, `credits`, `link`) are resolved
-via `TranslatableSerializerMixin` using the `Accept-Language` request header.
+Translated fields (`title`, `description`, `credits`, `link`) return
+all available translations as language-code dictionaries
+(e.g. {"en": "Poster", "fr": "Affiche"}).
 """
 
 from rest_framework import serializers
@@ -42,44 +43,45 @@ class MediaItemCropSerializer(serializers.ModelSerializer):
 
 class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """
-    Represents a MediaItem with its localised metadata and nested crops.
+    Represents a MediaItem with its translated metadata and nested crops.
 
-    The translated fields (`title`, `description`, `credits`, `link`) are
-    resolved from the item's translation table based on the `Accept-Language`
-    request header. All translated fields are read-only — use the Media Item
-    Translation endpoints to manage them.
+    Translated fields (`title`, `description`, `credits`, `link`) return all
+    available translations as dictionaries (e.g. {"en": "Poster", "fr": "Affiche"}).
+    All translated fields are read-only — use the Media Item Translation
+    endpoints to manage them.
 
     Nested `crops` is a read-only list of all pre-rendered crop variants.
     """
 
     title = serializers.SerializerMethodField(
         help_text=(
-            "Localised title resolved via the `Accept-Language` header. "
-            "Empty string when no title has been set for the resolved language. "
+            "Dictionary containing all available translations of the title "
+            "(e.g. {\"en\": \"Poster\", \"fr\": \"Affiche\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
 
     description = serializers.SerializerMethodField(
         help_text=(
-            "Localised description resolved via the `Accept-Language` header. "
-            "Empty string when no description has been set for the resolved language. "
+            "Dictionary containing all available translations of the description "
+            "(e.g. {\"en\": \"Event poster\", \"fr\": \"Affiche de l'événement\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
 
     credits = serializers.SerializerMethodField(
         help_text=(
-            "Localised credits string resolved via the `Accept-Language` header. "
-            "Empty string when no credits have been set for the resolved language. "
+            "Dictionary containing all available translations of the credits string "
+            "(e.g. {\"en\": \"Photo by John Doe\", \"fr\": \"Photo par John Doe\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
 
     link = serializers.SerializerMethodField(
         help_text=(
-            "Localised external URL resolved via the `Accept-Language` header. "
-            "Empty string when no link has been set for the resolved language. "
+            "Dictionary containing all available translations of the external URL "
+            "(e.g. {\"en\": \"https://example.com/en\", "
+            "\"fr\": \"https://example.com/fr\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -128,20 +130,20 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
             },
         }
 
-    def get_title(self, obj: MediaItem) -> str:
-        """Resolve the localised title via TranslatableSerializerMixin."""
+    def get_title(self, obj: MediaItem) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "title")
 
-    def get_description(self, obj: MediaItem) -> str:
-        """Resolve the localised description via TranslatableSerializerMixin."""
+    def get_description(self, obj: MediaItem) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")
 
-    def get_credits(self, obj: MediaItem) -> str:
-        """Resolve the localised credits via TranslatableSerializerMixin."""
+    def get_credits(self, obj: MediaItem) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "credits")
 
-    def get_link(self, obj: MediaItem) -> str:
-        """Resolve the localised external link via TranslatableSerializerMixin."""
+    def get_link(self, obj: MediaItem) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "link")
 
 
@@ -150,8 +152,8 @@ class MediaGallerySerializer(serializers.ModelSerializer):
     Represents a MediaGallery with its nested media items.
 
     The `media_items` field is a read-only nested list of all items in the
-    gallery, ordered by `position`. Each item includes its localised metadata
-    and crop variants.
+    gallery, ordered by `position`. Each item includes its translated metadata
+    represented as language-code dictionaries and crop variants.
     """
 
     media_items = MediaItemSerializer(many=True, read_only=True)

@@ -5,8 +5,8 @@ Field-level `help_text` and `extra_kwargs` are picked up automatically
 by drf-spectacular and rendered in the Swagger UI, so descriptions do
 not need to be repeated inside the schema decorators.
 
-Translated fields (`name`, `remark`) are resolved via
-`TranslatableSerializerMixin` using the `Accept-Language` request header.
+Translated fields (`name`, `remark`) return all available translations
+as a dictionary (e.g. {"en": "Main Hall", "fr": "Grande Salle"}).
 """
 
 from rest_framework import serializers
@@ -19,14 +19,14 @@ class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixi
     """
     Represents a Location.
 
-    The `name` field is localised: its value is resolved from the location's
-    translation table based on the `Accept-Language` request header.
+    The `name` field contains all available translations as a dictionary,
+    for example: {"en": "City Hall", "fr": "Hôtel de Ville"}.
     """
 
     name = serializers.SerializerMethodField(
         help_text=(
-            "Localised display name resolved via the `Accept-Language` header. "
-            "Falls back to the default language when no translation is available. "
+            "Dictionary containing all available translations of the location name "
+            "(e.g. {\"en\": \"City Hall\", \"fr\": \"Hôtel de Ville\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -59,8 +59,8 @@ class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixi
             },
         }
 
-    def get_name(self, obj: Location) -> str | None:
-        """Resolve the localised display name via TranslatableSerializerMixin."""
+    def get_name(self, obj: Location) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
 
 
@@ -68,14 +68,14 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """
     Represents a Space.
 
-    The `name` field is localised: its value is resolved from the space's
-    translation table based on the `Accept-Language` request header.
+    The `name` field contains all available translations as a dictionary,
+    for example: {"en": "Stage A", "fr": "Scène A"}.
     """
 
     name = serializers.SerializerMethodField(
         help_text=(
-            "Localised display name resolved via the `Accept-Language` header. "
-            "Falls back to the default language when no translation is available. "
+            "Dictionary containing all available translations of the space name "
+            "(e.g. {\"en\": \"Stage A\", \"fr\": \"Scène A\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -94,8 +94,8 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             },
         }
 
-    def get_name(self, obj: Space) -> str | None:
-        """Resolve the localised display name via TranslatableSerializerMixin."""
+    def get_name(self, obj: Space) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
 
 
@@ -103,23 +103,24 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """
     Represents a Hall.
 
-    Both `name` and `remark` are localised: their values are resolved from
-    the hall's translation table based on the `Accept-Language` request header.
+    Both `name` and `remark` contain all available translations
+    as dictionaries (e.g. {"en": "Main Hall", "fr": "Grande Salle"}).
     """
 
     name = serializers.SerializerMethodField(
         help_text=(
-            "Localised display name resolved via the `Accept-Language` header. "
-            "Falls back to the default language when no translation is available. "
+            "Dictionary containing all available translations of the hall name "
+            "(e.g. {\"en\": \"Main Hall\", \"fr\": \"Grande Salle\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
 
     remark = serializers.SerializerMethodField(
         help_text=(
-            "Localised optional remark (e.g. accessibility information) resolved "
-            "via the `Accept-Language` header. `null` when no remark has been set "
-            "for the resolved language. "
+            "Dictionary containing all available translations of the optional remark "
+            "(e.g. {\"en\": \"Wheelchair accessible\", "
+            "\"fr\": \"Accessible en fauteuil roulant\"}). "
+            "`null` when no remark translations have been set. "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -147,10 +148,10 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             },
         }
 
-    def get_name(self, obj: Hall) -> str | None:
-        """Resolve the localised display name via TranslatableSerializerMixin."""
+    def get_name(self, obj: Hall) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
 
-    def get_remark(self, obj: Hall) -> str | None:
-        """Resolve the localised remark via TranslatableSerializerMixin."""
+    def get_remark(self, obj: Hall) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "remark")

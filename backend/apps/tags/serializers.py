@@ -1,13 +1,10 @@
 """
 Serializers for the Tags app.
 
-Field-level ``help_text`` and ``extra_kwargs`` are picked up automatically
-by drf-spectacular and rendered in the Swagger UI, so descriptions do not
-need to be repeated inside the schema decorators.
-
-The translatable fields on ``TagSerializer`` (``name``, ``short_description``,
-``url_title``) are resolved via ``TranslatableSerializerMixin`` using the
-``Accept-Language`` request header.
+Translated fields on ``TagSerializer`` (``name``,
+``short_description``, ``url_title``) return all available translations
+as language-code dictionaries
+(e.g. {"en": "Contemporary", "fr": "Contemporain"}).
 """
 
 from rest_framework import serializers
@@ -20,45 +17,42 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """
     Full representation of a Tag.
 
-    Translatable fields
-    -------------------
-    The following fields are resolved from the tag's translation table based
-    on the ``Accept-Language`` request header:
+    Translated fields
+    -----------------
+    The following fields return all available translations as
+    language-code dictionaries:
 
     - ``name``
     - ``short_description``
     - ``url_title``
 
-    All translatable fields are read-only. Use the **Tag Translation**
-    endpoints to manage translations.
+    All translated fields are read-only.
     """
 
     # ---------------------------------------------------------------------------
-    # Translatable fields (resolved via Accept-Language)
+    # Translatable fields
     # ---------------------------------------------------------------------------
 
     name = serializers.SerializerMethodField(
         help_text=(
-            "Localised display name of the tag resolved via the `Accept-Language` header "
-            "(e.g. `Contemporary`, `Family friendly`). "
-            "Empty string when no translation exists for the resolved language. "
+            "Dictionary of all available translations for the tag name "
+            "(e.g. {\"en\": \"Contemporary\", \"fr\": \"Contemporain\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
 
     short_description = serializers.SerializerMethodField(
         help_text=(
-            "Localised short description of the tag resolved via the `Accept-Language` header. "
-            "`null` when no description has been provided. "
+            "Dictionary of all available translations for the tag's short description "
+            "(e.g. {\"en\": \"Contemporary performing arts\", \"fr\": \"Arts du spectacle contemporain\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
 
     url_title = serializers.SerializerMethodField(
         help_text=(
-            "Localised URL-safe title of the tag resolved via the `Accept-Language` header "
-            "(e.g. `contemporary`, `family-friendly`). "
-            "Empty string when no translation exists for the resolved language. "
+            "Dictionary of all available translations for the URL-safe title "
+            "(e.g. {\"en\": \"contemporary\", \"fr\": \"contemporain\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -104,13 +98,13 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     # ---------------------------------------------------------------------------
 
     def get_name(self, obj: Tag) -> str:
-        """Resolve the localised name via TranslatableSerializerMixin."""
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
 
     def get_short_description(self, obj: Tag):
-        """Resolve the localised short description via TranslatableSerializerMixin."""
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "short_description")
 
     def get_url_title(self, obj: Tag) -> str:
-        """Resolve the localised URL title via TranslatableSerializerMixin."""
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "url_title")

@@ -94,7 +94,8 @@ _PRICE_LIST = extend_schema(
     summary="List all prices",
     description=(
         "Returns a paginated list of all **Price** objects ordered by `sort_order`.\n\n"
-        "The `description` field is localised and resolved from the `Accept-Language` header."
+        "The `description` field contains all available translations as a "
+        "language-code dictionary (e.g. {\"en\": \"Early Bird\", \"fr\": \"Prévente\"})."
     ),
     responses={
         200: PriceSerializer,
@@ -236,7 +237,8 @@ _PRICE_RANK_LIST = extend_schema(
         "Returns a paginated list of all **PriceRank** objects ordered by `position`.\n\n"
         "Price ranks define the ordered availability tiers that control when a "
         "price level is considered sold out. "
-        "The `description` field is localised and resolved from the `Accept-Language` header."
+        "The `description` field contains all available translations as a "
+        "language-code dictionary (e.g. {\"en\": \"Standard\", \"fr\": \"Standard\"})."
     ),
     responses={
         200: PriceRankSerializer,

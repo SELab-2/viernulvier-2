@@ -5,8 +5,14 @@ Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
 
 Productions are the core catalogue entity. Each production may have one
-or more events and carries translatable metadata resolved per request via
-the ``Accept-Language`` header.
+or more events and carries translatable metadata. 
+
+Translation Format
+------------------
+Metadata fields (title, description, etc.) are returned as dictionaries 
+containing all available translations (e.g., {"nl": "...", "en": "..."}).
+The 'Accept-Language' header is not used for filtering these fields, 
+allowing consumers to access all languages in a single request.
 """
 
 from django.db.models import Prefetch
@@ -29,23 +35,15 @@ class ProductionViewSet(ApiModelViewSet):
     CRUD endpoints for Production objects.
 
     A production is the central catalogue record — it groups events and
-    carries all translatable metadata (title, artist name, description, etc.).
-    Translatable fields are resolved from the ``Accept-Language`` header via
+    carries all translated metadata (title, artist name, description, etc.).
+
+    Translated fields are returned as language-code dictionaries via
     ``TranslatableSerializerMixin``.
 
     Queryset strategy
     -----------------
-    - ``select_related`` is used for single-row FK relations
-      (``uit_database_theme``, ``uit_database_type``).
-    - ``prefetch_related`` with explicit ``Prefetch`` objects is used for
-      one-to-many and many-to-many relations to avoid N+1 queries:
-
-        * ``translations__language`` — localised production metadata.
-        * ``tags`` + ``tags__translations__language`` — tag objects with their
-          own localised fields, needed by ``TagSerializer``.
-        * ``productiongenre_set`` — fetched into ``prefetched_production_genres``
-          so the serializer can return genres in the correct ``position`` order
-          without issuing an extra query per production.
+    - ``select_related`` for FK relations
+    - ``prefetch_related`` for translations, tags, and ordered genres
     """
 
     serializer_class = ProductionSerializer

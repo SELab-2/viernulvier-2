@@ -5,8 +5,9 @@ Field-level `help_text` and `extra_kwargs` are picked up automatically
 by drf-spectacular and rendered in the Swagger UI, so descriptions do
 not need to be repeated inside the schema decorators.
 
-The translated `description` field on both serializers is resolved via
-`TranslatableSerializerMixin` using the `Accept-Language` request header.
+The translated `description` field on both serializers returns all
+available translations as a language-code dictionary
+(e.g. {"en": "Full price", "fr": "Plein tarif"}).
 """
 
 from rest_framework import serializers
@@ -19,15 +20,14 @@ class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """
     Represents a Price category.
 
-    The `description` field is localised: its value is resolved from the
-    price's translation table based on the `Accept-Language` request header.
+    The `description` field contains all available translations as a
+    dictionary (e.g. {"en": "Full price", "fr": "Plein tarif"}).
     """
 
     description = serializers.SerializerMethodField(
         help_text=(
-            "Localised human-readable label resolved via the `Accept-Language` header "
-            "(e.g. `Full price`, `Student`). "
-            "Empty string when no translation is available for the resolved language. "
+            "Dictionary containing all available translations of the human-readable label "
+            "(e.g. {\"en\": \"Full price\", \"fr\": \"Plein tarif\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -83,8 +83,8 @@ class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             },
         }
 
-    def get_description(self, obj: Price) -> str:
-        """Resolve the localised description via TranslatableSerializerMixin."""
+    def get_description(self, obj: Price) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")
 
 
@@ -92,14 +92,14 @@ class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     """
     Represents a PriceRank availability tier.
 
-    The `description` field is localised: its value is resolved from the
-    price rank's translation table based on the `Accept-Language` request header.
+    The `description` field contains all available translations as a
+    dictionary (e.g. {"en": "Early Bird", "fr": "Prévente"}).
     """
 
     description = serializers.SerializerMethodField(
         help_text=(
-            "Localised human-readable label resolved via the `Accept-Language` header. "
-            "Empty string when no translation is available for the resolved language. "
+            "Dictionary containing all available translations of the label "
+            "(e.g. {\"en\": \"Early Bird\", \"fr\": \"Prévente\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -125,6 +125,6 @@ class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMix
             },
         }
 
-    def get_description(self, obj: PriceRank) -> str:
-        """Resolve the localised description via TranslatableSerializerMixin."""
+    def get_description(self, obj: PriceRank) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")

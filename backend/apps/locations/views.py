@@ -23,8 +23,9 @@ class LocationViewSet(ApiModelViewSet):
     A location represents a physical venue or address. It is the top of
     the three-level hierarchy: Location → Space → Hall.
 
-    Translations (localised names) are managed via the Location Translation
-    endpoints and resolved at read time from the `Accept-Language` header.
+    Translated fields (e.g. `name`) return all available translations
+    as a dictionary (e.g. {"en": "City Hall", "fr": "Hôtel de Ville"}).
+    Translations are managed via the Location Translation endpoints.
     """
 
     queryset = (

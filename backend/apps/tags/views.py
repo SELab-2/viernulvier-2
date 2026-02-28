@@ -4,9 +4,13 @@ ViewSets for the Tags app.
 Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
 
-Tags are classification labels attached to productions. They support
-localised fields (name, short description, URL title) resolved per request
-via the ``Accept-Language`` header.
+Tags are classification labels used for filtering and categorising productions.
+They support localised fields (name, short_description, url_title).
+
+Translation Format
+------------------
+All translated fields are returned as dictionaries mapping language codes 
+to their values (e.g., {"nl": "...", "en": "..."}).
 """
 
 from drf_spectacular.utils import extend_schema
@@ -26,15 +30,16 @@ class TagViewSet(ApiModelViewSet):
     """
     CRUD endpoints for Tag objects.
 
-    A tag is a classification label that can be attached to productions.
-    Tags support localised fields (name, short description, URL title)
-    resolved from the ``Accept-Language`` header via ``TranslatableSerializerMixin``.
+    Tags are classification labels attached to productions.
+
+    Translated fields (name, short description, URL title)
+    are returned as language-code dictionaries via
+    ``TranslatableSerializerMixin``.
 
     Queryset strategy
     -----------------
-    ``prefetch_related("translations")`` loads all translations for each tag
-    in a single additional query, preventing N+1 queries when the serializer
-    resolves localised fields across a list response.
+    ``prefetch_related("translations")`` loads all translations in a
+    single additional query to avoid N+1 lookups.
     """
 
     serializer_class = TagSerializer

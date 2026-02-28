@@ -95,10 +95,11 @@ _PRODUCTION_LIST = extend_schema(
     summary="List all productions",
     description=(
         "Returns a paginated list of all **Production** objects ordered by descending `id`.\n\n"
-        "Translatable fields (`title`, `artist_name`, `tagline`, `teaser`, `description`) "
-        "are resolved from the `Accept-Language` request header.\n\n"
+        "Translated fields (`title`, `artist_name`, `tagline`, `teaser`, `description`) "
+        "are returned as language-code dictionaries "
+        "(e.g. {\"en\": \"Title\", \"fr\": \"Titre\"}).\n\n"
         "Nested `genres` are returned in their configured `position` order. "
-        "Nested `tags` and `genres` carry their own localised fields."
+        "Nested `tags` and `genres` carry their own translated fields as dictionaries."
     ),
     responses={
         200: ProductionSerializer,
@@ -113,7 +114,7 @@ _PRODUCTION_RETRIEVE = extend_schema(
     description=(
         "Returns the full representation of a single **Production** identified "
         "by its primary key.\n\n"
-        "All translatable fields are resolved from the `Accept-Language` header. "
+        "All translated fields are returned as language-code dictionaries. "
         "Genres are ordered by their `position` value."
     ),
     responses={
@@ -132,8 +133,8 @@ _PRODUCTION_CREATE = extend_schema(
         "- `attendance_mode` accepts `offline` or `online`.\n"
         "- `performer_type` accepts `group` or `solo`.\n"
         "- `uit_database_theme` and `uit_database_type` are optional FK references.\n"
-        "- Translatable fields (title, description, etc.) must be added via the "
-        "  **Production Translation** endpoints after creation.\n"
+        "- Translated fields (title, description, etc.) are managed via the "
+        "  **Production Translation** endpoints.\n"
         "- Tags and genres are managed via their dedicated through-table endpoints.\n\n"
         "> **Requires an internal API key.**"
     ),

@@ -88,8 +88,8 @@ _GALLERY_LIST = extend_schema(
     description=(
         "Returns a paginated list of all **MediaGallery** objects.\n\n"
         "Each gallery includes its full nested list of media items with "
-        "localised metadata and crop variants resolved from the "
-        "`Accept-Language` header."
+        "translated metadata represented as language-code dictionaries "
+        "(e.g. {\"en\": \"Poster\", \"fr\": \"Affiche\"}) and crop variants."
     ),
     responses={
         200: MediaGallerySerializer,
@@ -231,8 +231,8 @@ _ITEM_LIST = extend_schema(
     summary="List all media items",
     description=(
         "Returns a paginated list of all **MediaItem** objects across all galleries.\n\n"
-        "Each item includes its localised metadata resolved from the `Accept-Language` "
-        "header and all pre-rendered crop variants."
+        "Each item includes its translated metadata as language-code dictionaries "
+        "(e.g. {\"en\": \"Poster\", \"fr\": \"Affiche\"}) and all pre-rendered crop variants."
     ),
     responses={
         200: MediaItemSerializer,

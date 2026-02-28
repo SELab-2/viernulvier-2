@@ -187,7 +187,7 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,
         "displayOperationId": False,
-        "filter": True,
+        "filter": False,
         "showRequestDuration": True,
         "persistAuthorization": True,
         "docExpansion": "none", # Collapsed by default for a cleaner look (set to 'list' to expand tags and endpoints, or 'full' to expand everything)

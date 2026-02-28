@@ -5,15 +5,16 @@ Field-level ``help_text`` and ``extra_kwargs`` are picked up automatically
 by drf-spectacular and rendered in the Swagger UI, so descriptions do not
 need to be repeated inside the schema decorators.
 
-Translatable fields on ``ProductionSerializer`` are resolved via
-``TranslatableSerializerMixin`` using the ``Accept-Language`` request header.
+Translatable fields on ``ProductionSerializer`` return all available
+translations as language-code dictionaries
+(e.g. {"en": "Title", "fr": "Titre"}).
 
 Nested relations
 ----------------
 - ``UitDatabaseThemeSerializer`` / ``UitDatabaseTypeSerializer`` — simple
   read-only nested representations of the classification FK targets.
 - ``GenreSerializer`` — nested per production, ordered by ``position``.
-- ``TagSerializer`` — nested many-to-many, carries its own localised fields.
+- ``TagSerializer`` — nested many-to-many, carries its own translated fields.
 """
 
 from rest_framework import serializers
@@ -52,10 +53,10 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     """
     Full representation of a Production.
 
-    Translatable fields
-    -------------------
-    The following fields are resolved from the production's translation table
-    based on the ``Accept-Language`` request header:
+    Translated fields
+    -----------------
+    The following fields return all available translations as
+    language-code dictionaries:
 
     - ``title``
     - ``artist_name``
@@ -63,55 +64,56 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     - ``teaser``
     - ``description``
 
-    All translatable fields are read-only. Use the **Production Translation**
+    All translated fields are read-only. Use the **Production Translation**
     endpoints to manage translations.
 
     Nested relations
     ----------------
     - ``uit_database_theme`` / ``uit_database_type`` — nested FK objects.
-    - ``tags`` — many-to-many, serialised with ``TagSerializer`` (includes
-      localised tag fields).
+    - ``tags`` — many-to-many, serialised with ``TagSerializer``.
     - ``genres`` — ordered by ``position`` via ``ProductionGenre.position``.
-      Uses ``prefetched_production_genres`` when available to avoid extra
-      queries; falls back to a direct queryset call otherwise.
     """
 
     # ---------------------------------------------------------------------------
-    # Translatable fields (resolved via Accept-Language)
+    # Translatable fields
     # ---------------------------------------------------------------------------
 
     title = serializers.SerializerMethodField(
         help_text=(
-            "Localised production title resolved via the `Accept-Language` header. "
-            "Empty string when no translation exists for the resolved language. "
+            "Dictionary of all available translations for the production title "
+            "(e.g. {\"en\": \"Title\", \"fr\": \"Titre\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
 
     artist_name = serializers.SerializerMethodField(
         help_text=(
-            "Localised artist or company name resolved via the `Accept-Language` header. "
+            "Dictionary of all available translations for the artist or company name "
+            "(e.g. {\"en\": \"Artist\", \"fr\": \"Artiste\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
 
     tagline = serializers.SerializerMethodField(
         help_text=(
-            "Localised short tagline resolved via the `Accept-Language` header. "
+            "Dictionary of all available translations for the short tagline "
+            "(e.g. {\"en\": \"Short tagline\", \"fr\": \"Accroche courte\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
 
     teaser = serializers.SerializerMethodField(
         help_text=(
-            "Localised teaser text resolved via the `Accept-Language` header. "
+            "Dictionary of all available translations for the teaser text "
+            "(e.g. {\"en\": \"Teaser\", \"fr\": \"Teaser\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
 
     description = serializers.SerializerMethodField(
         help_text=(
-            "Localised long-form description resolved via the `Accept-Language` header. "
+            "Dictionary of all available translations for the long-form description "
+            "(e.g. {\"en\": \"Full description\", \"fr\": \"Description complète\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -209,21 +211,21 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         return GenreSerializer(genres, many=True).data
 
     def get_title(self, obj: Production) -> str:
-        """Resolve the localised title via TranslatableSerializerMixin."""
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "title")
 
     def get_artist_name(self, obj: Production) -> str:
-        """Resolve the localised artist name via TranslatableSerializerMixin."""
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "artist_name")
 
     def get_tagline(self, obj: Production) -> str:
-        """Resolve the localised tagline via TranslatableSerializerMixin."""
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "tagline")
 
     def get_teaser(self, obj: Production) -> str:
-        """Resolve the localised teaser via TranslatableSerializerMixin."""
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "teaser")
 
     def get_description(self, obj: Production) -> str:
-        """Resolve the localised description via TranslatableSerializerMixin."""
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")

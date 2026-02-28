@@ -1,14 +1,9 @@
 """
 OpenAPI schema decorators for the Tags app.
 
-Keeping all drf-spectacular annotations here means views.py stays focused
-on routing logic only. Each action is defined as a private variable and
-assembled into a single ``extend_schema_view`` decorator at the bottom of
-the file.
-
-Tags are classification labels that can be attached to productions. They
-support localised names, short descriptions, and URL titles resolved via
-the ``Accept-Language`` request header.
+Tags are classification labels that can be attached to productions.
+They support translated fields (name, short description, URL title)
+returned as language-code dictionaries.
 """
 
 from drf_spectacular.utils import (
@@ -97,8 +92,9 @@ _TAG_LIST = extend_schema(
     summary="List all tags",
     description=(
         "Returns a paginated list of all **Tag** objects ordered by `id`.\n\n"
-        "Translatable fields (`name`, `short_description`, `url_title`) are resolved "
-        "from the `Accept-Language` request header."
+        "Translated fields (`name`, `short_description`, `url_title`) are "
+        "returned as language-code dictionaries "
+        "(e.g. {\"en\": \"Contemporary\", \"fr\": \"Contemporain\"})."
     ),
     responses={
         200: TagSerializer,
@@ -111,9 +107,9 @@ _TAG_LIST = extend_schema(
 _TAG_RETRIEVE = extend_schema(
     summary="Retrieve a tag",
     description=(
-        "Returns the full representation of a single **Tag** identified by its "
-        "primary key.\n\n"
-        "Translatable fields are resolved from the `Accept-Language` header."
+        "Returns the full representation of a single **Tag**.\n\n"
+        "Translated fields are returned as language-code dictionaries "
+        "(e.g. {\"en\": \"Contemporary\", \"fr\": \"Contemporain\"})."
     ),
     responses={
         200: TagSerializer,
