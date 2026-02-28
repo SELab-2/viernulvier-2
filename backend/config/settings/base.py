@@ -196,21 +196,6 @@ SPECTACULAR_SETTINGS = {
         "docExpansion": "none", # Collapsed by default for a cleaner look (set to 'list' to expand tags and endpoints, or 'full' to expand everything)
         "defaultModelsExpandDepth": 0, # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
     },
-    "SECURITY": [
-        {
-            "ApiKeyAuth": [],
-        }
-    ],
-    "APPEND_COMPONENTS": {
-        "securitySchemes": {
-            "ApiKeyAuth": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "Authorization",
-                "description": "Enter your key as: Api-Key <your_key>",
-            }
-        },
-    },
     "TAGS": [
         {"name": "Productions", "description": "Production management and translations."},
         {"name": "Events", "description": "Event instances and pricing information."},
