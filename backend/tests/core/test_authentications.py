@@ -54,10 +54,8 @@ class TestApiKeyAuthenticationNoHeader(TestCase):
     def test_returns_none_not_raises(self):
         """Must NOT raise — returning None is the correct DRF contract."""
         request = make_request()
-        try:
-            result = self.auth.authenticate(request)
-        except Exception as exc:
-            self.fail(f"authenticate() raised unexpectedly: {exc}")
+        result = self.auth.authenticate(request)
+        self.assertIsNone(result)
 
 
 # ---------------------------------------------------------------------------

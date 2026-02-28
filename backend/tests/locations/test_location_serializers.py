@@ -9,8 +9,7 @@ Covers:
 
 from django.test import TestCase
 
-from apps.languages.models import Language
-from apps.locations.models import Hall, Location, Space, LocationTranslation, SpaceTranslation, HallTranslation
+from apps.locations.models import Hall, Location, Space
 from apps.locations.serializers import HallSerializer, LocationSerializer, SpaceSerializer
 from tests.factories.language import LanguageFactory
 from tests.factories.location import (
@@ -52,11 +51,11 @@ class TestLocationSerializerTranslations(TestCase):
 	"""Translation rendering for LocationSerializer."""
 
 	def setUp(self):
-		self.lang_en = Language.objects.create(code="en", name="English", is_active=True)
-		self.lang_nl = Language.objects.create(code="nl", name="Dutch", is_active=True)
+		self.lang_en = LanguageFactory(code="en", name="English")
+		self.lang_nl = LanguageFactory(code="nl", name="Dutch")
 		self.location = LocationFactory()
-		LocationTranslation.objects.create(location=self.location, language=self.lang_en, name="Main Hall")
-		LocationTranslation.objects.create(location=self.location, language=self.lang_nl, name="Hoofdzaal")
+		LocationTranslationFactory(location=self.location, language=self.lang_en, name="Main Hall")
+		LocationTranslationFactory(location=self.location, language=self.lang_nl, name="Hoofdzaal")
 
 	def test_translated_name_dict(self):
 		data = LocationSerializer(self.location).data

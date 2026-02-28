@@ -17,7 +17,6 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
-from apps.languages.models import Language
 from apps.pricing.admin import (
     PriceAdmin,
     PriceRankAdmin,
@@ -25,6 +24,13 @@ from apps.pricing.admin import (
     PriceRankTranslationAdmin,
 )
 from apps.pricing.models import Price, PriceRank, PriceTranslation, PriceRankTranslation
+from tests.factories.language import LanguageFactory
+from tests.factories.pricing import (
+    PriceFactory,
+    PriceRankFactory,
+    PriceRankTranslationFactory,
+    PriceTranslationFactory,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -134,9 +140,9 @@ class TestPricingAdminConfiguration(TestCase):
 class TestPricingTranslationAdminGetQueryset(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.lang = Language.objects.create(code="en", name="English")
+        cls.lang = LanguageFactory.create(code="en", name="English")
 
-        cls.price = Price.objects.create(
+        cls.price = PriceFactory.create(
             type="Standard",
             visibility="public",
             membership="",
@@ -146,12 +152,12 @@ class TestPricingTranslationAdminGetQueryset(TestCase):
             sort_order=0,
             cineville_box=False,
         )
-        cls.rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+        cls.rank = PriceRankFactory.create(position=1, sold_out_buffer=0)
 
-        cls.price_tr = PriceTranslation.objects.create(
+        cls.price_tr = PriceTranslationFactory.create(
             price=cls.price, language=cls.lang, description="Standard ticket"
         )
-        cls.rank_tr = PriceRankTranslation.objects.create(
+        cls.rank_tr = PriceRankTranslationFactory.create(
             price_rank=cls.rank, language=cls.lang, description="First rank"
         )
 
@@ -191,8 +197,8 @@ class TestPricingAdminChangelists(TestCase):
         self.superuser = make_superuser("pricing_admin")
         self.client.force_login(self.superuser)
 
-        self.lang = Language.objects.create(code="nl", name="Dutch")
-        self.price = Price.objects.create(
+        self.lang = LanguageFactory.create(code="nl", name="Dutch")
+        self.price = PriceFactory.create(
             type="Student",
             visibility="public",
             membership="",
@@ -202,12 +208,12 @@ class TestPricingAdminChangelists(TestCase):
             sort_order=1,
             cineville_box=False,
         )
-        self.rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+        self.rank = PriceRankFactory.create(position=1, sold_out_buffer=0)
 
-        self.price_tr = PriceTranslation.objects.create(
+        self.price_tr = PriceTranslationFactory.create(
             price=self.price, language=self.lang, description="Student ticket"
         )
-        self.rank_tr = PriceRankTranslation.objects.create(
+        self.rank_tr = PriceRankTranslationFactory.create(
             price_rank=self.rank, language=self.lang, description="First rank"
         )
 

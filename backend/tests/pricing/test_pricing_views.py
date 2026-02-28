@@ -10,6 +10,13 @@ from apps.pricing.models import (
     PriceRankTranslation,
 )
 from apps.pricing.views import PriceViewSet, PriceRankViewSet
+from tests.factories.language import LanguageFactory
+from tests.factories.pricing import (
+    PriceFactory,
+    PriceRankFactory,
+    PriceRankTranslationFactory,
+    PriceTranslationFactory,
+)
 
 
 PUB_KEY = "pub-view-test-key"
@@ -84,10 +91,10 @@ class _PriceSetupMixin(TestCase):
         Price.objects.all().delete()
         Language.objects.all().delete()
 
-        self.lang_en = Language.objects.create(code="en", name="English", is_active=True)
-        self.lang_nl = Language.objects.create(code="nl", name="Nederlands", is_active=True)
+        self.lang_en = LanguageFactory.create(code="en", name="English", is_active=True)
+        self.lang_nl = LanguageFactory.create(code="nl", name="Nederlands", is_active=True)
 
-        self.p1 = Price.objects.create(
+        self.p1 = PriceFactory.create(
             type="A",
             visibility="public",
             membership="",
@@ -97,7 +104,7 @@ class _PriceSetupMixin(TestCase):
             sort_order=1,
             cineville_box=False,
         )
-        self.p2 = Price.objects.create(
+        self.p2 = PriceFactory.create(
             type="B",
             visibility="public",
             membership="",
@@ -107,8 +114,8 @@ class _PriceSetupMixin(TestCase):
             sort_order=5,
             cineville_box=False,
         )
-        PriceTranslation.objects.create(price=self.p1, language=self.lang_en, description="A en")
-        PriceTranslation.objects.create(price=self.p1, language=self.lang_nl, description="A nl")
+        PriceTranslationFactory.create(price=self.p1, language=self.lang_en, description="A en")
+        PriceTranslationFactory.create(price=self.p1, language=self.lang_nl, description="A nl")
 
 
 # ---------------------------------------------------------------------------
@@ -476,11 +483,11 @@ class _PriceRankSetupMixin(TestCase):
         PriceRank.objects.all().delete()
         Language.objects.all().delete()
 
-        self.lang = Language.objects.create(code="en", name="English", is_active=True)
+        self.lang = LanguageFactory.create(code="en", name="English", is_active=True)
 
-        self.r1 = PriceRank.objects.create(position=1, sold_out_buffer=0)
-        self.r2 = PriceRank.objects.create(position=2, sold_out_buffer=0)
-        PriceRankTranslation.objects.create(price_rank=self.r1, language=self.lang, description="R1")
+        self.r1 = PriceRankFactory.create(position=1, sold_out_buffer=0)
+        self.r2 = PriceRankFactory.create(position=2, sold_out_buffer=0)
+        PriceRankTranslationFactory.create(price_rank=self.r1, language=self.lang, description="R1")
 
 
 # ---------------------------------------------------------------------------

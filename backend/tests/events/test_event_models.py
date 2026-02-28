@@ -18,9 +18,10 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.events.models import Event, EventPrice
-from apps.locations.models import Location, Space, Hall
-from apps.pricing.models import PriceRank
-from apps.productions.models import Production
+from tests.factories.event import EventFactory, EventPriceFactory
+from tests.factories.location import HallFactory
+from tests.factories.pricing import PriceRankFactory
+from tests.factories.production import ProductionFactory
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
@@ -29,34 +30,18 @@ pytestmark = pytest.mark.django_db(transaction=True)
 # Helpers
 # ---------------------------------------------------------------------------
 
-def make_hall() -> Hall:
-    """Create a minimal Hall with required Location/Space dependencies."""
-    loc = Location.objects.create(
-        street="Main Street",
-        number="1",
-        postal_code="9000",
-        city="Ghent",
-        country="BE",
-        phone_1=None,
-        phone_2=None,
-        is_own_location=False,
-    )
-    space = Space.objects.create(location=loc)
-    return Hall.objects.create(space=space, seat_selection=False, open_seating=False)
-
-
 # ---------------------------------------------------------------------------
 # Event
 # ---------------------------------------------------------------------------
 
 def test_event_meta_ordering_by_starts_at():
     """Test case for test_event_meta_ordering_by_starts_at."""
-    prod = Production.objects.create()
-    hall = make_hall()
+    prod = ProductionFactory()
+    hall = HallFactory()
 
     now = timezone.now()
-    e2 = Event.objects.create(production=prod, hall=hall, starts_at=now + timedelta(days=1))
-    e1 = Event.objects.create(production=prod, hall=hall, starts_at=now)
+    e2 = EventFactory(production=prod, hall=hall, starts_at=now + timedelta(days=1))
+    e1 = EventFactory(production=prod, hall=hall, starts_at=now)
 
     events = list(Event.objects.all())
     assert [e.id for e in events] == [e1.id, e2.id] 
@@ -70,8 +55,8 @@ def test_event_constraint_name_present():
 
 def test_event_clean_raises_when_ends_before_or_equal_starts():
     """Test case for test_event_clean_raises_when_ends_before_or_equal_starts."""
-    prod = Production.objects.create()
-    hall = make_hall()
+    prod = ProductionFactory()
+    hall = HallFactory()
     now = timezone.now()
 
     e = Event(
@@ -87,8 +72,8 @@ def test_event_clean_raises_when_ends_before_or_equal_starts():
 
 def test_event_allows_null_starts_or_ends():
     """Test case for test_event_allows_null_starts_or_ends."""
-    prod = Production.objects.create()
-    hall = make_hall()
+    prod = ProductionFactory()
+    hall = HallFactory()
 
     e1 = Event(production=prod, hall=hall, starts_at=None, ends_at=None, ticketing_url="")
     e1.full_clean()
@@ -107,12 +92,12 @@ def test_event_allows_null_starts_or_ends():
 
 def test_event_price_unique_per_event_and_price_rank():
     """Test case for test_event_price_unique_per_event_and_price_rank."""
-    prod = Production.objects.create()
-    hall = make_hall()
+    prod = ProductionFactory()
+    hall = HallFactory()
     now = timezone.now()
 
-    event = Event.objects.create(production=prod, hall=hall, starts_at=now)
-    rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+    event = EventFactory(production=prod, hall=hall, starts_at=now)
+    rank = PriceRankFactory(position=1, sold_out_buffer=0)
 
     ep1 = EventPrice(event=event, price_rank=rank, amount=Decimal("10.00"), available=10)
     ep1.full_clean()
@@ -138,14 +123,14 @@ def test_event_price_indexes_present_by_fields():
 
 def test_event_price_reverse_relation_from_event():
     """Test case for test_event_price_reverse_relation_from_event."""
-    prod = Production.objects.create()
-    hall = make_hall()
-    event = Event.objects.create(production=prod, hall=hall, starts_at=timezone.now())
-    rank1 = PriceRank.objects.create(position=1, sold_out_buffer=0)
-    rank2 = PriceRank.objects.create(position=2, sold_out_buffer=0)
+    prod = ProductionFactory()
+    hall = HallFactory()
+    event = EventFactory(production=prod, hall=hall, starts_at=timezone.now())
+    rank1 = PriceRankFactory(position=1, sold_out_buffer=0)
+    rank2 = PriceRankFactory(position=2, sold_out_buffer=0)
 
-    p1 = EventPrice.objects.create(event=event, price_rank=rank1, amount="10.00", available=10)
-    p2 = EventPrice.objects.create(event=event, price_rank=rank2, amount="12.00", available=5)
+    p1 = EventPriceFactory(event=event, price_rank=rank1, amount="10.00", available=10)
+    p2 = EventPriceFactory(event=event, price_rank=rank2, amount="12.00", available=5)
 
     assert event.prices.count() == 2
     assert set(event.prices.values_list("id", flat=True)) == {p1.id, p2.id}
@@ -153,13 +138,13 @@ def test_event_price_reverse_relation_from_event():
 
 def test_event_price_cascade_delete_event_deletes_prices():
     """Test case for test_event_price_cascade_delete_event_deletes_prices."""
-    prod = Production.objects.create()
-    hall = make_hall()
-    event = Event.objects.create(production=prod, hall=hall, starts_at=timezone.now())
-    rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+    prod = ProductionFactory()
+    hall = HallFactory()
+    event = EventFactory(production=prod, hall=hall, starts_at=timezone.now())
+    rank = PriceRankFactory(position=1, sold_out_buffer=0)
 
-    EventPrice.objects.create(event=event, price_rank=rank, amount="10.00", available=10)
-    EventPrice.objects.create(event=event, price_rank=None, amount="8.00", available=3)
+    EventPriceFactory(event=event, price_rank=rank, amount="10.00", available=10)
+    EventPriceFactory(event=event, price_rank=None, amount="8.00", available=3)
 
     event.delete()
     assert EventPrice.objects.count() == 0 
@@ -167,12 +152,12 @@ def test_event_price_cascade_delete_event_deletes_prices():
 
 def test_event_price_set_null_when_price_rank_deleted():
     """Test case for test_event_price_set_null_when_price_rank_deleted."""
-    prod = Production.objects.create()
-    hall = make_hall()
-    event = Event.objects.create(production=prod, hall=hall, starts_at=timezone.now())
-    rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+    prod = ProductionFactory()
+    hall = HallFactory()
+    event = EventFactory(production=prod, hall=hall, starts_at=timezone.now())
+    rank = PriceRankFactory(position=1, sold_out_buffer=0)
 
-    ep = EventPrice.objects.create(event=event, price_rank=rank, amount="10.00", available=10)
+    ep = EventPriceFactory(event=event, price_rank=rank, amount="10.00", available=10)
     rank.delete()
 
     ep.refresh_from_db()

@@ -19,25 +19,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
-from apps.languages.models import Language
 from apps.tags.admin import TagAdmin, TagTranslationAdmin, TagTranslationInline
 from apps.tags.models import Tag, TagTranslation
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def make_tag(**kwargs):
-    defaults = {
-        "type": "genre",
-        "source": "system",
-        "source_type": "internal",
-        "is_external": False,
-        "is_enabled": True,
-    }
-    defaults.update(kwargs)
-    return Tag.objects.create(**defaults)
+from tests.factories.language import LanguageFactory
+from tests.factories.tag import TagFactory, TagTranslationFactory
 
 
 # ---------------------------------------------------------------------------
@@ -223,7 +208,7 @@ class TestTagAdminFunctional(TestCase):
             username="admin", password="secret", email="admin@example.com"
         )
         self.client.force_login(self.superuser)
-        self.tag = make_tag(type="genre")
+        self.tag = TagFactory.create(type="genre")
 
     def test_changelist_returns_200(self):
         url = reverse("admin:tags_tag_changelist")
@@ -249,9 +234,9 @@ class TestTagTranslationAdminFunctional(TestCase):
             username="admin", password="secret", email="admin@example.com"
         )
         self.client.force_login(self.superuser)
-        self.lang = Language.objects.create(code="nl", name="Dutch", is_active=True)
-        self.tag = make_tag(type="genre")
-        self.translation = TagTranslation.objects.create(
+        self.lang = LanguageFactory.create(code="nl", name="Dutch")
+        self.tag = TagFactory.create(type="genre")
+        self.translation = TagTranslationFactory.create(
             tag=self.tag, language=self.lang, name="Genre", url_title="genre"
         )
 

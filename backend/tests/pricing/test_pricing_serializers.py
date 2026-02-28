@@ -13,9 +13,14 @@ Covers:
 from django.test import TestCase
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
-from apps.languages.models import Language
 from apps.pricing.models import Price, PriceTranslation, PriceRank
 from apps.pricing.serializers import PriceSerializer, PriceRankSerializer
+from tests.factories.language import LanguageFactory
+from tests.factories.pricing import (
+    PriceFactory,
+    PriceTranslationFactory,
+    PriceRankFactory,
+)
 
 
 def _drf_request(factory: APIRequestFactory, path: str) -> Request:
@@ -29,9 +34,9 @@ class TestPriceSerializerFields(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.factory = APIRequestFactory()
-        cls.lang_en = Language.objects.create(code="en", name="English")
+        cls.lang_en = LanguageFactory.create(code="en", name="English")
 
-        cls.price = Price.objects.create(
+        cls.price = PriceFactory.create(
             type="Standard",
             visibility="public",
             membership="Member",
@@ -41,7 +46,7 @@ class TestPriceSerializerFields(TestCase):
             sort_order=0,
             cineville_box=False,
         )
-        PriceTranslation.objects.create(
+        PriceTranslationFactory.create(
             price=cls.price,
             language=cls.lang_en,
             description="Standard ticket",
@@ -102,10 +107,10 @@ class TestPriceSerializerSerialization(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.factory = APIRequestFactory()
-        cls.lang_en = Language.objects.create(code="en", name="English")
-        cls.lang_nl = Language.objects.create(code="nl", name="Nederlands")
+        cls.lang_en = LanguageFactory.create(code="en", name="English")
+        cls.lang_nl = LanguageFactory.create(code="nl", name="Nederlands")
 
-        cls.price = Price.objects.create(
+        cls.price = PriceFactory.create(
             type="Standard",
             visibility="public",
             membership="Member",
@@ -116,8 +121,8 @@ class TestPriceSerializerSerialization(TestCase):
             cineville_box=False,
         )
 
-        PriceTranslation.objects.create(price=cls.price, language=cls.lang_en, description="Standard ticket")
-        PriceTranslation.objects.create(price=cls.price, language=cls.lang_nl, description="Standaard ticket")
+        PriceTranslationFactory.create(price=cls.price, language=cls.lang_en, description="Standard ticket")
+        PriceTranslationFactory.create(price=cls.price, language=cls.lang_nl, description="Standaard ticket")
 
     def test_serializes_price_core_fields(self):
         """Test case for test_serializes_price_core_fields."""
@@ -156,7 +161,7 @@ class TestPriceSerializerSerialization(TestCase):
 
     def test_serializes_queryset(self):
         """Test case for test_serializes_queryset."""
-        Price.objects.create(
+        PriceFactory.create(
             type="Other",
             visibility="public",
             membership="",
@@ -195,12 +200,12 @@ class TestPriceSerializerTranslationEdgeCases(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.factory = APIRequestFactory()
-        cls.lang_en = Language.objects.create(code="en", name="English")
-        cls.lang_nl = Language.objects.create(code="nl", name="Nederlands")
+        cls.lang_en = LanguageFactory.create(code="en", name="English")
+        cls.lang_nl = LanguageFactory.create(code="nl", name="Nederlands")
 
     def test_description_empty_dict_if_no_translations(self):
         """Test case for test_description_empty_dict_if_no_translations."""
-        price = Price.objects.create(
+        price = PriceFactory.create(
             type="NoTrans",
             visibility="public",
             membership="",
@@ -218,7 +223,7 @@ class TestPriceSerializerTranslationEdgeCases(TestCase):
         """
         If only one translation exists, the dict contains only that language.
         """
-        price = Price.objects.create(
+        price = PriceFactory.create(
             type="OneTrans",
             visibility="public",
             membership="",
@@ -228,7 +233,7 @@ class TestPriceSerializerTranslationEdgeCases(TestCase):
             sort_order=0,
             cineville_box=False,
         )
-        PriceTranslation.objects.create(price=price, language=self.lang_en, description="Only EN")
+        PriceTranslationFactory.create(price=price, language=self.lang_en, description="Only EN")
         serializer = PriceSerializer(price, context={"request": _drf_request(self.factory, "/dummy?lang=nl")})
         self.assertEqual(serializer.data["description"], {"en": "Only EN"})
 
@@ -342,7 +347,7 @@ class TestPriceSerializerDeserialization(TestCase):
 
     def test_partial_update_type_only(self):
         """Test case for test_partial_update_type_only."""
-        price = Price.objects.create(
+        price = PriceFactory.create(
             type="Standard",
             visibility="public",
             membership="Member",
@@ -381,7 +386,7 @@ class TestPriceRankSerializer(TestCase):
 
     def test_unique_position_validator(self):
         """Test case for test_unique_position_validator."""
-        PriceRank.objects.create(position=1, sold_out_buffer=0)
+        PriceRankFactory.create(position=1, sold_out_buffer=0)
         serializer = PriceRankSerializer(data={"position": 1, "sold_out_buffer": 0})
         self.assertFalse(serializer.is_valid())
         self.assertIn("position", serializer.errors)

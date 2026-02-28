@@ -17,30 +17,15 @@ from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 from apps.events.models import Event, EventPrice
 from apps.events.serializers import EventSerializer
-from apps.productions.models import Production
-from apps.locations.models import Location, Space, Hall
-from apps.pricing.models import PriceRank
+from tests.factories.event import EventFactory, EventPriceFactory
+from tests.factories.location import HallFactory
+from tests.factories.pricing import PriceRankFactory
+from tests.factories.production import ProductionFactory
 
 
 def _drf_request(factory: APIRequestFactory, path: str) -> Request:
     django_req = factory.get(path)
     return Request(django_req)
-
-
-def _make_hall() -> Hall:
-    """Create a minimal Hall with required Location/Space dependencies."""
-    location = Location.objects.create(
-        street="Main Street",
-        number="1",
-        postal_code="9000",
-        city="Ghent",
-        country="BE",
-        phone_1=None,
-        phone_2=None,
-        is_own_location=False,
-    )
-    space = Space.objects.create(location=location)
-    return Hall.objects.create(space=space, seat_selection=False, open_seating=False)
 
 
 class TestEventSerializerFields(TestCase):
@@ -49,11 +34,11 @@ class TestEventSerializerFields(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.factory = APIRequestFactory()
-        cls.production = Production.objects.create()
-        cls.hall = _make_hall()
+        cls.production = ProductionFactory()
+        cls.hall = HallFactory()
 
         now = timezone.now()
-        cls.event = Event.objects.create(
+        cls.event = EventFactory(
             production=cls.production,
             hall=cls.hall,
             starts_at=now,
@@ -85,11 +70,11 @@ class TestEventSerializerSerialization(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.factory = APIRequestFactory()
-        cls.production = Production.objects.create()
-        cls.hall = _make_hall()
+        cls.production = ProductionFactory()
+        cls.hall = HallFactory()
 
         now = timezone.now()
-        cls.event = Event.objects.create(
+        cls.event = EventFactory(
             production=cls.production,
             hall=cls.hall,
             starts_at=now,
@@ -97,16 +82,16 @@ class TestEventSerializerSerialization(TestCase):
             ticketing_url="https://example.com/tickets",
         )
 
-        cls.rank_1 = PriceRank.objects.create(position=1, sold_out_buffer=0)
-        cls.rank_2 = PriceRank.objects.create(position=2, sold_out_buffer=0)
+        cls.rank_1 = PriceRankFactory(position=1, sold_out_buffer=0)
+        cls.rank_2 = PriceRankFactory(position=2, sold_out_buffer=0)
 
-        cls.ep_1 = EventPrice.objects.create(
+        cls.ep_1 = EventPriceFactory(
             event=cls.event,
             price_rank=cls.rank_1,
             amount=Decimal("12.50"),
             available=100,
         )
-        cls.ep_2 = EventPrice.objects.create(
+        cls.ep_2 = EventPriceFactory(
             event=cls.event,
             price_rank=cls.rank_2,
             amount=Decimal("9.00"),
@@ -152,8 +137,8 @@ class TestEventSerializerDeserialization(TestCase):
 
     def setUp(self):
         self.factory = APIRequestFactory()
-        self.production = Production.objects.create()
-        self.hall = _make_hall()
+        self.production = ProductionFactory()
+        self.hall = HallFactory()
         self.now = timezone.now()
 
     def test_valid_data_is_valid(self):
@@ -189,7 +174,7 @@ class TestEventSerializerDeserialization(TestCase):
         """
         `prices` is read-only on EventSerializer; providing it in input should not create prices.
         """
-        rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+        rank = PriceRankFactory(position=1, sold_out_buffer=0)
 
         data = {
             "production": self.production.id,

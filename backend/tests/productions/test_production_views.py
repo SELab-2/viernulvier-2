@@ -22,11 +22,16 @@ from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
-from apps.languages.models import Language
-from apps.productions.models import Production, ProductionTranslation, UitDatabaseTheme, UitDatabaseType
+from apps.productions.models import Production
 from apps.productions.serializers import ProductionSerializer
 from apps.productions.views import ProductionViewSet
-from apps.tags.models import Tag
+from tests.factories.language import LanguageFactory
+from tests.factories.production import (
+    ProductionFactory,
+    ProductionTranslationFactory,
+    UitDatabaseThemeFactory,
+    UitDatabaseTypeFactory,
+)
 
 
 PUB_KEY = "pub-production-view-test-key"
@@ -47,30 +52,6 @@ def int_headers():
 
 def wrong_headers():
     return {"HTTP_AUTHORIZATION": "Api-Key completely-wrong-key"}
-
-
-def make_production(**kwargs):
-    defaults = {}
-    defaults.update(kwargs)
-    return Production.objects.create(**defaults)
-
-
-def make_language(code="nl", name="Dutch"):
-    return Language.objects.get_or_create(code=code, defaults={"name": name, "is_active": True})[0]
-
-
-def make_translation(production, language, **kwargs):
-    defaults = {
-        "title": "Test Titel",
-        "description": "",
-        "teaser": "",
-        "artist_name": "",
-        "tagline": "",
-    }
-    defaults.update(kwargs)
-    return ProductionTranslation.objects.create(
-        production=production, language=language, **defaults
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -109,8 +90,8 @@ class TestProductionViewSetList(TestCase):
     def setUp(self):
         self.client = APIClient()
         Production.objects.all().delete()
-        self.production_a = make_production(attendance_mode="offline")
-        self.production_b = make_production(attendance_mode="online")
+        self.production_a = ProductionFactory.create(attendance_mode="offline")
+        self.production_b = ProductionFactory.create(attendance_mode="online")
 
     def test_list_with_public_key_returns_200(self):
         response = self.client.get("/api/productions/", **pub_headers())
@@ -158,7 +139,7 @@ class TestProductionViewSetDetail(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.production = make_production(attendance_mode="offline", performer_type="solo")
+        self.production = ProductionFactory.create(attendance_mode="offline", performer_type="solo")
 
     def test_detail_with_public_key_returns_200(self):
         response = self.client.get(f"/api/productions/{self.production.pk}/", **pub_headers())
@@ -240,7 +221,7 @@ class TestProductionViewSetUpdate(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.production = make_production(attendance_mode="offline", performer_type="solo")
+        self.production = ProductionFactory.create(attendance_mode="offline", performer_type="solo")
         self.payload = {"attendance_mode": "online", "performer_type": "group"}
 
     def test_put_with_internal_key_returns_200(self):
@@ -276,7 +257,7 @@ class TestProductionViewSetPartialUpdate(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.production = make_production(attendance_mode="offline", performer_type="solo")
+        self.production = ProductionFactory.create(attendance_mode="offline", performer_type="solo")
 
     def test_patch_with_internal_key_returns_200(self):
         response = self.client.patch(
@@ -320,7 +301,7 @@ class TestProductionViewSetDelete(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.production = make_production()
+        self.production = ProductionFactory.create()
 
     def test_delete_with_internal_key_returns_204(self):
         response = self.client.delete(
@@ -360,15 +341,23 @@ class TestProductionViewSetResponseStructure(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.nl = make_language("nl", "Dutch")
-        self.theme = UitDatabaseTheme.objects.create(name="Drama")
-        self.db_type = UitDatabaseType.objects.create(name="Theater")
-        self.production = make_production(
+        self.nl = LanguageFactory.create(code="nl", name="Dutch")
+        self.theme = UitDatabaseThemeFactory.create(name="Drama")
+        self.db_type = UitDatabaseTypeFactory.create(name="Theater")
+        self.production = ProductionFactory.create(
             uit_database_theme=self.theme,
             uit_database_type=self.db_type,
             attendance_mode="offline",
         )
-        make_translation(self.production, self.nl, title="Test Titel", description="Test Beschrijving")
+        ProductionTranslationFactory.create(
+            production=self.production,
+            language=self.nl,
+            title="Test Titel",
+            description="Test Beschrijving",
+            teaser="",
+            artist_name="",
+            tagline="",
+        )
 
     def test_detail_contains_nested_uit_database_theme(self):
         response = self.client.get(f"/api/productions/{self.production.pk}/", **pub_headers())
@@ -392,7 +381,7 @@ class TestProductionViewSetResponseStructure(TestCase):
         self.assertEqual(response.data["description"]["nl"], "Test Beschrijving")
 
     def test_detail_title_is_empty_dict_without_translations(self):
-        production_no_trans = make_production()
+        production_no_trans = ProductionFactory.create()
         response = self.client.get(f"/api/productions/{production_no_trans.pk}/", **pub_headers())
         self.assertEqual(response.data["title"], {})
 
@@ -407,12 +396,28 @@ class TestProductionViewSetPrefetch(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        nl = make_language("nl", "Dutch")
-        en = make_language("en", "English")
+        nl = LanguageFactory.create(code="nl", name="Dutch")
+        en = LanguageFactory.create(code="en", name="English")
         for _ in range(5):
-            p = make_production()
-            make_translation(p, nl, title="NL Titel")
-            make_translation(p, en, title="EN Title")
+            p = ProductionFactory.create()
+            ProductionTranslationFactory.create(
+                production=p,
+                language=nl,
+                title="NL Titel",
+                description="",
+                teaser="",
+                artist_name="",
+                tagline="",
+            )
+            ProductionTranslationFactory.create(
+                production=p,
+                language=en,
+                title="EN Title",
+                description="",
+                teaser="",
+                artist_name="",
+                tagline="",
+            )
 
     def test_list_with_translations_executes_bounded_queries(self):
         with self.assertNumQueries(6):

@@ -21,7 +21,12 @@ from apps.genres.admin import (
 	GenreUseAsAdmin,
 )
 from apps.genres.models import Genre, GenreTranslation, GenreUseAs
-from apps.languages.models import Language
+from tests.factories.genre import (
+	GenreFactory,
+	GenreTranslationFactory,
+	GenreUseAsFactory,
+)
+from tests.factories.language import LanguageFactory
 
 
 # ---------------------------------------------------------------------------
@@ -161,10 +166,10 @@ class TestGenreAdminFunctional(TestCase):
 		)
 		self.client.force_login(self.superuser)
 
-		self.use_as = GenreUseAs.objects.create(name="genre")
-		self.language = Language.objects.create(code="en", name="English", is_active=True)
-		self.genre = Genre.objects.create(type="Theater", use_as=self.use_as)
-		self.translation = GenreTranslation.objects.create(
+		self.use_as = GenreUseAsFactory(name="genre")
+		self.language = LanguageFactory(code="en", name="English")
+		self.genre = GenreFactory(type="Theater", use_as=self.use_as)
+		self.translation = GenreTranslationFactory(
 			name="Theater",
 			language=self.language,
 			genre=self.genre,

@@ -16,7 +16,7 @@ from rest_framework.test import APIClient
 from apps.core.views import ApiModelViewSet
 from apps.genres.models import Genre, GenreUseAs
 from apps.genres.views import GenreUseAsViewSet, GenreViewSet
-from apps.languages.models import Language
+from tests.factories.genre import GenreFactory, GenreUseAsFactory
 
 
 PUB_KEY = "pub-view-test-key"
@@ -74,7 +74,7 @@ class TestGenreUseAsViewSet(TestCase):
     def setUp(self):
         self.client = APIClient()
         GenreUseAs.objects.all().delete()
-        self.use_as = GenreUseAs.objects.create(name="genre")
+        self.use_as = GenreUseAsFactory(name="genre")
 
     # list
     def test_list_public_key(self):
@@ -185,8 +185,8 @@ class TestGenreViewSet(TestCase):
         self.client = APIClient()
         Genre.objects.all().delete()
         GenreUseAs.objects.all().delete()
-        self.use_as = GenreUseAs.objects.create(name="genre")
-        self.genre = Genre.objects.create(type="Theater", use_as=self.use_as)
+        self.use_as = GenreUseAsFactory(name="genre")
+        self.genre = GenreFactory(type="Theater", use_as=self.use_as)
 
     # list
     def test_list_public_key(self):

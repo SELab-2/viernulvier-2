@@ -25,7 +25,6 @@ from apps.locations.admin import (
 	SpaceTranslationAdmin,
 	SpaceTranslationInline,
 )
-from apps.languages.models import Language
 from apps.locations.models import Hall, HallTranslation, Location, LocationTranslation, Space, SpaceTranslation
 from tests.factories.language import LanguageFactory
 from tests.factories.location import (
@@ -519,7 +518,7 @@ class TestLocationAdminFunctional(TestCase):
 
 	def test_hall_translation_add(self):
 		url = reverse("admin:locations_halltranslation_add")
-		new_language = Language.objects.create(code="es", name="Spanish", is_active=True)
+		new_language = LanguageFactory(code="es", name="Spanish")
 		response = self.client.post(
 			url,
 			{

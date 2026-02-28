@@ -22,6 +22,8 @@ from django.urls import reverse
 from apps.core.admin import BaseAdmin
 from apps.import_log.admin import ImportLogAdmin
 from apps.import_log.models import ImportLog
+from tests.factories.import_log import ImportLogFactory
+from tests.factories.import_log import ImportLogFactory
 
 
 # ---------------------------------------------------------------------------
@@ -41,9 +43,14 @@ def make_import_log(**kwargs):
         "records_total": 10,
         "records_imported": 10,
         "records_failed": 0,
+        "started_at": None,
+        "finished_at": None,
+        "error_message": None,
     }
     defaults.update(kwargs)
-    return ImportLog.objects.create(**defaults)
+    log = ImportLogFactory.build(**defaults)
+    log.save()
+    return log
 
 
 # ---------------------------------------------------------------------------

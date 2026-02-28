@@ -19,10 +19,11 @@ from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
-from apps.languages.models import Language
-from apps.tags.models import Tag, TagTranslation
+from apps.tags.models import Tag
 from apps.tags.serializers import TagSerializer
 from apps.tags.views import TagViewSet
+from tests.factories.language import LanguageFactory
+from tests.factories.tag import TagFactory, TagTranslationFactory
 
 
 PUB_KEY = "pub-tag-view-test-key"
@@ -43,18 +44,6 @@ def int_headers():
 
 def wrong_headers():
     return {"HTTP_AUTHORIZATION": "Api-Key completely-wrong-key"}
-
-
-def make_tag(**kwargs):
-    defaults = {
-        "type": "genre",
-        "source": "system",
-        "source_type": "internal",
-        "is_external": False,
-        "is_enabled": True,
-    }
-    defaults.update(kwargs)
-    return Tag.objects.create(**defaults)
 
 
 # ---------------------------------------------------------------------------
@@ -94,8 +83,8 @@ class TestTagViewSetList(TestCase):
     def setUp(self):
         self.client = APIClient()
         Tag.objects.all().delete()
-        self.tag_a = make_tag(type="genre")
-        self.tag_b = make_tag(type="theme")
+        self.tag_a = TagFactory.create(type="genre")
+        self.tag_b = TagFactory.create(type="theme")
 
     def test_list_with_public_key_returns_200(self):
         response = self.client.get("/api/tags/", **pub_headers())
@@ -146,7 +135,7 @@ class TestTagViewSetRetrieve(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.tag = make_tag(type="genre")
+        self.tag = TagFactory.create(type="genre")
 
     def test_retrieve_with_public_key_returns_200(self):
         response = self.client.get(f"/api/tags/{self.tag.id}/", **pub_headers())
@@ -175,9 +164,12 @@ class TestTagViewSetRetrieve(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_retrieve_includes_translations(self):
-        lang = Language.objects.create(code="nl", name="Dutch", is_active=True)
-        TagTranslation.objects.create(
-            tag=self.tag, language=lang, name="Genre", url_title="genre"
+        lang = LanguageFactory.create(code="nl", name="Dutch")
+        TagTranslationFactory.create(
+            tag=self.tag,
+            language=lang,
+            name="Genre",
+            url_title="genre",
         )
         response = self.client.get(f"/api/tags/{self.tag.id}/", **pub_headers())
         self.assertIsInstance(response.data["name"], dict)
@@ -237,7 +229,7 @@ class TestTagViewSetUpdate(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.tag = make_tag(type="genre")
+        self.tag = TagFactory.create(type="genre")
         self.payload = {
             "type": "updated-genre",
             "source": "system",
@@ -281,7 +273,7 @@ class TestTagViewSetPartialUpdate(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.tag = make_tag(type="genre", is_enabled=True)
+        self.tag = TagFactory.create(type="genre", is_enabled=True)
 
     def test_patch_with_internal_key_returns_200(self):
         response = self.client.patch(
@@ -329,30 +321,30 @@ class TestTagViewSetDelete(TestCase):
         self.client = APIClient()
 
     def test_delete_with_internal_key_returns_204(self):
-        tag = make_tag(type="genre")
+        tag = TagFactory.create(type="genre")
         response = self.client.delete(
             f"/api/tags/{tag.id}/", **int_headers()
         )
         self.assertEqual(response.status_code, 204)
 
     def test_delete_with_internal_key_removes_from_db(self):
-        tag = make_tag(type="genre")
+        tag = TagFactory.create(type="genre")
         self.client.delete(f"/api/tags/{tag.id}/", **int_headers())
         self.assertFalse(Tag.objects.filter(id=tag.id).exists())
 
     def test_delete_with_public_key_returns_403(self):
-        tag = make_tag(type="genre")
+        tag = TagFactory.create(type="genre")
         response = self.client.delete(
             f"/api/tags/{tag.id}/", **pub_headers()
         )
         self.assertEqual(response.status_code, 403)
 
     def test_delete_without_auth_returns_403(self):
-        tag = make_tag(type="genre")
+        tag = TagFactory.create(type="genre")
         response = self.client.delete(f"/api/tags/{tag.id}/")
         self.assertEqual(response.status_code, 403)
 
     def test_delete_with_wrong_key_returns_403(self):
-        tag = make_tag(type="genre")
+        tag = TagFactory.create(type="genre")
         response = self.client.delete(f"/api/tags/{tag.id}/", **wrong_headers())
         self.assertIn(response.status_code, [401, 403])

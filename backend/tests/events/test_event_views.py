@@ -5,8 +5,9 @@ from rest_framework.test import APIClient
 from apps.core.views import ApiModelViewSet
 from apps.events.models import Event
 from apps.events.views import EventViewSet
-from apps.locations.models import Location, Space, Hall
-from apps.productions.models import Production
+from tests.factories.event import EventFactory
+from tests.factories.location import HallFactory
+from tests.factories.production import ProductionFactory
 
 
 PUB_KEY = "pub-event-view-test-key"
@@ -32,22 +33,6 @@ def wrong_headers():
 def results_list(response):
     """Support both paginated and non-paginated responses."""
     return response.data.get("results", response.data)
-
-
-def make_hall() -> Hall:
-    """Create a minimal Hall with required Location/Space dependencies."""
-    loc = Location.objects.create(
-        street="Main Street",
-        number="1",
-        postal_code="9000",
-        city="Ghent",
-        country="BE",
-        phone_1=None,
-        phone_2=None,
-        is_own_location=False,
-    )
-    space = Space.objects.create(location=loc)
-    return Hall.objects.create(space=space, seat_selection=False, open_seating=False)
 
 
 # ---------------------------------------------------------------------------
@@ -79,23 +64,18 @@ class _EventSetupMixin(TestCase):
         self.client = APIClient()
 
         Event.objects.all().delete()
-        Production.objects.all().delete()
-        Hall.objects.all().delete()
-        Space.objects.all().delete()
-        Location.objects.all().delete()
-
-        self.production = Production.objects.create()
-        self.hall = make_hall()
+        self.production = ProductionFactory()
+        self.hall = HallFactory()
 
         now = timezone.now()
-        self.e1 = Event.objects.create(
+        self.e1 = EventFactory(
             production=self.production,
             hall=self.hall,
             starts_at=now,
             ends_at=now + timedelta(hours=2),
             ticketing_url="https://example.com/tickets-1",
         )
-        self.e2 = Event.objects.create(
+        self.e2 = EventFactory(
             production=self.production,
             hall=self.hall,
             starts_at=now + timedelta(days=1),

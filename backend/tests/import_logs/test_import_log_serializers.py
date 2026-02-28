@@ -27,6 +27,8 @@ from rest_framework.exceptions import ValidationError
 
 from apps.import_log.models import ImportLog
 from apps.import_log.serializers import ImportLogSerializer
+from tests.factories.import_log import ImportLogFactory
+from tests.factories.import_log import ImportLogFactory
 
 
 # ---------------------------------------------------------------------------
@@ -40,9 +42,14 @@ def make_import_log(**kwargs):
         "records_total": 0,
         "records_imported": 0,
         "records_failed": 0,
+        "started_at": None,
+        "finished_at": None,
+        "error_message": None,
     }
     defaults.update(kwargs)
-    return ImportLog.objects.create(**defaults)
+    log = ImportLogFactory.build(**defaults)
+    log.save()
+    return log
 
 
 def make_finished_log(duration_seconds=0, **kwargs):
