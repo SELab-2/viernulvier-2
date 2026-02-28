@@ -22,10 +22,6 @@ from apps.core.models import BaseModel
 from apps.languages.models import Language
 
 
-# ===========================================================================
-# Price
-# ===========================================================================
-
 class Price(BaseModel):
     """
     A ticket price category.
@@ -193,10 +189,6 @@ class PriceTranslation(BaseModel):
     def __str__(self) -> str:
         return f"{self.price.type} [{self.language.code}]"
 
-
-# ===========================================================================
-# PriceRank
-# ===========================================================================
 
 class PriceRank(BaseModel):
     """
