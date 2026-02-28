@@ -116,4 +116,4 @@ class GenreTranslation(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        return f"{self.language.code} — {self.name}"
+        return f"{self.language.code} - {self.name}"
