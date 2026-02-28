@@ -324,7 +324,7 @@ def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optiona
     # Handle datetime fields
     if isinstance(field, models.DateTimeField):
         if isinstance(value, str):
-            if value.startswith("-0001"):
+            if value.startswith("-"):
                 value = value[1:]
             if value[:4] == "0000":
                 value = "1970" + value[4:]

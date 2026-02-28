@@ -551,8 +551,18 @@ class TestCamelToSnakeCase:
 class TestFlexibleFieldMapping:
     """Test that the scraper tries every API field and skips unknown ones."""
 
+    def test_throws_no_error_for_year_minus_one_date(self):
+        """Should accept date fields that have year -0001."""
+        from apps.events.models import Event
+
+        field = Event._meta.get_field("starts_at")
+        value = "-0001-01-01T00:00:00+00:00"
+        parsed = _convert_field_value(field, value, 2)
+
+        assert parsed == datetime.datetime(1, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+
     def test_throws_no_error_for_year_zero_date(self):
-        """Should raise ScraperError if date fields have year 0000."""
+        """Should accept date fields that have year 0000."""
         from apps.events.models import Event
 
         field = Event._meta.get_field("starts_at")
