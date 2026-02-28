@@ -1,53 +1,83 @@
-"""ViewSets for location-related models with API-key access control."""
+"""
+ViewSets for the Locations app.
+
+Schema annotations are kept in schemas.py so this file stays focused
+on routing and queryset configuration only.
+"""
 
 from apps.core.views import ApiModelViewSet
+
 from .models import Hall, Location, Space
+from .schemas import extend_schema, hall_schema, location_schema, space_schema
 from .serializers import HallSerializer, LocationSerializer, SpaceSerializer
 
+_TAG = "Locations"  # Reusable tag for all location-related endpoints in the OpenAPI docs
 
+
+@extend_schema(tags=[_TAG])
+@location_schema
 class LocationViewSet(ApiModelViewSet):
-	"""API endpoint for locations with translated names.
+    """
+    CRUD endpoints for Location objects.
 
-	Access rules:
-		- Public API key -> read-only
-		- Internal API key -> full CRUD
-	"""
+    A location represents a physical venue or address. It is the top of
+    the three-level hierarchy: Location → Space → Hall.
 
-	queryset = (
-		Location.objects.prefetch_related("translations__language")
-		.order_by("id")
-		.all()
-	)
-	serializer_class = LocationSerializer
+    Translations (localised names) are managed via the Location Translation
+    endpoints and resolved at read time from the `Accept-Language` header.
+    """
+
+    queryset = (
+        Location.objects
+        .prefetch_related("translations__language")
+        .order_by("id")
+        .all()
+    )
+    serializer_class = LocationSerializer
 
 
+@extend_schema(tags=[_TAG])
+@space_schema
 class SpaceViewSet(ApiModelViewSet):
-	"""API endpoint for spaces.
+    """
+    CRUD endpoints for Space objects.
 
-	Prefetches translations and the owning location to avoid N+1 queries when
-	rendering translated fields and related lookups.
-	"""
+    A space is a distinct physical area (building, wing, …) within a location.
+    It groups one or more halls.
 
-	queryset = (
-		Space.objects.select_related("location")
-		.prefetch_related("translations__language")
-		.order_by("id")
-		.all()
-	)
-	serializer_class = SpaceSerializer
+    Prefetches translations and the owning location to avoid N+1 queries when
+    rendering translated fields and related lookups.
+    """
+
+    queryset = (
+        Space.objects
+        .select_related("location")
+        .prefetch_related("translations__language")
+        .order_by("id")
+        .all()
+    )
+    serializer_class = SpaceSerializer
 
 
+@extend_schema(tags=[_TAG])
+@hall_schema
 class HallViewSet(ApiModelViewSet):
-	"""API endpoint for halls.
+    """
+    CRUD endpoints for Hall objects.
 
-	Prefetches translations and selects related space/location so hall listings
-	stay efficient even with translated fields.
-	"""
+    A hall is a specific room or auditorium within a space. It carries
+    seating configuration flags and supports localised `name` and `remark`
+    fields.
 
-	queryset = (
-		Hall.objects.select_related("space", "space__location")
-		.prefetch_related("translations__language")
-		.order_by("id")
-		.all()
-	)
-	serializer_class = HallSerializer
+    Prefetches translations and selects the related space and location so
+    hall listings remain efficient even when translated fields are rendered.
+    """
+
+    queryset = (
+        Hall.objects
+        .select_related("space", "space__location")
+        .prefetch_related("translations__language")
+        .order_by("id")
+        .all()
+    )
+    serializer_class = HallSerializer

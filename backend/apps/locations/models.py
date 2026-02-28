@@ -1,214 +1,332 @@
+"""
+Models for the Locations app.
+
+The location hierarchy is three levels deep:
+
+    Location  →  Space  →  Hall
+
+- A **Location** is a physical address (building / venue).
+- A **Space** is a distinct area within a location (e.g. a wing or building).
+- A **Hall** is a specific room or auditorium within a space.
+
+Every model has a companion ``*Translation`` model that stores localised
+display names (and, for halls, an optional localised remark).
+"""
+
 from django.db import models
+
 from apps.core.models import BaseModel
 from apps.languages.models import Language
 
-# ==============================
-# LOCATION
-# ==============================
 
 class Location(BaseModel):
+    """
+    A physical venue or address.
+
+    Attributes:
+        street:          Street name.
+        number:          Street / house number.
+        postal_code:     Postal / ZIP code.
+        city:            City name.
+        country:         Country name.
+        phone_1:         Primary contact phone number (optional).
+        phone_2:         Secondary contact phone number (optional).
+        is_own_location: ``True`` when this venue is owned by the organisation.
+    """
+
     street = models.CharField(
         max_length=255,
-        db_comment="The street of the location."
+        help_text="Street name of the location.",
+        db_comment="Street name of the location.",
     )
 
     number = models.CharField(
         max_length=20,
-        db_comment="The street number of the location."
+        help_text="Street / house number.",
+        db_comment="Street number of the location.",
     )
 
     postal_code = models.CharField(
         max_length=20,
-        db_comment="The postal code of the location."
+        help_text="Postal or ZIP code.",
+        db_comment="Postal code of the location.",
     )
 
     city = models.CharField(
         max_length=100,
-        db_comment="City"
+        help_text="City in which the location sits.",
+        db_comment="City of the location.",
     )
 
     country = models.CharField(
-        max_length=100, 
-        db_comment="Country"
+        max_length=100,
+        help_text="Country in which the location sits.",
+        db_comment="Country of the location.",
     )
 
     phone_1 = models.CharField(
         max_length=50,
         blank=True,
-        null=True, 
-        db_comment="Primary phone number"
+        null=True,
+        help_text="Primary contact phone number (optional).",
+        db_comment="Primary phone number.",
     )
 
     phone_2 = models.CharField(
-        max_length=50, 
-        blank=True, 
-        null=True, 
-        db_comment="Secondary phone number"
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Secondary contact phone number (optional).",
+        db_comment="Secondary phone number.",
     )
-    
+
     is_own_location = models.BooleanField(
-        default=False, 
-        db_comment="Whether this is an owned location or not"
+        default=False,
+        help_text="``True`` when this venue is owned or operated by the organisation.",
+        db_comment="Whether this is an owned/operated location.",
     )
 
     class Meta(BaseModel.Meta):
         db_table = "location"
         verbose_name = "Location"
         verbose_name_plural = "Locations"
+        ordering = ["id"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.city} - {self.street} {self.number}"
 
 
 class LocationTranslation(BaseModel):
+    """
+    Localised name for a Location.
+
+    Each location can have at most one translation per language.
+
+    Attributes:
+        location: The location this translation belongs to.
+        language: The language of this translation.
+        name:     Localised display name of the location.
+    """
+
     location = models.ForeignKey(
         Location,
         on_delete=models.CASCADE,
         related_name="translations",
-        db_comment="Reference to the location"
+        help_text="Location this translation belongs to.",
+        db_comment="FK to Location.",
     )
 
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
         related_name="location_translations",
-        db_comment="Language of the translation"
+        help_text="Language of this translation.",
+        db_comment="FK to Language.",
     )
 
     name = models.CharField(
-        max_length=255, 
-        db_comment="Translated name of the location"
+        max_length=255,
+        null=False,
+        blank=False,
+        help_text="Localised display name of the location.",
+        db_comment="Translated name of the location.",
     )
 
     class Meta(BaseModel.Meta):
         db_table = "location_translation"
         verbose_name = "Location Translation"
         verbose_name_plural = "Location Translations"
+        ordering = ["id"]
         constraints = [
-            models.UniqueConstraint(fields=['location', 'language'], name='unique_location_language')
+            models.UniqueConstraint(
+                fields=["location", "language"],
+                name="unique_location_language",
+            )
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.language.code} - {self.name}"
 
 
-# ==============================
-# SPACE
-# ==============================
-
 class Space(BaseModel):
+    """
+    A distinct physical area within a Location.
+
+    A space groups one or more halls and represents a building, wing,
+    or other named section of a venue.
+
+    Attributes:
+        location: The parent location this space belongs to.
+    """
+
     location = models.ForeignKey(
         Location,
         on_delete=models.CASCADE,
         related_name="spaces",
-        db_comment="Reference to the location of the space"
+        help_text="Parent location this space belongs to.",
+        db_comment="FK to Location.",
     )
 
     class Meta(BaseModel.Meta):
         db_table = "space"
         verbose_name = "Space"
         verbose_name_plural = "Spaces"
+        ordering = ["id"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Space {self.id} - {self.location}"
 
 
 class SpaceTranslation(BaseModel):
+    """
+    Localised name for a Space.
+
+    Each space can have at most one translation per language.
+
+    Attributes:
+        space:    The space this translation belongs to.
+        language: The language of this translation.
+        name:     Localised display name of the space.
+    """
+
     space = models.ForeignKey(
         Space,
         on_delete=models.CASCADE,
         related_name="translations",
-        db_comment="Reference to the space"
+        help_text="Space this translation belongs to.",
+        db_comment="FK to Space.",
     )
 
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
         related_name="space_translations",
-        db_comment="Language of the translation"
+        help_text="Language of this translation.",
+        db_comment="FK to Language.",
     )
 
     name = models.CharField(
-        max_length=255, 
-        db_comment="Translated name of the space"
+        max_length=255,
+        null=False,
+        blank=False,
+        help_text="Localised display name of the space.",
+        db_comment="Translated name of the space.",
     )
 
     class Meta(BaseModel.Meta):
         db_table = "space_translation"
         verbose_name = "Space Translation"
         verbose_name_plural = "Space Translations"
+        ordering = ["id"]
         constraints = [
-            models.UniqueConstraint(fields=['space', 'language'], name='unique_space_language')
+            models.UniqueConstraint(
+                fields=["space", "language"],
+                name="unique_space_language",
+            )
         ]
 
-    def __str__(self):
-        return f"Space - {self.language.code} - {self.name}"
+    def __str__(self) -> str:
+        return f"{self.language.code} - {self.name}"
 
-
-# ==============================
-# HALL
-# ==============================
 
 class Hall(BaseModel):
+    """
+    A specific room or auditorium within a Space.
+
+    Carries seating configuration flags that determine how tickets are
+    sold and seats are assigned for events held in this hall.
+
+    Attributes:
+        space:          The parent space this hall belongs to.
+        seat_selection: ``True`` when visitors can choose a specific seat.
+        open_seating:   ``True`` when seating is general-admission (no fixed seat).
+    """
+
     space = models.ForeignKey(
         Space,
         on_delete=models.CASCADE,
         related_name="halls",
-        db_comment="Reference to the space where the hall is located"
+        help_text="Parent space this hall belongs to.",
+        db_comment="FK to Space.",
     )
 
     seat_selection = models.BooleanField(
         default=False,
-        db_comment="Whether seat selection is available"
+        help_text="``True`` when visitors can choose a specific seat during purchase.",
+        db_comment="Whether seat selection is available.",
     )
 
     open_seating = models.BooleanField(
         default=False,
-        db_comment="Whether seating is open/general admission"
+        help_text="``True`` when seating is general-admission (no fixed seat assignment).",
+        db_comment="Whether seating is open / general admission.",
     )
 
     class Meta(BaseModel.Meta):
         db_table = "hall"
         verbose_name = "Hall"
         verbose_name_plural = "Halls"
+        ordering = ["id"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Hall {self.id} @ {self.space}"
 
 
 class HallTranslation(BaseModel):
+    """
+    Localised name and optional remark for a Hall.
+
+    Each hall can have at most one translation per language.
+
+    Attributes:
+        hall:     The hall this translation belongs to.
+        language: The language of this translation.
+        name:     Localised display name of the hall.
+        remark:   Optional localised note about the hall (e.g. accessibility info).
+    """
+
     hall = models.ForeignKey(
         Hall,
         on_delete=models.CASCADE,
         related_name="translations",
-        db_comment="Reference to the hall"
+        help_text="Hall this translation belongs to.",
+        db_comment="FK to Hall.",
     )
 
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
         related_name="hall_translations",
-        db_comment="Language of the translation"
+        help_text="Language of this translation.",
+        db_comment="FK to Language.",
     )
 
     name = models.CharField(
-        max_length=255, 
-        db_comment="Translated name of the hall"
+        max_length=255,
+        null=False,
+        blank=False,
+        help_text="Localised display name of the hall.",
+        db_comment="Translated name of the hall.",
     )
 
     remark = models.TextField(
-        blank=True, 
-        null=True, 
-        db_comment="Optional remark about the hall"
+        blank=True,
+        null=True,
+        help_text="Optional localised note about the hall (e.g. accessibility information).",
+        db_comment="Optional translated remark about the hall.",
     )
 
     class Meta(BaseModel.Meta):
         db_table = "hall_translation"
         verbose_name = "Hall Translation"
         verbose_name_plural = "Hall Translations"
+        ordering = ["id"]
         constraints = [
-            models.UniqueConstraint(fields=['hall', 'language'], name='unique_hall_language')
+            models.UniqueConstraint(
+                fields=["hall", "language"],
+                name="unique_hall_language",
+            )
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.language.code} - {self.name}"
