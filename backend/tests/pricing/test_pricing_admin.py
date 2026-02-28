@@ -112,7 +112,7 @@ class TestPricingAdminConfiguration(TestCase):
         self.assertIn("cineville_box", admin_obj.list_filter)
 
         self.assertIn("id", admin_obj.search_fields)
-        self.assertEqual(admin_obj.ordering, ("sort_order",))
+        self.assertEqual(admin_obj.ordering, ("sort_order", "id"))
 
         # Inlines should exist (not necessarily strict count)
         self.assertTrue(admin_obj.inlines)
@@ -121,7 +121,7 @@ class TestPricingAdminConfiguration(TestCase):
         """Test case for test_price_rank_admin_configuration."""
         admin_obj = PriceRankAdmin(PriceRank, self.site)
 
-        self.assertEqual(admin_obj.ordering, ("position",))
+        self.assertEqual(admin_obj.ordering, ("position", "id"))
         self.assertIn("id", admin_obj.search_fields)
         self.assertIn("position", admin_obj.search_fields)
         self.assertTrue(admin_obj.inlines)
