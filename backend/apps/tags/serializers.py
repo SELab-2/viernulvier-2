@@ -1,17 +1,61 @@
+"""
+Serializers for the Tags app.
+
+Translated fields on ``TagSerializer`` (``name``,
+``short_description``, ``url_title``) return all available translations
+as language-code dictionaries
+(e.g. {"en": "Contemporary", "fr": "Contemporain"}).
+"""
+
 from rest_framework import serializers
+
 from apps.core.serializers import TranslatableSerializerMixin
 from .models import Tag
 
 
 class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """
-    Public representation of Tag.
-    Translations are nested per field.
+    Full representation of a Tag.
+
+    Translated fields
+    -----------------
+    The following fields return all available translations as
+    language-code dictionaries:
+
+    - ``name``
+    - ``short_description``
+    - ``url_title``
+
+    All translated fields are read-only.
     """
 
-    name = serializers.SerializerMethodField()
-    short_description = serializers.SerializerMethodField()
-    url_title = serializers.SerializerMethodField()
+    # ---------------------------------------------------------------------------
+    # Translatable fields
+    # ---------------------------------------------------------------------------
+
+    name = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary of all available translations for the tag name "
+            "(e.g. {\"en\": \"Contemporary\", \"fr\": \"Contemporain\"}). "
+            "Read-only — use the translation endpoints to manage translations."
+        ),
+    )
+
+    short_description = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary of all available translations for the tag's short description "
+            "(e.g. {\"en\": \"Contemporary performing arts\", \"fr\": \"Arts du spectacle contemporain\"}). "
+            "Read-only — use the translation endpoints to manage translations."
+        ),
+    )
+
+    url_title = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary of all available translations for the URL-safe title "
+            "(e.g. {\"en\": \"contemporary\", \"fr\": \"contemporain\"}). "
+            "Read-only — use the translation endpoints to manage translations."
+        ),
+    )
 
     class Meta:
         model = Tag
@@ -27,12 +71,40 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "short_description",
             "url_title",
         ]
+        read_only_fields = ["id", "name", "short_description", "url_title"]
+        extra_kwargs = {
+            "url": {
+                "help_text": "Public URL of the tag in the originating system. Empty string when not applicable.",
+            },
+            "source": {
+                "help_text": "Identifier of the system that created this tag (e.g. `uitdatabank`, `system`).",
+            },
+            "source_type": {
+                "help_text": "Sub-classification of the source (e.g. `theme`, `targetAudience`).",
+            },
+            "type": {
+                "help_text": "Internal category of the tag used for grouping (e.g. `theme`, `audience`).",
+            },
+            "is_external": {
+                "help_text": "`true` when this tag was imported from an external system.",
+            },
+            "is_enabled": {
+                "help_text": "`false` to soft-disable the tag without removing it.",
+            },
+        }
 
-    def get_name(self, obj):
+    # ---------------------------------------------------------------------------
+    # SerializerMethodField implementations
+    # ---------------------------------------------------------------------------
+
+    def get_name(self, obj: Tag) -> str:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
 
-    def get_short_description(self, obj):
+    def get_short_description(self, obj: Tag) -> str:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "short_description")
 
-    def get_url_title(self, obj):
+    def get_url_title(self, obj: Tag) -> str:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "url_title")

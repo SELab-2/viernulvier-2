@@ -37,12 +37,12 @@ INT_KEY = "int-production-view-test-key"
 # Helpers
 # ---------------------------------------------------------------------------
 
-def pub_headers():
-    return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
-
-
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
+
+
+def pub_headers():
+    return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
 
 
 def wrong_headers():
