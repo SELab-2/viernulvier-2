@@ -1,4 +1,4 @@
-import { Container, Paper, Stack, Typography, Button } from '@mui/material'
+import { Container, Paper, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
 const HomePage = () => {
