@@ -368,7 +368,16 @@ class TestMediaItemAdminGetQueryset(TestCase):
         self.assertEqual(qs.model, MediaItem)
 
     def test_queryset_has_select_related_for_gallery(self):
-        qs = self.model_admin.get_queryset(self._make_request())
+        admin = self.model_admin
+        request = self._make_request()
+        
+        self.assertEqual(admin.list_select_related, ("gallery",))
+
+        qs = admin.get_queryset(request)
+        
+        if admin.list_select_related:
+            qs = qs.select_related(*admin.list_select_related)
+        
         self.assertIn("gallery", qs.query.select_related)
 
 

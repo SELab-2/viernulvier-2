@@ -1,3 +1,5 @@
+"""Admin configuration for the Genre app."""
+
 from django.contrib import admin
 
 from apps.core.admin import BaseAdmin
@@ -5,39 +7,39 @@ from .models import Genre, GenreTranslation, GenreUseAs
 
 
 class GenreTranslationInline(admin.TabularInline):
-	model = GenreTranslation
-	extra = 1
-	fields = ("language", "name")
-	autocomplete_fields = ("language",)
+    model = GenreTranslation
+    extra = 1
+    fields = ("language", "name")
+    autocomplete_fields = ("language",)
 
 
 @admin.register(GenreUseAs)
 class GenreUseAsAdmin(BaseAdmin):
-	"""Admin config for genre use-cases."""
+    """Admin configuration for genre usage contexts."""
 
-	list_display = ("id", "name")
-	search_fields = ("name",)
-	ordering = ("name",)
+    list_display = ("id", "name")
+    search_fields = ("name",)
+    ordering = ("name",)
 
 
 @admin.register(Genre)
 class GenreAdmin(BaseAdmin):
-	"""Admin config for genres."""
+    """Admin configuration for genres."""
 
-	list_display = ("id", "type", "use_as")
-	list_filter = ("use_as",)
-	search_fields = ("type",)
-	ordering = ("id",)
-	autocomplete_fields = ("use_as",)
-	inlines = [GenreTranslationInline]
+    list_display = ("id", "type", "use_as")
+    list_filter = ("use_as",)
+    search_fields = ("type",)
+    ordering = ("id",)
+    autocomplete_fields = ("use_as",)
+    inlines = [GenreTranslationInline]
 
 
 @admin.register(GenreTranslation)
 class GenreTranslationAdmin(BaseAdmin):
-	"""Admin config for genre translations."""
+    """Admin configuration for genre translations."""
 
-	list_display = ("id", "name", "language", "genre")
-	list_filter = ("language", "genre")
-	search_fields = ("name",)
-	ordering = ("id",)
-	autocomplete_fields = ("language", "genre")
+    list_display = ("id", "name", "language", "genre")
+    list_filter = ("language", "genre")
+    search_fields = ("name",)
+    ordering = ("id",)
+    autocomplete_fields = ("language", "genre")
