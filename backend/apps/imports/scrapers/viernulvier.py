@@ -13,6 +13,7 @@ Usage:
 import logging
 import os
 import re
+import sys
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Type
 from urllib.parse import urljoin, urlparse
 
@@ -643,17 +644,17 @@ def sync_viernulvier(
 
         saved = 0
         errors = 0
+        error_messages = []
         seen = set()
 
         with transaction.atomic():
             for item in items:
                 # Validate item is a dict
                 if not isinstance(item, dict):
-                    logger.error(
-                        "Unexpected error while processing item: item is not a dict: %s",
-                        item,
-                    )
+                    msg = f"Item is not a dict: {item}"
+                    logger.error(msg)
                     errors += 1
+                    error_messages.append(msg)
                     continue
 
                 # Extract @id
@@ -661,13 +662,17 @@ def sync_viernulvier(
 
                 # Validate item_id is not empty
                 if item_id is None:
-                    logger.warning("Skipping item without @id: %s", item)
+                    msg = f"Missing @id for item: {item}"
+                    logger.warning(msg)
                     errors += 1
+                    error_messages.append(msg)
                     continue
 
                 # Check for duplicates in current batch
                 if item_id in seen:
-                    logger.warning("Duplicate @id in batch: %s", item_id)
+                    msg = f"Duplicate @id in batch: {item_id}"
+                    logger.warning(msg)
+                    error_messages.append(msg)
                     continue
 
                 seen.add(item_id)
@@ -678,29 +683,41 @@ def sync_viernulvier(
                     defaults = _build_model_defaults(model, item)
                     missing = _missing_required_fields(model, defaults)
                     if missing:
-                        logger.warning(
-                            "Skipping item @id=%s due to missing fields: %s",
-                            item_id,
-                            ", ".join(missing),
-                        )
+                        msg = f"Missing required fields for @id={item_id}: {', '.join(missing)}"
+                        logger.warning(msg)
                         transaction.savepoint_rollback(sid)
                         errors += 1
+                        error_messages.append(msg)
                         continue
 
-                    model.objects.update_or_create(
+                    obj, created = model.objects.update_or_create(
                         **{model._meta.pk.name: item_id},
                         defaults=defaults,
                     )
                     transaction.savepoint_commit(sid)
                     saved += 1
-                except (IntegrityError, DatabaseError, FieldError, ValidationError):
+                except ValidationError as e:
                     transaction.savepoint_rollback(sid)
-                    logger.error(
-                        "Database error while syncing item with @id=%s. Continuing.",
-                        item_id,
-                        exc_info=True,
-                    )
+                    # Make ValidationErrors readable
+                    messages = []
+                    for field, errs in e.message_dict.items():
+                        for err in errs:
+                            if field == "__all__":
+                                messages.append(f"{err}")
+                            else:
+                                messages.append(f"{field}: {err}")
+                    msg = f"Validation error for @id={item_id}: {'; '.join(messages)}"
+                    logger.error(msg)
                     errors += 1
+                    error_messages.append(msg)
+
+                except (IntegrityError, DatabaseError, FieldError):
+                    transaction.savepoint_rollback(sid)
+                    exc_type, exc_value, exc_tb = sys.exc_info()
+                    msg = f"Database error for @id={item_id}: {exc_type.__name__}: {exc_value}"
+                    logger.error(msg, exc_info=True)
+                    errors += 1
+                    error_messages.append(msg)
 
         # Update import log with final status
         import_log.records_total = len(items)
@@ -712,9 +729,10 @@ def sync_viernulvier(
             import_log.status = ImportLog.Status.SUCCESS
         elif saved > 0:
             import_log.status = ImportLog.Status.PARTIAL_SUCCESS
+            import_log.error_message = f"{errors} records failed to import: {', '.join(error_messages)}"
         else:
             import_log.status = ImportLog.Status.FAILED
-            import_log.error_message = f"All {errors} records failed to import"
+            import_log.error_message = f"All {errors} records failed to import: {', '.join(error_messages)}"
 
         import_log.save()
 
