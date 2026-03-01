@@ -570,7 +570,6 @@ class TestFlexibleFieldMapping:
     def test_skips_unknown_fields_event_price(self):
         """Unknown fields in the API response should be silently skipped."""
         from apps.events.models import EventPrice
-        logging.basicConfig(level=logging.DEBUG)
 
         # In the new architecture, transformers resolve FKs before _build_model_defaults is called
         # So we provide transformed data with event_id and price_rank_id already resolved

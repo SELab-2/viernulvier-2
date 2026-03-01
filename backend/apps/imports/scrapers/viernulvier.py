@@ -402,8 +402,11 @@ def _build_model_defaults(
 
     # Map each field from the transformed item to the model
     for key, value in item.items():
+        if key == "@id":
+            key = "external_id"
+
         # Skip JSON-LD metadata fields
-        if key.startswith("@") or key in JSON_LD_METADATA_FIELDS:
+        elif key.startswith("@") or key in JSON_LD_METADATA_FIELDS:
             continue
 
         if value is None:
@@ -578,7 +581,7 @@ def sync_viernulvier(
                         error_messages.append(msg)
                         continue
 
-                    model.objects.update_or_create(
+                    obj, created = model.objects.update_or_create(
                         **{model._meta.pk.name: item_id},
                         defaults=defaults,
                     )
