@@ -340,11 +340,11 @@ class TestTagViewSetDelete(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_delete_without_auth_returns_401(self):
-        tag = make_tag(type="genre")
+        tag = TagFactory.create(type="genre")
         response = self.client.delete(f"/api/tags/{tag.id}/")
         self.assertEqual(response.status_code, 401)
 
     def test_delete_with_wrong_key_returns_401(self):
-        tag = make_tag(type="genre")
+        tag = TagFactory.create(type="genre")
         response = self.client.delete(f"/api/tags/{tag.id}/", **wrong_headers())
         self.assertEqual(response.status_code, 401)

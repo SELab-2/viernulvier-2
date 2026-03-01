@@ -97,10 +97,7 @@ class TestNoAuthorizationHeader:
     def test_does_not_raise_when_header_absent(self, auth):
         """Missing header must never raise any exception."""
         with _patch_get_auth(b""):
-            try:
-                auth.authenticate(MagicMock())
-            except Exception as exc:
-                pytest.fail(f"Unexpected exception raised with no header: {exc}")
+            auth.authenticate(MagicMock())
 
     def test_settings_are_not_accessed_when_header_absent(self, auth):
         """
@@ -248,21 +245,13 @@ class TestUnicodeErrors:
     def test_raw_unicode_decode_error_does_not_escape_from_scheme(self, auth):
         """The raw UnicodeDecodeError must be caught and converted."""
         with _patch_get_auth(b"\xff validkey"):
-            try:
+            with pytest.raises(AuthenticationFailed):
                 auth.authenticate(MagicMock())
-            except UnicodeDecodeError:
-                pytest.fail("Raw UnicodeDecodeError must not escape authenticate().")
-            except AuthenticationFailed:
-                pass  # expected
 
     def test_raw_unicode_decode_error_does_not_escape_from_key(self, auth):
         with _patch_get_auth(b"Api-Key \xff"):
-            try:
+            with pytest.raises(AuthenticationFailed):
                 auth.authenticate(MagicMock())
-            except UnicodeDecodeError:
-                pytest.fail("Raw UnicodeDecodeError must not escape authenticate().")
-            except AuthenticationFailed:
-                pass  # expected
 
 
 # ===========================================================================
@@ -453,12 +442,6 @@ class TestInvalidKey:
             with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
                 with pytest.raises(AuthenticationFailed):
                     auth.authenticate(MagicMock())
-                try:
-                    auth.authenticate(MagicMock())
-                except PermissionDenied:
-                    pytest.fail("Must raise AuthenticationFailed, not PermissionDenied.")
-                except AuthenticationFailed:
-                    pass
 
 
 # ===========================================================================
@@ -536,10 +519,7 @@ class TestAuthenticateHeader:
     def test_does_not_raise_for_any_request_object(self, auth):
         """authenticate_header must never raise, regardless of request content."""
         for request in [MagicMock(), None, object()]:
-            try:
-                auth.authenticate_header(request)
-            except Exception as exc:
-                pytest.fail(f"authenticate_header raised unexpectedly: {exc}")
+            auth.authenticate_header(request)
 
     def test_return_value_is_non_empty(self, auth):
         """An empty WWW-Authenticate header would be useless and invalid."""
