@@ -21,6 +21,12 @@ class BaseModel(models.Model):
     save originates from the Django admin, the API, a management command,
     or a test.
 
+    Attributes
+    ----------
+    external_id : CharField
+        Optional external identifier for integration with external systems.
+        Can be null or blank.
+
     Validation order (``full_clean``)
     ----------------------------------
     Django's ``full_clean()`` runs three steps in order:
@@ -63,8 +69,10 @@ class BaseModel(models.Model):
     """
 
     external_id = models.CharField(
-        null = True,
-        blank = True,
+        null=True,
+        blank=True,
+        help_text="Optional external identifier for integration with the viernulvier database.",
+        db_comment="External identifier from the viernulvier database.",
     )
 
     class Meta:
