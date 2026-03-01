@@ -39,6 +39,7 @@ from tests.factories.media_library import (
     MediaGalleryFactory,
     MediaItemFactory,
     MediaItemTranslationFactory,
+    MediaItemCropFactory,
 )
 
 
@@ -60,6 +61,10 @@ def pub_headers():
 
 def wrong_headers():
     return {"HTTP_AUTHORIZATION": "Api-Key completely-wrong-key"}
+
+
+def results_list(response):
+    return response.data.get("results", response.data)
 
 
 # ---------------------------------------------------------------------------
@@ -510,3 +515,58 @@ class TestMediaItemViewSetWrite(TestCase):
     def test_delete_without_auth_returns_401_or_403(self):
         response = self.client.delete(f"/api/media-items/{self.item.pk}/")
         self.assertIn(response.status_code, (401, 403))
+
+
+# ---------------------------------------------------------------------------
+# N+1 guards — queryset prefetches
+# ---------------------------------------------------------------------------
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestMediaGalleryViewSetPrefetch(TestCase):
+    """Ensure gallery list stays bounded in query count when nested data grows."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.lang_nl = LanguageFactory.create(code="nl", name="Dutch")
+        self.lang_en = LanguageFactory.create(code="en", name="English")
+
+        for g in range(3):
+            gallery = MediaGalleryFactory(name=f"Gallery {g}")
+            for i in range(3):
+                item = MediaItemFactory(gallery=gallery, position=i)
+                MediaItemTranslationFactory(media_item=item, language=self.lang_nl, title=f"NL {g}-{i}")
+                MediaItemTranslationFactory(media_item=item, language=self.lang_en, title=f"EN {g}-{i}")
+                MediaItemCropFactory(media_item=item, name=f"crop_{g}_{i}_1")
+                MediaItemCropFactory(media_item=item, name=f"crop_{g}_{i}_2")
+
+    def test_gallery_list_prefetches_nested_relations(self):
+        with self.assertNumQueries(6):
+            response = self.client.get("/api/media-galleries/", **pub_headers())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(results_list(response)), 3)
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestMediaItemViewSetPrefetch(TestCase):
+    """Ensure media item list remains bounded in queries with translations and crops."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.lang_nl = LanguageFactory.create(code="nl", name="Dutch")
+        self.lang_en = LanguageFactory.create(code="en", name="English")
+        self.gallery = MediaGalleryFactory(name="Prefetch Gallery")
+
+        for i in range(6):
+            item = MediaItemFactory(gallery=self.gallery, position=i)
+            MediaItemTranslationFactory(media_item=item, language=self.lang_nl, title=f"NL {i}")
+            MediaItemTranslationFactory(media_item=item, language=self.lang_en, title=f"EN {i}")
+            MediaItemCropFactory(media_item=item, name=f"crop_{i}_a")
+            MediaItemCropFactory(media_item=item, name=f"crop_{i}_b")
+
+    def test_item_list_prefetches_related_models(self):
+        with self.assertNumQueries(5):
+            response = self.client.get("/api/media-items/", **pub_headers())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(results_list(response)), 6)

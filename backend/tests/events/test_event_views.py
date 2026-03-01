@@ -8,6 +8,11 @@ from apps.events.views import EventViewSet
 from tests.factories.event import EventFactory
 from tests.factories.location import HallFactory
 from tests.factories.production import ProductionFactory
+from tests.factories.pricing import PriceRankFactory, PriceRankTranslationFactory
+from tests.factories.event import EventPriceFactory
+from tests.factories.production import ProductionTranslationFactory
+from tests.factories.location import HallTranslationFactory
+from tests.factories.language import LanguageFactory
 
 
 PUB_KEY = "pub-event-view-test-key"
@@ -435,3 +440,54 @@ class TestEventViewSetDelete(_EventSetupMixin):
         """Test case for test_delete_nonexistent_returns_404."""
         response = self.client.delete("/api/events/999999/", **int_headers())
         self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# N+1 guard — queryset prefetches
+# ---------------------------------------------------------------------------
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestEventViewSetPrefetch(TestCase):
+    """Ensure list view stays bounded in queries when data volume grows."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.lang_nl = LanguageFactory.create(code="nl", name="Dutch")
+        self.lang_en = LanguageFactory.create(code="en", name="English")
+
+        for idx in range(5):
+            production = ProductionFactory()
+            ProductionTranslationFactory(
+                production=production,
+                language=self.lang_nl,
+                title=f"Titel {idx}",
+            )
+            ProductionTranslationFactory(
+                production=production,
+                language=self.lang_en,
+                title=f"Title {idx}",
+            )
+
+            hall = HallFactory()
+            HallTranslationFactory(hall=hall, language=self.lang_nl, name=f"Zaal {idx}")
+            HallTranslationFactory(hall=hall, language=self.lang_en, name=f"Hall {idx}")
+
+            rank = PriceRankFactory(position=idx + 1)
+            PriceRankTranslationFactory(price_rank=rank, language=self.lang_nl, description="NL")
+            PriceRankTranslationFactory(price_rank=rank, language=self.lang_en, description="EN")
+
+            event = EventFactory(
+                production=production,
+                hall=hall,
+                starts_at=timezone.now() + timedelta(days=idx),
+                ends_at=timezone.now() + timedelta(days=idx, hours=2),
+            )
+            EventPriceFactory(event=event, price_rank=rank)
+
+    def test_list_prefetches_related_models(self):
+        # Ensure query count stays bounded when related data grows
+        with self.assertNumQueries(6):
+            response = self.client.get("/api/events/?ordering=id", **pub_headers())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(results_list(response)), 5)

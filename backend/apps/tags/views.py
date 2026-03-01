@@ -13,11 +13,13 @@ All translated fields are returned as dictionaries mapping language codes
 to their values (e.g., {"nl": "...", "en": "..."}).
 """
 
+from django.db.models import Prefetch
+
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
 
-from .models import Tag
+from .models import Tag, TagTranslation
 from .schemas import tag_schema
 from .serializers import TagSerializer
 
@@ -43,4 +45,9 @@ class TagViewSet(ApiModelViewSet):
     """
 
     serializer_class = TagSerializer
-    queryset = Tag.objects.prefetch_related("translations")
+    queryset = Tag.objects.prefetch_related(
+        Prefetch(
+            "translations",
+            queryset=TagTranslation.objects.select_related("language"),
+        )
+    )
