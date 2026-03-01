@@ -7,6 +7,11 @@ class BaseModel(models.Model):
     Let all models inherit from this class and implement model validation
     in `clean()`. On `save()`, `full_clean()` is executed automatically.
     """
+
+    external_id = models.CharField(
+        null = True,
+        blank = True,
+    )
     
     class Meta:
         abstract = True

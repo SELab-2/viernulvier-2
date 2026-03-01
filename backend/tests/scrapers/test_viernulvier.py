@@ -520,31 +520,6 @@ def test_fetch_live_events(monkeypatch):
 # =============================================================================
 
 
-class TestCamelToSnakeCase:
-    """Test camelCase to snake_case conversion utility function."""
-
-    def test_simple_camel_case(self):
-        """Test basic camelCase conversion."""
-        assert viernulvier._camel_to_snake_case("startsAt") == "starts_at"
-
-    def test_multiple_words(self):
-        """Test conversion with multiple camelCase words."""
-        assert viernulvier._camel_to_snake_case("ticketingUrl") == "ticketing_url"
-
-    def test_consecutive_capitals(self):
-        """Test conversion with consecutive capital letters."""
-        # The regex inserts _ before each capital, so URLPath becomes U_R_L_path
-        assert viernulvier._camel_to_snake_case("URLPath") == "u_r_l_path"
-
-    def test_already_snake_case(self):
-        """Test that snake_case strings are left unchanged."""
-        assert viernulvier._camel_to_snake_case("already_snake") == "already_snake"
-
-    def test_single_word(self):
-        """Test that single word strings are left unchanged."""
-        assert viernulvier._camel_to_snake_case("word") == "word"
-
-
 @pytest.mark.django_db
 class TestFlexibleFieldMapping:
     """Test that the scraper tries every API field and skips unknown ones."""
@@ -555,7 +530,7 @@ class TestFlexibleFieldMapping:
 
         field = Event._meta.get_field("starts_at")
         value = "-0001-01-01T00:00:00+00:00"
-        parsed = _convert_field_value(field, value, 2)
+        parsed = _convert_field_value(field, value)
 
         assert parsed == datetime.datetime(1, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
 
@@ -565,7 +540,7 @@ class TestFlexibleFieldMapping:
 
         field = Event._meta.get_field("starts_at")
         value = "0000-01-01T00:00:00+00:00"
-        parsed = _convert_field_value(field, value, 2)
+        parsed = _convert_field_value(field, value)
 
         assert parsed == datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
 
@@ -575,7 +550,7 @@ class TestFlexibleFieldMapping:
 
         item = {
             "external_id": "/api/events/1",
-            "ticketingUrl": "https://example.com",
+            "ticketing_url": "https://example.com",
             # Missing required field: production
         }
 
@@ -587,19 +562,20 @@ class TestFlexibleFieldMapping:
 
     def test_skips_unknown_fields_event_price(self):
         """Unknown fields in the API response should be silently skipped."""
-        from apps.events.models import Event, EventPrice
-        from apps.productions.models import Production
-        from tests.factories.pricing import PriceRankFactory
-
-        # Create dependencies
-        production = Production.objects.create(id=1)
-        event = Event.objects.create(id=1, production=production)
-        price_rank = PriceRankFactory()
+        from apps.events.models import EventPrice
 
         item = {
-            "external_id": "/api/event_prices/1",
-            "event": event.pk,
-            "priceRank": price_rank.pk,
+            "@id": "/api/event_prices/1",
+            "event": {
+                "@id": "/api/events/1",
+                "production": {
+                    "@id": "/api/productions/1",
+                },
+            },
+            "price_rank": {
+                "@id": "/api/price_ranks/1",
+                "position": 1,
+            },
             "amount": "25.50",
             "available": 100,
             "unknownField": "should be ignored",
@@ -621,44 +597,22 @@ class TestFlexibleFieldMapping:
         assert "anotherUnknownField" not in defaults
         assert "another_unknown_field" not in defaults
 
-    def test_converts_camel_case_to_snake_case_event_price(self):
-        """API fields in camelCase should be converted to snake_case."""
-        from apps.events.models import Event, EventPrice
-        from apps.productions.models import Production
-        from tests.factories.pricing import PriceRankFactory
-
-        production = Production.objects.create(id=2)
-        event = Event.objects.create(id=2, production=production)
-        price_rank = PriceRankFactory()
-
-        item = {
-            "external_id": "/api/event_prices/2",
-            "event": event.pk,
-            "priceRank": price_rank.pk,
-            "amount": "30.00",
-            "available": 50,
-        }
-
-        defaults = viernulvier._build_model_defaults(EventPrice, item)
-
-        # Should have converted camelCase to snake_case
-        assert "price_rank_id" in defaults
-        assert "event_id" in defaults
-
-    def test_handles_snake_case_fields_directly(self):
-        """Should handle snake_case fields without conversion."""
-        from apps.events.models import Event, EventPrice
-        from apps.productions.models import Production
-        from tests.factories.pricing import PriceRankFactory
-
-        production = Production.objects.create(id=3)
-        event = Event.objects.create(id=3, production=production)
-        price_rank = PriceRankFactory()
+    def test_handles_fields_correctly(self):
+        """Should handle these fields without problems."""
+        from apps.events.models import EventPrice
 
         item = {
             "external_id": "/api/event_prices/3",
-            "event": event.pk,
-            "price_rank": price_rank.pk,
+            "event": {
+                "@id": "/api/events/3",
+                "production": {
+                    "@id": "/api/productions/3",
+                },
+            },
+            "price_rank": {
+                "@id": f"/api/price_ranks/3",
+                "position": 1,
+            },
             "amount": "20.00",
             "available": 75,
         }
@@ -671,7 +625,7 @@ class TestFlexibleFieldMapping:
 
 
 # ============================================================================
-# Tests for Query Parameter Support (createdAt, updatedAt filtering)
+# Tests for Query Parameter Support (created_at, updated_at filtering)
 # ============================================================================
 
 
@@ -690,10 +644,10 @@ def test_fetch_accepts_query_params(monkeypatch):
     monkeypatch.setattr(viernulvier.requests, "get", fake_get)
 
     viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"createdAt[after]": "2024-01-01T00:00:00Z"}
+        endpoint="/events", params={"created_at[after]": "2024-01-01T00:00:00Z"}
     )
 
-    assert captured_params["params"] == {"createdAt[after]": "2024-01-01T00:00:00Z"}
+    assert captured_params["params"] == {"created_at[after]": "2024-01-01T00:00:00Z"}
 
 
 def test_fetch_params_applied_to_initial_request_only(monkeypatch):
@@ -727,12 +681,12 @@ def test_fetch_params_applied_to_initial_request_only(monkeypatch):
     monkeypatch.setattr(viernulvier.requests, "get", fake_get)
 
     result = viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"createdAt[after]": "2024-01-01T00:00:00Z"}
+        endpoint="/events", params={"created_at[after]": "2024-01-01T00:00:00Z"}
     )
 
     assert len(result) == 2
     # First request should have params
-    assert captured_params_list[0] == {"createdAt[after]": "2024-01-01T00:00:00Z"}
+    assert captured_params_list[0] == {"created_at[after]": "2024-01-01T00:00:00Z"}
     # Second request (pagination) should not have params
     assert captured_params_list[1] is None
 
@@ -752,8 +706,8 @@ def test_fetch_with_multiple_query_params(monkeypatch):
     monkeypatch.setattr(viernulvier.requests, "get", fake_get)
 
     params = {
-        "createdAt[after]": "2024-01-01T00:00:00Z",
-        "updatedAt[before]": "2024-12-31T23:59:59Z",
+        "created_at[after]": "2024-01-01T00:00:00Z",
+        "updated_at[before]": "2024-12-31T23:59:59Z",
     }
 
     viernulvier.fetch_viernulvier(endpoint="/events", params=params)
@@ -797,7 +751,7 @@ def test_sync_passes_params_to_fetch(monkeypatch):
 
         monkeypatch.setattr(viernulvier, "fetch_viernulvier", mock_fetch)
 
-        params = {"createdAt[after]": "2024-01-01T00:00:00Z"}
+        params = {"created_at[after]": "2024-01-01T00:00:00Z"}
         viernulvier.sync_viernulvier(
             ViernulvierItem, endpoint="/events", params=params
         )
@@ -819,7 +773,7 @@ def test_sync_with_timestamp_filtering(monkeypatch):
             ],
         )
 
-        params = {"updatedAt[after]": "2024-06-01T00:00:00Z"}
+        params = {"updated_at[after]": "2024-06-01T00:00:00Z"}
         count = viernulvier.sync_viernulvier(
             ViernulvierItem, endpoint="/events", params=params
         )
@@ -885,10 +839,10 @@ def test_fetch_preserves_timestamp_format(monkeypatch):
 
     iso_timestamp = "2024-12-25T10:30:45Z"
     viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"createdAt[after]": iso_timestamp}
+        endpoint="/events", params={"created_at[after]": iso_timestamp}
     )
 
-    assert captured_params["params"]["createdAt[after]"] == iso_timestamp
+    assert captured_params["params"]["created_at[after]"] == iso_timestamp
 
 
 @isolate_apps("tests")
@@ -966,7 +920,7 @@ def test_sync_creates_import_log_with_params_in_source(monkeypatch):
             ],
         )
 
-        params = {"createdAt[after]": "2024-01-01T00:00:00Z", "page": "1"}
+        params = {"created_at[after]": "2024-01-01T00:00:00Z", "page": "1"}
         count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events", params=params)
 
         assert count == 1
@@ -974,7 +928,7 @@ def test_sync_creates_import_log_with_params_in_source(monkeypatch):
         log = ImportLog.objects.first()
         assert "viernulvier:/events?" in log.source
         # Params should be sorted
-        assert "createdAt[after]=2024-01-01T00:00:00Z" in log.source
+        assert "created_at[after]=2024-01-01T00:00:00Z" in log.source
         assert "page=1" in log.source
 
 

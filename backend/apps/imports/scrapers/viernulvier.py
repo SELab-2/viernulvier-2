@@ -30,7 +30,6 @@ BASE_URL = "https://www.viernulvier.gent/api/v1"
 BASE_DOMAIN = "https://www.viernulvier.gent"
 DEFAULT_ENDPOINT = "/productions"
 DEFAULT_TIMEOUT = 10
-MAX_RELATION_DEPTH = 2
 
 # JSON-LD Constants
 ERROR_CONTEXT_PATH = "/api/contexts/Error"
@@ -298,13 +297,12 @@ def _is_integer_field(field: models.Field) -> bool:
     return isinstance(field, INTEGER_FIELD_TYPES)
 
 
-def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optional[Any]:
+def _convert_field_value(field: models.Field, value: Any) -> Optional[Any]:
     """Convert an API value to the appropriate type for a Django model field.
 
     Args:
         field: Django model field.
         value: Raw API field value.
-        depth: Current traversal depth for FK resolution.
 
     Returns:
         Converted value suitable for the field type, or None if conversion fails.
@@ -320,7 +318,7 @@ def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optiona
 
     # Handle foreign key fields
     if field.is_relation and field.many_to_one:
-        return _resolve_fk_value(field, value, depth)
+        return _resolve_fk_value(field, value)
 
     # Handle datetime fields
     if isinstance(field, models.DateTimeField):
@@ -345,18 +343,20 @@ def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optiona
 def _get_item_value(item: Mapping[str, Any], field_name: str) -> Any:
     """Read a value by snake_case or lowerCamelCase field name.
 
-    This allows compatibility between Django model field names (snake_case)
-    and JSON-LD payloads that may use lowerCamelCase.
+    Strategy:
+    1. Extract external_id and try to find the object in the database
+    2. If not found and raw_value is a dict, recursively import that nested data
+    3. If raw_value is a primitive, verify existence in database
 
     Args:
         item: Parsed API item data.
         field_name: Model field name (snake_case).
 
     Returns:
-        The matching value or None if not present.
+        Primary key value for the related object or None when unresolved.
 
     Side Effects:
-        None. Read-only access to the mapping.
+        May perform database reads and writes for related objects.
     """
     if field_name in item:
         return item[field_name]
@@ -435,7 +435,7 @@ def _extract_item_pk_value(model: Type[models.Model], item: Mapping[str, Any]) -
 
 
 def _build_model_defaults(
-    model: Type[models.Model], item: Mapping[str, Any], depth: int = 0
+    model: Type[models.Model], item: Mapping[str, Any]
 ) -> Dict[str, Any]:
     """Build a defaults dict for update_or_create from an API item.
 
@@ -447,7 +447,6 @@ def _build_model_defaults(
     Args:
         model: Django model class to map the item onto.
         item: Parsed API item.
-        depth: Current relation traversal depth to prevent deep recursion.
 
     Returns:
         A dict suitable for update_or_create(..., defaults=...).
@@ -462,8 +461,11 @@ def _build_model_defaults(
 
     # Try to map every field from the API response
     for key, value in item.items():
+        if key == "@id":
+            key = "external_id"
+
         # Skip JSON-LD metadata fields
-        if key.startswith("@") or key in JSON_LD_METADATA_FIELDS:
+        elif key.startswith("@") or key in JSON_LD_METADATA_FIELDS:
             continue
 
         if value is None:
@@ -493,7 +495,7 @@ def _build_model_defaults(
             continue
 
         # Convert the value based on field type
-        converted_value = _convert_field_value(field, value, depth)
+        converted_value = _convert_field_value(field, value)
         if converted_value is not None:
             if field.is_relation and field.many_to_one:
                 defaults[f"{field.name}_id"] = converted_value
@@ -508,17 +510,16 @@ def _build_model_defaults(
     return defaults
 
 
-def _resolve_fk_value(field: models.Field, raw_value: Any, depth: int) -> Optional[Any]:
+def _resolve_fk_value(field: models.Field, raw_value: dict | str) -> Optional[Any]:
     """Resolve a foreign-key value from raw API data.
 
-    If raw_value is a dict, this will optionally materialize the related object
-    (bounded by MAX_RELATION_DEPTH). If raw_value is a primitive, this verifies
+    If raw_value is a dict, this will optionally materialize the related object.
+    If raw_value is a primitive, this verifies
     existence before returning the primary key.
 
     Args:
         field: Django model field representing the relation.
         raw_value: Raw API field value.
-        depth: Current traversal depth.
 
     Returns:
         Primary key value for the related object or None when unresolved.
@@ -528,41 +529,22 @@ def _resolve_fk_value(field: models.Field, raw_value: Any, depth: int) -> Option
     """
     related_model = field.remote_field.model
     if isinstance(raw_value, dict):
-        rel_id = _extract_item_pk_value(related_model, raw_value)
-        if depth >= MAX_RELATION_DEPTH:
-            return rel_id
-        defaults = _build_model_defaults(related_model, raw_value, depth=depth + 1)
-        missing = _missing_required_fields(related_model, defaults)
-        if missing:
-            return None
-        try:
-            if rel_id is None:
-                obj = related_model.objects.create(**defaults)
-            else:
-                obj, _ = related_model.objects.update_or_create(
-                    **{related_model._meta.pk.name: rel_id},
-                    defaults=defaults,
-                )
-            return obj.pk
-        except (IntegrityError, DatabaseError, FieldError, ValidationError):
-            logger.debug(
-                "Skipping related %s due to validation/db error",
-                related_model.__name__,
-                exc_info=True,
-            )
-            return None
+        ext_id = raw_value.get("@id")
 
-    if isinstance(raw_value, (str, int)):
-        pk_field = related_model._meta.pk
-        if _is_integer_field(pk_field):
-            rel_id = _extract_api_id(raw_value)
-        else:
-            rel_id = str(raw_value)
-        if rel_id is None:
-            return None
-        if related_model.objects.filter(pk=rel_id).exists():
-            return rel_id
-    return None
+    elif isinstance(raw_value, str):
+        ext_id = raw_value
+
+    else:
+        raise ScraperError(f"Unsupported foreign key value type for field '{field.name}': {raw_value!r}")
+
+    try:
+        return related_model.objects.get(external_id=ext_id)
+    except related_model.DoesNotExist:
+        if isinstance(raw_value, str):
+            raw_value = fetch_viernulvier(raw_value)[0]
+        defaults = _build_model_defaults(related_model, raw_value)
+        obj, _ = related_model.objects.update_or_create(external_id=ext_id, defaults=defaults)
+        return obj.pk
 
 
 def _missing_required_fields(model: Type[models.Model], defaults: Mapping[str, Any]) -> List[str]:
