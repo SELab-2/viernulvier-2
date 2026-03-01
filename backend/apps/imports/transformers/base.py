@@ -76,13 +76,13 @@ class BaseTransformer:
 
     @staticmethod
     def _extract_url(value: dict | str | None) -> str:
-        """Haal de best beschikbare URL op uit een meertalig dict of string.
+        """Retrieve the best available URL from a multilingual dict or string.
 
         Args:
-            value: Dict met taalcodes als keys, of een gewone URL-string.
+            value: Dict with language codes as keys, or a regular URL string.
 
         Returns:
-            Een URL-string, of lege string als niets gevonden.
+            A URL string, or empty string if nothing is found.
         """
         if isinstance(value, dict):
             return value.get("nl") or value.get("fr") or next(iter(value.values()), "")
