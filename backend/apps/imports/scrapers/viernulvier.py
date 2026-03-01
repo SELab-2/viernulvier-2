@@ -6,13 +6,14 @@ This allows multiple apps to reuse scraping logic without duplication.
 Usage:
     from apps.imports.scrapers.viernulvier import sync_viernulvier
     from apps.events.models import Event
+    from apps.imports.transformers.events import EventTransformer
 
-    sync_viernulvier(Event, endpoint="/events")
+    sync_viernulvier(Event, EventTransformer(), endpoint="/events")
 """
 
 import logging
 import os
-import re
+import sys
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Type
 from urllib.parse import urljoin, urlparse
 
@@ -22,6 +23,8 @@ from django.db import DatabaseError, IntegrityError, transaction, models
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime, parse_date
 
+from apps.imports.transformers.base import BaseTransformer
+
 logger = logging.getLogger(__name__)
 
 # API Configuration
@@ -29,7 +32,6 @@ BASE_URL = "https://www.viernulvier.gent/api/v1"
 BASE_DOMAIN = "https://www.viernulvier.gent"
 DEFAULT_ENDPOINT = "/productions"
 DEFAULT_TIMEOUT = 10
-MAX_RELATION_DEPTH = 2
 
 # JSON-LD Constants
 ERROR_CONTEXT_PATH = "/api/contexts/Error"
@@ -250,37 +252,6 @@ def fetch_viernulvier(
     return all_items
 
 
-def _snake_case_to_camel(value: str) -> str:
-    """Convert snake_case to lowerCamelCase.
-
-    Args:
-        value: snake_case string.
-
-    Returns:
-        lowerCamelCase string.
-
-    Side Effects:
-        None. Pure string transformation.
-    """
-    parts = value.split("_")
-    return parts[0] + "".join(part.title() for part in parts[1:])
-
-def _camel_to_snake_case(value: str) -> str:
-    """Convert lowerCamelCase or UpperCamelCase to snake_case.
-
-    Args:
-        value: camelCase string.
-
-    Returns:
-        snake_case string.
-
-    Side Effects:
-        None. Pure string transformation.
-    """
-    # Insert underscore before uppercase letters and convert to lowercase
-    snake = re.sub(r"(?<!^)(?=[A-Z])", "_", value).lower()
-    return snake
-
 
 def _is_integer_field(field: models.Field) -> bool:
     """Check if a Django field is an integer type.
@@ -297,13 +268,12 @@ def _is_integer_field(field: models.Field) -> bool:
     return isinstance(field, INTEGER_FIELD_TYPES)
 
 
-def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optional[Any]:
+def _convert_field_value(field: models.Field, value: Any) -> Optional[Any]:
     """Convert an API value to the appropriate type for a Django model field.
 
     Args:
         field: Django model field.
-        value: Raw API field value.
-        depth: Current traversal depth for FK resolution.
+        value: Raw API field value (already transformed by transformer).
 
     Returns:
         Converted value suitable for the field type, or None if conversion fails.
@@ -312,14 +282,11 @@ def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optiona
         ValueError: If a datetime string cannot be parsed.
 
     Side Effects:
-        May perform database reads and writes for related objects.
+        None. Pure type conversion.
     """
     if value is None:
         return None
 
-    # Handle foreign key fields
-    if field.is_relation and field.many_to_one:
-        return _resolve_fk_value(field, value, depth)
 
     # Handle datetime fields
     if isinstance(field, models.DateTimeField):
@@ -340,29 +307,6 @@ def _convert_field_value(field: models.Field, value: Any, depth: int) -> Optiona
     # Handle all other field types - return as-is
     return value
 
-
-def _get_item_value(item: Mapping[str, Any], field_name: str) -> Any:
-    """Read a value by snake_case or lowerCamelCase field name.
-
-    This allows compatibility between Django model field names (snake_case)
-    and JSON-LD payloads that may use lowerCamelCase.
-
-    Args:
-        item: Parsed API item data.
-        field_name: Model field name (snake_case).
-
-    Returns:
-        The matching value or None if not present.
-
-    Side Effects:
-        None. Read-only access to the mapping.
-    """
-    if field_name in item:
-        return item[field_name]
-    camel = _snake_case_to_camel(field_name)
-    if camel in item:
-        return item[camel]
-    return None
 
 
 def _extract_api_id(value: Any) -> Optional[int]:
@@ -403,12 +347,11 @@ def _extract_item_pk_value(model: Type[models.Model], item: Mapping[str, Any]) -
     """Extract the primary key value for a model from an API item.
 
     The function tries several common JSON-LD fields (external_id, @id, id)
-    and falls back to the model's primary key field name in both snake_case
-    and lowerCamelCase forms.
+    and falls back to the model's primary key field name.
 
     Args:
         model: Django model class to map the item onto.
-        item: Parsed API item.
+        item: Parsed API item (already transformed).
 
     Returns:
         Parsed primary key value or None when it cannot be determined.
@@ -418,11 +361,11 @@ def _extract_item_pk_value(model: Type[models.Model], item: Mapping[str, Any]) -
     """
     raw_id = item.get("external_id") or item.get("@id") or item.get("id")
     if raw_id is None:
-        raw_id = _get_item_value(item, model._meta.pk.name)
+        raw_id = item.get(model._meta.pk.name)
     if isinstance(raw_id, dict):
         extracted_id = raw_id.get("external_id") or raw_id.get("@id") or raw_id.get("id")
         if extracted_id is None:
-            raw_id = _get_item_value(raw_id, model._meta.pk.name)
+            raw_id = raw_id.get(model._meta.pk.name)
         else:
             raw_id = extracted_id
     if raw_id in (None, ""):
@@ -434,32 +377,30 @@ def _extract_item_pk_value(model: Type[models.Model], item: Mapping[str, Any]) -
 
 
 def _build_model_defaults(
-    model: Type[models.Model], item: Mapping[str, Any], depth: int = 0
+    model: Type[models.Model], item: Mapping[str, Any]
 ) -> Dict[str, Any]:
-    """Build a defaults dict for update_or_create from an API item.
+    """Build a defaults dict for update_or_create from a transformed API item.
 
-    This function attempts to map every field from the API response to the model,
-    automatically handling type conversions for date/time fields and resolving
-    foreign keys using bounded recursion. Fields present in the API but not in
-    the model are silently skipped.
+    This function maps transformed fields to model fields, automatically handling
+    type conversions for date/time fields. The transformer must have already handled
+    field name mapping and foreign key resolution.
 
     Args:
         model: Django model class to map the item onto.
-        item: Parsed API item.
-        depth: Current relation traversal depth to prevent deep recursion.
+        item: Transformed API item (output from transformer.transform()).
 
     Returns:
         A dict suitable for update_or_create(..., defaults=...).
 
     Raises:
-        ScraperError: If required model fields are missing from the API data.
+        ScraperError: If required model fields are missing from the transformed data.
 
     Side Effects:
-        May trigger database lookups and writes for related objects.
+        None. Type conversion only.
     """
     defaults: Dict[str, Any] = {}
 
-    # Try to map every field from the API response
+    # Map each field from the transformed item to the model
     for key, value in item.items():
         # Skip JSON-LD metadata fields
         if key.startswith("@") or key in JSON_LD_METADATA_FIELDS:
@@ -469,18 +410,12 @@ def _build_model_defaults(
             continue
 
         # Try to find the corresponding model field
-        # First try snake_case (direct match)
         try:
             field = model._meta.get_field(key)
         except FieldDoesNotExist:
-            # Try converting from camelCase to snake_case
-            snake_key = _camel_to_snake_case(key)
-            try:
-                field = model._meta.get_field(snake_key)
-            except FieldDoesNotExist:
-                # Field doesn't exist in model, skip it silently
-                logger.debug("Skipping unknown field '%s' for model %s", key, model.__name__)
-                continue
+            # Field doesn't exist in model, skip it silently
+            logger.debug("Skipping unknown field '%s' for model %s", key, model.__name__)
+            continue
 
         # Skip reverse relations (e.g., ManyToOneRel) that aren't real model fields
         if not isinstance(field, models.Field):
@@ -492,12 +427,9 @@ def _build_model_defaults(
             continue
 
         # Convert the value based on field type
-        converted_value = _convert_field_value(field, value, depth)
+        converted_value = _convert_field_value(field, value)
         if converted_value is not None:
-            if field.is_relation and field.many_to_one:
-                defaults[f"{field.name}_id"] = converted_value
-            else:
-                defaults[field.name] = converted_value
+            defaults[field.name] = converted_value
 
     # Validate that all required fields are present
     missing = _missing_required_fields(model, defaults)
@@ -506,62 +438,6 @@ def _build_model_defaults(
 
     return defaults
 
-
-def _resolve_fk_value(field: models.Field, raw_value: Any, depth: int) -> Optional[Any]:
-    """Resolve a foreign-key value from raw API data.
-
-    If raw_value is a dict, this will optionally materialize the related object
-    (bounded by MAX_RELATION_DEPTH). If raw_value is a primitive, this verifies
-    existence before returning the primary key.
-
-    Args:
-        field: Django model field representing the relation.
-        raw_value: Raw API field value.
-        depth: Current traversal depth.
-
-    Returns:
-        Primary key value for the related object or None when unresolved.
-
-    Side Effects:
-        May perform database reads and writes for related objects.
-    """
-    related_model = field.remote_field.model
-    if isinstance(raw_value, dict):
-        rel_id = _extract_item_pk_value(related_model, raw_value)
-        if depth >= MAX_RELATION_DEPTH:
-            return rel_id
-        defaults = _build_model_defaults(related_model, raw_value, depth=depth + 1)
-        missing = _missing_required_fields(related_model, defaults)
-        if missing:
-            return None
-        try:
-            if rel_id is None:
-                obj = related_model.objects.create(**defaults)
-            else:
-                obj, _ = related_model.objects.update_or_create(
-                    **{related_model._meta.pk.name: rel_id},
-                    defaults=defaults,
-                )
-            return obj.pk
-        except (IntegrityError, DatabaseError, FieldError, ValidationError):
-            logger.debug(
-                "Skipping related %s due to validation/db error",
-                related_model.__name__,
-                exc_info=True,
-            )
-            return None
-
-    if isinstance(raw_value, (str, int)):
-        pk_field = related_model._meta.pk
-        if _is_integer_field(pk_field):
-            rel_id = _extract_api_id(raw_value)
-        else:
-            rel_id = str(raw_value)
-        if rel_id is None:
-            return None
-        if related_model.objects.filter(pk=rel_id).exists():
-            return rel_id
-    return None
 
 
 def _missing_required_fields(model: Type[models.Model], defaults: Mapping[str, Any]) -> List[str]:
@@ -587,7 +463,7 @@ def _missing_required_fields(model: Type[models.Model], defaults: Mapping[str, A
         if field.has_default() or field.null or getattr(field, "blank", False):
             continue
         if field.is_relation and field.many_to_one:
-            if f"{field.name}_id" not in defaults:
+            if f"{field.name}" not in defaults:
                 missing.append(field.name)
             continue
         if field.name not in defaults:
@@ -597,18 +473,21 @@ def _missing_required_fields(model: Type[models.Model], defaults: Mapping[str, A
 
 def sync_viernulvier(
     model: Type[models.Model],
+    transformer: BaseTransformer,
     endpoint: str = DEFAULT_ENDPOINT,
     params: Optional[Dict[str, str]] = None,
 ) -> int:
     """Fetch and persist Viernulvier data into a Django model.
 
-    Items are fetched via `fetch_viernulvier`, validated, and then persisted
-    with per-item savepoints to isolate errors without aborting the batch.
+    Items are fetched via `fetch_viernulvier`, transformed using the provided
+    transformer, validated, and then persisted with per-item savepoints to
+    isolate errors without aborting the batch.
 
     An ImportLog entry is created to track the import operation.
 
     Args:
         model: Django model class receiving the API data.
+        transformer: BaseTransformer instance to transform API items to model fields.
         endpoint: Relative API endpoint (e.g., "/events").
         params: Optional query parameters dict (e.g., {"created_at[after]": "2024-01-01T00:00:00Z"})
             to filter results at the API level.
@@ -643,31 +522,45 @@ def sync_viernulvier(
 
         saved = 0
         errors = 0
+        error_messages = []
         seen = set()
 
         with transaction.atomic():
             for item in items:
                 # Validate item is a dict
                 if not isinstance(item, dict):
-                    logger.error(
-                        "Unexpected error while processing item: item is not a dict: %s",
-                        item,
-                    )
+                    msg = f"Item is not a dict: {item}"
+                    logger.error(msg)
                     errors += 1
+                    error_messages.append(msg)
                     continue
 
-                # Extract @id
+                # Transform the raw API item using the provided transformer
+                try:
+                    transformed_item = transformer.transform(item)
+                except Exception as e:
+                    msg = f"Transformer error for item: {e}"
+                    logger.error(msg, exc_info=True)
+                    errors += 1
+                    error_messages.append(msg)
+                    continue
+
+                # Extract @id from the original item (before transformation)
                 item_id = _extract_item_pk_value(model, item)
 
                 # Validate item_id is not empty
                 if item_id is None:
-                    logger.warning("Skipping item without @id: %s", item)
+                    msg = f"Missing @id for item: {item}"
+                    logger.warning(msg)
                     errors += 1
+                    error_messages.append(msg)
                     continue
 
                 # Check for duplicates in current batch
                 if item_id in seen:
-                    logger.warning("Duplicate @id in batch: %s", item_id)
+                    msg = f"Duplicate @id in batch: {item_id}"
+                    logger.warning(msg)
+                    error_messages.append(msg)
                     continue
 
                 seen.add(item_id)
@@ -675,16 +568,14 @@ def sync_viernulvier(
                 # Persist item with savepoint isolation
                 sid = transaction.savepoint()
                 try:
-                    defaults = _build_model_defaults(model, item)
+                    defaults = _build_model_defaults(model, transformed_item)
                     missing = _missing_required_fields(model, defaults)
                     if missing:
-                        logger.warning(
-                            "Skipping item @id=%s due to missing fields: %s",
-                            item_id,
-                            ", ".join(missing),
-                        )
+                        msg = f"Missing required fields for @id={item_id}: {', '.join(missing)}"
+                        logger.warning(msg)
                         transaction.savepoint_rollback(sid)
                         errors += 1
+                        error_messages.append(msg)
                         continue
 
                     model.objects.update_or_create(
@@ -693,14 +584,28 @@ def sync_viernulvier(
                     )
                     transaction.savepoint_commit(sid)
                     saved += 1
-                except (IntegrityError, DatabaseError, FieldError, ValidationError):
+                except ValidationError as e:
                     transaction.savepoint_rollback(sid)
-                    logger.error(
-                        "Database error while syncing item with @id=%s. Continuing.",
-                        item_id,
-                        exc_info=True,
-                    )
+                    # Make ValidationErrors readable
+                    messages = []
+                    for field, errs in e.message_dict.items():
+                        for err in errs:
+                            if field == "__all__":
+                                messages.append(f"{err}")
+                            else:
+                                messages.append(f"{field}: {err}")
+                    msg = f"Validation error for @id={item_id}: {'; '.join(messages)}"
+                    logger.error(msg)
                     errors += 1
+                    error_messages.append(msg)
+
+                except (IntegrityError, DatabaseError, FieldError):
+                    transaction.savepoint_rollback(sid)
+                    exc_type, exc_value, exc_tb = sys.exc_info()
+                    msg = f"Database error for @id={item_id}: {exc_type.__name__}: {exc_value}"
+                    logger.error(msg, exc_info=True)
+                    errors += 1
+                    error_messages.append(msg)
 
         # Update import log with final status
         import_log.records_total = len(items)
@@ -712,9 +617,10 @@ def sync_viernulvier(
             import_log.status = ImportLog.Status.SUCCESS
         elif saved > 0:
             import_log.status = ImportLog.Status.PARTIAL_SUCCESS
+            import_log.error_message = f"{errors} records failed to import: {', '.join(error_messages)}"
         else:
             import_log.status = ImportLog.Status.FAILED
-            import_log.error_message = f"All {errors} records failed to import"
+            import_log.error_message = f"All {errors} records failed to import: {', '.join(error_messages)}"
 
         import_log.save()
 

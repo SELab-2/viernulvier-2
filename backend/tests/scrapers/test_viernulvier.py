@@ -13,6 +13,7 @@ from django.test.utils import isolate_apps
 
 from apps.imports.scrapers import viernulvier
 from apps.imports.scrapers.viernulvier import _convert_field_value
+from apps.imports.transformers.base import BaseTransformer
 
 
 def test_fetch_uses_api_key_header(monkeypatch):
@@ -165,6 +166,12 @@ def _temp_viernulvier_model():
             schema_editor.delete_model(ViernulvierItem)
 
 
+class _PassThroughTransformer(BaseTransformer):
+    """Simple transformer for tests that passes data through unchanged."""
+    def __init__(self):
+        super().__init__({},{})
+
+
 def test_fetch_allows_different_endpoint_paths(monkeypatch):
     """Test that fetch_viernulvier works with different endpoint paths."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
@@ -238,7 +245,7 @@ def test_sync_persists_items(monkeypatch):
             ],
         )
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 2
         assert ViernulvierItem.objects.count() == 2
@@ -257,7 +264,7 @@ def test_sync_updates_existing_item(monkeypatch):
             lambda endpoint="/events", params=None: [{"@id": "https://example.com/1", "title": "new"}],
         )
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
@@ -277,11 +284,11 @@ def test_sync_skips_items_without_id(monkeypatch, caplog):
 
         caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 0
         assert ViernulvierItem.objects.count() == 0
-        assert any("Skipping item without @id" in r.message for r in caplog.records)
+        assert any("Missing @id for item" in r.message for r in caplog.records)
 
 
 @isolate_apps("tests")
@@ -293,7 +300,7 @@ def test_sync_logs_info_on_empty_response(monkeypatch, caplog):
 
         caplog.set_level(logging.INFO, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 0
         assert any(
@@ -313,7 +320,7 @@ def test_sync_handles_special_chars_and_nulls(monkeypatch):
             lambda endpoint="/events", params=None: [payload],
         )
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 1
         obj = ViernulvierItem.objects.get(id="https://example.com/9")
@@ -333,7 +340,7 @@ def test_sync_handles_large_payload(monkeypatch):
             lambda endpoint="/events", params=None: items,
         )
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 50
         assert ViernulvierItem.objects.count() == 50
@@ -355,7 +362,7 @@ def test_sync_skips_duplicate_ids_in_batch(monkeypatch, caplog):
 
         caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
@@ -375,11 +382,11 @@ def test_sync_skips_empty_string_id(monkeypatch, caplog):
 
         caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 0
         assert ViernulvierItem.objects.count() == 0
-        assert any("Skipping item without @id" in r.message for r in caplog.records)
+        assert any("Missing @id for item" in r.message for r in caplog.records)
 
 
 @isolate_apps("tests")
@@ -409,7 +416,7 @@ def test_sync_continues_on_database_errors(monkeypatch, caplog):
 
         caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
@@ -437,7 +444,7 @@ def test_sync_all_items_fail_returns_zero(monkeypatch, caplog):
 
         caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 0
         assert ViernulvierItem.objects.count() == 0
@@ -459,7 +466,7 @@ def test_sync_logs_finish_message_with_error_count(monkeypatch, caplog):
 
         caplog.set_level(logging.INFO, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 1
         info_records = [r for r in caplog.records if r.levelname == "INFO"]
@@ -482,14 +489,12 @@ def test_sync_continues_when_item_is_not_dict(monkeypatch, caplog):
 
         caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
         # Check that an error was logged for the non-dict item
-        assert any(
-            "Unexpected error while processing item: item is not a dict" in r.message for r in caplog.records
-        )
+        assert any("Item is not a dict" in r.message for r in caplog.records)
 
 
 def test_fetch_live_events(monkeypatch):
@@ -522,31 +527,6 @@ def test_fetch_live_events(monkeypatch):
 # =============================================================================
 
 
-class TestCamelToSnakeCase:
-    """Test camelCase to snake_case conversion utility function."""
-
-    def test_simple_camel_case(self):
-        """Test basic camelCase conversion."""
-        assert viernulvier._camel_to_snake_case("startsAt") == "starts_at"
-
-    def test_multiple_words(self):
-        """Test conversion with multiple camelCase words."""
-        assert viernulvier._camel_to_snake_case("ticketingUrl") == "ticketing_url"
-
-    def test_consecutive_capitals(self):
-        """Test conversion with consecutive capital letters."""
-        # The regex inserts _ before each capital, so URLPath becomes U_R_L_path
-        assert viernulvier._camel_to_snake_case("URLPath") == "u_r_l_path"
-
-    def test_already_snake_case(self):
-        """Test that snake_case strings are left unchanged."""
-        assert viernulvier._camel_to_snake_case("already_snake") == "already_snake"
-
-    def test_single_word(self):
-        """Test that single word strings are left unchanged."""
-        assert viernulvier._camel_to_snake_case("word") == "word"
-
-
 @pytest.mark.django_db
 class TestFlexibleFieldMapping:
     """Test that the scraper tries every API field and skips unknown ones."""
@@ -557,7 +537,7 @@ class TestFlexibleFieldMapping:
 
         field = Event._meta.get_field("starts_at")
         value = "-0001-01-01T00:00:00+00:00"
-        parsed = _convert_field_value(field, value, 2)
+        parsed = _convert_field_value(field, value)
 
         assert parsed == datetime.datetime(1, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
 
@@ -567,7 +547,7 @@ class TestFlexibleFieldMapping:
 
         field = Event._meta.get_field("starts_at")
         value = "0000-01-01T00:00:00+00:00"
-        parsed = _convert_field_value(field, value, 2)
+        parsed = _convert_field_value(field, value)
 
         assert parsed == datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
 
@@ -577,7 +557,7 @@ class TestFlexibleFieldMapping:
 
         item = {
             "external_id": "/api/events/1",
-            "ticketingUrl": "https://example.com",
+            "ticketing_url": "https://example.com",
             # Missing required field: production
         }
 
@@ -589,19 +569,15 @@ class TestFlexibleFieldMapping:
 
     def test_skips_unknown_fields_event_price(self):
         """Unknown fields in the API response should be silently skipped."""
-        from apps.events.models import Event, EventPrice
-        from apps.productions.models import Production
-        from tests.factories.pricing import PriceRankFactory
+        from apps.events.models import EventPrice
+        logging.basicConfig(level=logging.DEBUG)
 
-        # Create dependencies
-        production = Production.objects.create(id=1)
-        event = Event.objects.create(id=1, production=production)
-        price_rank = PriceRankFactory()
-
+        # In the new architecture, transformers resolve FKs before _build_model_defaults is called
+        # So we provide transformed data with event_id and price_rank_id already resolved
         item = {
             "external_id": "/api/event_prices/1",
-            "event": event.pk,
-            "priceRank": price_rank.pk,
+            "event_id": 1,  # Transformer already resolved this
+            "price_rank_id": 1,  # Transformer already resolved this
             "amount": "25.50",
             "available": 100,
             "unknownField": "should be ignored",
@@ -612,8 +588,8 @@ class TestFlexibleFieldMapping:
         defaults = viernulvier._build_model_defaults(EventPrice, item)
 
         # Should have mapped known fields
-        assert "event_id" in defaults
-        assert "price_rank_id" in defaults
+        assert "event" in defaults
+        assert "price_rank" in defaults
         assert "amount" in defaults
         assert "available" in defaults
 
@@ -623,57 +599,28 @@ class TestFlexibleFieldMapping:
         assert "anotherUnknownField" not in defaults
         assert "another_unknown_field" not in defaults
 
-    def test_converts_camel_case_to_snake_case_event_price(self):
-        """API fields in camelCase should be converted to snake_case."""
-        from apps.events.models import Event, EventPrice
-        from apps.productions.models import Production
-        from tests.factories.pricing import PriceRankFactory
+    def test_handles_fields_correctly(self):
+        """Should handle these fields without problems."""
+        from apps.events.models import EventPrice
 
-        production = Production.objects.create(id=2)
-        event = Event.objects.create(id=2, production=production)
-        price_rank = PriceRankFactory()
-
-        item = {
-            "external_id": "/api/event_prices/2",
-            "event": event.pk,
-            "priceRank": price_rank.pk,
-            "amount": "30.00",
-            "available": 50,
-        }
-
-        defaults = viernulvier._build_model_defaults(EventPrice, item)
-
-        # Should have converted camelCase to snake_case
-        assert "price_rank_id" in defaults
-        assert "event_id" in defaults
-
-    def test_handles_snake_case_fields_directly(self):
-        """Should handle snake_case fields without conversion."""
-        from apps.events.models import Event, EventPrice
-        from apps.productions.models import Production
-        from tests.factories.pricing import PriceRankFactory
-
-        production = Production.objects.create(id=3)
-        event = Event.objects.create(id=3, production=production)
-        price_rank = PriceRankFactory()
-
+        # In the new architecture, transformers resolve FKs before _build_model_defaults is called
         item = {
             "external_id": "/api/event_prices/3",
-            "event": event.pk,
-            "price_rank": price_rank.pk,
+            "event_id": 3,  # Transformer already resolved this
+            "price_rank_id": 3,  # Transformer already resolved this
             "amount": "20.00",
             "available": 75,
         }
 
         defaults = viernulvier._build_model_defaults(EventPrice, item)
 
-        assert "price_rank_id" in defaults
-        assert "event_id" in defaults
+        assert "price_rank" in defaults
+        assert "event" in defaults
         assert "amount" in defaults
 
 
 # ============================================================================
-# Tests for Query Parameter Support (createdAt, updatedAt filtering)
+# Tests for Query Parameter Support (created_at, updated_at filtering)
 # ============================================================================
 
 
@@ -692,10 +639,10 @@ def test_fetch_accepts_query_params(monkeypatch):
     monkeypatch.setattr(viernulvier.requests, "get", fake_get)
 
     viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"createdAt[after]": "2024-01-01T00:00:00Z"}
+        endpoint="/events", params={"created_at[after]": "2024-01-01T00:00:00Z"}
     )
 
-    assert captured_params["params"] == {"createdAt[after]": "2024-01-01T00:00:00Z"}
+    assert captured_params["params"] == {"created_at[after]": "2024-01-01T00:00:00Z"}
 
 
 def test_fetch_params_applied_to_initial_request_only(monkeypatch):
@@ -729,12 +676,12 @@ def test_fetch_params_applied_to_initial_request_only(monkeypatch):
     monkeypatch.setattr(viernulvier.requests, "get", fake_get)
 
     result = viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"createdAt[after]": "2024-01-01T00:00:00Z"}
+        endpoint="/events", params={"created_at[after]": "2024-01-01T00:00:00Z"}
     )
 
     assert len(result) == 2
     # First request should have params
-    assert captured_params_list[0] == {"createdAt[after]": "2024-01-01T00:00:00Z"}
+    assert captured_params_list[0] == {"created_at[after]": "2024-01-01T00:00:00Z"}
     # Second request (pagination) should not have params
     assert captured_params_list[1] is None
 
@@ -754,8 +701,8 @@ def test_fetch_with_multiple_query_params(monkeypatch):
     monkeypatch.setattr(viernulvier.requests, "get", fake_get)
 
     params = {
-        "createdAt[after]": "2024-01-01T00:00:00Z",
-        "updatedAt[before]": "2024-12-31T23:59:59Z",
+        "created_at[after]": "2024-01-01T00:00:00Z",
+        "updated_at[before]": "2024-12-31T23:59:59Z",
     }
 
     viernulvier.fetch_viernulvier(endpoint="/events", params=params)
@@ -799,9 +746,9 @@ def test_sync_passes_params_to_fetch(monkeypatch):
 
         monkeypatch.setattr(viernulvier, "fetch_viernulvier", mock_fetch)
 
-        params = {"createdAt[after]": "2024-01-01T00:00:00Z"}
+        params = {"created_at[after]": "2024-01-01T00:00:00Z"}
         viernulvier.sync_viernulvier(
-            ViernulvierItem, endpoint="/events", params=params
+            ViernulvierItem, _PassThroughTransformer(), endpoint="/events", params=params
         )
 
         assert captured_call_args["endpoint"] == "/events"
@@ -821,9 +768,9 @@ def test_sync_with_timestamp_filtering(monkeypatch):
             ],
         )
 
-        params = {"updatedAt[after]": "2024-06-01T00:00:00Z"}
+        params = {"updated_at[after]": "2024-06-01T00:00:00Z"}
         count = viernulvier.sync_viernulvier(
-            ViernulvierItem, endpoint="/events", params=params
+            ViernulvierItem, _PassThroughTransformer(), endpoint="/events", params=params
         )
 
         assert count == 1
@@ -887,10 +834,10 @@ def test_fetch_preserves_timestamp_format(monkeypatch):
 
     iso_timestamp = "2024-12-25T10:30:45Z"
     viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"createdAt[after]": iso_timestamp}
+        endpoint="/events", params={"created_at[after]": iso_timestamp}
     )
 
-    assert captured_params["params"]["createdAt[after]"] == iso_timestamp
+    assert captured_params["params"]["created_at[after]"] == iso_timestamp
 
 
 @isolate_apps("tests")
@@ -907,7 +854,7 @@ def test_sync_without_params_still_works(monkeypatch):
         )
 
         # Call sync without params argument
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
@@ -934,7 +881,7 @@ def test_sync_creates_import_log_on_success(monkeypatch):
             ],
         )
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 2
 
@@ -968,15 +915,15 @@ def test_sync_creates_import_log_with_params_in_source(monkeypatch):
             ],
         )
 
-        params = {"createdAt[after]": "2024-01-01T00:00:00Z", "page": "1"}
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events", params=params)
+        params = {"created_at[after]": "2024-01-01T00:00:00Z", "page": "1"}
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events", params=params)
 
         assert count == 1
 
         log = ImportLog.objects.first()
         assert "viernulvier:/events?" in log.source
         # Params should be sorted
-        assert "createdAt[after]=2024-01-01T00:00:00Z" in log.source
+        assert "created_at[after]=2024-01-01T00:00:00Z" in log.source
         assert "page=1" in log.source
 
 
@@ -997,7 +944,7 @@ def test_sync_creates_import_log_on_partial_success(monkeypatch):
             ],
         )
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 2
 
@@ -1006,7 +953,7 @@ def test_sync_creates_import_log_on_partial_success(monkeypatch):
         assert log.records_total == 3
         assert log.records_imported == 2
         assert log.records_failed == 1
-        assert log.error_message is None
+        assert log.error_message is not None
 
 
 @isolate_apps("tests")
@@ -1025,7 +972,7 @@ def test_sync_creates_import_log_on_all_failures(monkeypatch):
             ],
         )
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 0
 
@@ -1034,7 +981,7 @@ def test_sync_creates_import_log_on_all_failures(monkeypatch):
         assert log.records_total == 2
         assert log.records_imported == 0
         assert log.records_failed == 2
-        assert log.error_message == "All 2 records failed to import"
+        assert log.error_message.startswith("All 2 records failed to import")
 
 
 @isolate_apps("tests")
@@ -1050,7 +997,7 @@ def test_sync_creates_import_log_on_fetch_exception(monkeypatch):
         monkeypatch.setattr(viernulvier, "fetch_viernulvier", failing_fetch)
 
         with pytest.raises(viernulvier.ScraperError):
-            viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+            viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         log = ImportLog.objects.first()
         assert log.status == ImportLog.Status.FAILED
@@ -1075,7 +1022,7 @@ def test_sync_creates_import_log_on_empty_response(monkeypatch):
             lambda endpoint="/events", params=None: [],
         )
 
-        count = viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert count == 0
 
@@ -1101,7 +1048,7 @@ def test_sync_import_log_timestamps_are_sequential(monkeypatch):
             ],
         )
 
-        viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         log = ImportLog.objects.first()
         assert log.started_at is not None
@@ -1125,10 +1072,10 @@ def test_sync_import_log_tracks_multiple_syncs(monkeypatch):
         )
 
         # First sync
-        viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         # Second sync
-        viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         assert ImportLog.objects.count() == 2
         logs = ImportLog.objects.all().order_by('started_at')
@@ -1154,10 +1101,10 @@ def test_sync_import_log_different_endpoints_tracked_separately(monkeypatch):
         )
 
         # Sync to /events
-        viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/events")
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/events")
 
         # Sync to /venues
-        viernulvier.sync_viernulvier(ViernulvierItem, endpoint="/venues")
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughTransformer(), endpoint="/venues")
 
         assert ImportLog.objects.count() == 2
         sources = list(ImportLog.objects.values_list('source', flat=True))
