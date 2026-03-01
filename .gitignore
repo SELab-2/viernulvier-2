@@ -1,0 +1,3 @@
+# Environment variables
+infrastructure/.env.*
+!infrastructure/.env.*.example

@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    env_file:
+      - .env.dev
+
+volumes:
+  postgres_data_dev:
