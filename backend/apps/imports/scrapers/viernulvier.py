@@ -343,11 +343,6 @@ def _convert_field_value(field: models.Field, value: Any) -> Optional[Any]:
 def _get_item_value(item: Mapping[str, Any], field_name: str) -> Any:
     """Read a value by snake_case or lowerCamelCase field name.
 
-    Strategy:
-    1. Extract external_id and try to find the object in the database
-    2. If not found and raw_value is a dict, recursively import that nested data
-    3. If raw_value is a primitive, verify existence in database
-
     Args:
         item: Parsed API item data.
         field_name: Model field name (snake_case).
@@ -541,7 +536,8 @@ def _resolve_fk_value(field: models.Field, raw_value: dict | str) -> Optional[An
         return related_model.objects.get(external_id=ext_id)
     except related_model.DoesNotExist:
         if isinstance(raw_value, str):
-            raw_value = fetch_viernulvier(raw_value)[0]
+            endpoint = raw_value.split("/api/v1")[-1]
+            raw_value = fetch_viernulvier(endpoint)[0]
         defaults = _build_model_defaults(related_model, raw_value)
         obj, _ = related_model.objects.update_or_create(external_id=ext_id, defaults=defaults)
         return obj.pk
