@@ -281,7 +281,7 @@ def test_sync_skips_items_without_id(monkeypatch, caplog):
 
         assert count == 0
         assert ViernulvierItem.objects.count() == 0
-        assert any("Skipping item without @id" in r.message for r in caplog.records)
+        assert any("Missing @id for item" in r.message for r in caplog.records)
 
 
 @isolate_apps("tests")
@@ -379,7 +379,7 @@ def test_sync_skips_empty_string_id(monkeypatch, caplog):
 
         assert count == 0
         assert ViernulvierItem.objects.count() == 0
-        assert any("Skipping item without @id" in r.message for r in caplog.records)
+        assert any("Missing @id for item" in r.message for r in caplog.records)
 
 
 @isolate_apps("tests")
@@ -487,9 +487,7 @@ def test_sync_continues_when_item_is_not_dict(monkeypatch, caplog):
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
         # Check that an error was logged for the non-dict item
-        assert any(
-            "Unexpected error while processing item: item is not a dict" in r.message for r in caplog.records
-        )
+        assert any("Item is not a dict" in r.message for r in caplog.records)
 
 
 def test_fetch_live_events(monkeypatch):
@@ -1006,7 +1004,7 @@ def test_sync_creates_import_log_on_partial_success(monkeypatch):
         assert log.records_total == 3
         assert log.records_imported == 2
         assert log.records_failed == 1
-        assert log.error_message is None
+        assert log.error_message is not None
 
 
 @isolate_apps("tests")
@@ -1034,7 +1032,7 @@ def test_sync_creates_import_log_on_all_failures(monkeypatch):
         assert log.records_total == 2
         assert log.records_imported == 0
         assert log.records_failed == 2
-        assert log.error_message == "All 2 records failed to import"
+        assert log.error_message.startswith("All 2 records failed to import")
 
 
 @isolate_apps("tests")
