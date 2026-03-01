@@ -1,17 +1,64 @@
+"""
+Models for the Events app.
+
+Events are scheduled occurrences of productions:
+
+    Event  ->  Production
+
+- An **Event** links a :class:`~apps.productions.models.Production` to a
+  :class:`~apps.locations.models.Hall` and defines the time window during
+  which the performance takes place.
+- An **EventPrice** records the ticket amount and available capacity for a
+  specific :class:`~apps.pricing.models.PriceRank` within an event.
+
+A database-level check constraint guarantees that ``ends_at > starts_at``
+for every event. The same rule is enforced at the application level via
+:meth:`Event.clean`.
+"""
+
+from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q, F
-from apps.core.model import BaseModel
-from apps.productions.models import Production
+from django.db.models import F, Q
+
+from apps.core.models import BaseModel
 from apps.locations.models import Hall
 from apps.pricing.models import PriceRank
-from django.core.exceptions import ValidationError
+from apps.productions.models import Production
+
+
+# ===========================================================================
+# Event
+# ===========================================================================
 
 class Event(BaseModel):
+    """
+    A scheduled occurrence of a production inside a hall.
+
+    An event has a start and end time, an optional ticketing URL, and a
+    set of :class:`EventPrice` entries that define capacity and pricing
+    per price rank. The ``hall`` FK is nullable to support online or
+    location-independent events.
+
+    The constraint ``ends_at > starts_at`` is enforced both at the
+    database level (``CheckConstraint``) and at the application level
+    (:meth:`clean`), so validation fires in both the admin and the API.
+
+    Attributes:
+        production:    The production this event is a performance of.
+        hall:          The hall in which the event takes place.
+                       ``null`` for online or location-independent events.
+        starts_at:     Date and time at which the event begins (UTC).
+        ends_at:       Date and time at which the event ends (UTC).
+                       Must be strictly later than ``starts_at``.
+        ticketing_url: Public URL where tickets can be purchased.
+    """
+
     production = models.ForeignKey(
         Production,
         on_delete=models.CASCADE,
-        db_comment="The production that the event is organized for.",
         related_name="events",
+        help_text="Production this event is a performance of.",
+        db_comment="The production that the event is organized for.",
     )
 
     hall = models.ForeignKey(
@@ -19,74 +66,118 @@ class Event(BaseModel):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        db_comment="The hall which the event is organized in.",
         related_name="events",
+        help_text="Hall in which the event takes place. `null` for online or location-independent events.",
+        db_comment="The hall which the event is organized in.",
     )
 
     starts_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="ISO 8601 UTC datetime at which the event begins.",
         db_comment="The time at which the event starts.",
-        null=True,
-        blank=True
-        )
+    )
+
     ends_at = models.DateTimeField(
-        db_comment="The time at which the event ends.",
         null=True,
-        blank=True
-        )
+        blank=True,
+        help_text="ISO 8601 UTC datetime at which the event ends. Must be strictly later than `starts_at`.",
+        db_comment="The time at which the event ends.",
+    )
 
     ticketing_url = models.URLField(
+        blank=True,
+        help_text="Public URL where tickets for this event can be purchased. Empty string when not applicable.",
         db_comment="The URL leading to the ticket reservations.",
-        blank=True
     )
 
     class Meta(BaseModel.Meta):
         db_table = "event"
         verbose_name = "Event"
         verbose_name_plural = "Events"
+        ordering = ["starts_at"]
         constraints = [
             models.CheckConstraint(
                 condition=Q(ends_at__gt=F("starts_at")),
                 name="event_ends_after_starts",
             )
         ]
-        ordering = ["starts_at"]
 
-    def clean(self):
+    def clean(self) -> None:
+        """
+        Enforce that ``ends_at`` is strictly later than ``starts_at``.
+
+        This mirrors the database-level ``CheckConstraint`` so that the
+        validation error surfaces in the Django admin and any form-based
+        flow, rather than only at the database layer.
+        """
         super().clean()
         if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
             raise ValidationError("Event end time must be after start time.")
 
+    def __str__(self) -> str:
+        return f"Event {self.id} - {self.production} @ {self.starts_at}"
+
+
+# ===========================================================================
+# EventPrice
+# ===========================================================================
+
 class EventPrice(BaseModel):
+    """
+    A price tier assigned to a specific event.
+
+    Each ``EventPrice`` links an :class:`Event` to a
+    :class:`~apps.pricing.models.PriceRank` and records the ticket amount
+    (in euro) and the number of seats available at that rank.
+
+    Each combination of event and price rank must be unique (enforced by a
+    ``UniqueConstraint``). The ``price_rank`` FK uses ``SET_NULL`` on delete
+    so that removing a rank does not cascade-delete historical pricing data.
+
+    Attributes:
+        event:       The event this price entry belongs to.
+        price_rank:  The price rank availability tier.
+                     ``null`` when the rank has been deleted.
+        amount:      Ticket price in euro.
+        available:   Number of tickets available at this rank for the event.
+    """
+
     event = models.ForeignKey(
         Event,
         on_delete=models.CASCADE,
-        db_comment="The event which the price belongs to.",
         related_name="prices",
+        help_text="Event this price entry belongs to.",
+        db_comment="The event which the price belongs to.",
     )
 
     price_rank = models.ForeignKey(
         PriceRank,
-        on_delete=models.SET_NULL,
-        db_comment="The rank corresponding to the price.",
-        related_name="event_prices",
         null=True,
-        blank=True
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="event_prices",
+        help_text="Price rank availability tier. `null` when the rank has been deleted.",
+        db_comment="The rank corresponding to the price.",
     )
 
     amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        help_text="Ticket price in euro (e.g. `18.00`).",
         db_comment="The price amount.",
     )
 
     available = models.PositiveIntegerField(
-        db_comment="The amount of event tickets available for this specific price."
+        help_text="Number of tickets available at this price rank for the event.",
+        db_comment="The amount of event tickets available for this specific price.",
     )
 
     class Meta(BaseModel.Meta):
         db_table = "event_price"
         verbose_name = "Event Price"
         verbose_name_plural = "Event Prices"
+        ordering = ["price_rank__position", "id"]
         constraints = [
             models.UniqueConstraint(
                 fields=["event", "price_rank"],
@@ -94,7 +185,9 @@ class EventPrice(BaseModel):
             )
         ]
         indexes = [
-            models.Index(fields=["event"]),
-            models.Index(fields=["event", "price_rank"]),
+            models.Index(fields=["event"], name="idx_event_price_event"),
+            models.Index(fields=["event", "price_rank"], name="idx_event_price_event_rank"),
         ]
-        
+
+    def __str__(self) -> str:
+        return f"EventPrice {self.id} - Event {self.event_id} / Rank {self.price_rank_id}"
