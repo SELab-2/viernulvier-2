@@ -46,7 +46,7 @@ from apps.pricing.models import (
     Price, PriceTranslation,
     PriceRank, PriceRankTranslation,
 )
-from apps.events.models import Event
+from apps.events.models import Event, EventPrice
 
 
 # ===========================================================================
@@ -632,6 +632,40 @@ EVENT_CONFIG = ModelSyncConfig(
 
 
 # ===========================================================================
+# EVENT PRICE
+# API: {
+#   "@id",
+#   "event": "url",        <- FK to Event
+#   "price": "url",        <- FK to PriceRank
+#   "amount": 0,
+#   "available": 0,
+#   "expires_at": "datetime",
+#   "created_at": "datetime",
+#   "updated_at": "datetime",
+#   "contingent_id": "string",    <- no field in our model
+#   "box_office_id": "string",   <- no field in our model
+#   "rank": 0                   <- no field in our model
+# }
+# Endpoint: /events/prices
+#
+EVENT_PRICE_CONFIG = ModelSyncConfig(
+    field_map={
+        "@id": "external_id",
+        "event": "event",          # FK → Event
+        "price": "price_rank",     # FK → PriceRank
+        "amount": "amount",
+        "available": "available",
+        "expires_at": None,
+        "created_at": None,
+        "updated_at": None,
+        "contingent_id": None,
+        "box_office_id": None,
+        "rank": None,
+    }
+)
+
+
+# ===========================================================================
 # Sync steps in required order
 # Leaf models (no FK's to other models) ALWAYS come first.
 # ===========================================================================
@@ -651,6 +685,7 @@ SYNC_STEPS = [
     ("price_ranks",         PriceRank,          PRICE_RANK_CONFIG,          "/prices/ranks"),
     ("productions",         Production,         PRODUCTION_CONFIG,          "/productions"),
     ("events",              Event,              EVENT_CONFIG,               "/events"),
+    ("event_prices",        EventPrice,         EVENT_PRICE_CONFIG,         "/events/prices"),
 ]
 
 
