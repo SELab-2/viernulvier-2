@@ -62,6 +62,11 @@ class BaseModel(models.Model):
                     raise ValidationError("This name is not allowed.")
     """
 
+    external_id = models.CharField(
+        null = True,
+        blank = True,
+    )
+
     class Meta:
         abstract = True
 
