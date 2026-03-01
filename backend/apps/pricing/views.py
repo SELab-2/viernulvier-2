@@ -1,19 +1,38 @@
+"""
+ViewSets for the Pricing app.
+
+Schema annotations are kept in schemas.py so this file stays focused
+on routing and queryset configuration only.
+"""
+
 from django.db.models import Prefetch
+
 from apps.core.views import ApiModelViewSet
-from apps.pricing.models import (
-    Price,
-    PriceTranslation,
-    PriceRank,
-    PriceRankTranslation,
-)
-from apps.pricing.serializers import (
-    PriceSerializer,
-    PriceRankSerializer
-)
+
+from .models import Price, PriceRank, PriceRankTranslation, PriceTranslation
+from .schemas import extend_schema, price_rank_schema, price_schema
+from .serializers import PriceRankSerializer, PriceSerializer
+
+_TAG = "Pricing"  # Reusable tag for all pricing-related endpoints in the OpenAPI docs
 
 
+@extend_schema(tags=[_TAG])
+@price_schema
 class PriceViewSet(ApiModelViewSet):
-    """Prices endpoint."""
+    """
+    CRUD endpoints for Price objects.
+
+    A price defines a ticket category (e.g. full price, student, Cineville).
+    Variable pricing is supported via the `minimum`, `maximum`, and `step`
+    fields.
+
+    The `description` field returns all available translations as a
+    language-code dictionary.
+
+    Uses an explicit `Prefetch` to eagerly load translations with their related
+    language in a single query.
+    """
+
     serializer_class = PriceSerializer
     queryset = (
         Price.objects
@@ -27,8 +46,22 @@ class PriceViewSet(ApiModelViewSet):
     )
 
 
+@extend_schema(tags=[_TAG])
+@price_rank_schema
 class PriceRankViewSet(ApiModelViewSet):
-    """PriceRanks endpoint."""
+    """
+    CRUD endpoints for PriceRank objects.
+
+    A price rank defines an ordered availability tier that controls when a
+    price level is considered sold out.
+
+    The `description` field returns all available translations as a
+    language-code dictionary.
+
+    Uses an explicit `Prefetch` to eagerly load translations with their related
+    language in a single query.
+    """
+
     serializer_class = PriceRankSerializer
     queryset = (
         PriceRank.objects

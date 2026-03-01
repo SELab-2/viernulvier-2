@@ -1,19 +1,46 @@
+"""
+ViewSets for the Tags app.
+
+Schema annotations are kept in schemas.py so this file stays focused
+on routing and queryset configuration only.
+
+Tags are classification labels used for filtering and categorising productions.
+They support localised fields (name, short_description, url_title).
+
+Translation Format
+------------------
+All translated fields are returned as dictionaries mapping language codes 
+to their values (e.g., {"nl": "...", "en": "..."}).
+"""
+
+from drf_spectacular.utils import extend_schema
+
 from apps.core.views import ApiModelViewSet
+
 from .models import Tag
+from .schemas import tag_schema
 from .serializers import TagSerializer
 
+_TAG = "Tags"  # Reusable tag for all tag-related endpoints in the OpenAPI docs
 
+
+@extend_schema(tags=[_TAG])
+@tag_schema
 class TagViewSet(ApiModelViewSet):
     """
-    API endpoint for managing Tags.
+    CRUD endpoints for Tag objects.
 
-    Behavior:
-        - Public API key  -> read-only
-        - Internal API key -> full CRUD
+    Tags are classification labels attached to productions.
 
-    Optimized with prefetch_related to avoid N+1 queries
-    when accessing translations.
+    Translated fields (name, short description, URL title)
+    are returned as language-code dictionaries via
+    ``TranslatableSerializerMixin``.
+
+    Queryset strategy
+    -----------------
+    ``prefetch_related("translations")`` loads all translations in a
+    single additional query to avoid N+1 lookups.
     """
 
-    queryset = Tag.objects.prefetch_related("translations")
     serializer_class = TagSerializer
+    queryset = Tag.objects.prefetch_related("translations")
