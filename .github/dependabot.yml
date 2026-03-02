@@ -15,7 +15,6 @@ updates:
       include: "scope"
     groups:
       dependencies:
-        dependency-type: "all"
         patterns: ["*"]
 
   # Monitor pip dependencies for backend
@@ -33,7 +32,6 @@ updates:
       include: "scope"
     groups:
       dependencies:
-        dependency-type: "all"
         patterns: ["*"]
 
   # Monitor GitHub Actions
@@ -51,5 +49,4 @@ updates:
       include: "scope"
     groups:
       dependencies:
-        dependency-type: "all"
         patterns: ["*"]
