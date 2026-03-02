@@ -14,6 +14,13 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    groups:
+      patch-minor-updates:
+        update-types: ["patch", "minor"]
+        patterns: ["*"]
+      major-updates:
+        update-types: ["major"]
+        patterns: ["*"]
 
   # Monitor pip dependencies for backend
   - package-ecosystem: "pip"
@@ -29,6 +36,13 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    groups:
+      patch-minor-updates:
+        update-types: ["patch", "minor"]
+        patterns: ["*"]
+      major-updates:
+        update-types: ["major"]
+        patterns: ["*"]
 
   # Monitor GitHub Actions
   - package-ecosystem: "github-actions"
@@ -44,3 +58,10 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    groups:
+      patch-minor-updates:
+        update-types: ["patch", "minor"]
+        patterns: ["*"]
+      major-updates:
+        update-types: ["major"]
+        patterns: ["*"]
