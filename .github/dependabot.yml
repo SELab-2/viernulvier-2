@@ -6,7 +6,7 @@ updates:
     target-branch: "dependabot-test"
     schedule:
       interval: "daily"
-      time: "22:25"
+      time: "09:00"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -28,7 +28,7 @@ updates:
     target-branch: "dependabot-test"
     schedule:
       interval: "daily"
-      time: "22:25"
+      time: "09:00"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -50,7 +50,7 @@ updates:
     target-branch: "dependabot-test"
     schedule:
       interval: "daily"
-      time: "22:25"
+      time: "09:00"
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
