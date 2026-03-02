@@ -31,6 +31,14 @@ class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixi
         ),
     )
 
+    display_name = serializers.SerializerMethodField(
+        help_text=(
+            "Human-readable location name in the project's base language. "
+            "Falls back to the first available translation when the base "
+            "language translation is missing."
+        )
+    )
+
     class Meta:
         model = Location
         fields = [
@@ -44,8 +52,9 @@ class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixi
             "phone_2",
             "is_own_location",
             "name",
+            "display_name"
         ]
-        read_only_fields = ["id", "name"]
+        read_only_fields = ["id", "display_name", "name"]
         extra_kwargs = {
             "street": {"help_text": "Street name of the location."},
             "number": {"help_text": "Street / house number."},
@@ -62,6 +71,10 @@ class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixi
     def get_name(self, obj: Location) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
+    
+    def get_display_name(self, obj: Location) -> str | None:
+        """Return the location name in the project's base language."""
+        return self.get_base_translated_value(obj, "name")
 
 
 class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
@@ -80,14 +93,19 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         ),
     )
 
+    display_name = serializers.SerializerMethodField(
+        help_text="Human-readable space name in the project's base language."
+    )
+
     class Meta:
         model = Space
         fields = [
             "id",
             "location",
             "name",
+            "display_name"
         ]
-        read_only_fields = ["id", "name"]
+        read_only_fields = ["id", "name", "display_name"]
         extra_kwargs = {
             "location": {
                 "help_text": "Primary key of the parent **Location** this space belongs to.",
@@ -97,6 +115,10 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     def get_name(self, obj: Space) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
+    
+    def get_display_name(self, obj: Space) -> str | None:
+        """Return the space name in the project's base language."""
+        return self.get_base_translated_value(obj, "name")
 
 
 class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
@@ -113,6 +135,10 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             "(e.g. {\"en\": \"Main Hall\", \"fr\": \"Grande Salle\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
+    )
+
+    display_name = serializers.SerializerMethodField(
+        help_text="Human-readable hall name in the project's base language."
     )
 
     remark = serializers.SerializerMethodField(
@@ -133,9 +159,10 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             "seat_selection",
             "open_seating",
             "name",
+            "display_remark",
             "remark",
         ]
-        read_only_fields = ["id", "name", "remark"]
+        read_only_fields = ["id", "name", "display_remark", "remark"]
         extra_kwargs = {
             "space": {
                 "help_text": "Primary key of the parent **Space** this hall belongs to.",
@@ -151,6 +178,10 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     def get_name(self, obj: Hall) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
+    
+    def get_display_name(self, obj: Hall) -> str | None:
+        """Return the hall name in the project's base language."""
+        return self.get_base_translated_value(obj, "name")
 
     def get_remark(self, obj: Hall) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
