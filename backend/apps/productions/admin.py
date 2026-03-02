@@ -16,6 +16,8 @@ the list and detail pages free of N+1 queries.
 from django.contrib import admin
 
 from apps.core.admin import BaseAdmin
+from apps.core.admin_bulk import BulkOperationAdminMixin
+from apps.productions.bulk import ProductionBulkService
 from .models import (
     Production,
     ProductionGenre,
@@ -119,7 +121,7 @@ class UitDatabaseTypeAdmin(BaseAdmin):
 # ===========================================================================
 
 @admin.register(Production)
-class ProductionAdmin(BaseAdmin):
+class ProductionAdmin(BulkOperationAdminMixin, BaseAdmin):
     """
     Admin configuration for the Production model.
 
@@ -135,6 +137,9 @@ class ProductionAdmin(BaseAdmin):
     - ``prefetch_related("translations")`` prevents N+1 queries when the
       admin search uses ``translations__title`` or ``translations__artist_name``.
     """
+
+    bulk_service_class = ProductionBulkService
+    change_list_template = "admin/productions/production/change_list.html"
 
     list_display = (
         "id",

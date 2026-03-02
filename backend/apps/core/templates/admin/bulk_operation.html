@@ -1,0 +1,266 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+<p class="help">Build your query: rows in the same group are AND’ed, groups are OR’ed.</p>
+<form method="post" novalidate class="bulk-form">
+  {% csrf_token %}
+  <fieldset class="module aligned action-block">
+    <legend>Action</legend>
+    <div id="action-form-fields">{{ action_form.as_p }}</div>
+    <div id="action-extra"></div>
+  </fieldset>
+
+  <fieldset class="module aligned">
+    <legend>Filters (AND within a group, OR between groups)</legend>
+    <div id="conditions-container">
+      {% for form in cond_forms %}
+        <div class="condition-form">
+          <div class="condition-header">
+            <span class="group-badge" data-group="{{ form.group.value|default:0 }}">Group {{ form.group.value|default:0 }}</span>
+            <span class="logic-label">AND inside</span>
+          </div>
+          {{ form.as_p }}
+        </div>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <input type="hidden" id="id_conditions-TOTAL_FORMS" name="conditions-TOTAL_FORMS" value="{{ cond_forms|length }}">
+  <div class="submit-row">
+    <button type="button" class="button" id="add-condition">Add filter (AND)</button>
+    <button type="button" class="button" id="add-or-group">Add OR group</button>
+    <input type="submit" value="Run" class="default">
+  </div>
+</form>
+
+<script>
+(function() {
+  const FIELD_SPECS = JSON.parse('{{ field_specs_json|escapejs }}');
+  const ACTION_FIELDS = JSON.parse('{{ action_fields_json|escapejs }}');
+  let currentAction = '{{ current_action|default:"" }}';
+  const addBtn = document.getElementById("add-condition");
+  const addOrBtn = document.getElementById("add-or-group");
+  const container = document.getElementById("conditions-container");
+  const totalInput = document.getElementById("id_conditions-TOTAL_FORMS");
+  const actionFormFields = document.getElementById("action-form-fields");
+  const actionExtra = document.getElementById("action-extra");
+  if (!container || !totalInput) return;
+
+  function renderActionFields(actionSlug) {
+    if (!actionFormFields) return;
+    const actionSelect = actionFormFields.querySelector("select[name='action']");
+    const payload = ACTION_FIELDS[actionSlug] || { html: "", add_links: {} };
+
+    const actionSelectHtml = actionSelect ? actionSelect.closest("p").outerHTML : "";
+    actionFormFields.innerHTML = actionSelectHtml + (payload.html || "");
+
+    // Rebind change listener after replacing HTML
+    bindActionSelect();
+
+    // set selected action
+    const newSelect = actionFormFields.querySelector("select[name='action']");
+    if (newSelect && actionSlug) {
+      newSelect.value = actionSlug;
+    }
+    currentAction = actionSlug || currentAction;
+
+    if (payload && actionExtra) {
+      let links = "";
+      Object.entries(payload.add_links || {}).forEach(([fieldName, url]) => {
+        links += `<a class="add-related" href="${url}" target="_blank">➕ Add ${fieldName}</a> `;
+      });
+      actionExtra.innerHTML = links;
+    }
+  }
+
+  function bindActionSelect() {
+    const select = actionFormFields?.querySelector("select[name='action']");
+    if (!select) return;
+    select.addEventListener("change", function() {
+      renderActionFields(select.value);
+    });
+    if (currentAction) {
+      select.value = currentAction;
+    }
+  }
+
+  function nextGroupId() {
+    const groups = Array.from(container.querySelectorAll("input[name$='-group']"))
+      .map(el => parseInt(el.value || "0", 10));
+    return groups.length ? Math.max.apply(null, groups) + 1 : 0;
+  }
+
+  function applySpec(formEl) {
+    const fieldSelect = formEl.querySelector("select[name$='-field']");
+    const operatorSelect = formEl.querySelector("select[name$='-operator']");
+    const valueInput = formEl.querySelector("[name$='-value']");
+    const value2Input = formEl.querySelector("[name$='-value2']");
+    if (!fieldSelect || !operatorSelect || !valueInput || !value2Input) return;
+    const spec = FIELD_SPECS[fieldSelect.value];
+    if (!spec) return;
+
+    operatorSelect.innerHTML = "";
+    spec.operators.forEach(function(op) {
+      const opt = document.createElement("option");
+      opt.value = op.code;
+      opt.textContent = op.label;
+      operatorSelect.appendChild(opt);
+    });
+
+    if (!operatorSelect.value && spec.operators.length) {
+      operatorSelect.value = spec.operators[0].code;
+    }
+
+    const valueName = valueInput.getAttribute("name");
+    const valueId = valueInput.getAttribute("id");
+    const html1 = spec.value_html
+      .replace(/__name__/g, valueName)
+      .replace(/__id__/g, valueId);
+    const tmp1 = document.createElement("div");
+    tmp1.innerHTML = html1;
+    const newField1 = tmp1.firstElementChild;
+    if (newField1) {
+      valueInput.replaceWith(newField1);
+    }
+
+    const value2Name = value2Input.getAttribute("name");
+    const value2Id = value2Input.getAttribute("id");
+    const html2 = spec.value2_html
+      .replace(/__name2__/g, value2Name)
+      .replace(/__id2__/g, value2Id);
+    const tmp2 = document.createElement("div");
+    tmp2.innerHTML = html2;
+    const newField2 = tmp2.firstElementChild;
+    if (newField2) {
+      value2Input.replaceWith(newField2);
+    }
+
+    const selectedOp = operatorSelect.value || (spec.operators[0] && spec.operators[0].code);
+    updateValueVisibility(formEl, spec, selectedOp);
+    updateGroupBadge(formEl);
+  }
+
+  function updateValueVisibility(formEl, spec, opCode) {
+    const valueInput = formEl.querySelector("[name$='-value']");
+    const value2Input = formEl.querySelector("[name$='-value2']");
+    if (!valueInput || !value2Input) return;
+    const meta = spec.operators.find(o => o.code === opCode) || spec.operators[0];
+    const vk = meta ? meta.value_kind : "single";
+    if (vk === "none") {
+        valueInput.closest("p")?.classList.add("hidden");
+        value2Input.closest("p")?.classList.add("hidden");
+        valueInput.value = "";
+        value2Input.value = "";
+    } else if (vk === "range") {
+        valueInput.closest("p")?.classList.remove("hidden");
+        value2Input.closest("p")?.classList.remove("hidden");
+    } else {
+        valueInput.closest("p")?.classList.remove("hidden");
+        value2Input.closest("p")?.classList.add("hidden");
+        value2Input.value = "";
+    }
+  }
+
+  function attachFieldListeners(formEl) {
+    const fieldSelect = formEl.querySelector("select[name$='-field']");
+    const operatorSelect = formEl.querySelector("select[name$='-operator']");
+    if (!fieldSelect) return;
+    fieldSelect.addEventListener("change", function() {
+      applySpec(formEl);
+    });
+    if (operatorSelect) {
+      operatorSelect.addEventListener("change", function() {
+        const spec = FIELD_SPECS[fieldSelect.value];
+        if (!spec) return;
+        updateValueVisibility(formEl, spec, operatorSelect.value);
+      });
+    }
+  }
+
+  function updateGroupBadge(formEl) {
+    const badge = formEl.querySelector(".group-badge");
+    const groupInput = formEl.querySelector("input[name$='-group']");
+    if (badge && groupInput) {
+      badge.textContent = `Group ${groupInput.value || 0}`;
+      badge.dataset.group = groupInput.value || 0;
+    }
+  }
+
+  function addCondition(newGroupId) {
+    const total = parseInt(totalInput.value || "0", 10);
+    const first = container.querySelector(".condition-form");
+    if (!first) return;
+    const clone = first.cloneNode(true);
+    clone.querySelectorAll("input, select, label").forEach(function (el) {
+      const name = el.getAttribute("name");
+      const id = el.getAttribute("id");
+      const htmlFor = el.getAttribute("for");
+      if (name) {
+        const newName = name.replace(/conditions-\d+/, "conditions-" + total);
+        el.setAttribute("name", newName);
+      }
+      if (id) {
+        const newId = id.replace(/conditions-\d+/, "conditions-" + total);
+        el.setAttribute("id", newId);
+      }
+      if (htmlFor) {
+        const newFor = htmlFor.replace(/conditions-\d+/, "conditions-" + total);
+        el.setAttribute("for", newFor);
+      }
+      if (el.tagName === "SELECT") {
+        el.selectedIndex = 0;
+      } else if (el.tagName === "INPUT") {
+        if (el.getAttribute("name")?.endsWith("-group")) {
+          el.value = String(newGroupId);
+        } else {
+          el.value = "";
+        }
+      }
+    });
+    container.appendChild(clone);
+    totalInput.value = total + 1;
+    applySpec(clone);
+    attachFieldListeners(clone);
+    updateGroupBadge(clone);
+  }
+
+  if (addBtn) {
+    addBtn.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      // same group as last
+      const groups = container.querySelectorAll("input[name$='-group']");
+      const last = groups.length ? groups[groups.length - 1].value : 0;
+      addCondition(parseInt(last || "0", 10));
+    });
+  }
+
+  if (addOrBtn) {
+    addOrBtn.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      addCondition(nextGroupId());
+    });
+  }
+
+  container.querySelectorAll(".condition-form").forEach(function(formEl) {
+    applySpec(formEl);
+    attachFieldListeners(formEl);
+    updateGroupBadge(formEl);
+  });
+
+  bindActionSelect();
+  renderActionFields(currentAction || (actionFormFields?.querySelector("select[name='action']")?.value));
+})();
+</script>
+<style>
+  .hidden { display: none; }
+  .bulk-form { gap: 12px; }
+  .condition-form { border: 1px solid #ccc; padding: 10px; margin-bottom: 8px; border-radius: 6px; }
+  .condition-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .group-badge { background: #eef3ff; color: #2a4b8d; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+  .logic-label { font-size: 12px; color: #666; }
+  .action-block { border: 1px solid #ddd; border-radius: 6px; }
+  .help { color: #444; margin-bottom: 10px; }
+</style>
+{% endblock %}
