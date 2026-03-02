@@ -4,8 +4,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
       time: "09:00"
     open-pull-requests-limit: 5
     labels:
@@ -14,13 +13,16 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    groups:
+      dependencies:
+        dependency-type: "all"
+        patterns: ["*"]
 
   # Monitor pip dependencies for backend
   - package-ecosystem: "pip"
     directory: "/backend/requirements"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
       time: "09:00"
     open-pull-requests-limit: 5
     labels:
@@ -29,13 +31,16 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    groups:
+      dependencies:
+        dependency-type: "all"
+        patterns: ["*"]
 
   # Monitor GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
       time: "09:00"
     open-pull-requests-limit: 3
     labels:
@@ -44,3 +49,7 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    groups:
+      dependencies:
+        dependency-type: "all"
+        patterns: ["*"]
