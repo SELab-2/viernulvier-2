@@ -75,7 +75,11 @@ class Genre(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        return self.type
+        name = self.get_base_display_name(
+            related_name="translations",
+            fallback=None,
+        )
+        return f"{name} ({self.type})" if name else self.type
 
 
 class GenreTranslation(BaseModel):
