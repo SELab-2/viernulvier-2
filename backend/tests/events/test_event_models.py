@@ -53,8 +53,25 @@ def test_event_constraint_name_present():
     assert "event_ends_after_starts" in names
 
 
-def test_event_clean_raises_when_ends_before_or_equal_starts():
-    """Test case for test_event_clean_raises_when_ends_before_or_equal_starts."""
+def test_event_clean_raises_when_ends_before_starts():
+    """Test case for test_event_clean_raises_when_ends_before_starts."""
+    prod = ProductionFactory()
+    hall = HallFactory()
+    now = timezone.now()
+
+    e = Event(
+        production=prod,
+        hall=hall,
+        starts_at=now,
+        ends_at=now - timedelta(minutes=1),
+        ticketing_url="",
+    )
+    with pytest.raises(ValidationError):
+        e.full_clean()
+
+
+def test_event_allows_equal_start_and_end():
+    """Equal start/end timestamps are allowed."""
     prod = ProductionFactory()
     hall = HallFactory()
     now = timezone.now()
@@ -66,8 +83,9 @@ def test_event_clean_raises_when_ends_before_or_equal_starts():
         ends_at=now,
         ticketing_url="",
     )
-    with pytest.raises(ValidationError):
-        e.full_clean() 
+    e.full_clean()
+    e.save()
+    assert e.id is not None
 
 
 def test_event_allows_null_starts_or_ends():
@@ -84,6 +102,17 @@ def test_event_allows_null_starts_or_ends():
     e2.full_clean()
     e2.save()
     assert e2.id is not None
+
+
+def test_event_allows_end_without_start():
+    """Test case for allowing an end time without a start time."""
+    prod = ProductionFactory()
+    hall = HallFactory()
+
+    e3 = Event(production=prod, hall=hall, starts_at=None, ends_at=timezone.now(), ticketing_url="")
+    e3.full_clean()
+    e3.save()
+    assert e3.id is not None
 
 
 # ---------------------------------------------------------------------------

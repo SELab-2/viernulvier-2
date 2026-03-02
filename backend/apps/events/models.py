@@ -98,7 +98,11 @@ class Event(BaseModel):
         ordering = ["starts_at"]
         constraints = [
             models.CheckConstraint(
-                condition=Q(ends_at__gt=F("starts_at")),
+                condition=(
+                    Q(ends_at__gte=F("starts_at"))
+                    | Q(starts_at__isnull=True)
+                    | Q(ends_at__isnull=True)
+                ),
                 name="event_ends_after_starts",
             )
         ]
@@ -112,8 +116,8 @@ class Event(BaseModel):
         flow, rather than only at the database layer.
         """
         super().clean()
-        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
-            raise ValidationError("Event end time must be after start time.")
+        if self.starts_at and self.ends_at and self.ends_at < self.starts_at:
+            raise ValidationError("Event end time cannot be before start time.")
 
     def __str__(self) -> str:
         return f"Event {self.id} - {self.production} @ {self.starts_at}"
