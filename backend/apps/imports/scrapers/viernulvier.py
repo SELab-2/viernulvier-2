@@ -1,8 +1,5 @@
 """Viernulvier / Peppered scraper module.
 
-Place in your project:
-    apps/imports/scrapers/viernulvier.py
-
 Usage:
     from apps.imports.scrapers.viernulvier import sync_viernulvier, ModelSyncConfig
     sync_viernulvier(MyModel, config, endpoint="/productions")
