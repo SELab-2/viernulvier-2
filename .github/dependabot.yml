@@ -5,7 +5,8 @@ updates:
     directory: "/frontend"
     target-branch: "dependabot-test"
     schedule:
-      interval: "hourly"
+      interval: "daily"
+      time: "09:00"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -26,7 +27,8 @@ updates:
     directory: "/backend/requirements"
     target-branch: "dependabot-test"
     schedule:
-      interval: "hourly"
+      interval: "daily"
+      time: "09:00"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -47,7 +49,8 @@ updates:
     directory: "/"
     target-branch: "dependabot-test"
     schedule:
-      interval: "hourly"
+      interval: "daily"
+      time: "09:00"
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
