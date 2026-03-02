@@ -14,7 +14,11 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     groups:
-      dependencies:
+      patch-minor-updates:
+        update-types: ["patch", "minor"]
+        patterns: ["*"]
+      major-updates:
+        update-types: ["major"]
         patterns: ["*"]
 
   # Monitor pip dependencies for backend
@@ -31,7 +35,11 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     groups:
-      dependencies:
+      patch-minor-updates:
+        update-types: ["patch", "minor"]
+        patterns: ["*"]
+      major-updates:
+        update-types: ["major"]
         patterns: ["*"]
 
   # Monitor GitHub Actions
@@ -48,5 +56,9 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     groups:
-      dependencies:
+      patch-minor-updates:
+        update-types: ["patch", "minor"]
+        patterns: ["*"]
+      major-updates:
+        update-types: ["major"]
         patterns: ["*"]
