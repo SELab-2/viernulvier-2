@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import textwrap
 
 # Load environment variables from .env file
 load_dotenv()
@@ -91,14 +92,20 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.environ.get("DB_NAME", "viernulvier_archief"),
+#         "USER": os.environ.get("DB_USER", "postgres"),
+#         "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+#         "HOST": os.environ.get("DB_HOST", "localhost"),
+#         "PORT": os.environ.get("DB_PORT", "5432"),
+#     }
+# }
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME", "viernulvier_archief"),
-        "USER": os.environ.get("DB_USER", "postgres"),
-        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": os.environ.get("DB_PORT", "5432"),
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -151,12 +158,57 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
     "DEFAULT_AUTHENTICATION_CLASSES": ["apps.core.authentications.ApiKeyAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.ApiKeyPermission"],
+    "DEFAULT_THROTTLE_CLASSES": ["apps.core.throttles.PublicKeyThrottle"],
+    "DEFAULT_THROTTLE_RATES": {
+        "public": "1000/day",
+    },
 }
 
 # drf-spectacular settings
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Viernulvier Archief API',
-    'DESCRIPTION': 'API documentation for the Viernulvier Archief project.',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    "TITLE": "Viernulvier Archive API",
+    "DESCRIPTION": textwrap.dedent("""
+        This API provides structured access to the digital archive, including
+        productions, events, media, and locations.
+
+        ### Authentication
+        Access is determined by your API key:
+        * **Public API key**: Read-only.
+        * **Internal API key**: Full rights (CRUD).
+    """).strip(),
+    "VERSION": "1.0.0",
+    "CONTACT": { # TODO change this
+        'name': 'Support Team',
+        'url': 'https://www.viernulvier.gent/',
+        "email": "info@viernulvier.gent",
+    },
+    "LICENSE": {
+        "name": "MIT License",
+    },
+    "SCHEMA_PATH_PREFIX": r'/api/',
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "displayOperationId": False,
+        "filter": False,
+        "showRequestDuration": True,
+        "persistAuthorization": True,
+        "tagsSorter": "alpha", # Sort tags alfabetically
+        "operationsSorter": "method", # Sort endpoints on HTTP method
+        "tryItOutEnabled": True,
+        "docExpansion": "none", # Collapsed by default for a cleaner look (set to 'list' to expand tags and endpoints, or 'full' to expand everything)
+        "defaultModelsExpandDepth": 0, # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
+    },
+    "TAGS": [
+        {"name": "Productions", "description": "Production management and translations."},
+        {"name": "Events", "description": "Event instances and pricing information."},
+        {"name": "Media", "description": "Media galleries, items and crops."},
+        {"name": "Locations", "description": "Locations, halls and spaces."},
+        {"name": "Genres", "description": "Genre taxonomy and usage types."},
+        {"name": "Tags", "description": "Tag management and production tagging."},
+        {"name": "Pricing", "description": "Price ranks and price structures."},
+        {"name": "Languages", "description": "Supported languages."},
+        {"name": "Imports", "description": "Import pipeline audit logs."},
+    ],
 }
