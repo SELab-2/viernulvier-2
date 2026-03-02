@@ -7,18 +7,18 @@ import ProductionDetailPage from './pages/ProductionDetailPage'
 import Navbar from './components/Navbar'
 
 const Router = () => {
-    return (
-        <BrowserRouter>
-            <Navbar />
-            <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/events" element={<EventsPage />} />
-                <Route path="/events/:id" element={<EventDetailPage />} />
-                <Route path="/productions" element={<ProductionsPage />} />
-                <Route path="/productions/:id" element={<ProductionDetailPage />} />
-            </Routes>
-        </BrowserRouter>
-    )
+  return (
+    <BrowserRouter>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/events" element={<EventsPage />} />
+        <Route path="/events/:id" element={<EventDetailPage />} />
+        <Route path="/productions" element={<ProductionsPage />} />
+        <Route path="/productions/:id" element={<ProductionDetailPage />} />
+      </Routes>
+    </BrowserRouter>
+  )
 }
 
 export default Router
