@@ -1,3 +1,17 @@
+"""
+Production-specific bulk actions and query field specs.
+
+What this file provides
+-----------------------
+- A set of bulk actions for productions (tag add/remove/replace/clear, hall updates on events, deleting events, setting attendance/performer, setting UIT theme/type).
+- Field specifications for the dynamic query builder: performer/attendance choices, FK and M2M filters (hall, tags, genres, UIT theme/type), event start datetime, and text search on title/artist.
+
+How to use
+----------
+- The admin wires this service via BulkOperationAdminMixin (see apps/productions/admin.py); the bulk UI appears from the changelist "Bulk operations" link.
+- Build queries with AND/OR groups; pick an action; submit. Actions run in bulk on the filtered queryset with proper distinct handling for joins.
+"""
+
 from django import forms
 
 from apps.core.bulk import (

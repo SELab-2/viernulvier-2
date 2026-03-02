@@ -1,3 +1,26 @@
+"""
+Dynamic bulk querying and execution utilities for Django admin.
+
+Key ideas
+---------
+- FieldSpec + OperatorSpec define what the user can query (lookups, widgets, null handling).
+- Condition forms are grouped: rows in the same group combine with AND; groups combine with OR.
+- DynamicBulkService builds forms (filters + action) and executes the selected action on the filtered queryset.
+
+How to use
+----------
+1) Define actions by subclassing BaseBulkAction and implement ``run(qs, cleaned_data, user)``.
+2) Define field_specs with helper factories (choice_field_spec, text_field_spec, datetime_field_spec, fk_field_spec, m2m_field_spec).
+3) Create a service subclass of DynamicBulkService with ``model``, ``field_specs`` and ``actions``.
+4) Plug the service into admin via BulkOperationAdminMixin (see apps/core/admin_bulk.py).
+
+Notes
+-----
+- M2M/FK lookups that join set ``requires_distinct=True`` to avoid duplicates.
+- Empty filter rows are ignored; partially filled range rows still error.
+- Operators support value kinds: single, list, range, none (is null).
+"""
+
 from dataclasses import dataclass
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
