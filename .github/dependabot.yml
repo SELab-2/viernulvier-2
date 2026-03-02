@@ -3,6 +3,7 @@ updates:
   # Monitor npm dependencies for frontend
   - package-ecosystem: "npm"
     directory: "/frontend"
+    target-branch: "dependabot-test"
     schedule:
       interval: "daily"
       time: "09:00"
@@ -24,6 +25,7 @@ updates:
   # Monitor pip dependencies for backend
   - package-ecosystem: "pip"
     directory: "/backend/requirements"
+    target-branch: "dependabot-test"
     schedule:
       interval: "daily"
       time: "09:00"
@@ -45,6 +47,7 @@ updates:
   # Monitor GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "dependabot-test"
     schedule:
       interval: "daily"
       time: "09:00"

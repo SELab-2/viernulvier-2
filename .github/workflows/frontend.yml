@@ -2,9 +2,9 @@ name: Frontend CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, test, dependabot-test]
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, test, dependabot-test]
 
 jobs:
   frontend-lint:
