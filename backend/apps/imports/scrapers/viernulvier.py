@@ -215,7 +215,7 @@ def fetch_viernulvier(
                 # Single-item response
                 all_items.append(data)
             else:
-                raise ScraperError("Unexpected payload shape: dict zonder 'member' of '@context'")
+                raise ScraperError("Unexpected payload shape: dict without 'member' or '@context'")
 
             view = data.get("view")
             if isinstance(view, dict) and "next" in view:
@@ -291,12 +291,12 @@ def _resolve_fk(model_field: models.Field, raw_value: Any) -> Optional[Any]:
         return related_model.objects.values_list("pk", flat=True).get(external_id=ext_id)
     except related_model.DoesNotExist:
         logger.warning(
-            "FK niet gevonden: %s.external_id=%r — sync gerelateerde modellen eerst.",
+            "FK not found: %s.external_id=%r — sync related models first.",
             related_model.__name__, ext_id,
         )
         return None
     except Exception:
-        logger.exception("Fout bij FK-resolutie %s external_id=%r", related_model.__name__, ext_id)
+        logger.exception("Error resolving FK %s external_id=%r", related_model.__name__, ext_id)
         return None
 
 
@@ -331,7 +331,7 @@ def _build_defaults(
         try:
             model_field = model._meta.get_field(model_field_name)
         except FieldDoesNotExist:
-            logger.warning("Veld '%s' bestaat niet op %s", model_field_name, model.__name__)
+            logger.warning("Field '%s' doesn't exist in %s", model_field_name, model.__name__)
             continue
 
         if not isinstance(model_field, models.Field) or model_field.primary_key:
@@ -376,7 +376,7 @@ def _build_defaults(
                 pass
 
         if model_field is None:
-            logger.debug("Auto-mapping: '%s' niet gevonden op %s", api_key, model.__name__)
+            logger.debug("Auto-mapping: '%s' not found in %s", api_key, model.__name__)
             continue
 
         if model_field.is_relation and model_field.many_to_one:
@@ -579,7 +579,7 @@ def sync_viernulvier(
 
     for item in items:
         if not isinstance(item, dict):
-            msg = f"Item is geen dict: {item!r}"
+            msg = f"Item is not a dict: {item!r}"
             logger.error(msg)
             errors += 1
             error_messages.append(msg)
@@ -587,14 +587,14 @@ def sync_viernulvier(
 
         lookup_value = _extract_lookup_value(item, config)
         if lookup_value is None:
-            msg = f"Geen '{config.api_id_key}' voor item: {str(item)[:200]}"
+            msg = f"Missing '{config.api_id_key}' for item: {str(item)[:200]}"
             logger.warning(msg)
             errors += 1
             error_messages.append(msg)
             continue
 
         if lookup_value in seen:
-            logger.warning("Duplicaat in batch overgeslagen: %s", lookup_value)
+            logger.warning("Duplicate in batch skipped: %s", lookup_value)
             continue
         seen.add(lookup_value)
 
@@ -614,7 +614,7 @@ def sync_viernulvier(
 
             transaction.savepoint_commit(sid)
             saved += 1
-            logger.debug("%s %s: %s", "Aangemaakt" if created else "Bijgewerkt", model.__name__, lookup_value)
+            logger.debug("%s %s: %s", "Created" if created else "Updated", model.__name__, lookup_value)
 
         except ValidationError as e:
             transaction.savepoint_rollback(sid)
@@ -623,7 +623,7 @@ def sync_viernulvier(
                 for f, errs in e.message_dict.items()
                 for err in errs
             ]
-            msg = f"Validatiefout voor {lookup_value}: {'; '.join(msgs)}"
+            msg = f"Validation error for {lookup_value}: {'; '.join(msgs)}"
             logger.error(msg)
             errors += 1
             error_messages.append(msg)
@@ -631,7 +631,7 @@ def sync_viernulvier(
         except (IntegrityError, DatabaseError, FieldError):
             transaction.savepoint_rollback(sid)
             exc_type, exc_value, _ = sys.exc_info()
-            msg = f"Database fout voor {lookup_value}: {exc_type.__name__}: {exc_value}"
+            msg = f"Database error for {lookup_value}: {exc_type.__name__}: {exc_value}"
             logger.error(msg, exc_info=True)
             errors += 1
             error_messages.append(msg)
@@ -639,7 +639,7 @@ def sync_viernulvier(
         except Exception:
             transaction.savepoint_rollback(sid)
             exc_type, exc_value, _ = sys.exc_info()
-            msg = f"Onverwachte fout voor {lookup_value}: {exc_type.__name__}: {exc_value}"
+            msg = f"Unexpected error for {lookup_value}: {exc_type.__name__}: {exc_value}"
             logger.error(msg, exc_info=True)
             errors += 1
             error_messages.append(msg)
@@ -653,11 +653,11 @@ def sync_viernulvier(
         import_log.status = ImportLog.Status.SUCCESS
     elif saved > 0:
         import_log.status = ImportLog.Status.PARTIAL_SUCCESS
-        import_log.error_message = f"{errors} records mislukt: {', '.join(error_messages)}"
+        import_log.error_message = f"{errors} records failed: {', '.join(error_messages)}"
     else:
         import_log.status = ImportLog.Status.FAILED
-        import_log.error_message = f"Alle {errors} records mislukt: {', '.join(error_messages)}"
+        import_log.error_message = f"All {errors} records failed: {', '.join(error_messages)}"
 
     import_log.save()
-    logger.info("Sync klaar: opgeslagen=%s, fouten=%s", saved, errors)
+    logger.info("Sync finished: saved=%s, errors=%s", saved, errors)
     return saved
