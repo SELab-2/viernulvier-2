@@ -10,7 +10,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type
+from typing import Any, Callable, Dict, List, Mapping, Optional, Type
 from urllib.parse import urljoin, urlparse
 
 import requests

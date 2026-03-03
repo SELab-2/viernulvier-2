@@ -17,15 +17,14 @@ from typing import Any, Optional
 
 from django.core.management.base import BaseCommand
 
+from apps.events.models import Event, EventPrice
+from apps.genres.models import Genre, GenreUseAs, GenreTranslation
 from apps.imports.scrapers.viernulvier import (
     ModelSyncConfig,
     TranslationConfig,
     M2MConfig,
     sync_viernulvier,
 )
-
-from apps.genres.models import Genre, GenreUseAs, GenreTranslation
-from apps.tags.models import Tag, TagTranslation
 from apps.locations.models import (
     Location, LocationTranslation,
     Space, SpaceTranslation,
@@ -35,6 +34,10 @@ from apps.media_library.models import (
     MediaGallery,
     MediaItem, MediaItemTranslation,
 )
+from apps.pricing.models import (
+    Price, PriceTranslation,
+    PriceRank, PriceRankTranslation,
+)
 from apps.productions.models import (
     UitDatabaseTheme,
     UitDatabaseType,
@@ -42,11 +45,7 @@ from apps.productions.models import (
     ProductionTranslation,
     ProductionGenre,
 )
-from apps.pricing.models import (
-    Price, PriceTranslation,
-    PriceRank, PriceRankTranslation,
-)
-from apps.events.models import Event, EventPrice
+from apps.tags.models import Tag, TagTranslation
 
 
 # ===========================================================================

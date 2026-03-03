@@ -6,7 +6,6 @@ from unittest.mock import Mock
 
 import pytest
 import requests
-from _pytest.raises import raises
 from django.db import IntegrityError
 from django.db import connection, models
 from django.test.utils import isolate_apps
