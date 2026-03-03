@@ -1,8 +1,6 @@
 name: Frontend CI
 
 on:
-  push:
-    branches: [main, dev, dependabot-test]
   pull_request:
     branches: [main, dev, dependabot-test]
 
