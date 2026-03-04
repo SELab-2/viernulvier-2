@@ -209,18 +209,19 @@ class TranslatableSerializerMixin:
         translations = getattr(obj, related_name).all()
         base_code = self.get_base_language_code()
 
-        # Prefer base language
-        for t in translations:
-            if t.language.code == base_code:
-                value = getattr(t, field_name, None)
-                if value:
-                    return value
+        first_available = None
 
-        # Fallback: first non-empty value
         for t in translations:
             value = getattr(t, field_name, None)
-            if value:
+            if not value:
+                continue
+            
+            # If this translation matches the base language, return it immediately
+            if t.language.code == base_code:
                 return value
+            
+            # Otherwise, keep track of the first available translation as a fallback
+            if first_available is None:
+                first_available = value
 
-        # Final fallback
-        return fallback
+        return first_available or fallback

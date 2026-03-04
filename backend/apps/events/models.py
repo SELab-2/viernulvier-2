@@ -116,7 +116,7 @@ class Event(BaseModel):
             raise ValidationError("Event end time must be after start time.")
 
     def __str__(self) -> str:
-        production = str(self.production)
+        production = str(self.production) if self.production else "Unknown Production"
         date = self.starts_at.strftime("%Y-%m-%d %H:%M") if self.starts_at else "TBA"
         return f"{production} @ {date}"
 

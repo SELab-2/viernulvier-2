@@ -95,10 +95,8 @@ class BaseModel(models.Model):
             return None
 
         base_code = self.base_language_code()
-        return (
-            manager.filter(language__code=base_code).first()
-            or manager.first()
-        )
+        qs = manager.all()
+        return qs.filter(language__code=base_code).first() or qs.first()
 
     def get_base_display_name(
         self,
@@ -109,4 +107,4 @@ class BaseModel(models.Model):
         tr = self.get_base_translation(related_name=related_name)
         if not tr:
             return fallback
-        return getattr(tr, name_field, fallback)
+        return getattr(tr, name_field, None) or fallback
