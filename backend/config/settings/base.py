@@ -10,8 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -21,8 +22,10 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
-PUBLIC_API_KEY = os.getenv("PUBLIC_API_KEY", "dev-key-for-local") # API key for our API (only read)
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "key for everything") # API key for our API to change also values
+# API key for our API (only read)
+PUBLIC_API_KEY = os.getenv("PUBLIC_API_KEY", "dev-key-for-local") 
+# API key for our API to change also values
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "key for everything") 
 DEBUG = False
 ALLOWED_HOSTS = []
 
@@ -107,7 +110,8 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': 
+            'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
@@ -149,7 +153,8 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
-    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.core.authentications.ApiKeyAuthentication"],
+    "DEFAULT_AUTHENTICATION_CLASSES": 
+        ["apps.core.authentications.ApiKeyAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.ApiKeyPermission"],
 }
 

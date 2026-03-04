@@ -1,14 +1,14 @@
 from datetime import timedelta
 
 import factory
-from factory.declarations import LazyAttribute, LazyFunction, SubFactory
 from django.utils import timezone
+from factory.declarations import LazyAttribute, LazyFunction, SubFactory
 from faker import Faker
 
 from apps.events.models import Event, EventPrice
-from tests.factories.production import ProductionFactory
-from tests.factories.pricing import PriceRankFactory
 from tests.factories.location import HallFactory
+from tests.factories.pricing import PriceRankFactory
+from tests.factories.production import ProductionFactory
 
 faker = Faker()
 
@@ -36,5 +36,7 @@ class EventPriceFactory(factory.django.DjangoModelFactory):
 
 	event = SubFactory(EventFactory)
 	price_rank = SubFactory(PriceRankFactory)
-	amount = LazyFunction(lambda: faker.pydecimal(left_digits=2, right_digits=2, positive=True))
+	amount = LazyFunction(
+     lambda: faker.pydecimal(left_digits=2, right_digits=2, positive=True)
+    )
 	available = LazyFunction(lambda: faker.random_int(min=1, max=500))

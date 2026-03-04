@@ -1,14 +1,14 @@
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-from apps.tags.models import Tag, TagTranslation
+
+from apps.tags.models import TagTranslation
+from tests.factories.language import LanguageFactory
 
 # Use the factories to create test data
 from tests.factories.tag import (
     TagFactory,
     TagTranslationFactory,
 )
-from tests.factories.language import LanguageFactory
 
 pytestmark = pytest.mark.django_db
 

@@ -1,9 +1,10 @@
-import factory
-from factory.helpers import post_generation
-from factory.declarations import LazyFunction, LazyAttribute
-from faker import Faker
-from django.utils import timezone
 from datetime import timedelta
+
+import factory
+from django.utils import timezone
+from factory.declarations import LazyAttribute, LazyFunction
+from factory.helpers import post_generation
+from faker import Faker
 
 from apps.import_log.models import ImportLog  # pas pad aan indien nodig
 

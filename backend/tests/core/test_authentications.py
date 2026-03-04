@@ -19,7 +19,6 @@ from rest_framework.exceptions import AuthenticationFailed
 
 from apps.core.authentications import ApiKeyAuthentication
 
-
 INTERNAL_KEY = "internal-secret-key"
 PUBLIC_KEY = "public-secret-key"
 
@@ -55,7 +54,7 @@ class TestApiKeyAuthenticationNoHeader(TestCase):
         """Must NOT raise — returning None is the correct DRF contract."""
         request = make_request()
         try:
-            result = self.auth.authenticate(request)
+            _ = self.auth.authenticate(request)
         except Exception as exc:
             self.fail(f"authenticate() raised unexpectedly: {exc}")
 
@@ -272,7 +271,9 @@ class TestApiKeyAuthenticationTimingSafe(TestCase):
     @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
     def test_uses_compare_digest_for_internal_key(self):
         request = make_request(auth_header=f"Api-Key {INTERNAL_KEY}")
-        with patch("apps.core.authentications.secrets.compare_digest", return_value=True) as mock_cd:
+        with patch(
+            "apps.core.authentications.secrets.compare_digest", return_value=True
+            ) as mock_cd:
             self.auth.authenticate(request)
             # compare_digest must have been called at least once
             self.assertTrue(mock_cd.called)
@@ -286,6 +287,9 @@ class TestApiKeyAuthenticationTimingSafe(TestCase):
     @override_settings(INTERNAL_API_KEY=INTERNAL_KEY, PUBLIC_API_KEY=PUBLIC_KEY)
     def test_uses_compare_digest_for_public_key(self):
         request = make_request(auth_header=f"Api-Key {PUBLIC_KEY}")
-        with patch("apps.core.authentications.secrets.compare_digest", side_effect=[False, True]) as mock_cd:
+        with patch(
+            "apps.core.authentications.secrets.compare_digest", 
+            side_effect=[False, True]
+        ) as mock_cd:
             self.auth.authenticate(request)
             self.assertTrue(mock_cd.called)

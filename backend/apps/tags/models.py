@@ -3,8 +3,10 @@ Definition of the models related to tags.
 """
 
 from django.db import models
+
 from apps.core.model import BaseModel
 from apps.languages.models import Language
+
 
 class Tag(BaseModel):
     """
@@ -93,7 +95,9 @@ class TagTranslation(BaseModel):
         verbose_name = "Tag Translation"
         verbose_name_plural = "Tag Translations"
         constraints = [
-            models.UniqueConstraint(fields=['tag', 'language'], name='unique_tag_language')
+            models.UniqueConstraint(
+                fields=['tag', 'language'], name='unique_tag_language'
+            )
         ]
     
     def __str__(self):

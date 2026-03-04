@@ -1,6 +1,6 @@
 import factory
-from factory.fuzzy import FuzzyChoice
 from faker import Faker
+
 from apps.languages.models import Language
 
 faker = Faker()

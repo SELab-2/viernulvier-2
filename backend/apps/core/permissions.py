@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class ApiKeyPermission(BasePermission):
@@ -9,4 +9,5 @@ class ApiKeyPermission(BasePermission):
     def has_permission(self, request, _):
         if request.auth == "internal": # Acces to everything
             return True
-        return request.auth == "public" and request.method in SAFE_METHODS # Only GET, ... no changes allowed
+        # Only GET, ... no changes allowed
+        return request.auth == "public" and request.method in SAFE_METHODS 

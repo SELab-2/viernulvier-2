@@ -22,7 +22,6 @@ from apps.core.views import ApiModelViewSet
 from apps.languages.models import Language
 from apps.languages.views import LanguageViewSet
 
-
 PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"
 

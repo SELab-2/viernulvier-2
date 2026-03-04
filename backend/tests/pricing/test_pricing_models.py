@@ -4,9 +4,9 @@ from django.core.exceptions import ValidationError
 from tests.factories.language import LanguageFactory
 from tests.factories.pricing import (
     PriceFactory,
-    PriceTranslationFactory,
     PriceRankFactory,
     PriceRankTranslationFactory,
+    PriceTranslationFactory,
 )
 
 pytestmark = pytest.mark.django_db(transaction=True)

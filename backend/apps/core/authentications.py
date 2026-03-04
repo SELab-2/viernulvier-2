@@ -1,4 +1,5 @@
 import secrets
+
 from django.conf import settings
 from rest_framework import authentication
 from rest_framework.exceptions import AuthenticationFailed

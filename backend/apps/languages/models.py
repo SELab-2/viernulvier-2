@@ -1,5 +1,7 @@
 from django.db import models
+
 from apps.core.model import BaseModel
+
 
 # Create your models here.
 class Language(BaseModel):
@@ -19,7 +21,8 @@ class Language(BaseModel):
     
     is_active = models.BooleanField(
         default=False,
-        db_comment="Wether the language should be shown in the frontend or not. Useful for when a language is still being implemented."
+        db_comment="Wether the language should be shown in the frontend or not. \
+                    Useful for when a language is still being implemented."
     )
 
     class Meta(BaseModel.Meta):

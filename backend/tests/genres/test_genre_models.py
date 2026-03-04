@@ -1,12 +1,13 @@
 import pytest
 from django.core.exceptions import ValidationError
+
 from apps.genres.models import Genre, GenreTranslation
 
 # Use the factories to create test data
 from tests.factories.genre import (
     GenreFactory,
-    GenreUseAsFactory,
     GenreTranslationFactory,
+    GenreUseAsFactory,
 )
 from tests.factories.language import LanguageFactory
 
@@ -50,7 +51,8 @@ class TestGenre:
 
     def test_delete_cascades_to_translations(self):
         genre = GenreFactory()
-        GenreTranslationFactory.create_batch(2, genre=genre) # Create 2 translations for the genre
+        # Create 2 translations for the genre
+        GenreTranslationFactory.create_batch(2, genre=genre) 
 
         genre.delete() # Delete the genre, which should cascade to the translations
 

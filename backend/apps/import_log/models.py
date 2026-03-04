@@ -1,11 +1,14 @@
 from django.db import models
+from django.db.models import F, Q
+
 from apps.core.model import BaseModel
-from django.db.models import Q, F
+
 
 # Create your models here.
 class ImportLog(BaseModel):
     """
-    Model for logging import operations. This is useful for debugging if something goes wrong.
+    Model for logging import operations. 
+    This is useful for debugging if something goes wrong.
     """
     
     class Status(models.TextChoices):
@@ -65,12 +68,13 @@ class ImportLog(BaseModel):
         verbose_name = "Import Log"
         verbose_name_plural = "Import Logs"
         ordering = ["-started_at"]
+        # If both timestamps are set, finished_at must be after started_at
         constraints = [
             models.CheckConstraint(
                 condition=(
                     Q(started_at__isnull=True) |
                     Q(finished_at__isnull=True) |
-                    Q(finished_at__gt=F("started_at")) # If both timestamps are set, finished_at must be after started_at
+                    Q(finished_at__gt=F("started_at")) 
                 ),
                 name="importlog_finished_after_started",
             )

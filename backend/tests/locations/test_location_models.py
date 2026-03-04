@@ -1,10 +1,22 @@
 import pytest
 from django.core.exceptions import ValidationError
-from apps.languages.models import Language
-from apps.locations.models import Location, LocationTranslation, Space, SpaceTranslation, Hall, HallTranslation
 
+from apps.locations.models import (
+    Hall,
+    HallTranslation,
+    LocationTranslation,
+    Space,
+    SpaceTranslation,
+)
 from tests.factories.language import LanguageFactory
-from tests.factories.location import LocationFactory, LocationTranslationFactory, SpaceFactory, SpaceTranslationFactory, HallFactory, HallTranslationFactory
+from tests.factories.location import (
+    HallFactory,
+    HallTranslationFactory,
+    LocationFactory,
+    LocationTranslationFactory,
+    SpaceFactory,
+    SpaceTranslationFactory,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -15,7 +27,9 @@ pytestmark = pytest.mark.django_db
 class TestLocation:
 
     def test_requires_mandatory_fields(self):
-        loc = LocationFactory.build(street="", number="", postal_code="", city="", country="")
+        loc = LocationFactory.build(
+            street="", number="", postal_code="", city="", country=""
+        )
         with pytest.raises(ValidationError):
             loc.full_clean()
 
@@ -87,7 +101,7 @@ class TestSpaceTranslation:
 
     def test_str(self):
         trans = SpaceTranslationFactory(name="Main Hall", language__code="en")
-        assert str(trans) == f"Space - en - Main Hall"
+        assert str(trans) == "Space - en - Main Hall"
 
     def test_language_reverse_relation(self):
         lang = LanguageFactory()

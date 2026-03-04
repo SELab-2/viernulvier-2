@@ -1,6 +1,6 @@
-import pytest
 from datetime import timedelta
 
+import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
@@ -45,7 +45,9 @@ class TestEventModel:
     def test_event_clean_raises_when_ends_before_starts(self):
         """Model clean should raise when end time is before start time."""
         starts = timezone.now()
-        event = EventFactory.build(starts_at=starts, ends_at=starts - timedelta(minutes=1))
+        event = EventFactory.build(
+            starts_at=starts, ends_at=starts - timedelta(minutes=1)
+        )
 
         with pytest.raises(ValidationError):
             event.clean()
@@ -137,8 +139,12 @@ class TestEventPriceModel:
     def test_different_ranks_allowed_for_same_event(self):
         """Allow multiple ranks for a single event."""
         event = EventFactory.create()
-        first = EventPriceFactory.create(event=event, price_rank=PriceRankFactory.create())
-        second = EventPriceFactory.create(event=event, price_rank=PriceRankFactory.create())
+        first = EventPriceFactory.create(
+            event=event, price_rank=PriceRankFactory.create()
+        )
+        second = EventPriceFactory.create(
+            event=event, price_rank=PriceRankFactory.create()
+        )
 
         assert first.pk != second.pk
 

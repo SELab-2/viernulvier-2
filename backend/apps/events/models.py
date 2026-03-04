@@ -1,10 +1,12 @@
+from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q, F
+from django.db.models import F, Q
+
 from apps.core.model import BaseModel
-from apps.productions.models import Production
 from apps.locations.models import Hall
 from apps.pricing.models import PriceRank
-from django.core.exceptions import ValidationError
+from apps.productions.models import Production
+
 
 class Event(BaseModel):
     production = models.ForeignKey(

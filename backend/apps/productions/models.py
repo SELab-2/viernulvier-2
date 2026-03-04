@@ -1,9 +1,11 @@
 from django.db import models
+
 from apps.core.model import BaseModel
-from apps.languages.models import Language
-from apps.tags.models import Tag
 from apps.genres.models import Genre
+from apps.languages.models import Language
 from apps.media_library.models import MediaGallery
+from apps.tags.models import Tag
+
 
 class UitDatabaseTheme(BaseModel):
     """Model representing a theme in the UIT database."""
@@ -181,12 +183,14 @@ class ProductionTranslation(BaseModel):
     )
 
     video_1 = models.URLField(
-        db_comment="The URL of the first video of the production in the given language.",
+        db_comment=
+            "The URL of the first video of the production in the given language.",
         blank=True
     )
 
     video_2 = models.URLField(
-        db_comment="The URL of the second video of the production in the given language.",
+        db_comment=
+            "The URL of the second video of the production in the given language.",
         blank=True
     )
 
@@ -204,12 +208,15 @@ class ProductionTranslation(BaseModel):
     class Meta(BaseModel.Meta):
         db_table = "production_translation"
         constraints = [
-            models.UniqueConstraint(fields=['production', 'language'], name='unique_production_language')
+            models.UniqueConstraint(
+                fields=['production', 'language'], name='unique_production_language'
+            )
         ]
         verbose_name = "Production Translation"
         verbose_name_plural = "Production Translations"
 
-    # TODO Add in save method html sanitization for the text fields to prevent XSS attacks, or use a library like bleach to sanitize the HTML content.
+    # TODO Add in save method html sanitization for the text fields to prevent XSS 
+    # attacks, or use a library like bleach to sanitize the HTML content.
 
     def __str__(self):
         return f"Translation of Production {self.production.id} in {self.language.code}"
@@ -229,7 +236,9 @@ class ProductionTag(BaseModel):
     class Meta(BaseModel.Meta):
         db_table = "production_tag" 
         constraints = [
-            models.UniqueConstraint(fields=['production', 'tag'], name='unique_production_tag')
+            models.UniqueConstraint(
+                fields=['production', 'tag'], name='unique_production_tag'
+            )
         ]
         verbose_name = "Production Tag"
         verbose_name_plural = "Production Tags"
@@ -252,14 +261,17 @@ class ProductionGenre(BaseModel):
     )
 
     position = models.PositiveIntegerField(
-        db_comment="The position of the genre in the list of genres for the production.",
+        db_comment=
+            "The position of the genre in the list of genres for the production.",
         # default=0, # TODO in viewset ordering definieren
     )
 
     class Meta(BaseModel.Meta):
         db_table = "production_genre"
         constraints = [
-            models.UniqueConstraint(fields=['production', 'genre'], name='unique_production_genre')
+            models.UniqueConstraint(
+                fields=['production', 'genre'], name='unique_production_genre'
+            )
         ]
         verbose_name = "Production Genre"
         verbose_name_plural = "Production Genres"

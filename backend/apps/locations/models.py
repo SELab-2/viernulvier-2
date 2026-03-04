@@ -1,4 +1,5 @@
 from django.db import models
+
 from apps.core.model import BaseModel
 from apps.languages.models import Language
 
@@ -85,7 +86,9 @@ class LocationTranslation(BaseModel):
         verbose_name = "Location Translation"
         verbose_name_plural = "Location Translations"
         constraints = [
-            models.UniqueConstraint(fields=['location', 'language'], name='unique_location_language')
+            models.UniqueConstraint(
+                fields=['location', 'language'], name='unique_location_language'
+            )
         ]
 
     def __str__(self):
@@ -138,7 +141,9 @@ class SpaceTranslation(BaseModel):
         verbose_name = "Space Translation"
         verbose_name_plural = "Space Translations"
         constraints = [
-            models.UniqueConstraint(fields=['space', 'language'], name='unique_space_language')
+            models.UniqueConstraint(
+                fields=['space', 'language'], name='unique_space_language'
+            )
         ]
 
     def __str__(self):
@@ -207,7 +212,9 @@ class HallTranslation(BaseModel):
         verbose_name = "Hall Translation"
         verbose_name_plural = "Hall Translations"
         constraints = [
-            models.UniqueConstraint(fields=['hall', 'language'], name='unique_hall_language')
+            models.UniqueConstraint(
+                fields=['hall', 'language'], name='unique_hall_language'
+            )
         ]
 
     def __str__(self):

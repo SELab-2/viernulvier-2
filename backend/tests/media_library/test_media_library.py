@@ -1,20 +1,17 @@
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 
 from apps.media_library.models import (
-    MediaGallery,
     MediaItem,
-    MediaItemTranslation,
     MediaItemCrop,
+    MediaItemTranslation,
 )
-
 from tests.factories.language import LanguageFactory
 from tests.factories.media_library import (
     MediaGalleryFactory,
+    MediaItemCropFactory,
     MediaItemFactory,
     MediaItemTranslationFactory,
-    MediaItemCropFactory,
 )
 
 pytestmark = pytest.mark.django_db
@@ -85,11 +82,15 @@ class TestMediaItem:
         item.full_clean()  # should not raise
 
     def test_str_with_filename(self):
-        item = MediaItemFactory(type=MediaItem.MediaItemType.IMAGE, original_filename="banner.jpg")
+        item = MediaItemFactory(
+            type=MediaItem.MediaItemType.IMAGE, original_filename="banner.jpg"
+        )
         assert str(item) == "image - banner.jpg"
 
     def test_str_without_filename(self):
-        item = MediaItemFactory(type=MediaItem.MediaItemType.VIDEO, original_filename="")
+        item = MediaItemFactory(
+            type=MediaItem.MediaItemType.VIDEO, original_filename=""
+        )
         assert str(item) == "video - Unnamed"
 
     def test_delete_cascades_to_translations(self):

@@ -1,4 +1,4 @@
-from .base import *
+from .base import INSTALLED_APPS, MIDDLEWARE, REST_FRAMEWORK
 
 DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]

@@ -1,6 +1,7 @@
+from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q, F
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db.models import F, Q
+
 from apps.core.model import BaseModel
 from apps.languages.models import Language
 
@@ -39,7 +40,8 @@ class Price(BaseModel):
     step = models.IntegerField(
         null=True,
         blank=True,
-        validators=[MinValueValidator(1)], # TODO: determine whether minimal/maximal validator is actually needed
+        # TODO: determine whether minimal/maximal validator is actually needed
+        validators=[MinValueValidator(1)], 
         db_comment="Step size for variable pricing (if applicable).",
     )
 
@@ -65,8 +67,9 @@ class Price(BaseModel):
                 name="price_min_max_both_null_or_both_set",
             ),
             models.CheckConstraint(
-                condition=Q(minimum__isnull=True, maximum__isnull=True) | Q(minimum__lte=F("maximum")),
-                name="price_min_lte_max",
+                condition = Q(minimum__isnull=True, maximum__isnull=True) | 
+                    Q(minimum__lte=F("maximum")),
+                name = "price_min_lte_max",
             ),
         ]
 
@@ -102,7 +105,9 @@ class PriceTranslation(BaseModel):
         verbose_name = "Price Translation"
         verbose_name_plural = "Price Translations"
         constraints = [
-            models.UniqueConstraint(fields=['price', 'language'], name='unique_price_language')
+            models.UniqueConstraint(
+                fields=['price', 'language'], name='unique_price_language'
+            )
         ]
         indexes = [
             models.Index(fields=["price", "language"], name="idx_price_lang"),
@@ -129,7 +134,9 @@ class PriceRank(BaseModel):
         verbose_name_plural = "Price Ranks"
         ordering = ["position", "id"]
         constraints = [
-            models.UniqueConstraint(fields=["position"], name="uniq_price_rank_position"),
+            models.UniqueConstraint(
+                fields=["position"], name="uniq_price_rank_position"
+            ),
         ]
     
     def __str__(self):
@@ -148,7 +155,8 @@ class PriceRankTranslation(BaseModel):
         Language,
         on_delete=models.CASCADE,
         related_name="pricerank_translations",
-        db_comment="The language that corresponds to the translation of the price rank.",
+        db_comment=
+            "The language that corresponds to the translation of the price rank.",
     ) 
 
     description = models.CharField(
@@ -163,7 +171,9 @@ class PriceRankTranslation(BaseModel):
         verbose_name = "Price Rank Translation"
         verbose_name_plural = "Price Rank Translations"
         constraints = [
-            models.UniqueConstraint(fields=['price_rank', 'language'], name='unique_price_rank_language')
+            models.UniqueConstraint(
+                fields=['price_rank', 'language'], name='unique_price_rank_language'
+            )
         ]
         indexes = [
             models.Index(fields=["price_rank", "language"], name="idx_price_rank_lang"),

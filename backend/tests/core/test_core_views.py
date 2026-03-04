@@ -33,10 +33,9 @@ from unittest.mock import MagicMock
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
-from apps.core.views import ApiModelViewSet
 from apps.core.authentications import ApiKeyAuthentication
 from apps.core.permissions import ApiKeyPermission
-
+from apps.core.views import ApiModelViewSet
 
 INT_KEY = "int-view-test-key"
 PUB_KEY = "pub-view-test-key"
@@ -180,19 +179,27 @@ class TestApiModelViewSetCreate(TestCase):
         return {"code": "de", "name": "German", "is_active": True}
 
     def test_create_internal_key_returns_201(self):
-        response = self.client.post("/api/languages/", self._payload(), format="json", **int_headers())
+        response = self.client.post(
+            "/api/languages/", self._payload(), format="json", **int_headers()
+        )
         self.assertEqual(response.status_code, 201)
 
     def test_create_public_key_returns_403(self):
-        response = self.client.post("/api/languages/", self._payload(), format="json", **pub_headers())
+        response = self.client.post(
+            "/api/languages/", self._payload(), format="json", **pub_headers()
+        )
         self.assertEqual(response.status_code, 403)
 
     def test_create_wrong_key_returns_403(self):
-        response = self.client.post("/api/languages/", self._payload(), format="json", **wrong_headers())
+        response = self.client.post(
+            "/api/languages/", self._payload(), format="json", **wrong_headers()
+        )
         self.assertEqual(response.status_code, 403)
 
     def test_create_no_auth_returns_403(self):
-        response = self.client.post("/api/languages/", self._payload(), format="json")
+        response = self.client.post(
+            "/api/languages/", self._payload(), format="json"
+        )
         self.assertEqual(response.status_code, 403)
 
 
@@ -213,19 +220,27 @@ class TestApiModelViewSetUpdate(TestCase):
         return {"code": "nl", "name": "Nederlands", "is_active": False}
 
     def test_put_internal_key_returns_200(self):
-        response = self.client.put("/api/languages/nl/", self._payload(), format="json", **int_headers())
+        response = self.client.put(
+            "/api/languages/nl/", self._payload(), format="json", **int_headers()
+        )
         self.assertEqual(response.status_code, 200)
 
     def test_put_public_key_returns_403(self):
-        response = self.client.put("/api/languages/nl/", self._payload(), format="json", **pub_headers())
+        response = self.client.put(
+            "/api/languages/nl/", self._payload(), format="json", **pub_headers()
+        )
         self.assertEqual(response.status_code, 403)
 
     def test_put_wrong_key_returns_403(self):
-        response = self.client.put("/api/languages/nl/", self._payload(), format="json", **wrong_headers())
+        response = self.client.put(
+            "/api/languages/nl/", self._payload(), format="json", **wrong_headers()
+        )
         self.assertEqual(response.status_code, 403)
 
     def test_put_no_auth_returns_403(self):
-        response = self.client.put("/api/languages/nl/", self._payload(), format="json")
+        response = self.client.put(
+            "/api/languages/nl/", self._payload(), format="json"
+        )
         self.assertEqual(response.status_code, 403)
 
     def test_put_nonexistent_returns_404(self):
@@ -252,19 +267,27 @@ class TestApiModelViewSetPartialUpdate(TestCase):
         Language.objects.create(code="nl", name="Dutch", is_active=True)
 
     def test_patch_internal_key_returns_200(self):
-        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json", **int_headers())
+        response = self.client.patch(
+            "/api/languages/nl/", {"is_active": False}, format="json", **int_headers()
+        )
         self.assertEqual(response.status_code, 200)
 
     def test_patch_public_key_returns_403(self):
-        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json", **pub_headers())
+        response = self.client.patch(
+            "/api/languages/nl/", {"is_active": False}, format="json", **pub_headers()
+        )
         self.assertEqual(response.status_code, 403)
 
     def test_patch_wrong_key_returns_403(self):
-        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json", **wrong_headers())
+        response = self.client.patch(
+            "/api/languages/nl/", {"is_active": False}, format="json", **wrong_headers()
+        )
         self.assertEqual(response.status_code, 403)
 
     def test_patch_no_auth_returns_403(self):
-        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json")
+        response = self.client.patch(
+            "/api/languages/nl/", {"is_active": False}, format="json"
+        )
         self.assertEqual(response.status_code, 403)
 
 

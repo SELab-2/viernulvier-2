@@ -3,8 +3,10 @@ Definitions of the models related to genres.
 """
 
 from django.db import models
+
 from apps.core.model import BaseModel
 from apps.languages.models import Language
+
 
 class GenreUseAs(BaseModel):
     """
@@ -31,7 +33,8 @@ class Genre(BaseModel):
         max_length=50,
         null=False,
         blank=False,
-        db_comment="The type of the genre ex. 'Theater', 'Festival', 'Boek voorstelling', etc."
+        db_comment=
+            "The type of the genre ex. 'Theater', 'Festival', 'Boek voorstelling', etc."
     )
 
     use_as = models.ForeignKey(
@@ -48,7 +51,9 @@ class Genre(BaseModel):
         verbose_name = "Genre"
         verbose_name_plural = "Genres"
 
-    def __str__(self): # TODO maybe this can be better, but for now it shows the type and the translations of the genre
+    # TODO maybe this can be better, but for now it shows the type
+    # and the translations of the genre
+    def __str__(self): 
         # Get the English name for the genre
         english_name = GenreTranslation.objects.filter(
             genre=self,
