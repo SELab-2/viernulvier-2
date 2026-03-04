@@ -12,10 +12,11 @@ Covers:
 - Keyword / scheme matching is case-insensitive
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.test import APIRequestFactory
 
 from apps.core.authentications import ApiKeyAuthentication
 
@@ -29,11 +30,10 @@ PUBLIC_KEY = "public-secret-key"
 # ---------------------------------------------------------------------------
 
 def make_request(auth_header=None):
-    request = MagicMock()
-    request.headers = {}
-    if auth_header is not None:
-        request.headers["Authorization"] = auth_header
-    return request
+    factory = APIRequestFactory()
+    if auth_header is None:
+        return factory.get("/")
+    return factory.get("/", HTTP_AUTHORIZATION=auth_header)
 
 
 # ---------------------------------------------------------------------------
