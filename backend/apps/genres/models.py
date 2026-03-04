@@ -35,7 +35,7 @@ class Genre(BaseModel):
         max_length=50,
         null=False,
         blank=False,
-        db_comment="The type of the genre ex. 'Theater', 'Festival', 'Boek voorstelling', etc.",
+        db_comment="The type of the genre ex. 'Theater', 'Festival', etc.",
     )
 
     use_as = models.ForeignKey(
