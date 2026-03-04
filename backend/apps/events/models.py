@@ -123,6 +123,11 @@ class Event(BaseModel):
 # EventPrice
 # ===========================================================================
 
+    def clean(self):
+        super().clean()
+        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
+            raise ValidationError("Event end time must be after start time.")
+
 class EventPrice(BaseModel):
     """
     A price tier assigned to a specific event.
