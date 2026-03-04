@@ -139,7 +139,7 @@ class TestProductionViewSetList(TestCase):
             "id", "attendance_mode", "performer_type",
             "uit_database_theme", "uit_database_type",
             "title", "description", "teaser", "artist_name", "tagline",
-            "tags", "genres"
+            "tags", "genres", "display_title", "display_artist_name",
         }
         self.assertEqual(set(item.keys()), expected_fields)
 

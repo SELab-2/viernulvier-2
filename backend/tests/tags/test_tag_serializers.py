@@ -60,8 +60,8 @@ class TestTagSerializerFields(TestCase):
     def test_no_extra_fields_are_exposed(self):
         serializer = TagSerializer(self.tag)
         expected = {"id", "url", "source", "source_type", "type",
-                    "is_external", "is_enabled", "name",
-                    "short_description", "url_title"}
+            "is_external", "is_enabled", "name", "display_name", "display_short_description", "display_url_title",
+            "short_description", "url_title"}
         self.assertEqual(set(serializer.data.keys()), expected)
 
 

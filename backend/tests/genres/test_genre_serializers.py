@@ -83,7 +83,7 @@ class TestGenreSerializerFields(TestCase):
 
     def test_expected_fields_are_present(self):
         data = GenreSerializer(self.genre).data
-        self.assertEqual(set(data.keys()), {"id", "type", "use_as", "name"})
+        self.assertEqual(set(data.keys()), {"id", "type", "use_as", "name", "display_name"})
 
 
 class TestGenreSerializerSerialization(TestCase):

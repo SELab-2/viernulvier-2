@@ -92,6 +92,7 @@ class TestPriceSerializerFields(TestCase):
                 "sort_order",
                 "cineville_box",
                 "description",
+                "display_description"
             },
         )
 

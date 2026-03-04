@@ -154,7 +154,4 @@ class TagTranslation(BaseModel):
         ]
 
     def __str__(self) -> str:
-        name = self.get_base_display_name(related_name="translations", fallback=None)
-        if name:
-            return f"{name} ({self.type})" if self.type else name
-        return f"Tag ({self.type})" if self.type else f"Tag {self.id}"
+        return f"{self.language.code} - {self.name}"

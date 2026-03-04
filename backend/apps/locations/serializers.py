@@ -159,7 +159,7 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             "seat_selection",
             "open_seating",
             "name",
-            "display_remark",
+            "display_name",
             "remark",
         ]
         read_only_fields = ["id", "name", "display_remark", "remark"]

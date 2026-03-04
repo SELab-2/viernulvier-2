@@ -44,6 +44,7 @@ class TestLocationSerializerFields(TestCase):
 				"phone_2",
 				"is_own_location",
 				"name",
+				"display_name"
 			},
 		)
 
@@ -76,7 +77,7 @@ class TestSpaceSerializerFields(TestCase):
 
 	def test_expected_fields_present(self):
 		data = SpaceSerializer(self.space).data
-		self.assertEqual(set(data.keys()), {"id", "location", "name"})
+		self.assertEqual(set(data.keys()), {"id", "location", "name", "display_name"})
 
 
 class TestSpaceSerializerTranslations(TestCase):
@@ -102,7 +103,7 @@ class TestHallSerializerFields(TestCase):
 		data = HallSerializer(self.hall).data
 		self.assertEqual(
 			set(data.keys()),
-			{"id", "space", "seat_selection", "open_seating", "name", "remark"},
+			{"id", "space", "seat_selection", "open_seating", "name", "display_name", "remark"},
 		)
 
 

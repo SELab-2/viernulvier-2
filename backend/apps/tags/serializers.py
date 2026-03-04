@@ -95,7 +95,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "short_description",
             "url_title",
         ]
-        read_only_fields = ["id", "name", "short_description", "url_title"]
+        read_only_fields = ["id", "name", "short_description", "display_name", "display_short_description", "display_url_title", "url_title"]
         extra_kwargs = {
             "url": {
                 "help_text": "Public URL of the tag in the originating system. Empty string when not applicable.",
