@@ -2,6 +2,11 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
     env_file:
@@ -13,7 +18,8 @@ services:
     build: ../backend
     restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     env_file:
       - .env.prod
     volumes:
@@ -29,6 +35,8 @@ services:
   frontend:
     build: ../frontend
     restart: "no"
+    networks:
+      - viernulvier
     volumes:
       - frontend_build:/usr/share/nginx/html
 
@@ -48,8 +56,10 @@ services:
     environment:
       - DOMAIN=${DOMAIN}
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_completed_successfully
     networks:
       - viernulvier
 
