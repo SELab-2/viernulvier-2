@@ -21,23 +21,24 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from rest_framework.exceptions import AuthenticationFailed
-from apps.core.authentications import ApiKeyAuthentication
 
+from apps.core.authentications import ApiKeyAuthentication
 
 # ===========================================================================
 # Shared test constants
 # ===========================================================================
 
 INTERNAL_KEY = "super-secret-internal-key-abc123"
-PUBLIC_KEY   = "public-readonly-key-xyz789"
+PUBLIC_KEY = "public-readonly-key-xyz789"
 
 VALID_INTERNAL_HEADER = f"Api-Key {INTERNAL_KEY}".encode()
-VALID_PUBLIC_HEADER   = f"Api-Key {PUBLIC_KEY}".encode()
+VALID_PUBLIC_HEADER = f"Api-Key {PUBLIC_KEY}".encode()
 
 
 # ===========================================================================
 # Helper utilities
 # ===========================================================================
+
 
 def _patch_get_auth(value: bytes):
     """
@@ -55,15 +56,19 @@ def _patch_settings(internal: str | None = None, public: str | None = None):
     Patch Django settings with specific API key values.
     Pass None to simulate a key not being configured.
     """
-    return patch("apps.core.authentications.settings", **{
-        "INTERNAL_API_KEY": internal,
-        "PUBLIC_API_KEY":   public,
-    })
+    return patch(
+        "apps.core.authentications.settings",
+        **{
+            "INTERNAL_API_KEY": internal,
+            "PUBLIC_API_KEY": public,
+        },
+    )
 
 
 # ===========================================================================
 # Fixture
 # ===========================================================================
+
 
 @pytest.fixture()
 def auth():
@@ -74,6 +79,7 @@ def auth():
 # ===========================================================================
 # 1. No Authorization header present
 # ===========================================================================
+
 
 class TestNoAuthorizationHeader:
     """
@@ -120,6 +126,7 @@ class TestNoAuthorizationHeader:
 # 2. Wrong authentication scheme
 # ===========================================================================
 
+
 class TestWrongScheme:
     """
     When the Authorization header uses a scheme other than 'Api-Key',
@@ -164,6 +171,7 @@ class TestWrongScheme:
 # ===========================================================================
 # 3. Malformed headers
 # ===========================================================================
+
 
 class TestMalformedHeaders:
     """
@@ -213,6 +221,7 @@ class TestMalformedHeaders:
 # ===========================================================================
 # 4. UnicodeDecodeError in scheme or key
 # ===========================================================================
+
 
 class TestUnicodeErrors:
     """
@@ -268,6 +277,7 @@ class TestUnicodeErrors:
 # ===========================================================================
 # 5. Successful authentication — INTERNAL key
 # ===========================================================================
+
 
 class TestInternalKeySuccess:
     """
@@ -328,6 +338,7 @@ class TestInternalKeySuccess:
 # 6. Successful authentication — PUBLIC key
 # ===========================================================================
 
+
 class TestPublicKeySuccess:
     """
     A request carrying the configured PUBLIC_API_KEY must receive
@@ -369,6 +380,7 @@ class TestPublicKeySuccess:
 # ===========================================================================
 # 7. Invalid / unknown keys
 # ===========================================================================
+
 
 class TestInvalidKey:
     """
@@ -449,6 +461,7 @@ class TestInvalidKey:
     def test_raises_authentication_failed_not_permission_denied(self, auth):
         """Must raise AuthenticationFailed (HTTP 401), not PermissionDenied (HTTP 403)."""
         from rest_framework.exceptions import PermissionDenied
+
         with _patch_get_auth(b"Api-Key badkey"):
             with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
                 with pytest.raises(AuthenticationFailed):
@@ -464,6 +477,7 @@ class TestInvalidKey:
 # ===========================================================================
 # 8. Settings without configured keys
 # ===========================================================================
+
 
 class TestMissingSettings:
     """
@@ -514,6 +528,7 @@ class TestMissingSettings:
 # 9. authenticate_header()
 # ===========================================================================
 
+
 class TestAuthenticateHeader:
     """
     authenticate_header() provides the WWW-Authenticate value that DRF
@@ -551,29 +566,31 @@ class TestAuthenticateHeader:
 # 10. Case-insensitivity of the scheme
 # ===========================================================================
 
+
 class TestSchemeCaseInsensitivity:
     """
     RFC 7235 requires that authentication schemes are compared
     case-insensitively. All capitalisation variants of 'api-key' must work.
     """
 
-    @pytest.mark.parametrize("scheme", [
-        "api-key",
-        "API-KEY",
-        "Api-Key",
-        "API-key",
-        "api-KEY",
-        "aPi-KeY",
-        "ApI-kEy",
-    ])
+    @pytest.mark.parametrize(
+        "scheme",
+        [
+            "api-key",
+            "API-KEY",
+            "Api-Key",
+            "API-key",
+            "api-KEY",
+            "aPi-KeY",
+            "ApI-kEy",
+        ],
+    )
     def test_all_case_variants_of_scheme_are_accepted(self, auth, scheme):
         header = f"{scheme} {INTERNAL_KEY}".encode()
         with _patch_get_auth(header):
             with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
                 result = auth.authenticate(MagicMock())
-        assert result == (None, "internal"), (
-            f"Scheme variant '{scheme}' should have been accepted."
-        )
+        assert result == (None, "internal"), f"Scheme variant '{scheme}' should have been accepted."
 
     def test_key_comparison_itself_is_case_sensitive(self, auth):
         """
@@ -589,6 +606,7 @@ class TestSchemeCaseInsensitivity:
 # ===========================================================================
 # 11. Timing-safe comparison
 # ===========================================================================
+
 
 class TestTimingSafeComparison:
     """
@@ -629,9 +647,7 @@ class TestTimingSafeComparison:
                     wraps=secrets.compare_digest,
                 ) as mock_cd:
                     auth.authenticate(MagicMock())
-        assert mock_cd.call_count == 2, (
-            "compare_digest should be called once per configured key."
-        )
+        assert mock_cd.call_count == 2, "compare_digest should be called once per configured key."
 
     def test_compare_digest_called_once_when_internal_matches(self, auth):
         """
@@ -660,14 +676,13 @@ class TestTimingSafeComparison:
                 ) as mock_cd:
                     auth.authenticate(MagicMock())
         args, _ = mock_cd.call_args
-        assert all(isinstance(a, bytes) for a in args), (
-            "Both arguments to compare_digest must be bytes."
-        )
+        assert all(isinstance(a, bytes) for a in args), "Both arguments to compare_digest must be bytes."
 
 
 # ===========================================================================
 # 12. Edge cases and robustness
 # ===========================================================================
+
 
 class TestEdgeCases:
     """Miscellaneous edge cases that verify general robustness."""
@@ -717,6 +732,7 @@ class TestEdgeCases:
     def test_inherits_from_drf_base_authentication(self):
         """ApiKeyAuthentication must be a subclass of DRF's BaseAuthentication."""
         from rest_framework.authentication import BaseAuthentication
+
         assert issubclass(ApiKeyAuthentication, BaseAuthentication)
 
     def test_multiple_sequential_calls_are_stateless(self, auth):
@@ -742,11 +758,11 @@ class TestEdgeCases:
     def test_authenticate_does_not_mutate_request(self, auth):
         """authenticate() must treat the request as read-only and not set attributes on it."""
         mock_request = MagicMock()
-        
+
         with _patch_get_auth(VALID_INTERNAL_HEADER):
             with _patch_settings(internal=INTERNAL_KEY):
                 auth.authenticate(mock_request)
-        
+
         setattr_calls = [c for c in mock_request.mock_calls if c[0] == "__setattr__"]
         assert len(setattr_calls) == 0, f"Request was mutated with: {setattr_calls}"
 

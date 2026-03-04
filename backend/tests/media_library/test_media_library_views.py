@@ -36,7 +36,6 @@ from apps.media_library.models import (
 from apps.media_library.serializers import MediaGallerySerializer, MediaItemSerializer
 from apps.media_library.views import MediaGalleryViewSet, MediaItemViewSet
 
-
 PUB_KEY = "pub-media-library-view-test-key"
 INT_KEY = "int-media-library-view-test-key"
 
@@ -44,6 +43,7 @@ INT_KEY = "int-media-library-view-test-key"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
@@ -75,17 +75,17 @@ def make_item(gallery, **kwargs):
 def make_language(code="nl", name="Dutch"):
     return Language.objects.get_or_create(code=code, defaults={"name": name, "is_active": True})[0]
 
+
 def make_translation(media_item, language, **kwargs):
     defaults = {"title": "Test", "description": "", "credits": "", "link": ""}
     defaults.update(kwargs)
-    return MediaItemTranslation.objects.create(
-        media_item=media_item, language=language, **defaults
-    )
+    return MediaItemTranslation.objects.create(media_item=media_item, language=language, **defaults)
 
 
 # ---------------------------------------------------------------------------
 # Class-level tests — MediaGalleryViewSet
 # ---------------------------------------------------------------------------
+
 
 class TestMediaGalleryViewSetClass(TestCase):
     """Verify MediaGalleryViewSet class-level configuration."""
@@ -101,32 +101,24 @@ class TestMediaGalleryViewSetClass(TestCase):
 
     def test_queryset_prefetches_media_items(self):
         lookups = MediaGalleryViewSet.queryset._prefetch_related_lookups
-        names = [
-            l.prefetch_through if hasattr(l, "prefetch_through") else l
-            for l in lookups
-        ]
+        names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("media_items", names)
 
     def test_queryset_prefetches_media_item_translations(self):
         lookups = MediaGalleryViewSet.queryset._prefetch_related_lookups
-        names = [
-            l.prefetch_through if hasattr(l, "prefetch_through") else l
-            for l in lookups
-        ]
+        names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("media_items__translations__language", names)
 
     def test_queryset_prefetches_media_item_crops(self):
         lookups = MediaGalleryViewSet.queryset._prefetch_related_lookups
-        names = [
-            l.prefetch_through if hasattr(l, "prefetch_through") else l
-            for l in lookups
-        ]
+        names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("media_items__crops", names)
 
 
 # ---------------------------------------------------------------------------
 # Class-level tests — MediaItemViewSet
 # ---------------------------------------------------------------------------
+
 
 class TestMediaItemViewSetClass(TestCase):
     """Verify MediaItemViewSet class-level configuration."""
@@ -146,18 +138,12 @@ class TestMediaItemViewSetClass(TestCase):
 
     def test_queryset_prefetches_translations(self):
         lookups = MediaItemViewSet.queryset._prefetch_related_lookups
-        names = [
-            l.prefetch_through if hasattr(l, "prefetch_through") else l
-            for l in lookups
-        ]
+        names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("translations__language", names)
 
     def test_queryset_prefetches_crops(self):
         lookups = MediaItemViewSet.queryset._prefetch_related_lookups
-        names = [
-            l.prefetch_through if hasattr(l, "prefetch_through") else l
-            for l in lookups
-        ]
+        names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("crops", names)
 
     def test_queryset_is_ordered_by_position(self):
@@ -169,9 +155,9 @@ class TestMediaItemViewSetClass(TestCase):
 # GET /api/media-galleries/ — list
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestMediaGalleryViewSetList(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         MediaGallery.objects.all().delete()
@@ -215,9 +201,9 @@ class TestMediaGalleryViewSetList(TestCase):
 # GET /api/media-galleries/<id>/ — detail
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestMediaGalleryViewSetDetail(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.gallery = make_gallery("Detail Gallery")
@@ -257,9 +243,9 @@ class TestMediaGalleryViewSetDetail(TestCase):
 # Write methods — /api/media-galleries/
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestMediaGalleryViewSetWrite(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.gallery = make_gallery()
@@ -349,9 +335,9 @@ class TestMediaGalleryViewSetWrite(TestCase):
 # GET /api/media-items/ — list
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestMediaItemViewSetList(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         MediaItem.objects.all().delete()
@@ -382,8 +368,20 @@ class TestMediaItemViewSetList(TestCase):
     def test_list_response_contains_expected_fields(self):
         response = self.client.get("/api/media-items/", **pub_headers())
         item = response.data["results"][0]
-        for field in ("id", "type", "format", "original_filename", "position",
-                      "width", "height", "title", "description", "credits", "link", "crops"):
+        for field in (
+            "id",
+            "type",
+            "format",
+            "original_filename",
+            "position",
+            "width",
+            "height",
+            "title",
+            "description",
+            "credits",
+            "link",
+            "crops",
+        ):
             with self.subTest(field=field):
                 self.assertIn(field, item)
 
@@ -397,9 +395,9 @@ class TestMediaItemViewSetList(TestCase):
 # GET /api/media-items/<id>/ — detail
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestMediaItemViewSetDetail(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.gallery = make_gallery()
@@ -441,9 +439,9 @@ class TestMediaItemViewSetDetail(TestCase):
 # Write methods — /api/media-items/
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestMediaItemViewSetWrite(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.gallery = make_gallery()

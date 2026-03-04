@@ -28,10 +28,10 @@ from rest_framework.exceptions import ValidationError
 from apps.import_log.models import ImportLog
 from apps.import_log.serializers import ImportLogSerializer
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_import_log(**kwargs):
     defaults = {
@@ -63,6 +63,7 @@ def make_finished_log(duration_seconds=0, **kwargs):
 # ---------------------------------------------------------------------------
 # Field presence
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogSerializerFields(TestCase):
     """Verify all expected fields are present and no extras are exposed."""
@@ -108,13 +109,12 @@ class TestImportLogSerializerFields(TestCase):
 # Read-only fields
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogSerializerReadOnly(TestCase):
     """All declared fields must be read-only — the serializer is for monitoring only."""
 
     def setUp(self):
-        self.meta_read_only = set(
-            getattr(ImportLogSerializer.Meta, "read_only_fields", [])
-        )
+        self.meta_read_only = set(getattr(ImportLogSerializer.Meta, "read_only_fields", []))
 
     def test_source_is_read_only(self):
         self.assertIn("source", self.meta_read_only)
@@ -148,6 +148,7 @@ class TestImportLogSerializerReadOnly(TestCase):
 # Scalar field values
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogSerializerScalarFields(TestCase):
     """Verify scalar fields are serialized with the correct values."""
 
@@ -172,6 +173,7 @@ class TestImportLogSerializerScalarFields(TestCase):
 # Status choices
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogSerializerStatusChoices(TestCase):
     """Each Status choice must serialize to its string value."""
 
@@ -182,14 +184,10 @@ class TestImportLogSerializerStatusChoices(TestCase):
         self.assertEqual(self._serialize_status(ImportLog.Status.PENDING), "PENDING")
 
     def test_status_in_progress(self):
-        self.assertEqual(
-            self._serialize_status(ImportLog.Status.IN_PROGRESS), "IN_PROGRESS"
-        )
+        self.assertEqual(self._serialize_status(ImportLog.Status.IN_PROGRESS), "IN_PROGRESS")
 
     def test_status_partial_success(self):
-        self.assertEqual(
-            self._serialize_status(ImportLog.Status.PARTIAL_SUCCESS), "PARTIAL_SUCCESS"
-        )
+        self.assertEqual(self._serialize_status(ImportLog.Status.PARTIAL_SUCCESS), "PARTIAL_SUCCESS")
 
     def test_status_success(self):
         self.assertEqual(self._serialize_status(ImportLog.Status.SUCCESS), "SUCCESS")
@@ -201,6 +199,7 @@ class TestImportLogSerializerStatusChoices(TestCase):
 # ---------------------------------------------------------------------------
 # Nullable fields
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogSerializerNullableFields(TestCase):
     """Nullable fields must serialize as None when not set."""
@@ -249,6 +248,7 @@ class TestImportLogSerializerPopulatedNullableFields(TestCase):
 # duration field
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogSerializerDurationNone(TestCase):
     """duration must be None whenever one or both timestamps are missing."""
 
@@ -279,7 +279,6 @@ class TestImportLogSerializerDurationFormat(TestCase):
         self.assertNotIn(".", duration)
 
     def test_duration_matches_hhmmss_pattern(self):
-        import re
         log = make_finished_log(duration_seconds=3661)
         duration = ImportLogSerializer(log).data["duration"]
         self.assertRegex(duration, r"^\d+:\d{2}:\d{2}$")
@@ -327,6 +326,7 @@ class TestImportLogSerializerDurationValues(TestCase):
 # create() and update() overrides
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogSerializerWriteProtection(TestCase):
     """create() and update() must raise ValidationError to protect log integrity."""
 
@@ -358,6 +358,7 @@ class TestImportLogSerializerWriteProtection(TestCase):
 # ---------------------------------------------------------------------------
 # Realistic states
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogSerializerRealisticStates(TestCase):
     """Verify the serializer handles common real-world import states correctly."""

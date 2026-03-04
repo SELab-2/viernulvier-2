@@ -28,12 +28,7 @@ class LocationViewSet(ApiModelViewSet):
     Translations are managed via the Location Translation endpoints.
     """
 
-    queryset = (
-        Location.objects
-        .prefetch_related("translations__language")
-        .order_by("id")
-        .all()
-    )
+    queryset = Location.objects.prefetch_related("translations__language").order_by("id").all()
     serializer_class = LocationSerializer
 
 
@@ -50,13 +45,7 @@ class SpaceViewSet(ApiModelViewSet):
     rendering translated fields and related lookups.
     """
 
-    queryset = (
-        Space.objects
-        .select_related("location")
-        .prefetch_related("translations__language")
-        .order_by("id")
-        .all()
-    )
+    queryset = Space.objects.select_related("location").prefetch_related("translations__language").order_by("id").all()
     serializer_class = SpaceSerializer
 
 
@@ -75,8 +64,7 @@ class HallViewSet(ApiModelViewSet):
     """
 
     queryset = (
-        Hall.objects
-        .select_related("space", "space__location")
+        Hall.objects.select_related("space", "space__location")
         .prefetch_related("translations__language")
         .order_by("id")
         .all()

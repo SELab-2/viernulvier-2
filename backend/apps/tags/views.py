@@ -9,7 +9,7 @@ They support localised fields (name, short_description, url_title).
 
 Translation Format
 ------------------
-All translated fields are returned as dictionaries mapping language codes 
+All translated fields are returned as dictionaries mapping language codes
 to their values (e.g., {"nl": "...", "en": "..."}).
 """
 

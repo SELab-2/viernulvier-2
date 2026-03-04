@@ -19,7 +19,6 @@ from apps.core.models import BaseModel
 from apps.languages.models import Language
 
 
-
 class Location(BaseModel):
     """
     A physical venue or address.

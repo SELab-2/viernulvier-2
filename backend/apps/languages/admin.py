@@ -6,9 +6,6 @@ from apps.core.admin import BaseAdmin
 
 from .models import Language
 
-from apps.core.admin import BaseAdmin
-from .models import Language
-
 
 @admin.register(Language)
 class LanguageAdmin(BaseAdmin):

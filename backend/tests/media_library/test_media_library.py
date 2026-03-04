@@ -82,15 +82,11 @@ class TestMediaItem:
         item.full_clean()  # should not raise
 
     def test_str_with_filename(self):
-        item = MediaItemFactory(
-            type=MediaItem.MediaItemType.IMAGE, original_filename="banner.jpg"
-        )
+        item = MediaItemFactory(type=MediaItem.MediaItemType.IMAGE, original_filename="banner.jpg")
         assert str(item) == "image - banner.jpg"
 
     def test_str_without_filename(self):
-        item = MediaItemFactory(
-            type=MediaItem.MediaItemType.VIDEO, original_filename=""
-        )
+        item = MediaItemFactory(type=MediaItem.MediaItemType.VIDEO, original_filename="")
         assert str(item) == "video - Unnamed"
 
     def test_delete_cascades_to_translations(self):

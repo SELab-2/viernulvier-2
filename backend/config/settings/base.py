@@ -11,10 +11,10 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import textwrap
 from pathlib import Path
 
 from dotenv import load_dotenv
-import textwrap
 
 # Load environment variables from .env file
 load_dotenv()
@@ -23,12 +23,8 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-PUBLIC_API_KEY = os.getenv(
-    "PUBLIC_API_KEY", "dev-key-for-local"
-)  # API key for our API (only read)
-INTERNAL_API_KEY = os.getenv(
-    "INTERNAL_API_KEY", "key for everything"
-)  # API key for our API to change also values
+PUBLIC_API_KEY = os.getenv("PUBLIC_API_KEY", "dev-key-for-local")  # API key for our API (only read)
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "key for everything")  # API key for our API to change also values
 DEBUG = False
 ALLOWED_HOSTS = []
 
@@ -165,9 +161,7 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "apps.core.authentications.ApiKeyAuthentication"
-    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.core.authentications.ApiKeyAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.ApiKeyPermission"],
     "DEFAULT_THROTTLE_CLASSES": ["apps.core.throttles.PublicKeyThrottle"],
     "DEFAULT_THROTTLE_RATES": {
@@ -188,15 +182,15 @@ SPECTACULAR_SETTINGS = {
         * **Internal API key**: Full rights (CRUD).
     """).strip(),
     "VERSION": "1.0.0",
-    "CONTACT": { # TODO change this
-        'name': 'Support Team',
-        'url': 'https://www.viernulvier.gent/',
+    "CONTACT": {  # TODO change this
+        "name": "Support Team",
+        "url": "https://www.viernulvier.gent/",
         "email": "info@viernulvier.gent",
     },
     "LICENSE": {
         "name": "MIT License",
     },
-    "SCHEMA_PATH_PREFIX": r'/api/',
+    "SCHEMA_PATH_PREFIX": r"/api/",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SWAGGER_UI_SETTINGS": {
@@ -205,11 +199,11 @@ SPECTACULAR_SETTINGS = {
         "filter": False,
         "showRequestDuration": True,
         "persistAuthorization": True,
-        "tagsSorter": "alpha", # Sort tags alfabetically
-        "operationsSorter": "method", # Sort endpoints on HTTP method
+        "tagsSorter": "alpha",  # Sort tags alfabetically
+        "operationsSorter": "method",  # Sort endpoints on HTTP method
         "tryItOutEnabled": True,
-        "docExpansion": "none", # Collapsed by default for a cleaner look (set to 'list' to expand tags and endpoints, or 'full' to expand everything)
-        "defaultModelsExpandDepth": 0, # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
+        "docExpansion": "none",  # Collapsed by default for a cleaner look
+        "defaultModelsExpandDepth": 0,  # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
     },
     "TAGS": [
         {"name": "Productions", "description": "Production management and translations."},

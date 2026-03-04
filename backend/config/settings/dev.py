@@ -1,12 +1,10 @@
-from .base import *
 import os
 
+from .base import *  # noqa: F403
+from .base import INSTALLED_APPS, MIDDLEWARE, REST_FRAMEWORK
+
 DEBUG = True
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv("ALLOWED_HOSTS", "").split(",")
-    if host.strip()
-]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "").split(",") if host.strip()]
 
 
 REST_FRAMEWORK = {
@@ -17,15 +15,14 @@ REST_FRAMEWORK = {
     ],
 }
 
-# If you want to enable throttling in development for testing purposes, you can override the throttle classes and rates here.
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
-    'DEFAULT_THROTTLE_CLASSES': [
-        'apps.core.throttles.PublicKeyMinuteThrottle',
-        'apps.core.throttles.PublicKeyHourThrottle',
-        'apps.core.throttles.InternalKeyThrottle',
+    "DEFAULT_THROTTLE_CLASSES": [
+        "apps.core.throttles.PublicKeyMinuteThrottle",
+        "apps.core.throttles.PublicKeyHourThrottle",
+        "apps.core.throttles.InternalKeyThrottle",
     ],
-    'DEFAULT_THROTTLE_RATES': {
+    "DEFAULT_THROTTLE_RATES": {
         "internal": None,
         "public_min": None,
         "public_hour": None,

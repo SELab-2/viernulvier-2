@@ -30,6 +30,7 @@ INT_KEY = "int-view-test-key"
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
 

@@ -37,9 +37,7 @@ class TestImportLog:
         started = timezone.now()
         finished = started + timedelta(minutes=10)
 
-        log = ImportLogFactory(
-            started_at=started, finished_at=finished, status=ImportLog.Status.SUCCESS
-        )
+        log = ImportLogFactory(started_at=started, finished_at=finished, status=ImportLog.Status.SUCCESS)
 
         assert log.finished_at > log.started_at
 

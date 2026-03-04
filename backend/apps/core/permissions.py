@@ -25,7 +25,7 @@ returned ``None``, causing DRF to issue ``HTTP 401 Unauthorized`` before
 this permission class is even called.
 """
 
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class ApiKeyPermission(BasePermission):

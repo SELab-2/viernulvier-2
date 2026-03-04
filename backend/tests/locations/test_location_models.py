@@ -27,9 +27,7 @@ pytestmark = pytest.mark.django_db
 
 class TestLocation:
     def test_requires_mandatory_fields(self):
-        loc = LocationFactory.build(
-            street="", number="", postal_code="", city="", country=""
-        )
+        loc = LocationFactory.build(street="", number="", postal_code="", city="", country="")
         with pytest.raises(ValidationError):
             loc.full_clean()
 
@@ -99,7 +97,7 @@ class TestSpace:
 class TestSpaceTranslation:
     def test_str(self):
         trans = SpaceTranslationFactory(name="Main Hall", language__code="en")
-        assert str(trans) == f"en - Main Hall"
+        assert str(trans) == "en - Main Hall"
 
     def test_language_reverse_relation(self):
         lang = LanguageFactory()

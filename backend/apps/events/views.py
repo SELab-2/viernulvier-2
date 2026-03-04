@@ -10,14 +10,12 @@ capacity and amount per price rank.
 """
 
 from django.db.models import Prefetch
-
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
-
-from apps.productions.models import ProductionTranslation
 from apps.locations.models import HallTranslation
 from apps.pricing.models import PriceRankTranslation
+from apps.productions.models import ProductionTranslation
 
 from .models import Event, EventPrice
 from .schemas import event_schema
@@ -58,8 +56,7 @@ class EventViewSet(ApiModelViewSet):
     serializer_class = EventSerializer
 
     queryset = (
-        Event.objects
-        .select_related(
+        Event.objects.select_related(
             "production",
             "hall",
             "hall__space",

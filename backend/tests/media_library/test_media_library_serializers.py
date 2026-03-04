@@ -33,15 +33,13 @@ from apps.media_library.serializers import (
     MediaItemSerializer,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_language(code="nl", name="Dutch"):
-    return Language.objects.get_or_create(
-        code=code, defaults={"name": name, "is_active": True}
-    )[0]
+    return Language.objects.get_or_create(code=code, defaults={"name": name, "is_active": True})[0]
 
 
 def make_gallery(name="Test Gallery"):
@@ -101,6 +99,7 @@ def serialize_gallery(gallery):
 # MediaItemCropSerializer
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemCropSerializerFields(TestCase):
     """Verify field presence and output of MediaItemCropSerializer."""
 
@@ -132,6 +131,7 @@ class TestMediaItemCropSerializerFields(TestCase):
 # MediaItemSerializer — field presence
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemSerializerFields(TestCase):
     """Verify all expected fields are present on MediaItemSerializer."""
 
@@ -162,8 +162,19 @@ class TestMediaItemSerializerFields(TestCase):
     def test_no_extra_fields_are_exposed(self):
         data = serialize_item(self.item)
         expected = {
-            "id", "gallery", "type", "format", "original_filename", "position",
-            "width", "height", "title", "description", "credits", "link", "crops",
+            "id",
+            "gallery",
+            "type",
+            "format",
+            "original_filename",
+            "position",
+            "width",
+            "height",
+            "title",
+            "description",
+            "credits",
+            "link",
+            "crops",
         }
         self.assertEqual(set(data.keys()), expected)
 
@@ -171,6 +182,7 @@ class TestMediaItemSerializerFields(TestCase):
 # ---------------------------------------------------------------------------
 # MediaItemSerializer — scalar fields
 # ---------------------------------------------------------------------------
+
 
 class TestMediaItemSerializerScalarFields(TestCase):
     """Verify scalar fields are serialized correctly on MediaItemSerializer."""
@@ -223,6 +235,7 @@ class TestMediaItemSerializerScalarFields(TestCase):
 # MediaItemSerializer — crops
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemSerializerCrops(TestCase):
     """Verify nested crops are serialized correctly."""
 
@@ -262,6 +275,7 @@ class TestMediaItemSerializerCrops(TestCase):
 # ---------------------------------------------------------------------------
 # MediaItemSerializer — translated fields
 # ---------------------------------------------------------------------------
+
 
 class TestMediaItemSerializerTranslatedFields(TestCase):
     """Verify translated fields are returned as language-keyed dicts."""
@@ -345,6 +359,7 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
 # MediaItemSerializer — inheritance
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemSerializerInheritance(TestCase):
     """MediaItemSerializer must inherit from TranslatableSerializerMixin."""
 
@@ -355,6 +370,7 @@ class TestMediaItemSerializerInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # MediaGallerySerializer — field presence
 # ---------------------------------------------------------------------------
+
 
 class TestMediaGallerySerializerFields(TestCase):
     """Verify all expected fields are present on MediaGallerySerializer."""
@@ -381,6 +397,7 @@ class TestMediaGallerySerializerFields(TestCase):
 # MediaGallerySerializer — nested media_items
 # ---------------------------------------------------------------------------
 
+
 class TestMediaGallerySerializerMediaItems(TestCase):
     """Verify nested media_items are serialized correctly on MediaGallerySerializer."""
 
@@ -406,8 +423,19 @@ class TestMediaGallerySerializerMediaItems(TestCase):
         make_item(self.gallery)
         data = serialize_gallery(self.gallery)
         expected = {
-            "id", "gallery", "type", "format", "original_filename", "position",
-            "width", "height", "title", "description", "credits", "link", "crops",
+            "id",
+            "gallery",
+            "type",
+            "format",
+            "original_filename",
+            "position",
+            "width",
+            "height",
+            "title",
+            "description",
+            "credits",
+            "link",
+            "crops",
         }
         self.assertEqual(set(data["media_items"][0].keys()), expected)
 

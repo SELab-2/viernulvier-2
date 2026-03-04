@@ -18,7 +18,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.events.models import Event, EventPrice
-from apps.locations.models import Location, Space, Hall
+from apps.locations.models import Hall, Location, Space
 from apps.pricing.models import PriceRank
 from apps.productions.models import Production
 
@@ -28,6 +28,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_hall() -> Hall:
     """Create a minimal Hall with required Location/Space dependencies."""
@@ -49,6 +50,7 @@ def make_hall() -> Hall:
 # Event
 # ---------------------------------------------------------------------------
 
+
 def test_event_meta_ordering_by_starts_at():
     """Test case for test_event_meta_ordering_by_starts_at."""
     prod = Production.objects.create()
@@ -59,7 +61,7 @@ def test_event_meta_ordering_by_starts_at():
     e1 = Event.objects.create(production=prod, hall=hall, starts_at=now)
 
     events = list(Event.objects.all())
-    assert [e.id for e in events] == [e1.id, e2.id] 
+    assert [e.id for e in events] == [e1.id, e2.id]
 
 
 def test_event_constraint_name_present():
@@ -82,7 +84,7 @@ def test_event_clean_raises_when_ends_before_or_equal_starts():
         ticketing_url="",
     )
     with pytest.raises(ValidationError):
-        e.full_clean() 
+        e.full_clean()
 
 
 def test_event_allows_null_starts_or_ends():
@@ -104,6 +106,7 @@ def test_event_allows_null_starts_or_ends():
 # ---------------------------------------------------------------------------
 # EventPrice
 # ---------------------------------------------------------------------------
+
 
 def test_event_price_unique_per_event_and_price_rank():
     """Test case for test_event_price_unique_per_event_and_price_rank."""
@@ -162,7 +165,7 @@ def test_event_price_cascade_delete_event_deletes_prices():
     EventPrice.objects.create(event=event, price_rank=None, amount="8.00", available=3)
 
     event.delete()
-    assert EventPrice.objects.count() == 0 
+    assert EventPrice.objects.count() == 0
 
 
 def test_event_price_set_null_when_price_rank_deleted():

@@ -8,7 +8,7 @@ on routing and queryset configuration only.
 from apps.core.views import ApiModelViewSet
 
 from .models import Language
-from .schemas import language_schema, extend_schema
+from .schemas import extend_schema, language_schema
 from .serializers import LanguageSerializer
 
 _TAG = "Languages"  # Reusable tag for all language-related endpoints in the OpenAPI docs

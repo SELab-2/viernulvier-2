@@ -29,6 +29,7 @@ if settings.DEBUG:
 
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     import debug_toolbar
+
     urlpatterns = [
-        path('__debug__/', include(debug_toolbar.urls)), # Must be at the beginning, otherwise strange error
+        path("__debug__/", include(debug_toolbar.urls)),  # Must be at the beginning, otherwise strange error
     ] + urlpatterns

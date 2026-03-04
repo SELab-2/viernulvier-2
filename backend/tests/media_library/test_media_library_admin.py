@@ -18,7 +18,7 @@ Covers:
 
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
@@ -39,15 +39,13 @@ from apps.media_library.models import (
     MediaItemTranslation,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_superuser(username="admin"):
-    return User.objects.create_superuser(
-        username=username, password="password", email=f"{username}@example.com"
-    )
+    return User.objects.create_superuser(username=username, password="password", email=f"{username}@example.com")
 
 
 def make_gallery(name="Test Gallery"):
@@ -76,14 +74,13 @@ def make_language(code="nl", name="Dutch"):
 def make_translation(media_item, language, **kwargs):
     defaults = {"title": "Test", "description": "", "credits": "", "link": ""}
     defaults.update(kwargs)
-    return MediaItemTranslation.objects.create(
-        media_item=media_item, language=language, **defaults
-    )
+    return MediaItemTranslation.objects.create(media_item=media_item, language=language, **defaults)
 
 
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
+
 
 class TestAdminRegistration(TestCase):
     """Verify all admin classes are registered against their models."""
@@ -104,9 +101,7 @@ class TestAdminRegistration(TestCase):
         self.assertIn(MediaItemTranslation, admin.site._registry)
 
     def test_registered_admin_is_media_item_translation_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[MediaItemTranslation], MediaItemTranslationAdmin
-        )
+        self.assertIsInstance(admin.site._registry[MediaItemTranslation], MediaItemTranslationAdmin)
 
     def test_media_item_crop_is_registered(self):
         self.assertIn(MediaItemCrop, admin.site._registry)
@@ -118,6 +113,7 @@ class TestAdminRegistration(TestCase):
 # ---------------------------------------------------------------------------
 # Inheritance
 # ---------------------------------------------------------------------------
+
 
 class TestAdminInheritance(TestCase):
     """All admin classes must extend BaseAdmin (and therefore ModelAdmin)."""
@@ -143,6 +139,7 @@ class TestAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # MediaGalleryAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestMediaGalleryAdminConfiguration(TestCase):
     """Tests for MediaGalleryAdmin meta configuration."""
@@ -170,6 +167,7 @@ class TestMediaGalleryAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # MediaItemAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestMediaItemAdminConfiguration(TestCase):
     """Tests for MediaItemAdmin meta configuration."""
@@ -240,6 +238,7 @@ class TestMediaItemAdminConfiguration(TestCase):
 # MediaItemTranslationAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemTranslationAdminConfiguration(TestCase):
     """Tests for MediaItemTranslationAdmin meta configuration."""
 
@@ -288,6 +287,7 @@ class TestMediaItemTranslationAdminConfiguration(TestCase):
 # MediaItemCropAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemCropAdminConfiguration(TestCase):
     """Tests for MediaItemCropAdmin meta configuration."""
 
@@ -319,6 +319,7 @@ class TestMediaItemCropAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # Inline configuration
 # ---------------------------------------------------------------------------
+
 
 class TestMediaItemInline(TestCase):
     """Tests for MediaItemInline configuration."""
@@ -375,6 +376,7 @@ class TestMediaItemCropInline(TestCase):
 # get_queryset optimisation
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemAdminGetQueryset(TestCase):
     """Verify get_queryset uses select_related for FK optimisation."""
 
@@ -395,20 +397,21 @@ class TestMediaItemAdminGetQueryset(TestCase):
     def test_queryset_has_select_related_for_gallery(self):
         admin = self.model_admin
         request = self._make_request()
-        
+
         self.assertEqual(admin.list_select_related, ("gallery",))
 
         qs = admin.get_queryset(request)
-        
+
         if admin.list_select_related:
             qs = qs.select_related(*admin.list_select_related)
-        
+
         self.assertIn("gallery", qs.query.select_related)
 
 
 # ---------------------------------------------------------------------------
 # Functional changelist / changeform tests
 # ---------------------------------------------------------------------------
+
 
 class TestMediaGalleryAdminChangelist(TestCase):
     """Functional tests for MediaGalleryAdmin via HTTP."""
@@ -506,9 +509,7 @@ class TestMediaItemTranslationAdminChangelist(TestCase):
 
     def test_changelist_filter_by_language(self):
         url = reverse("admin:media_library_mediaitemtranslation_changelist")
-        self.assertEqual(
-            self.client.get(url, {"language__code": "nl"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"language__code": "nl"}).status_code, 200)
 
     def test_changelist_search(self):
         url = reverse("admin:media_library_mediaitemtranslation_changelist")

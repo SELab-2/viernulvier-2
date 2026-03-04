@@ -14,8 +14,6 @@ class LanguageFactory(factory.django.DjangoModelFactory):
 
     code = factory.Iterator(["nl", "en", "de", "fr"])  # Repeatable codes for testing
     name = factory.LazyAttribute(
-        lambda o: {"nl": "Dutch", "en": "English", "de": "German", "fr": "French"}.get(
-            o.code
-        )
+        lambda o: {"nl": "Dutch", "en": "English", "de": "German", "fr": "French"}.get(o.code)
     )  # So we get consistent names for the codes
     is_active = True

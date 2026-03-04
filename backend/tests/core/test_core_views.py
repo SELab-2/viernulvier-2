@@ -183,15 +183,11 @@ class TestApiModelViewSetCreate(TestCase):
         return {"code": "de", "name": "German", "is_active": True}
 
     def test_create_internal_key_returns_201(self):
-        response = self.client.post(
-            "/api/languages/", self._payload(), format="json", **int_headers()
-        )
+        response = self.client.post("/api/languages/", self._payload(), format="json", **int_headers())
         self.assertEqual(response.status_code, 201)
 
     def test_create_public_key_returns_403(self):
-        response = self.client.post(
-            "/api/languages/", self._payload(), format="json", **pub_headers()
-        )
+        response = self.client.post("/api/languages/", self._payload(), format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_create_wrong_key_returns_401(self):
@@ -221,15 +217,11 @@ class TestApiModelViewSetUpdate(TestCase):
         return {"code": "nl", "name": "Nederlands", "is_active": False}
 
     def test_put_internal_key_returns_200(self):
-        response = self.client.put(
-            "/api/languages/nl/", self._payload(), format="json", **int_headers()
-        )
+        response = self.client.put("/api/languages/nl/", self._payload(), format="json", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_put_public_key_returns_403(self):
-        response = self.client.put(
-            "/api/languages/nl/", self._payload(), format="json", **pub_headers()
-        )
+        response = self.client.put("/api/languages/nl/", self._payload(), format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_put_wrong_key_returns_401(self):
@@ -265,15 +257,11 @@ class TestApiModelViewSetPartialUpdate(TestCase):
         Language.objects.create(code="nl", name="Dutch", is_active=True)
 
     def test_patch_internal_key_returns_200(self):
-        response = self.client.patch(
-            "/api/languages/nl/", {"is_active": False}, format="json", **int_headers()
-        )
+        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_patch_public_key_returns_403(self):
-        response = self.client.patch(
-            "/api/languages/nl/", {"is_active": False}, format="json", **pub_headers()
-        )
+        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_patch_wrong_key_returns_401(self):

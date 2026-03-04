@@ -1,4 +1,5 @@
-from .base import *  # noqa: F403, F401
+from .base import *  # noqa: F403
+from .base import REST_FRAMEWORK
 
 # Test settings for the Django project. These settings are used when running tests.
 
@@ -13,8 +14,8 @@ DATABASES = {
 # Test settings: throttling is disabled to avoid interference with test cases
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
-    'DEFAULT_THROTTLE_CLASSES': [],  # No throttling during tests
-    'DEFAULT_THROTTLE_RATES': {
+    "DEFAULT_THROTTLE_CLASSES": [],  # No throttling during tests
+    "DEFAULT_THROTTLE_RATES": {
         "internal": None,
         "public_min": "1/minute",
         "public_hour": None,

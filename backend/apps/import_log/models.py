@@ -20,10 +20,10 @@ from django.db.models import F, Q
 
 from apps.core.models import BaseModel
 
-
 # ===========================================================================
 # ImportLog
 # ===========================================================================
+
 
 class ImportLog(BaseModel):
     """
@@ -133,11 +133,7 @@ class ImportLog(BaseModel):
         # If both timestamps are set, finished_at must be after started_at
         constraints = [
             models.CheckConstraint(
-                condition=(
-                    Q(started_at__isnull=True)
-                    | Q(finished_at__isnull=True)
-                    | Q(finished_at__gte=F("started_at"))
-                ),
+                condition=(Q(started_at__isnull=True) | Q(finished_at__isnull=True) | Q(finished_at__gte=F("started_at"))),
                 name="importlog_finished_after_or_equal_started",
             )
         ]
