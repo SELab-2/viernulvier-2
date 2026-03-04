@@ -12,8 +12,9 @@ Covers:
 - Field types
 """
 
-from django.test import TestCase
-
+import pytest
+from django.test import TestCase, override_settings
+from rest_framework.test import APIRequestFactory
 from apps.languages.models import Language
 from apps.tags.models import Tag, TagTranslation
 from apps.tags.serializers import TagSerializer
@@ -306,3 +307,50 @@ class TestTagSerializerDeserialization(TestCase):
         self.assertTrue(serializer.is_valid())
         updated = serializer.save()
         self.assertEqual(updated.source, "manual")
+
+
+def _display_ctx():
+    factory = APIRequestFactory()
+    return {"request": factory.get("/dummy")}
+
+
+class TestTagDisplayNameBaseLanguage:
+    """Verify whether display_name uses base language with a sensible fallback."""
+
+    @pytest.mark.django_db
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_uses_base_language_when_present(self):
+        en = Language.objects.create(code="en", name="English")
+        nl = Language.objects.create(code="nl", name="Dutch")
+
+        tag = Tag.objects.create(
+            url="",
+            source="system",
+            source_type="",
+            type="theme",
+            is_external=False,
+            is_enabled=True,
+        )
+        TagTranslation.objects.create(tag=tag, language=nl, name="Thema", short_description="", url_title="")
+        TagTranslation.objects.create(tag=tag, language=en, name="Theme", short_description="", url_title="")
+
+        data = TagSerializer(tag, context=_display_ctx()).data
+        assert data["display_name"] == "Theme"
+
+    @pytest.mark.django_db
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_falls_back_when_base_language_missing(self):
+        nl = Language.objects.create(code="nl", name="Dutch")
+
+        tag = Tag.objects.create(
+            url="",
+            source="system",
+            source_type="",
+            type="theme",
+            is_external=False,
+            is_enabled=True,
+        )
+        TagTranslation.objects.create(tag=tag, language=nl, name="Thema", short_description="", url_title="")
+
+        data = TagSerializer(tag, context=_display_ctx()).data
+        assert data["display_name"] == "Thema"

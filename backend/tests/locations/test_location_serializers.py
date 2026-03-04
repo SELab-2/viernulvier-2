@@ -7,8 +7,10 @@ Covers:
 - Queryset serialization for many=True
 """
 
+import pytest
+from django.test import override_settings
+from rest_framework.test import APIRequestFactory
 from django.test import TestCase
-
 from apps.languages.models import Language
 from apps.locations.models import Hall, Location, Space, LocationTranslation, SpaceTranslation, HallTranslation
 from apps.locations.serializers import HallSerializer, LocationSerializer, SpaceSerializer
@@ -121,3 +123,45 @@ class TestHallSerializerTranslations(TestCase):
 		data = HallSerializer(self.hall).data
 		self.assertEqual(data["name"], {"en": "Blue Hall", "fr": "Salle Bleue"})
 		self.assertEqual(data["remark"], {"en": "Front stage", "fr": "Avant scène"})
+
+
+def _ctx():
+    factory = APIRequestFactory()
+    return {"request": factory.get("/dummy")}
+
+
+def _make_hall():
+    loc = Location.objects.create(
+        street="Main St",
+        number="1",
+        postal_code="9000",
+        city="Ghent",
+        country="BE",
+        phone_1=None,
+        phone_2=None,
+        is_own_location=False,
+    )
+    space = Space.objects.create(location=loc)
+    return Hall.objects.create(space=space, seat_selection=False, open_seating=True)
+
+
+def _display_ctx():
+    factory = APIRequestFactory()
+    return {"request": factory.get("/dummy")}
+
+
+class TestHallDisplayNameBaseLanguage:
+    """Verify whether Hall's display_name uses base language."""
+
+    @pytest.mark.django_db
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_uses_base_language_when_present(self):
+        en = Language.objects.create(code="en", name="English")
+        nl = Language.objects.create(code="nl", name="Dutch")
+
+        hall = _make_hall()
+        HallTranslation.objects.create(hall=hall, language=nl, name="Grote Zaal", remark="Opmerking NL")
+        HallTranslation.objects.create(hall=hall, language=en, name="Main Hall", remark="Remark EN")
+
+        data = HallSerializer(hall, context=_display_ctx()).data
+        assert data["display_name"] == "Main Hall"
