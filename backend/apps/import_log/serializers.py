@@ -82,14 +82,12 @@ class ImportLogSerializer(serializers.ModelSerializer):
             },
             "finished_at": {
                 "help_text": (
-                    "ISO 8601 UTC timestamp at which the import run ended. "
-                    "`null` while the run is still in progress."
+                    "ISO 8601 UTC timestamp at which the import run ended. `null` while the run is still in progress."
                 ),
             },
             "error_message": {
                 "help_text": (
-                    "Human-readable error detail populated when the run fails. "
-                    "`null` when the run completed without error."
+                    "Human-readable error detail populated when the run fails. `null` when the run completed without error."
                 ),
             },
         }
@@ -117,12 +115,8 @@ class ImportLogSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data: dict) -> None:
         """Prevent creation of import logs via the API."""
-        raise serializers.ValidationError(
-            "Import logs cannot be created via the API."
-        )
+        raise serializers.ValidationError("Import logs cannot be created via the API.")
 
     def update(self, instance: ImportLog, validated_data: dict) -> None:
         """Prevent modification of import logs via the API."""
-        raise serializers.ValidationError(
-            "Import logs cannot be updated via the API."
-        )
+        raise serializers.ValidationError("Import logs cannot be updated via the API.")

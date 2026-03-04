@@ -24,8 +24,8 @@ from apps.core.openapi import (
     RESPONSE_403,
     RESPONSE_404,
 )
-from .serializers import ImportLogSerializer
 
+from .serializers import ImportLogSerializer
 
 # ===========================================================================
 # ImportLog — examples

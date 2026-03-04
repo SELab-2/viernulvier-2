@@ -5,12 +5,11 @@ from apps.core.views import ApiModelViewSet
 from apps.languages.models import Language
 from apps.pricing.models import (
     Price,
-    PriceTranslation,
     PriceRank,
     PriceRankTranslation,
+    PriceTranslation,
 )
-from apps.pricing.views import PriceViewSet, PriceRankViewSet
-
+from apps.pricing.views import PriceRankViewSet, PriceViewSet
 
 PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"
@@ -19,6 +18,7 @@ INT_KEY = "int-view-test-key"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
@@ -41,6 +41,7 @@ def results_list(response):
 # Class-level tests
 # ---------------------------------------------------------------------------
 
+
 class TestPriceViewSetClass(TestCase):
     def test_inherits_from_api_model_viewset(self):
         """Test case for test_inherits_from_api_model_viewset."""
@@ -53,6 +54,7 @@ class TestPriceViewSetClass(TestCase):
     def test_serializer_class(self):
         """Test case for test_serializer_class."""
         from apps.pricing.serializers import PriceSerializer
+
         self.assertEqual(PriceViewSet.serializer_class, PriceSerializer)
 
 
@@ -68,12 +70,14 @@ class TestPriceRankViewSetClass(TestCase):
     def test_serializer_class(self):
         """Test case for test_serializer_class."""
         from apps.pricing.serializers import PriceRankSerializer
+
         self.assertEqual(PriceRankViewSet.serializer_class, PriceRankSerializer)
 
 
 # ---------------------------------------------------------------------------
 # Prices — shared setup mixin
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class _PriceSetupMixin(TestCase):
@@ -114,6 +118,7 @@ class _PriceSetupMixin(TestCase):
 # ---------------------------------------------------------------------------
 # GET /api/prices/ — list
 # ---------------------------------------------------------------------------
+
 
 class TestPriceViewSetList(_PriceSetupMixin):
     def test_list_with_public_key_returns_200(self):
@@ -168,6 +173,7 @@ class TestPriceViewSetList(_PriceSetupMixin):
 # GET /api/prices/<id>/ — retrieve
 # ---------------------------------------------------------------------------
 
+
 class TestPriceViewSetRetrieve(_PriceSetupMixin):
     def test_retrieve_with_public_key_returns_200(self):
         """Test case for test_retrieve_with_public_key_returns_200."""
@@ -204,6 +210,7 @@ class TestPriceViewSetRetrieve(_PriceSetupMixin):
 # ---------------------------------------------------------------------------
 # POST /api/prices/ — create (internal only)
 # ---------------------------------------------------------------------------
+
 
 class TestPriceViewSetCreate(_PriceSetupMixin):
     def test_create_with_internal_key_returns_201(self):
@@ -297,6 +304,7 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
 # PUT /api/prices/<id>/ — full update (internal only)
 # ---------------------------------------------------------------------------
 
+
 class TestPriceViewSetUpdate(_PriceSetupMixin):
     def test_put_with_internal_key_returns_200(self):
         """Test case for test_put_with_internal_key_returns_200."""
@@ -380,6 +388,7 @@ class TestPriceViewSetUpdate(_PriceSetupMixin):
 # PATCH /api/prices/<id>/ — partial update (internal only)
 # ---------------------------------------------------------------------------
 
+
 class TestPriceViewSetPartialUpdate(_PriceSetupMixin):
     def test_patch_with_internal_key_returns_200(self):
         """Test case for test_patch_with_internal_key_returns_200."""
@@ -436,6 +445,7 @@ class TestPriceViewSetPartialUpdate(_PriceSetupMixin):
 # DELETE /api/prices/<id>/ — destroy (internal only)
 # ---------------------------------------------------------------------------
 
+
 class TestPriceViewSetDelete(_PriceSetupMixin):
     def test_delete_with_internal_key_returns_204(self):
         """Test case for test_delete_with_internal_key_returns_204."""
@@ -467,6 +477,7 @@ class TestPriceViewSetDelete(_PriceSetupMixin):
 # Price ranks — shared setup mixin
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class _PriceRankSetupMixin(TestCase):
     def setUp(self):
@@ -486,6 +497,7 @@ class _PriceRankSetupMixin(TestCase):
 # ---------------------------------------------------------------------------
 # GET /api/price-ranks/ — list
 # ---------------------------------------------------------------------------
+
 
 class TestPriceRankViewSetList(_PriceRankSetupMixin):
     def test_list_with_public_key_returns_200(self):
@@ -520,6 +532,7 @@ class TestPriceRankViewSetList(_PriceRankSetupMixin):
 # ---------------------------------------------------------------------------
 # POST /api/price-ranks/ — create (internal only)
 # ---------------------------------------------------------------------------
+
 
 class TestPriceRankViewSetCreate(_PriceRankSetupMixin):
     def test_create_with_internal_key_returns_201(self):

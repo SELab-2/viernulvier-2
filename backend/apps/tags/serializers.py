@@ -10,6 +10,7 @@ as language-code dictionaries
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
+
 from .models import Tag
 
 
@@ -36,7 +37,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     name = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the tag name "
-            "(e.g. {\"en\": \"Contemporary\", \"fr\": \"Contemporain\"}). "
+            '(e.g. {"en": "Contemporary", "fr": "Contemporain"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -44,7 +45,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     short_description = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the tag's short description "
-            "(e.g. {\"en\": \"Contemporary performing arts\", \"fr\": \"Arts du spectacle contemporain\"}). "
+            '(e.g. {"en": "Contemporary performing arts", "fr": "Arts du spectacle contemporain"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -52,7 +53,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     url_title = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the URL-safe title "
-            "(e.g. {\"en\": \"contemporary\", \"fr\": \"contemporain\"}). "
+            '(e.g. {"en": "contemporary", "fr": "contemporain"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )

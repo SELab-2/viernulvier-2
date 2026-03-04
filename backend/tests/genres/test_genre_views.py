@@ -16,8 +16,6 @@ from rest_framework.test import APIClient
 from apps.core.views import ApiModelViewSet
 from apps.genres.models import Genre, GenreUseAs
 from apps.genres.views import GenreUseAsViewSet, GenreViewSet
-from apps.languages.models import Language
-
 
 PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"
@@ -26,6 +24,7 @@ INT_KEY = "int-view-test-key"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
@@ -42,6 +41,7 @@ def wrong_headers():
 # ---------------------------------------------------------------------------
 # Class-level tests
 # ---------------------------------------------------------------------------
+
 
 class TestGenreUseAsViewSetClass(TestCase):
     """Class-level checks for GenreUseAsViewSet."""
@@ -66,6 +66,7 @@ class TestGenreViewSetClass(TestCase):
 # ---------------------------------------------------------------------------
 # GenreUseAs endpoints
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestGenreUseAsViewSet(TestCase):
@@ -176,6 +177,7 @@ class TestGenreUseAsViewSet(TestCase):
 # ---------------------------------------------------------------------------
 # Genre endpoints
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestGenreViewSet(TestCase):

@@ -21,10 +21,11 @@ Productions are the core catalogue entity in the archive. The hierarchy is:
 from django.db import models
 
 from apps.core.models import BaseModel
-from apps.languages.models import Language
-from apps.tags.models import Tag
 from apps.genres.models import Genre
+from apps.languages.models import Language
 from apps.media_library.models import MediaGallery
+from apps.tags.models import Tag
+
 
 class UitDatabaseTheme(BaseModel):
     """

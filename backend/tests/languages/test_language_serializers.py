@@ -86,7 +86,7 @@ class TestLanguageSerializerDeserialization(TestCase):
         data = {"code": "nl", "name": "Dutch", "is_active": True}
         serializer = LanguageSerializer(data=data)
         self.assertTrue(serializer.is_valid())
-        lang = serializer.save()
+        _ = serializer.save()
         self.assertEqual(Language.objects.get(code="nl").name, "Dutch")
 
     def test_is_active_defaults_or_is_provided(self):

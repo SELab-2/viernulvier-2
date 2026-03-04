@@ -1,20 +1,17 @@
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 
 from apps.media_library.models import (
-    MediaGallery,
     MediaItem,
-    MediaItemTranslation,
     MediaItemCrop,
+    MediaItemTranslation,
 )
-
 from tests.factories.language import LanguageFactory
 from tests.factories.media_library import (
     MediaGalleryFactory,
+    MediaItemCropFactory,
     MediaItemFactory,
     MediaItemTranslationFactory,
-    MediaItemCropFactory,
 )
 
 pytestmark = pytest.mark.django_db
@@ -24,8 +21,8 @@ pytestmark = pytest.mark.django_db
 # MediaGallery
 # =====================================================
 
-class TestMediaGallery:
 
+class TestMediaGallery:
     def test_requires_name(self):
         gallery = MediaGalleryFactory.build(name="")
         with pytest.raises(ValidationError):
@@ -54,8 +51,8 @@ class TestMediaGallery:
 # MediaItem
 # =====================================================
 
-class TestMediaItem:
 
+class TestMediaItem:
     def test_requires_gallery(self):
         item = MediaItemFactory.build(gallery=None)
         with pytest.raises(ValidationError):
@@ -113,8 +110,8 @@ class TestMediaItem:
 # MediaItemTranslation
 # =====================================================
 
-class TestMediaItemTranslation:
 
+class TestMediaItemTranslation:
     def test_unique_per_media_item_and_language(self):
         language = LanguageFactory()
         item = MediaItemFactory()
@@ -166,8 +163,8 @@ class TestMediaItemTranslation:
 # MediaItemCrop
 # =====================================================
 
-class TestMediaItemCrop:
 
+class TestMediaItemCrop:
     def test_unique_per_media_item_and_name(self):
         item = MediaItemFactory()
 

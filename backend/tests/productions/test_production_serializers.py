@@ -20,7 +20,12 @@ from django.test import TestCase
 
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.languages.models import Language
-from apps.productions.models import Production, ProductionTranslation, UitDatabaseTheme, UitDatabaseType
+from apps.productions.models import (
+    Production,
+    ProductionTranslation,
+    UitDatabaseTheme,
+    UitDatabaseType,
+)
 from apps.productions.serializers import (
     ProductionSerializer,
     UitDatabaseThemeSerializer,
@@ -28,10 +33,10 @@ from apps.productions.serializers import (
 )
 from apps.tags.models import Tag
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_language(code="nl", name="Dutch"):
     return Language.objects.get_or_create(code=code, defaults={"name": name, "is_active": True})[0]
@@ -75,6 +80,7 @@ def make_translation(production, language, **kwargs):
 # UitDatabaseThemeSerializer
 # ---------------------------------------------------------------------------
 
+
 class TestUitDatabaseThemeSerializerFields(TestCase):
     """Verify field presence and output of UitDatabaseThemeSerializer."""
 
@@ -102,6 +108,7 @@ class TestUitDatabaseThemeSerializerFields(TestCase):
 # ---------------------------------------------------------------------------
 # UitDatabaseTypeSerializer
 # ---------------------------------------------------------------------------
+
 
 class TestUitDatabaseTypeSerializerFields(TestCase):
     """Verify field presence and output of UitDatabaseTypeSerializer."""
@@ -131,6 +138,7 @@ class TestUitDatabaseTypeSerializerFields(TestCase):
 # ProductionSerializer — field presence
 # ---------------------------------------------------------------------------
 
+
 class TestProductionSerializerFields(TestCase):
     """Verify that exactly the expected fields are exposed."""
 
@@ -140,9 +148,16 @@ class TestProductionSerializerFields(TestCase):
     def test_expected_fields_are_present(self):
         data = ProductionSerializer(self.production).data
         expected = {
-            "id", "attendance_mode", "performer_type",
-            "uit_database_theme", "uit_database_type",
-            "title", "description", "teaser", "artist_name", "tagline",
+            "id",
+            "attendance_mode",
+            "performer_type",
+            "uit_database_theme",
+            "uit_database_type",
+            "title",
+            "description",
+            "teaser",
+            "artist_name",
+            "tagline",
             "tags",
         }
         for field in expected:
@@ -151,10 +166,18 @@ class TestProductionSerializerFields(TestCase):
     def test_no_extra_fields_are_exposed(self):
         data = ProductionSerializer(self.production).data
         expected = {
-            "id", "attendance_mode", "performer_type",
-            "uit_database_theme", "uit_database_type",
-            "title", "description", "teaser", "artist_name", "tagline",
-            "tags", "genres",
+            "id",
+            "attendance_mode",
+            "performer_type",
+            "uit_database_theme",
+            "uit_database_type",
+            "title",
+            "description",
+            "teaser",
+            "artist_name",
+            "tagline",
+            "tags",
+            "genres",
         }
         self.assertEqual(set(data.keys()), expected)
 
@@ -162,6 +185,7 @@ class TestProductionSerializerFields(TestCase):
 # ---------------------------------------------------------------------------
 # ProductionSerializer — scalar fields
 # ---------------------------------------------------------------------------
+
 
 class TestProductionSerializerScalarFields(TestCase):
     """Model → dict for non-translated, non-nested fields."""
@@ -195,6 +219,7 @@ class TestProductionSerializerScalarFields(TestCase):
 # ---------------------------------------------------------------------------
 # ProductionSerializer — nested fields
 # ---------------------------------------------------------------------------
+
 
 class TestProductionSerializerNestedUitDatabaseTheme(TestCase):
     """Verify nested UitDatabaseTheme serialization."""
@@ -257,6 +282,7 @@ class TestProductionSerializerNestedTags(TestCase):
 # ProductionSerializer — translated fields (empty state)
 # ---------------------------------------------------------------------------
 
+
 class TestProductionSerializerTranslatedFieldsEmpty(TestCase):
     """Translated fields return an empty dict when no translations exist."""
 
@@ -287,6 +313,7 @@ class TestProductionSerializerTranslatedFieldsEmpty(TestCase):
 # ---------------------------------------------------------------------------
 # ProductionSerializer — translated fields (populated state)
 # ---------------------------------------------------------------------------
+
 
 class TestProductionSerializerTranslatedFieldsPopulated(TestCase):
     """Translated fields return a dict keyed by language code when translations exist."""
@@ -333,6 +360,7 @@ class TestProductionSerializerTranslatedFieldsPopulated(TestCase):
 # ProductionSerializer — translated fields (multiple languages)
 # ---------------------------------------------------------------------------
 
+
 class TestProductionSerializerMultipleTranslations(TestCase):
     """Multiple language translations are all present in the output dict."""
 
@@ -365,6 +393,7 @@ class TestProductionSerializerMultipleTranslations(TestCase):
 # ProductionSerializer — translated fields (blank values are omitted)
 # ---------------------------------------------------------------------------
 
+
 class TestProductionSerializerTranslatedFieldsOmitBlanks(TestCase):
     """Blank translated field values must not appear in the output dict."""
 
@@ -386,6 +415,7 @@ class TestProductionSerializerTranslatedFieldsOmitBlanks(TestCase):
 # ---------------------------------------------------------------------------
 # Mixin inheritance
 # ---------------------------------------------------------------------------
+
 
 class TestProductionSerializerInheritance(TestCase):
     """ProductionSerializer must use TranslatableSerializerMixin."""

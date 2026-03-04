@@ -1,17 +1,22 @@
 import factory
-from factory.fuzzy import FuzzyChoice
 from faker import Faker
 
+from apps.locations.models import (
+    Hall,
+    HallTranslation,
+    Location,
+    LocationTranslation,
+    Space,
+    SpaceTranslation,
+)
 from tests.factories.language import LanguageFactory
-
-from apps.languages.models import Language
-from apps.locations.models import Location, LocationTranslation, Space, SpaceTranslation, Hall, HallTranslation
 
 faker = Faker()
 
 # ==============================
 # LOCATION
 # ==============================
+
 
 class LocationFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -40,6 +45,7 @@ class LocationTranslationFactory(factory.django.DjangoModelFactory):
 # SPACE
 # ==============================
 
+
 class SpaceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Space
@@ -59,6 +65,7 @@ class SpaceTranslationFactory(factory.django.DjangoModelFactory):
 # ==============================
 # HALL
 # ==============================
+
 
 class HallFactory(factory.django.DjangoModelFactory):
     class Meta:

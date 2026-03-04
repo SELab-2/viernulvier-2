@@ -13,14 +13,14 @@ from drf_spectacular.utils import (
 )
 
 from apps.core.openapi import (
+    RESPONSE_204_DELETED,
     RESPONSE_400,
     RESPONSE_401,
     RESPONSE_403,
     RESPONSE_404,
-    RESPONSE_204_DELETED,
 )
-from .serializers import TagSerializer
 
+from .serializers import TagSerializer
 
 # ===========================================================================
 # Tag — examples
@@ -94,7 +94,7 @@ _TAG_LIST = extend_schema(
         "Returns a paginated list of all **Tag** objects ordered by `id`.\n\n"
         "Translated fields (`name`, `short_description`, `url_title`) are "
         "returned as language-code dictionaries "
-        "(e.g. {\"en\": \"Contemporary\", \"fr\": \"Contemporain\"})."
+        '(e.g. {"en": "Contemporary", "fr": "Contemporain"}).'
     ),
     responses={
         200: TagSerializer,
@@ -109,7 +109,7 @@ _TAG_RETRIEVE = extend_schema(
     description=(
         "Returns the full representation of a single **Tag**.\n\n"
         "Translated fields are returned as language-code dictionaries "
-        "(e.g. {\"en\": \"Contemporary\", \"fr\": \"Contemporain\"})."
+        '(e.g. {"en": "Contemporary", "fr": "Contemporain"}).'
     ),
     responses={
         200: TagSerializer,
@@ -144,9 +144,7 @@ _TAG_CREATE = extend_schema(
 _TAG_UPDATE = extend_schema(
     summary="Replace a tag",
     description=(
-        "Fully replaces an existing **Tag**. "
-        "All writable fields must be supplied.\n\n"
-        "> **Requires an internal API key.**"
+        "Fully replaces an existing **Tag**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
     ),
     request=TagSerializer,
     responses={

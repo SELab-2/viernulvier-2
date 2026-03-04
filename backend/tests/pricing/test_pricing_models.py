@@ -11,17 +11,16 @@ Covers:
 - cascade delete behavior
 """
 
-from django.db import connection
 import pytest
 from django.core.exceptions import ValidationError
 
-from apps.pricing.models import PriceTranslation, PriceRankTranslation
+from apps.pricing.models import PriceRankTranslation, PriceTranslation
 from tests.factories.language import LanguageFactory
 from tests.factories.pricing import (
     PriceFactory,
-    PriceTranslationFactory,
     PriceRankFactory,
     PriceRankTranslationFactory,
+    PriceTranslationFactory,
 )
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -30,6 +29,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 # ---------------------------------------------------------------------------
 # Price
 # ---------------------------------------------------------------------------
+
 
 def test_price_str_contains_type_and_id():
     """Test case for test_price_str_contains_type_and_id."""
@@ -45,7 +45,10 @@ def test_price_meta_ordering_by_sort_order():
     p1 = PriceFactory(sort_order=1)
 
     prices = list(type(p1).objects.all())
-    assert [p.id for p in prices] == [p1.id, p2.id]  # ordering=["sort_order"] :contentReference[oaicite:4]{index=4}
+    assert [p.id for p in prices] == [
+        p1.id,
+        p2.id,
+    ]  # ordering=["sort_order"] :contentReference[oaicite:4]{index=4}
 
 
 def test_price_check_constraint_min_max_both_null_or_both_set():
@@ -93,6 +96,7 @@ def test_price_constraints_names_present():
 # ---------------------------------------------------------------------------
 # PriceTranslation
 # ---------------------------------------------------------------------------
+
 
 def test_price_translation_unique_per_price_and_language():
     """Test case for test_price_translation_unique_per_price_and_language."""
@@ -152,6 +156,7 @@ def test_price_translation_indexes_present():
 # PriceRank
 # ---------------------------------------------------------------------------
 
+
 def test_price_rank_meta_ordering_by_position():
     """Test case for test_price_rank_meta_ordering_by_position."""
     r2 = PriceRankFactory(position=2)
@@ -185,6 +190,7 @@ def test_price_rank_str():
 # ---------------------------------------------------------------------------
 # PriceRankTranslation
 # ---------------------------------------------------------------------------
+
 
 def test_price_rank_translation_unique_per_rank_and_language():
     """Test case for test_price_rank_translation_unique_per_rank_and_language."""

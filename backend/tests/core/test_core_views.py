@@ -33,10 +33,9 @@ from unittest.mock import MagicMock
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
-from apps.core.views import ApiModelViewSet
 from apps.core.authentications import ApiKeyAuthentication
 from apps.core.permissions import ApiKeyPermission
-
+from apps.core.views import ApiModelViewSet
 
 INT_KEY = "int-view-test-key"
 PUB_KEY = "pub-view-test-key"
@@ -58,8 +57,8 @@ def wrong_headers():
 # Class-level / wiring tests
 # ---------------------------------------------------------------------------
 
-class TestApiModelViewSetClass(TestCase):
 
+class TestApiModelViewSetClass(TestCase):
     def test_authentication_classes_contains_api_key_authentication(self):
         self.assertIn(ApiKeyAuthentication, ApiModelViewSet.authentication_classes)
 
@@ -74,6 +73,7 @@ class TestApiModelViewSetClass(TestCase):
 
     def test_inherits_from_model_viewset(self):
         from rest_framework.viewsets import ModelViewSet
+
         self.assertTrue(issubclass(ApiModelViewSet, ModelViewSet))
 
     def test_get_authenticators_returns_instances(self):
@@ -99,11 +99,12 @@ class TestApiModelViewSetClass(TestCase):
 # Integration — GET list
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetList(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
@@ -130,11 +131,12 @@ class TestApiModelViewSetList(TestCase):
 # Integration — GET retrieve
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetRetrieve(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
@@ -168,11 +170,12 @@ class TestApiModelViewSetRetrieve(TestCase):
 # Integration — POST create
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetCreate(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
 
@@ -200,11 +203,12 @@ class TestApiModelViewSetCreate(TestCase):
 # Integration — PUT full update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetUpdate(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
@@ -242,11 +246,12 @@ class TestApiModelViewSetUpdate(TestCase):
 # Integration — PATCH partial update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetPartialUpdate(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
@@ -272,11 +277,12 @@ class TestApiModelViewSetPartialUpdate(TestCase):
 # Integration — DELETE
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetDelete(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)

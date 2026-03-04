@@ -25,10 +25,10 @@ from apps.locations.models import Hall
 from apps.pricing.models import PriceRank
 from apps.productions.models import Production
 
-
 # ===========================================================================
 # Event
 # ===========================================================================
+
 
 class Event(BaseModel):
     """
@@ -123,10 +123,6 @@ class Event(BaseModel):
 # EventPrice
 # ===========================================================================
 
-    def clean(self):
-        super().clean()
-        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
-            raise ValidationError("Event end time must be after start time.")
 
 class EventPrice(BaseModel):
     """

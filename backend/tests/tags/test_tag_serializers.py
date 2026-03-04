@@ -18,10 +18,10 @@ from apps.languages.models import Language
 from apps.tags.models import Tag, TagTranslation
 from apps.tags.serializers import TagSerializer
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_tag(**kwargs):
     defaults = {
@@ -43,6 +43,7 @@ def make_language(code="nl", name="Dutch"):
 # Field presence
 # ---------------------------------------------------------------------------
 
+
 class TestTagSerializerFields(TestCase):
     """Verify that the correct fields are exposed."""
 
@@ -52,22 +53,41 @@ class TestTagSerializerFields(TestCase):
     def test_expected_fields_are_present(self):
         serializer = TagSerializer(self.tag)
         data = serializer.data
-        for field in ("id", "url", "source", "source_type", "type",
-                      "is_external", "is_enabled", "name",
-                      "short_description", "url_title"):
+        for field in (
+            "id",
+            "url",
+            "source",
+            "source_type",
+            "type",
+            "is_external",
+            "is_enabled",
+            "name",
+            "short_description",
+            "url_title",
+        ):
             self.assertIn(field, data)
 
     def test_no_extra_fields_are_exposed(self):
         serializer = TagSerializer(self.tag)
-        expected = {"id", "url", "source", "source_type", "type",
-                    "is_external", "is_enabled", "name",
-                    "short_description", "url_title"}
+        expected = {
+            "id",
+            "url",
+            "source",
+            "source_type",
+            "type",
+            "is_external",
+            "is_enabled",
+            "name",
+            "short_description",
+            "url_title",
+        }
         self.assertEqual(set(serializer.data.keys()), expected)
 
 
 # ---------------------------------------------------------------------------
 # Serialization — scalar fields
 # ---------------------------------------------------------------------------
+
 
 class TestTagSerializerScalarFields(TestCase):
     """Model → dict for non-translated fields."""
@@ -132,6 +152,7 @@ class TestTagSerializerScalarFields(TestCase):
 # Serialization — translated fields
 # ---------------------------------------------------------------------------
 
+
 class TestTagSerializerTranslatedFields(TestCase):
     """name / short_description / url_title are returned as language-keyed dicts."""
 
@@ -141,57 +162,51 @@ class TestTagSerializerTranslatedFields(TestCase):
         self.en = make_language("en", "English")
 
     def test_name_is_dict(self):
-        TagTranslation.objects.create(
-            tag=self.tag, language=self.nl, name="Genre", url_title="genre"
-        )
+        TagTranslation.objects.create(tag=self.tag, language=self.nl, name="Genre", url_title="genre")
         data = TagSerializer(self.tag).data
         self.assertIsInstance(data["name"], dict)
 
     def test_name_contains_correct_language_keys(self):
-        TagTranslation.objects.create(
-            tag=self.tag, language=self.nl, name="Genre", url_title="genre"
-        )
-        TagTranslation.objects.create(
-            tag=self.tag, language=self.en, name="Genre EN", url_title="genre-en"
-        )
+        TagTranslation.objects.create(tag=self.tag, language=self.nl, name="Genre", url_title="genre")
+        TagTranslation.objects.create(tag=self.tag, language=self.en, name="Genre EN", url_title="genre-en")
         data = TagSerializer(self.tag).data
         self.assertIn("nl", data["name"])
         self.assertIn("en", data["name"])
 
     def test_name_contains_correct_values(self):
-        TagTranslation.objects.create(
-            tag=self.tag, language=self.nl, name="Muziekgenre", url_title="genre"
-        )
+        TagTranslation.objects.create(tag=self.tag, language=self.nl, name="Muziekgenre", url_title="genre")
         data = TagSerializer(self.tag).data
         self.assertEqual(data["name"]["nl"], "Muziekgenre")
 
     def test_short_description_is_dict(self):
         TagTranslation.objects.create(
-            tag=self.tag, language=self.nl, name="Genre",
-            short_description="Een muziekgenre", url_title="genre"
+            tag=self.tag,
+            language=self.nl,
+            name="Genre",
+            short_description="Een muziekgenre",
+            url_title="genre",
         )
         data = TagSerializer(self.tag).data
         self.assertIsInstance(data["short_description"], dict)
 
     def test_short_description_contains_correct_value(self):
         TagTranslation.objects.create(
-            tag=self.tag, language=self.nl, name="Genre",
-            short_description="Een muziekgenre", url_title="genre"
+            tag=self.tag,
+            language=self.nl,
+            name="Genre",
+            short_description="Een muziekgenre",
+            url_title="genre",
         )
         data = TagSerializer(self.tag).data
         self.assertEqual(data["short_description"]["nl"], "Een muziekgenre")
 
     def test_url_title_is_dict(self):
-        TagTranslation.objects.create(
-            tag=self.tag, language=self.nl, name="Genre", url_title="muziek-genre"
-        )
+        TagTranslation.objects.create(tag=self.tag, language=self.nl, name="Genre", url_title="muziek-genre")
         data = TagSerializer(self.tag).data
         self.assertIsInstance(data["url_title"], dict)
 
     def test_url_title_contains_correct_value(self):
-        TagTranslation.objects.create(
-            tag=self.tag, language=self.nl, name="Genre", url_title="muziek-genre"
-        )
+        TagTranslation.objects.create(tag=self.tag, language=self.nl, name="Genre", url_title="muziek-genre")
         data = TagSerializer(self.tag).data
         self.assertEqual(data["url_title"]["nl"], "muziek-genre")
 
@@ -209,20 +224,13 @@ class TestTagSerializerTranslatedFields(TestCase):
 
     def test_blank_short_description_is_excluded_from_dict(self):
         """Translations with blank short_description should not appear as a key."""
-        TagTranslation.objects.create(
-            tag=self.tag, language=self.nl, name="Genre",
-            short_description="", url_title="genre"
-        )
+        TagTranslation.objects.create(tag=self.tag, language=self.nl, name="Genre", short_description="", url_title="genre")
         data = TagSerializer(self.tag).data
         self.assertNotIn("nl", data["short_description"])
 
     def test_multiple_translations_all_included(self):
-        TagTranslation.objects.create(
-            tag=self.tag, language=self.nl, name="Genre NL", url_title="genre-nl"
-        )
-        TagTranslation.objects.create(
-            tag=self.tag, language=self.en, name="Genre EN", url_title="genre-en"
-        )
+        TagTranslation.objects.create(tag=self.tag, language=self.nl, name="Genre NL", url_title="genre-nl")
+        TagTranslation.objects.create(tag=self.tag, language=self.en, name="Genre EN", url_title="genre-en")
         data = TagSerializer(self.tag).data
         self.assertEqual(len(data["name"]), 2)
 
@@ -231,8 +239,8 @@ class TestTagSerializerTranslatedFields(TestCase):
 # Serialization — queryset
 # ---------------------------------------------------------------------------
 
-class TestTagSerializerQueryset(TestCase):
 
+class TestTagSerializerQueryset(TestCase):
     def test_serializes_queryset_of_tags(self):
         make_tag(type="genre")
         make_tag(type="mood")
@@ -245,6 +253,7 @@ class TestTagSerializerQueryset(TestCase):
 # ---------------------------------------------------------------------------
 # Deserialization / validation
 # ---------------------------------------------------------------------------
+
 
 class TestTagSerializerDeserialization(TestCase):
     """dict → model (create / update)."""

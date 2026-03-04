@@ -10,28 +10,28 @@ Covers:
 - Functional admin changelist + changeform (superuser)
 """
 
+from datetime import timedelta
+
 from django.contrib import admin
-from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
+from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
-from datetime import timedelta
+
 from apps.core.admin import BaseAdmin
 from apps.events.admin import EventAdmin, EventPriceInline
 from apps.events.models import Event
+from apps.locations.models import Hall, Location, Space
 from apps.productions.models import Production
-from apps.locations.models import Location, Space, Hall
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_superuser(username="admin"):
-    return User.objects.create_superuser(
-        username=username, password="password", email=f"{username}@example.com"
-    )
+    return User.objects.create_superuser(username=username, password="password", email=f"{username}@example.com")
 
 
 def admin_changelist_url(model):
@@ -61,6 +61,7 @@ def make_hall() -> Hall:
 # Registration
 # ---------------------------------------------------------------------------
 
+
 class TestEventsAdminRegistration(TestCase):
     def test_event_is_registered(self):
         """Test case for test_event_is_registered."""
@@ -74,6 +75,7 @@ class TestEventsAdminRegistration(TestCase):
 # ---------------------------------------------------------------------------
 # Inheritance
 # ---------------------------------------------------------------------------
+
 
 class TestEventsAdminInheritance(TestCase):
     admins = [EventAdmin]
@@ -94,6 +96,7 @@ class TestEventsAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
+
 
 class TestEventsAdminConfiguration(TestCase):
     def setUp(self):
@@ -129,6 +132,7 @@ class TestEventsAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # Queryset optimization (smoke)
 # ---------------------------------------------------------------------------
+
 
 class TestEventAdminGetQueryset(TestCase):
     @classmethod
@@ -176,6 +180,7 @@ class TestEventAdminGetQueryset(TestCase):
 # ---------------------------------------------------------------------------
 # Functional admin tests (HTTP)
 # ---------------------------------------------------------------------------
+
 
 class TestEventsAdminChangelists(TestCase):
     def setUp(self):

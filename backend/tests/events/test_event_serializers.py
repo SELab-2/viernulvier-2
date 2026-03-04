@@ -11,15 +11,17 @@ Covers:
 
 from datetime import timedelta
 from decimal import Decimal
+
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
+
 from apps.events.models import Event, EventPrice
 from apps.events.serializers import EventSerializer
-from apps.productions.models import Production
-from apps.locations.models import Location, Space, Hall
+from apps.locations.models import Hall, Location, Space
 from apps.pricing.models import PriceRank
+from apps.productions.models import Production
 
 
 def _drf_request(factory: APIRequestFactory, path: str) -> Request:

@@ -16,22 +16,20 @@ Covers:
 
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
 from apps.import_log.admin import ImportLogAdmin
 from apps.import_log.models import ImportLog
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_superuser(username="admin"):
-    return User.objects.create_superuser(
-        username=username, password="password", email=f"{username}@example.com"
-    )
+    return User.objects.create_superuser(username=username, password="password", email=f"{username}@example.com")
 
 
 def make_import_log(**kwargs):
@@ -50,6 +48,7 @@ def make_import_log(**kwargs):
 # Registration
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogAdminRegistration(TestCase):
     """Verify ImportLogAdmin is registered."""
 
@@ -64,6 +63,7 @@ class TestImportLogAdminRegistration(TestCase):
 # Inheritance
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogAdminInheritance(TestCase):
     """ImportLogAdmin must extend BaseAdmin."""
 
@@ -77,6 +77,7 @@ class TestImportLogAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # list_display
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogAdminListDisplay(TestCase):
     """Tests for list_display configuration."""
@@ -113,6 +114,7 @@ class TestImportLogAdminListDisplay(TestCase):
 # list_filter
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogAdminListFilter(TestCase):
     """Tests for list_filter configuration."""
 
@@ -126,6 +128,7 @@ class TestImportLogAdminListFilter(TestCase):
 # ---------------------------------------------------------------------------
 # search_fields
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogAdminSearchFields(TestCase):
     """Tests for search_fields configuration."""
@@ -143,6 +146,7 @@ class TestImportLogAdminSearchFields(TestCase):
 # ---------------------------------------------------------------------------
 # readonly_fields
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogAdminReadonlyFields(TestCase):
     """All data fields must be read-only to protect log integrity."""
@@ -179,6 +183,7 @@ class TestImportLogAdminReadonlyFields(TestCase):
 # has_add_permission
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogAdminAddPermission(TestCase):
     """has_add_permission must always return False."""
 
@@ -193,20 +198,17 @@ class TestImportLogAdminAddPermission(TestCase):
         return request
 
     def test_has_add_permission_returns_false_for_superuser(self):
-        self.assertFalse(
-            self.model_admin.has_add_permission(self._make_request(self.superuser))
-        )
+        self.assertFalse(self.model_admin.has_add_permission(self._make_request(self.superuser)))
 
     def test_has_add_permission_returns_false_for_regular_user(self):
         regular = User.objects.create_user(username="regular", password="password")
-        self.assertFalse(
-            self.model_admin.has_add_permission(self._make_request(regular))
-        )
+        self.assertFalse(self.model_admin.has_add_permission(self._make_request(regular)))
 
 
 # ---------------------------------------------------------------------------
 # Functional changelist / changeform tests
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogAdminChangelist(TestCase):
     """Functional tests for ImportLogAdmin via HTTP."""
@@ -236,26 +238,18 @@ class TestImportLogAdminChangelist(TestCase):
     def test_changelist_filter_by_status_success(self):
         make_import_log(status=ImportLog.Status.SUCCESS)
         url = reverse("admin:import_log_importlog_changelist")
-        self.assertEqual(
-            self.client.get(url, {"status": ImportLog.Status.SUCCESS}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"status": ImportLog.Status.SUCCESS}).status_code, 200)
 
     def test_changelist_filter_by_status_failed(self):
         make_import_log(status=ImportLog.Status.FAILED, error_message="timeout")
         url = reverse("admin:import_log_importlog_changelist")
-        self.assertEqual(
-            self.client.get(url, {"status": ImportLog.Status.FAILED}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"status": ImportLog.Status.FAILED}).status_code, 200)
 
     def test_changelist_search_by_source(self):
         url = reverse("admin:import_log_importlog_changelist")
         self.assertEqual(self.client.get(url, {"q": "import"}).status_code, 200)
 
     def test_changelist_search_by_error_message(self):
-        make_import_log(
-            status=ImportLog.Status.FAILED, error_message="connection refused"
-        )
+        make_import_log(status=ImportLog.Status.FAILED, error_message="connection refused")
         url = reverse("admin:import_log_importlog_changelist")
-        self.assertEqual(
-            self.client.get(url, {"q": "connection refused"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"q": "connection refused"}).status_code, 200)

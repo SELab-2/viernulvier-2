@@ -12,6 +12,7 @@ as a dictionary (e.g. {"en": "Main Hall", "fr": "Grande Salle"}).
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
+
 from .models import Hall, Location, Space
 
 
@@ -26,7 +27,7 @@ class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixi
     name = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the location name "
-            "(e.g. {\"en\": \"City Hall\", \"fr\": \"Hôtel de Ville\"}). "
+            '(e.g. {"en": "City Hall", "fr": "Hôtel de Ville"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -75,7 +76,7 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     name = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the space name "
-            "(e.g. {\"en\": \"Stage A\", \"fr\": \"Scène A\"}). "
+            '(e.g. {"en": "Stage A", "fr": "Scène A"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -110,7 +111,7 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     name = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the hall name "
-            "(e.g. {\"en\": \"Main Hall\", \"fr\": \"Grande Salle\"}). "
+            '(e.g. {"en": "Main Hall", "fr": "Grande Salle"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -118,8 +119,8 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     remark = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the optional remark "
-            "(e.g. {\"en\": \"Wheelchair accessible\", "
-            "\"fr\": \"Accessible en fauteuil roulant\"}). "
+            '(e.g. {"en": "Wheelchair accessible", '
+            '"fr": "Accessible en fauteuil roulant"}). '
             "`null` when no remark translations have been set. "
             "Read-only — use the translation endpoints to manage translations."
         ),
