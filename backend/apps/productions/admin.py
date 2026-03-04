@@ -16,8 +16,7 @@ the list and detail pages free of N+1 queries.
 from django.contrib import admin
 
 from apps.core.admin import BaseAdmin
-from apps.core.admin_bulk import BulkOperationAdminMixin
-from apps.productions.bulk import ProductionBulkService
+from .admin_filters import ArtistNameFilter, GenreFilter, TagFilter
 from .models import (
     Production,
     ProductionGenre,
@@ -121,7 +120,7 @@ class UitDatabaseTypeAdmin(BaseAdmin):
 # ===========================================================================
 
 @admin.register(Production)
-class ProductionAdmin(BulkOperationAdminMixin, BaseAdmin):
+class ProductionAdmin(BaseAdmin):
     """
     Admin configuration for the Production model.
 
@@ -138,9 +137,6 @@ class ProductionAdmin(BulkOperationAdminMixin, BaseAdmin):
       admin search uses ``translations__title`` or ``translations__artist_name``.
     """
 
-    bulk_service_class = ProductionBulkService
-    change_list_template = "admin/productions/production/change_list.html"
-
     list_display = (
         "id",
         "attendance_mode",
@@ -155,6 +151,9 @@ class ProductionAdmin(BulkOperationAdminMixin, BaseAdmin):
         "performer_type",
         "uit_database_theme",
         "uit_database_type",
+        TagFilter,
+        GenreFilter,
+        ArtistNameFilter,
     )
 
     search_fields = (
