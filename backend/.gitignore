@@ -7,4 +7,5 @@ venv/
 *migrations
 .pytest_cache
 
+.idea/
 db.sqlite3
