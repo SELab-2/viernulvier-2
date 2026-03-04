@@ -65,7 +65,7 @@ jobs:
             git push
         
   backend-tests:
-    name: Backend Tests (pytest +  coverage)
+    name: Backend Tests (pytest + coverage)
     runs-on: ubuntu-latest
 
     defaults:
