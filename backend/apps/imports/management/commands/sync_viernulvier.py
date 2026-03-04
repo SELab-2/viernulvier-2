@@ -695,6 +695,13 @@ SYNC_STEPS = [
 class Command(BaseCommand):
     help = "Synchronize Viernulvier / Peppered API data to the local database"
 
+    FILTER_FIELDS = {
+        "created": "created_at",
+        "updated": "updated_at",
+        "starts": "starts_at",
+        "ends": "ends_at",
+    }
+
     def add_arguments(self, parser):
         parser.add_argument(
             "--only",
@@ -705,17 +712,37 @@ class Command(BaseCommand):
                 f"Choices: {', '.join(name for name, *_ in SYNC_STEPS)}"
             ),
         )
-        parser.add_argument(
-            "--since",
-            type=str,
-            metavar="DATETIME",
-            help="Sync only records created after this timestamp, e.g. 2024-01-01T00:00:00Z",
-        )
+        for prefix in self.FILTER_FIELDS.keys():
+            for bound in ("after", "before"):
+                option_name = f"--{prefix}-{bound}"
+                parser.add_argument(
+                    option_name,
+                    type=str,
+                    metavar="DATETIME",
+                    help=f"Sync only records with {self.FILTER_FIELDS[prefix]} {bound} this timestamp, e.g. 2024-01-01T00:00:00Z",
+                )
+                parser.add_argument(
+                    f"{option_name}-x",
+                    type=str,
+                    metavar="DATETIME",
+                    help=f"Sync only records with {self.FILTER_FIELDS[prefix]} {bound} this timestamp (exclusive), e.g. 2024-01-01T00:00:00Z",
+                )
 
     def handle(self, *args, **options):
         only = options.get("only")
-        since = options.get("since")
-        params = {"created_at[after]": since} if since else None
+
+        params = {}
+        for prefix, api_field in self.FILTER_FIELDS.items():
+            for bound in ("after", "before"):
+                option_key = f"{prefix}_{bound}"
+                value = options.get(option_key)
+                if value:
+                    params[f"{api_field}[{bound}]"] = value
+
+                strict_option_key = f"{option_key}_x"
+                strict_value = options.get(strict_option_key)
+                if strict_value:
+                    params[f"{api_field}[strictly_{bound}]"] = strict_value
 
         steps_to_run = [
             (name, model, config, endpoint)
@@ -743,6 +770,6 @@ class Command(BaseCommand):
                 total_saved += saved
                 self.stdout.write(self.style.SUCCESS(f"{saved} records"))
             except Exception as exc:
-                self.stdout.write(self.style.ERROR(f"MISLUKT: {exc}"))
+                self.stdout.write(self.style.ERROR(f"FAILED: {exc}"))
 
         self.stdout.write(self.style.SUCCESS(f"\nDone. Total: {total_saved} records"))
