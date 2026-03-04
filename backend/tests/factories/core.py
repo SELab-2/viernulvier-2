@@ -1,7 +1,7 @@
 import factory
 from django.db import models
 
-from apps.core.model import BaseModel
+from apps.core.models import BaseModel
 
 
 class CoreDummy(BaseModel):

@@ -35,10 +35,6 @@
     -- bv. ```python manage.py makemigrations languages```
 - migrate: ```python manage.py migrate```
 
-## Frontend
-
-See wiki pages
-
 ## Adding a Pull Request
 
 When creating a PR, please follow these guidelines:

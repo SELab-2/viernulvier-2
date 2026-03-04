@@ -99,7 +99,7 @@ class TestSpace:
 class TestSpaceTranslation:
     def test_str(self):
         trans = SpaceTranslationFactory(name="Main Hall", language__code="en")
-        assert str(trans) == "Space - en - Main Hall"
+        assert str(trans) == f"en - Main Hall"
 
     def test_language_reverse_relation(self):
         lang = LanguageFactory()

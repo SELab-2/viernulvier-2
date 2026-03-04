@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+import textwrap
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,10 +23,12 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-# API key for our API (only read)
-PUBLIC_API_KEY = os.getenv("PUBLIC_API_KEY", "dev-key-for-local")
-# API key for our API to change also values
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "key for everything")
+PUBLIC_API_KEY = os.getenv(
+    "PUBLIC_API_KEY", "dev-key-for-local"
+)  # API key for our API (only read)
+INTERNAL_API_KEY = os.getenv(
+    "INTERNAL_API_KEY", "key for everything"
+)  # API key for our API to change also values
 DEBUG = False
 ALLOWED_HOSTS = []
 
@@ -94,14 +97,20 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.environ.get("DB_NAME", "viernulvier_archief"),
+#         "USER": os.environ.get("DB_USER", "postgres"),
+#         "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+#         "HOST": os.environ.get("DB_HOST", "localhost"),
+#         "PORT": os.environ.get("DB_PORT", "5432"),
+#     }
+# }
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME", "viernulvier_archief"),
-        "USER": os.environ.get("DB_USER", "postgres"),
-        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": os.environ.get("DB_PORT", "5432"),
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -110,8 +119,7 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.\
-                UserAttributeSimilarityValidator",
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
@@ -141,6 +149,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
@@ -157,12 +169,57 @@ REST_FRAMEWORK = {
         "apps.core.authentications.ApiKeyAuthentication"
     ],
     "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.ApiKeyPermission"],
+    "DEFAULT_THROTTLE_CLASSES": ["apps.core.throttles.PublicKeyThrottle"],
+    "DEFAULT_THROTTLE_RATES": {
+        "public": "1000/day",
+    },
 }
 
 # drf-spectacular settings
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Viernulvier Archief API",
-    "DESCRIPTION": "API documentation for the Viernulvier Archief project.",
+    "TITLE": "Viernulvier Archive API",
+    "DESCRIPTION": textwrap.dedent("""
+        This API provides structured access to the digital archive, including
+        productions, events, media, and locations.
+
+        ### Authentication
+        Access is determined by your API key:
+        * **Public API key**: Read-only.
+        * **Internal API key**: Full rights (CRUD).
+    """).strip(),
     "VERSION": "1.0.0",
+    "CONTACT": { # TODO change this
+        'name': 'Support Team',
+        'url': 'https://www.viernulvier.gent/',
+        "email": "info@viernulvier.gent",
+    },
+    "LICENSE": {
+        "name": "MIT License",
+    },
+    "SCHEMA_PATH_PREFIX": r'/api/',
     "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "displayOperationId": False,
+        "filter": False,
+        "showRequestDuration": True,
+        "persistAuthorization": True,
+        "tagsSorter": "alpha", # Sort tags alfabetically
+        "operationsSorter": "method", # Sort endpoints on HTTP method
+        "tryItOutEnabled": True,
+        "docExpansion": "none", # Collapsed by default for a cleaner look (set to 'list' to expand tags and endpoints, or 'full' to expand everything)
+        "defaultModelsExpandDepth": 0, # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
+    },
+    "TAGS": [
+        {"name": "Productions", "description": "Production management and translations."},
+        {"name": "Events", "description": "Event instances and pricing information."},
+        {"name": "Media", "description": "Media galleries, items and crops."},
+        {"name": "Locations", "description": "Locations, halls and spaces."},
+        {"name": "Genres", "description": "Genre taxonomy and usage types."},
+        {"name": "Tags", "description": "Tag management and production tagging."},
+        {"name": "Pricing", "description": "Price ranks and price structures."},
+        {"name": "Languages", "description": "Supported languages."},
+        {"name": "Imports", "description": "Import pipeline audit logs."},
+    ],
 }

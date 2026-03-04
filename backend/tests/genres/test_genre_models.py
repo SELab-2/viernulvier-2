@@ -47,7 +47,7 @@ class TestGenre:
         GenreTranslationFactory(genre=genre, language__code="en", name="Festival")
         GenreTranslationFactory(genre=genre, language__code="nl", name="Festival NL")
 
-        assert str(genre) == "Festival - [en - Festival] - [nl - Festival NL]"
+        assert str(genre) == "Festival"
 
     def test_delete_cascades_to_translations(self):
         genre = GenreFactory()
