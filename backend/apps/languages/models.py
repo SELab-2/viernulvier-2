@@ -20,7 +20,7 @@ class Language(BaseModel):
 
     is_active = models.BooleanField(
         default=False,
-        db_comment="Wether the language should be shown in the frontend or not. \
+        db_comment="Whether the language should be shown in the frontend or not. \
                     Useful for when a language is still being implemented.",
     )
 
