@@ -1,54 +1,54 @@
 name: Deploy to production
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+    push:
+        branches: [main]
+    workflow_dispatch:
 
 jobs:
-  deploy:
-    runs-on: self-hosted
+    deploy:
+        runs-on: self-hosted
 
-    steps:
-      - uses: actions/checkout@v4
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Create .env.prod from secrets
-        env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
-          DOMAIN: ${{ secrets.DOMAIN }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          VIERNULVIER_API_KEY: ${{ secrets.VIERNULVIER_API_KEY }}
-          PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
-          INTERNAL_API_KEY: ${{ secrets.INTERNAL_API_KEY }}
-        run: |
-          cat <<EOF > infrastructure/.env.prod
-          DJANGO_SETTINGS_MODULE=config.settings.prod
-          SECRET_KEY=${SECRET_KEY}
-          DEBUG=False
-          ALLOWED_HOSTS=${ALLOWED_HOSTS}
-          DOMAIN=${DOMAIN}
-          DB_NAME=${DB_NAME}
-          DB_USER=${DB_USER}
-          DB_PASSWORD=${DB_PASSWORD}
-          DB_HOST=db
-          DB_PORT=5432
-          POSTGRES_DB=${DB_NAME}
-          POSTGRES_USER=${DB_USER}
-          POSTGRES_PASSWORD=${DB_PASSWORD}
-          VIERNULVIER_API_KEY=${VIERNULVIER_API_KEY}
-          PUBLIC_API_KEY=${PUBLIC_API_KEY}
-          INTERNAL_API_KEY=${INTERNAL_API_KEY}
-          EOF
+            - name: Create .env.prod from secrets
+              env:
+                  SECRET_KEY: ${{ secrets.SECRET_KEY }}
+                  ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+                  DOMAIN: ${{ secrets.DOMAIN }}
+                  DB_NAME: ${{ secrets.DB_NAME }}
+                  DB_USER: ${{ secrets.DB_USER }}
+                  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                  VIERNULVIER_API_KEY: ${{ secrets.VIERNULVIER_API_KEY }}
+                  PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
+                  INTERNAL_API_KEY: ${{ secrets.INTERNAL_API_KEY }}
+              run: |
+                  cat <<EOF > infrastructure/.env.prod
+                  DJANGO_SETTINGS_MODULE=config.settings.prod
+                  SECRET_KEY=${SECRET_KEY}
+                  DEBUG=False
+                  ALLOWED_HOSTS=${ALLOWED_HOSTS}
+                  DOMAIN=${DOMAIN}
+                  DB_NAME=${DB_NAME}
+                  DB_USER=${DB_USER}
+                  DB_PASSWORD=${DB_PASSWORD}
+                  DB_HOST=database
+                  DB_PORT=5432
+                  POSTGRES_DB=${DB_NAME}
+                  POSTGRES_USER=${DB_USER}
+                  POSTGRES_PASSWORD=${DB_PASSWORD}
+                  VIERNULVIER_API_KEY=${VIERNULVIER_API_KEY}
+                  PUBLIC_API_KEY=${PUBLIC_API_KEY}
+                  INTERNAL_API_KEY=${INTERNAL_API_KEY}
+                  EOF
 
-      - name: Build and start containers
-        run: |
-          docker compose -f infrastructure/docker-compose.prod.yml build
-          docker compose -f infrastructure/docker-compose.prod.yml up -d
+            - name: Build and start containers
+              run: |
+                  docker compose -f infrastructure/docker-compose.prod.yml build
+                  docker compose -f infrastructure/docker-compose.prod.yml up -d
 
-      - name: Verify deployment
-        run: |
-          sleep 5
-          docker compose -f infrastructure/docker-compose.prod.yml ps
+            - name: Verify deployment
+              run: |
+                  sleep 5
+                  docker compose -f infrastructure/docker-compose.prod.yml ps

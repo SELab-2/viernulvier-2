@@ -1,5 +1,8 @@
+name: viernulvier
+
 services:
-    db:
+    database:
+        container_name: database
         image: postgres:16-alpine
         restart: unless-stopped
         healthcheck:
@@ -19,6 +22,7 @@ services:
             - viernulvier
 
     backend:
+        container_name: backend
         image: viernulvier/backend
         build:
             context: ../backend
@@ -27,7 +31,7 @@ services:
                 REQUIREMENTS_FILE: requirements/production.txt
         restart: unless-stopped
         depends_on:
-            db:
+            database:
                 condition: service_healthy
         env_file:
             - .env.prod
@@ -42,6 +46,8 @@ services:
                    gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
 
     frontend:
+        container_name: frontend
+        image: viernulvier/frontend
         build: ../frontend
         restart: "no"
         networks:
@@ -50,6 +56,7 @@ services:
             - frontend_build:/frontend_build
 
     nginx:
+        container_name: nginx
         image: nginx:alpine
         restart: unless-stopped
         ports:
@@ -73,6 +80,7 @@ services:
             - viernulvier
 
     certbot:
+        container_name: certbot
         image: certbot/certbot
         restart: unless-stopped
         volumes:
