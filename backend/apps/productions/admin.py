@@ -14,8 +14,14 @@ the list and detail pages free of N+1 queries.
 """
 
 from django.contrib import admin
+from django.contrib import messages
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django import forms
+from django.template.response import TemplateResponse
+from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
+from apps.tags.models import Tag
 from .admin_filters import ArtistNameFilter, GenreFilter, TagFilter
 from .models import (
     Production,
@@ -25,6 +31,14 @@ from .models import (
     UitDatabaseTheme,
     UitDatabaseType,
 )
+
+
+class AddTagToProductionsForm(forms.Form):
+    tag = forms.ModelChoiceField(
+        queryset=Tag.objects.order_by("type"),
+        required=True,
+        label="Tag",
+    )
 
 
 # ===========================================================================
@@ -170,6 +184,8 @@ class ProductionAdmin(BaseAdmin):
 
     ordering = ("-id",)
 
+    actions = ("add_tag_to_selected_productions",)
+
     inlines = [
         ProductionTranslationInline,
         ProductionGenreInline,
@@ -188,6 +204,70 @@ class ProductionAdmin(BaseAdmin):
             )
             .prefetch_related("translations")
         )
+
+    @admin.action(description="Add selected tag to selected productions")
+    def add_tag_to_selected_productions(self, request, queryset):
+        """Two-step admin action to attach one tag to selected productions."""
+
+        changelist_url = reverse(
+            f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist"
+        )
+
+        if "apply" in request.POST:
+            form = AddTagToProductionsForm(request.POST)
+            selected_ids = request.POST.getlist(ACTION_CHECKBOX_NAME)
+            selected_qs = self.model.objects.filter(pk__in=selected_ids)
+
+            if not selected_ids:
+                self.message_user(request, "Geen productions geselecteerd.", level=messages.ERROR)
+                return
+
+            if form.is_valid():
+                tag = form.cleaned_data["tag"]
+                production_ids = list(selected_qs.values_list("id", flat=True))
+                through_model = Production.tags.through
+
+                through_model.objects.bulk_create(
+                    [through_model(production_id=production_id, tag_id=tag.id) for production_id in production_ids],
+                    ignore_conflicts=True,
+                )
+
+                self.message_user(
+                    request,
+                    f"Tag '{tag.type}' toegevoegd aan {len(production_ids)} geselecteerde productions.",
+                    level=messages.SUCCESS,
+                )
+                return
+
+            context = {
+                **self.admin_site.each_context(request),
+                "opts": self.model._meta,
+                "queryset": selected_qs,
+                "form": form,
+                "action_checkbox_name": ACTION_CHECKBOX_NAME,
+                "action_name": "add_tag_to_selected_productions",
+                "title": "Add tag to selected productions",
+                "changelist_url": changelist_url,
+            }
+            return TemplateResponse(request, "productions/add_tag_action.html", context)
+
+        form = AddTagToProductionsForm()
+        selected_qs = queryset
+        if not selected_qs.exists():
+            self.message_user(request, "Geen productions geselecteerd.", level=messages.ERROR)
+            return
+
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "queryset": selected_qs,
+            "form": form,
+            "action_checkbox_name": ACTION_CHECKBOX_NAME,
+            "action_name": "add_tag_to_selected_productions",
+            "title": "Add tag to selected productions",
+            "changelist_url": changelist_url,
+        }
+        return TemplateResponse(request, "productions/add_tag_action.html", context)
 
 
 # ===========================================================================

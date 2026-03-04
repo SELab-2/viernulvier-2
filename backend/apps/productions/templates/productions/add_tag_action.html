@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <div style="position: fixed; inset: 0; z-index: 1;">
+    <iframe
+      src="{{ changelist_url }}"
+      title="Productions"
+      style="width:100%; height:100%; border:0; opacity:.45; pointer-events:none;"
+    ></iframe>
+  </div>
+
+  <div style="position: fixed; inset: 0; z-index: 2; background: rgba(0, 0, 0, 0.20);"></div>
+
+  <div style="position: fixed; inset: 0; z-index: 3; display:flex; align-items:center; justify-content:center; padding:24px;">
+    <div style="background:#fff; width:min(560px, 100%); border-radius:8px; box-shadow:0 12px 30px rgba(0,0,0,.25); padding:20px;">
+      <h1 style="margin-top:0;">{{ title }}</h1>
+      <p>{% trans "Selected productions" %}: {{ queryset|length }}</p>
+
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <input type="hidden" name="action" value="{{ action_name }}">
+        <input type="hidden" name="apply" value="1">
+
+        {% for obj in queryset %}
+          <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk }}">
+        {% endfor %}
+
+        <div style="display:flex; gap:10px; align-items:center; margin-top:14px;">
+          <button type="submit" class="default">{% trans "Apply" %}</button>
+          <a href="{{ changelist_url }}">{% trans "Cancel" %}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
