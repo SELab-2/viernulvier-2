@@ -1,73 +1,143 @@
-"""Viernulvier scraper module.
-
-Architecture: centralized scrapers live in apps/imports/scrapers/.
-This allows multiple apps to reuse scraping logic without duplication.
+"""Viernulvier / Peppered scraper module.
 
 Usage:
-    from apps.imports.scrapers.viernulvier import sync_viernulvier
-    from apps.events.models import Event
-
-    sync_viernulvier(Event, endpoint="/events")
+    from apps.imports.scrapers.viernulvier import sync_viernulvier, ModelSyncConfig
+    sync_viernulvier(MyModel, config, endpoint="/productions")
 """
 
 import logging
 import os
 import re
 import sys
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Type
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Mapping, Optional, Type
 from urllib.parse import urljoin, urlparse
 
 import requests
 from django.core.exceptions import FieldDoesNotExist, FieldError, ValidationError
 from django.db import DatabaseError, IntegrityError, transaction, models
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime, parse_date
+from django.utils.dateparse import parse_date, parse_datetime
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
 # API Configuration
+# ---------------------------------------------------------------------------
+
 BASE_URL = "https://www.viernulvier.gent/api/v1"
 BASE_DOMAIN = "https://www.viernulvier.gent"
 DEFAULT_ENDPOINT = "/productions"
 DEFAULT_TIMEOUT = 10
-
-# JSON-LD Constants
 ERROR_CONTEXT_PATH = "/api/contexts/Error"
-JSON_LD_ID_FIELDS = ("external_id", "@id", "id")
-JSON_LD_METADATA_FIELDS = ("external_id",)
 
-# Django Integer Field Types
-INTEGER_FIELD_TYPES = (
-    models.AutoField,
-    models.BigAutoField,
-    models.IntegerField,
-    models.BigIntegerField,
-    models.SmallIntegerField,
-    models.PositiveIntegerField,
-    models.PositiveSmallIntegerField,
-)
 
+# ---------------------------------------------------------------------------
+# Exceptions
+# ---------------------------------------------------------------------------
 
 class ScraperError(Exception):
-    """Raised when the scraper cannot fetch or normalize Viernulvier data.
+    """Raised when the scraper cannot fetch or normalize Viernulvier data."""
 
-    This exception wraps network errors, response shape validation failures,
-    and JSON decoding problems so callers can handle a single error type.
+
+# ---------------------------------------------------------------------------
+# Configuration dataclasses
+# ---------------------------------------------------------------------------
+
+@dataclass
+class TranslationConfig:
+    """Configuration for syncing translations to a separate model.
+
+    The Peppered API ALWAYS returns translations as a flat dict:
+        "title": {"nl": "De titel", "en": "The title", "fr": "Le titre"}
+
+    Each translated field has its own flat dict on the parent object.
+    Each TranslationConfig processes one such field. Multiple TranslationConfigs
+    for the same model are merged per language code via update_or_create.
+
+    Args:
+        api_key:      Key in the parent API item (e.g. "title", "description").
+        model:        Django model for the translations.
+        parent_fk:    FK field name to the parent model on the translation model.
+        flat_field:   Field name on the translation model to populate.
+        language_fk:  Field name for the language code on the translation model.
+                      Use "language_id" when Language has a string PK.
+        value_transforms: Optional callables per model field name.
+
+    Example:
+        TranslationConfig(
+            api_key="title",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="title",
+            language_fk="language_id",
+        )
     """
+    api_key: str
+    model: Type[models.Model]
+    parent_fk: str
+    flat_field: str
+    language_fk: str = "language_id"
+    value_transforms: Dict[str, Callable[[Any], Any]] = field(default_factory=dict)
 
+
+@dataclass
+class M2MConfig:
+    """Configuration for M2M relations via a through table.
+
+    The API returns M2M relations as a list of URLs:
+        "genres": ["https://example.com/api/v1/genres/1", ...]
+
+    Args:
+        api_key:              Key in the parent API item (e.g. "genres").
+        related_model:        The related Django model.
+        through_model:        The through table.
+        parent_fk:            FK to the parent model in the through table.
+        related_fk:           FK to the related model in the through table.
+        related_lookup_field: Field used to look up the related model.
+        extra_fields:         Extra fields on the through table: {api_field: model_field}.
+    """
+    api_key: str
+    related_model: Type[models.Model]
+    through_model: Type[models.Model]
+    parent_fk: str
+    related_fk: str
+    related_lookup_field: str = "external_id"
+    extra_fields: Dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
+class ModelSyncConfig:
+    """Complete sync configuration for one Django model.
+
+    Args:
+        field_map:        API field name -> model field name.
+                          Set to None to explicitly skip a field.
+        value_transforms: Callables per model field name for value transformation.
+                          E.g. {"is_own_location": nee_ja_to_bool}
+        fk_resolvers:     Custom FK resolution per model field name when the
+                          default external_id lookup does not work.
+                          Callable(raw_value) -> pk | None
+                          E.g. {"use_as": lambda v: GenreUseAs.objects.get_or_create(name=v)[0].pk}
+        translations:     List of TranslationConfig for flat-dict translations.
+        m2m:              List of M2MConfig for M2M relations.
+        lookup_field:     Field for update_or_create lookup (default "external_id").
+        api_id_key:       Key for the primary identifier in the API object (default "@id").
+    """
+    field_map: Dict[str, Optional[str]] = field(default_factory=dict)
+    value_transforms: Dict[str, Callable[[Any], Any]] = field(default_factory=dict)
+    fk_resolvers: Dict[str, Callable[[Any], Optional[Any]]] = field(default_factory=dict)
+    translations: List[TranslationConfig] = field(default_factory=list)
+    m2m: List[M2MConfig] = field(default_factory=list)
+    lookup_field: str = "external_id"
+    api_id_key: str = "@id"
+
+
+# ---------------------------------------------------------------------------
+# HTTP fetch layer
+# ---------------------------------------------------------------------------
 
 def _get_api_key_or_raise() -> str:
-    """Return the API key from the environment or raise a scraper error.
-
-    Returns:
-        The value of the VIERNULVIER_API_KEY environment variable.
-
-    Raises:
-        ScraperError: If VIERNULVIER_API_KEY is missing or empty.
-
-    Side Effects:
-        None. This reads environment variables only.
-    """
     api_key = os.getenv("VIERNULVIER_API_KEY")
     if not api_key:
         raise ScraperError("VIERNULVIER_API_KEY is not set")
@@ -75,67 +145,14 @@ def _get_api_key_or_raise() -> str:
 
 
 def _build_request_headers() -> Dict[str, str]:
-    """Build request headers required by the Viernulvier API.
-
-    Returns:
-        A headers dict containing authentication and JSON-LD accept header.
-
-    Raises:
-        ScraperError: If the API key is missing.
-
-    Side Effects:
-        None. This only assembles a dict from environment configuration.
-    """
     return {
         "X-AUTH-TOKEN": _get_api_key_or_raise(),
         "accept": "application/ld+json",
     }
 
 
-def _normalize_items(items: Sequence[Any]) -> List[Any]:
-    """Normalize items by renaming @id to external_id.
-
-    This function performs a shallow copy for dict items that contain "@id"
-    to avoid mutating the original API response payload.
-
-    Args:
-        items: Items from the API response (list or other sequence).
-
-    Returns:
-        List of items with @id renamed to external_id when possible.
-
-    Side Effects:
-        None. Returns a new list and copies only dicts with "@id".
-    """
-    normalized: List[Any] = []
-    for item in items:
-        if isinstance(item, dict) and "@id" in item:
-            # Create a copy and rename @id to external_id
-            normalized_item = {k: v for k, v in item.items() if k != "@id"}
-            normalized_item["external_id"] = item["@id"]
-            normalized.append(normalized_item)
-        else:
-            normalized.append(item)
-    return normalized
-
-
-def _fetch_single_page(url: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
-    """Fetch a single page from the Viernulvier API.
-
-    Args:
-        url: Full URL to fetch (absolute).
-        params: Optional query parameters dict to include in the request.
-
-    Returns:
-        Parsed JSON response as a dict.
-
-    Raises:
-        ScraperError: On request failures, invalid JSON, or JSON-LD error payloads.
-
-    Side Effects:
-        Performs an HTTP GET request to the Viernulvier API.
-    """
-    logger.debug("Fetching Viernulvier page: %s", url)
+def _fetch_single_page(url: str, params: Optional[Dict[str, str]] = None) -> Any:
+    logger.debug("Fetching page: %s", url)
     try:
         response = requests.get(
             url,
@@ -144,30 +161,23 @@ def _fetch_single_page(url: str, params: Optional[Dict[str, str]] = None) -> Dic
             timeout=DEFAULT_TIMEOUT,
         )
     except requests.RequestException as exc:
-        logger.exception("Viernulvier API request failed")
         raise ScraperError("Request to Viernulvier API failed") from exc
 
     if not response.ok:
-        logger.error("Viernulvier API error: %s %s", response.status_code, response.text)
         raise ScraperError(f"Viernulvier API error: {response.status_code}")
 
     try:
         data = response.json()
     except ValueError as exc:
-        logger.exception("Invalid JSON from Viernulvier API")
         raise ScraperError("Invalid JSON from Viernulvier API") from exc
 
     if data is None:
-        raise ScraperError("Unexpected Viernulvier API payload")
+        raise ScraperError("Unexpected Viernulvier API payload: null")
 
-    # Handle JSON-LD error responses
-    if isinstance(data, dict):
-        if data.get("@context") == ERROR_CONTEXT_PATH:
-            status = data.get("status", "unknown")
-            detail = data.get("detail", "no detail provided")
-            error_msg = f"Viernulvier API error: status={status}, detail={detail}"
-            logger.error(error_msg)
-            raise ScraperError(error_msg)
+    if isinstance(data, dict) and data.get("@context") == ERROR_CONTEXT_PATH:
+        status = data.get("status", "unknown")
+        detail = data.get("detail", "no detail provided")
+        raise ScraperError(f"Viernulvier API error: status={status}, detail={detail}")
 
     return data
 
@@ -176,441 +186,377 @@ def fetch_viernulvier(
     endpoint: str = DEFAULT_ENDPOINT,
     params: Optional[Dict[str, str]] = None,
 ) -> List[Any]:
-    """Fetch items from the Viernulvier JSON-LD API endpoint.
-
-    The endpoint must be a relative API path. The response is expected to be
-    JSON-LD, either a collection with a "member" field or a single item with
-    an "@context". JSON-LD error payloads are detected and surfaced.
-
-    For paginated endpoints (those with a "view" property), this function
-    automatically fetches all pages by following the "next" link.
+    """Fetch all items from an endpoint (follows pagination automatically).
 
     Args:
-        endpoint: Relative API path (e.g., "/events"). Absolute URLs are rejected.
-        params: Optional query parameters dict (e.g., {"created_at[after]": "2024-01-01T00:00:00Z"}).
-            Parameters are only applied to the initial request; pagination links from the API
-            are followed as-is.
+        endpoint: Relative API path (e.g. "/productions").
+        params:   Optional query parameters (e.g. {"created_at[after]": "2024-01-01"}).
 
     Returns:
-        A list of items from the endpoint (all pages if paginated), normalized
-        to include external_id when @id is present.
-
-    Raises:
-        ScraperError: On missing API key, request failures, invalid JSON, JSON-LD
-            error payloads, or unexpected payload shapes.
-
-    Side Effects:
-        Performs HTTP GET requests to the Viernulvier API (possibly multiple for pagination).
+        List of all items across all pages.
     """
     parsed = urlparse(endpoint)
     if parsed.scheme or parsed.netloc:
         raise ScraperError(f"endpoint must be a relative path, got: {endpoint!r}")
-    url = urljoin(BASE_URL + "/", endpoint.lstrip("/"))
 
+    url = urljoin(BASE_URL + "/", endpoint.lstrip("/"))
     all_items: List[Any] = []
-    current_url = url
-    first_iteration = True
+    current_url: Optional[str] = url
+    first_page = True
 
     while current_url:
-        data = _fetch_single_page(current_url, params=params if first_iteration else None)
-        first_iteration = False
+        data = _fetch_single_page(current_url, params=params if first_page else None)
+        first_page = False
 
-        # Handle JSON-LD @graph member extraction
         if isinstance(data, dict):
             if "member" in data:
-                all_items.extend(_normalize_items(data["member"]))
+                all_items.extend(data["member"])
             elif "@context" in data:
-                # This is likely a single JSON-LD item, wrap it
-                all_items.extend(_normalize_items([data]))
+                # Single-item response
+                all_items.append(data)
             else:
-                # Dict without @context or member is unexpected
-                raise ScraperError("Unexpected Viernulvier API payload")
+                raise ScraperError("Unexpected payload shape: dict without 'member' or '@context'")
 
-            # Check if there's a "next" page in the view property
             view = data.get("view")
             if isinstance(view, dict) and "next" in view:
                 next_url = view["next"]
-                # The next_url from the API is an absolute path like /api/v1/events?page=2
-                # Construct the full URL correctly
-                if next_url.startswith("http"):
-                    current_url = next_url
-                else:
-                    # It's a relative path, join it with the base domain
-                    current_url = urljoin(BASE_DOMAIN, next_url)
+                current_url = (
+                    next_url if next_url.startswith("http")
+                    else urljoin(BASE_DOMAIN, next_url)
+                )
             else:
-                # No more pages
                 current_url = None
+
         elif isinstance(data, list):
-            # Handle list responses (non-paginated)
-            all_items.extend(_normalize_items(data))
+            all_items.extend(data)
             current_url = None
         else:
-            raise ScraperError("Unexpected Viernulvier API payload")
+            raise ScraperError(f"Unexpected payload type: {type(data)}")
 
     return all_items
 
 
-def _snake_case_to_camel(value: str) -> str:
-    """Convert snake_case to lowerCamelCase.
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
 
-    Args:
-        value: snake_case string.
-
-    Returns:
-        lowerCamelCase string.
-
-    Side Effects:
-        None. Pure string transformation.
-    """
-    parts = value.split("_")
-    return parts[0] + "".join(part.title() for part in parts[1:])
-
-def _camel_to_snake_case(value: str) -> str:
-    """Convert lowerCamelCase or UpperCamelCase to snake_case.
-
-    Args:
-        value: camelCase string.
-
-    Returns:
-        snake_case string.
-
-    Side Effects:
-        None. Pure string transformation.
-    """
-    # Insert underscore before uppercase letters and convert to lowercase
-    snake = re.sub(r"(?<!^)(?=[A-Z])", "_", value).lower()
-    return snake
+def _camel_to_snake(value: str) -> str:
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", value).lower()
 
 
-def _is_integer_field(field: models.Field) -> bool:
-    """Check if a Django field is an integer type.
-
-    Args:
-        field: Django model field to check.
-
-    Returns:
-        True if the field is an integer type, False otherwise.
-
-    Side Effects:
-        None. Pure type checking.
-    """
-    return isinstance(field, INTEGER_FIELD_TYPES)
-
-
-def _convert_field_value(field: models.Field, value: Any) -> Optional[Any]:
-    """Convert an API value to the appropriate type for a Django model field.
-
-    Args:
-        field: Django model field.
-        value: Raw API field value.
-
-    Returns:
-        Converted value suitable for the field type, or None if conversion fails.
-
-    Raises:
-        ValueError: If a datetime string cannot be parsed.
-
-    Side Effects:
-        May perform database reads and writes for related objects.
-    """
+def _parse_field_value(model_field: models.Field, value: Any) -> Any:
+    """Convert an API value to the correct Python type for a model field."""
     if value is None:
         return None
-
-    # Handle foreign key fields
-    if field.is_relation and field.many_to_one:
-        return _resolve_fk_value(field, value)
-
-    # Handle datetime fields
-    if isinstance(field, models.DateTimeField):
-        if isinstance(value, str):
-            if value.startswith("-"):
-                value = value[1:]
-            if value[:4] == "0000":
-                value = "1970" + value[4:]
-            return parse_datetime(value)
-        return value
-
-    # Handle date fields
-    if isinstance(field, models.DateField):
-        if isinstance(value, str):
-            return parse_date(value)
-        return value
-
-    # Handle all other field types - return as-is
+    if isinstance(model_field, models.DateTimeField) and isinstance(value, str):
+        # Repair invalid date strings
+        if value.startswith("-"):
+            value = value[1:]
+        if value[:4] == "0000":
+            value = "1970" + value[4:]
+        return parse_datetime(value)
+    if isinstance(model_field, models.DateField) and isinstance(value, str):
+        return parse_date(value)
     return value
 
 
-def _get_item_value(item: Mapping[str, Any], field_name: str) -> Any:
-    """Read a value by snake_case or lowerCamelCase field name.
+def _extract_external_id_from_url(raw: Any) -> Optional[str]:
+    """Extract an external ID from a URL string or dict with '@id'.
 
-    Args:
-        item: Parsed API item data.
-        field_name: Model field name (snake_case).
-
-    Returns:
-        Primary key value for the related object or None when unresolved.
-
-    Side Effects:
-        May perform database reads and writes for related objects.
+    The API sends FK values as URL strings:
+        "hall": "https://www.viernulvier.gent/api/v1/halls/42"
+    or as an embedded object:
+        "production": {"@id": "/api/v1/productions/5", ...}
     """
-    if field_name in item:
-        return item[field_name]
-    camel = _snake_case_to_camel(field_name)
-    if camel in item:
-        return item[camel]
+    if raw is None:
+        return None
+    if isinstance(raw, int):
+        return str(raw)
+    if isinstance(raw, dict):
+        raw = raw.get("@id") or raw.get("external_id") or raw.get("id")
+        if raw is None:
+            return None
+    if isinstance(raw, str):
+        return raw.strip() or None
     return None
 
 
-def _extract_api_id(value: Any) -> Optional[int]:
-    """Extract a numeric ID from an API value.
-
-    Supports raw integers, numeric strings, JSON-LD @id URLs, or nested dicts.
-    This is used for models with integer primary keys.
-
-    Args:
-        value: Raw id value from the API.
-
-    Returns:
-        Parsed integer ID or None when not extractable.
-
-    Side Effects:
-        None. Pure parsing logic.
-    """
-    if value is None:
+def _resolve_fk(model_field: models.Field, raw_value: Any) -> Optional[Any]:
+    """Resolve an FK value to a primary key via external_id lookup."""
+    related_model = model_field.remote_field.model
+    ext_id = _extract_external_id_from_url(raw_value)
+    if ext_id is None:
         return None
-    if isinstance(value, int):
-        return value
-    if isinstance(value, str):
-        text = value.strip()
-        if text.isdigit():
-            return int(text)
-        parsed = urlparse(text)
-        path = parsed.path if parsed.scheme or parsed.netloc else text
-        tail = path.rstrip("/").split("/")[-1]
-        return int(tail) if tail.isdigit() else None
-    if isinstance(value, dict):
-        for field_name in JSON_LD_ID_FIELDS:
-            if field_value := value.get(field_name):
-                return _extract_api_id(field_value)
-    return None
-
-
-def _extract_item_pk_value(model: Type[models.Model], item: Mapping[str, Any]) -> Optional[Any]:
-    """Extract the primary key value for a model from an API item.
-
-    The function tries several common JSON-LD fields (external_id, @id, id)
-    and falls back to the model's primary key field name in both snake_case
-    and lowerCamelCase forms.
-
-    Args:
-        model: Django model class to map the item onto.
-        item: Parsed API item.
-
-    Returns:
-        Parsed primary key value or None when it cannot be determined.
-
-    Side Effects:
-        None. This is pure extraction and normalization.
-    """
-    raw_id = item.get("external_id") or item.get("@id") or item.get("id")
-    if raw_id is None:
-        raw_id = _get_item_value(item, model._meta.pk.name)
-    if isinstance(raw_id, dict):
-        extracted_id = raw_id.get("external_id") or raw_id.get("@id") or raw_id.get("id")
-        if extracted_id is None:
-            raw_id = _get_item_value(raw_id, model._meta.pk.name)
-        else:
-            raw_id = extracted_id
-    if raw_id in (None, ""):
+    try:
+        return related_model.objects.values_list("pk", flat=True).get(external_id=ext_id)
+    except related_model.DoesNotExist:
+        logger.warning(
+            "FK not found: %s.external_id=%r — sync related models first.",
+            related_model.__name__, ext_id,
+        )
         return None
-    pk_field = model._meta.pk
-    if _is_integer_field(pk_field):
-        return _extract_api_id(raw_id)
-    return str(raw_id)
+    except Exception:
+        logger.exception("Error resolving FK %s external_id=%r", related_model.__name__, ext_id)
+        return None
 
 
-def _build_model_defaults(
-    model: Type[models.Model], item: Mapping[str, Any]
+# ---------------------------------------------------------------------------
+# Build defaults: API item → Django model defaults dict
+# ---------------------------------------------------------------------------
+
+def _build_defaults(
+    model: Type[models.Model],
+    item: Mapping[str, Any],
+    config: ModelSyncConfig,
 ) -> Dict[str, Any]:
-    """Build a defaults dict for update_or_create from an API item.
+    """Convert an API item to a defaults dict suitable for update_or_create.
 
-    This function attempts to map every field from the API response to the model,
-    automatically handling type conversions for date/time fields and resolving
-    foreign keys using bounded recursion. Fields present in the API but not in
-    the model are silently skipped.
+    Step 1: Explicit field_map from config (highest priority).
+    Step 2: Automatic camelCase→snake_case mapping as fallback.
 
-    Args:
-        model: Django model class to map the item onto.
-        item: Parsed API item.
-
-    Returns:
-        A dict suitable for update_or_create(..., defaults=...).
-
-    Raises:
-        ScraperError: If required model fields are missing from the API data.
-
-    Side Effects:
-        May trigger database lookups and writes for related objects.
+    Flat-dict fields (translations) and lists (M2M) are NOT processed here —
+    those are handled by _sync_translations and _sync_m2m.
     """
     defaults: Dict[str, Any] = {}
+    explicitly_mapped = set(config.field_map.keys())
 
-    # Try to map every field from the API response
-    for key, value in item.items():
-        if key == "@id":
-            key = "external_id"
-
-        # Skip JSON-LD metadata fields
-        elif key.startswith("@") or key in JSON_LD_METADATA_FIELDS:
+    # ---- Step 1: Explicit field_map ----
+    for api_key, model_field_name in config.field_map.items():
+        if model_field_name is None:
+            continue
+        raw_value = item.get(api_key)
+        if raw_value is None:
             continue
 
-        if value is None:
-            continue
-
-        # Try to find the corresponding model field
-        # First try snake_case (direct match)
         try:
-            field = model._meta.get_field(key)
+            model_field = model._meta.get_field(model_field_name)
         except FieldDoesNotExist:
-            # Try converting from camelCase to snake_case
-            snake_key = _camel_to_snake_case(key)
+            logger.warning("Field '%s' doesn't exist in %s", model_field_name, model.__name__)
+            continue
+
+        if not isinstance(model_field, models.Field) or model_field.primary_key:
+            continue
+
+        # Flat dict = translation, handled by _sync_translations, skip here
+        if isinstance(raw_value, dict) and not model_field.is_relation:
+            continue
+
+        if model_field.is_relation and model_field.many_to_one:
+            custom_resolver = config.fk_resolvers.get(model_field_name)
+            pk = custom_resolver(raw_value) if custom_resolver else _resolve_fk(model_field, raw_value)
+            if pk is not None:
+                defaults[f"{model_field.name}_id"] = pk
+        else:
+            converted = _parse_field_value(model_field, raw_value)
+            transform = config.value_transforms.get(model_field_name)
+            if transform:
+                converted = transform(converted)
+            if converted is not None:
+                defaults[model_field.name] = converted
+
+    # ---- Step 2: Auto-mapping for fields not explicitly mapped ----
+    for api_key, raw_value in item.items():
+        if api_key in explicitly_mapped:
+            continue
+        if api_key.startswith("@") or raw_value is None:
+            continue
+        # Lists = M2M, flat dicts = translations — skip both here
+        if isinstance(raw_value, (list, dict)):
+            continue
+
+        snake_key = _camel_to_snake(api_key)
+        model_field = None
+        for candidate in (api_key, snake_key):
             try:
-                field = model._meta.get_field(snake_key)
+                f = model._meta.get_field(candidate)
+                if isinstance(f, models.Field) and not f.primary_key:
+                    model_field = f
+                    break
             except FieldDoesNotExist:
-                # Field doesn't exist in model, skip it silently
-                logger.debug("Skipping unknown field '%s' for model %s", key, model.__name__)
-                continue
+                pass
 
-        # Skip reverse relations (e.g., ManyToOneRel) that aren't real model fields
-        if not isinstance(field, models.Field):
-            logger.debug("Skipping reverse relation '%s' for model %s", key, model.__name__)
+        if model_field is None:
+            logger.debug("Auto-mapping: '%s' not found in %s", api_key, model.__name__)
             continue
 
-        # Skip primary key fields
-        if field.primary_key:
-            continue
-
-        # Convert the value based on field type
-        converted_value = _convert_field_value(field, value)
-        if converted_value is not None:
-            if field.is_relation and field.many_to_one:
-                defaults[f"{field.name}_id"] = converted_value
-            else:
-                defaults[field.name] = converted_value
-
-    # Validate that all required fields are present
-    missing = _missing_required_fields(model, defaults)
-    if missing:
-        raise ScraperError(f"Missing required fields for {model.__name__}: {', '.join(missing)}")
+        if model_field.is_relation and model_field.many_to_one:
+            pk = _resolve_fk(model_field, raw_value)
+            if pk is not None:
+                defaults[f"{model_field.name}_id"] = pk
+        else:
+            converted = _parse_field_value(model_field, raw_value)
+            transform = config.value_transforms.get(model_field.name)
+            if transform:
+                converted = transform(converted)
+            if converted is not None:
+                defaults[model_field.name] = converted
 
     return defaults
 
 
-def _resolve_fk_value(field: models.Field, raw_value: dict | str) -> Optional[Any]:
-    """Resolve a foreign-key value from raw API data.
+def _extract_lookup_value(item: Mapping[str, Any], config: ModelSyncConfig) -> Optional[str]:
+    """Extract the lookup value for update_or_create."""
+    raw = item.get(config.api_id_key) or item.get("external_id") or item.get("id")
+    if raw is None:
+        return None
+    if isinstance(raw, dict):
+        raw = raw.get("@id") or raw.get("external_id") or raw.get("id")
+    return str(raw).strip() if raw is not None else None
 
-    If raw_value is a dict, this will optionally materialize the related object.
-    If raw_value is a primitive, this verifies
-    existence before returning the primary key.
 
-    Args:
-        field: Django model field representing the relation.
-        raw_value: Raw API field value.
+# ---------------------------------------------------------------------------
+# Translation sync — flat dict format
+# ---------------------------------------------------------------------------
 
-    Returns:
-        Primary key value for the related object or None when unresolved.
+def _sync_translations(
+    parent_obj: models.Model,
+    item: Mapping[str, Any],
+    translation_config: TranslationConfig,
+) -> None:
+    """Sync one flat-dict field to a translation model.
 
-    Side Effects:
-        May perform database reads and writes for related objects.
+    The Peppered API returns translations as:
+        "title": {"nl": "De titel", "en": "The title"}
+
+    For each language code in the dict, we run update_or_create on the
+    translation model with the single field managed by this TranslationConfig.
+    Multiple TranslationConfigs for the same model then fill all fields
+    together per language code.
     """
-    related_model = field.remote_field.model
-    if isinstance(raw_value, dict):
-        ext_id = raw_value.get("@id")
+    raw_dict = item.get(translation_config.api_key)
+    if not isinstance(raw_dict, dict):
+        return
 
-    elif isinstance(raw_value, str):
-        ext_id = raw_value
-
-    else:
-        raise ScraperError(f"Unsupported foreign key value type for field '{field.name}': {raw_value!r}")
+    model = translation_config.model
+    parent_fk = translation_config.parent_fk
+    language_fk = translation_config.language_fk
+    target_field = translation_config.flat_field
 
     try:
-        return related_model.objects.get(external_id=ext_id)
-    except related_model.DoesNotExist:
-        if isinstance(raw_value, str):
-            endpoint = raw_value.split("/api/v1")[-1]
-            raw_value = fetch_viernulvier(endpoint)[0]
-        defaults = _build_model_defaults(related_model, raw_value)
-        obj, _ = related_model.objects.update_or_create(external_id=ext_id, defaults=defaults)
-        return obj.pk
+        model_field = model._meta.get_field(target_field)
+    except FieldDoesNotExist:
+        logger.warning("Translation veld '%s' niet gevonden op %s", target_field, model.__name__)
+        return
+
+    for lang_code, raw_value in raw_dict.items():
+        if not lang_code or raw_value is None:
+            continue
+
+        transform = translation_config.value_transforms.get(target_field)
+        converted = _parse_field_value(model_field, raw_value)
+        if transform:
+            converted = transform(converted)
+        if converted is None:
+            continue
+
+        try:
+            model.objects.update_or_create(
+                **{parent_fk: parent_obj, language_fk: lang_code},
+                defaults={target_field: converted},
+            )
+        except Exception:
+            logger.exception(
+                "Fout bij translation %s.%s pk=%s taal=%s",
+                model.__name__, target_field, parent_obj.pk, lang_code,
+            )
 
 
-def _missing_required_fields(model: Type[models.Model], defaults: Mapping[str, Any]) -> List[str]:
-    """Return a list of missing required fields based on model metadata.
+# ---------------------------------------------------------------------------
+# M2M sync
+# ---------------------------------------------------------------------------
 
-    Required fields are those that are not auto-created, not nullable, and
-    have no default value (including required foreign keys).
+def _sync_m2m(
+    parent_obj: models.Model,
+    item: Mapping[str, Any],
+    m2m_config: M2MConfig,
+) -> None:
+    """Sync an M2M relation via a through table.
 
-    Args:
-        model: Django model class.
-        defaults: Defaults dict built from the API item.
+    The API returns M2M data as a list of URL strings:
+        "genres": ["https://.../genres/1", "https://.../genres/3"]
 
-    Returns:
-        List of required field names not present in defaults.
-
-    Side Effects:
-        None. Uses model metadata only.
+    Existing through-table rows for this parent object are deleted
+    and recreated based on the current API data.
     """
-    missing: List[str] = []
-    for field in model._meta.fields:
-        if field.primary_key or field.auto_created:
-            continue
-        if field.has_default() or field.null or getattr(field, "blank", False):
-            continue
-        if field.is_relation and field.many_to_one:
-            if f"{field.name}_id" not in defaults:
-                missing.append(field.name)
-            continue
-        if field.name not in defaults:
-            missing.append(field.name)
-    return missing
+    raw_list = item.get(m2m_config.api_key)
+    if not isinstance(raw_list, list):
+        return
 
+    through_model = m2m_config.through_model
+    related_model = m2m_config.related_model
+
+    # Delete existing relations for this parent
+    through_model.objects.filter(**{m2m_config.parent_fk: parent_obj}).delete()
+
+    for position, raw_item in enumerate(raw_list):
+        ext_id = _extract_external_id_from_url(raw_item)
+        if not ext_id:
+            continue
+
+        try:
+            related_obj = related_model.objects.get(
+                **{m2m_config.related_lookup_field: ext_id}
+            )
+        except related_model.DoesNotExist:
+            logger.warning(
+                "%s met %s=%r niet gevonden — sync gerelateerde modellen eerst.",
+                related_model.__name__, m2m_config.related_lookup_field, ext_id,
+            )
+            continue
+
+        through_kwargs: Dict[str, Any] = {
+            m2m_config.parent_fk: parent_obj,
+            m2m_config.related_fk: related_obj,
+        }
+
+        # Extra fields on the through table (e.g. position)
+        for api_field, through_field in m2m_config.extra_fields.items():
+            value = raw_item.get(api_field) if isinstance(raw_item, dict) else None
+            if value is None and api_field == "position":
+                value = position
+            if value is not None:
+                through_kwargs[through_field] = value
+
+        try:
+            through_model.objects.create(**through_kwargs)
+        except Exception:
+            logger.exception(
+                "Fout bij aanmaken %s voor %s pk=%s",
+                through_model.__name__, parent_obj.__class__.__name__, parent_obj.pk,
+            )
+
+
+# ---------------------------------------------------------------------------
+# Main sync function
+# ---------------------------------------------------------------------------
 
 def sync_viernulvier(
     model: Type[models.Model],
+    config: ModelSyncConfig,
     endpoint: str = DEFAULT_ENDPOINT,
     params: Optional[Dict[str, str]] = None,
 ) -> int:
-    """Fetch and persist Viernulvier data into a Django model.
+    """Fetch Viernulvier data and store it in a Django model.
 
-    Items are fetched via `fetch_viernulvier`, validated, and then persisted
-    with per-item savepoints to isolate errors without aborting the batch.
-
-    An ImportLog entry is created to track the import operation.
+    A savepoint is used per item so that an error in one item
+    does not break the rest of the batch.
 
     Args:
-        model: Django model class receiving the API data.
-        endpoint: Relative API endpoint (e.g., "/events").
-        params: Optional query parameters dict (e.g., {"created_at[after]": "2024-01-01T00:00:00Z"})
-            to filter results at the API level.
+        model:    Django model class.
+        config:   ModelSyncConfig with field mapping, translations and M2M.
+        endpoint: Relative API path (e.g. "/productions").
+        params:   Optional query parameters.
 
     Returns:
-        Number of records created or updated.
-
-    Raises:
-        ScraperError: When fetch_viernulvier fails.
-
-    Side Effects:
-        Performs database writes, logs summary and error details, creates ImportLog entry.
+        Number of saved records (created or updated).
     """
-    # Import here to avoid circular dependency
     from apps.import_log.models import ImportLog
 
-    # Build source name from endpoint and params
     source = f"viernulvier:{endpoint}"
     if params:
         params_str = ",".join(f"{k}={v}" for k, v in sorted(params.items()))
         source = f"{source}?{params_str}"
 
-    # Create import log entry
     import_log = ImportLog.objects.create(
         source=source,
         status=ImportLog.Status.IN_PROGRESS,
@@ -619,112 +565,99 @@ def sync_viernulvier(
 
     try:
         items = fetch_viernulvier(endpoint=endpoint, params=params)
-
-        saved = 0
-        errors = 0
-        error_messages = []
-        seen = set()
-
-        with transaction.atomic():
-            for item in items:
-                # Validate item is a dict
-                if not isinstance(item, dict):
-                    msg = f"Item is not a dict: {item}"
-                    logger.error(msg)
-                    errors += 1
-                    error_messages.append(msg)
-                    continue
-
-                # Extract @id
-                item_id = _extract_item_pk_value(model, item)
-
-                # Validate item_id is not empty
-                if item_id is None:
-                    msg = f"Missing @id for item: {item}"
-                    logger.warning(msg)
-                    errors += 1
-                    error_messages.append(msg)
-                    continue
-
-                # Check for duplicates in current batch
-                if item_id in seen:
-                    msg = f"Duplicate @id in batch: {item_id}"
-                    logger.warning(msg)
-                    error_messages.append(msg)
-                    continue
-
-                seen.add(item_id)
-
-                # Persist item with savepoint isolation
-                sid = transaction.savepoint()
-                try:
-                    defaults = _build_model_defaults(model, item)
-                    missing = _missing_required_fields(model, defaults)
-                    if missing:
-                        msg = f"Missing required fields for @id={item_id}: {', '.join(missing)}"
-                        logger.warning(msg)
-                        transaction.savepoint_rollback(sid)
-                        errors += 1
-                        error_messages.append(msg)
-                        continue
-
-                    obj, created = model.objects.update_or_create(
-                        **{model._meta.pk.name: item_id},
-                        defaults=defaults,
-                    )
-                    transaction.savepoint_commit(sid)
-                    saved += 1
-                except ValidationError as e:
-                    transaction.savepoint_rollback(sid)
-                    # Make ValidationErrors readable
-                    messages = []
-                    for field, errs in e.message_dict.items():
-                        for err in errs:
-                            if field == "__all__":
-                                messages.append(f"{err}")
-                            else:
-                                messages.append(f"{field}: {err}")
-                    msg = f"Validation error for @id={item_id}: {'; '.join(messages)}"
-                    logger.error(msg)
-                    errors += 1
-                    error_messages.append(msg)
-
-                except (IntegrityError, DatabaseError, FieldError):
-                    transaction.savepoint_rollback(sid)
-                    exc_type, exc_value, exc_tb = sys.exc_info()
-                    msg = f"Database error for @id={item_id}: {exc_type.__name__}: {exc_value}"
-                    logger.error(msg, exc_info=True)
-                    errors += 1
-                    error_messages.append(msg)
-
-        # Update import log with final status
-        import_log.records_total = len(items)
-        import_log.records_imported = saved
-        import_log.records_failed = errors
-        import_log.finished_at = timezone.now()
-
-        if errors == 0:
-            import_log.status = ImportLog.Status.SUCCESS
-        elif saved > 0:
-            import_log.status = ImportLog.Status.PARTIAL_SUCCESS
-            import_log.error_message = f"{errors} records failed to import: {', '.join(error_messages)}"
-        else:
-            import_log.status = ImportLog.Status.FAILED
-            import_log.error_message = f"All {errors} records failed to import: {', '.join(error_messages)}"
-
-        import_log.save()
-
-        logger.info(
-            "Viernulvier sync finished: Saved=%s, Errors=%s",
-            saved,
-            errors,
-        )
-        return saved
-
     except Exception as exc:
-        # Update import log with error status
         import_log.status = ImportLog.Status.FAILED
         import_log.finished_at = timezone.now()
         import_log.error_message = str(exc)
         import_log.save()
         raise
+
+    saved = 0
+    errors = 0
+    error_messages: List[str] = []
+    seen: set = set()
+
+    for item in items:
+        if not isinstance(item, dict):
+            msg = f"Item is not a dict: {item!r}"
+            logger.error(msg)
+            errors += 1
+            error_messages.append(msg)
+            continue
+
+        lookup_value = _extract_lookup_value(item, config)
+        if lookup_value is None:
+            msg = f"Missing '{config.api_id_key}' for item: {str(item)[:200]}"
+            logger.warning(msg)
+            errors += 1
+            error_messages.append(msg)
+            continue
+
+        if lookup_value in seen:
+            logger.warning("Duplicate in batch skipped: %s", lookup_value)
+            continue
+        seen.add(lookup_value)
+
+        sid = transaction.savepoint()
+        try:
+            defaults = _build_defaults(model, item, config)
+            obj, created = model.objects.update_or_create(
+                **{config.lookup_field: lookup_value},
+                defaults=defaults,
+            )
+
+            for trans_cfg in config.translations:
+                _sync_translations(obj, item, trans_cfg)
+
+            for m2m_cfg in config.m2m:
+                _sync_m2m(obj, item, m2m_cfg)
+
+            transaction.savepoint_commit(sid)
+            saved += 1
+            logger.debug("%s %s: %s", "Created" if created else "Updated", model.__name__, lookup_value)
+
+        except ValidationError as e:
+            transaction.savepoint_rollback(sid)
+            msgs = [
+                f"{f}: {err}" if f != "__all__" else err
+                for f, errs in e.message_dict.items()
+                for err in errs
+            ]
+            msg = f"Validation error for {lookup_value}: {'; '.join(msgs)}"
+            logger.error(msg)
+            errors += 1
+            error_messages.append(msg)
+
+        except (IntegrityError, DatabaseError, FieldError):
+            transaction.savepoint_rollback(sid)
+            exc_type, exc_value, _ = sys.exc_info()
+            msg = f"Database error for {lookup_value}: {exc_type.__name__}: {exc_value}"
+            logger.error(msg, exc_info=True)
+            errors += 1
+            error_messages.append(msg)
+
+        except Exception:
+            transaction.savepoint_rollback(sid)
+            exc_type, exc_value, _ = sys.exc_info()
+            msg = f"Unexpected error for {lookup_value}: {exc_type.__name__}: {exc_value}"
+            logger.error(msg, exc_info=True)
+            errors += 1
+            error_messages.append(msg)
+
+    import_log.records_total = len(items)
+    import_log.records_imported = saved
+    import_log.records_failed = errors
+    import_log.finished_at = timezone.now()
+
+    if errors == 0:
+        import_log.status = ImportLog.Status.SUCCESS
+    elif saved > 0:
+        import_log.status = ImportLog.Status.PARTIAL_SUCCESS
+        import_log.error_message = f"{errors} records failed: {', '.join(error_messages)}"
+    else:
+        import_log.status = ImportLog.Status.FAILED
+        import_log.error_message = f"All {errors} records failed: {', '.join(error_messages)}"
+
+    import_log.save()
+    logger.info("Sync finished: saved=%s, errors=%s", saved, errors)
+    return saved
