@@ -7,49 +7,32 @@ from apps.languages.models import Language
 # LOCATION
 # ==============================
 
+
 class Location(BaseModel):
-    street = models.CharField(
-        max_length=255,
-        db_comment="The street of the location."
-    )
+    street = models.CharField(max_length=255, db_comment="The street of the location.")
 
     number = models.CharField(
-        max_length=20,
-        db_comment="The street number of the location."
+        max_length=20, db_comment="The street number of the location."
     )
 
     postal_code = models.CharField(
-        max_length=20,
-        db_comment="The postal code of the location."
+        max_length=20, db_comment="The postal code of the location."
     )
 
-    city = models.CharField(
-        max_length=100,
-        db_comment="City"
-    )
+    city = models.CharField(max_length=100, db_comment="City")
 
-    country = models.CharField(
-        max_length=100, 
-        db_comment="Country"
-    )
+    country = models.CharField(max_length=100, db_comment="Country")
 
     phone_1 = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True, 
-        db_comment="Primary phone number"
+        max_length=50, blank=True, null=True, db_comment="Primary phone number"
     )
 
     phone_2 = models.CharField(
-        max_length=50, 
-        blank=True, 
-        null=True, 
-        db_comment="Secondary phone number"
+        max_length=50, blank=True, null=True, db_comment="Secondary phone number"
     )
-    
+
     is_own_location = models.BooleanField(
-        default=False, 
-        db_comment="Whether this is an owned location or not"
+        default=False, db_comment="Whether this is an owned location or not"
     )
 
     class Meta(BaseModel.Meta):
@@ -66,19 +49,18 @@ class LocationTranslation(BaseModel):
         Location,
         on_delete=models.CASCADE,
         related_name="translations",
-        db_comment="Reference to the location"
+        db_comment="Reference to the location",
     )
 
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
         related_name="location_translations",
-        db_comment="Language of the translation"
+        db_comment="Language of the translation",
     )
 
     name = models.CharField(
-        max_length=255, 
-        db_comment="Translated name of the location"
+        max_length=255, db_comment="Translated name of the location"
     )
 
     class Meta(BaseModel.Meta):
@@ -87,7 +69,7 @@ class LocationTranslation(BaseModel):
         verbose_name_plural = "Location Translations"
         constraints = [
             models.UniqueConstraint(
-                fields=['location', 'language'], name='unique_location_language'
+                fields=["location", "language"], name="unique_location_language"
             )
         ]
 
@@ -99,12 +81,13 @@ class LocationTranslation(BaseModel):
 # SPACE
 # ==============================
 
+
 class Space(BaseModel):
     location = models.ForeignKey(
         Location,
         on_delete=models.CASCADE,
         related_name="spaces",
-        db_comment="Reference to the location of the space"
+        db_comment="Reference to the location of the space",
     )
 
     class Meta(BaseModel.Meta):
@@ -121,20 +104,17 @@ class SpaceTranslation(BaseModel):
         Space,
         on_delete=models.CASCADE,
         related_name="translations",
-        db_comment="Reference to the space"
+        db_comment="Reference to the space",
     )
 
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
         related_name="space_translations",
-        db_comment="Language of the translation"
+        db_comment="Language of the translation",
     )
 
-    name = models.CharField(
-        max_length=255, 
-        db_comment="Translated name of the space"
-    )
+    name = models.CharField(max_length=255, db_comment="Translated name of the space")
 
     class Meta(BaseModel.Meta):
         db_table = "space_translation"
@@ -142,7 +122,7 @@ class SpaceTranslation(BaseModel):
         verbose_name_plural = "Space Translations"
         constraints = [
             models.UniqueConstraint(
-                fields=['space', 'language'], name='unique_space_language'
+                fields=["space", "language"], name="unique_space_language"
             )
         ]
 
@@ -154,22 +134,21 @@ class SpaceTranslation(BaseModel):
 # HALL
 # ==============================
 
+
 class Hall(BaseModel):
     space = models.ForeignKey(
         Space,
         on_delete=models.CASCADE,
         related_name="halls",
-        db_comment="Reference to the space where the hall is located"
+        db_comment="Reference to the space where the hall is located",
     )
 
     seat_selection = models.BooleanField(
-        default=False,
-        db_comment="Whether seat selection is available"
+        default=False, db_comment="Whether seat selection is available"
     )
 
     open_seating = models.BooleanField(
-        default=False,
-        db_comment="Whether seating is open/general admission"
+        default=False, db_comment="Whether seating is open/general admission"
     )
 
     class Meta(BaseModel.Meta):
@@ -186,25 +165,20 @@ class HallTranslation(BaseModel):
         Hall,
         on_delete=models.CASCADE,
         related_name="translations",
-        db_comment="Reference to the hall"
+        db_comment="Reference to the hall",
     )
 
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
         related_name="hall_translations",
-        db_comment="Language of the translation"
+        db_comment="Language of the translation",
     )
 
-    name = models.CharField(
-        max_length=255, 
-        db_comment="Translated name of the hall"
-    )
+    name = models.CharField(max_length=255, db_comment="Translated name of the hall")
 
     remark = models.TextField(
-        blank=True, 
-        null=True, 
-        db_comment="Optional remark about the hall"
+        blank=True, null=True, db_comment="Optional remark about the hall"
     )
 
     class Meta(BaseModel.Meta):
@@ -213,7 +187,7 @@ class HallTranslation(BaseModel):
         verbose_name_plural = "Hall Translations"
         constraints = [
             models.UniqueConstraint(
-                fields=['hall', 'language'], name='unique_hall_language'
+                fields=["hall", "language"], name="unique_hall_language"
             )
         ]
 

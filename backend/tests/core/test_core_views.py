@@ -57,8 +57,8 @@ def wrong_headers():
 # Class-level / wiring tests
 # ---------------------------------------------------------------------------
 
-class TestApiModelViewSetClass(TestCase):
 
+class TestApiModelViewSetClass(TestCase):
     def test_authentication_classes_contains_api_key_authentication(self):
         self.assertIn(ApiKeyAuthentication, ApiModelViewSet.authentication_classes)
 
@@ -73,6 +73,7 @@ class TestApiModelViewSetClass(TestCase):
 
     def test_inherits_from_model_viewset(self):
         from rest_framework.viewsets import ModelViewSet
+
         self.assertTrue(issubclass(ApiModelViewSet, ModelViewSet))
 
     def test_get_authenticators_returns_instances(self):
@@ -98,11 +99,12 @@ class TestApiModelViewSetClass(TestCase):
 # Integration — GET list
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetList(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
@@ -129,11 +131,12 @@ class TestApiModelViewSetList(TestCase):
 # Integration — GET retrieve
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetRetrieve(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
@@ -167,11 +170,12 @@ class TestApiModelViewSetRetrieve(TestCase):
 # Integration — POST create
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetCreate(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
 
@@ -197,9 +201,7 @@ class TestApiModelViewSetCreate(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_create_no_auth_returns_403(self):
-        response = self.client.post(
-            "/api/languages/", self._payload(), format="json"
-        )
+        response = self.client.post("/api/languages/", self._payload(), format="json")
         self.assertEqual(response.status_code, 403)
 
 
@@ -207,11 +209,12 @@ class TestApiModelViewSetCreate(TestCase):
 # Integration — PUT full update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetUpdate(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
@@ -238,9 +241,7 @@ class TestApiModelViewSetUpdate(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_put_no_auth_returns_403(self):
-        response = self.client.put(
-            "/api/languages/nl/", self._payload(), format="json"
-        )
+        response = self.client.put("/api/languages/nl/", self._payload(), format="json")
         self.assertEqual(response.status_code, 403)
 
     def test_put_nonexistent_returns_404(self):
@@ -257,11 +258,12 @@ class TestApiModelViewSetUpdate(TestCase):
 # Integration — PATCH partial update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetPartialUpdate(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
@@ -295,11 +297,12 @@ class TestApiModelViewSetPartialUpdate(TestCase):
 # Integration — DELETE
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetDelete(TestCase):
-
     def setUp(self):
         from apps.languages.models import Language
+
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)

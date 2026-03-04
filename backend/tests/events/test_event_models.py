@@ -15,6 +15,7 @@ pytestmark = pytest.mark.django_db
 # Event
 # =====================================================
 
+
 class TestEventModel:
     """Tests for the Event model behavior and constraints."""
 
@@ -66,7 +67,7 @@ class TestEventModel:
         event.ends_at = event.starts_at + timedelta(minutes=30)
 
         event.clean()
-    
+
     def test_event_ordering(self):
         """Events are ordered by starts_at ascending by default."""
         now = timezone.now()
@@ -102,9 +103,11 @@ class TestEventModel:
 
         assert event.ticketing_url == ""
 
+
 # =====================================================
 # EventPrice
 # =====================================================
+
 
 class TestEventPriceModel:
     """Tests for EventPrice model behavior and constraints."""

@@ -57,9 +57,7 @@ class ApiKeyAuthentication(authentication.BaseAuthentication):
         parts = auth_header.split()
 
         if len(parts) != 2 or parts[0].lower() != self.keyword:
-            raise AuthenticationFailed(
-                "Invalid header format. Use: Api-Key <KEY>"
-            )
+            raise AuthenticationFailed("Invalid header format. Use: Api-Key <KEY>")
 
         key = parts[1]
 

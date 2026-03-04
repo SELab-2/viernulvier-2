@@ -7,60 +7,50 @@ from apps.core.model import BaseModel
 # Create your models here.
 class ImportLog(BaseModel):
     """
-    Model for logging import operations. 
+    Model for logging import operations.
     This is useful for debugging if something goes wrong.
     """
-    
+
     class Status(models.TextChoices):
-        PENDING = 'PENDING', 'Pending'
-        IN_PROGRESS = 'IN_PROGRESS', 'In Progress'
-        PARTIAL_SUCCESS = 'PARTIAL_SUCCESS', 'Partial Success'
-        SUCCESS = 'SUCCESS', 'Success'
-        FAILED = 'FAILED', 'Failed'
-    
+        PENDING = "PENDING", "Pending"
+        IN_PROGRESS = "IN_PROGRESS", "In Progress"
+        PARTIAL_SUCCESS = "PARTIAL_SUCCESS", "Partial Success"
+        SUCCESS = "SUCCESS", "Success"
+        FAILED = "FAILED", "Failed"
+
     source = models.CharField(
-        max_length=255,
-        help_text="The source of the import, e.g., file name or URL."
+        max_length=255, help_text="The source of the import, e.g., file name or URL."
     )
 
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.PENDING,
-        db_comment="Current status of the import process"
+        db_comment="Current status of the import process",
     )
 
     records_total = models.PositiveIntegerField(
-        default=0,
-        db_comment="Total number of records processed"
+        default=0, db_comment="Total number of records processed"
     )
 
     records_imported = models.PositiveIntegerField(
-        default=0,
-        db_comment="Number of successfully imported records"
+        default=0, db_comment="Number of successfully imported records"
     )
 
     records_failed = models.PositiveIntegerField(
-        default=0,
-        db_comment="Number of failed records"
+        default=0, db_comment="Number of failed records"
     )
 
     started_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        db_comment="Timestamp when the import started"
+        null=True, blank=True, db_comment="Timestamp when the import started"
     )
 
     finished_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        db_comment="Timestamp when the import finished"
+        null=True, blank=True, db_comment="Timestamp when the import finished"
     )
 
     error_message = models.TextField(
-        null=True,
-        blank=True,
-        db_comment="Error message if the import failed"
+        null=True, blank=True, db_comment="Error message if the import failed"
     )
 
     class Meta(BaseModel.Meta):
@@ -72,9 +62,9 @@ class ImportLog(BaseModel):
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    Q(started_at__isnull=True) |
-                    Q(finished_at__isnull=True) |
-                    Q(finished_at__gt=F("started_at")) 
+                    Q(started_at__isnull=True)
+                    | Q(finished_at__isnull=True)
+                    | Q(finished_at__gt=F("started_at"))
                 ),
                 name="importlog_finished_after_started",
             )

@@ -27,6 +27,7 @@ PUBLIC_KEY = "public-secret-key"
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_request(auth_header=None):
     request = MagicMock()
     request.headers = {}
@@ -39,8 +40,8 @@ def make_request(auth_header=None):
 # No header
 # ---------------------------------------------------------------------------
 
-class TestApiKeyAuthenticationNoHeader(TestCase):
 
+class TestApiKeyAuthenticationNoHeader(TestCase):
     def setUp(self):
         self.auth = ApiKeyAuthentication()
 
@@ -63,8 +64,8 @@ class TestApiKeyAuthenticationNoHeader(TestCase):
 # Malformed headers
 # ---------------------------------------------------------------------------
 
-class TestApiKeyAuthenticationMalformedHeader(TestCase):
 
+class TestApiKeyAuthenticationMalformedHeader(TestCase):
     def setUp(self):
         self.auth = ApiKeyAuthentication()
 
@@ -105,8 +106,8 @@ class TestApiKeyAuthenticationMalformedHeader(TestCase):
 # Scheme case-insensitivity
 # ---------------------------------------------------------------------------
 
-class TestApiKeyAuthenticationScheme(TestCase):
 
+class TestApiKeyAuthenticationScheme(TestCase):
     def setUp(self):
         self.auth = ApiKeyAuthentication()
 
@@ -139,8 +140,8 @@ class TestApiKeyAuthenticationScheme(TestCase):
 # Successful authentication
 # ---------------------------------------------------------------------------
 
-class TestApiKeyAuthenticationSuccess(TestCase):
 
+class TestApiKeyAuthenticationSuccess(TestCase):
     def setUp(self):
         self.auth = ApiKeyAuthentication()
 
@@ -197,8 +198,8 @@ class TestApiKeyAuthenticationSuccess(TestCase):
 # Unknown / wrong key
 # ---------------------------------------------------------------------------
 
-class TestApiKeyAuthenticationFailure(TestCase):
 
+class TestApiKeyAuthenticationFailure(TestCase):
     def setUp(self):
         self.auth = ApiKeyAuthentication()
 
@@ -228,8 +229,8 @@ class TestApiKeyAuthenticationFailure(TestCase):
 # Missing / unconfigured settings
 # ---------------------------------------------------------------------------
 
-class TestApiKeyAuthenticationMissingSettings(TestCase):
 
+class TestApiKeyAuthenticationMissingSettings(TestCase):
     def setUp(self):
         self.auth = ApiKeyAuthentication()
 
@@ -263,8 +264,8 @@ class TestApiKeyAuthenticationMissingSettings(TestCase):
 # Timing-safe comparison
 # ---------------------------------------------------------------------------
 
-class TestApiKeyAuthenticationTimingSafe(TestCase):
 
+class TestApiKeyAuthenticationTimingSafe(TestCase):
     def setUp(self):
         self.auth = ApiKeyAuthentication()
 
@@ -273,7 +274,7 @@ class TestApiKeyAuthenticationTimingSafe(TestCase):
         request = make_request(auth_header=f"Api-Key {INTERNAL_KEY}")
         with patch(
             "apps.core.authentications.secrets.compare_digest", return_value=True
-            ) as mock_cd:
+        ) as mock_cd:
             self.auth.authenticate(request)
             # compare_digest must have been called at least once
             self.assertTrue(mock_cd.called)
@@ -288,8 +289,8 @@ class TestApiKeyAuthenticationTimingSafe(TestCase):
     def test_uses_compare_digest_for_public_key(self):
         request = make_request(auth_header=f"Api-Key {PUBLIC_KEY}")
         with patch(
-            "apps.core.authentications.secrets.compare_digest", 
-            side_effect=[False, True]
+            "apps.core.authentications.secrets.compare_digest",
+            side_effect=[False, True],
         ) as mock_cd:
             self.auth.authenticate(request)
             self.assertTrue(mock_cd.called)

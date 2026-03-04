@@ -8,6 +8,7 @@ from tests.factories.core import CoreDummy, CoreDummyFactory
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 @pytest.fixture(autouse=False)
 def core_dummy_table():
     """Create the CoreDummy table before each test and drop it afterward."""
@@ -17,9 +18,11 @@ def core_dummy_table():
     with connection.schema_editor() as schema_editor:
         schema_editor.delete_model(CoreDummy)
 
+
 class TestBaseModel:
     def test_basemodel_is_abstract(self):
         from apps.core.model import BaseModel
+
         assert BaseModel._meta.abstract is True
 
     def test_save_calls_full_clean(self, core_dummy_table):

@@ -26,19 +26,14 @@ class Event(BaseModel):
     )
 
     starts_at = models.DateTimeField(
-        db_comment="The time at which the event starts.",
-        null=True,
-        blank=True
-        )
+        db_comment="The time at which the event starts.", null=True, blank=True
+    )
     ends_at = models.DateTimeField(
-        db_comment="The time at which the event ends.",
-        null=True,
-        blank=True
-        )
+        db_comment="The time at which the event ends.", null=True, blank=True
+    )
 
     ticketing_url = models.URLField(
-        db_comment="The URL leading to the ticket reservations.",
-        blank=True
+        db_comment="The URL leading to the ticket reservations.", blank=True
     )
 
     class Meta(BaseModel.Meta):
@@ -58,6 +53,7 @@ class Event(BaseModel):
         if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
             raise ValidationError("Event end time must be after start time.")
 
+
 class EventPrice(BaseModel):
     event = models.ForeignKey(
         Event,
@@ -72,7 +68,7 @@ class EventPrice(BaseModel):
         db_comment="The rank corresponding to the price.",
         related_name="event_prices",
         null=True,
-        blank=True
+        blank=True,
     )
 
     amount = models.DecimalField(
@@ -99,4 +95,3 @@ class EventPrice(BaseModel):
             models.Index(fields=["event"]),
             models.Index(fields=["event", "price_rank"]),
         ]
-        

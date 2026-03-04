@@ -6,6 +6,7 @@ from apps.languages.models import Language
 
 class MediaGallery(BaseModel):
     """Model representing a media gallery."""
+
     name = models.CharField(
         max_length=255,
         db_comment="Name of the media gallery.",
@@ -15,12 +16,14 @@ class MediaGallery(BaseModel):
         db_table = "media_gallery"
         verbose_name = "Media Gallery"
         verbose_name_plural = "Media Galleries"
-    
+
     def __str__(self):
         return self.name
-    
+
+
 class MediaItem(BaseModel):
     """Model representing a media item."""
+
     gallery = models.ForeignKey(
         MediaGallery,
         on_delete=models.CASCADE,
@@ -33,11 +36,8 @@ class MediaItem(BaseModel):
         VIDEO = "video", "Video"
         AUDIO = "audio", "Audio"
 
-
     type = models.CharField(
-        max_length=20,
-        choices=MediaItemType.choices,
-        db_comment="Type of media item."
+        max_length=20, choices=MediaItemType.choices, db_comment="Type of media item."
     )
 
     format = models.CharField(
@@ -73,13 +73,15 @@ class MediaItem(BaseModel):
         db_table = "media_item"
         verbose_name = "Media Item"
         verbose_name_plural = "Media Items"
-        ordering = ['position']
+        ordering = ["position"]
 
     def __str__(self):
         return f"{self.type} - {self.original_filename or 'Unnamed'}"
-    
+
+
 class MediaItemTranslation(BaseModel):
     """Model representing a translation for a media item."""
+
     media_item = models.ForeignKey(
         MediaItem,
         on_delete=models.CASCADE,
@@ -120,17 +122,19 @@ class MediaItemTranslation(BaseModel):
         db_table = "media_item_translation"
         constraints = [
             models.UniqueConstraint(
-                fields=['media_item', 'language'], name='unique_media_language'
+                fields=["media_item", "language"], name="unique_media_language"
             )
         ]
         verbose_name = "Media Item Translation"
         verbose_name_plural = "Media Item Translations"
-    
+
     def __str__(self):
         return f"{self.media_item} - {self.language}"
-    
+
+
 class MediaItemCrop(BaseModel):
     """Model representing a crop for a media item."""
+
     media_item = models.ForeignKey(
         MediaItem,
         on_delete=models.CASCADE,
@@ -151,11 +155,11 @@ class MediaItemCrop(BaseModel):
         db_table = "media_item_crop"
         constraints = [
             models.UniqueConstraint(
-                fields=['media_item', 'name'], name='unique_crop_name_per_media_item'
+                fields=["media_item", "name"], name="unique_crop_name_per_media_item"
             )
         ]
         verbose_name = "Media Item Crop"
         verbose_name_plural = "Media Item Crops"
-    
+
     def __str__(self):
         return f"{self.media_item} - {self.name}"

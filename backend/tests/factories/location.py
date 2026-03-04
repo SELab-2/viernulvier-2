@@ -17,6 +17,7 @@ faker = Faker()
 # LOCATION
 # ==============================
 
+
 class LocationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Location
@@ -48,6 +49,7 @@ class LocationTranslationFactory(factory.django.DjangoModelFactory):
 # SPACE
 # ==============================
 
+
 class SpaceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Space
@@ -67,6 +69,7 @@ class SpaceTranslationFactory(factory.django.DjangoModelFactory):
 # ==============================
 # HALL
 # ==============================
+
 
 class HallFactory(factory.django.DjangoModelFactory):
     class Meta:

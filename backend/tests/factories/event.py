@@ -14,29 +14,29 @@ faker = Faker()
 
 
 class EventFactory(factory.django.DjangoModelFactory):
-	"""Factory for Event model."""
+    """Factory for Event model."""
 
-	class Meta:
-		model = Event
+    class Meta:
+        model = Event
 
-	production = SubFactory(ProductionFactory)
-	hall = SubFactory(HallFactory)
-	starts_at = LazyFunction(timezone.now)
-	ends_at = LazyAttribute(
-		lambda obj: (obj.starts_at + timedelta(hours=2)) if obj.starts_at else None
-	)
-	ticketing_url = LazyFunction(lambda: faker.url())
+    production = SubFactory(ProductionFactory)
+    hall = SubFactory(HallFactory)
+    starts_at = LazyFunction(timezone.now)
+    ends_at = LazyAttribute(
+        lambda obj: (obj.starts_at + timedelta(hours=2)) if obj.starts_at else None
+    )
+    ticketing_url = LazyFunction(lambda: faker.url())
 
 
 class EventPriceFactory(factory.django.DjangoModelFactory):
-	"""Factory for EventPrice model."""
+    """Factory for EventPrice model."""
 
-	class Meta:
-		model = EventPrice
+    class Meta:
+        model = EventPrice
 
-	event = SubFactory(EventFactory)
-	price_rank = SubFactory(PriceRankFactory)
-	amount = LazyFunction(
-     lambda: faker.pydecimal(left_digits=2, right_digits=2, positive=True)
+    event = SubFactory(EventFactory)
+    price_rank = SubFactory(PriceRankFactory)
+    amount = LazyFunction(
+        lambda: faker.pydecimal(left_digits=2, right_digits=2, positive=True)
     )
-	available = LazyFunction(lambda: faker.random_int(min=1, max=500))
+    available = LazyFunction(lambda: faker.random_int(min=1, max=500))

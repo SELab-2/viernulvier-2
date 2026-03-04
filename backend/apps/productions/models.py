@@ -9,10 +9,8 @@ from apps.tags.models import Tag
 
 class UitDatabaseTheme(BaseModel):
     """Model representing a theme in the UIT database."""
-    name = models.CharField(
-        max_length=200,
-        db_comment="The name of the theme."
-    )
+
+    name = models.CharField(max_length=200, db_comment="The name of the theme.")
 
     class Meta(BaseModel.Meta):
         db_table = "uit_database_theme"
@@ -22,12 +20,11 @@ class UitDatabaseTheme(BaseModel):
     def __str__(self):
         return self.name
 
+
 class UitDatabaseType(BaseModel):
     """Model representing a type in the UIT database."""
-    name = models.CharField(
-        max_length=200,
-        db_comment="The name of the type."
-    )
+
+    name = models.CharField(max_length=200, db_comment="The name of the type.")
 
     class Meta(BaseModel.Meta):
         db_table = "uit_database_type"
@@ -37,18 +34,21 @@ class UitDatabaseType(BaseModel):
     def __str__(self):
         return self.name
 
+
 class Production(BaseModel):
     """Model representing a production."""
 
     # TODO: add more choices for attendance model if needed (look at the api responses)
     class AttendanceMode(models.TextChoices):
         """Enum representing the attendance model of a production."""
+
         OFFLINE = "offline", "Offline"
         ONLINE = "online", "Online"
 
     # TODO: add more choices for performer model if needed (look at the api responses)
     class PerformerType(models.TextChoices):
         """Enum representing the performer type of a production."""
+
         GROUP = "group", "Group"
         SOLO = "solo", "Solo"
 
@@ -83,14 +83,14 @@ class Production(BaseModel):
         max_length=20,
         choices=AttendanceMode.choices,
         blank=True,
-        db_comment="The attendance mode of the production."
+        db_comment="The attendance mode of the production.",
     )
 
     performer_type = models.CharField(
         max_length=20,
         choices=PerformerType.choices,
         blank=True,
-        db_comment="The performer type of the production."
+        db_comment="The performer type of the production.",
     )
 
     genres = models.ManyToManyField(
@@ -115,10 +115,12 @@ class Production(BaseModel):
         verbose_name_plural = "Productions"
 
     def __str__(self):
-        return f"Production {self.id}" # TODO: change if we know how to do translations
+        return f"Production {self.id}"  # TODO: change if we know how to do translations
+
 
 class ProductionTranslation(BaseModel):
     """Model representing a translation of a production."""
+
     production = models.ForeignKey(
         Production,
         on_delete=models.CASCADE,
@@ -136,108 +138,101 @@ class ProductionTranslation(BaseModel):
     supertitle = models.CharField(
         max_length=200,
         db_comment="The supertitle of the production in the given language.",
-        blank=True
+        blank=True,
     )
 
     title = models.CharField(
         max_length=200,
         db_comment="The title of the production in the given language.",
-        blank=True
+        blank=True,
     )
 
     artist_name = models.CharField(
         max_length=200,
         db_comment="The name of the artist of the production in the given language.",
-        blank=True
+        blank=True,
     )
 
     tagline = models.CharField(
         max_length=200,
         db_comment="The tagline of the production in the given language.",
-        blank=True
+        blank=True,
     )
 
     teaser = models.TextField(
-        db_comment="The teaser of the production in the given language.",
-        blank=True
+        db_comment="The teaser of the production in the given language.", blank=True
     )
 
     description = models.TextField(
         db_comment="The description of the production in the given language.",
-        blank=True
+        blank=True,
     )
 
     description_short = models.TextField(
         db_comment="The short description of the production in the given language.",
-        blank=True
+        blank=True,
     )
 
     description_extra = models.TextField(
         db_comment="The extra description of the production in the given language.",
-        blank=True
+        blank=True,
     )
 
     description_2 = models.TextField(
         db_comment="The second description of the production in the given language.",
-        blank=True
+        blank=True,
     )
 
     video_1 = models.URLField(
-        db_comment=
-            "The URL of the first video of the production in the given language.",
-        blank=True
+        db_comment="The URL of the first video of the production in the given language.",
+        blank=True,
     )
 
     video_2 = models.URLField(
-        db_comment=
-            "The URL of the second video of the production in the given language.",
-        blank=True
+        db_comment="The URL of the second video of the production in the given language.",
+        blank=True,
     )
 
     meta_title = models.CharField(
         max_length=200,
         db_comment="The meta title of the production in the given language.",
-        blank=True
+        blank=True,
     )
 
     meta_description = models.TextField(
         db_comment="The meta description of the production in the given language.",
-        blank=True
+        blank=True,
     )
 
     class Meta(BaseModel.Meta):
         db_table = "production_translation"
         constraints = [
             models.UniqueConstraint(
-                fields=['production', 'language'], name='unique_production_language'
+                fields=["production", "language"], name="unique_production_language"
             )
         ]
         verbose_name = "Production Translation"
         verbose_name_plural = "Production Translations"
 
-    # TODO Add in save method html sanitization for the text fields to prevent XSS 
+    # TODO Add in save method html sanitization for the text fields to prevent XSS
     # attacks, or use a library like bleach to sanitize the HTML content.
 
     def __str__(self):
         return f"Translation of Production {self.production.id} in {self.language.code}"
-    
+
+
 class ProductionTag(BaseModel):
     """Model representing the many-to-many relationship between productions and tags."""
-    production = models.ForeignKey(
-        Production, 
-        on_delete=models.CASCADE
-    )
 
-    tag = models.ForeignKey(
-        Tag,
-        on_delete=models.CASCADE
-    )
+    production = models.ForeignKey(Production, on_delete=models.CASCADE)
+
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
 
     class Meta(BaseModel.Meta):
-        db_table = "production_tag" 
+        db_table = "production_tag"
         constraints = [
             models.UniqueConstraint(
-                fields=['production', 'tag'], name='unique_production_tag'
+                fields=["production", "tag"], name="unique_production_tag"
             )
         ]
         verbose_name = "Production Tag"
@@ -246,8 +241,10 @@ class ProductionTag(BaseModel):
     def __str__(self):
         return f"Tag {self.tag.name} for Production {self.production.id}"
 
+
 class ProductionGenre(BaseModel):
     """Model representing a genre of a production."""
+
     production = models.ForeignKey(
         Production,
         on_delete=models.CASCADE,
@@ -261,8 +258,7 @@ class ProductionGenre(BaseModel):
     )
 
     position = models.PositiveIntegerField(
-        db_comment=
-            "The position of the genre in the list of genres for the production.",
+        db_comment="The position of the genre in the list of genres for the production.",
         # default=0, # TODO in viewset ordering definieren
     )
 
@@ -270,7 +266,7 @@ class ProductionGenre(BaseModel):
         db_table = "production_genre"
         constraints = [
             models.UniqueConstraint(
-                fields=['production', 'genre'], name='unique_production_genre'
+                fields=["production", "genre"], name="unique_production_genre"
             )
         ]
         verbose_name = "Production Genre"

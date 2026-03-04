@@ -17,8 +17,8 @@ pytestmark = pytest.mark.django_db
 # GenreUseAs
 # =====================================================
 
-class TestGenreUseAs:
 
+class TestGenreUseAs:
     def test_requires_name(self):
         instance = GenreUseAsFactory.build(name="")
         with pytest.raises(ValidationError):
@@ -27,7 +27,7 @@ class TestGenreUseAs:
     def test_reverse_relation_genres(self):
         use_as = GenreUseAsFactory()
         GenreFactory.create_batch(3, use_as=use_as)
-        
+
         assert use_as.genres.count() == 3
 
 
@@ -35,8 +35,8 @@ class TestGenreUseAs:
 # Genre
 # =====================================================
 
-class TestGenre:
 
+class TestGenre:
     def test_requires_use_as(self):
         genre = GenreFactory.build(use_as=None)
         with pytest.raises(ValidationError):
@@ -52,9 +52,9 @@ class TestGenre:
     def test_delete_cascades_to_translations(self):
         genre = GenreFactory()
         # Create 2 translations for the genre
-        GenreTranslationFactory.create_batch(2, genre=genre) 
+        GenreTranslationFactory.create_batch(2, genre=genre)
 
-        genre.delete() # Delete the genre, which should cascade to the translations
+        genre.delete()  # Delete the genre, which should cascade to the translations
 
         assert GenreTranslation.objects.count() == 0
 
@@ -63,8 +63,8 @@ class TestGenre:
 # GenreTranslation
 # =====================================================
 
-class TestGenreTranslation:
 
+class TestGenreTranslation:
     def test_str(self):
         translation = GenreTranslationFactory(
             language__code="en",
@@ -75,7 +75,7 @@ class TestGenreTranslation:
     def test_language_reverse_relation(self):
         language = LanguageFactory()
         GenreTranslationFactory.create_batch(2, language=language)
-        
+
         assert language.genre_translations.count() == 2
 
 
@@ -83,15 +83,15 @@ class TestGenreTranslation:
 # Cascade behaviour
 # =====================================================
 
-class TestCascadeBehaviour:
 
+class TestCascadeBehaviour:
     def test_deleting_use_as_cascades_to_genres(self):
         use_as = GenreUseAsFactory()
         GenreFactory(use_as=use_as)
 
         # Check if the setup is correct
         assert Genre.objects.count() == 1
-        
+
         use_as.delete()
 
         # Check if the genre was deleted

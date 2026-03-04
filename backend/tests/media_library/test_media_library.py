@@ -21,8 +21,8 @@ pytestmark = pytest.mark.django_db
 # MediaGallery
 # =====================================================
 
-class TestMediaGallery:
 
+class TestMediaGallery:
     def test_requires_name(self):
         gallery = MediaGalleryFactory.build(name="")
         with pytest.raises(ValidationError):
@@ -51,8 +51,8 @@ class TestMediaGallery:
 # MediaItem
 # =====================================================
 
-class TestMediaItem:
 
+class TestMediaItem:
     def test_requires_gallery(self):
         item = MediaItemFactory.build(gallery=None)
         with pytest.raises(ValidationError):
@@ -114,8 +114,8 @@ class TestMediaItem:
 # MediaItemTranslation
 # =====================================================
 
-class TestMediaItemTranslation:
 
+class TestMediaItemTranslation:
     def test_unique_per_media_item_and_language(self):
         language = LanguageFactory()
         item = MediaItemFactory()
@@ -167,8 +167,8 @@ class TestMediaItemTranslation:
 # MediaItemCrop
 # =====================================================
 
-class TestMediaItemCrop:
 
+class TestMediaItemCrop:
     def test_unique_per_media_item_and_name(self):
         item = MediaItemFactory()
 

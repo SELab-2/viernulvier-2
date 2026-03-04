@@ -15,7 +15,7 @@ class TranslatableSerializerMixin:
         Example: {"nl": "Titel", "en": "Title"}
         """
         translations = obj.translations.all()
-        
+
         return {
             t.language.code: getattr(t, field_name)
             for t in translations
