@@ -184,12 +184,14 @@ class ProductionTranslation(BaseModel):
     )
 
     video_1 = models.URLField(
-        db_comment="The URL of the first video of the production in the given language.",
+        db_comment="The URL of the first video of the production \
+            in the given language.",
         blank=True,
     )
 
     video_2 = models.URLField(
-        db_comment="The URL of the second video of the production in the given language.",
+        db_comment="The URL of the second video of the production \
+            in the given language.",
         blank=True,
     )
 
@@ -258,7 +260,8 @@ class ProductionGenre(BaseModel):
     )
 
     position = models.PositiveIntegerField(
-        db_comment="The position of the genre in the list of genres for the production.",
+        db_comment="The position of the genre \
+            in the list of genres for the production.",
         # default=0, # TODO in viewset ordering definieren
     )
 
