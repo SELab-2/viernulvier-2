@@ -1,7 +1,12 @@
 from .base import *
+import os
 
 DEBUG = True
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "").split(",")
+    if host.strip()
+]
 
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
