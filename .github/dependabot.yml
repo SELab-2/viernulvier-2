@@ -1,0 +1,67 @@
+version: 2
+updates:
+  # Monitor npm dependencies for frontend
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    target-branch: "dependabot-test"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      patch-minor-updates:
+        update-types: ["patch", "minor"]
+        patterns: ["*"]
+      major-updates:
+        update-types: ["major"]
+        patterns: ["*"]
+
+  # Monitor pip dependencies for backend
+  - package-ecosystem: "pip"
+    directory: "/backend/requirements"
+    target-branch: "dependabot-test"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      patch-minor-updates:
+        update-types: ["patch", "minor"]
+        patterns: ["*"]
+      major-updates:
+        update-types: ["major"]
+        patterns: ["*"]
+
+  # Monitor GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "dependabot-test"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      patch-minor-updates:
+        update-types: ["patch", "minor"]
+        patterns: ["*"]
+      major-updates:
+        update-types: ["major"]
+        patterns: ["*"]

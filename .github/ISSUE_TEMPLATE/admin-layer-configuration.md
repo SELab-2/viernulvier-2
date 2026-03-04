@@ -2,7 +2,7 @@
 name: Admin Layer Configuration
 about: Use this issue for admin layer implementation of domain.
 title: "[DOMAIN_NAME] Admin Layer Configuration"
-labels: backend, domains
+labels: backend, frontend
 assignees: ''
 
 ---
