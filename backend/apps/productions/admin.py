@@ -17,10 +17,12 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django import forms
+from django.db.models import Max
 from django.template.response import TemplateResponse
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
+from apps.genres.models import Genre
 from apps.tags.models import Tag
 from .admin_filters import ArtistNameFilter, GenreFilter, TagFilter
 from .models import (
@@ -38,6 +40,14 @@ class AddTagToProductionsForm(forms.Form):
         queryset=Tag.objects.order_by("type"),
         required=True,
         label="Tag",
+    )
+
+
+class AddGenreToProductionsForm(forms.Form):
+    genre = forms.ModelChoiceField(
+        queryset=Genre.objects.order_by("type"),
+        required=True,
+        label="Genre",
     )
 
 
@@ -184,7 +194,10 @@ class ProductionAdmin(BaseAdmin):
 
     ordering = ("-id",)
 
-    actions = ("add_tag_to_selected_productions",)
+    actions = (
+        "add_tag_to_selected_productions",
+        "add_genre_to_selected_productions",
+    )
 
     inlines = [
         ProductionTranslationInline,
@@ -205,69 +218,148 @@ class ProductionAdmin(BaseAdmin):
             .prefetch_related("translations")
         )
 
-    @admin.action(description="Add selected tag to selected productions")
-    def add_tag_to_selected_productions(self, request, queryset):
-        """Two-step admin action to attach one tag to selected productions."""
-
-        changelist_url = reverse(
+    def _changelist_url(self):
+        return reverse(
             f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist"
         )
 
-        if "apply" in request.POST:
-            form = AddTagToProductionsForm(request.POST)
-            selected_ids = request.POST.getlist(ACTION_CHECKBOX_NAME)
-            selected_qs = self.model.objects.filter(pk__in=selected_ids)
-
-            if not selected_ids:
-                self.message_user(request, "Geen productions geselecteerd.", level=messages.ERROR)
-                return
-
-            if form.is_valid():
-                tag = form.cleaned_data["tag"]
-                production_ids = list(selected_qs.values_list("id", flat=True))
-                through_model = Production.tags.through
-
-                through_model.objects.bulk_create(
-                    [through_model(production_id=production_id, tag_id=tag.id) for production_id in production_ids],
-                    ignore_conflicts=True,
-                )
-
-                self.message_user(
-                    request,
-                    f"Tag '{tag.type}' toegevoegd aan {len(production_ids)} geselecteerde productions.",
-                    level=messages.SUCCESS,
-                )
-                return
-
-            context = {
-                **self.admin_site.each_context(request),
-                "opts": self.model._meta,
-                "queryset": selected_qs,
-                "form": form,
-                "action_checkbox_name": ACTION_CHECKBOX_NAME,
-                "action_name": "add_tag_to_selected_productions",
-                "title": "Add tag to selected productions",
-                "changelist_url": changelist_url,
-            }
-            return TemplateResponse(request, "productions/add_tag_action.html", context)
-
-        form = AddTagToProductionsForm()
-        selected_qs = queryset
-        if not selected_qs.exists():
-            self.message_user(request, "Geen productions geselecteerd.", level=messages.ERROR)
-            return
-
+    def _render_two_step_action_page(self, request, *, selected_qs, form, action_name, title, changelist_url):
         context = {
             **self.admin_site.each_context(request),
             "opts": self.model._meta,
             "queryset": selected_qs,
             "form": form,
             "action_checkbox_name": ACTION_CHECKBOX_NAME,
-            "action_name": "add_tag_to_selected_productions",
-            "title": "Add tag to selected productions",
+            "action_name": action_name,
+            "title": title,
             "changelist_url": changelist_url,
         }
-        return TemplateResponse(request, "productions/add_tag_action.html", context)
+        return TemplateResponse(request, "productions/add_item_action.html", context)
+
+    def _run_two_step_add_action(
+        self,
+        request,
+        queryset,
+        *,
+        form_class,
+        action_name,
+        title,
+        apply_handler,
+    ):
+        changelist_url = self._changelist_url()
+
+        if "apply" in request.POST:
+            form = form_class(request.POST)
+            selected_ids = request.POST.getlist(ACTION_CHECKBOX_NAME)
+            selected_qs = self.model.objects.filter(pk__in=selected_ids)
+
+            if not selected_ids:
+                self.message_user(request, "No productions selected.", level=messages.ERROR)
+                return None
+
+            if form.is_valid():
+                success_message = apply_handler(selected_qs, form.cleaned_data)
+                self.message_user(request, success_message, level=messages.SUCCESS)
+                return None
+
+            return self._render_two_step_action_page(
+                request,
+                selected_qs=selected_qs,
+                form=form,
+                action_name=action_name,
+                title=title,
+                changelist_url=changelist_url,
+            )
+
+        selected_qs = queryset
+        if not selected_qs.exists():
+            self.message_user(request, "No productions selected.", level=messages.ERROR)
+            return None
+
+        return self._render_two_step_action_page(
+            request,
+            selected_qs=selected_qs,
+            form=form_class(),
+            action_name=action_name,
+            title=title,
+            changelist_url=changelist_url,
+        )
+
+    def _apply_add_tag_to_productions(self, selected_qs, cleaned_data):
+        tag = cleaned_data["tag"]
+        production_ids = list(selected_qs.values_list("id", flat=True))
+        through_model = Production.tags.through
+
+        through_model.objects.bulk_create(
+            [through_model(production_id=production_id, tag_id=tag.id) for production_id in production_ids],
+            ignore_conflicts=True,
+        )
+
+        return f"Tag '{str(tag)}' added to {len(production_ids)} selected productions."
+
+    def _apply_add_genre_to_productions(self, selected_qs, cleaned_data):
+        genre = cleaned_data["genre"]
+        production_ids = list(selected_qs.values_list("id", flat=True))
+
+        existing_links = set(
+            ProductionGenre.objects.filter(
+                production_id__in=production_ids,
+                genre_id=genre.id,
+            ).values_list("production_id", flat=True)
+        )
+
+        max_positions = {
+            row["production_id"]: row["max_position"] or 0
+            for row in ProductionGenre.objects.filter(production_id__in=production_ids)
+            .values("production_id")
+            .annotate(max_position=Max("position"))
+        }
+
+        to_create = []
+        for production_id in production_ids:
+            if production_id in existing_links:
+                continue
+
+            next_position = max_positions.get(production_id, 0) + 1
+            max_positions[production_id] = next_position
+            to_create.append(
+                ProductionGenre(
+                    production_id=production_id,
+                    genre_id=genre.id,
+                    position=next_position,
+                )
+            )
+
+        if to_create:
+            ProductionGenre.objects.bulk_create(to_create, ignore_conflicts=True)
+
+        return f"Genre '{str(genre)}' added to {len(to_create)} selected productions."
+
+    @admin.action(description="Add tag to selected productions")
+    def add_tag_to_selected_productions(self, request, queryset):
+        """Two-step admin action to attach one tag to selected productions."""
+
+        return self._run_two_step_add_action(
+            request,
+            queryset,
+            form_class=AddTagToProductionsForm,
+            action_name="add_tag_to_selected_productions",
+            title="Add tag to selected productions",
+            apply_handler=self._apply_add_tag_to_productions,
+        )
+
+    @admin.action(description="Add genre to selected productions")
+    def add_genre_to_selected_productions(self, request, queryset):
+        """Two-step admin action to attach one genre to selected productions."""
+
+        return self._run_two_step_add_action(
+            request,
+            queryset,
+            form_class=AddGenreToProductionsForm,
+            action_name="add_genre_to_selected_productions",
+            title="Add genre to selected productions",
+            apply_handler=self._apply_add_genre_to_productions,
+        )
 
 
 # ===========================================================================
