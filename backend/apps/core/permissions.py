@@ -7,7 +7,7 @@ class ApiKeyPermission(BasePermission):
     """
 
     def has_permission(self, request, _):
-        if request.auth == "internal":  # Acces to everything
+        if request.auth == "internal":  # Access to everything
             return True
         # Only GET, ... no changes allowed
         return request.auth == "public" and request.method in SAFE_METHODS
