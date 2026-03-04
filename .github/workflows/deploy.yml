@@ -34,7 +34,7 @@ jobs:
                   : "${PUBLIC_API_KEY:?Missing PUBLIC_API_KEY}"
                   : "${INTERNAL_API_KEY:?Missing INTERNAL_API_KEY}"
 
-                  envsubst < infrastructure/.env.prod.template > infrastructure/.env.prod
+                  envsubst < infrastructure/.env.prod.example > infrastructure/.env.prod
 
             - name: Build and start containers
               run: |
