@@ -74,6 +74,9 @@ jobs:
 
     env:
       DJANGO_SETTINGS_MODULE: config.settings.test
+      SECRET_KEY: "django-insecure-test-key-only-for-github-actions"
+      INTERNAL_API_KEY: "test-internal-key"
+      PUBLIC_API_KEY: "test-public-key"
     
     steps:
       - name: Checkout
