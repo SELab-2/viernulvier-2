@@ -1,10 +1,11 @@
 import factory
 from faker import Faker
+
 from apps.media_library.models import (
     MediaGallery,
     MediaItem,
-    MediaItemTranslation,
     MediaItemCrop,
+    MediaItemTranslation,
 )
 from tests.factories.language import LanguageFactory
 
