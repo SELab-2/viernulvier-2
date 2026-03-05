@@ -18,14 +18,14 @@ from drf_spectacular.utils import (
 )
 
 from apps.core.openapi import (
+    RESPONSE_204_DELETED,
     RESPONSE_400,
     RESPONSE_401,
     RESPONSE_403,
     RESPONSE_404,
-    RESPONSE_204_DELETED,
 )
-from .serializers import ProductionSerializer
 
+from .serializers import ProductionSerializer
 
 # ===========================================================================
 # Production — examples
@@ -59,9 +59,7 @@ _PRODUCTION_RESPONSE = OpenApiExample(
                 "url_title": "",
             }
         ],
-        "genres": [
-            {"id": 2, "type": "theater", "name": "Theater"}
-        ],
+        "genres": [{"id": 2, "type": "theater", "name": "Theater"}],
     },
     response_only=True,
 )
@@ -97,7 +95,7 @@ _PRODUCTION_LIST = extend_schema(
         "Returns a paginated list of all **Production** objects ordered by descending `id`.\n\n"
         "Translated fields (`title`, `artist_name`, `tagline`, `teaser`, `description`) "
         "are returned as language-code dictionaries "
-        "(e.g. {\"en\": \"Title\", \"fr\": \"Titre\"}).\n\n"
+        '(e.g. {"en": "Title", "fr": "Titre"}).\n\n'
         "Nested `genres` are returned in their configured `position` order. "
         "Nested `tags` and `genres` carry their own translated fields as dictionaries."
     ),

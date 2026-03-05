@@ -17,7 +17,7 @@ Covers:
 
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
@@ -43,15 +43,13 @@ from apps.productions.models import (
 )
 from apps.tags.models import Tag
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_superuser(username="admin"):
-    return User.objects.create_superuser(
-        username=username, password="password", email=f"{username}@example.com"
-    )
+    return User.objects.create_superuser(username=username, password="password", email=f"{username}@example.com")
 
 
 def make_theme(name="Test Theme"):
@@ -86,6 +84,7 @@ def make_tag(**kwargs):
 # Registration
 # ---------------------------------------------------------------------------
 
+
 class TestAdminRegistration(TestCase):
     """Verify all admin classes are registered against their models."""
 
@@ -99,46 +98,37 @@ class TestAdminRegistration(TestCase):
         self.assertIn(ProductionTranslation, admin.site._registry)
 
     def test_registered_admin_is_production_translation_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[ProductionTranslation], ProductionTranslationAdmin
-        )
+        self.assertIsInstance(admin.site._registry[ProductionTranslation], ProductionTranslationAdmin)
 
     def test_uit_database_theme_is_registered(self):
         self.assertIn(UitDatabaseTheme, admin.site._registry)
 
     def test_registered_admin_is_uit_database_theme_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[UitDatabaseTheme], UitDatabaseThemeAdmin
-        )
+        self.assertIsInstance(admin.site._registry[UitDatabaseTheme], UitDatabaseThemeAdmin)
 
     def test_uit_database_type_is_registered(self):
         self.assertIn(UitDatabaseType, admin.site._registry)
 
     def test_registered_admin_is_uit_database_type_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[UitDatabaseType], UitDatabaseTypeAdmin
-        )
+        self.assertIsInstance(admin.site._registry[UitDatabaseType], UitDatabaseTypeAdmin)
 
     def test_production_genre_is_registered(self):
         self.assertIn(ProductionGenre, admin.site._registry)
 
     def test_registered_admin_is_production_genre_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[ProductionGenre], ProductionGenreAdmin
-        )
+        self.assertIsInstance(admin.site._registry[ProductionGenre], ProductionGenreAdmin)
 
     def test_production_tag_is_registered(self):
         self.assertIn(ProductionTag, admin.site._registry)
 
     def test_registered_admin_is_production_tag_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[ProductionTag], ProductionTagAdmin
-        )
+        self.assertIsInstance(admin.site._registry[ProductionTag], ProductionTagAdmin)
 
 
 # ---------------------------------------------------------------------------
 # Inheritance
 # ---------------------------------------------------------------------------
+
 
 class TestAdminInheritance(TestCase):
     """All admin classes must extend BaseAdmin (and therefore ModelAdmin)."""
@@ -167,6 +157,7 @@ class TestAdminInheritance(TestCase):
 # UitDatabaseThemeAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestUitDatabaseThemeAdminConfiguration(TestCase):
     """Tests for UitDatabaseThemeAdmin meta configuration."""
 
@@ -187,6 +178,7 @@ class TestUitDatabaseThemeAdminConfiguration(TestCase):
 # UitDatabaseTypeAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestUitDatabaseTypeAdminConfiguration(TestCase):
     """Tests for UitDatabaseTypeAdmin meta configuration."""
 
@@ -206,6 +198,7 @@ class TestUitDatabaseTypeAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # ProductionAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestProductionAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionAdmin."""
@@ -280,6 +273,7 @@ class TestProductionAdminConfiguration(TestCase):
 # ProductionTranslationAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestProductionTranslationAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionTranslationAdmin."""
 
@@ -328,6 +322,7 @@ class TestProductionTranslationAdminConfiguration(TestCase):
 # ProductionGenreAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestProductionGenreAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionGenreAdmin."""
 
@@ -354,6 +349,7 @@ class TestProductionGenreAdminConfiguration(TestCase):
 # ProductionTagAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestProductionTagAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionTagAdmin."""
 
@@ -379,6 +375,7 @@ class TestProductionTagAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # Inline configuration
 # ---------------------------------------------------------------------------
+
 
 class TestProductionTranslationInline(TestCase):
     """Tests for ProductionTranslationInline configuration."""
@@ -432,6 +429,7 @@ class TestProductionTagInline(TestCase):
 # get_queryset optimisation
 # ---------------------------------------------------------------------------
 
+
 class TestProductionAdminGetQueryset(TestCase):
     """Verify get_queryset uses select_related for FK optimisation."""
 
@@ -461,6 +459,7 @@ class TestProductionAdminGetQueryset(TestCase):
 # ---------------------------------------------------------------------------
 # Functional changelist tests  (HTTP, requires superuser login)
 # ---------------------------------------------------------------------------
+
 
 class TestUitDatabaseThemeAdminChangelist(TestCase):
     """Functional tests for UitDatabaseThemeAdmin via HTTP."""
@@ -569,21 +568,15 @@ class TestProductionTranslationAdminChangelist(TestCase):
     def test_changeform_returns_200(self):
         production = make_production()
         language = make_language()
-        translation = ProductionTranslation.objects.create(
-            production=production, language=language, title="Test Title"
-        )
-        url = reverse(
-            "admin:productions_productiontranslation_change", args=[translation.pk]
-        )
+        translation = ProductionTranslation.objects.create(production=production, language=language, title="Test Title")
+        url = reverse("admin:productions_productiontranslation_change", args=[translation.pk])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_changelist_shows_translation_title(self):
         production = make_production()
         language = make_language()
-        ProductionTranslation.objects.create(
-            production=production, language=language, title="Visible Title"
-        )
+        ProductionTranslation.objects.create(production=production, language=language, title="Visible Title")
         url = reverse("admin:productions_productiontranslation_changelist")
         response = self.client.get(url)
         self.assertContains(response, "Visible Title")
@@ -623,8 +616,6 @@ class TestProductionTagAdminChangelist(TestCase):
         production = make_production()
         tag = make_tag()
         production_tag = ProductionTag.objects.create(production=production, tag=tag)
-        url = reverse(
-            "admin:productions_productiontag_change", args=[production_tag.pk]
-        )
+        url = reverse("admin:productions_productiontag_change", args=[production_tag.pk])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)

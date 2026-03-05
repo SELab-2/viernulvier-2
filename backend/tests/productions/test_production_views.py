@@ -23,11 +23,14 @@ from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
 from apps.languages.models import Language
-from apps.productions.models import Production, ProductionTranslation, UitDatabaseTheme, UitDatabaseType
+from apps.productions.models import (
+    Production,
+    ProductionTranslation,
+    UitDatabaseTheme,
+    UitDatabaseType,
+)
 from apps.productions.serializers import ProductionSerializer
 from apps.productions.views import ProductionViewSet
-from apps.tags.models import Tag
-
 
 PUB_KEY = "pub-production-view-test-key"
 INT_KEY = "int-production-view-test-key"
@@ -36,6 +39,7 @@ INT_KEY = "int-production-view-test-key"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
@@ -68,14 +72,13 @@ def make_translation(production, language, **kwargs):
         "tagline": "",
     }
     defaults.update(kwargs)
-    return ProductionTranslation.objects.create(
-        production=production, language=language, **defaults
-    )
+    return ProductionTranslation.objects.create(production=production, language=language, **defaults)
 
 
 # ---------------------------------------------------------------------------
 # Class-level tests
 # ---------------------------------------------------------------------------
+
 
 class TestProductionViewSetClass(TestCase):
     """Verify ViewSet class-level configuration."""
@@ -92,10 +95,7 @@ class TestProductionViewSetClass(TestCase):
     def test_queryset_has_prefetch_for_tags(self):
         queryset = ProductionViewSet().get_queryset()
         lookups = queryset._prefetch_related_lookups
-        lookup_names = [
-            l.prefetch_through if hasattr(l, "prefetch_through") else l
-            for l in lookups
-        ]
+        lookup_names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("tags", lookup_names)
 
 
@@ -103,9 +103,9 @@ class TestProductionViewSetClass(TestCase):
 # GET /api/productions/ — list
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetList(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Production.objects.all().delete()
@@ -130,32 +130,40 @@ class TestProductionViewSetList(TestCase):
 
     def test_list_returns_all_productions(self):
         response = self.client.get("/api/productions/", **pub_headers())
-        self.assertEqual(len(response.data['results']), 2)
+        self.assertEqual(len(response.data["results"]), 2)
 
     def test_list_response_contains_expected_fields(self):
         response = self.client.get("/api/productions/", **pub_headers())
-        item = response.data['results'][0]
+        item = response.data["results"][0]
         expected_fields = {
-            "id", "attendance_mode", "performer_type",
-            "uit_database_theme", "uit_database_type",
-            "title", "description", "teaser", "artist_name", "tagline",
-            "tags", "genres"
+            "id",
+            "attendance_mode",
+            "performer_type",
+            "uit_database_theme",
+            "uit_database_type",
+            "title",
+            "description",
+            "teaser",
+            "artist_name",
+            "tagline",
+            "tags",
+            "genres",
         }
         self.assertEqual(set(item.keys()), expected_fields)
 
     def test_list_returns_empty_list_when_no_productions(self):
         Production.objects.all().delete()
         response = self.client.get("/api/productions/", **pub_headers())
-        self.assertEqual(response.data['results'], [])
+        self.assertEqual(response.data["results"], [])
 
 
 # ---------------------------------------------------------------------------
 # GET /api/productions/<id>/ — detail
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetDetail(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.production = make_production(attendance_mode="offline", performer_type="solo")
@@ -197,9 +205,9 @@ class TestProductionViewSetDetail(TestCase):
 # POST /api/productions/ — create
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetCreate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.payload = {"attendance_mode": "offline", "performer_type": "group"}
@@ -235,24 +243,20 @@ class TestProductionViewSetCreate(TestCase):
 # PUT /api/productions/<id>/ — full update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetUpdate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.production = make_production(attendance_mode="offline", performer_type="solo")
         self.payload = {"attendance_mode": "online", "performer_type": "group"}
 
     def test_put_with_internal_key_returns_200(self):
-        response = self.client.put(
-            f"/api/productions/{self.production.pk}/", self.payload, **int_headers()
-        )
+        response = self.client.put(f"/api/productions/{self.production.pk}/", self.payload, **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_put_with_public_key_returns_403(self):
-        response = self.client.put(
-            f"/api/productions/{self.production.pk}/", self.payload, **pub_headers()
-        )
+        response = self.client.put(f"/api/productions/{self.production.pk}/", self.payload, **pub_headers())
         self.assertIn(response.status_code, (401, 403))
 
     def test_put_without_auth_returns_403(self):
@@ -260,9 +264,7 @@ class TestProductionViewSetUpdate(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_put_updates_attendance_mode(self):
-        self.client.put(
-            f"/api/productions/{self.production.pk}/", self.payload, **int_headers()
-        )
+        self.client.put(f"/api/productions/{self.production.pk}/", self.payload, **int_headers())
         self.production.refresh_from_db()
         self.assertEqual(self.production.attendance_mode, "online")
 
@@ -271,9 +273,9 @@ class TestProductionViewSetUpdate(TestCase):
 # PATCH /api/productions/<id>/ — partial update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetPartialUpdate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.production = make_production(attendance_mode="offline", performer_type="solo")
@@ -295,9 +297,7 @@ class TestProductionViewSetPartialUpdate(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_patch_without_auth_returns_403(self):
-        response = self.client.patch(
-            f"/api/productions/{self.production.pk}/", {"attendance_mode": "online"}
-        )
+        response = self.client.patch(f"/api/productions/{self.production.pk}/", {"attendance_mode": "online"})
         self.assertIn(response.status_code, (401, 403))
 
     def test_patch_only_updates_specified_field(self):
@@ -315,23 +315,19 @@ class TestProductionViewSetPartialUpdate(TestCase):
 # DELETE /api/productions/<id>/ — destroy
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetDelete(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.production = make_production()
 
     def test_delete_with_internal_key_returns_204(self):
-        response = self.client.delete(
-            f"/api/productions/{self.production.pk}/", **int_headers()
-        )
+        response = self.client.delete(f"/api/productions/{self.production.pk}/", **int_headers())
         self.assertEqual(response.status_code, 204)
 
     def test_delete_with_public_key_returns_403(self):
-        response = self.client.delete(
-            f"/api/productions/{self.production.pk}/", **pub_headers()
-        )
+        response = self.client.delete(f"/api/productions/{self.production.pk}/", **pub_headers())
         self.assertIn(response.status_code, (401, 403))
 
     def test_delete_without_auth_returns_403(self):
@@ -339,9 +335,7 @@ class TestProductionViewSetDelete(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_delete_with_wrong_key_returns_403(self):
-        response = self.client.delete(
-            f"/api/productions/{self.production.pk}/", **wrong_headers()
-        )
+        response = self.client.delete(f"/api/productions/{self.production.pk}/", **wrong_headers())
         self.assertIn(response.status_code, (401, 403))
 
     def test_delete_removes_production_from_database(self):
@@ -353,6 +347,7 @@ class TestProductionViewSetDelete(TestCase):
 # ---------------------------------------------------------------------------
 # Response structure — nested and translated fields
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetResponseStructure(TestCase):
@@ -400,6 +395,7 @@ class TestProductionViewSetResponseStructure(TestCase):
 # ---------------------------------------------------------------------------
 # N+1 guard — prefetch translations
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetPrefetch(TestCase):

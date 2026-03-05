@@ -8,6 +8,7 @@ from tests.factories.core import CoreDummy, CoreDummyFactory
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
+
 @pytest.fixture(autouse=False)
 def core_dummy_table():
     """Create the CoreDummy table safely and drop it afterward."""
@@ -15,17 +16,19 @@ def core_dummy_table():
         # Check if table exists before creating to avoid OperationalError
         if CoreDummy._meta.db_table not in connection.introspection.table_names():
             schema_editor.create_model(CoreDummy)
-    
+
     yield
-    
+
     with connection.schema_editor() as schema_editor:
         # Check if table exists before deleting
         if CoreDummy._meta.db_table in connection.introspection.table_names():
             schema_editor.delete_model(CoreDummy)
 
+
 class TestBaseModel:
     def test_basemodel_is_abstract(self):
         from apps.core.models import BaseModel
+
         assert BaseModel._meta.abstract is True
 
     def test_save_calls_full_clean(self, core_dummy_table):

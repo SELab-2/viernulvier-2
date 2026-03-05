@@ -7,8 +7,8 @@ Covers:
 
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
-from django.test import TestCase
 from django.contrib.auth.models import User
+from django.test import TestCase
 
 from apps.core.admin import BaseAdmin
 
@@ -44,6 +44,7 @@ class TestBaseAdmin(TestCase):
 
     def test_subclassing_works(self):
         """Other admin classes should be able to extend BaseAdmin."""
+
         class MyAdmin(BaseAdmin):
             list_display = ("id",)
 

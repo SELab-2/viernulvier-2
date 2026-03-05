@@ -23,10 +23,10 @@ from apps.languages.models import Language
 from apps.tags.admin import TagAdmin, TagTranslationAdmin, TagTranslationInline
 from apps.tags.models import Tag, TagTranslation
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_tag(**kwargs):
     defaults = {
@@ -43,6 +43,7 @@ def make_tag(**kwargs):
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
+
 
 class TestTagAdminRegistration(TestCase):
     """Verify TagAdmin and TagTranslationAdmin are registered."""
@@ -66,6 +67,7 @@ class TestTagAdminRegistration(TestCase):
 # Inheritance
 # ---------------------------------------------------------------------------
 
+
 class TestTagAdminInheritance(TestCase):
     """TagAdmin and TagTranslationAdmin must extend BaseAdmin."""
 
@@ -85,6 +87,7 @@ class TestTagAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # TagAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestTagAdminConfiguration(TestCase):
     """Tests for individual meta configuration of TagAdmin."""
@@ -137,7 +140,6 @@ class TestTagAdminConfiguration(TestCase):
     # -- inlines --------------------------------------------------------------
 
     def test_inlines_contains_tag_translation_inline(self):
-        inline_classes = [type(i) for i in self.admin.get_inline_instances(None)]
         inline_types = [i for i in self.admin.inlines]
         self.assertIn(TagTranslationInline, inline_types)
 
@@ -145,6 +147,7 @@ class TestTagAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # TagTranslationInline configuration
 # ---------------------------------------------------------------------------
+
 
 class TestTagTranslationInlineConfiguration(TestCase):
     """Tests for TagTranslationInline."""
@@ -165,6 +168,7 @@ class TestTagTranslationInlineConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # TagTranslationAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestTagTranslationAdminConfiguration(TestCase):
     """Tests for individual meta configuration of TagTranslationAdmin."""
@@ -215,13 +219,12 @@ class TestTagTranslationAdminConfiguration(TestCase):
 # Functional admin tests
 # ---------------------------------------------------------------------------
 
+
 class TestTagAdminFunctional(TestCase):
     """Smoke tests: changelist and changeform load without errors."""
 
     def setUp(self):
-        self.superuser = User.objects.create_superuser(
-            username="admin", password="secret", email="admin@example.com"
-        )
+        self.superuser = User.objects.create_superuser(username="admin", password="secret", email="admin@example.com")
         self.client.force_login(self.superuser)
         self.tag = make_tag(type="genre")
 
@@ -245,15 +248,11 @@ class TestTagTranslationAdminFunctional(TestCase):
     """Smoke tests for TagTranslationAdmin."""
 
     def setUp(self):
-        self.superuser = User.objects.create_superuser(
-            username="admin", password="secret", email="admin@example.com"
-        )
+        self.superuser = User.objects.create_superuser(username="admin", password="secret", email="admin@example.com")
         self.client.force_login(self.superuser)
         self.lang = Language.objects.create(code="nl", name="Dutch", is_active=True)
         self.tag = make_tag(type="genre")
-        self.translation = TagTranslation.objects.create(
-            tag=self.tag, language=self.lang, name="Genre", url_title="genre"
-        )
+        self.translation = TagTranslation.objects.create(tag=self.tag, language=self.lang, name="Genre", url_title="genre")
 
     def test_changelist_returns_200(self):
         url = reverse("admin:tags_tagtranslation_changelist")

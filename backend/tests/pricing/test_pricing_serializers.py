@@ -13,9 +13,10 @@ Covers:
 from django.test import TestCase
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
+
 from apps.languages.models import Language
-from apps.pricing.models import Price, PriceTranslation, PriceRank
-from apps.pricing.serializers import PriceSerializer, PriceRankSerializer
+from apps.pricing.models import Price, PriceRank, PriceTranslation
+from apps.pricing.serializers import PriceRankSerializer, PriceSerializer
 
 
 def _drf_request(factory: APIRequestFactory, path: str) -> Request:

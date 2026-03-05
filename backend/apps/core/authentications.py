@@ -111,9 +111,7 @@ class ApiKeyAuthentication(BaseAuthentication):
 
         # The header must be exactly two parts: scheme + key.
         if len(parts) != 2:
-            raise AuthenticationFailed(
-                "Invalid Authorization header format. Use: Api-Key <KEY>"
-            )
+            raise AuthenticationFailed("Invalid Authorization header format. Use: Api-Key <KEY>")
 
         # Decode the key; reject non-UTF-8 byte sequences.
         try:
@@ -130,15 +128,11 @@ class ApiKeyAuthentication(BaseAuthentication):
         key_bytes = key.encode("utf-8")
 
         # Check against INTERNAL_API_KEY first (grants full access).
-        if internal_key and secrets.compare_digest(
-            key_bytes, internal_key.encode("utf-8")
-        ):
+        if internal_key and secrets.compare_digest(key_bytes, internal_key.encode("utf-8")):
             return (None, "internal")
 
         # Check against PUBLIC_API_KEY (grants read-only access).
-        if public_key and secrets.compare_digest(
-            key_bytes, public_key.encode("utf-8")
-        ):
+        if public_key and secrets.compare_digest(key_bytes, public_key.encode("utf-8")):
             return (None, "public")
 
         # No match — reject the request.

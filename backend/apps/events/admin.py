@@ -14,12 +14,13 @@ the list and detail pages free of N+1 queries.
 from django.contrib import admin
 
 from apps.core.admin import BaseAdmin
-from .models import Event, EventPrice
 
+from .models import Event, EventPrice
 
 # ===========================================================================
 # Inline
 # ===========================================================================
+
 
 class EventPriceInline(admin.TabularInline):
     """
@@ -40,6 +41,7 @@ class EventPriceInline(admin.TabularInline):
 # ===========================================================================
 # Event admin
 # ===========================================================================
+
 
 @admin.register(Event)
 class EventAdmin(BaseAdmin):

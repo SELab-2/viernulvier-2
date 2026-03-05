@@ -15,12 +15,13 @@ language in a single query.
 from django.contrib import admin
 
 from apps.core.admin import BaseAdmin
-from .models import Tag, TagTranslation
 
+from .models import Tag, TagTranslation
 
 # ===========================================================================
 # Inline
 # ===========================================================================
+
 
 class TagTranslationInline(admin.TabularInline):
     """
@@ -40,6 +41,7 @@ class TagTranslationInline(admin.TabularInline):
 # ===========================================================================
 # Tag admin
 # ===========================================================================
+
 
 @admin.register(Tag)
 class TagAdmin(BaseAdmin):
@@ -90,6 +92,7 @@ class TagAdmin(BaseAdmin):
 # Standalone translation admin
 # ===========================================================================
 
+
 @admin.register(TagTranslation)
 class TagTranslationAdmin(BaseAdmin):
     """
@@ -125,8 +128,4 @@ class TagTranslationAdmin(BaseAdmin):
 
     def get_queryset(self, request):
         """Select related tag and language to avoid N+1 queries."""
-        return (
-            super()
-            .get_queryset(request)
-            .select_related("tag", "language")
-        )
+        return super().get_queryset(request).select_related("tag", "language")

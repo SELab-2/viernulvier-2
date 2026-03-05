@@ -11,8 +11,8 @@ Covers:
 """
 
 from django.contrib import admin
-from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
+from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
@@ -21,20 +21,18 @@ from apps.languages.models import Language
 from apps.pricing.admin import (
     PriceAdmin,
     PriceRankAdmin,
-    PriceTranslationAdmin,
     PriceRankTranslationAdmin,
+    PriceTranslationAdmin,
 )
-from apps.pricing.models import Price, PriceRank, PriceTranslation, PriceRankTranslation
-
+from apps.pricing.models import Price, PriceRank, PriceRankTranslation, PriceTranslation
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_superuser(username="admin"):
-    return User.objects.create_superuser(
-        username=username, password="password", email=f"{username}@example.com"
-    )
+    return User.objects.create_superuser(username=username, password="password", email=f"{username}@example.com")
 
 
 def admin_changelist_url(model):
@@ -48,6 +46,7 @@ def admin_change_url(model, pk):
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
+
 
 class TestPricingAdminRegistration(TestCase):
     def test_price_is_registered(self):
@@ -78,6 +77,7 @@ class TestPricingAdminRegistration(TestCase):
 # Inheritance (mirrors production admin tests style)
 # ---------------------------------------------------------------------------
 
+
 class TestPricingAdminInheritance(TestCase):
     admins = [PriceAdmin, PriceRankAdmin, PriceTranslationAdmin, PriceRankTranslationAdmin]
 
@@ -97,6 +97,7 @@ class TestPricingAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # Configuration (extends your existing config tests)
 # ---------------------------------------------------------------------------
+
 
 class TestPricingAdminConfiguration(TestCase):
     def setUp(self):
@@ -131,6 +132,7 @@ class TestPricingAdminConfiguration(TestCase):
 # Queryset optimization (keeps your existing idea, but structured like production)
 # ---------------------------------------------------------------------------
 
+
 class TestPricingTranslationAdminGetQueryset(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -148,12 +150,8 @@ class TestPricingTranslationAdminGetQueryset(TestCase):
         )
         cls.rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
 
-        cls.price_tr = PriceTranslation.objects.create(
-            price=cls.price, language=cls.lang, description="Standard ticket"
-        )
-        cls.rank_tr = PriceRankTranslation.objects.create(
-            price_rank=cls.rank, language=cls.lang, description="First rank"
-        )
+        cls.price_tr = PriceTranslation.objects.create(price=cls.price, language=cls.lang, description="Standard ticket")
+        cls.rank_tr = PriceRankTranslation.objects.create(price_rank=cls.rank, language=cls.lang, description="First rank")
 
     def setUp(self):
         self.site = AdminSite()
@@ -186,6 +184,7 @@ class TestPricingTranslationAdminGetQueryset(TestCase):
 # Functional admin tests (HTTP)
 # ---------------------------------------------------------------------------
 
+
 class TestPricingAdminChangelists(TestCase):
     def setUp(self):
         self.superuser = make_superuser("pricing_admin")
@@ -204,9 +203,7 @@ class TestPricingAdminChangelists(TestCase):
         )
         self.rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
 
-        self.price_tr = PriceTranslation.objects.create(
-            price=self.price, language=self.lang, description="Student ticket"
-        )
+        self.price_tr = PriceTranslation.objects.create(price=self.price, language=self.lang, description="Student ticket")
         self.rank_tr = PriceRankTranslation.objects.create(
             price_rank=self.rank, language=self.lang, description="First rank"
         )

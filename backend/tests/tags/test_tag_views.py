@@ -24,7 +24,6 @@ from apps.tags.models import Tag, TagTranslation
 from apps.tags.serializers import TagSerializer
 from apps.tags.views import TagViewSet
 
-
 PUB_KEY = "pub-tag-view-test-key"
 INT_KEY = "int-tag-view-test-key"
 
@@ -32,6 +31,7 @@ INT_KEY = "int-tag-view-test-key"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
@@ -61,8 +61,8 @@ def make_tag(**kwargs):
 # Class-level tests
 # ---------------------------------------------------------------------------
 
-class TestTagViewSetClass(TestCase):
 
+class TestTagViewSetClass(TestCase):
     def test_inherits_from_api_model_viewset(self):
         self.assertTrue(issubclass(TagViewSet, ApiModelViewSet))
 
@@ -75,12 +75,9 @@ class TestTagViewSetClass(TestCase):
     def test_queryset_has_prefetch_related_translations(self):
         queryset = TagViewSet().get_queryset()
         lookups = queryset._prefetch_related_lookups
-        
-        lookup_names = [
-            l.prefetch_through if hasattr(l, 'prefetch_through') else l 
-            for l in lookups
-        ]
-        
+
+        lookup_names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
+
         self.assertIn("translations", lookup_names)
 
 
@@ -88,9 +85,9 @@ class TestTagViewSetClass(TestCase):
 # GET /api/tags/  — list
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetList(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Tag.objects.all().delete()
@@ -123,9 +120,18 @@ class TestTagViewSetList(TestCase):
         response = self.client.get("/api/tags/", **pub_headers())
         results = response.data.get("results", response.data)
         item = results[0]
-        for field in ("id", "url", "source", "source_type", "type",
-                      "is_external", "is_enabled", "name",
-                      "short_description", "url_title"):
+        for field in (
+            "id",
+            "url",
+            "source",
+            "source_type",
+            "type",
+            "is_external",
+            "is_enabled",
+            "name",
+            "short_description",
+            "url_title",
+        ):
             self.assertIn(field, item)
 
     def test_list_without_auth_returns_401(self):
@@ -141,9 +147,9 @@ class TestTagViewSetList(TestCase):
 # GET /api/tags/<id>/  — retrieve
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetRetrieve(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.tag = make_tag(type="genre")
@@ -169,16 +175,12 @@ class TestTagViewSetRetrieve(TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_retrieve_nonexistent_returns_404(self):
-        response = self.client.get(
-            "/api/tags/00000000-0000-0000-0000-000000000000/", **int_headers()
-        )
+        response = self.client.get("/api/tags/00000000-0000-0000-0000-000000000000/", **int_headers())
         self.assertEqual(response.status_code, 404)
 
     def test_retrieve_includes_translations(self):
         lang = Language.objects.create(code="nl", name="Dutch", is_active=True)
-        TagTranslation.objects.create(
-            tag=self.tag, language=lang, name="Genre", url_title="genre"
-        )
+        TagTranslation.objects.create(tag=self.tag, language=lang, name="Genre", url_title="genre")
         response = self.client.get(f"/api/tags/{self.tag.id}/", **pub_headers())
         self.assertIsInstance(response.data["name"], dict)
         self.assertIn("nl", response.data["name"])
@@ -188,9 +190,9 @@ class TestTagViewSetRetrieve(TestCase):
 # POST /api/tags/  — create
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetCreate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.payload = {
@@ -202,9 +204,7 @@ class TestTagViewSetCreate(TestCase):
         }
 
     def test_create_with_internal_key_returns_201(self):
-        response = self.client.post(
-            "/api/tags/", self.payload, format="json", **int_headers()
-        )
+        response = self.client.post("/api/tags/", self.payload, format="json", **int_headers())
         self.assertEqual(response.status_code, 201)
 
     def test_create_with_internal_key_persists_to_db(self):
@@ -212,9 +212,7 @@ class TestTagViewSetCreate(TestCase):
         self.assertTrue(Tag.objects.filter(type="mood").exists())
 
     def test_create_with_public_key_returns_403(self):
-        response = self.client.post(
-            "/api/tags/", self.payload, format="json", **pub_headers()
-        )
+        response = self.client.post("/api/tags/", self.payload, format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_create_without_auth_returns_401(self):
@@ -222,9 +220,7 @@ class TestTagViewSetCreate(TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_create_with_wrong_key_returns_401(self):
-        response = self.client.post(
-            "/api/tags/", self.payload, format="json", **wrong_headers()
-        )
+        response = self.client.post("/api/tags/", self.payload, format="json", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
 
@@ -232,9 +228,9 @@ class TestTagViewSetCreate(TestCase):
 # PUT /api/tags/<id>/  — full update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetUpdate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.tag = make_tag(type="genre")
@@ -247,28 +243,20 @@ class TestTagViewSetUpdate(TestCase):
         }
 
     def test_put_with_internal_key_returns_200(self):
-        response = self.client.put(
-            f"/api/tags/{self.tag.id}/", self.payload, format="json", **int_headers()
-        )
+        response = self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_put_with_internal_key_updates_db(self):
-        self.client.put(
-            f"/api/tags/{self.tag.id}/", self.payload, format="json", **int_headers()
-        )
+        self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json", **int_headers())
         self.tag.refresh_from_db()
         self.assertEqual(self.tag.type, "updated-genre")
 
     def test_put_with_public_key_returns_403(self):
-        response = self.client.put(
-            f"/api/tags/{self.tag.id}/", self.payload, format="json", **pub_headers()
-        )
+        response = self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_put_without_auth_returns_401(self):
-        response = self.client.put(
-            f"/api/tags/{self.tag.id}/", self.payload, format="json"
-        )
+        response = self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json")
         self.assertEqual(response.status_code, 401)
 
 
@@ -276,9 +264,9 @@ class TestTagViewSetUpdate(TestCase):
 # PATCH /api/tags/<id>/  — partial update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetPartialUpdate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.tag = make_tag(type="genre", is_enabled=True)
@@ -312,9 +300,7 @@ class TestTagViewSetPartialUpdate(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_patch_without_auth_returns_401(self):
-        response = self.client.patch(
-            f"/api/tags/{self.tag.id}/", {"is_enabled": False}, format="json"
-        )
+        response = self.client.patch(f"/api/tags/{self.tag.id}/", {"is_enabled": False}, format="json")
         self.assertEqual(response.status_code, 401)
 
 
@@ -322,17 +308,15 @@ class TestTagViewSetPartialUpdate(TestCase):
 # DELETE /api/tags/<id>/  — destroy
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetDelete(TestCase):
-
     def setUp(self):
         self.client = APIClient()
 
     def test_delete_with_internal_key_returns_204(self):
         tag = make_tag(type="genre")
-        response = self.client.delete(
-            f"/api/tags/{tag.id}/", **int_headers()
-        )
+        response = self.client.delete(f"/api/tags/{tag.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
 
     def test_delete_with_internal_key_removes_from_db(self):
@@ -342,9 +326,7 @@ class TestTagViewSetDelete(TestCase):
 
     def test_delete_with_public_key_returns_403(self):
         tag = make_tag(type="genre")
-        response = self.client.delete(
-            f"/api/tags/{tag.id}/", **pub_headers()
-        )
+        response = self.client.delete(f"/api/tags/{tag.id}/", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_delete_without_auth_returns_401(self):

@@ -9,6 +9,7 @@ not need to be repeated inside the schema decorators.
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
+
 from .models import Genre, GenreUseAs
 
 
@@ -23,10 +24,7 @@ class GenreUseAsSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
         extra_kwargs = {
             "name": {
-                "help_text": (
-                    "Human-readable label for this usage context "
-                    "(e.g. `genre`, `tag`, `category`)."
-                ),
+                "help_text": ("Human-readable label for this usage context (e.g. `genre`, `tag`, `category`)."),
             },
         }
 
@@ -42,7 +40,7 @@ class GenreSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     name = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the genre name, "
-            "e.g. {\"en\": \"Theatre\", \"fr\": \"Théâtre\"}. "
+            'e.g. {"en": "Theatre", "fr": "Théâtre"}. '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -54,8 +52,7 @@ class GenreSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         extra_kwargs = {
             "type": {
                 "help_text": (
-                    "Internal technical identifier in `snake_case` "
-                    "(e.g. `theater`, `contemporary_dance`, `festival`)."
+                    "Internal technical identifier in `snake_case` (e.g. `theater`, `contemporary_dance`, `festival`)."
                 ),
             },
             "use_as": {

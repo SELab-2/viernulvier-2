@@ -13,6 +13,7 @@ available translations as a language-code dictionary
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
+
 from .models import Price, PriceRank
 
 
@@ -27,7 +28,7 @@ class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     description = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the human-readable label "
-            "(e.g. {\"en\": \"Full price\", \"fr\": \"Plein tarif\"}). "
+            '(e.g. {"en": "Full price", "fr": "Plein tarif"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -99,7 +100,7 @@ class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     description = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the label "
-            "(e.g. {\"en\": \"Early Bird\", \"fr\": \"Prévente\"}). "
+            '(e.g. {"en": "Early Bird", "fr": "Prévente"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )

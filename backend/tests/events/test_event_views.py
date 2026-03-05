@@ -1,13 +1,14 @@
 from datetime import timedelta
+
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
+
 from apps.core.views import ApiModelViewSet
 from apps.events.models import Event
 from apps.events.views import EventViewSet
-from apps.locations.models import Location, Space, Hall
+from apps.locations.models import Hall, Location, Space
 from apps.productions.models import Production
-
 
 PUB_KEY = "pub-event-view-test-key"
 INT_KEY = "int-event-view-test-key"
@@ -16,6 +17,7 @@ INT_KEY = "int-event-view-test-key"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def pub_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
@@ -54,6 +56,7 @@ def make_hall() -> Hall:
 # Class-level tests
 # ---------------------------------------------------------------------------
 
+
 class TestEventViewSetClass(TestCase):
     def test_inherits_from_api_model_viewset(self):
         """Test case for test_inherits_from_api_model_viewset."""
@@ -66,12 +69,14 @@ class TestEventViewSetClass(TestCase):
     def test_serializer_class(self):
         """Test case for test_serializer_class."""
         from apps.events.serializers import EventSerializer
+
         self.assertEqual(EventViewSet.serializer_class, EventSerializer)
 
 
 # ---------------------------------------------------------------------------
 # Events — shared setup mixin
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class _EventSetupMixin(TestCase):
@@ -107,6 +112,7 @@ class _EventSetupMixin(TestCase):
 # ---------------------------------------------------------------------------
 # GET /api/events/ — list
 # ---------------------------------------------------------------------------
+
 
 class TestEventViewSetList(_EventSetupMixin):
     def test_list_with_public_key_returns_200(self):
@@ -155,6 +161,7 @@ class TestEventViewSetList(_EventSetupMixin):
 # GET /api/events/<id>/ — retrieve
 # ---------------------------------------------------------------------------
 
+
 class TestEventViewSetRetrieve(_EventSetupMixin):
     def test_retrieve_with_public_key_returns_200(self):
         """Test case for test_retrieve_with_public_key_returns_200."""
@@ -192,6 +199,7 @@ class TestEventViewSetRetrieve(_EventSetupMixin):
 # ---------------------------------------------------------------------------
 # POST /api/events/ — create (internal only)
 # ---------------------------------------------------------------------------
+
 
 class TestEventViewSetCreate(_EventSetupMixin):
     def test_create_with_internal_key_returns_201(self):
@@ -299,6 +307,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
 # PUT /api/events/<id>/ — full update (internal only)
 # ---------------------------------------------------------------------------
 
+
 class TestEventViewSetUpdate(_EventSetupMixin):
     def test_put_with_internal_key_returns_200(self):
         """Test case for test_put_with_internal_key_returns_200."""
@@ -374,6 +383,7 @@ class TestEventViewSetUpdate(_EventSetupMixin):
 # PATCH /api/events/<id>/ — partial update (internal only)
 # ---------------------------------------------------------------------------
 
+
 class TestEventViewSetPartialUpdate(_EventSetupMixin):
     def test_patch_with_internal_key_returns_200(self):
         """Test case for test_patch_with_internal_key_returns_200."""
@@ -429,6 +439,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
 # ---------------------------------------------------------------------------
 # DELETE /api/events/<id>/ — destroy (internal only)
 # ---------------------------------------------------------------------------
+
 
 class TestEventViewSetDelete(_EventSetupMixin):
     def test_delete_with_internal_key_returns_204(self):

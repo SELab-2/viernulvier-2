@@ -21,6 +21,7 @@ from apps.languages.models import Language
 
 class TestGenreUseAsSerializerFields(TestCase):
     """Field exposure for GenreUseAsSerializer."""
+
     def setUp(self):
         self.use_as = GenreUseAs(name="genre")
         self.use_as.save()
@@ -35,6 +36,7 @@ class TestGenreUseAsSerializerFields(TestCase):
 
 class TestGenreUseAsSerializerSerialization(TestCase):
     """Model → dict serialization for GenreUseAsSerializer."""
+
     def test_serializes_instance(self):
         use_as = GenreUseAs.objects.create(name="tag")
         data = GenreUseAsSerializer(use_as).data
@@ -55,6 +57,7 @@ class TestGenreUseAsSerializerSerialization(TestCase):
 
 class TestGenreUseAsSerializerDeserialization(TestCase):
     """dict → model validation for GenreUseAsSerializer."""
+
     def test_valid_data_creates(self):
         serializer = GenreUseAsSerializer(data={"name": "genre"})
         self.assertTrue(serializer.is_valid(), serializer.errors)
@@ -77,6 +80,7 @@ class TestGenreUseAsSerializerDeserialization(TestCase):
 
 class TestGenreSerializerFields(TestCase):
     """Field exposure for GenreSerializer."""
+
     def setUp(self):
         self.use_as = GenreUseAs.objects.create(name="genre")
         self.genre = Genre.objects.create(type="Theater", use_as=self.use_as)
@@ -88,6 +92,7 @@ class TestGenreSerializerFields(TestCase):
 
 class TestGenreSerializerSerialization(TestCase):
     """Model → dict serialization for GenreSerializer."""
+
     def setUp(self):
         self.use_as = GenreUseAs.objects.create(name="genre")
         self.lang_en = Language.objects.create(code="en", name="English", is_active=True)
@@ -124,6 +129,7 @@ class TestGenreSerializerSerialization(TestCase):
 
 class TestGenreSerializerDeserialization(TestCase):
     """dict → model validation for GenreSerializer."""
+
     def setUp(self):
         self.use_as = GenreUseAs.objects.create(name="genre")
         self.lang_en = Language.objects.create(code="en", name="English", is_active=True)

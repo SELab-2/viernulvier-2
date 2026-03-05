@@ -13,6 +13,7 @@ all available translations as language-code dictionaries
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
+
 from .models import MediaGallery, MediaItem, MediaItemCrop
 
 
@@ -56,7 +57,7 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     title = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the title "
-            "(e.g. {\"en\": \"Poster\", \"fr\": \"Affiche\"}). "
+            '(e.g. {"en": "Poster", "fr": "Affiche"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -64,7 +65,7 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     description = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the description "
-            "(e.g. {\"en\": \"Event poster\", \"fr\": \"Affiche de l'événement\"}). "
+            '(e.g. {"en": "Event poster", "fr": "Affiche de l\'événement"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -72,7 +73,7 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     credits = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the credits string "
-            "(e.g. {\"en\": \"Photo by John Doe\", \"fr\": \"Photo par John Doe\"}). "
+            '(e.g. {"en": "Photo by John Doe", "fr": "Photo par John Doe"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -80,8 +81,8 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     link = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the external URL "
-            "(e.g. {\"en\": \"https://example.com/en\", "
-            "\"fr\": \"https://example.com/fr\"}). "
+            '(e.g. {"en": "https://example.com/en", '
+            '"fr": "https://example.com/fr"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )

@@ -13,14 +13,14 @@ from drf_spectacular.utils import (
 )
 
 from apps.core.openapi import (
+    RESPONSE_204_DELETED,
     RESPONSE_400,
     RESPONSE_401,
     RESPONSE_403,
     RESPONSE_404,
-    RESPONSE_204_DELETED,
 )
-from .serializers import LanguageSerializer
 
+from .serializers import LanguageSerializer
 
 # ===========================================================================
 # Language — examples
@@ -71,8 +71,7 @@ _LANGUAGE_LIST = extend_schema(
 _LANGUAGE_RETRIEVE = extend_schema(
     summary="Retrieve a language",
     description=(
-        "Returns the full representation of a single **Language** identified "
-        "by its ISO 639-1 `code` (e.g. `en`, `nl`)."
+        "Returns the full representation of a single **Language** identified by its ISO 639-1 `code` (e.g. `en`, `nl`)."
     ),
     responses={
         200: LanguageSerializer,
