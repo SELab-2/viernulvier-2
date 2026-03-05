@@ -17,10 +17,10 @@
         "@emotion/styled": "^11.11.5",
         "@mui/icons-material": "^6.2.15",
         "@mui/material": "^6.2.15",
-        "i18next": "^23.15.1",
+        "i18next": "^25.8.14",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
-        "react-i18next": "^15.4.0",
+        "react-i18next": "^16.5.4",
         "react-router-dom": "^7.1.3"
     },
     "devDependencies": {
