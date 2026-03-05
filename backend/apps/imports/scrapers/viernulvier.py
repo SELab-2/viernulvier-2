@@ -7,6 +7,7 @@ Usage:
 
 import logging
 import os
+import random
 import re
 import sys
 from dataclasses import dataclass, field
@@ -30,6 +31,13 @@ BASE_DOMAIN = "https://www.viernulvier.gent"
 DEFAULT_ENDPOINT = "/productions"
 DEFAULT_TIMEOUT = 10
 ERROR_CONTEXT_PATH = "/api/contexts/Error"
+
+USER_AGENT_POOL = [
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.3; rv:122.0) Gecko/20100101 Firefox/122.0",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -153,9 +161,11 @@ def _get_api_key_or_raise() -> str:
 
 
 def _build_request_headers() -> Dict[str, str]:
+    user_agent = random.choice(USER_AGENT_POOL)
     return {
         "X-AUTH-TOKEN": _get_api_key_or_raise(),
         "accept": "application/ld+json",
+        "User-Agent": user_agent,
     }
 
 
