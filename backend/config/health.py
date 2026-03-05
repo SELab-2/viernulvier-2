@@ -11,5 +11,5 @@ def health(_):
             cursor.fetchone()
     except OperationalError:
         return JsonResponse({"status": "error", "detail": "database unavailable"}, status=503)
-    
+
     return JsonResponse({"status": "ok"})
