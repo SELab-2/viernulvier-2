@@ -50,6 +50,7 @@ LOCAL_APPS = [
     'apps.events',
     'apps.genres',
     'apps.import_log',
+    "apps.imports",
     'apps.tags',
     'apps.pricing',
     'apps.locations',
