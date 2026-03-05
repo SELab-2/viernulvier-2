@@ -42,12 +42,12 @@ class TestTag:
     def test_empty_type(self):
         tag = TagFactory.build(type="")
         
-        # The model should allow empty type, so full_clean should not raise an error
-        tag.full_clean()  # should not raise
+        tag.full_clean()
 
     def test_str_representation(self):
         tag = TagFactory(type="genre")
-        assert str(tag) == "Tag of type (genre)"
+        TagTranslationFactory(tag=tag, language__code="en", name="Rock")
+        assert str(tag) == "Rock"
 
     def test_delete_cascades_to_translations(self):
         tag = TagFactory()
