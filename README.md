@@ -39,6 +39,12 @@
 
 See wiki pages
 
+## Dependency Management
+
+Dependencies are automatically monitored and updated using **Dependabot**. Updates run weekly on Mondays and are automatically approved and merged based on version type (patch/minor auto-merge, major requires manual review).
+
+For information on how Dependabot is configured, what gets updated, and the auto-merge workflow, see [`DEPENDABOT`](.github/DEPENDABOT.md).
+
 ## Adding a Pull Request
 
 When creating a PR, please follow these guidelines:
