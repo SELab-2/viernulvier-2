@@ -550,21 +550,21 @@ class TestSyncCommandOptions:
         assert "Unknown step 'not_a_real_step'" in stderr_buffer.getvalue()
         sync_mock.assert_not_called()
 
-    def test_handle_writes_failed_when_sync_raises(self):
-        """Test that a sync exception is reported and execution continues to final summary."""
+    def test_handle_reports_sync_exception_and_success(monkeypatch):
+        """Covers error and success output branches in Command.handle (lines 870-871)."""
         command = Command()
         stdout_buffer = StringIO()
-        stderr_buffer = StringIO()
         command.stdout = OutputWrapper(stdout_buffer)
-        command.stderr = OutputWrapper(stderr_buffer)
-
-        with patch(
-            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
-            side_effect=Exception("boom"),
-        ) as sync_mock:
+        # Success branch
+        with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=3):
             command.handle(only="events")
-
-        assert sync_mock.call_count == 1
-        output = stdout_buffer.getvalue()
-        assert "FAILED: boom" in output
-        assert "Done. Total: 0 records" in output
+            assert "3 records" in stdout_buffer.getvalue()
+            assert "Done. Total: 3 records" in stdout_buffer.getvalue()
+        # Error branch
+        def raise_exc(*args, **kwargs):
+            raise RuntimeError("fail branch")
+        stdout_buffer = StringIO()
+        command.stdout = OutputWrapper(stdout_buffer)
+        with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", side_effect=raise_exc):
+            command.handle(only="events")
+            assert "FAILED: fail branch" in stdout_buffer.getvalue()

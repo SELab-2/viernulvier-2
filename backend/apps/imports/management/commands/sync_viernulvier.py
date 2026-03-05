@@ -26,17 +26,23 @@ from apps.imports.scrapers.viernulvier import (
     sync_viernulvier,
 )
 from apps.locations.models import (
-    Location, LocationTranslation,
-    Space, SpaceTranslation,
-    Hall, HallTranslation,
+    Location,
+    LocationTranslation,
+    Space,
+    SpaceTranslation,
+    Hall,
+    HallTranslation,
 )
 from apps.media_library.models import (
     MediaGallery,
-    MediaItem, MediaItemTranslation,
+    MediaItem,
+    MediaItemTranslation,
 )
 from apps.pricing.models import (
-    Price, PriceTranslation,
-    PriceRank, PriceRankTranslation,
+    Price,
+    PriceTranslation,
+    PriceRank,
+    PriceRankTranslation,
 )
 from apps.productions.models import (
     UitDatabaseTheme,
@@ -51,6 +57,7 @@ from apps.tags.models import Tag, TagTranslation
 # ===========================================================================
 # Shared value transforms
 # ===========================================================================
+
 
 def nee_ja_to_bool(value) -> bool:
     """Convert API "nee"/"ja" strings to Python bool.
@@ -75,7 +82,7 @@ UITDATABASE_THEME_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
         "name": "name",
-        "cdb_cat_id": None,     # not in our model
+        "cdb_cat_id": None,  # not in our model
     },
 )
 
@@ -119,11 +126,11 @@ GENRE_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
         "type": "type",
-        "use_as": "use_as",         # FK — resolved via fk_resolver
+        "use_as": "use_as",  # FK — resolved via fk_resolver
         "vendor_id": None,
-        "name": None,               # flat dict → handled via TranslationConfig
-        "slug": None,               # no field in GenreTranslation
-        "description": None,        # no field in GenreTranslation
+        "name": None,  # flat dict → handled via TranslationConfig
+        "slug": None,  # no field in GenreTranslation
+        "description": None,  # no field in GenreTranslation
     },
     fk_resolvers={
         "use_as": _resolve_genre_use_as,
@@ -165,17 +172,17 @@ TAG_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
         "source": "source",
-        "sourceType": "source_type",    # camelCase in API, snake_case in model
-        "enable": "is_enabled",         # API: "enable"  →  model: "is_enabled"
-        "external": "is_external",      # API: "external"  →  model: "is_external"
+        "sourceType": "source_type",  # camelCase in API, snake_case in model
+        "enable": "is_enabled",  # API: "enable"  →  model: "is_enabled"
+        "external": "is_external",  # API: "external"  →  model: "is_external"
         "url": "url",
         "type": "type",
         # Skip
         "code": None,
-        "name": None,               # flat dict → TranslationConfig
+        "name": None,  # flat dict → TranslationConfig
         "short_description": None,  # flat dict → TranslationConfig
-        "url_title": None,          # flat dict → TranslationConfig
-        "gallery": None,            # no FK on Tag in our model
+        "url_title": None,  # flat dict → TranslationConfig
+        "gallery": None,  # no FK on Tag in our model
         "expires_after": None,
         "automatically_assigned": None,
     },
@@ -234,10 +241,10 @@ LOCATION_CONFIG = ModelSyncConfig(
         "phone_2": "phone_2",
         "own_location": "is_own_location",  # API: "own_location"  →  model: "is_own_location"
         # Skip
-        "name": None,           # flat dict → TranslationConfig
+        "name": None,  # flat dict → TranslationConfig
         "code": None,
         "uitdatabank_id": None,
-        "spaces": None,         # reverse relation, not on Location
+        "spaces": None,  # reverse relation, not on Location
     },
     value_transforms={
         "is_own_location": nee_ja_to_bool,
@@ -267,11 +274,11 @@ LOCATION_CONFIG = ModelSyncConfig(
 SPACE_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
-        "location": "location",     # FK to Location
+        "location": "location",  # FK to Location
         # Skip
         "vendor_id": None,
-        "name": None,               # flat dict → TranslationConfig
-        "halls": None,              # reverse relation
+        "name": None,  # flat dict → TranslationConfig
+        "halls": None,  # reverse relation
     },
     translations=[
         TranslationConfig(
@@ -300,14 +307,14 @@ SPACE_CONFIG = ModelSyncConfig(
 HALL_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
-        "space": "space",               # FK to Space
+        "space": "space",  # FK to Space
         "seat_selection": "seat_selection",
         "open_seating": "open_seating",
         # Skip
         "vendor_id": None,
         "box_office_id": None,
-        "name": None,                   # flat dict → TranslationConfig
-        "remark": None,                 # flat dict → TranslationConfig
+        "name": None,  # flat dict → TranslationConfig
+        "remark": None,  # flat dict → TranslationConfig
     },
     value_transforms={
         "seat_selection": nee_ja_to_bool,
@@ -340,8 +347,8 @@ HALL_CONFIG = ModelSyncConfig(
 MEDIA_GALLERY_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
-        "name": "name",     # plain string, no flat dict
-        "items": None,      # reverse relation
+        "name": "name",  # plain string, no flat dict
+        "items": None,  # reverse relation
     },
 )
 
@@ -368,7 +375,7 @@ MEDIA_ITEM_CONFIG = ModelSyncConfig(
         "width": "width",
         "height": "height",
         "format": "format",
-        "gallery": "gallery",   # FK to MediaGallery
+        "gallery": "gallery",  # FK to MediaGallery
         # Skip — flat dicts → TranslationConfigs
         "title": None,
         "description": None,
@@ -432,11 +439,11 @@ PRICE_CONFIG = ModelSyncConfig(
         "minimum": "minimum",
         "maximum": "maximum",
         "step": "step",
-        "order": "sort_order",          # API: "order"  →  model: "sort_order"
+        "order": "sort_order",  # API: "order"  →  model: "sort_order"
         "cineville_box": "cineville_box",
         # Skip
         "code": None,
-        "description": None,            # flat dict → TranslationConfig
+        "description": None,  # flat dict → TranslationConfig
         "auto_select_combo": None,
         "include_in_price_range": None,
     },
@@ -470,7 +477,7 @@ PRICE_RANK_CONFIG = ModelSyncConfig(
         "sold_out_buffer": "sold_out_buffer",
         # Skip
         "code": None,
-        "description": None,    # flat dict → TranslationConfig
+        "description": None,  # flat dict → TranslationConfig
     },
     translations=[
         TranslationConfig(
@@ -524,8 +531,8 @@ PRODUCTION_CONFIG = ModelSyncConfig(
         "attendance_mode": "attendance_mode",
         "performer_type": "performer_type",
         "uitdatabank_theme": "uit_database_theme",  # FK → UitDatabaseTheme
-        "uitdatabank_type": "uit_database_type",    # FK → UitDatabaseType
-        "media_gallery": "media_gallery",           # FK → MediaGallery
+        "uitdatabank_type": "uit_database_type",  # FK → UitDatabaseType
+        "media_gallery": "media_gallery",  # FK → MediaGallery
         # Skip — no field in our model
         "vendor_id": None,
         "box_office_id": None,
@@ -534,7 +541,7 @@ PRODUCTION_CONFIG = ModelSyncConfig(
         "poster_gallery": None,
         "uitdatabank_keywords": None,
         "events": None,
-        "genres": None,         # M2M → handled via M2MConfig
+        "genres": None,  # M2M → handled via M2MConfig
         # Skip all flat dict fields — handled via TranslationConfigs
         "supertitle": None,
         "title": None,
@@ -557,19 +564,97 @@ PRODUCTION_CONFIG = ModelSyncConfig(
         "custom_data": None,
     },
     translations=[
-        TranslationConfig(api_key="supertitle",         model=ProductionTranslation, parent_fk="production", flat_field="supertitle",         language_fk="language_id"),
-        TranslationConfig(api_key="title",              model=ProductionTranslation, parent_fk="production", flat_field="title",              language_fk="language_id"),
-        TranslationConfig(api_key="artist",             model=ProductionTranslation, parent_fk="production", flat_field="artist_name",        language_fk="language_id"),  # API: "artist" → model: "artist_name"
-        TranslationConfig(api_key="tagline",            model=ProductionTranslation, parent_fk="production", flat_field="tagline",            language_fk="language_id"),
-        TranslationConfig(api_key="teaser",             model=ProductionTranslation, parent_fk="production", flat_field="teaser",             language_fk="language_id"),
-        TranslationConfig(api_key="description",        model=ProductionTranslation, parent_fk="production", flat_field="description",        language_fk="language_id"),
-        TranslationConfig(api_key="description_short",  model=ProductionTranslation, parent_fk="production", flat_field="description_short",  language_fk="language_id"),
-        TranslationConfig(api_key="description_extra",  model=ProductionTranslation, parent_fk="production", flat_field="description_extra",  language_fk="language_id"),
-        TranslationConfig(api_key="description_2",      model=ProductionTranslation, parent_fk="production", flat_field="description_2",      language_fk="language_id"),
-        TranslationConfig(api_key="meta_title",         model=ProductionTranslation, parent_fk="production", flat_field="meta_title",         language_fk="language_id"),
-        TranslationConfig(api_key="meta_description",   model=ProductionTranslation, parent_fk="production", flat_field="meta_description",   language_fk="language_id"),
-        TranslationConfig(api_key="video_1",            model=ProductionTranslation, parent_fk="production", flat_field="video_1",            language_fk="language_id"),
-        TranslationConfig(api_key="video_2",            model=ProductionTranslation, parent_fk="production", flat_field="video_2",            language_fk="language_id"),
+        TranslationConfig(
+            api_key="supertitle",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="supertitle",
+            language_fk="language_id",
+        ),
+        TranslationConfig(
+            api_key="title",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="title",
+            language_fk="language_id",
+        ),
+        TranslationConfig(
+            api_key="artist",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="artist_name",
+            language_fk="language_id",
+        ),  # API: "artist" → model: "artist_name"
+        TranslationConfig(
+            api_key="tagline",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="tagline",
+            language_fk="language_id",
+        ),
+        TranslationConfig(
+            api_key="teaser",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="teaser",
+            language_fk="language_id",
+        ),
+        TranslationConfig(
+            api_key="description",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="description",
+            language_fk="language_id",
+        ),
+        TranslationConfig(
+            api_key="description_short",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="description_short",
+            language_fk="language_id",
+        ),
+        TranslationConfig(
+            api_key="description_extra",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="description_extra",
+            language_fk="language_id",
+        ),
+        TranslationConfig(
+            api_key="description_2",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="description_2",
+            language_fk="language_id",
+        ),
+        TranslationConfig(
+            api_key="meta_title",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="meta_title",
+            language_fk="language_id",
+        ),
+        TranslationConfig(
+            api_key="meta_description",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="meta_description",
+            language_fk="language_id",
+        ),
+        TranslationConfig(
+            api_key="video_1",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="video_1",
+            language_fk="language_id",
+        ),
+        TranslationConfig(
+            api_key="video_2",
+            model=ProductionTranslation,
+            parent_fk="production",
+            flat_field="video_2",
+            language_fk="language_id",
+        ),
     ],
     m2m=[
         # genres is a list of URLs → ProductionGenre through table
@@ -608,8 +693,8 @@ PRODUCTION_CONFIG = ModelSyncConfig(
 EVENT_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
-        "production": "production",     # FK → Production (embedded object with @id)
-        "hall": "hall",                 # FK → Hall (nullable, URL string)
+        "production": "production",  # FK → Production (embedded object with @id)
+        "hall": "hall",  # FK → Hall (nullable, URL string)
         "starts_at": "starts_at",
         "ends_at": "ends_at",
         # Skip
@@ -621,9 +706,9 @@ EVENT_CONFIG = ModelSyncConfig(
         "uitdatabank_id": None,
         "secure": None,
         "sms_verification": None,
-        "status": None,                 # no Status model in our schema
-        "prices": None,                 # sync separately via /events/prices
-        "info": None,                   # no translation model for events
+        "status": None,  # no Status model in our schema
+        "prices": None,  # sync separately via /events/prices
+        "info": None,  # no translation model for events
         "eticket_info": None,
         "external_order_url": None,
     },
@@ -650,8 +735,8 @@ EVENT_CONFIG = ModelSyncConfig(
 EVENT_PRICE_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
-        "event": "event",          # FK → Event
-        "price": "price_rank",     # FK → PriceRank
+        "event": "event",  # FK → Event
+        "price": "price_rank",  # FK → PriceRank
         "amount": "amount",
         "available": "available",
         "expires_at": None,
@@ -671,26 +756,37 @@ EVENT_PRICE_CONFIG = ModelSyncConfig(
 
 SYNC_STEPS = [
     # name                  model               config                      endpoint
-    ("uitdatabank_themes",  UitDatabaseTheme,   UITDATABASE_THEME_CONFIG,   "/uitdatabank/themes"),
-    ("uitdatabank_types",   UitDatabaseType,    UITDATABASE_TYPE_CONFIG,    "/uitdatabank/types"),
-    ("genres",              Genre,              GENRE_CONFIG,               "/genres"),
-    ("tags",                Tag,                TAG_CONFIG,                 "/tags"),
-    ("locations",           Location,           LOCATION_CONFIG,            "/locations"),
-    ("spaces",              Space,              SPACE_CONFIG,               "/spaces"),
-    ("halls",               Hall,               HALL_CONFIG,                "/halls"),
-    ("media_galleries",     MediaGallery,       MEDIA_GALLERY_CONFIG,       "/media/galleries"),
-    ("media_items",         MediaItem,          MEDIA_ITEM_CONFIG,          "/media/items"),
-    ("prices",              Price,              PRICE_CONFIG,               "/prices"),
-    ("price_ranks",         PriceRank,          PRICE_RANK_CONFIG,          "/prices/ranks"),
-    ("productions",         Production,         PRODUCTION_CONFIG,          "/productions"),
-    ("events",              Event,              EVENT_CONFIG,               "/events"),
-    ("event_prices",        EventPrice,         EVENT_PRICE_CONFIG,         "/events/prices"),
+    (
+        "uitdatabank_themes",
+        UitDatabaseTheme,
+        UITDATABASE_THEME_CONFIG,
+        "/uitdatabank/themes",
+    ),
+    (
+        "uitdatabank_types",
+        UitDatabaseType,
+        UITDATABASE_TYPE_CONFIG,
+        "/uitdatabank/types",
+    ),
+    ("genres", Genre, GENRE_CONFIG, "/genres"),
+    ("tags", Tag, TAG_CONFIG, "/tags"),
+    ("locations", Location, LOCATION_CONFIG, "/locations"),
+    ("spaces", Space, SPACE_CONFIG, "/spaces"),
+    ("halls", Hall, HALL_CONFIG, "/halls"),
+    ("media_galleries", MediaGallery, MEDIA_GALLERY_CONFIG, "/media/galleries"),
+    ("media_items", MediaItem, MEDIA_ITEM_CONFIG, "/media/items"),
+    ("prices", Price, PRICE_CONFIG, "/prices"),
+    ("price_ranks", PriceRank, PRICE_RANK_CONFIG, "/prices/ranks"),
+    ("productions", Production, PRODUCTION_CONFIG, "/productions"),
+    ("events", Event, EVENT_CONFIG, "/events"),
+    ("event_prices", EventPrice, EVENT_PRICE_CONFIG, "/events/prices"),
 ]
 
 
 # ===========================================================================
 # Management command
 # ===========================================================================
+
 
 class Command(BaseCommand):
     help = "Synchronize Viernulvier / Peppered API data to the local database"
@@ -751,10 +847,12 @@ class Command(BaseCommand):
         ]
 
         if only and not steps_to_run:
-            self.stderr.write(self.style.ERROR(
-                f"Unknown step '{only}'. "
-                f"Choices: {', '.join(n for n, *_ in SYNC_STEPS)}"
-            ))
+            self.stderr.write(
+                self.style.ERROR(
+                    f"Unknown step '{only}'. "
+                    f"Choices: {', '.join(n for n, *_ in SYNC_STEPS)}"
+                )
+            )
             return
 
         total_saved = 0
