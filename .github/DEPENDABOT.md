@@ -50,7 +50,7 @@ The workflow in `.github/workflows/dependabot-auto-merge.yml` automatically:
 1. **Detects Dependabot PRs** – Runs only on pull requests created by `dependabot[bot]`
 2. **Fetches Update Metadata** – Determines the update type (patch, minor, or major)
 3. **Approves patch/minor updates** – Uses `actions/github-script` to add an approval
-4. **Enables auto-merge** – Uses `gh pr merge --auto --squash` for patch/minor updates
+4. **Enables auto-merge** – Uses `actions/github-script` with the `enablePullRequestAutoMerge` GraphQL mutation to enable squash auto-merge for patch/minor updates
 5. **Waits for checks** – Auto-merge proceeds once all status checks pass
 
 ### Merge Strategy
