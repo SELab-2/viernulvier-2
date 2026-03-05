@@ -1,8 +1,8 @@
 import factory
 from django.db import models
-from django.apps import apps
 
-from apps.core.model import BaseModel
+from apps.core.models import BaseModel
+
 
 class CoreDummy(BaseModel):
     name = models.CharField(max_length=10, blank=False, null=False)

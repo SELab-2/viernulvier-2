@@ -1,14 +1,14 @@
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-from apps.tags.models import Tag, TagTranslation
+
+from apps.tags.models import TagTranslation
+from tests.factories.language import LanguageFactory
 
 # Use the factories to create test data
 from tests.factories.tag import (
     TagFactory,
     TagTranslationFactory,
 )
-from tests.factories.language import LanguageFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -16,32 +16,33 @@ pytestmark = pytest.mark.django_db
 # Tag
 # =====================================================
 
+
 class TestTag:
     def test_tag_creation(self):
         tag = TagFactory(
-            url='http://example.com/tag/rock',
-            source='source', 
-            source_type='source_type', 
-            is_external=True, 
-            is_enabled=True, 
-            type='type'
+            url="http://example.com/tag/rock",
+            source="source",
+            source_type="source_type",
+            is_external=True,
+            is_enabled=True,
+            type="type",
         )
 
-        assert tag.url == 'http://example.com/tag/rock'
-        assert tag.source == 'source'
-        assert tag.source_type == 'source_type'
+        assert tag.url == "http://example.com/tag/rock"
+        assert tag.source == "source"
+        assert tag.source_type == "source_type"
         assert tag.is_external is True
         assert tag.is_enabled is True
-        assert tag.type == 'type'
+        assert tag.type == "type"
 
     def test_wrong_url(self):
-        tag = TagFactory.build(url='not-a-valid-url')
+        tag = TagFactory.build(url="not-a-valid-url")
         with pytest.raises(ValidationError):
             tag.full_clean()
-        
+
     def test_empty_type(self):
         tag = TagFactory.build(type="")
-        
+
         # The model should allow empty type, so full_clean should not raise an error
         tag.full_clean()  # should not raise
 
@@ -64,18 +65,15 @@ class TestTag:
 # TagTranslation
 # =====================================================
 
+
 class TestTagTranslation:
-    
     def test_requires_name(self):
         translation = TagTranslationFactory.build(name="")
         with pytest.raises(ValidationError):
             translation.full_clean()
 
     def test_optional_fields_can_be_blank(self):
-        translation = TagTranslationFactory(
-            short_description="",
-            url_title=""
-        )
+        translation = TagTranslationFactory(short_description="", url_title="")
         translation.full_clean()  # should not raise
 
     def test_str(self):

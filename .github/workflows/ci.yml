@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+    # Auto-fix style on push 
+  backend:
+    name: Backend (ruff auto-fix)
+    runs-on: ubuntu-latest
+    if: >
+        github.event_name == 'push' &&
+        github.actor != 'github-actions[bot]'
+
+    permissions:
+      contents: write
+
+    defaults:
+      run:
+        working-directory: backend
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12' #TODO check if this is the correct version
+          cache: 'pip'
+          cache-dependency-path: backend/requirements/development.txt
+            
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/development.txt
+    
+      - name: Ruff auto-fix (lint + import sorting) and format
+        run: |
+            ruff check . --fix
+            ruff format .
+
+      - name: Commit and push if changes
+        run: |
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            if git diff --quiet; then
+                echo "No changes to commit."
+                exit 0
+            fi
+
+            git add -A
+            git commit -m "chore: ruff auto-fix"
+            git push
+        
+  backend-tests:
+    name: Backend Tests (pytest + coverage)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      SECRET_KEY: "django-insecure-test-key-only-for-github-actions"
+      INTERNAL_API_KEY: "test-internal-key"
+      PUBLIC_API_KEY: "test-public-key"
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+    
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12' #TODO check if this is the correct version
+          cache: 'pip'
+          cache-dependency-path: backend/requirements/development.txt
+        
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/development.txt
+
+    # On pull request: verify formatting/linting without changing code
+      - name: Ruff check (check only)
+        if: github.event_name == 'pull_request'
+        run: |
+            ruff check .
+            ruff format --check .
+
+      - name: Django system check
+        run: |
+          python manage.py check
+    
+      - name: Run tests (pytest + pytest-cov)
+        run: |
+          pytest -q --cov=. --cov-report=term-missing --cov-report=html

@@ -24,10 +24,10 @@ from rest_framework.permissions import SAFE_METHODS
 
 from apps.core.permissions import ApiKeyPermission
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_request(method="GET", auth=None):
     request = MagicMock()
@@ -40,52 +40,36 @@ def make_request(method="GET", auth=None):
 # Internal auth — full access
 # ---------------------------------------------------------------------------
 
-class TestApiKeyPermissionInternal(TestCase):
 
+class TestApiKeyPermissionInternal(TestCase):
     def setUp(self):
         self.permission = ApiKeyPermission()
         self.view = MagicMock()
 
     def test_internal_allows_get(self):
-        self.assertTrue(
-            self.permission.has_permission(make_request("GET", "internal"), self.view)
-        )
+        self.assertTrue(self.permission.has_permission(make_request("GET", "internal"), self.view))
 
     def test_internal_allows_head(self):
-        self.assertTrue(
-            self.permission.has_permission(make_request("HEAD", "internal"), self.view)
-        )
+        self.assertTrue(self.permission.has_permission(make_request("HEAD", "internal"), self.view))
 
     def test_internal_allows_options(self):
-        self.assertTrue(
-            self.permission.has_permission(make_request("OPTIONS", "internal"), self.view)
-        )
+        self.assertTrue(self.permission.has_permission(make_request("OPTIONS", "internal"), self.view))
 
     def test_internal_allows_post(self):
-        self.assertTrue(
-            self.permission.has_permission(make_request("POST", "internal"), self.view)
-        )
+        self.assertTrue(self.permission.has_permission(make_request("POST", "internal"), self.view))
 
     def test_internal_allows_put(self):
-        self.assertTrue(
-            self.permission.has_permission(make_request("PUT", "internal"), self.view)
-        )
+        self.assertTrue(self.permission.has_permission(make_request("PUT", "internal"), self.view))
 
     def test_internal_allows_patch(self):
-        self.assertTrue(
-            self.permission.has_permission(make_request("PATCH", "internal"), self.view)
-        )
+        self.assertTrue(self.permission.has_permission(make_request("PATCH", "internal"), self.view))
 
     def test_internal_allows_delete(self):
-        self.assertTrue(
-            self.permission.has_permission(make_request("DELETE", "internal"), self.view)
-        )
+        self.assertTrue(self.permission.has_permission(make_request("DELETE", "internal"), self.view))
 
     def test_internal_returns_true_for_all_methods(self):
         for method in ("GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"):
-            result = self.permission.has_permission(
-                make_request(method, "internal"), self.view
-            )
+            result = self.permission.has_permission(make_request(method, "internal"), self.view)
             self.assertTrue(result, f"Internal auth should allow {method}")
 
 
@@ -93,8 +77,8 @@ class TestApiKeyPermissionInternal(TestCase):
 # Public auth — read-only
 # ---------------------------------------------------------------------------
 
-class TestApiKeyPermissionPublic(TestCase):
 
+class TestApiKeyPermissionPublic(TestCase):
     def setUp(self):
         self.permission = ApiKeyPermission()
         self.view = MagicMock()
@@ -102,54 +86,36 @@ class TestApiKeyPermissionPublic(TestCase):
     # Safe methods allowed
 
     def test_public_allows_get(self):
-        self.assertTrue(
-            self.permission.has_permission(make_request("GET", "public"), self.view)
-        )
+        self.assertTrue(self.permission.has_permission(make_request("GET", "public"), self.view))
 
     def test_public_allows_head(self):
-        self.assertTrue(
-            self.permission.has_permission(make_request("HEAD", "public"), self.view)
-        )
+        self.assertTrue(self.permission.has_permission(make_request("HEAD", "public"), self.view))
 
     def test_public_allows_options(self):
-        self.assertTrue(
-            self.permission.has_permission(make_request("OPTIONS", "public"), self.view)
-        )
+        self.assertTrue(self.permission.has_permission(make_request("OPTIONS", "public"), self.view))
 
     # Write methods denied
 
     def test_public_denies_post(self):
-        self.assertFalse(
-            self.permission.has_permission(make_request("POST", "public"), self.view)
-        )
+        self.assertFalse(self.permission.has_permission(make_request("POST", "public"), self.view))
 
     def test_public_denies_put(self):
-        self.assertFalse(
-            self.permission.has_permission(make_request("PUT", "public"), self.view)
-        )
+        self.assertFalse(self.permission.has_permission(make_request("PUT", "public"), self.view))
 
     def test_public_denies_patch(self):
-        self.assertFalse(
-            self.permission.has_permission(make_request("PATCH", "public"), self.view)
-        )
+        self.assertFalse(self.permission.has_permission(make_request("PATCH", "public"), self.view))
 
     def test_public_denies_delete(self):
-        self.assertFalse(
-            self.permission.has_permission(make_request("DELETE", "public"), self.view)
-        )
+        self.assertFalse(self.permission.has_permission(make_request("DELETE", "public"), self.view))
 
     def test_public_allows_all_safe_methods(self):
         for method in SAFE_METHODS:
-            result = self.permission.has_permission(
-                make_request(method, "public"), self.view
-            )
+            result = self.permission.has_permission(make_request(method, "public"), self.view)
             self.assertTrue(result, f"Public auth should allow safe method {method}")
 
     def test_public_denies_all_write_methods(self):
         for method in ("POST", "PUT", "PATCH", "DELETE"):
-            result = self.permission.has_permission(
-                make_request(method, "public"), self.view
-            )
+            result = self.permission.has_permission(make_request(method, "public"), self.view)
             self.assertFalse(result, f"Public auth should deny write method {method}")
 
 
@@ -157,27 +123,21 @@ class TestApiKeyPermissionPublic(TestCase):
 # No auth (unauthenticated) — all denied
 # ---------------------------------------------------------------------------
 
-class TestApiKeyPermissionNoAuth(TestCase):
 
+class TestApiKeyPermissionNoAuth(TestCase):
     def setUp(self):
         self.permission = ApiKeyPermission()
         self.view = MagicMock()
 
     def test_none_auth_denies_get(self):
-        self.assertFalse(
-            self.permission.has_permission(make_request("GET", None), self.view)
-        )
+        self.assertFalse(self.permission.has_permission(make_request("GET", None), self.view))
 
     def test_none_auth_denies_post(self):
-        self.assertFalse(
-            self.permission.has_permission(make_request("POST", None), self.view)
-        )
+        self.assertFalse(self.permission.has_permission(make_request("POST", None), self.view))
 
     def test_none_auth_denies_all_methods(self):
         for method in ("GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"):
-            result = self.permission.has_permission(
-                make_request(method, None), self.view
-            )
+            result = self.permission.has_permission(make_request(method, None), self.view)
             self.assertFalse(result, f"No auth should deny {method}")
 
 
@@ -185,27 +145,21 @@ class TestApiKeyPermissionNoAuth(TestCase):
 # Unknown auth value — all denied
 # ---------------------------------------------------------------------------
 
-class TestApiKeyPermissionUnknownAuth(TestCase):
 
+class TestApiKeyPermissionUnknownAuth(TestCase):
     def setUp(self):
         self.permission = ApiKeyPermission()
         self.view = MagicMock()
 
     def test_unknown_string_denies_get(self):
-        self.assertFalse(
-            self.permission.has_permission(make_request("GET", "superadmin"), self.view)
-        )
+        self.assertFalse(self.permission.has_permission(make_request("GET", "superadmin"), self.view))
 
     def test_unknown_string_denies_post(self):
-        self.assertFalse(
-            self.permission.has_permission(make_request("POST", "superadmin"), self.view)
-        )
+        self.assertFalse(self.permission.has_permission(make_request("POST", "superadmin"), self.view))
 
     def test_empty_string_auth_denies_all(self):
         for method in ("GET", "POST", "DELETE"):
-            result = self.permission.has_permission(
-                make_request(method, ""), self.view
-            )
+            result = self.permission.has_permission(make_request(method, ""), self.view)
             self.assertFalse(result, f"Empty-string auth should deny {method}")
 
     def test_boolean_true_auth_denies(self):
@@ -222,8 +176,8 @@ class TestApiKeyPermissionUnknownAuth(TestCase):
 # Return type is always bool
 # ---------------------------------------------------------------------------
 
-class TestApiKeyPermissionReturnType(TestCase):
 
+class TestApiKeyPermissionReturnType(TestCase):
     def setUp(self):
         self.permission = ApiKeyPermission()
         self.view = MagicMock()
@@ -249,10 +203,11 @@ class TestApiKeyPermissionReturnType(TestCase):
 # Inheritance / class contract
 # ---------------------------------------------------------------------------
 
-class TestApiKeyPermissionClass(TestCase):
 
+class TestApiKeyPermissionClass(TestCase):
     def test_inherits_from_base_permission(self):
         from rest_framework.permissions import BasePermission
+
         self.assertTrue(issubclass(ApiKeyPermission, BasePermission))
 
     def test_can_be_instantiated(self):

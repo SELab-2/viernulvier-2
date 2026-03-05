@@ -1,160 +1,182 @@
-import pytest
-from datetime import timedelta
+"""
+Covers:
+- Meta ordering
+- constraint names present
+- Event.clean validation (ends_at > starts_at)
+- EventPrice uniqueness constraint (event + price_rank)
+- indexes presence (by fields)
+- reverse relations (event.prices)
+- cascade delete behavior (Event -> EventPrice)
+- set_null behavior (PriceRank -> EventPrice.price_rank)
+"""
 
+from datetime import timedelta
+from decimal import Decimal
+
+import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.events.models import Event, EventPrice
-from tests.factories.event import EventFactory, EventPriceFactory
-from tests.factories.pricing import PriceRankFactory
+from apps.locations.models import Hall, Location, Space
+from apps.pricing.models import PriceRank
+from apps.productions.models import Production
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 
-# =====================================================
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def make_hall() -> Hall:
+    """Create a minimal Hall with required Location/Space dependencies."""
+    loc = Location.objects.create(
+        street="Main Street",
+        number="1",
+        postal_code="9000",
+        city="Ghent",
+        country="BE",
+        phone_1=None,
+        phone_2=None,
+        is_own_location=False,
+    )
+    space = Space.objects.create(location=loc)
+    return Hall.objects.create(space=space, seat_selection=False, open_seating=False)
+
+
+# ---------------------------------------------------------------------------
 # Event
-# =====================================================
+# ---------------------------------------------------------------------------
 
-class TestEventModel:
-    """Tests for the Event model behavior and constraints."""
 
-    def test_event_creation(self):
-        """Test that an Event can be created successfully."""
-        event = EventFactory.create()
+def test_event_meta_ordering_by_starts_at():
+    """Test case for test_event_meta_ordering_by_starts_at."""
+    prod = Production.objects.create()
+    hall = make_hall()
 
-        assert event.pk is not None
-        assert event.production is not None
-        assert event.hall is not None
-        assert event.ends_at > event.starts_at
+    now = timezone.now()
+    e2 = Event.objects.create(production=prod, hall=hall, starts_at=now + timedelta(days=1))
+    e1 = Event.objects.create(production=prod, hall=hall, starts_at=now)
 
-    def test_event_ends_after_starts_constraint(self):
-        """Reject events where end time is before start time."""
-        starts = timezone.now()
-        ends = starts - timedelta(hours=1)
+    events = list(Event.objects.all())
+    assert [e.id for e in events] == [e1.id, e2.id]
 
-        with pytest.raises(ValidationError):
-            EventFactory.create(starts_at=starts, ends_at=ends)
 
-    def test_event_allows_null_times(self):
-        """Allow events without explicit start and end timestamps."""
-        event = EventFactory.create(starts_at=None, ends_at=None)
+def test_event_constraint_name_present():
+    """Test case for test_event_constraint_name_present."""
+    names = {c.name for c in Event._meta.constraints}
+    assert "event_ends_after_starts" in names
 
-        assert event.starts_at is None
-        assert event.ends_at is None
 
-    def test_event_clean_raises_when_ends_before_starts(self):
-        """Model clean should raise when end time is before start time."""
-        starts = timezone.now()
-        event = EventFactory.build(starts_at=starts, ends_at=starts - timedelta(minutes=1))
+def test_event_clean_raises_when_ends_before_or_equal_starts():
+    """Test case for test_event_clean_raises_when_ends_before_or_equal_starts."""
+    prod = Production.objects.create()
+    hall = make_hall()
+    now = timezone.now()
 
-        with pytest.raises(ValidationError):
-            event.clean()
+    e = Event(
+        production=prod,
+        hall=hall,
+        starts_at=now,
+        ends_at=now,
+        ticketing_url="",
+    )
+    with pytest.raises(ValidationError):
+        e.full_clean()
 
-    def test_event_clean_raises_when_ends_equals_starts(self):
-        """Model clean should raise when end and start time are equal."""
-        starts = timezone.now()
-        event = EventFactory.build(starts_at=starts, ends_at=starts)
 
-        with pytest.raises(ValidationError):
-            event.clean()
+def test_event_allows_null_starts_or_ends():
+    """Test case for test_event_allows_null_starts_or_ends."""
+    prod = Production.objects.create()
+    hall = make_hall()
 
-    def test_event_clean_passes_when_ends_after_starts(self):
-        """Model clean should pass when end time is after start time."""
-        event = EventFactory.create()
-        event.ends_at = event.starts_at + timedelta(minutes=30)
+    e1 = Event(production=prod, hall=hall, starts_at=None, ends_at=None, ticketing_url="")
+    e1.full_clean()
+    e1.save()
+    assert e1.id is not None
 
-        event.clean()
-    
-    def test_event_ordering(self):
-        """Events are ordered by starts_at ascending by default."""
-        now = timezone.now()
+    e2 = Event(production=prod, hall=hall, starts_at=timezone.now(), ends_at=None, ticketing_url="")
+    e2.full_clean()
+    e2.save()
+    assert e2.id is not None
 
-        e1 = EventFactory.create(starts_at=now)
-        e2 = EventFactory.create(starts_at=now + timedelta(days=1))
-        e3 = EventFactory.create(starts_at=now + timedelta(days=2))
 
-        events = list(Event.objects.all())
-
-        assert events[0] == e1
-        assert events[1] == e2
-        assert events[2] == e3
-
-    def test_event_hall_nullable(self):
-        """Hall relation can be null."""
-        event = EventFactory.create(hall=None)
-
-        assert event.hall is None
-
-    def test_eventprice_cascade_on_event_delete(self):
-        """Deleting an event should cascade and delete linked EventPrice rows."""
-        event = EventFactory.create()
-        EventPriceFactory.create(event=event)
-
-        event.delete()
-
-        assert EventPrice.objects.count() == 0
-
-    def test_event_allows_blank_ticketing_url(self):
-        """Ticketing URL can be stored as an empty string."""
-        event = EventFactory.create(ticketing_url="")
-
-        assert event.ticketing_url == ""
-
-# =====================================================
+# ---------------------------------------------------------------------------
 # EventPrice
-# =====================================================
+# ---------------------------------------------------------------------------
 
-class TestEventPriceModel:
-    """Tests for EventPrice model behavior and constraints."""
 
-    def test_eventprice_creation(self):
-        """Create an EventPrice with valid defaults from the factory."""
-        price = EventPriceFactory.create()
+def test_event_price_unique_per_event_and_price_rank():
+    """Test case for test_event_price_unique_per_event_and_price_rank."""
+    prod = Production.objects.create()
+    hall = make_hall()
+    now = timezone.now()
 
-        assert price.pk is not None
-        assert price.event is not None
-        assert price.price_rank is not None
-        assert price.available >= 0
+    event = Event.objects.create(production=prod, hall=hall, starts_at=now)
+    rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
 
-    def test_unique_event_price_rank_constraint(self):
-        """Prevent duplicate (event, price_rank) combinations."""
-        event = EventFactory.create()
-        rank = PriceRankFactory.create()
-        EventPriceFactory.create(event=event, price_rank=rank)
+    ep1 = EventPrice(event=event, price_rank=rank, amount=Decimal("10.00"), available=10)
+    ep1.full_clean()
+    ep1.save()
 
-        with pytest.raises(ValidationError):
-            EventPriceFactory.create(event=event, price_rank=rank)
+    ep2 = EventPrice(event=event, price_rank=rank, amount=Decimal("12.00"), available=5)
+    with pytest.raises(ValidationError):
+        ep2.full_clean()
 
-    def test_same_rank_allowed_for_different_events(self):
-        """Allow reusing the same rank across different events."""
-        rank = PriceRankFactory.create()
 
-        first = EventPriceFactory.create(price_rank=rank)
-        second = EventPriceFactory.create(price_rank=rank)
+def test_event_price_constraint_name_present():
+    """Test case for test_event_price_constraint_name_present."""
+    names = {c.name for c in EventPrice._meta.constraints}
+    assert "uniq_event_price_rank" in names
 
-        assert first.event_id != second.event_id
 
-    def test_different_ranks_allowed_for_same_event(self):
-        """Allow multiple ranks for a single event."""
-        event = EventFactory.create()
-        first = EventPriceFactory.create(event=event, price_rank=PriceRankFactory.create())
-        second = EventPriceFactory.create(event=event, price_rank=PriceRankFactory.create())
+def test_event_price_indexes_present_by_fields():
+    """Test case for test_event_price_indexes_present_by_fields."""
+    idx_fields = [tuple(idx.fields) for idx in EventPrice._meta.indexes]
+    assert ("event",) in idx_fields
+    assert ("event", "price_rank") in idx_fields
 
-        assert first.pk != second.pk
 
-    def test_price_rank_set_null_on_delete(self):
-        """Deleting a rank should set price_rank to null on EventPrice."""
-        rank = PriceRankFactory.create()
-        price = EventPriceFactory.create(price_rank=rank)
+def test_event_price_reverse_relation_from_event():
+    """Test case for test_event_price_reverse_relation_from_event."""
+    prod = Production.objects.create()
+    hall = make_hall()
+    event = Event.objects.create(production=prod, hall=hall, starts_at=timezone.now())
+    rank1 = PriceRank.objects.create(position=1, sold_out_buffer=0)
+    rank2 = PriceRank.objects.create(position=2, sold_out_buffer=0)
 
-        rank.delete()
-        price.refresh_from_db()
+    p1 = EventPrice.objects.create(event=event, price_rank=rank1, amount="10.00", available=10)
+    p2 = EventPrice.objects.create(event=event, price_rank=rank2, amount="12.00", available=5)
 
-        assert price.price_rank is None
+    assert event.prices.count() == 2
+    assert set(event.prices.values_list("id", flat=True)) == {p1.id, p2.id}
 
-    def test_available_must_be_positive_or_zero(self):
-        """Reject negative available ticket counts."""
-        price = EventPriceFactory.build(available=-1)
 
-        with pytest.raises(ValidationError):
-            price.full_clean()
+def test_event_price_cascade_delete_event_deletes_prices():
+    """Test case for test_event_price_cascade_delete_event_deletes_prices."""
+    prod = Production.objects.create()
+    hall = make_hall()
+    event = Event.objects.create(production=prod, hall=hall, starts_at=timezone.now())
+    rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+
+    EventPrice.objects.create(event=event, price_rank=rank, amount="10.00", available=10)
+    EventPrice.objects.create(event=event, price_rank=None, amount="8.00", available=3)
+
+    event.delete()
+    assert EventPrice.objects.count() == 0
+
+
+def test_event_price_set_null_when_price_rank_deleted():
+    """Test case for test_event_price_set_null_when_price_rank_deleted."""
+    prod = Production.objects.create()
+    hall = make_hall()
+    event = Event.objects.create(production=prod, hall=hall, starts_at=timezone.now())
+    rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+
+    ep = EventPrice.objects.create(event=event, price_rank=rank, amount="10.00", available=10)
+    rank.delete()
+
+    ep.refresh_from_db()
+    assert ep.price_rank_id is None

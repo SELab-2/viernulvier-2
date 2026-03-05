@@ -1,18 +1,19 @@
-import pytest
-from django.core.exceptions import ValidationError
-from apps.import_log.models import ImportLog
-from django.db import transaction
-from django.utils import timezone
 from datetime import timedelta
 
-from tests.factories.import_log import ImportLogFactory
+import pytest
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.utils import timezone
 
+from apps.import_log.models import ImportLog
+from tests.factories.import_log import ImportLogFactory
 
 pytestmark = pytest.mark.django_db
 
 # =====================================================
 # ImportLog
 # =====================================================
+
 
 class TestImportLog:
     def test_requires_source(self):
@@ -36,11 +37,7 @@ class TestImportLog:
         started = timezone.now()
         finished = started + timedelta(minutes=10)
 
-        log = ImportLogFactory(
-            started_at=started,
-            finished_at=finished,
-            status=ImportLog.Status.SUCCESS
-        )
+        log = ImportLogFactory(started_at=started, finished_at=finished, status=ImportLog.Status.SUCCESS)
 
         assert log.finished_at > log.started_at
 
@@ -50,16 +47,10 @@ class TestImportLog:
 
         with pytest.raises(ValidationError):
             with transaction.atomic():
-                ImportLogFactory(
-                    started_at=started,
-                    finished_at=finished
-                )
+                ImportLogFactory(started_at=started, finished_at=finished)
 
     def test_null_timestamps_allowed(self):
-        log = ImportLogFactory(
-            started_at=None,
-            finished_at=None
-        )
+        log = ImportLogFactory(started_at=None, finished_at=None)
 
         assert log.started_at is None
         assert log.finished_at is None

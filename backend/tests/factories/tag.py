@@ -11,8 +11,8 @@ faker = Faker()
 # TAG
 # ==============================
 
+
 class TagFactory(factory.django.DjangoModelFactory):
-    
     class Meta:
         model = Tag
 
@@ -23,24 +23,21 @@ class TagFactory(factory.django.DjangoModelFactory):
     is_enabled = LazyFunction(lambda: faker.boolean(chance_of_getting_true=90))
     type = LazyFunction(lambda: faker.word())
 
+
 # ==============================
 # TAG TRANSLATION
 # ==============================
 
-class TagTranslationFactory(factory.django.DjangoModelFactory):
 
+class TagTranslationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TagTranslation
 
     tag = SubFactory(TagFactory)
     language = SubFactory(LanguageFactory)
 
-    name = LazyAttribute(
-        lambda o: f"{faker.word().capitalize()} ({o.language.code})"
-    )
+    name = LazyAttribute(lambda o: f"{faker.word().capitalize()} ({o.language.code})")
 
     short_description = LazyFunction(faker.sentence)
 
-    url_title = LazyAttribute(
-        lambda o: o.name.lower().replace(" ", "-")
-    )   
+    url_title = LazyAttribute(lambda o: o.name.lower().replace(" ", "-"))
