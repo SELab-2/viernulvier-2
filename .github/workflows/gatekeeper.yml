@@ -6,7 +6,7 @@ on:
 
 jobs:
   backend-gate:
-    name: Django check + Pytest
+    name: Django check (gate)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
           ignore-checks: 'CI Gatekeeper'
 
   frontend-gate:
-    name: Lint / Test / Build
+    name: Lint / Test / Build (gate)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
