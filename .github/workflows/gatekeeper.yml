@@ -27,9 +27,10 @@ jobs:
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          check-name: 'Django check + Pytest'
+          check-name: 'Backend CI / Django check + Pytest'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
+          ignore-checks: 'CI Gatekeeper'
 
   frontend-gate:
     name: Lint / Test / Build
@@ -53,6 +54,7 @@ jobs:
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          check-name: 'Lint / Test / Build'
+          check-name: 'Frontend CI / Lint / Test / Build'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
+          ignore-checks: 'CI Gatekeeper'
