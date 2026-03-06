@@ -264,7 +264,7 @@ class ProductionGenreAdmin(BaseAdmin):
 
     search_fields = (
         "production__id",
-        "genre__type",
+        "genre__translations__name",
     )
 
     autocomplete_fields = ("production", "genre")
@@ -305,7 +305,7 @@ class ProductionTagAdmin(BaseAdmin):
 
     search_fields = (
         "production__id",
-        "tag__type",
+        "tag__translations__name",
     )
 
     autocomplete_fields = ("production", "tag")

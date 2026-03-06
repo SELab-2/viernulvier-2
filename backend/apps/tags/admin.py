@@ -75,6 +75,7 @@ class TagAdmin(BaseAdmin):
     search_fields = (
         "type",
         "source",
+        "translations__name",
     )
 
     ordering = ("type", "id")

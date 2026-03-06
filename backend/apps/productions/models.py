@@ -186,7 +186,12 @@ class Production(BaseModel):
         ordering = ["-id"]
 
     def __str__(self) -> str:
-        return f"Production {self.id}"
+        title = self.get_base_display_name(
+            related_name="translations",
+            name_field="title",
+            fallback=None,
+        )
+        return title or f"Production {self.id}"
 
 
 class ProductionTranslation(BaseModel):
@@ -373,7 +378,7 @@ class ProductionTag(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"Tag {self.tag.type} for Production {self.production.id}"
+        return f"Tag {self.tag} for {self.production}"
 
 
 class ProductionGenre(BaseModel):
@@ -424,4 +429,4 @@ class ProductionGenre(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.genre.type}"
+        return str(self.genre)

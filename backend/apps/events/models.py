@@ -116,7 +116,9 @@ class Event(BaseModel):
             raise ValidationError("Event end time must be after start time.")
 
     def __str__(self) -> str:
-        return f"Event {self.id} - {self.production} @ {self.starts_at}"
+        production = str(self.production) if self.production else "Unknown Production"
+        date = self.starts_at.strftime("%Y-%m-%d %H:%M") if self.starts_at else "TBA"
+        return f"{production} @ {date}"
 
 
 # ===========================================================================
@@ -195,4 +197,5 @@ class EventPrice(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"EventPrice {self.id} - Event {self.event_id} / Rank {self.price_rank_id}"
+        rank = str(self.price_rank) if self.price_rank else "No rank"
+        return f"{self.event} - {rank} (€{self.amount})"

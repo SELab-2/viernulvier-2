@@ -118,6 +118,20 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         ),
     )
 
+    display_title = serializers.SerializerMethodField(
+        help_text=(
+            "Production title in the project's base language (derived from settings.LANGUAGE_CODE). "
+            "Falls back to the first available translation when missing."
+        ),
+    )
+
+    display_artist_name = serializers.SerializerMethodField(
+        help_text=(
+            "Artist or company name in the project's base language (derived from settings.LANGUAGE_CODE). "
+            "Falls back to the first available translation when missing."
+        ),
+    )
+
     # ---------------------------------------------------------------------------
     # Nested relations (read-only)
     # ---------------------------------------------------------------------------
@@ -153,6 +167,8 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "performer_type",
             "uit_database_theme",
             "uit_database_type",
+            "display_title",
+            "display_artist_name",
             "title",
             "artist_name",
             "tagline",
@@ -165,6 +181,8 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "id",
             "uit_database_theme",
             "uit_database_type",
+            "display_title",
+            "display_artist_name",
             "title",
             "artist_name",
             "tagline",
@@ -229,3 +247,11 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     def get_description(self, obj: Production) -> str:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")
+    
+    def get_display_title(self, obj: Production) -> str | None:
+        """Return the base-language title (with fallback)."""
+        return self.get_base_translated_value(obj, field_name="title")
+
+    def get_display_artist_name(self, obj: Production) -> str | None:
+        """Return the base-language artist/company name (with fallback)."""
+        return self.get_base_translated_value(obj, field_name="artist_name")
