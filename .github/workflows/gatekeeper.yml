@@ -30,6 +30,7 @@ jobs:
           check-name: 'Django check + Pytest'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
+          ignore-checks: 'CI Gatekeeper'
 
   frontend-gate:
     name: Lint / Test / Build
@@ -56,3 +57,4 @@ jobs:
           check-name: 'Lint / Test / Build'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
+          ignore-checks: 'CI Gatekeeper'
