@@ -3,9 +3,9 @@ updates:
   # Monitor npm dependencies for frontend
   - package-ecosystem: "npm"
     directory: "/frontend"
-    target-branch: "dependabot-test"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
       time: "09:00"
     open-pull-requests-limit: 5
     labels:
@@ -25,9 +25,9 @@ updates:
   # Monitor pip dependencies for backend
   - package-ecosystem: "pip"
     directory: "/backend/requirements"
-    target-branch: "dependabot-test"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
       time: "09:00"
     open-pull-requests-limit: 5
     labels:
@@ -47,9 +47,9 @@ updates:
   # Monitor GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
-    target-branch: "dependabot-test"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
       time: "09:00"
     open-pull-requests-limit: 3
     labels:

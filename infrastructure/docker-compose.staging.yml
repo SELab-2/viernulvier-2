@@ -34,8 +34,10 @@ services:
         healthcheck:
             test:
                 [
-                    "CMD-SHELL",
-                    'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:8000/api/schema/'', timeout=3)" >/dev/null 2>&1 || exit 1',
+                    "CMD",
+                    "python",
+                    "-c",
+                    "import http.client,sys; c=http.client.HTTPConnection('127.0.0.1',8000,timeout=3); c.request('GET','/health'); r=c.getresponse(); sys.exit(0 if r.status in (200,301,302,307,308) else 1)",
                 ]
             interval: 15s
             timeout: 5s
@@ -62,7 +64,7 @@ services:
         build: ../frontend
         restart: "no"
         healthcheck:
-            test: ["CMD-SHELL", "test -f /frontend_build/index.html"]
+            test: ["CMD", "test", "-f", "/frontend_build/index.html"]
             interval: 5s
             timeout: 3s
             retries: 3
@@ -77,8 +79,12 @@ services:
         healthcheck:
             test:
                 [
-                    "CMD-SHELL",
-                    "wget -q -O /dev/null http://localhost/ || exit 1",
+                    "CMD",
+                    "wget",
+                    "-q",
+                    "-O",
+                    "/dev/null",
+                    "http://127.0.0.1/health",
                 ]
             interval: 15s
             timeout: 5s
