@@ -19,7 +19,10 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
+from .health import health
+
 urlpatterns = [
+    path("health", health, name="health"),  # Health check endpoint
     path("admin/", admin.site.urls),  # Admin interface
     path("api/", include("api.urls")),  # Include API app URLs
 ]
