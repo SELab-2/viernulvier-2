@@ -15,7 +15,7 @@ jobs:
     # Auto-fix style on push 
   backend:
     name: Backend (ruff auto-fix)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: >
         github.event_name == 'push' &&
         github.actor != 'github-actions[bot]'
@@ -66,7 +66,7 @@ jobs:
         
   backend-tests:
     name: Backend Tests (pytest + coverage)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     defaults:
       run:
