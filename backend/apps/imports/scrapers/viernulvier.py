@@ -7,6 +7,7 @@ Usage:
 
 import logging
 import os
+import random
 import re
 import sys
 from dataclasses import dataclass, field
@@ -31,10 +32,18 @@ DEFAULT_ENDPOINT = "/productions"
 DEFAULT_TIMEOUT = 10
 ERROR_CONTEXT_PATH = "/api/contexts/Error"
 
+USER_AGENT_POOL = [
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.3; rv:122.0) Gecko/20100101 Firefox/122.0",
+]
+
 
 # ---------------------------------------------------------------------------
 # Exceptions
 # ---------------------------------------------------------------------------
+
 
 class ScraperError(Exception):
     """Raised when the scraper cannot fetch or normalize Viernulvier data."""
@@ -43,6 +52,7 @@ class ScraperError(Exception):
 # ---------------------------------------------------------------------------
 # Configuration dataclasses
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class TranslationConfig:
@@ -73,6 +83,7 @@ class TranslationConfig:
             language_fk="language_id",
         )
     """
+
     api_key: str
     model: Type[models.Model]
     parent_fk: str
@@ -97,6 +108,7 @@ class M2MConfig:
         related_lookup_field: Field used to look up the related model.
         extra_fields:         Extra fields on the through table: {api_field: model_field}.
     """
+
     api_key: str
     related_model: Type[models.Model]
     through_model: Type[models.Model]
@@ -124,9 +136,12 @@ class ModelSyncConfig:
         lookup_field:     Field for update_or_create lookup (default "external_id").
         api_id_key:       Key for the primary identifier in the API object (default "@id").
     """
+
     field_map: Dict[str, Optional[str]] = field(default_factory=dict)
     value_transforms: Dict[str, Callable[[Any], Any]] = field(default_factory=dict)
-    fk_resolvers: Dict[str, Callable[[Any], Optional[Any]]] = field(default_factory=dict)
+    fk_resolvers: Dict[str, Callable[[Any], Optional[Any]]] = field(
+        default_factory=dict
+    )
     translations: List[TranslationConfig] = field(default_factory=list)
     m2m: List[M2MConfig] = field(default_factory=list)
     lookup_field: str = "external_id"
@@ -137,6 +152,7 @@ class ModelSyncConfig:
 # HTTP fetch layer
 # ---------------------------------------------------------------------------
 
+
 def _get_api_key_or_raise() -> str:
     api_key = os.getenv("VIERNULVIER_API_KEY")
     if not api_key:
@@ -145,9 +161,11 @@ def _get_api_key_or_raise() -> str:
 
 
 def _build_request_headers() -> Dict[str, str]:
+    user_agent = random.choice(USER_AGENT_POOL)
     return {
         "X-AUTH-TOKEN": _get_api_key_or_raise(),
         "accept": "application/ld+json",
+        "User-Agent": user_agent,
     }
 
 
@@ -215,13 +233,16 @@ def fetch_viernulvier(
                 # Single-item response
                 all_items.append(data)
             else:
-                raise ScraperError("Unexpected payload shape: dict without 'member' or '@context'")
+                raise ScraperError(
+                    "Unexpected payload shape: dict without 'member' or '@context'"
+                )
 
             view = data.get("view")
             if isinstance(view, dict) and "next" in view:
                 next_url = view["next"]
                 current_url = (
-                    next_url if next_url.startswith("http")
+                    next_url
+                    if next_url.startswith("http")
                     else urljoin(BASE_DOMAIN, next_url)
                 )
             else:
@@ -239,6 +260,7 @@ def fetch_viernulvier(
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
+
 
 def _camel_to_snake(value: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "_", value).lower()
@@ -288,21 +310,27 @@ def _resolve_fk(model_field: models.Field, raw_value: Any) -> Optional[Any]:
     if ext_id is None:
         return None
     try:
-        return related_model.objects.values_list("pk", flat=True).get(external_id=ext_id)
+        return related_model.objects.values_list("pk", flat=True).get(
+            external_id=ext_id
+        )
     except related_model.DoesNotExist:
         logger.warning(
             "FK not found: %s.external_id=%r — sync related models first.",
-            related_model.__name__, ext_id,
+            related_model.__name__,
+            ext_id,
         )
         return None
     except Exception:
-        logger.exception("Error resolving FK %s external_id=%r", related_model.__name__, ext_id)
+        logger.exception(
+            "Error resolving FK %s external_id=%r", related_model.__name__, ext_id
+        )
         return None
 
 
 # ---------------------------------------------------------------------------
 # Build defaults: API item → Django model defaults dict
 # ---------------------------------------------------------------------------
+
 
 def _build_defaults(
     model: Type[models.Model],
@@ -331,7 +359,9 @@ def _build_defaults(
         try:
             model_field = model._meta.get_field(model_field_name)
         except FieldDoesNotExist:
-            logger.warning("Field '%s' doesn't exist in %s", model_field_name, model.__name__)
+            logger.warning(
+                "Field '%s' doesn't exist in %s", model_field_name, model.__name__
+            )
             continue
 
         if not isinstance(model_field, models.Field) or model_field.primary_key:
@@ -343,7 +373,11 @@ def _build_defaults(
 
         if model_field.is_relation and model_field.many_to_one:
             custom_resolver = config.fk_resolvers.get(model_field_name)
-            pk = custom_resolver(raw_value) if custom_resolver else _resolve_fk(model_field, raw_value)
+            pk = (
+                custom_resolver(raw_value)
+                if custom_resolver
+                else _resolve_fk(model_field, raw_value)
+            )
             if pk is not None:
                 defaults[f"{model_field.name}_id"] = pk
         else:
@@ -394,7 +428,9 @@ def _build_defaults(
     return defaults
 
 
-def _extract_lookup_value(item: Mapping[str, Any], config: ModelSyncConfig) -> Optional[str]:
+def _extract_lookup_value(
+    item: Mapping[str, Any], config: ModelSyncConfig
+) -> Optional[str]:
     """Extract the lookup value for update_or_create."""
     raw = item.get(config.api_id_key) or item.get("external_id") or item.get("id")
     if raw is None:
@@ -407,6 +443,7 @@ def _extract_lookup_value(item: Mapping[str, Any], config: ModelSyncConfig) -> O
 # ---------------------------------------------------------------------------
 # Translation sync — flat dict format
 # ---------------------------------------------------------------------------
+
 
 def _sync_translations(
     parent_obj: models.Model,
@@ -435,7 +472,9 @@ def _sync_translations(
     try:
         model_field = model._meta.get_field(target_field)
     except FieldDoesNotExist:
-        logger.warning("Translation veld '%s' niet gevonden op %s", target_field, model.__name__)
+        logger.warning(
+            "Translation veld '%s' niet gevonden op %s", target_field, model.__name__
+        )
         return
 
     for lang_code, raw_value in raw_dict.items():
@@ -457,13 +496,17 @@ def _sync_translations(
         except Exception:
             logger.exception(
                 "Fout bij translation %s.%s pk=%s taal=%s",
-                model.__name__, target_field, parent_obj.pk, lang_code,
+                model.__name__,
+                target_field,
+                parent_obj.pk,
+                lang_code,
             )
 
 
 # ---------------------------------------------------------------------------
 # M2M sync
 # ---------------------------------------------------------------------------
+
 
 def _sync_m2m(
     parent_obj: models.Model,
@@ -500,7 +543,9 @@ def _sync_m2m(
         except related_model.DoesNotExist:
             logger.warning(
                 "%s met %s=%r niet gevonden — sync gerelateerde modellen eerst.",
-                related_model.__name__, m2m_config.related_lookup_field, ext_id,
+                related_model.__name__,
+                m2m_config.related_lookup_field,
+                ext_id,
             )
             continue
 
@@ -522,13 +567,16 @@ def _sync_m2m(
         except Exception:
             logger.exception(
                 "Fout bij aanmaken %s voor %s pk=%s",
-                through_model.__name__, parent_obj.__class__.__name__, parent_obj.pk,
+                through_model.__name__,
+                parent_obj.__class__.__name__,
+                parent_obj.pk,
             )
 
 
 # ---------------------------------------------------------------------------
 # Main sync function
 # ---------------------------------------------------------------------------
+
 
 def sync_viernulvier(
     model: Type[models.Model],
@@ -614,7 +662,12 @@ def sync_viernulvier(
 
             transaction.savepoint_commit(sid)
             saved += 1
-            logger.debug("%s %s: %s", "Created" if created else "Updated", model.__name__, lookup_value)
+            logger.debug(
+                "%s %s: %s",
+                "Created" if created else "Updated",
+                model.__name__,
+                lookup_value,
+            )
 
         except ValidationError as e:
             transaction.savepoint_rollback(sid)
@@ -639,7 +692,9 @@ def sync_viernulvier(
         except Exception:
             transaction.savepoint_rollback(sid)
             exc_type, exc_value, _ = sys.exc_info()
-            msg = f"Unexpected error for {lookup_value}: {exc_type.__name__}: {exc_value}"
+            msg = (
+                f"Unexpected error for {lookup_value}: {exc_type.__name__}: {exc_value}"
+            )
             logger.error(msg, exc_info=True)
             errors += 1
             error_messages.append(msg)
@@ -653,10 +708,14 @@ def sync_viernulvier(
         import_log.status = ImportLog.Status.SUCCESS
     elif saved > 0:
         import_log.status = ImportLog.Status.PARTIAL_SUCCESS
-        import_log.error_message = f"{errors} records failed: {', '.join(error_messages)}"
+        import_log.error_message = (
+            f"{errors} records failed: {', '.join(error_messages)}"
+        )
     else:
         import_log.status = ImportLog.Status.FAILED
-        import_log.error_message = f"All {errors} records failed: {', '.join(error_messages)}"
+        import_log.error_message = (
+            f"All {errors} records failed: {', '.join(error_messages)}"
+        )
 
     import_log.save()
     logger.info("Sync finished: saved=%s, errors=%s", saved, errors)

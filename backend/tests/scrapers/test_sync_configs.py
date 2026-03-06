@@ -4,7 +4,11 @@ This module tests that all sync configurations are properly structured and compa
 with the scraper architecture.
 """
 
+from io import StringIO
+from unittest.mock import patch
+
 import pytest
+from django.core.management.base import CommandParser, OutputWrapper
 from django.db import models as django_models
 
 from apps.events.models import Event, EventPrice
@@ -25,10 +29,15 @@ from apps.imports.management.commands.sync_viernulvier import (
     EVENT_CONFIG,
     EVENT_PRICE_CONFIG,
     SYNC_STEPS,
+    Command,
     nee_ja_to_bool,
     _resolve_genre_use_as,
 )
-from apps.imports.scrapers.viernulvier import ModelSyncConfig, TranslationConfig, M2MConfig
+from apps.imports.scrapers.viernulvier import (
+    ModelSyncConfig,
+    TranslationConfig,
+    M2MConfig,
+)
 from apps.locations.models import Location, Space, Hall
 from apps.media_library.models import MediaGallery, MediaItem
 from apps.pricing.models import Price, PriceRank
@@ -44,6 +53,7 @@ from apps.tags.models import Tag
 # Helper Functions
 # ===========================================================================
 
+
 def get_model_field_names(model):
     """Get all field names from a Django model, excluding auto-generated fields."""
     return {
@@ -53,10 +63,10 @@ def get_model_field_names(model):
     }
 
 
-
 # ===========================================================================
 # Test Value Transform Functions
 # ===========================================================================
+
 
 class TestValueTransforms:
     """Test value transformation functions."""
@@ -112,6 +122,7 @@ class TestValueTransforms:
 # Test Configuration Structure
 # ===========================================================================
 
+
 class TestConfigStructure:
     """Test that all configurations have the correct structure."""
 
@@ -146,10 +157,10 @@ class TestConfigStructure:
             LOCATION_CONFIG,
         ]
         for config in configs:
-            assert hasattr(config, 'field_map')
+            assert hasattr(config, "field_map")
             assert isinstance(config.field_map, dict)
-            assert hasattr(config, 'lookup_field')
-            assert hasattr(config, 'api_id_key')
+            assert hasattr(config, "lookup_field")
+            assert hasattr(config, "api_id_key")
 
     def test_configs_with_translations_have_valid_structure(self):
         """Test that configs with translations have properly structured TranslationConfig objects."""
@@ -166,35 +177,36 @@ class TestConfigStructure:
         ]
 
         for config in configs_with_translations:
-            assert hasattr(config, 'translations')
+            assert hasattr(config, "translations")
             assert isinstance(config.translations, list)
             if config.translations:  # Only check if translations exist
                 for trans_cfg in config.translations:
                     assert isinstance(trans_cfg, TranslationConfig)
-                    assert hasattr(trans_cfg, 'api_key')
-                    assert hasattr(trans_cfg, 'model')
-                    assert hasattr(trans_cfg, 'parent_fk')
-                    assert hasattr(trans_cfg, 'flat_field')
-                    assert hasattr(trans_cfg, 'language_fk')
+                    assert hasattr(trans_cfg, "api_key")
+                    assert hasattr(trans_cfg, "model")
+                    assert hasattr(trans_cfg, "parent_fk")
+                    assert hasattr(trans_cfg, "flat_field")
+                    assert hasattr(trans_cfg, "language_fk")
 
     def test_production_config_has_m2m(self):
         """Test that production config has M2M configuration."""
-        assert hasattr(PRODUCTION_CONFIG, 'm2m')
+        assert hasattr(PRODUCTION_CONFIG, "m2m")
         assert isinstance(PRODUCTION_CONFIG.m2m, list)
         assert len(PRODUCTION_CONFIG.m2m) > 0
 
         for m2m_cfg in PRODUCTION_CONFIG.m2m:
             assert isinstance(m2m_cfg, M2MConfig)
-            assert hasattr(m2m_cfg, 'api_key')
-            assert hasattr(m2m_cfg, 'related_model')
-            assert hasattr(m2m_cfg, 'through_model')
-            assert hasattr(m2m_cfg, 'parent_fk')
-            assert hasattr(m2m_cfg, 'related_fk')
+            assert hasattr(m2m_cfg, "api_key")
+            assert hasattr(m2m_cfg, "related_model")
+            assert hasattr(m2m_cfg, "through_model")
+            assert hasattr(m2m_cfg, "parent_fk")
+            assert hasattr(m2m_cfg, "related_fk")
 
 
 # ===========================================================================
 # Test Configuration Compatibility
 # ===========================================================================
+
 
 class TestConfigCompatibility:
     """Test that configurations are compatible with their models."""
@@ -223,8 +235,8 @@ class TestConfigCompatibility:
                 if model_field is not None:  # None means skip this field
                     # Check if field exists directly or as FK (with _id suffix)
                     field_exists = (
-                        model_field in model_fields or
-                        f"{model_field}_id" in model_fields
+                        model_field in model_fields
+                        or f"{model_field}_id" in model_fields
                     )
                     assert field_exists, (
                         f"Config for {model.__name__}: mapped field '{model_field}' "
@@ -240,7 +252,7 @@ class TestConfigCompatibility:
         ]
 
         for config, model in configs_and_models:
-            if hasattr(config, 'value_transforms') and config.value_transforms:
+            if hasattr(config, "value_transforms") and config.value_transforms:
                 model_fields = get_model_field_names(model)
 
                 for field_name in config.value_transforms.keys():
@@ -256,7 +268,7 @@ class TestConfigCompatibility:
         ]
 
         for config, model in configs_and_models:
-            if hasattr(config, 'fk_resolvers') and config.fk_resolvers:
+            if hasattr(config, "fk_resolvers") and config.fk_resolvers:
                 model_fields = get_model_field_names(model)
 
                 for field_name in config.fk_resolvers.keys():
@@ -269,6 +281,7 @@ class TestConfigCompatibility:
 # ===========================================================================
 # Test Sync Steps Configuration
 # ===========================================================================
+
 
 class TestSyncStepsConfiguration:
     """Test that SYNC_STEPS is properly configured."""
@@ -287,10 +300,10 @@ class TestSyncStepsConfiguration:
 
             # Check types
             assert isinstance(name, str)
-            assert hasattr(model, '_meta')  # Django model check
+            assert hasattr(model, "_meta")  # Django model check
             assert isinstance(config, ModelSyncConfig)
             assert isinstance(endpoint, str)
-            assert endpoint.startswith('/')
+            assert endpoint.startswith("/")
 
     def test_sync_steps_unique_names(self):
         """Test that sync step names are unique."""
@@ -300,7 +313,9 @@ class TestSyncStepsConfiguration:
     def test_sync_steps_unique_endpoints(self):
         """Test that sync step endpoints are unique."""
         endpoints = [endpoint for *_, endpoint in SYNC_STEPS]
-        assert len(endpoints) == len(set(endpoints)), "Duplicate sync step endpoints found"
+        assert len(endpoints) == len(set(endpoints)), (
+            "Duplicate sync step endpoints found"
+        )
 
     def test_sync_steps_matches_configs(self):
         """Test that all defined configs are used in SYNC_STEPS."""
@@ -325,24 +340,28 @@ class TestSyncStepsConfiguration:
 
         # Check that all defined configs are in SYNC_STEPS
         for config in defined_configs:
-            assert config in configs_in_steps, \
+            assert config in configs_in_steps, (
                 f"Config {config} is defined but not used in SYNC_STEPS"
+            )
 
         # Check that there are no extra configs in SYNC_STEPS
-        assert len(configs_in_steps) == len(defined_configs), \
+        assert len(configs_in_steps) == len(defined_configs), (
             f"SYNC_STEPS has {len(configs_in_steps)} configs but {len(defined_configs)} are defined"
+        )
 
     def test_all_models_in_sync_steps_have_external_id(self):
         """Test that all models in SYNC_STEPS have external_id field."""
         for name, model, config, endpoint in SYNC_STEPS:
             model_fields = get_model_field_names(model)
-            assert 'external_id' in model_fields, \
+            assert "external_id" in model_fields, (
                 f"Model {model.__name__} used in sync step '{name}' doesn't have external_id"
+            )
 
 
 # ===========================================================================
 # Test External ID Mapping
 # ===========================================================================
+
 
 class TestExternalIDMapping:
     """Test that all configs properly map external_id."""
@@ -369,19 +388,22 @@ class TestExternalIDMapping:
         for name, model, config in configs:
             # Check if external_id field exists in model
             model_fields = get_model_field_names(model)
-            assert 'external_id' in model_fields, \
+            assert "external_id" in model_fields, (
                 f"Model {name} doesn't have external_id field"
+            )
 
             # Check if config maps @id properly (either explicitly or via default)
             # The scraper will use @id as the default identifier
-            if '@id' in config.field_map:
-                assert config.field_map['@id'] == 'external_id', \
+            if "@id" in config.field_map:
+                assert config.field_map["@id"] == "external_id", (
                     f"Config for {name} doesn't map '@id' to 'external_id'"
+                )
 
 
 # ===========================================================================
 # Integration Tests
 # ===========================================================================
+
 
 class TestConfigIntegration:
     """Integration tests to verify configs work with the scraper."""
@@ -390,13 +412,21 @@ class TestConfigIntegration:
         """Test that configs have all attributes required by sync_viernulvier function."""
         all_configs = [config for _, _, config, _ in SYNC_STEPS]
 
-        required_attributes = ['field_map', 'lookup_field', 'api_id_key', 'value_transforms',
-                              'fk_resolvers', 'translations', 'm2m']
+        required_attributes = [
+            "field_map",
+            "lookup_field",
+            "api_id_key",
+            "value_transforms",
+            "fk_resolvers",
+            "translations",
+            "m2m",
+        ]
 
         for config in all_configs:
             for attr in required_attributes:
-                assert hasattr(config, attr), \
+                assert hasattr(config, attr), (
                     f"Config {config} missing required attribute '{attr}'"
+                )
 
     def test_translation_configs_compatible_with_sync_translations(self):
         """Test that translation configs have required attributes."""
@@ -406,10 +436,17 @@ class TestConfigIntegration:
             if config.translations:
                 for trans_cfg in config.translations:
                     # Check required attributes for TranslationConfig
-                    required = ['api_key', 'model', 'parent_fk', 'flat_field', 'language_fk']
+                    required = [
+                        "api_key",
+                        "model",
+                        "parent_fk",
+                        "flat_field",
+                        "language_fk",
+                    ]
                     for attr in required:
-                        assert hasattr(trans_cfg, attr), \
+                        assert hasattr(trans_cfg, attr), (
                             f"TranslationConfig missing required attribute '{attr}'"
+                        )
 
     def test_m2m_configs_compatible_with_sync_m2m(self):
         """Test that M2M configs have required attributes."""
@@ -419,11 +456,18 @@ class TestConfigIntegration:
             if config.m2m:
                 for m2m_cfg in config.m2m:
                     # Check required attributes for M2MConfig
-                    required = ['api_key', 'related_model', 'through_model',
-                               'parent_fk', 'related_fk', 'related_lookup_field']
+                    required = [
+                        "api_key",
+                        "related_model",
+                        "through_model",
+                        "parent_fk",
+                        "related_fk",
+                        "related_lookup_field",
+                    ]
                     for attr in required:
-                        assert hasattr(m2m_cfg, attr), \
+                        assert hasattr(m2m_cfg, attr), (
                             f"M2MConfig missing required attribute '{attr}'"
+                        )
 
     def test_lookup_field_exists_in_all_models(self):
         """Test that lookup_field specified in config exists in the model."""
@@ -431,7 +475,96 @@ class TestConfigIntegration:
             model_fields = get_model_field_names(model)
             lookup_field = config.lookup_field
 
-            assert lookup_field in model_fields, \
+            assert lookup_field in model_fields, (
                 f"Model {model.__name__} doesn't have lookup_field '{lookup_field}'"
+            )
 
 
+# ===========================================================================
+# Test Management Command Argument + Filter Handling
+# ===========================================================================
+
+
+class TestSyncCommandOptions:
+    """Test management command option wiring and filter param construction."""
+
+    def test_add_arguments_registers_only_and_all_filter_variants(self):
+        """Test that add_arguments exposes --only and generated filter flags."""
+        parser = CommandParser(prog="manage.py")
+        command = Command()
+
+        command.add_arguments(parser)
+
+        option_strings = {
+            option for action in parser._actions for option in action.option_strings
+        }
+
+        assert "--only" in option_strings
+        for prefix in command.FILTER_FIELDS:
+            for bound in ("after", "before"):
+                assert f"--{prefix}-{bound}" in option_strings
+                assert f"--{prefix}-{bound}-x" in option_strings
+
+    def test_handle_builds_expected_filter_params_and_respects_only(self):
+        """Test filter option mapping to API params and --only step selection."""
+        command = Command()
+        stdout_buffer = StringIO()
+        stderr_buffer = StringIO()
+        command.stdout = OutputWrapper(stdout_buffer)
+        command.stderr = OutputWrapper(stderr_buffer)
+
+        options = {
+            "only": "events",
+            "created_after": "2024-01-01T00:00:00Z",
+            "updated_before_x": "2024-12-31T23:59:59Z",
+        }
+
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            return_value=5,
+        ) as sync_mock:
+            command.handle(**options)
+
+        assert sync_mock.call_count == 1
+        call_kwargs = sync_mock.call_args.kwargs
+        assert call_kwargs["endpoint"] == "/events"
+        assert call_kwargs["params"] == {
+            "created_at[after]": "2024-01-01T00:00:00Z",
+            "updated_at[strictly_before]": "2024-12-31T23:59:59Z",
+        }
+
+    def test_handle_reports_unknown_step_without_syncing(self):
+        """Test unknown --only step triggers error path and no sync call."""
+        command = Command()
+        stdout_buffer = StringIO()
+        stderr_buffer = StringIO()
+        command.stdout = OutputWrapper(stdout_buffer)
+        command.stderr = OutputWrapper(stderr_buffer)
+
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier"
+        ) as sync_mock:
+            result = command.handle(only="not_a_real_step")
+
+        assert result is None
+        assert "Unknown step 'not_a_real_step'" in stderr_buffer.getvalue()
+        sync_mock.assert_not_called()
+
+    def test_handle_reports_sync_exception_and_success(monkeypatch):
+        """Covers error and success output branches in Command.handle (lines 870-871)."""
+        command = Command()
+        stdout_buffer = StringIO()
+        command.stdout = OutputWrapper(stdout_buffer)
+        # Success branch
+        with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=3):
+            command.handle(only="events")
+            assert "3 records" in stdout_buffer.getvalue()
+            assert "Done. Total: 3 records" in stdout_buffer.getvalue()
+        # Error branch
+        def raise_exc(*args, **kwargs):
+            raise RuntimeError("fail branch")
+        stdout_buffer = StringIO()
+        command.stdout = OutputWrapper(stdout_buffer)
+        with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", side_effect=raise_exc):
+            command.handle(only="events")
+            assert "FAILED: fail branch" in stdout_buffer.getvalue()
