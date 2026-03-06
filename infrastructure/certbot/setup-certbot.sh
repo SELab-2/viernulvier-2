@@ -34,6 +34,7 @@ docker compose -f "$COMPOSE_FILE" run --rm --entrypoint "\
     certbot
 
 docker compose -f "$COMPOSE_FILE" run --rm --entrypoint "\
+    mkdir -p /etc/letsencrypt/live/$DOMAIN && \
     openssl req -x509 -nodes -newkey rsa:$RSA_KEY_SIZE -days 1 \
         -keyout '/etc/letsencrypt/live/$DOMAIN/privkey.pem' \
         -out '/etc/letsencrypt/live/$DOMAIN/fullchain.pem' \
