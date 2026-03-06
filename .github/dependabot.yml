@@ -1,67 +1,54 @@
 version: 2
 updates:
-  # Monitor npm dependencies for frontend
-  - package-ecosystem: "npm"
-    directory: "/frontend"
+  - package-ecosystem: npm
+    directory: /frontend
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: weekly
+      day: monday
       time: "09:00"
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "frontend"
+    labels: [dependencies, frontend]
     commit-message:
       prefix: "chore(deps)"
-      include: "scope"
+      include: scope
     groups:
-      patch-minor-updates:
-        update-types: ["patch", "minor"]
+      patch-minor:
+        update-types: [patch, minor]
         patterns: ["*"]
-      major-updates:
-        update-types: ["major"]
+      major:
+        update-types: [major]
         patterns: ["*"]
 
-  # Monitor pip dependencies for backend
-  - package-ecosystem: "pip"
-    directory: "/backend/requirements"
+  - package-ecosystem: pip
+    directory: /backend/requirements
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: weekly
+      day: monday
       time: "09:00"
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "backend"
+    labels: [dependencies, backend]
     commit-message:
       prefix: "chore(deps)"
-      include: "scope"
+      include: scope
     groups:
-      patch-minor-updates:
-        update-types: ["patch", "minor"]
+      patch-minor:
+        update-types: [patch, minor]
         patterns: ["*"]
-      major-updates:
-        update-types: ["major"]
+      major:
+        update-types: [major]
         patterns: ["*"]
 
-  # Monitor GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: weekly
+      day: monday
       time: "09:00"
     open-pull-requests-limit: 3
-    labels:
-      - "dependencies"
-      - "github-actions"
+    labels: [dependencies, github-actions]
     commit-message:
       prefix: "chore(deps)"
-      include: "scope"
+      include: scope
     groups:
-      patch-minor-updates:
-        update-types: ["patch", "minor"]
-        patterns: ["*"]
-      major-updates:
-        update-types: ["major"]
+      all:
         patterns: ["*"]

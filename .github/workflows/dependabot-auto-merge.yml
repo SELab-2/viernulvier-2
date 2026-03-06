@@ -1,4 +1,4 @@
-name: Dependabot Auto-merge
+name: Dependabot auto-merge
 
 on:
   pull_request_target:
@@ -10,46 +10,38 @@ permissions:
 
 jobs:
   auto-merge:
+    name: Approve and auto-merge patch/minor updates
     runs-on: self-hosted
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
-      - name: Get Dependabot metadata
-        id: metadata
+      - name: Fetch Dependabot metadata
+        id: meta
         uses: dependabot/fetch-metadata@v2
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Approve pull request
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+      - name: Approve and enable auto-merge
+        if: |
+          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+          steps.meta.outputs.update-type == 'version-update:semver-minor'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const pr = context.payload.pull_request;
+
             await github.rest.pulls.createReview({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              event: 'APPROVE'
-            })
+              pull_number: pr.number,
+              event: "APPROVE",
+            });
 
-      - name: Enable auto-merge for Dependabot PRs
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
             await github.graphql(
-              `mutation($pullRequestId: ID!) {
-                enablePullRequestAutoMerge(input: {pullRequestId: $pullRequestId, mergeMethod: SQUASH}) {
-                  pullRequest {
-                    number
-                    autoMergeRequest {
-                      enabledAt
-                    }
-                  }
+              `mutation($id: ID!) {
+                enablePullRequestAutoMerge(input: { pullRequestId: $id, mergeMethod: SQUASH }) {
+                  pullRequest { number }
                 }
               }`,
-              {
-                pullRequestId: context.payload.pull_request.node_id
-              }
-            )
+              { id: pr.node_id }
+            );
