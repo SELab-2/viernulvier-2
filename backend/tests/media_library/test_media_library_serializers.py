@@ -150,6 +150,7 @@ class TestMediaItemSerializerFields(TestCase):
             "width",
             "height",
             "title",
+            "display_title",
             "description",
             "credits",
             "link",
@@ -163,7 +164,7 @@ class TestMediaItemSerializerFields(TestCase):
         data = serialize_item(self.item)
         expected = {
             "id", "gallery", "type", "format", "original_filename", "position",
-            "width", "height", "title", "description", "credits", "link", "crops",
+            "width", "height", "title", "display_title", "description", "credits", "link", "crops",
         }
         self.assertEqual(set(data.keys()), expected)
 
@@ -407,7 +408,7 @@ class TestMediaGallerySerializerMediaItems(TestCase):
         data = serialize_gallery(self.gallery)
         expected = {
             "id", "gallery", "type", "format", "original_filename", "position",
-            "width", "height", "title", "description", "credits", "link", "crops",
+            "width", "height", "title", "display_title", "description", "credits", "link", "crops",
         }
         self.assertEqual(set(data["media_items"][0].keys()), expected)
 

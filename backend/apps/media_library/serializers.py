@@ -41,7 +41,7 @@ class MediaItemCropSerializer(serializers.ModelSerializer):
         }
 
 
-class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
+class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """
     Represents a MediaItem with its translated metadata and nested crops.
 
@@ -59,6 +59,13 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
             "(e.g. {\"en\": \"Poster\", \"fr\": \"Affiche\"}). "
             "Read-only — use the translation endpoints to manage translations."
         ),
+    )
+
+    display_title = serializers.SerializerMethodField(
+        help_text=(
+            "Title in the project's base language (derived from settings.LANGUAGE_CODE). "
+            "Falls back to the first available translation when missing."
+        )
     )
 
     description = serializers.SerializerMethodField(
@@ -100,12 +107,13 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
             "width",
             "height",
             "title",
+            "display_title",
             "description",
             "credits",
             "link",
             "crops",
         ]
-        read_only_fields = ["id", "title", "description", "credits", "link", "crops"]
+        read_only_fields = ["id", "display_title", "title", "description", "credits", "link", "crops"]
         extra_kwargs = {
             "gallery": {
                 "help_text": "Primary key of the parent **MediaGallery** this item belongs to.",
@@ -133,6 +141,10 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     def get_title(self, obj: MediaItem) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "title")
+    
+    def get_display_title(self, obj: MediaItem) -> str | None:
+        """Return the media item title in the project's base language."""
+        return self.get_base_translated_value(obj, "title")
 
     def get_description(self, obj: MediaItem) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""

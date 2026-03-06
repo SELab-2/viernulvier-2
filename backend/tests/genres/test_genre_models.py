@@ -43,10 +43,10 @@ class TestGenre:
 
     def test_str_representation_contains_translations(self):
         genre = GenreFactory(type="Festival")
-        GenreTranslationFactory(genre=genre, language__code="en", name="Festival")
-        GenreTranslationFactory(genre=genre, language__code="nl", name="Festival NL")
+        GenreTranslationFactory(genre=genre, language__code="en", name="EN Festival")
+        GenreTranslationFactory(genre=genre, language__code="nl", name="NL Festival")
 
-        assert str(genre) == "Festival"
+        assert str(genre) == "EN Festival (Festival)"
 
     def test_delete_cascades_to_translations(self):
         genre = GenreFactory()

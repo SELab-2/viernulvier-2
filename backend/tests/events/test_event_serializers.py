@@ -66,7 +66,17 @@ class TestEventSerializerFields(TestCase):
         serializer = EventSerializer(self.event, context={"request": _drf_request(self.factory, "/dummy")})
         data = serializer.data
 
-        expected = {"id", "production", "hall", "starts_at", "ends_at", "ticketing_url", "prices"}
+        expected = {
+            "id",
+            "production",
+            "production_display",
+            "hall",
+            "hall_display",
+            "starts_at",
+            "ends_at",
+            "ticketing_url",
+            "prices",
+        }
         for f in expected:
             self.assertIn(f, data)
 
@@ -75,7 +85,17 @@ class TestEventSerializerFields(TestCase):
         serializer = EventSerializer(self.event, context={"request": _drf_request(self.factory, "/dummy")})
         self.assertEqual(
             set(serializer.data.keys()),
-            {"id", "production", "hall", "starts_at", "ends_at", "ticketing_url", "prices"},
+            {
+                "id",
+                "production",
+                "production_display",
+                "hall",
+                "hall_display",
+                "starts_at",
+                "ends_at",
+                "ticketing_url",
+                "prices",
+            },
         )
 
 
