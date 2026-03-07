@@ -9,6 +9,7 @@ faker = Faker()
 
 class GenreUseAsFactory(factory.django.DjangoModelFactory):
     """Factory for GenreUseAs model."""
+
     class Meta:
         model = GenreUseAs
 
@@ -17,10 +18,11 @@ class GenreUseAsFactory(factory.django.DjangoModelFactory):
 
 class GenreFactory(factory.django.DjangoModelFactory):
     """Factory for Genre model."""
+
     class Meta:
         model = Genre
 
-    type = factory.Sequence(lambda n: f"Genre_{n}") # Unique type for each instance
+    type = factory.Sequence(lambda n: f"Genre_{n}")  # Unique type for each instance
     use_as = factory.SubFactory(GenreUseAsFactory)
 
 
@@ -28,6 +30,8 @@ class GenreTranslationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = GenreTranslation
 
-    name = factory.LazyAttribute(lambda _: faker.word()) # Random name for the translation
+    name = factory.LazyAttribute(
+        lambda _: faker.word()
+    )  # Random name for the translation
     language = factory.SubFactory(LanguageFactory)
     genre = factory.SubFactory(GenreFactory)

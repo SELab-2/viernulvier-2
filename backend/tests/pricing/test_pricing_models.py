@@ -11,7 +11,6 @@ Covers:
 - cascade delete behavior
 """
 
-from django.db import connection
 import pytest
 from django.core.exceptions import ValidationError
 
@@ -31,12 +30,15 @@ pytestmark = pytest.mark.django_db(transaction=True)
 # Price
 # ---------------------------------------------------------------------------
 
+
 def test_price_str_contains_type_and_id():
     """Test case for test_price_str_contains_type_and_id."""
     p = PriceFactory(type="standard")
     s = str(p)
     assert "standard" in s
-    assert f"id={p.id}" in s  # model uses f"{self.type} (id={self.id})" :contentReference[oaicite:3]{index=3}
+    assert (
+        f"id={p.id}" in s
+    )  # model uses f"{self.type} (id={self.id})" :contentReference[oaicite:3]{index=3}
 
 
 def test_price_meta_ordering_by_sort_order():
@@ -45,7 +47,10 @@ def test_price_meta_ordering_by_sort_order():
     p1 = PriceFactory(sort_order=1)
 
     prices = list(type(p1).objects.all())
-    assert [p.id for p in prices] == [p1.id, p2.id]  # ordering=["sort_order"] :contentReference[oaicite:4]{index=4}
+    assert [p.id for p in prices] == [
+        p1.id,
+        p2.id,
+    ]  # ordering=["sort_order"] :contentReference[oaicite:4]{index=4}
 
 
 def test_price_check_constraint_min_max_both_null_or_both_set():
@@ -94,6 +99,7 @@ def test_price_constraints_names_present():
 # PriceTranslation
 # ---------------------------------------------------------------------------
 
+
 def test_price_translation_unique_per_price_and_language():
     """Test case for test_price_translation_unique_per_price_and_language."""
     lang = LanguageFactory(code="nl")
@@ -112,7 +118,9 @@ def test_price_translation_str_contains_price_type_and_language_code():
     pt = PriceTranslationFactory(price=p, language=lang)
     s = str(pt)
     assert "student" in s
-    assert "[en]" in s  # model uses f"{self.price.type} [{self.language.code}]" :contentReference[oaicite:8]{index=8}
+    assert (
+        "[en]" in s
+    )  # model uses f"{self.price.type} [{self.language.code}]" :contentReference[oaicite:8]{index=8}
 
 
 def test_price_translation_default_description_is_empty_string():
@@ -139,18 +147,23 @@ def test_price_translation_cascade_delete_price_deletes_translations():
     PriceTranslationFactory.create_batch(2, price=p)
 
     p.delete()
-    assert PriceTranslation.objects.count() == 0  # on_delete=CASCADE :contentReference[oaicite:9]{index=9}
+    assert (
+        PriceTranslation.objects.count() == 0
+    )  # on_delete=CASCADE :contentReference[oaicite:9]{index=9}
 
 
 def test_price_translation_indexes_present():
     """Test case for test_price_translation_indexes_present."""
     idx_names = {idx.name for idx in PriceTranslation._meta.indexes}
-    assert "idx_price_lang" in idx_names  # defined in model meta :contentReference[oaicite:11]{index=11}
+    assert (
+        "idx_price_lang" in idx_names
+    )  # defined in model meta :contentReference[oaicite:11]{index=11}
 
 
 # ---------------------------------------------------------------------------
 # PriceRank
 # ---------------------------------------------------------------------------
+
 
 def test_price_rank_meta_ordering_by_position():
     """Test case for test_price_rank_meta_ordering_by_position."""
@@ -179,12 +192,15 @@ def test_price_rank_default_sold_out_buffer_is_zero():
 def test_price_rank_str():
     """Test case for test_price_rank_str."""
     pr = PriceRankFactory(position=3)
-    assert str(pr) == "Rank 3"  # model uses f"Rank {self.position}" :contentReference[oaicite:13]{index=13}
+    assert (
+        str(pr) == "Rank 3"
+    )  # model uses f"Rank {self.position}" :contentReference[oaicite:13]{index=13}
 
 
 # ---------------------------------------------------------------------------
 # PriceRankTranslation
 # ---------------------------------------------------------------------------
+
 
 def test_price_rank_translation_unique_per_rank_and_language():
     """Test case for test_price_rank_translation_unique_per_rank_and_language."""
@@ -204,7 +220,9 @@ def test_price_rank_translation_str_contains_rank_and_language():
     prt = PriceRankTranslationFactory(price_rank=pr, language=lang)
     s = str(prt)
     assert "Rank 2" in s
-    assert "[de]" in s  # model uses f"{self.price_rank} [{self.language.code}]" :contentReference[oaicite:14]{index=14}
+    assert (
+        "[de]" in s
+    )  # model uses f"{self.price_rank} [{self.language.code}]" :contentReference[oaicite:14]{index=14}
 
 
 def test_price_rank_translation_reverse_relation_from_rank():
@@ -220,4 +238,6 @@ def test_price_rank_translation_reverse_relation_from_rank():
 def test_price_rank_translation_indexes_present():
     """Test case for test_price_rank_translation_indexes_present."""
     idx_names = {idx.name for idx in PriceRankTranslation._meta.indexes}
-    assert "idx_price_rank_lang" in idx_names  # defined in model meta :contentReference[oaicite:17]{index=17}
+    assert (
+        "idx_price_rank_lang" in idx_names
+    )  # defined in model meta :contentReference[oaicite:17]{index=17}

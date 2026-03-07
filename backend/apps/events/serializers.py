@@ -26,6 +26,7 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     inside ``EventSerializer``. Use the dedicated **Event Price** endpoints
     to create or modify price entries.
     """
+
     price_rank_display = serializers.SerializerMethodField()
 
     def get_price_rank_display(self, obj):

@@ -28,15 +28,11 @@ class MediaGalleryViewSet(ApiModelViewSet):
     """
 
     serializer_class = MediaGallerySerializer
-    queryset = (
-        MediaGallery.objects
-        .prefetch_related(
-            "media_items",
-            "media_items__translations__language",
-            "media_items__crops",
-        )
-        .order_by("name")
-    )
+    queryset = MediaGallery.objects.prefetch_related(
+        "media_items",
+        "media_items__translations__language",
+        "media_items__crops",
+    ).order_by("name")
 
 
 @extend_schema(tags=[_TAG])
@@ -54,8 +50,7 @@ class MediaItemViewSet(ApiModelViewSet):
 
     serializer_class = MediaItemSerializer
     queryset = (
-        MediaItem.objects
-        .select_related("gallery")
+        MediaItem.objects.select_related("gallery")
         .prefetch_related(
             "translations__language",
             "crops",

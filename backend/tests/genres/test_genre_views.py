@@ -10,13 +10,20 @@ Covers:
 - Basic response fields
 """
 
+from django.db import connection
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
 from apps.genres.models import Genre, GenreUseAs
 from apps.genres.views import GenreUseAsViewSet, GenreViewSet
-from apps.languages.models import Language
+from tests.factories.genre import (
+    GenreFactory,
+    GenreTranslationFactory,
+    GenreUseAsFactory,
+)
+from tests.factories.language import LanguageFactory
 
 
 PUB_KEY = "pub-view-test-key"
@@ -26,6 +33,7 @@ INT_KEY = "int-view-test-key"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
@@ -39,9 +47,14 @@ def wrong_headers():
     return {"HTTP_AUTHORIZATION": "Api-Key completely-wrong-key"}
 
 
+def results_list(response):
+    return response.data.get("results", response.data)
+
+
 # ---------------------------------------------------------------------------
 # Class-level tests
 # ---------------------------------------------------------------------------
+
 
 class TestGenreUseAsViewSetClass(TestCase):
     """Class-level checks for GenreUseAsViewSet."""
@@ -64,8 +77,41 @@ class TestGenreViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
+# N+1 guard — translations are prefetched
+# ---------------------------------------------------------------------------
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestGenreViewSetPrefetch(TestCase):
+    """Ensure genre list stays bounded in queries with translations present."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.lang_nl = LanguageFactory(code="nl", name="Dutch")
+        self.lang_en = LanguageFactory(code="en", name="English")
+
+        for idx in range(5):
+            genre = GenreFactory(type=f"genre-{idx}")
+            GenreTranslationFactory(
+                genre=genre, language=self.lang_nl, name=f"NL {idx}"
+            )
+            GenreTranslationFactory(
+                genre=genre, language=self.lang_en, name=f"EN {idx}"
+            )
+
+    def test_list_prefetches_translations_bounded_queries(self):
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.get("/api/genres/?ordering=id", **pub_headers())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(results_list(response)), 5)
+        self.assertEqual(len(ctx), 4)
+
+
+# ---------------------------------------------------------------------------
 # GenreUseAs endpoints
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestGenreUseAsViewSet(TestCase):
@@ -74,7 +120,7 @@ class TestGenreUseAsViewSet(TestCase):
     def setUp(self):
         self.client = APIClient()
         GenreUseAs.objects.all().delete()
-        self.use_as = GenreUseAs.objects.create(name="genre")
+        self.use_as = GenreUseAsFactory(name="genre")
 
     # list
     def test_list_public_key(self):
@@ -91,16 +137,22 @@ class TestGenreUseAsViewSet(TestCase):
 
     # retrieve
     def test_retrieve_public_key(self):
-        response = self.client.get(f"/api/genre-use-as/{self.use_as.id}/", **pub_headers())
+        response = self.client.get(
+            f"/api/genre-use-as/{self.use_as.id}/", **pub_headers()
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["name"], "genre")
 
     def test_retrieve_internal_key(self):
-        response = self.client.get(f"/api/genre-use-as/{self.use_as.id}/", **int_headers())
+        response = self.client.get(
+            f"/api/genre-use-as/{self.use_as.id}/", **int_headers()
+        )
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_wrong_key(self):
-        response = self.client.get(f"/api/genre-use-as/{self.use_as.id}/", **wrong_headers())
+        response = self.client.get(
+            f"/api/genre-use-as/{self.use_as.id}/", **wrong_headers()
+        )
         self.assertEqual(response.status_code, 401)
 
     # create
@@ -164,18 +216,23 @@ class TestGenreUseAsViewSet(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_delete_internal_key(self):
-        response = self.client.delete(f"/api/genre-use-as/{self.use_as.id}/", **int_headers())
+        response = self.client.delete(
+            f"/api/genre-use-as/{self.use_as.id}/", **int_headers()
+        )
         self.assertEqual(response.status_code, 204)
         self.assertFalse(GenreUseAs.objects.filter(id=self.use_as.id).exists())
 
     def test_delete_public_key_denied(self):
-        response = self.client.delete(f"/api/genre-use-as/{self.use_as.id}/", **pub_headers())
+        response = self.client.delete(
+            f"/api/genre-use-as/{self.use_as.id}/", **pub_headers()
+        )
         self.assertEqual(response.status_code, 403)
 
 
 # ---------------------------------------------------------------------------
 # Genre endpoints
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestGenreViewSet(TestCase):
@@ -185,8 +242,8 @@ class TestGenreViewSet(TestCase):
         self.client = APIClient()
         Genre.objects.all().delete()
         GenreUseAs.objects.all().delete()
-        self.use_as = GenreUseAs.objects.create(name="genre")
-        self.genre = Genre.objects.create(type="Theater", use_as=self.use_as)
+        self.use_as = GenreUseAsFactory(name="genre")
+        self.genre = GenreFactory(type="Theater", use_as=self.use_as)
 
     # list
     def test_list_public_key(self):

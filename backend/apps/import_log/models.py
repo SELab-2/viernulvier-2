@@ -25,6 +25,7 @@ from apps.core.models import BaseModel
 # ImportLog
 # ===========================================================================
 
+
 class ImportLog(BaseModel):
     """
     Audit record for a single run of the data import pipeline.

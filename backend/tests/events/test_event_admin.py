@@ -20,13 +20,15 @@ from datetime import timedelta
 from apps.core.admin import BaseAdmin
 from apps.events.admin import EventAdmin, EventPriceInline
 from apps.events.models import Event
-from apps.productions.models import Production
-from apps.locations.models import Location, Space, Hall
+from tests.factories.event import EventFactory
+from tests.factories.location import HallFactory
+from tests.factories.production import ProductionFactory
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_superuser(username="admin"):
     return User.objects.create_superuser(
@@ -39,27 +41,15 @@ def admin_changelist_url(model):
 
 
 def admin_change_url(model, pk):
-    return reverse(f"admin:{model._meta.app_label}_{model._meta.model_name}_change", args=[pk])
-
-
-def make_hall() -> Hall:
-    loc = Location.objects.create(
-        street="Main Street",
-        number="1",
-        postal_code="9000",
-        city="Ghent",
-        country="BE",
-        phone_1=None,
-        phone_2=None,
-        is_own_location=False,
+    return reverse(
+        f"admin:{model._meta.app_label}_{model._meta.model_name}_change", args=[pk]
     )
-    space = Space.objects.create(location=loc)
-    return Hall.objects.create(space=space, seat_selection=False, open_seating=False)
 
 
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
+
 
 class TestEventsAdminRegistration(TestCase):
     def test_event_is_registered(self):
@@ -74,6 +64,7 @@ class TestEventsAdminRegistration(TestCase):
 # ---------------------------------------------------------------------------
 # Inheritance
 # ---------------------------------------------------------------------------
+
 
 class TestEventsAdminInheritance(TestCase):
     admins = [EventAdmin]
@@ -94,6 +85,7 @@ class TestEventsAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
+
 
 class TestEventsAdminConfiguration(TestCase):
     def setUp(self):
@@ -130,13 +122,14 @@ class TestEventsAdminConfiguration(TestCase):
 # Queryset optimization (smoke)
 # ---------------------------------------------------------------------------
 
+
 class TestEventAdminGetQueryset(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.prod = Production.objects.create()
-        cls.hall = make_hall()
+        cls.prod = ProductionFactory()
+        cls.hall = HallFactory()
         now = timezone.now()
-        cls.event = Event.objects.create(
+        cls.event = EventFactory(
             production=cls.prod,
             hall=cls.hall,
             starts_at=now,
@@ -177,15 +170,16 @@ class TestEventAdminGetQueryset(TestCase):
 # Functional admin tests (HTTP)
 # ---------------------------------------------------------------------------
 
+
 class TestEventsAdminChangelists(TestCase):
     def setUp(self):
         self.superuser = make_superuser("events_admin")
         self.client.force_login(self.superuser)
 
-        self.prod = Production.objects.create()
-        self.hall = make_hall()
+        self.prod = ProductionFactory()
+        self.hall = HallFactory()
         now = timezone.now()
-        self.event = Event.objects.create(
+        self.event = EventFactory(
             production=self.prod,
             hall=self.hall,
             starts_at=now,

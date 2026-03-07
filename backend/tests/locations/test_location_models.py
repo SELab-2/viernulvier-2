@@ -1,10 +1,22 @@
 import pytest
 from django.core.exceptions import ValidationError
-from apps.languages.models import Language
-from apps.locations.models import Location, LocationTranslation, Space, SpaceTranslation, Hall, HallTranslation
+from apps.locations.models import (
+    LocationTranslation,
+    Space,
+    SpaceTranslation,
+    Hall,
+    HallTranslation,
+)
 
 from tests.factories.language import LanguageFactory
-from tests.factories.location import LocationFactory, LocationTranslationFactory, SpaceFactory, SpaceTranslationFactory, HallFactory, HallTranslationFactory
+from tests.factories.location import (
+    LocationFactory,
+    LocationTranslationFactory,
+    SpaceFactory,
+    SpaceTranslationFactory,
+    HallFactory,
+    HallTranslationFactory,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -12,10 +24,12 @@ pytestmark = pytest.mark.django_db
 # LOCATION
 # =====================================================
 
-class TestLocation:
 
+class TestLocation:
     def test_requires_mandatory_fields(self):
-        loc = LocationFactory.build(street="", number="", postal_code="", city="", country="")
+        loc = LocationFactory.build(
+            street="", number="", postal_code="", city="", country=""
+        )
         with pytest.raises(ValidationError):
             loc.full_clean()
 
@@ -30,7 +44,6 @@ class TestLocation:
 
 
 class TestLocationTranslation:
-
     def test_requires_unique_location_language(self):
         loc = LocationFactory()
         lang = LanguageFactory()
@@ -59,8 +72,8 @@ class TestLocationTranslation:
 # SPACE
 # =====================================================
 
-class TestSpace:
 
+class TestSpace:
     def test_requires_location(self):
         space = SpaceFactory.build(location=None)
         with pytest.raises(ValidationError):
@@ -84,10 +97,9 @@ class TestSpace:
 
 
 class TestSpaceTranslation:
-
     def test_str(self):
         trans = SpaceTranslationFactory(name="Main Hall", language__code="en")
-        assert str(trans) == f"en - Main Hall"
+        assert str(trans) == "en - Main Hall"
 
     def test_language_reverse_relation(self):
         lang = LanguageFactory()
@@ -105,8 +117,8 @@ class TestSpaceTranslation:
 # HALL
 # =====================================================
 
-class TestHall:
 
+class TestHall:
     def test_requires_space(self):
         hall = HallFactory.build(space=None)
         with pytest.raises(ValidationError):
@@ -130,7 +142,6 @@ class TestHall:
 
 
 class TestHallTranslation:
-
     def test_str(self):
         trans = HallTranslationFactory(name="Grand Hall", language__code="en")
         assert str(trans) == "en - Grand Hall"

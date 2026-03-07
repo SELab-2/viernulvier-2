@@ -27,7 +27,7 @@ class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     description = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the human-readable label "
-            "(e.g. {\"en\": \"Full price\", \"fr\": \"Plein tarif\"}). "
+            '(e.g. {"en": "Full price", "fr": "Plein tarif"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -52,7 +52,7 @@ class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             "sort_order",
             "cineville_box",
             "description",
-            "display_description"
+            "display_description",
         ]
         read_only_fields = ["id", "description", "display_description"]
         extra_kwargs = {
@@ -94,7 +94,7 @@ class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     def get_description(self, obj: Price) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")
-    
+
     def get_display_description(self, obj: Price) -> str | None:
         """Return the price label in the project's base language."""
         return self.get_base_translated_value(obj, field_name="description")
@@ -111,7 +111,7 @@ class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     description = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the label "
-            "(e.g. {\"en\": \"Early Bird\", \"fr\": \"Prévente\"}). "
+            '(e.g. {"en": "Early Bird", "fr": "Prévente"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -130,7 +130,7 @@ class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMix
             "position",
             "sold_out_buffer",
             "description",
-            "display_description"
+            "display_description",
         ]
         read_only_fields = ["id", "description", "display_description"]
         extra_kwargs = {
@@ -148,6 +148,6 @@ class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     def get_description(self, obj: PriceRank) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")
-    
+
     def get_display_description(self, obj: PriceRank) -> str | None:
         return self.get_base_translated_value(obj, field_name="description")

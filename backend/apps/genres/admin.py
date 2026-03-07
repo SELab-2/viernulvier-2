@@ -28,7 +28,10 @@ class GenreAdmin(BaseAdmin):
 
     list_display = ("id", "type", "use_as")
     list_filter = ("use_as",)
-    search_fields = ("type", "translations__name",)
+    search_fields = (
+        "type",
+        "translations__name",
+    )
     ordering = ("id",)
     autocomplete_fields = ("use_as",)
     inlines = [GenreTranslationInline]

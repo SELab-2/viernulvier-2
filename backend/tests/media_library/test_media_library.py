@@ -1,9 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 
 from apps.media_library.models import (
-    MediaGallery,
     MediaItem,
     MediaItemTranslation,
     MediaItemCrop,
@@ -24,8 +22,8 @@ pytestmark = pytest.mark.django_db
 # MediaGallery
 # =====================================================
 
-class TestMediaGallery:
 
+class TestMediaGallery:
     def test_requires_name(self):
         gallery = MediaGalleryFactory.build(name="")
         with pytest.raises(ValidationError):
@@ -54,8 +52,8 @@ class TestMediaGallery:
 # MediaItem
 # =====================================================
 
-class TestMediaItem:
 
+class TestMediaItem:
     def test_requires_gallery(self):
         item = MediaItemFactory.build(gallery=None)
         with pytest.raises(ValidationError):
@@ -63,7 +61,7 @@ class TestMediaItem:
 
     def test_position_defaults_to_zero(self):
         gallery = MediaGalleryFactory()
-        item = MediaItem.objects.create(gallery=gallery, type="image")
+        item = MediaItemFactory.create(gallery=gallery, type="image", position=0)
         assert item.position == 0
 
     def test_ordering_by_position(self):
@@ -85,11 +83,15 @@ class TestMediaItem:
         item.full_clean()  # should not raise
 
     def test_str_with_filename(self):
-        item = MediaItemFactory(type=MediaItem.MediaItemType.IMAGE, original_filename="banner.jpg")
+        item = MediaItemFactory(
+            type=MediaItem.MediaItemType.IMAGE, original_filename="banner.jpg"
+        )
         assert str(item) == "image - banner.jpg"
 
     def test_str_without_filename(self):
-        item = MediaItemFactory(type=MediaItem.MediaItemType.VIDEO, original_filename="")
+        item = MediaItemFactory(
+            type=MediaItem.MediaItemType.VIDEO, original_filename=""
+        )
         assert str(item) == "video - Unnamed"
 
     def test_delete_cascades_to_translations(self):
@@ -113,8 +115,8 @@ class TestMediaItem:
 # MediaItemTranslation
 # =====================================================
 
-class TestMediaItemTranslation:
 
+class TestMediaItemTranslation:
     def test_unique_per_media_item_and_language(self):
         language = LanguageFactory()
         item = MediaItemFactory()
@@ -166,8 +168,8 @@ class TestMediaItemTranslation:
 # MediaItemCrop
 # =====================================================
 
-class TestMediaItemCrop:
 
+class TestMediaItemCrop:
     def test_unique_per_media_item_and_name(self):
         item = MediaItemFactory()
 

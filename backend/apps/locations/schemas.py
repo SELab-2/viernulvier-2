@@ -82,8 +82,8 @@ _LOCATION_LIST = extend_schema(
         "Returns a paginated list of all **Location** objects.\n\n"
         "Each location includes its full address, optional phone numbers, "
         "an ownership flag, and a `name` field containing all available "
-        "translations as a dictionary (e.g. {\"en\": \"City Hall\", "
-        "\"fr\": \"Hôtel de Ville\"})."
+        'translations as a dictionary (e.g. {"en": "City Hall", '
+        '"fr": "Hôtel de Ville"}).'
     ),
     responses={
         200: LocationSerializer,
