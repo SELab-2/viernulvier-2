@@ -5,7 +5,6 @@ from apps.core.admin import BaseAdmin
 from .models import Language
 
 
-
 @admin.register(Language)
 class LanguageAdmin(BaseAdmin):
     """Admin configuration for Language objects."""
