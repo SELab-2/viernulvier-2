@@ -10,10 +10,12 @@ Covers:
 - PriceRankSerializer validation (unique position)
 """
 
-from django.test import TestCase
-from rest_framework.request import Request
+import pytest
 from rest_framework.test import APIRequestFactory
-from apps.pricing.models import Price, PriceTranslation, PriceRank
+from django.test import TestCase, override_settings
+from rest_framework.request import Request
+from apps.languages.models import Language
+from apps.pricing.models import Price, PriceRank, PriceRankTranslation
 from apps.pricing.serializers import PriceSerializer, PriceRankSerializer
 from tests.factories.language import LanguageFactory
 from tests.factories.pricing import (
@@ -97,6 +99,7 @@ class TestPriceSerializerFields(TestCase):
                 "sort_order",
                 "cineville_box",
                 "description",
+                "display_description"
             },
         )
 
@@ -396,3 +399,36 @@ class TestPriceRankSerializer(TestCase):
         serializer = PriceRankSerializer(data={"position": "nope", "sold_out_buffer": 0})
         self.assertFalse(serializer.is_valid())
         self.assertIn("position", serializer.errors)
+
+
+def _display_ctx():
+    factory = APIRequestFactory()
+    return {"request": factory.get("/dummy")}
+
+
+class TestPriceRankDisplayDescriptionBaseLanguage:
+    """Verify whether display_description uses base language with a sensible fallback."""
+
+    @pytest.mark.django_db
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_uses_base_language_when_present(self):
+        en = Language.objects.create(code="en", name="English")
+        nl = Language.objects.create(code="nl", name="Dutch")
+
+        rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+        PriceRankTranslation.objects.create(price_rank=rank, language=nl, description="Standaard")
+        PriceRankTranslation.objects.create(price_rank=rank, language=en, description="Standard")
+
+        data = PriceRankSerializer(rank, context=_display_ctx()).data
+        assert data["display_description"] == "Standard"
+
+    @pytest.mark.django_db
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_falls_back_when_base_language_missing(self):
+        nl = Language.objects.create(code="nl", name="Dutch")
+
+        rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+        PriceRankTranslation.objects.create(price_rank=rank, language=nl, description="Standaard")
+
+        data = PriceRankSerializer(rank, context=_display_ctx()).data
+        assert data["display_description"] == "Standaard"

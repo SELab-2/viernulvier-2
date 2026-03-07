@@ -69,7 +69,7 @@ class TestSpace:
     def test_str_representation(self):
         loc = LocationFactory(city="Gotham", street="Main St", number="1")
         space = SpaceFactory(location=loc)
-        assert str(space) == f"Space {space.id} - {loc}"
+        assert str(space) == f"Space {space.id} @ {loc}"
 
     def test_reverse_relation_translations(self):
         space = SpaceFactory()

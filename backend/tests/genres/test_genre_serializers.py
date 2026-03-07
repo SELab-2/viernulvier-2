@@ -9,8 +9,9 @@ Covers:
 - Invalid data handling
 """
 
-from django.test import TestCase
-
+import pytest
+from rest_framework.test import APIRequestFactory
+from django.test import TestCase, override_settings
 from apps.genres.models import Genre, GenreTranslation, GenreUseAs
 from apps.genres.serializers import (
     GenreSerializer,
@@ -87,7 +88,7 @@ class TestGenreSerializerFields(TestCase):
 
     def test_expected_fields_are_present(self):
         data = GenreSerializer(self.genre).data
-        self.assertEqual(set(data.keys()), {"id", "type", "use_as", "name"})
+        self.assertEqual(set(data.keys()), {"id", "type", "use_as", "name", "display_name"})
 
 
 class TestGenreSerializerSerialization(TestCase):
@@ -167,3 +168,37 @@ class TestGenreSerializerDeserialization(TestCase):
         updated = serializer.save()
         self.assertEqual(updated.type, "Festival")
         self.assertEqual(updated.use_as, self.use_as)
+
+def _display_ctx():
+        factory = APIRequestFactory()
+        return {"request": factory.get("/dummy")}
+
+class TestGenreDisplayNameBaseLanguage:
+    """Verify whether display_name uses base language with a sensible fallback."""
+    
+    @pytest.mark.django_db
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_uses_base_language_when_present(self):
+        en = Language.objects.create(code="en", name="English")
+        nl = Language.objects.create(code="nl", name="Dutch")
+
+        use_as = GenreUseAs.objects.create(name="genre")
+        genre = Genre.objects.create(type="festival", use_as=use_as)
+
+        GenreTranslation.objects.create(genre=genre, language=nl, name="Feest")
+        GenreTranslation.objects.create(genre=genre, language=en, name="Festival")
+
+        data = GenreSerializer(genre, context=_display_ctx()).data
+        assert data["display_name"] == "Festival"
+
+    @pytest.mark.django_db
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_falls_back_when_base_language_missing(self):
+        nl = Language.objects.create(code="nl", name="Dutch")
+
+        use_as = GenreUseAs.objects.create(name="genre")
+        genre = Genre.objects.create(type="festival", use_as=use_as)
+        GenreTranslation.objects.create(genre=genre, language=nl, name="Feest")
+
+        data = GenreSerializer(genre, context=_display_ctx()).data
+        assert data["display_name"] == "Feest"

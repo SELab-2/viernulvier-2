@@ -31,7 +31,7 @@ class GenreUseAsSerializer(serializers.ModelSerializer):
         }
 
 
-class GenreSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
+class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """
     Represents a Genre.
 
@@ -47,10 +47,18 @@ class GenreSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         ),
     )
 
+    display_name = serializers.SerializerMethodField(
+        help_text=(
+            "Human-readable name in the project's base language "
+            "(e.g. `Theatre`). Falls back to the first available "
+            "translation when the base language is missing."
+        )
+    )
+
     class Meta:
         model = Genre
-        fields = ["id", "type", "use_as", "name"]
-        read_only_fields = ["id", "name"]
+        fields = ["id", "type", "use_as", "name", "display_name"]
+        read_only_fields = ["id", "name", "display_name"]
         extra_kwargs = {
             "type": {
                 "help_text": (
@@ -69,3 +77,7 @@ class GenreSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     def get_name(self, obj: Genre) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
+    
+    def get_display_name(self, obj: Genre) -> str | None:
+        """Return the genre name in the project's base language."""
+        return self.get_base_translated_value(obj, "name")
