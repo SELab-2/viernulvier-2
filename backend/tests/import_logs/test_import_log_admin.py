@@ -23,12 +23,12 @@ from apps.core.admin import BaseAdmin
 from apps.import_log.admin import ImportLogAdmin
 from apps.import_log.models import ImportLog
 from tests.factories.import_log import ImportLogFactory
-from tests.factories.import_log import ImportLogFactory
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_superuser(username="admin"):
     return User.objects.create_superuser(
@@ -57,6 +57,7 @@ def make_import_log(**kwargs):
 # Registration
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogAdminRegistration(TestCase):
     """Verify ImportLogAdmin is registered."""
 
@@ -71,6 +72,7 @@ class TestImportLogAdminRegistration(TestCase):
 # Inheritance
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogAdminInheritance(TestCase):
     """ImportLogAdmin must extend BaseAdmin."""
 
@@ -84,6 +86,7 @@ class TestImportLogAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # list_display
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogAdminListDisplay(TestCase):
     """Tests for list_display configuration."""
@@ -120,6 +123,7 @@ class TestImportLogAdminListDisplay(TestCase):
 # list_filter
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogAdminListFilter(TestCase):
     """Tests for list_filter configuration."""
 
@@ -133,6 +137,7 @@ class TestImportLogAdminListFilter(TestCase):
 # ---------------------------------------------------------------------------
 # search_fields
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogAdminSearchFields(TestCase):
     """Tests for search_fields configuration."""
@@ -150,6 +155,7 @@ class TestImportLogAdminSearchFields(TestCase):
 # ---------------------------------------------------------------------------
 # readonly_fields
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogAdminReadonlyFields(TestCase):
     """All data fields must be read-only to protect log integrity."""
@@ -186,6 +192,7 @@ class TestImportLogAdminReadonlyFields(TestCase):
 # has_add_permission
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogAdminAddPermission(TestCase):
     """has_add_permission must always return False."""
 
@@ -214,6 +221,7 @@ class TestImportLogAdminAddPermission(TestCase):
 # ---------------------------------------------------------------------------
 # Functional changelist / changeform tests
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogAdminChangelist(TestCase):
     """Functional tests for ImportLogAdmin via HTTP."""

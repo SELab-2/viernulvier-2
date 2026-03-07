@@ -36,6 +36,7 @@ INT_KEY = "int-tag-view-test-key"
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
 
@@ -56,8 +57,8 @@ def results_list(response):
 # Class-level tests
 # ---------------------------------------------------------------------------
 
-class TestTagViewSetClass(TestCase):
 
+class TestTagViewSetClass(TestCase):
     def test_inherits_from_api_model_viewset(self):
         self.assertTrue(issubclass(TagViewSet, ApiModelViewSet))
 
@@ -70,18 +71,19 @@ class TestTagViewSetClass(TestCase):
     def test_queryset_has_prefetch_related_translations(self):
         queryset = TagViewSet().get_queryset()
         lookups = queryset._prefetch_related_lookups
-        
+
         lookup_names = [
-            l.prefetch_through if hasattr(l, 'prefetch_through') else l 
-            for l in lookups
+            lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup
+            for lookup in lookups
         ]
-        
+
         self.assertIn("translations", lookup_names)
 
 
 # ---------------------------------------------------------------------------
 # N+1 guard — translations
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetPrefetch(TestCase):
@@ -110,9 +112,9 @@ class TestTagViewSetPrefetch(TestCase):
 # GET /api/tags/  — list
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetList(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Tag.objects.all().delete()
@@ -145,9 +147,18 @@ class TestTagViewSetList(TestCase):
         response = self.client.get("/api/tags/", **pub_headers())
         results = response.data.get("results", response.data)
         item = results[0]
-        for field in ("id", "url", "source", "source_type", "type",
-                      "is_external", "is_enabled", "name",
-                      "short_description", "url_title"):
+        for field in (
+            "id",
+            "url",
+            "source",
+            "source_type",
+            "type",
+            "is_external",
+            "is_enabled",
+            "name",
+            "short_description",
+            "url_title",
+        ):
             self.assertIn(field, item)
 
     def test_list_without_auth_returns_401(self):
@@ -163,9 +174,9 @@ class TestTagViewSetList(TestCase):
 # GET /api/tags/<id>/  — retrieve
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetRetrieve(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.tag = TagFactory.create(type="genre")
@@ -213,9 +224,9 @@ class TestTagViewSetRetrieve(TestCase):
 # POST /api/tags/  — create
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetCreate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.payload = {
@@ -257,9 +268,9 @@ class TestTagViewSetCreate(TestCase):
 # PUT /api/tags/<id>/  — full update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetUpdate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.tag = TagFactory.create(type="genre")
@@ -301,9 +312,9 @@ class TestTagViewSetUpdate(TestCase):
 # PATCH /api/tags/<id>/  — partial update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetPartialUpdate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.tag = TagFactory.create(type="genre", is_enabled=True)
@@ -347,17 +358,15 @@ class TestTagViewSetPartialUpdate(TestCase):
 # DELETE /api/tags/<id>/  — destroy
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestTagViewSetDelete(TestCase):
-
     def setUp(self):
         self.client = APIClient()
 
     def test_delete_with_internal_key_returns_204(self):
         tag = TagFactory.create(type="genre")
-        response = self.client.delete(
-            f"/api/tags/{tag.id}/", **int_headers()
-        )
+        response = self.client.delete(f"/api/tags/{tag.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
 
     def test_delete_with_internal_key_removes_from_db(self):
@@ -367,9 +376,7 @@ class TestTagViewSetDelete(TestCase):
 
     def test_delete_with_public_key_returns_403(self):
         tag = TagFactory.create(type="genre")
-        response = self.client.delete(
-            f"/api/tags/{tag.id}/", **pub_headers()
-        )
+        response = self.client.delete(f"/api/tags/{tag.id}/", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_delete_without_auth_returns_401(self):

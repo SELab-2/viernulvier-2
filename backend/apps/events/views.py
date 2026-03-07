@@ -58,8 +58,7 @@ class EventViewSet(ApiModelViewSet):
     serializer_class = EventSerializer
 
     queryset = (
-        Event.objects
-        .select_related(
+        Event.objects.select_related(
             "production",
             "hall",
             "hall__space",

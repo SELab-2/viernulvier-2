@@ -29,6 +29,7 @@ INT_KEY = "int-view-test-key"
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
 
@@ -50,6 +51,7 @@ def results_list(response):
 # Class-level tests
 # ---------------------------------------------------------------------------
 
+
 class TestPriceViewSetClass(TestCase):
     def test_inherits_from_api_model_viewset(self):
         """Test case for test_inherits_from_api_model_viewset."""
@@ -62,6 +64,7 @@ class TestPriceViewSetClass(TestCase):
     def test_serializer_class(self):
         """Test case for test_serializer_class."""
         from apps.pricing.serializers import PriceSerializer
+
         self.assertEqual(PriceViewSet.serializer_class, PriceSerializer)
 
 
@@ -77,12 +80,14 @@ class TestPriceRankViewSetClass(TestCase):
     def test_serializer_class(self):
         """Test case for test_serializer_class."""
         from apps.pricing.serializers import PriceRankSerializer
+
         self.assertEqual(PriceRankViewSet.serializer_class, PriceRankSerializer)
 
 
 # ---------------------------------------------------------------------------
 # PriceRank N+1 guard
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestPriceRankViewSetPrefetch(TestCase):
@@ -91,12 +96,18 @@ class TestPriceRankViewSetPrefetch(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.lang_en = LanguageFactory.create(code="en", name="English", is_active=True)
-        self.lang_nl = LanguageFactory.create(code="nl", name="Nederlands", is_active=True)
+        self.lang_nl = LanguageFactory.create(
+            code="nl", name="Nederlands", is_active=True
+        )
 
         for idx in range(5):
             rank = PriceRankFactory(position=idx)
-            PriceRankTranslationFactory(price_rank=rank, language=self.lang_en, description=f"Rank {idx} en")
-            PriceRankTranslationFactory(price_rank=rank, language=self.lang_nl, description=f"Rank {idx} nl")
+            PriceRankTranslationFactory(
+                price_rank=rank, language=self.lang_en, description=f"Rank {idx} en"
+            )
+            PriceRankTranslationFactory(
+                price_rank=rank, language=self.lang_nl, description=f"Rank {idx} nl"
+            )
 
     def test_price_rank_list_bounded_queries(self):
         with CaptureQueriesContext(connection) as ctx:
@@ -111,6 +122,7 @@ class TestPriceRankViewSetPrefetch(TestCase):
 # Prices — shared setup mixin
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class _PriceSetupMixin(TestCase):
     def setUp(self):
@@ -121,7 +133,9 @@ class _PriceSetupMixin(TestCase):
         Language.objects.all().delete()
 
         self.lang_en = LanguageFactory.create(code="en", name="English", is_active=True)
-        self.lang_nl = LanguageFactory.create(code="nl", name="Nederlands", is_active=True)
+        self.lang_nl = LanguageFactory.create(
+            code="nl", name="Nederlands", is_active=True
+        )
 
         self.p1 = PriceFactory.create(
             type="A",
@@ -143,19 +157,28 @@ class _PriceSetupMixin(TestCase):
             sort_order=5,
             cineville_box=False,
         )
-        PriceTranslationFactory.create(price=self.p1, language=self.lang_en, description="A en")
-        PriceTranslationFactory.create(price=self.p1, language=self.lang_nl, description="A nl")
+        PriceTranslationFactory.create(
+            price=self.p1, language=self.lang_en, description="A en"
+        )
+        PriceTranslationFactory.create(
+            price=self.p1, language=self.lang_nl, description="A nl"
+        )
 
         # extra data to exercise prefetches
         for idx in range(4):
             price = PriceFactory.create(type=f"X{idx}")
-            PriceTranslationFactory.create(price=price, language=self.lang_en, description=f"X{idx} en")
-            PriceTranslationFactory.create(price=price, language=self.lang_nl, description=f"X{idx} nl")
+            PriceTranslationFactory.create(
+                price=price, language=self.lang_en, description=f"X{idx} en"
+            )
+            PriceTranslationFactory.create(
+                price=price, language=self.lang_nl, description=f"X{idx} nl"
+            )
 
 
 # ---------------------------------------------------------------------------
 # GET /api/prices/ — list
 # ---------------------------------------------------------------------------
+
 
 class TestPriceViewSetList(_PriceSetupMixin):
     def test_list_with_public_key_returns_200(self):
@@ -218,6 +241,7 @@ class TestPriceViewSetList(_PriceSetupMixin):
 # GET /api/prices/<id>/ — retrieve
 # ---------------------------------------------------------------------------
 
+
 class TestPriceViewSetRetrieve(_PriceSetupMixin):
     def test_retrieve_with_public_key_returns_200(self):
         """Test case for test_retrieve_with_public_key_returns_200."""
@@ -254,6 +278,7 @@ class TestPriceViewSetRetrieve(_PriceSetupMixin):
 # ---------------------------------------------------------------------------
 # POST /api/prices/ — create (internal only)
 # ---------------------------------------------------------------------------
+
 
 class TestPriceViewSetCreate(_PriceSetupMixin):
     def test_create_with_internal_key_returns_201(self):
@@ -317,7 +342,12 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
         """Test case for test_create_without_auth_returns_401."""
         response = self.client.post(
             "/api/prices/",
-            {"type": "C", "visibility": "public", "sort_order": 10, "cineville_box": False},
+            {
+                "type": "C",
+                "visibility": "public",
+                "sort_order": 10,
+                "cineville_box": False,
+            },
             format="json",
         )
         self.assertEqual(response.status_code, 401)
@@ -326,7 +356,12 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
         """Test case for test_create_with_wrong_key_returns_401."""
         response = self.client.post(
             "/api/prices/",
-            {"type": "C", "visibility": "public", "sort_order": 10, "cineville_box": False},
+            {
+                "type": "C",
+                "visibility": "public",
+                "sort_order": 10,
+                "cineville_box": False,
+            },
             format="json",
             **wrong_headers(),
         )
@@ -336,7 +371,11 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
         """Test case for test_create_missing_required_field_returns_400."""
         response = self.client.post(
             "/api/prices/",
-            {"visibility": "public", "sort_order": 10, "cineville_box": False},  # missing type
+            {
+                "visibility": "public",
+                "sort_order": 10,
+                "cineville_box": False,
+            },  # missing type
             format="json",
             **int_headers(),
         )
@@ -346,6 +385,7 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
 # ---------------------------------------------------------------------------
 # PUT /api/prices/<id>/ — full update (internal only)
 # ---------------------------------------------------------------------------
+
 
 class TestPriceViewSetUpdate(_PriceSetupMixin):
     def test_put_with_internal_key_returns_200(self):
@@ -430,6 +470,7 @@ class TestPriceViewSetUpdate(_PriceSetupMixin):
 # PATCH /api/prices/<id>/ — partial update (internal only)
 # ---------------------------------------------------------------------------
 
+
 class TestPriceViewSetPartialUpdate(_PriceSetupMixin):
     def test_patch_with_internal_key_returns_200(self):
         """Test case for test_patch_with_internal_key_returns_200."""
@@ -486,6 +527,7 @@ class TestPriceViewSetPartialUpdate(_PriceSetupMixin):
 # DELETE /api/prices/<id>/ — destroy (internal only)
 # ---------------------------------------------------------------------------
 
+
 class TestPriceViewSetDelete(_PriceSetupMixin):
     def test_delete_with_internal_key_returns_204(self):
         """Test case for test_delete_with_internal_key_returns_204."""
@@ -517,6 +559,7 @@ class TestPriceViewSetDelete(_PriceSetupMixin):
 # Price ranks — shared setup mixin
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class _PriceRankSetupMixin(TestCase):
     def setUp(self):
@@ -530,12 +573,15 @@ class _PriceRankSetupMixin(TestCase):
 
         self.r1 = PriceRankFactory.create(position=1, sold_out_buffer=0)
         self.r2 = PriceRankFactory.create(position=2, sold_out_buffer=0)
-        PriceRankTranslationFactory.create(price_rank=self.r1, language=self.lang, description="R1")
+        PriceRankTranslationFactory.create(
+            price_rank=self.r1, language=self.lang, description="R1"
+        )
 
 
 # ---------------------------------------------------------------------------
 # GET /api/price-ranks/ — list
 # ---------------------------------------------------------------------------
+
 
 class TestPriceRankViewSetList(_PriceRankSetupMixin):
     def test_list_with_public_key_returns_200(self):
@@ -570,6 +616,7 @@ class TestPriceRankViewSetList(_PriceRankSetupMixin):
 # ---------------------------------------------------------------------------
 # POST /api/price-ranks/ — create (internal only)
 # ---------------------------------------------------------------------------
+
 
 class TestPriceRankViewSetCreate(_PriceRankSetupMixin):
     def test_create_with_internal_key_returns_201(self):

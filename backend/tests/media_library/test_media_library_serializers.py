@@ -23,8 +23,6 @@ from apps.core.serializers import TranslatableSerializerMixin
 from apps.media_library.models import (
     MediaGallery,
     MediaItem,
-    MediaItemCrop,
-    MediaItemTranslation,
 )
 from apps.media_library.serializers import (
     MediaGallerySerializer,
@@ -63,6 +61,7 @@ def serialize_gallery(gallery):
 # MediaItemCropSerializer
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemCropSerializerFields(TestCase):
     """Verify field presence and output of MediaItemCropSerializer."""
 
@@ -98,6 +97,7 @@ class TestMediaItemCropSerializerFields(TestCase):
 # MediaItemSerializer — field presence
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemSerializerFields(TestCase):
     """Verify all expected fields are present on MediaItemSerializer."""
 
@@ -129,8 +129,20 @@ class TestMediaItemSerializerFields(TestCase):
     def test_no_extra_fields_are_exposed(self):
         data = serialize_item(self.item)
         expected = {
-            "id", "gallery", "type", "format", "original_filename", "position",
-            "width", "height", "title", "display_title", "description", "credits", "link", "crops",
+            "id",
+            "gallery",
+            "type",
+            "format",
+            "original_filename",
+            "position",
+            "width",
+            "height",
+            "title",
+            "display_title",
+            "description",
+            "credits",
+            "link",
+            "crops",
         }
         self.assertEqual(set(data.keys()), expected)
 
@@ -138,6 +150,7 @@ class TestMediaItemSerializerFields(TestCase):
 # ---------------------------------------------------------------------------
 # MediaItemSerializer — scalar fields
 # ---------------------------------------------------------------------------
+
 
 class TestMediaItemSerializerScalarFields(TestCase):
     """Verify scalar fields are serialized correctly on MediaItemSerializer."""
@@ -198,6 +211,7 @@ class TestMediaItemSerializerScalarFields(TestCase):
 # MediaItemSerializer — crops
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemSerializerCrops(TestCase):
     """Verify nested crops are serialized correctly."""
 
@@ -249,6 +263,7 @@ class TestMediaItemSerializerCrops(TestCase):
 # ---------------------------------------------------------------------------
 # MediaItemSerializer — translated fields
 # ---------------------------------------------------------------------------
+
 
 class TestMediaItemSerializerTranslatedFields(TestCase):
     """Verify translated fields are returned as language-keyed dicts."""
@@ -381,6 +396,7 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
 # MediaItemSerializer — inheritance
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemSerializerInheritance(TestCase):
     """MediaItemSerializer must inherit from TranslatableSerializerMixin."""
 
@@ -392,11 +408,12 @@ class TestMediaItemSerializerInheritance(TestCase):
 # MediaGallerySerializer — field presence
 # ---------------------------------------------------------------------------
 
+
 class TestMediaGallerySerializerFields(TestCase):
     """Verify all expected fields are present on MediaGallerySerializer."""
 
     def setUp(self):
-            self.gallery = MediaGalleryFactory.create(name="My Gallery")
+        self.gallery = MediaGalleryFactory.create(name="My Gallery")
 
     def test_expected_fields_are_present(self):
         data = serialize_gallery(self.gallery)
@@ -417,6 +434,7 @@ class TestMediaGallerySerializerFields(TestCase):
 # MediaGallerySerializer — nested media_items
 # ---------------------------------------------------------------------------
 
+
 class TestMediaGallerySerializerMediaItems(TestCase):
     """Verify nested media_items are serialized correctly on MediaGallerySerializer."""
 
@@ -433,8 +451,12 @@ class TestMediaGallerySerializerMediaItems(TestCase):
         self.assertEqual(len(data["media_items"]), 1)
 
     def test_media_items_contains_multiple_items(self):
-        MediaItemFactory.create(gallery=self.gallery, position=0, original_filename="a.jpg")
-        MediaItemFactory.create(gallery=self.gallery, position=1, original_filename="b.jpg")
+        MediaItemFactory.create(
+            gallery=self.gallery, position=0, original_filename="a.jpg"
+        )
+        MediaItemFactory.create(
+            gallery=self.gallery, position=1, original_filename="b.jpg"
+        )
         data = serialize_gallery(self.gallery)
         self.assertEqual(len(data["media_items"]), 2)
 
@@ -442,15 +464,33 @@ class TestMediaGallerySerializerMediaItems(TestCase):
         MediaItemFactory.create(gallery=self.gallery)
         data = serialize_gallery(self.gallery)
         expected = {
-            "id", "gallery", "type", "format", "original_filename", "position",
-            "width", "height", "title", "display_title", "description", "credits", "link", "crops",
+            "id",
+            "gallery",
+            "type",
+            "format",
+            "original_filename",
+            "position",
+            "width",
+            "height",
+            "title",
+            "display_title",
+            "description",
+            "credits",
+            "link",
+            "crops",
         }
         self.assertEqual(set(data["media_items"][0].keys()), expected)
 
     def test_media_items_are_ordered_by_position(self):
-        MediaItemFactory.create(gallery=self.gallery, position=2, original_filename="second.jpg")
-        MediaItemFactory.create(gallery=self.gallery, position=0, original_filename="first.jpg")
-        MediaItemFactory.create(gallery=self.gallery, position=1, original_filename="middle.jpg")
+        MediaItemFactory.create(
+            gallery=self.gallery, position=2, original_filename="second.jpg"
+        )
+        MediaItemFactory.create(
+            gallery=self.gallery, position=0, original_filename="first.jpg"
+        )
+        MediaItemFactory.create(
+            gallery=self.gallery, position=1, original_filename="middle.jpg"
+        )
         data = serialize_gallery(self.gallery)
         positions = [item["position"] for item in data["media_items"]]
         self.assertEqual(positions, sorted(positions))

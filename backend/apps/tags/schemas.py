@@ -94,7 +94,7 @@ _TAG_LIST = extend_schema(
         "Returns a paginated list of all **Tag** objects ordered by `id`.\n\n"
         "Translated fields (`name`, `short_description`, `url_title`) are "
         "returned as language-code dictionaries "
-        "(e.g. {\"en\": \"Contemporary\", \"fr\": \"Contemporain\"})."
+        '(e.g. {"en": "Contemporary", "fr": "Contemporain"}).'
     ),
     responses={
         200: TagSerializer,
@@ -109,7 +109,7 @@ _TAG_RETRIEVE = extend_schema(
     description=(
         "Returns the full representation of a single **Tag**.\n\n"
         "Translated fields are returned as language-code dictionaries "
-        "(e.g. {\"en\": \"Contemporary\", \"fr\": \"Contemporain\"})."
+        '(e.g. {"en": "Contemporary", "fr": "Contemporain"}).'
     ),
     responses={
         200: TagSerializer,

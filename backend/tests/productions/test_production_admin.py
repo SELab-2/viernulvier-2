@@ -55,6 +55,7 @@ from tests.factories.tag import TagFactory
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_superuser(username="admin"):
     return User.objects.create_superuser(
         username=username, password="password", email=f"{username}@example.com"
@@ -64,6 +65,7 @@ def make_superuser(username="admin"):
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
+
 
 class TestAdminRegistration(TestCase):
     """Verify all admin classes are registered against their models."""
@@ -110,14 +112,13 @@ class TestAdminRegistration(TestCase):
         self.assertIn(ProductionTag, admin.site._registry)
 
     def test_registered_admin_is_production_tag_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[ProductionTag], ProductionTagAdmin
-        )
+        self.assertIsInstance(admin.site._registry[ProductionTag], ProductionTagAdmin)
 
 
 # ---------------------------------------------------------------------------
 # Inheritance
 # ---------------------------------------------------------------------------
+
 
 class TestAdminInheritance(TestCase):
     """All admin classes must extend BaseAdmin (and therefore ModelAdmin)."""
@@ -146,6 +147,7 @@ class TestAdminInheritance(TestCase):
 # UitDatabaseThemeAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestUitDatabaseThemeAdminConfiguration(TestCase):
     """Tests for UitDatabaseThemeAdmin meta configuration."""
 
@@ -166,6 +168,7 @@ class TestUitDatabaseThemeAdminConfiguration(TestCase):
 # UitDatabaseTypeAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestUitDatabaseTypeAdminConfiguration(TestCase):
     """Tests for UitDatabaseTypeAdmin meta configuration."""
 
@@ -185,6 +188,7 @@ class TestUitDatabaseTypeAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # ProductionAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestProductionAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionAdmin."""
@@ -259,6 +263,7 @@ class TestProductionAdminConfiguration(TestCase):
 # ProductionTranslationAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestProductionTranslationAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionTranslationAdmin."""
 
@@ -307,6 +312,7 @@ class TestProductionTranslationAdminConfiguration(TestCase):
 # ProductionGenreAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestProductionGenreAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionGenreAdmin."""
 
@@ -333,6 +339,7 @@ class TestProductionGenreAdminConfiguration(TestCase):
 # ProductionTagAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestProductionTagAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionTagAdmin."""
 
@@ -358,6 +365,7 @@ class TestProductionTagAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # Inline configuration
 # ---------------------------------------------------------------------------
+
 
 class TestProductionTranslationInline(TestCase):
     """Tests for ProductionTranslationInline configuration."""
@@ -411,6 +419,7 @@ class TestProductionTagInline(TestCase):
 # get_queryset optimisation
 # ---------------------------------------------------------------------------
 
+
 class TestProductionAdminGetQueryset(TestCase):
     """Verify get_queryset uses select_related for FK optimisation."""
 
@@ -440,6 +449,7 @@ class TestProductionAdminGetQueryset(TestCase):
 # ---------------------------------------------------------------------------
 # Functional changelist tests  (HTTP, requires superuser login)
 # ---------------------------------------------------------------------------
+
 
 class TestUitDatabaseThemeAdminChangelist(TestCase):
     """Functional tests for UitDatabaseThemeAdmin via HTTP."""

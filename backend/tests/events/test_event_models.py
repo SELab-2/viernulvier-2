@@ -34,6 +34,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 # Event
 # ---------------------------------------------------------------------------
 
+
 def test_event_meta_ordering_by_starts_at():
     """Test case for test_event_meta_ordering_by_starts_at."""
     prod = ProductionFactory()
@@ -44,7 +45,7 @@ def test_event_meta_ordering_by_starts_at():
     e1 = EventFactory(production=prod, hall=hall, starts_at=now)
 
     events = list(Event.objects.all())
-    assert [e.id for e in events] == [e1.id, e2.id] 
+    assert [e.id for e in events] == [e1.id, e2.id]
 
 
 def test_event_constraint_name_present():
@@ -93,12 +94,20 @@ def test_event_allows_null_starts_or_ends():
     prod = ProductionFactory()
     hall = HallFactory()
 
-    e1 = Event(production=prod, hall=hall, starts_at=None, ends_at=None, ticketing_url="")
+    e1 = Event(
+        production=prod, hall=hall, starts_at=None, ends_at=None, ticketing_url=""
+    )
     e1.full_clean()
     e1.save()
     assert e1.id is not None
 
-    e2 = Event(production=prod, hall=hall, starts_at=timezone.now(), ends_at=None, ticketing_url="")
+    e2 = Event(
+        production=prod,
+        hall=hall,
+        starts_at=timezone.now(),
+        ends_at=None,
+        ticketing_url="",
+    )
     e2.full_clean()
     e2.save()
     assert e2.id is not None
@@ -109,7 +118,13 @@ def test_event_allows_end_without_start():
     prod = ProductionFactory()
     hall = HallFactory()
 
-    e3 = Event(production=prod, hall=hall, starts_at=None, ends_at=timezone.now(), ticketing_url="")
+    e3 = Event(
+        production=prod,
+        hall=hall,
+        starts_at=None,
+        ends_at=timezone.now(),
+        ticketing_url="",
+    )
     e3.full_clean()
     e3.save()
     assert e3.id is not None
@@ -118,6 +133,7 @@ def test_event_allows_end_without_start():
 # ---------------------------------------------------------------------------
 # EventPrice
 # ---------------------------------------------------------------------------
+
 
 def test_event_price_unique_per_event_and_price_rank():
     """Test case for test_event_price_unique_per_event_and_price_rank."""
@@ -128,7 +144,9 @@ def test_event_price_unique_per_event_and_price_rank():
     event = EventFactory(production=prod, hall=hall, starts_at=now)
     rank = PriceRankFactory(position=1, sold_out_buffer=0)
 
-    ep1 = EventPrice(event=event, price_rank=rank, amount=Decimal("10.00"), available=10)
+    ep1 = EventPrice(
+        event=event, price_rank=rank, amount=Decimal("10.00"), available=10
+    )
     ep1.full_clean()
     ep1.save()
 
@@ -176,7 +194,7 @@ def test_event_price_cascade_delete_event_deletes_prices():
     EventPriceFactory(event=event, price_rank=None, amount="8.00", available=3)
 
     event.delete()
-    assert EventPrice.objects.count() == 0 
+    assert EventPrice.objects.count() == 0
 
 
 def test_event_price_set_null_when_price_rank_deleted():

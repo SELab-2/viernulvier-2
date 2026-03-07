@@ -11,7 +11,9 @@ from .models import Language
 from .schemas import language_schema, extend_schema
 from .serializers import LanguageSerializer
 
-_TAG = "Languages"  # Reusable tag for all language-related endpoints in the OpenAPI docs
+_TAG = (
+    "Languages"  # Reusable tag for all language-related endpoints in the OpenAPI docs
+)
 
 
 @extend_schema(tags=[_TAG])

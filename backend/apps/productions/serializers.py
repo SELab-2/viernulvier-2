@@ -81,7 +81,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     title = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the production title "
-            "(e.g. {\"en\": \"Title\", \"fr\": \"Titre\"}). "
+            '(e.g. {"en": "Title", "fr": "Titre"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -89,7 +89,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     artist_name = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the artist or company name "
-            "(e.g. {\"en\": \"Artist\", \"fr\": \"Artiste\"}). "
+            '(e.g. {"en": "Artist", "fr": "Artiste"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -97,7 +97,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     tagline = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the short tagline "
-            "(e.g. {\"en\": \"Short tagline\", \"fr\": \"Accroche courte\"}). "
+            '(e.g. {"en": "Short tagline", "fr": "Accroche courte"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -105,7 +105,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     teaser = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the teaser text "
-            "(e.g. {\"en\": \"Teaser\", \"fr\": \"Teaser\"}). "
+            '(e.g. {"en": "Teaser", "fr": "Teaser"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -113,7 +113,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     description = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the long-form description "
-            "(e.g. {\"en\": \"Full description\", \"fr\": \"Description complète\"}). "
+            '(e.g. {"en": "Full description", "fr": "Description complète"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -247,7 +247,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     def get_description(self, obj: Production) -> str:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")
-    
+
     def get_display_title(self, obj: Production) -> str | None:
         """Return the base-language title (with fallback)."""
         return self.get_base_translated_value(obj, field_name="title")

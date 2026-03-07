@@ -37,6 +37,7 @@ from tests.factories.pricing import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_superuser(username="admin"):
     return User.objects.create_superuser(
         username=username, password="password", email=f"{username}@example.com"
@@ -48,12 +49,15 @@ def admin_changelist_url(model):
 
 
 def admin_change_url(model, pk):
-    return reverse(f"admin:{model._meta.app_label}_{model._meta.model_name}_change", args=[pk])
+    return reverse(
+        f"admin:{model._meta.app_label}_{model._meta.model_name}_change", args=[pk]
+    )
 
 
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
+
 
 class TestPricingAdminRegistration(TestCase):
     def test_price_is_registered(self):
@@ -76,16 +80,26 @@ class TestPricingAdminRegistration(TestCase):
         """Test case for test_registered_admin_classes."""
         self.assertIsInstance(admin.site._registry[Price], PriceAdmin)
         self.assertIsInstance(admin.site._registry[PriceRank], PriceRankAdmin)
-        self.assertIsInstance(admin.site._registry[PriceTranslation], PriceTranslationAdmin)
-        self.assertIsInstance(admin.site._registry[PriceRankTranslation], PriceRankTranslationAdmin)
+        self.assertIsInstance(
+            admin.site._registry[PriceTranslation], PriceTranslationAdmin
+        )
+        self.assertIsInstance(
+            admin.site._registry[PriceRankTranslation], PriceRankTranslationAdmin
+        )
 
 
 # ---------------------------------------------------------------------------
 # Inheritance (mirrors production admin tests style)
 # ---------------------------------------------------------------------------
 
+
 class TestPricingAdminInheritance(TestCase):
-    admins = [PriceAdmin, PriceRankAdmin, PriceTranslationAdmin, PriceRankTranslationAdmin]
+    admins = [
+        PriceAdmin,
+        PriceRankAdmin,
+        PriceTranslationAdmin,
+        PriceRankTranslationAdmin,
+    ]
 
     def test_admins_inherit_from_base_admin_if_used(self):
         """Test case for test_admins_inherit_from_base_admin_if_used."""
@@ -103,6 +117,7 @@ class TestPricingAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # Configuration (extends your existing config tests)
 # ---------------------------------------------------------------------------
+
 
 class TestPricingAdminConfiguration(TestCase):
     def setUp(self):
@@ -136,6 +151,7 @@ class TestPricingAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # Queryset optimization (keeps your existing idea, but structured like production)
 # ---------------------------------------------------------------------------
+
 
 class TestPricingTranslationAdminGetQueryset(TestCase):
     @classmethod
@@ -191,6 +207,7 @@ class TestPricingTranslationAdminGetQueryset(TestCase):
 # ---------------------------------------------------------------------------
 # Functional admin tests (HTTP)
 # ---------------------------------------------------------------------------
+
 
 class TestPricingAdminChangelists(TestCase):
     def setUp(self):
@@ -254,5 +271,7 @@ class TestPricingAdminChangelists(TestCase):
 
     def test_price_rank_translation_changeform_returns_200(self):
         """Test case for test_price_rank_translation_changeform_returns_200."""
-        response = self.client.get(admin_change_url(PriceRankTranslation, self.rank_tr.pk))
+        response = self.client.get(
+            admin_change_url(PriceRankTranslation, self.rank_tr.pk)
+        )
         self.assertEqual(response.status_code, 200)

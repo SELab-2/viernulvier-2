@@ -29,6 +29,7 @@ from tests.factories.production import ProductionFactory
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_superuser(username="admin"):
     return User.objects.create_superuser(
         username=username, password="password", email=f"{username}@example.com"
@@ -40,12 +41,15 @@ def admin_changelist_url(model):
 
 
 def admin_change_url(model, pk):
-    return reverse(f"admin:{model._meta.app_label}_{model._meta.model_name}_change", args=[pk])
+    return reverse(
+        f"admin:{model._meta.app_label}_{model._meta.model_name}_change", args=[pk]
+    )
 
 
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
+
 
 class TestEventsAdminRegistration(TestCase):
     def test_event_is_registered(self):
@@ -60,6 +64,7 @@ class TestEventsAdminRegistration(TestCase):
 # ---------------------------------------------------------------------------
 # Inheritance
 # ---------------------------------------------------------------------------
+
 
 class TestEventsAdminInheritance(TestCase):
     admins = [EventAdmin]
@@ -80,6 +85,7 @@ class TestEventsAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
+
 
 class TestEventsAdminConfiguration(TestCase):
     def setUp(self):
@@ -115,6 +121,7 @@ class TestEventsAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # Queryset optimization (smoke)
 # ---------------------------------------------------------------------------
+
 
 class TestEventAdminGetQueryset(TestCase):
     @classmethod
@@ -162,6 +169,7 @@ class TestEventAdminGetQueryset(TestCase):
 # ---------------------------------------------------------------------------
 # Functional admin tests (HTTP)
 # ---------------------------------------------------------------------------
+
 
 class TestEventsAdminChangelists(TestCase):
     def setUp(self):

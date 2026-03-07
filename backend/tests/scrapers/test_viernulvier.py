@@ -2055,7 +2055,7 @@ def test_extract_lookup_value_returns_empty_string_when_only_whitespace():
     config = viernulvier.ModelSyncConfig(api_id_key="@id", lookup_field="external_id")
     item = {"@id": "    "}
     result = viernulvier._extract_lookup_value(item, config)
-    # Empty string after strip (line 479: return str(raw).strip() if raw is not None else None) 
+    # Empty string after strip (line 479: return str(raw).strip() if raw is not None else None)
     assert result == ""
 
 
@@ -2094,7 +2094,7 @@ def test_extract_external_id_from_url_dict_with_external_id_key():
 
 
 def test_extract_external_id_from_url_dict_with_id_key():
-    """Test _extract_external_id_from_url uses id from dict as fallback""" 
+    """Test _extract_external_id_from_url uses id from dict as fallback"""
     result = viernulvier._extract_external_id_from_url({"id": "id789"})
     assert result == "id789"
 

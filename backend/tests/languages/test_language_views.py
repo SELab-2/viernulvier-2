@@ -32,6 +32,7 @@ INT_KEY = "int-view-test-key"
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
 
@@ -48,8 +49,8 @@ def wrong_headers():
 # Class-level tests
 # ---------------------------------------------------------------------------
 
-class TestLanguageViewSetClass(TestCase):
 
+class TestLanguageViewSetClass(TestCase):
     def test_inherits_from_api_model_viewset(self):
         self.assertTrue(issubclass(LanguageViewSet, ApiModelViewSet))
 
@@ -61,6 +62,7 @@ class TestLanguageViewSetClass(TestCase):
 
     def test_serializer_class_is_language_serializer(self):
         from apps.languages.serializers import LanguageSerializer
+
         self.assertEqual(LanguageViewSet.serializer_class, LanguageSerializer)
 
 
@@ -68,9 +70,9 @@ class TestLanguageViewSetClass(TestCase):
 # GET /api/languages/  — list
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetList(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
@@ -121,9 +123,9 @@ class TestLanguageViewSetList(TestCase):
 # GET /api/languages/<code>/  — retrieve
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetRetrieve(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
@@ -164,9 +166,9 @@ class TestLanguageViewSetRetrieve(TestCase):
 # POST /api/languages/  — create
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetCreate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
@@ -250,9 +252,9 @@ class TestLanguageViewSetCreate(TestCase):
 # PUT /api/languages/<code>/  — full update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetUpdate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
@@ -310,9 +312,9 @@ class TestLanguageViewSetUpdate(TestCase):
 # PATCH /api/languages/<code>/  — partial update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetPartialUpdate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
@@ -370,9 +372,9 @@ class TestLanguageViewSetPartialUpdate(TestCase):
 # DELETE /api/languages/<code>/  — destroy
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetDelete(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()

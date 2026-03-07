@@ -29,6 +29,7 @@ from tests.factories.tag import TagFactory, TagTranslationFactory
 # Registration
 # ---------------------------------------------------------------------------
 
+
 class TestTagAdminRegistration(TestCase):
     """Verify TagAdmin and TagTranslationAdmin are registered."""
 
@@ -51,6 +52,7 @@ class TestTagAdminRegistration(TestCase):
 # Inheritance
 # ---------------------------------------------------------------------------
 
+
 class TestTagAdminInheritance(TestCase):
     """TagAdmin and TagTranslationAdmin must extend BaseAdmin."""
 
@@ -70,6 +72,7 @@ class TestTagAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # TagAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestTagAdminConfiguration(TestCase):
     """Tests for individual meta configuration of TagAdmin."""
@@ -122,7 +125,6 @@ class TestTagAdminConfiguration(TestCase):
     # -- inlines --------------------------------------------------------------
 
     def test_inlines_contains_tag_translation_inline(self):
-        inline_classes = [type(i) for i in self.admin.get_inline_instances(None)]
         inline_types = [i for i in self.admin.inlines]
         self.assertIn(TagTranslationInline, inline_types)
 
@@ -130,6 +132,7 @@ class TestTagAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # TagTranslationInline configuration
 # ---------------------------------------------------------------------------
+
 
 class TestTagTranslationInlineConfiguration(TestCase):
     """Tests for TagTranslationInline."""
@@ -150,6 +153,7 @@ class TestTagTranslationInlineConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # TagTranslationAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestTagTranslationAdminConfiguration(TestCase):
     """Tests for individual meta configuration of TagTranslationAdmin."""
@@ -199,6 +203,7 @@ class TestTagTranslationAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # Functional admin tests
 # ---------------------------------------------------------------------------
+
 
 class TestTagAdminFunctional(TestCase):
     """Smoke tests: changelist and changeform load without errors."""

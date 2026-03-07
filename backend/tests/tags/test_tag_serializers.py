@@ -26,6 +26,7 @@ from tests.factories.tag import TagFactory, TagTranslationFactory
 # Field presence
 # ---------------------------------------------------------------------------
 
+
 class TestTagSerializerFields(TestCase):
     """Verify that the correct fields are exposed."""
 
@@ -35,22 +36,44 @@ class TestTagSerializerFields(TestCase):
     def test_expected_fields_are_present(self):
         serializer = TagSerializer(self.tag)
         data = serializer.data
-        for field in ("id", "url", "source", "source_type", "type",
-                      "is_external", "is_enabled", "name",
-                      "short_description", "url_title"):
+        for field in (
+            "id",
+            "url",
+            "source",
+            "source_type",
+            "type",
+            "is_external",
+            "is_enabled",
+            "name",
+            "short_description",
+            "url_title",
+        ):
             self.assertIn(field, data)
 
     def test_no_extra_fields_are_exposed(self):
         serializer = TagSerializer(self.tag)
-        expected = {"id", "url", "source", "source_type", "type",
-            "is_external", "is_enabled", "name", "display_name", "display_short_description", "display_url_title",
-            "short_description", "url_title"}
+        expected = {
+            "id",
+            "url",
+            "source",
+            "source_type",
+            "type",
+            "is_external",
+            "is_enabled",
+            "name",
+            "display_name",
+            "display_short_description",
+            "display_url_title",
+            "short_description",
+            "url_title",
+        }
         self.assertEqual(set(serializer.data.keys()), expected)
 
 
 # ---------------------------------------------------------------------------
 # Serialization — scalar fields
 # ---------------------------------------------------------------------------
+
 
 class TestTagSerializerScalarFields(TestCase):
     """Model → dict for non-translated fields."""
@@ -114,6 +137,7 @@ class TestTagSerializerScalarFields(TestCase):
 # ---------------------------------------------------------------------------
 # Serialization — translated fields
 # ---------------------------------------------------------------------------
+
 
 class TestTagSerializerTranslatedFields(TestCase):
     """name / short_description / url_title are returned as language-keyed dicts."""
@@ -247,8 +271,8 @@ class TestTagSerializerTranslatedFields(TestCase):
 # Serialization — queryset
 # ---------------------------------------------------------------------------
 
-class TestTagSerializerQueryset(TestCase):
 
+class TestTagSerializerQueryset(TestCase):
     def test_serializes_queryset_of_tags(self):
         TagFactory.create(type="genre")
         TagFactory.create(type="mood")
@@ -261,6 +285,7 @@ class TestTagSerializerQueryset(TestCase):
 # ---------------------------------------------------------------------------
 # Deserialization / validation
 # ---------------------------------------------------------------------------
+
 
 class TestTagSerializerDeserialization(TestCase):
     """dict → model (create / update)."""
@@ -346,8 +371,12 @@ class TestTagDisplayNameBaseLanguage:
             is_external=False,
             is_enabled=True,
         )
-        TagTranslation.objects.create(tag=tag, language=nl, name="Thema", short_description="", url_title="")
-        TagTranslation.objects.create(tag=tag, language=en, name="Theme", short_description="", url_title="")
+        TagTranslation.objects.create(
+            tag=tag, language=nl, name="Thema", short_description="", url_title=""
+        )
+        TagTranslation.objects.create(
+            tag=tag, language=en, name="Theme", short_description="", url_title=""
+        )
 
         data = TagSerializer(tag, context=_display_ctx()).data
         assert data["display_name"] == "Theme"
@@ -365,7 +394,9 @@ class TestTagDisplayNameBaseLanguage:
             is_external=False,
             is_enabled=True,
         )
-        TagTranslation.objects.create(tag=tag, language=nl, name="Thema", short_description="", url_title="")
+        TagTranslation.objects.create(
+            tag=tag, language=nl, name="Thema", short_description="", url_title=""
+        )
 
         data = TagSerializer(tag, context=_display_ctx()).data
         assert data["display_name"] == "Thema"

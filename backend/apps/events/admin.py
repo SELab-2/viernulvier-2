@@ -21,6 +21,7 @@ from .models import Event, EventPrice
 # Inline
 # ===========================================================================
 
+
 class EventPriceInline(admin.TabularInline):
     """
     Inline for managing price tiers directly inside the Event change page.
@@ -40,6 +41,7 @@ class EventPriceInline(admin.TabularInline):
 # ===========================================================================
 # Event admin
 # ===========================================================================
+
 
 @admin.register(Event)
 class EventAdmin(BaseAdmin):

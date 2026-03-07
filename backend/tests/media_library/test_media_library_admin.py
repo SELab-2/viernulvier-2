@@ -50,6 +50,7 @@ from tests.factories.media_library import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_superuser(username="admin"):
     return User.objects.create_superuser(
         username=username, password="password", email=f"{username}@example.com"
@@ -59,6 +60,7 @@ def make_superuser(username="admin"):
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
+
 
 class TestAdminRegistration(TestCase):
     """Verify all admin classes are registered against their models."""
@@ -94,6 +96,7 @@ class TestAdminRegistration(TestCase):
 # Inheritance
 # ---------------------------------------------------------------------------
 
+
 class TestAdminInheritance(TestCase):
     """All admin classes must extend BaseAdmin (and therefore ModelAdmin)."""
 
@@ -118,6 +121,7 @@ class TestAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # MediaGalleryAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestMediaGalleryAdminConfiguration(TestCase):
     """Tests for MediaGalleryAdmin meta configuration."""
@@ -145,6 +149,7 @@ class TestMediaGalleryAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # MediaItemAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestMediaItemAdminConfiguration(TestCase):
     """Tests for MediaItemAdmin meta configuration."""
@@ -215,6 +220,7 @@ class TestMediaItemAdminConfiguration(TestCase):
 # MediaItemTranslationAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemTranslationAdminConfiguration(TestCase):
     """Tests for MediaItemTranslationAdmin meta configuration."""
 
@@ -263,6 +269,7 @@ class TestMediaItemTranslationAdminConfiguration(TestCase):
 # MediaItemCropAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemCropAdminConfiguration(TestCase):
     """Tests for MediaItemCropAdmin meta configuration."""
 
@@ -294,6 +301,7 @@ class TestMediaItemCropAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # Inline configuration
 # ---------------------------------------------------------------------------
+
 
 class TestMediaItemInline(TestCase):
     """Tests for MediaItemInline configuration."""
@@ -350,6 +358,7 @@ class TestMediaItemCropInline(TestCase):
 # get_queryset optimisation
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemAdminGetQueryset(TestCase):
     """Verify get_queryset uses select_related for FK optimisation."""
 
@@ -370,20 +379,21 @@ class TestMediaItemAdminGetQueryset(TestCase):
     def test_queryset_has_select_related_for_gallery(self):
         admin = self.model_admin
         request = self._make_request()
-        
+
         self.assertEqual(admin.list_select_related, ("gallery",))
 
         qs = admin.get_queryset(request)
-        
+
         if admin.list_select_related:
             qs = qs.select_related(*admin.list_select_related)
-        
+
         self.assertIn("gallery", qs.query.select_related)
 
 
 # ---------------------------------------------------------------------------
 # Functional changelist / changeform tests
 # ---------------------------------------------------------------------------
+
 
 class TestMediaGalleryAdminChangelist(TestCase):
     """Functional tests for MediaGalleryAdmin via HTTP."""

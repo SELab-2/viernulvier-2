@@ -31,7 +31,6 @@ from apps.import_log.models import ImportLog
 from apps.import_log.serializers import ImportLogSerializer
 from apps.import_log.views import ImportLogViewSet
 from tests.factories.import_log import ImportLogFactory
-from tests.factories.import_log import ImportLogFactory
 
 
 PUB_KEY = "pub-import-log-view-test-key"
@@ -41,6 +40,7 @@ INT_KEY = "int-import-log-view-test-key"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
@@ -85,6 +85,7 @@ def make_finished_log(source="finished.json", duration_seconds=60, **kwargs):
 # Class-level tests
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogViewSetClass(TestCase):
     """Verify ViewSet class-level configuration."""
 
@@ -106,9 +107,9 @@ class TestImportLogViewSetClass(TestCase):
 # GET /api/import-logs/ — list
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestImportLogViewSetList(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         ImportLog.objects.all().delete()
@@ -144,9 +145,16 @@ class TestImportLogViewSetList(TestCase):
         response = self.client.get("/api/import-logs/", **pub_headers())
         item = response.data["results"][0]
         for field in (
-            "id", "source", "status", "records_total",
-            "records_imported", "records_failed",
-            "started_at", "finished_at", "duration", "error_message",
+            "id",
+            "source",
+            "status",
+            "records_total",
+            "records_imported",
+            "records_failed",
+            "started_at",
+            "finished_at",
+            "duration",
+            "error_message",
         ):
             with self.subTest(field=field):
                 self.assertIn(field, item)
@@ -169,9 +177,9 @@ class TestImportLogViewSetList(TestCase):
 # GET /api/import-logs/<id>/ — detail
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestImportLogViewSetDetail(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         self.log = make_import_log(
@@ -242,6 +250,7 @@ class TestImportLogViewSetDetail(TestCase):
 # ---------------------------------------------------------------------------
 # Write methods must return 405 Method Not Allowed
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestImportLogViewSetWriteNotAllowed(TestCase):
@@ -339,6 +348,7 @@ class TestImportLogViewSetWriteNotAllowed(TestCase):
 # ---------------------------------------------------------------------------
 # Ordering
 # ---------------------------------------------------------------------------
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestImportLogViewSetOrdering(TestCase):

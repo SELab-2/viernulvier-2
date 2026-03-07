@@ -136,9 +136,7 @@ class ApiKeyAuthentication(BaseAuthentication):
             return (None, "internal")
 
         # Check against PUBLIC_API_KEY (grants read-only access).
-        if public_key and secrets.compare_digest(
-            key_bytes, public_key.encode("utf-8")
-        ):
+        if public_key and secrets.compare_digest(key_bytes, public_key.encode("utf-8")):
             return (None, "public")
 
         # No match — reject the request.

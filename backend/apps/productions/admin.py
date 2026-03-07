@@ -30,6 +30,7 @@ from .models import (
 # Inlines
 # ===========================================================================
 
+
 class ProductionTranslationInline(admin.TabularInline):
     """
     Inline for editing localised text fields directly inside the
@@ -84,6 +85,7 @@ class ProductionTagInline(admin.TabularInline):
 # UIT Database classification admins
 # ===========================================================================
 
+
 @admin.register(UitDatabaseTheme)
 class UitDatabaseThemeAdmin(BaseAdmin):
     """
@@ -117,6 +119,7 @@ class UitDatabaseTypeAdmin(BaseAdmin):
 # ===========================================================================
 # Production admin
 # ===========================================================================
+
 
 @admin.register(Production)
 class ProductionAdmin(BaseAdmin):
@@ -190,6 +193,7 @@ class ProductionAdmin(BaseAdmin):
 # Standalone translation admin
 # ===========================================================================
 
+
 @admin.register(ProductionTranslation)
 class ProductionTranslationAdmin(BaseAdmin):
     """
@@ -227,16 +231,13 @@ class ProductionTranslationAdmin(BaseAdmin):
 
     def get_queryset(self, request):
         """Select related production and language to avoid N+1 queries."""
-        return (
-            super()
-            .get_queryset(request)
-            .select_related("production", "language")
-        )
+        return super().get_queryset(request).select_related("production", "language")
 
 
 # ===========================================================================
 # Standalone through-table admins
 # ===========================================================================
+
 
 @admin.register(ProductionGenre)
 class ProductionGenreAdmin(BaseAdmin):
@@ -273,11 +274,7 @@ class ProductionGenreAdmin(BaseAdmin):
 
     def get_queryset(self, request):
         """Select related production and genre to avoid N+1 queries."""
-        return (
-            super()
-            .get_queryset(request)
-            .select_related("production", "genre")
-        )
+        return super().get_queryset(request).select_related("production", "genre")
 
 
 @admin.register(ProductionTag)
@@ -314,8 +311,4 @@ class ProductionTagAdmin(BaseAdmin):
 
     def get_queryset(self, request):
         """Select related production and tag to avoid N+1 queries."""
-        return (
-            super()
-            .get_queryset(request)
-            .select_related("production", "tag")
-        )
+        return super().get_queryset(request).select_related("production", "tag")
