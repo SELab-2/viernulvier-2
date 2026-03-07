@@ -170,7 +170,7 @@ class MediaItemTranslation(BaseModel):
     )
 
     title = models.CharField(
-        max_length=255,
+        max_length=2000,
         blank=True,
         default="",
         help_text="Localised display title of the media item.",
