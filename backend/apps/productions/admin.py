@@ -14,14 +14,10 @@ the list and detail pages free of N+1 queries.
 """
 
 from django.contrib import admin
-from django.contrib import messages
-from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django import forms
 from django.db.models import Max
-from django.template.response import TemplateResponse
-from django.urls import reverse
 
-from apps.core.admin import BaseAdmin
+from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
 from apps.genres.models import Genre
 from apps.tags.models import Tag
 from .admin_filters import ArtistNameFilter, GenreFilter, TagFilter
@@ -144,7 +140,7 @@ class UitDatabaseTypeAdmin(BaseAdmin):
 # ===========================================================================
 
 @admin.register(Production)
-class ProductionAdmin(BaseAdmin):
+class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
     """
     Admin configuration for the Production model.
 
@@ -218,72 +214,7 @@ class ProductionAdmin(BaseAdmin):
             .prefetch_related("translations")
         )
 
-    def _changelist_url(self):
-        return reverse(
-            f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist"
-        )
-
-    def _render_two_step_action_page(self, request, *, selected_qs, form, action_name, title, changelist_url):
-        context = {
-            **self.admin_site.each_context(request),
-            "opts": self.model._meta,
-            "queryset": selected_qs,
-            "form": form,
-            "action_checkbox_name": ACTION_CHECKBOX_NAME,
-            "action_name": action_name,
-            "title": title,
-            "changelist_url": changelist_url,
-        }
-        return TemplateResponse(request, "productions/add_item_action.html", context)
-
-    def _run_two_step_add_action(
-        self,
-        request,
-        queryset,
-        *,
-        form_class,
-        action_name,
-        title,
-        apply_handler,
-    ):
-        changelist_url = self._changelist_url()
-
-        if "apply" in request.POST:
-            form = form_class(request.POST)
-            selected_ids = request.POST.getlist(ACTION_CHECKBOX_NAME)
-            selected_qs = self.model.objects.filter(pk__in=selected_ids)
-
-            if not selected_ids:
-                self.message_user(request, "No productions selected.", level=messages.ERROR)
-                return None
-
-            if form.is_valid():
-                success_message = apply_handler(selected_qs, form.cleaned_data)
-                self.message_user(request, success_message, level=messages.SUCCESS)
-                return None
-
-            return self._render_two_step_action_page(
-                request,
-                selected_qs=selected_qs,
-                form=form,
-                action_name=action_name,
-                title=title,
-                changelist_url=changelist_url,
-            )
-
-        selected_qs = queryset
-        if not selected_qs.exists():
-            self.message_user(request, "No productions selected.", level=messages.ERROR)
-            return None
-
-        return self._render_two_step_action_page(
-            request,
-            selected_qs=selected_qs,
-            form=form_class(),
-            action_name=action_name,
-            title=title,
-            changelist_url=changelist_url,
-        )
+    two_step_empty_selection_message = "No productions selected."
 
     def _apply_add_tag_to_productions(self, selected_qs, cleaned_data):
         tag = cleaned_data["tag"]
@@ -339,26 +270,28 @@ class ProductionAdmin(BaseAdmin):
     def add_tag_to_selected_productions(self, request, queryset):
         """Two-step admin action to attach one tag to selected productions."""
 
-        return self._run_two_step_add_action(
+        return self._run_two_step_bulk_action(
             request,
             queryset,
             form_class=AddTagToProductionsForm,
             action_name="add_tag_to_selected_productions",
             title="Add tag to selected productions",
             apply_handler=self._apply_add_tag_to_productions,
+            selected_label="Selected productions",
         )
 
     @admin.action(description="Add genre to selected productions")
     def add_genre_to_selected_productions(self, request, queryset):
         """Two-step admin action to attach one genre to selected productions."""
 
-        return self._run_two_step_add_action(
+        return self._run_two_step_bulk_action(
             request,
             queryset,
             form_class=AddGenreToProductionsForm,
             action_name="add_genre_to_selected_productions",
             title="Add genre to selected productions",
             apply_handler=self._apply_add_genre_to_productions,
+            selected_label="Selected productions",
         )
 
 
