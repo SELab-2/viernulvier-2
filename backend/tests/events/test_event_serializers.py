@@ -151,6 +151,37 @@ class TestEventSerializerSerialization(TestCase):
 
         self.assertIn(str(item["amount"]), {"12.50", "12.5"})
 
+    def test_hall_display_is_none_when_event_has_no_hall(self):
+        event = EventFactory(
+            production=self.production,
+            hall=None,
+            starts_at=timezone.now(),
+            ends_at=timezone.now() + timedelta(hours=1),
+            ticketing_url="https://example.com/tickets",
+        )
+
+        data = EventSerializer(event, context={"request": _drf_request(self.factory, "/dummy")}).data
+        self.assertIsNone(data["hall_display"])
+
+    def test_price_rank_display_is_none_when_price_rank_is_null(self):
+        event = EventFactory(
+            production=self.production,
+            hall=self.hall,
+            starts_at=timezone.now(),
+            ends_at=timezone.now() + timedelta(hours=1),
+            ticketing_url="https://example.com/tickets",
+        )
+        EventPriceFactory(
+            event=event,
+            price_rank=None,
+            amount=Decimal("12.50"),
+            available=10,
+        )
+
+        data = EventSerializer(event, context={"request": _drf_request(self.factory, "/dummy")}).data
+        self.assertEqual(len(data["prices"]), 1)
+        self.assertIsNone(data["prices"][0]["price_rank_display"])
+
 
 class TestEventSerializerDeserialization(TestCase):
     """dict → model (create / update)."""

@@ -125,11 +125,6 @@ class TestHallSerializerTranslations(TestCase):
 		self.assertEqual(data["remark"], {"en": "Front stage", "fr": "Avant scène"})
 
 
-def _ctx():
-    factory = APIRequestFactory()
-    return {"request": factory.get("/dummy")}
-
-
 def _make_hall():
     loc = Location.objects.create(
         street="Main St",

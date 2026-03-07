@@ -196,7 +196,7 @@ def test_event_price_set_null_when_price_rank_deleted():
 def test_event_price_str_representation():
     """__str__ must include the id, event id, and price rank id."""
     price = EventPriceFactory(amount="10.00", available=10)
-
-    expected = f"EventPrice {price.id} - Event {price.event_id} / Rank {price.price_rank_id}"
+    rank = str(price.price_rank) if price.price_rank else "No rank"
+    expected = f"{price.event} - {rank} (€{price.amount})"
 
     assert str(price) == expected

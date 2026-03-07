@@ -23,6 +23,7 @@ from tests.factories.genre import (
     GenreUseAsFactory,
 )
 from tests.factories.language import LanguageFactory
+from apps.languages.models import Language
 
 
 class TestGenreUseAsSerializerFields(TestCase):
