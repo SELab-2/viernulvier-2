@@ -2055,7 +2055,7 @@ def test_extract_lookup_value_returns_empty_string_when_only_whitespace():
     config = viernulvier.ModelSyncConfig(api_id_key="@id", lookup_field="external_id")
     item = {"@id": "    "}
     result = viernulvier._extract_lookup_value(item, config)
-    # Empty string after strip (line 479: return str(raw).strip() if raw is not None else None)
+    # Empty string after strip (line 479: return str(raw).strip() if raw is not None else None) 
     assert result == ""
 
 
