@@ -92,7 +92,10 @@ jobs:
     name: Django check + Pytest
     runs-on: self-hosted
     needs: [autofix, lint]
-    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    if: |
+      always() &&
+      (needs.autofix.result == 'success' || needs.autofix.result == 'skipped') &&
+      (needs.lint.result == 'success' || needs.lint.result == 'skipped')
     defaults:
       run:
         working-directory: backend
