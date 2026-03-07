@@ -2,7 +2,7 @@
 name: Data Layer Implementation
 about: Use this issue for data layer implementation of domain.
 title: "[DOMAIN_NAME] Data Layer Implementation"
-labels: backend, domains
+labels: backend
 assignees: ''
 
 ---

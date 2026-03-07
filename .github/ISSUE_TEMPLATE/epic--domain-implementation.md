@@ -3,7 +3,7 @@ name: 'Epic: Domain Implementation'
 about: Use this issue to monitor the architecture and view the progress of the sub-tasks
   for the backend domains.
 title: "[DOMAIN_NAME] Domain Implementation (Epic)"
-labels: backend, domains
+labels: backend
 assignees: ''
 
 ---
