@@ -2094,7 +2094,7 @@ def test_extract_external_id_from_url_dict_with_external_id_key():
 
 
 def test_extract_external_id_from_url_dict_with_id_key():
-    """Test _extract_external_id_from_url uses id from dict as fallback"""
+    """Test _extract_external_id_from_url uses id from dict as fallback""" 
     result = viernulvier._extract_external_id_from_url({"id": "id789"})
     assert result == "id789"
 
