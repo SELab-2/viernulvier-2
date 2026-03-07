@@ -2,7 +2,7 @@ name: CI Gatekeeper
 
 on:
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, backend, frontend]
 
 jobs:
   backend-gate:
