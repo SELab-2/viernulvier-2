@@ -31,6 +31,7 @@ queryset. See the individual app viewsets for examples.
 
 from django.conf import settings
 
+
 class TranslatableSerializerMixin:
     """
     Mixin that adds :meth:`get_translated_field` to any DRF serializer.
@@ -106,7 +107,7 @@ class TranslatableSerializerMixin:
             for t in translations
             if getattr(t, field_name)
         }
-    
+
     def get_base_language_code(self) -> str:
         """
         Return the project's primary language code.
@@ -215,11 +216,11 @@ class TranslatableSerializerMixin:
             value = getattr(t, field_name, None)
             if not value:
                 continue
-            
+
             # If this translation matches the base language, return it immediately
             if t.language.code == base_code:
                 return value
-            
+
             # Otherwise, keep track of the first available translation as a fallback
             if first_available is None:
                 first_available = value

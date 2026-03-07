@@ -21,7 +21,6 @@ from django.test import TestCase, RequestFactory
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
-from apps.languages.models import Language
 from apps.productions.admin import (
     ProductionAdmin,
     ProductionGenreAdmin,
@@ -41,12 +40,21 @@ from apps.productions.models import (
     UitDatabaseTheme,
     UitDatabaseType,
 )
-from apps.tags.models import Tag
+from tests.factories.language import LanguageFactory
+from tests.factories.production import (
+    ProductionFactory,
+    ProductionTagFactory,
+    ProductionTranslationFactory,
+    UitDatabaseThemeFactory,
+    UitDatabaseTypeFactory,
+)
+from tests.factories.tag import TagFactory
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_superuser(username="admin"):
     return User.objects.create_superuser(
@@ -54,37 +62,10 @@ def make_superuser(username="admin"):
     )
 
 
-def make_theme(name="Test Theme"):
-    return UitDatabaseTheme.objects.create(name=name)
-
-
-def make_type(name="Test Type"):
-    return UitDatabaseType.objects.create(name=name)
-
-
-def make_production(**kwargs):
-    return Production.objects.create(**kwargs)
-
-
-def make_language(code="en", name="English"):
-    return Language.objects.get_or_create(code=code, name=name)[0]
-
-
-def make_tag(**kwargs):
-    defaults = {
-        "type": "genre",
-        "source": "system",
-        "source_type": "internal",
-        "is_external": False,
-        "is_enabled": True,
-    }
-    defaults.update(kwargs)
-    return Tag.objects.create(**defaults)
-
-
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
+
 
 class TestAdminRegistration(TestCase):
     """Verify all admin classes are registered against their models."""
@@ -131,14 +112,13 @@ class TestAdminRegistration(TestCase):
         self.assertIn(ProductionTag, admin.site._registry)
 
     def test_registered_admin_is_production_tag_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[ProductionTag], ProductionTagAdmin
-        )
+        self.assertIsInstance(admin.site._registry[ProductionTag], ProductionTagAdmin)
 
 
 # ---------------------------------------------------------------------------
 # Inheritance
 # ---------------------------------------------------------------------------
+
 
 class TestAdminInheritance(TestCase):
     """All admin classes must extend BaseAdmin (and therefore ModelAdmin)."""
@@ -167,6 +147,7 @@ class TestAdminInheritance(TestCase):
 # UitDatabaseThemeAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestUitDatabaseThemeAdminConfiguration(TestCase):
     """Tests for UitDatabaseThemeAdmin meta configuration."""
 
@@ -187,6 +168,7 @@ class TestUitDatabaseThemeAdminConfiguration(TestCase):
 # UitDatabaseTypeAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestUitDatabaseTypeAdminConfiguration(TestCase):
     """Tests for UitDatabaseTypeAdmin meta configuration."""
 
@@ -206,6 +188,7 @@ class TestUitDatabaseTypeAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # ProductionAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestProductionAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionAdmin."""
@@ -280,6 +263,7 @@ class TestProductionAdminConfiguration(TestCase):
 # ProductionTranslationAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestProductionTranslationAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionTranslationAdmin."""
 
@@ -328,6 +312,7 @@ class TestProductionTranslationAdminConfiguration(TestCase):
 # ProductionGenreAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestProductionGenreAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionGenreAdmin."""
 
@@ -354,6 +339,7 @@ class TestProductionGenreAdminConfiguration(TestCase):
 # ProductionTagAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestProductionTagAdminConfiguration(TestCase):
     """Tests for individual meta configuration of ProductionTagAdmin."""
 
@@ -379,6 +365,7 @@ class TestProductionTagAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # Inline configuration
 # ---------------------------------------------------------------------------
+
 
 class TestProductionTranslationInline(TestCase):
     """Tests for ProductionTranslationInline configuration."""
@@ -432,6 +419,7 @@ class TestProductionTagInline(TestCase):
 # get_queryset optimisation
 # ---------------------------------------------------------------------------
 
+
 class TestProductionAdminGetQueryset(TestCase):
     """Verify get_queryset uses select_related for FK optimisation."""
 
@@ -462,6 +450,7 @@ class TestProductionAdminGetQueryset(TestCase):
 # Functional changelist tests  (HTTP, requires superuser login)
 # ---------------------------------------------------------------------------
 
+
 class TestUitDatabaseThemeAdminChangelist(TestCase):
     """Functional tests for UitDatabaseThemeAdmin via HTTP."""
 
@@ -475,13 +464,13 @@ class TestUitDatabaseThemeAdminChangelist(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_changelist_shows_theme(self):
-        make_theme("Jazz Night")
+        UitDatabaseThemeFactory.create(name="Jazz Night")
         url = reverse("admin:productions_uitdatabasetheme_changelist")
         response = self.client.get(url)
         self.assertContains(response, "Jazz Night")
 
     def test_changeform_returns_200(self):
-        theme = make_theme()
+        theme = UitDatabaseThemeFactory.create(name="Test Theme")
         url = reverse("admin:productions_uitdatabasetheme_change", args=[theme.pk])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -500,13 +489,13 @@ class TestUitDatabaseTypeAdminChangelist(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_changelist_shows_type(self):
-        make_type("Concert")
+        UitDatabaseTypeFactory.create(name="Concert")
         url = reverse("admin:productions_uitdatabasetype_changelist")
         response = self.client.get(url)
         self.assertContains(response, "Concert")
 
     def test_changeform_returns_200(self):
-        db_type = make_type()
+        db_type = UitDatabaseTypeFactory.create(name="Test Type")
         url = reverse("admin:productions_uitdatabasetype_change", args=[db_type.pk])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -525,25 +514,25 @@ class TestProductionAdminChangelist(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_changelist_with_production(self):
-        make_production()
+        ProductionFactory.create()
         url = reverse("admin:productions_production_changelist")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_changeform_returns_200(self):
-        production = make_production()
+        production = ProductionFactory.create()
         url = reverse("admin:productions_production_change", args=[production.pk])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_changelist_filter_by_attendance_mode(self):
-        make_production(attendance_mode="offline")
+        ProductionFactory.create(attendance_mode="offline")
         url = reverse("admin:productions_production_changelist")
         response = self.client.get(url, {"attendance_mode": "offline"})
         self.assertEqual(response.status_code, 200)
 
     def test_changelist_filter_by_performer_type(self):
-        make_production(performer_type="solo")
+        ProductionFactory.create(performer_type="solo")
         url = reverse("admin:productions_production_changelist")
         response = self.client.get(url, {"performer_type": "solo"})
         self.assertEqual(response.status_code, 200)
@@ -567,10 +556,12 @@ class TestProductionTranslationAdminChangelist(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_changeform_returns_200(self):
-        production = make_production()
-        language = make_language()
-        translation = ProductionTranslation.objects.create(
-            production=production, language=language, title="Test Title"
+        production = ProductionFactory.create()
+        language = LanguageFactory.create(code="en", name="English")
+        translation = ProductionTranslationFactory.create(
+            production=production,
+            language=language,
+            title="Test Title",
         )
         url = reverse(
             "admin:productions_productiontranslation_change", args=[translation.pk]
@@ -579,10 +570,12 @@ class TestProductionTranslationAdminChangelist(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_changelist_shows_translation_title(self):
-        production = make_production()
-        language = make_language()
-        ProductionTranslation.objects.create(
-            production=production, language=language, title="Visible Title"
+        production = ProductionFactory.create()
+        language = LanguageFactory.create(code="en", name="English")
+        ProductionTranslationFactory.create(
+            production=production,
+            language=language,
+            title="Visible Title",
         )
         url = reverse("admin:productions_productiontranslation_changelist")
         response = self.client.get(url)
@@ -620,9 +613,9 @@ class TestProductionTagAdminChangelist(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_changeform_returns_200(self):
-        production = make_production()
-        tag = make_tag()
-        production_tag = ProductionTag.objects.create(production=production, tag=tag)
+        production = ProductionFactory.create()
+        tag = TagFactory.create()
+        production_tag = ProductionTagFactory.create(production=production, tag=tag)
         url = reverse(
             "admin:productions_productiontag_change", args=[production_tag.pk]
         )

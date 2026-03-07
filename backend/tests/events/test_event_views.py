@@ -5,8 +5,14 @@ from rest_framework.test import APIClient
 from apps.core.views import ApiModelViewSet
 from apps.events.models import Event
 from apps.events.views import EventViewSet
-from apps.locations.models import Location, Space, Hall
-from apps.productions.models import Production
+from tests.factories.event import EventFactory
+from tests.factories.location import HallFactory
+from tests.factories.production import ProductionFactory
+from tests.factories.pricing import PriceRankFactory, PriceRankTranslationFactory
+from tests.factories.event import EventPriceFactory
+from tests.factories.production import ProductionTranslationFactory
+from tests.factories.location import HallTranslationFactory
+from tests.factories.language import LanguageFactory
 
 
 PUB_KEY = "pub-event-view-test-key"
@@ -16,6 +22,7 @@ INT_KEY = "int-event-view-test-key"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def pub_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
@@ -34,25 +41,10 @@ def results_list(response):
     return response.data.get("results", response.data)
 
 
-def make_hall() -> Hall:
-    """Create a minimal Hall with required Location/Space dependencies."""
-    loc = Location.objects.create(
-        street="Main Street",
-        number="1",
-        postal_code="9000",
-        city="Ghent",
-        country="BE",
-        phone_1=None,
-        phone_2=None,
-        is_own_location=False,
-    )
-    space = Space.objects.create(location=loc)
-    return Hall.objects.create(space=space, seat_selection=False, open_seating=False)
-
-
 # ---------------------------------------------------------------------------
 # Class-level tests
 # ---------------------------------------------------------------------------
+
 
 class TestEventViewSetClass(TestCase):
     def test_inherits_from_api_model_viewset(self):
@@ -66,6 +58,7 @@ class TestEventViewSetClass(TestCase):
     def test_serializer_class(self):
         """Test case for test_serializer_class."""
         from apps.events.serializers import EventSerializer
+
         self.assertEqual(EventViewSet.serializer_class, EventSerializer)
 
 
@@ -73,29 +66,25 @@ class TestEventViewSetClass(TestCase):
 # Events — shared setup mixin
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class _EventSetupMixin(TestCase):
     def setUp(self):
         self.client = APIClient()
 
         Event.objects.all().delete()
-        Production.objects.all().delete()
-        Hall.objects.all().delete()
-        Space.objects.all().delete()
-        Location.objects.all().delete()
-
-        self.production = Production.objects.create()
-        self.hall = make_hall()
+        self.production = ProductionFactory()
+        self.hall = HallFactory()
 
         now = timezone.now()
-        self.e1 = Event.objects.create(
+        self.e1 = EventFactory(
             production=self.production,
             hall=self.hall,
             starts_at=now,
             ends_at=now + timedelta(hours=2),
             ticketing_url="https://example.com/tickets-1",
         )
-        self.e2 = Event.objects.create(
+        self.e2 = EventFactory(
             production=self.production,
             hall=self.hall,
             starts_at=now + timedelta(days=1),
@@ -107,6 +96,7 @@ class _EventSetupMixin(TestCase):
 # ---------------------------------------------------------------------------
 # GET /api/events/ — list
 # ---------------------------------------------------------------------------
+
 
 class TestEventViewSetList(_EventSetupMixin):
     def test_list_with_public_key_returns_200(self):
@@ -155,6 +145,7 @@ class TestEventViewSetList(_EventSetupMixin):
 # GET /api/events/<id>/ — retrieve
 # ---------------------------------------------------------------------------
 
+
 class TestEventViewSetRetrieve(_EventSetupMixin):
     def test_retrieve_with_public_key_returns_200(self):
         """Test case for test_retrieve_with_public_key_returns_200."""
@@ -193,6 +184,7 @@ class TestEventViewSetRetrieve(_EventSetupMixin):
 # POST /api/events/ — create (internal only)
 # ---------------------------------------------------------------------------
 
+
 class TestEventViewSetCreate(_EventSetupMixin):
     def test_create_with_internal_key_returns_201(self):
         """Test case for test_create_with_internal_key_returns_201."""
@@ -226,7 +218,9 @@ class TestEventViewSetCreate(_EventSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertTrue(Event.objects.filter(ticketing_url="https://example.com/new").exists())
+        self.assertTrue(
+            Event.objects.filter(ticketing_url="https://example.com/new").exists()
+        )
 
     def test_create_with_public_key_returns_403(self):
         """Test case for test_create_with_public_key_returns_403."""
@@ -298,6 +292,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
 # ---------------------------------------------------------------------------
 # PUT /api/events/<id>/ — full update (internal only)
 # ---------------------------------------------------------------------------
+
 
 class TestEventViewSetUpdate(_EventSetupMixin):
     def test_put_with_internal_key_returns_200(self):
@@ -374,6 +369,7 @@ class TestEventViewSetUpdate(_EventSetupMixin):
 # PATCH /api/events/<id>/ — partial update (internal only)
 # ---------------------------------------------------------------------------
 
+
 class TestEventViewSetPartialUpdate(_EventSetupMixin):
     def test_patch_with_internal_key_returns_200(self):
         """Test case for test_patch_with_internal_key_returns_200."""
@@ -430,6 +426,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
 # DELETE /api/events/<id>/ — destroy (internal only)
 # ---------------------------------------------------------------------------
 
+
 class TestEventViewSetDelete(_EventSetupMixin):
     def test_delete_with_internal_key_returns_204(self):
         """Test case for test_delete_with_internal_key_returns_204."""
@@ -455,3 +452,59 @@ class TestEventViewSetDelete(_EventSetupMixin):
         """Test case for test_delete_nonexistent_returns_404."""
         response = self.client.delete("/api/events/999999/", **int_headers())
         self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# N+1 guard — queryset prefetches
+# ---------------------------------------------------------------------------
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestEventViewSetPrefetch(TestCase):
+    """Ensure list view stays bounded in queries when data volume grows."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.lang_nl = LanguageFactory.create(code="nl", name="Dutch")
+        self.lang_en = LanguageFactory.create(code="en", name="English")
+
+        for idx in range(5):
+            production = ProductionFactory()
+            ProductionTranslationFactory(
+                production=production,
+                language=self.lang_nl,
+                title=f"Titel {idx}",
+            )
+            ProductionTranslationFactory(
+                production=production,
+                language=self.lang_en,
+                title=f"Title {idx}",
+            )
+
+            hall = HallFactory()
+            HallTranslationFactory(hall=hall, language=self.lang_nl, name=f"Zaal {idx}")
+            HallTranslationFactory(hall=hall, language=self.lang_en, name=f"Hall {idx}")
+
+            rank = PriceRankFactory(position=idx + 1)
+            PriceRankTranslationFactory(
+                price_rank=rank, language=self.lang_nl, description="NL"
+            )
+            PriceRankTranslationFactory(
+                price_rank=rank, language=self.lang_en, description="EN"
+            )
+
+            event = EventFactory(
+                production=production,
+                hall=hall,
+                starts_at=timezone.now() + timedelta(days=idx),
+                ends_at=timezone.now() + timedelta(days=idx, hours=2),
+            )
+            EventPriceFactory(event=event, price_rank=rank)
+
+    def test_list_prefetches_related_models(self):
+        # Ensure query count stays bounded when related data grows
+        with self.assertNumQueries(6):
+            response = self.client.get("/api/events/?ordering=id", **pub_headers())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(results_list(response)), 5)

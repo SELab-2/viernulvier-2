@@ -21,6 +21,7 @@ from rest_framework.test import APIClient
 from apps.core.views import ApiModelViewSet
 from apps.languages.models import Language
 from apps.languages.views import LanguageViewSet
+from tests.factories.language import LanguageFactory
 
 
 PUB_KEY = "pub-view-test-key"
@@ -30,6 +31,7 @@ INT_KEY = "int-view-test-key"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def int_headers():
     return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
@@ -47,8 +49,8 @@ def wrong_headers():
 # Class-level tests
 # ---------------------------------------------------------------------------
 
-class TestLanguageViewSetClass(TestCase):
 
+class TestLanguageViewSetClass(TestCase):
     def test_inherits_from_api_model_viewset(self):
         self.assertTrue(issubclass(LanguageViewSet, ApiModelViewSet))
 
@@ -60,6 +62,7 @@ class TestLanguageViewSetClass(TestCase):
 
     def test_serializer_class_is_language_serializer(self):
         from apps.languages.serializers import LanguageSerializer
+
         self.assertEqual(LanguageViewSet.serializer_class, LanguageSerializer)
 
 
@@ -67,14 +70,14 @@ class TestLanguageViewSetClass(TestCase):
 # GET /api/languages/  — list
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetList(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
-        Language.objects.create(code="nl", name="Dutch", is_active=True)
-        Language.objects.create(code="en", name="English", is_active=True)
+        LanguageFactory(code="nl", name="Dutch", is_active=True)
+        LanguageFactory(code="en", name="English", is_active=True)
 
     def test_list_with_public_key_returns_200(self):
         response = self.client.get("/api/languages/", **pub_headers())
@@ -120,13 +123,13 @@ class TestLanguageViewSetList(TestCase):
 # GET /api/languages/<code>/  — retrieve
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetRetrieve(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
-        Language.objects.create(code="nl", name="Dutch", is_active=True)
+        LanguageFactory(code="nl", name="Dutch", is_active=True)
 
     def test_retrieve_with_public_key_returns_200(self):
         response = self.client.get("/api/languages/nl/", **pub_headers())
@@ -163,9 +166,9 @@ class TestLanguageViewSetRetrieve(TestCase):
 # POST /api/languages/  — create
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetCreate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
@@ -226,7 +229,7 @@ class TestLanguageViewSetCreate(TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_create_duplicate_code_returns_400(self):
-        Language.objects.create(code="nl", name="Dutch", is_active=True)
+        LanguageFactory(code="nl", name="Dutch", is_active=True)
         response = self.client.post(
             "/api/languages/",
             {"code": "nl", "name": "Dutch Duplicate", "is_active": True},
@@ -249,13 +252,13 @@ class TestLanguageViewSetCreate(TestCase):
 # PUT /api/languages/<code>/  — full update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetUpdate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
-        Language.objects.create(code="nl", name="Dutch", is_active=True)
+        LanguageFactory(code="nl", name="Dutch", is_active=True)
 
     def test_put_with_internal_key_returns_200(self):
         response = self.client.put(
@@ -309,13 +312,13 @@ class TestLanguageViewSetUpdate(TestCase):
 # PATCH /api/languages/<code>/  — partial update
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetPartialUpdate(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
-        Language.objects.create(code="nl", name="Dutch", is_active=True)
+        LanguageFactory(code="nl", name="Dutch", is_active=True)
 
     def test_patch_with_internal_key_returns_200(self):
         response = self.client.patch(
@@ -369,13 +372,13 @@ class TestLanguageViewSetPartialUpdate(TestCase):
 # DELETE /api/languages/<code>/  — destroy
 # ---------------------------------------------------------------------------
 
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSetDelete(TestCase):
-
     def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
-        Language.objects.create(code="nl", name="Dutch", is_active=True)
+        LanguageFactory(code="nl", name="Dutch", is_active=True)
 
     def test_delete_with_internal_key_returns_204(self):
         response = self.client.delete("/api/languages/nl/", **int_headers())

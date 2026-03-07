@@ -556,15 +556,23 @@ class TestSyncCommandOptions:
         stdout_buffer = StringIO()
         command.stdout = OutputWrapper(stdout_buffer)
         # Success branch
-        with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=3):
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            return_value=3,
+        ):
             command.handle(only="events")
             assert "3 records" in stdout_buffer.getvalue()
             assert "Done. Total: 3 records" in stdout_buffer.getvalue()
+
         # Error branch
         def raise_exc(*args, **kwargs):
             raise RuntimeError("fail branch")
+
         stdout_buffer = StringIO()
         command.stdout = OutputWrapper(stdout_buffer)
-        with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", side_effect=raise_exc):
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            side_effect=raise_exc,
+        ):
             command.handle(only="events")
             assert "FAILED: fail branch" in stdout_buffer.getvalue()

@@ -117,12 +117,8 @@ class ImportLogSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data: dict) -> None:
         """Prevent creation of import logs via the API."""
-        raise serializers.ValidationError(
-            "Import logs cannot be created via the API."
-        )
+        raise serializers.ValidationError("Import logs cannot be created via the API.")
 
     def update(self, instance: ImportLog, validated_data: dict) -> None:
         """Prevent modification of import logs via the API."""
-        raise serializers.ValidationError(
-            "Import logs cannot be updated via the API."
-        )
+        raise serializers.ValidationError("Import logs cannot be updated via the API.")

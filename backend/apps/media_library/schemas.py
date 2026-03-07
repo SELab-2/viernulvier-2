@@ -42,8 +42,16 @@ _MEDIA_ITEM_EXAMPLE = {
     "width": 1920,
     "height": 1080,
     "title": {"nl": "Affiche", "en": "Poster", "fr": "Affiche"},
-    "description": {"nl": "De officiële affiche.", "en": "The official poster.", "fr": "L'affiche officielle."},
-    "credits": {"nl": "Foto: Jan Janssen", "en": "Photo: Jan Janssen", "fr": "Photo : Jan Janssen"},
+    "description": {
+        "nl": "De officiële affiche.",
+        "en": "The official poster.",
+        "fr": "L'affiche officielle.",
+    },
+    "credits": {
+        "nl": "Foto: Jan Janssen",
+        "en": "Photo: Jan Janssen",
+        "fr": "Photo : Jan Janssen",
+    },
     "link": {"nl": "", "en": "", "fr": ""},
     "crops": [_CROP_EXAMPLE],
 }
@@ -89,7 +97,7 @@ _GALLERY_LIST = extend_schema(
         "Returns a paginated list of all **MediaGallery** objects.\n\n"
         "Each gallery includes its full nested list of media items with "
         "translated metadata represented as language-code dictionaries "
-        "(e.g. {\"en\": \"Poster\", \"fr\": \"Affiche\"}) and crop variants."
+        '(e.g. {"en": "Poster", "fr": "Affiche"}) and crop variants.'
     ),
     responses={
         200: MediaGallerySerializer,
@@ -232,7 +240,7 @@ _ITEM_LIST = extend_schema(
     description=(
         "Returns a paginated list of all **MediaItem** objects across all galleries.\n\n"
         "Each item includes its translated metadata as language-code dictionaries "
-        "(e.g. {\"en\": \"Poster\", \"fr\": \"Affiche\"}) and all pre-rendered crop variants."
+        '(e.g. {"en": "Poster", "fr": "Affiche"}) and all pre-rendered crop variants.'
     ),
     responses={
         200: MediaItemSerializer,

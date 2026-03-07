@@ -1,6 +1,5 @@
 import pytest
 from django.core.exceptions import ValidationError
-from apps.languages.models import Language
 from tests.factories.language import LanguageFactory
 from tests.factories.genre import GenreTranslationFactory
 from tests.factories.media_library import MediaItemTranslationFactory
@@ -13,6 +12,7 @@ from tests.factories.pricing import PriceTranslationFactory, PriceRankTranslatio
 from tests.factories.tag import TagTranslationFactory
 
 pytestmark = pytest.mark.django_db
+
 
 class TestLanguageModel:
     def test_language_creation_defaults(self):
@@ -31,7 +31,6 @@ class TestLanguageModel:
         assert lang.code == "en"
         assert lang.name == "English"
         assert lang.is_active is False
-        
 
     def test_language_code_too_long_raises_validation_error(self):
         """Code exceeding max_length=2 should raise ValidationError."""
@@ -45,18 +44,16 @@ class TestLanguageModel:
 
     def test_language_str(self):
         """Test the string representation of the Language model."""
-        lang = LanguageFactory.create(code='en', name='English')
-        assert str(lang) == 'en - English'
-
+        lang = LanguageFactory.create(code="en", name="English")
+        assert str(lang) == "en - English"
 
     def test_language_code_is_primary_key(self):
         """Test that the code field is the primary key."""
-        lang1 = LanguageFactory.create(code='en', name='English')
-        lang2 = LanguageFactory.create(code='nl', name='Dutch')
+        lang1 = LanguageFactory.create(code="en", name="English")
+        lang2 = LanguageFactory.create(code="nl", name="Dutch")
 
-        assert lang1.pk == 'en'
-        assert lang2.pk == 'nl'
-
+        assert lang1.pk == "en"
+        assert lang2.pk == "nl"
 
     def test_name_null_raises_validation_error(self):
         """name=None should raise ValidationError."""
@@ -68,16 +65,14 @@ class TestLanguageModel:
         with pytest.raises(ValidationError):
             LanguageFactory.create(code="en", name="")
 
-
     def test_genre_translations(self):
         """Language should expose related genre translations via genre_translations."""
-        language = LanguageFactory.create(code='en', name='English')
+        language = LanguageFactory.create(code="en", name="English")
         translations = GenreTranslationFactory.create_batch(3, language=language)
 
         assert language.genre_translations.count() == 3
         assert all(tr.language == language for tr in translations)
         assert all(str(tr).startswith("en - ") for tr in translations)
-
 
     def test_media_item_translations_related_name(self):
         """Language should expose media item translations via media_item_translations."""
@@ -91,7 +86,9 @@ class TestLanguageModel:
         """Language should expose location, space, and hall translations via <location|space|hall>_translations."""
         language = LanguageFactory.create(code="de", name="German")
 
-        location_translations = LocationTranslationFactory.create_batch(2, language=language)
+        location_translations = LocationTranslationFactory.create_batch(
+            2, language=language
+        )
         space_translation = SpaceTranslationFactory.create(language=language)
         hall_translation = HallTranslationFactory.create(language=language)
 
@@ -106,7 +103,7 @@ class TestLanguageModel:
 
     def test_price_translation_related_name(self):
         """Language should expose price translations via price_translations."""
-        language = LanguageFactory.create(code='it', name='Italian')
+        language = LanguageFactory.create(code="it", name="Italian")
         translations = PriceTranslationFactory.create_batch(2, language=language)
 
         assert language.price_translations.count() == 2
@@ -114,7 +111,7 @@ class TestLanguageModel:
 
     def test_price_rank_translation_reverse_manager(self):
         """Language should expose price rank translations via pricerank_translations."""
-        language = LanguageFactory.create(code='es', name='Spanish')
+        language = LanguageFactory.create(code="es", name="Spanish")
         translation = PriceRankTranslationFactory.create(language=language)
 
         assert language.pricerank_translations.count() == 1
@@ -122,7 +119,7 @@ class TestLanguageModel:
 
     def test_tag_translations_related_name(self):
         """Language should expose tag translations via tag_translations."""
-        language = LanguageFactory.create(code='pt', name='Portuguese')
+        language = LanguageFactory.create(code="pt", name="Portuguese")
         translations = TagTranslationFactory.create_batch(2, language=language)
 
         assert language.tag_translations.count() == 2

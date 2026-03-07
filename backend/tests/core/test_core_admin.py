@@ -44,6 +44,7 @@ class TestBaseAdmin(TestCase):
 
     def test_subclassing_works(self):
         """Other admin classes should be able to extend BaseAdmin."""
+
         class MyAdmin(BaseAdmin):
             list_display = ("id",)
 

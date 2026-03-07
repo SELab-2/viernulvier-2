@@ -17,14 +17,20 @@ from apps.genres.serializers import (
     GenreSerializer,
     GenreUseAsSerializer,
 )
+from tests.factories.genre import (
+    GenreFactory,
+    GenreTranslationFactory,
+    GenreUseAsFactory,
+)
+from tests.factories.language import LanguageFactory
 from apps.languages.models import Language
 
 
 class TestGenreUseAsSerializerFields(TestCase):
     """Field exposure for GenreUseAsSerializer."""
+
     def setUp(self):
-        self.use_as = GenreUseAs(name="genre")
-        self.use_as.save()
+        self.use_as = GenreUseAsFactory(name="genre")
 
     def test_expected_fields_are_present(self):
         data = GenreUseAsSerializer(self.use_as).data
@@ -36,16 +42,17 @@ class TestGenreUseAsSerializerFields(TestCase):
 
 class TestGenreUseAsSerializerSerialization(TestCase):
     """Model → dict serialization for GenreUseAsSerializer."""
+
     def test_serializes_instance(self):
-        use_as = GenreUseAs.objects.create(name="tag")
+        use_as = GenreUseAsFactory(name="tag")
         data = GenreUseAsSerializer(use_as).data
 
         self.assertEqual(data["name"], "tag")
         self.assertIsInstance(data["id"], int)
 
     def test_serializes_queryset(self):
-        GenreUseAs.objects.create(name="tag")
-        GenreUseAs.objects.create(name="genre")
+        GenreUseAsFactory(name="tag")
+        GenreUseAsFactory(name="genre")
 
         data = GenreUseAsSerializer(GenreUseAs.objects.all(), many=True).data
         names = {item["name"] for item in data}
@@ -56,6 +63,7 @@ class TestGenreUseAsSerializerSerialization(TestCase):
 
 class TestGenreUseAsSerializerDeserialization(TestCase):
     """dict → model validation for GenreUseAsSerializer."""
+
     def test_valid_data_creates(self):
         serializer = GenreUseAsSerializer(data={"name": "genre"})
         self.assertTrue(serializer.is_valid(), serializer.errors)
@@ -78,26 +86,30 @@ class TestGenreUseAsSerializerDeserialization(TestCase):
 
 class TestGenreSerializerFields(TestCase):
     """Field exposure for GenreSerializer."""
+
     def setUp(self):
-        self.use_as = GenreUseAs.objects.create(name="genre")
-        self.genre = Genre.objects.create(type="Theater", use_as=self.use_as)
+        self.use_as = GenreUseAsFactory(name="genre")
+        self.genre = GenreFactory(type="Theater", use_as=self.use_as)
 
     def test_expected_fields_are_present(self):
         data = GenreSerializer(self.genre).data
-        self.assertEqual(set(data.keys()), {"id", "type", "use_as", "name", "display_name"})
+        self.assertEqual(
+            set(data.keys()), {"id", "type", "use_as", "name", "display_name"}
+        )
 
 
 class TestGenreSerializerSerialization(TestCase):
     """Model → dict serialization for GenreSerializer."""
+
     def setUp(self):
-        self.use_as = GenreUseAs.objects.create(name="genre")
-        self.lang_en = Language.objects.create(code="en", name="English", is_active=True)
-        self.lang_nl = Language.objects.create(code="nl", name="Dutch", is_active=True)
+        self.use_as = GenreUseAsFactory(name="genre")
+        self.lang_en = LanguageFactory(code="en", name="English")
+        self.lang_nl = LanguageFactory(code="nl", name="Dutch")
 
     def test_serializes_instance(self):
-        genre = Genre.objects.create(type="Theater", use_as=self.use_as)
-        GenreTranslation.objects.create(name="Theatre", language=self.lang_en, genre=genre)
-        GenreTranslation.objects.create(name="Theater", language=self.lang_nl, genre=genre)
+        genre = GenreFactory(type="Theater", use_as=self.use_as)
+        GenreTranslationFactory(name="Theatre", language=self.lang_en, genre=genre)
+        GenreTranslationFactory(name="Theater", language=self.lang_nl, genre=genre)
 
         data = GenreSerializer(genre).data
 
@@ -107,11 +119,11 @@ class TestGenreSerializerSerialization(TestCase):
         self.assertEqual(data["name"], {"en": "Theatre", "nl": "Theater"})
 
     def test_serializes_queryset(self):
-        g1 = Genre.objects.create(type="Festival", use_as=self.use_as)
-        g2 = Genre.objects.create(type="Concert", use_as=self.use_as)
+        g1 = GenreFactory(type="Festival", use_as=self.use_as)
+        g2 = GenreFactory(type="Concert", use_as=self.use_as)
 
-        GenreTranslation.objects.create(name="Festival", language=self.lang_en, genre=g1)
-        GenreTranslation.objects.create(name="Concert", language=self.lang_en, genre=g2)
+        GenreTranslationFactory(name="Festival", language=self.lang_en, genre=g1)
+        GenreTranslationFactory(name="Concert", language=self.lang_en, genre=g2)
 
         data = GenreSerializer(Genre.objects.all(), many=True).data
         types = {item["type"] for item in data}
@@ -125,9 +137,10 @@ class TestGenreSerializerSerialization(TestCase):
 
 class TestGenreSerializerDeserialization(TestCase):
     """dict → model validation for GenreSerializer."""
+
     def setUp(self):
-        self.use_as = GenreUseAs.objects.create(name="genre")
-        self.lang_en = Language.objects.create(code="en", name="English", is_active=True)
+        self.use_as = GenreUseAsFactory(name="genre")
+        self.lang_en = LanguageFactory(code="en", name="English")
 
     def test_valid_data_creates(self):
         serializer = GenreSerializer(data={"type": "Theater", "use_as": self.use_as.id})
@@ -157,7 +170,7 @@ class TestGenreSerializerDeserialization(TestCase):
         self.assertIn("type", serializer.errors)
 
     def test_partial_update_type_only(self):
-        genre = Genre.objects.create(type="Concert", use_as=self.use_as)
+        genre = GenreFactory(type="Concert", use_as=self.use_as)
         serializer = GenreSerializer(genre, data={"type": "Festival"}, partial=True)
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
@@ -165,13 +178,15 @@ class TestGenreSerializerDeserialization(TestCase):
         self.assertEqual(updated.type, "Festival")
         self.assertEqual(updated.use_as, self.use_as)
 
+
 def _display_ctx():
-        factory = APIRequestFactory()
-        return {"request": factory.get("/dummy")}
+    factory = APIRequestFactory()
+    return {"request": factory.get("/dummy")}
+
 
 class TestGenreDisplayNameBaseLanguage:
     """Verify whether display_name uses base language with a sensible fallback."""
-    
+
     @pytest.mark.django_db
     @override_settings(LANGUAGE_CODE="en-us")
     def test_uses_base_language_when_present(self):

@@ -19,6 +19,7 @@ from .models import ImportLog
 # ImportLog admin
 # ===========================================================================
 
+
 @admin.register(ImportLog)
 class ImportLogAdmin(BaseAdmin):
     """

@@ -13,6 +13,7 @@ from .serializers import GenreSerializer, GenreUseAsSerializer
 
 _TAG = "Genres"  # Reusable tag for all genre-related endpoints in the OpenAPI docs
 
+
 @extend_schema(tags=[_TAG])
 @genre_use_as_schema
 class GenreUseAsViewSet(ApiModelViewSet):
@@ -38,8 +39,7 @@ class GenreViewSet(ApiModelViewSet):
     """
 
     queryset = (
-        Genre.objects
-        .select_related("use_as")
+        Genre.objects.select_related("use_as")
         .prefetch_related("translations__language")
         .all()
     )

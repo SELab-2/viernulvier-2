@@ -21,73 +21,77 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY')
-PUBLIC_API_KEY = os.getenv("PUBLIC_API_KEY", "dev-key-for-local") # API key for our API (only read)
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "key for everything") # API key for our API to change also values
+SECRET_KEY = os.getenv("SECRET_KEY")
+PUBLIC_API_KEY = os.getenv(
+    "PUBLIC_API_KEY", "dev-key-for-local"
+)  # API key for our API (only read)
+INTERNAL_API_KEY = os.getenv(
+    "INTERNAL_API_KEY", "key for everything"
+)  # API key for our API to change also values
 DEBUG = False
 ALLOWED_HOSTS = []
 
 # Application definition
 DJANGO_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
 ]
 
 THIRD_PARTY_APPS = [
-    'rest_framework',
-    'drf_spectacular',
-    'django_filters',
+    "rest_framework",
+    "drf_spectacular",
+    "django_filters",
 ]
 
 LOCAL_APPS = [
-    'apps.core',
-    'apps.languages',
-    'apps.productions',
-    'apps.events',
-    'apps.genres',
-    'apps.import_log',
+    "apps.core",
+    "apps.languages",
+    "apps.productions",
+    "apps.events",
+    "apps.genres",
+    "apps.import_log",
     "apps.imports",
-    'apps.tags',
-    'apps.pricing',
-    'apps.locations',
-    'apps.media_library',
+    "apps.tags",
+    "apps.pricing",
+    "apps.locations",
+    "apps.media_library",
     # TODO add more local apps here
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database
@@ -105,21 +109,21 @@ DATABASES = {
 }
 
 
-# Password validation 
+# Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -127,9 +131,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -139,20 +143,22 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # REST Framework settings
 REST_FRAMEWORK = {
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'DEFAULT_PAGINATION_CLASS': 'api.pagination.StandardResultsSetPagination',
-    'PAGE_SIZE': 20,
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-    'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
-    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.core.authentications.ApiKeyAuthentication"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "api.pagination.StandardResultsSetPagination",
+    "PAGE_SIZE": 20,
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "apps.core.authentications.ApiKeyAuthentication"
+    ],
     "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.ApiKeyPermission"],
     "DEFAULT_THROTTLE_CLASSES": ["apps.core.throttles.PublicKeyThrottle"],
     "DEFAULT_THROTTLE_RATES": {
@@ -173,15 +179,15 @@ SPECTACULAR_SETTINGS = {
         * **Internal API key**: Full rights (CRUD).
     """).strip(),
     "VERSION": "1.0.0",
-    "CONTACT": { # TODO change this
-        'name': 'Support Team',
-        'url': 'https://www.viernulvier.gent/',
+    "CONTACT": {  # TODO change this
+        "name": "Support Team",
+        "url": "https://www.viernulvier.gent/",
         "email": "info@viernulvier.gent",
     },
     "LICENSE": {
         "name": "MIT License",
     },
-    "SCHEMA_PATH_PREFIX": r'/api/',
+    "SCHEMA_PATH_PREFIX": r"/api/",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SWAGGER_UI_SETTINGS": {
@@ -190,14 +196,17 @@ SPECTACULAR_SETTINGS = {
         "filter": False,
         "showRequestDuration": True,
         "persistAuthorization": True,
-        "tagsSorter": "alpha", # Sort tags alfabetically
-        "operationsSorter": "method", # Sort endpoints on HTTP method
+        "tagsSorter": "alpha",  # Sort tags alfabetically
+        "operationsSorter": "method",  # Sort endpoints on HTTP method
         "tryItOutEnabled": True,
-        "docExpansion": "none", # Collapsed by default for a cleaner look (set to 'list' to expand tags and endpoints, or 'full' to expand everything)
-        "defaultModelsExpandDepth": 0, # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
+        "docExpansion": "none",  # Collapsed by default for a cleaner look (set to 'list' to expand tags and endpoints, or 'full' to expand everything)
+        "defaultModelsExpandDepth": 0,  # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
     },
     "TAGS": [
-        {"name": "Productions", "description": "Production management and translations."},
+        {
+            "name": "Productions",
+            "description": "Production management and translations.",
+        },
         {"name": "Events", "description": "Event instances and pricing information."},
         {"name": "Media", "description": "Media galleries, items and crops."},
         {"name": "Locations", "description": "Locations, halls and spaces."},

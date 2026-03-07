@@ -42,7 +42,7 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     name = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the genre name, "
-            "e.g. {\"en\": \"Theatre\", \"fr\": \"Théâtre\"}. "
+            'e.g. {"en": "Theatre", "fr": "Théâtre"}. '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -77,7 +77,7 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     def get_name(self, obj: Genre) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
-    
+
     def get_display_name(self, obj: Genre) -> str | None:
         """Return the genre name in the project's base language."""
         return self.get_base_translated_value(obj, "name")

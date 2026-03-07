@@ -59,9 +59,7 @@ _PRODUCTION_RESPONSE = OpenApiExample(
                 "url_title": "",
             }
         ],
-        "genres": [
-            {"id": 2, "type": "theater", "name": "Theater"}
-        ],
+        "genres": [{"id": 2, "type": "theater", "name": "Theater"}],
     },
     response_only=True,
 )
@@ -97,7 +95,7 @@ _PRODUCTION_LIST = extend_schema(
         "Returns a paginated list of all **Production** objects ordered by descending `id`.\n\n"
         "Translated fields (`title`, `artist_name`, `tagline`, `teaser`, `description`) "
         "are returned as language-code dictionaries "
-        "(e.g. {\"en\": \"Title\", \"fr\": \"Titre\"}).\n\n"
+        '(e.g. {"en": "Title", "fr": "Titre"}).\n\n'
         "Nested `genres` are returned in their configured `position` order. "
         "Nested `tags` and `genres` carry their own translated fields as dictionaries."
     ),
