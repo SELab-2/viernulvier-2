@@ -33,8 +33,8 @@ class MediaGallery(BaseModel):
 
     name = models.CharField(
         max_length=255,
-        null=False,
-        blank=False,
+        blank=True,
+        null=True,
         help_text="Human-readable name of the gallery.",
         db_comment="Name of the media gallery.",
     )
@@ -46,7 +46,7 @@ class MediaGallery(BaseModel):
         ordering = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return self.name if self.name else f"Unnamed Gallery"
 
 
 class MediaItem(BaseModel):
