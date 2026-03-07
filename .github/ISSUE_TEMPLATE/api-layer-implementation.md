@@ -2,7 +2,7 @@
 name: API Layer Implementation
 about: Use this issue for API layer implementation of domain.
 title: "[DOMAIN_NAME] API Layer Implementation"
-labels: backend, domains
+labels: backend
 assignees: ''
 
 ---

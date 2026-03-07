@@ -1,6 +1,8 @@
 """Admin configuration for the Language app."""
 
 from django.contrib import admin
+from apps.core.admin import BaseAdmin
+from .models import Language
 
 from apps.core.admin import BaseAdmin
 from .models import Language
