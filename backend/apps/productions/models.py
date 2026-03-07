@@ -167,7 +167,6 @@ class Production(BaseModel):
         through="ProductionGenre",
         related_name="productions",
         help_text="Genres associated with this production, ordered by `ProductionGenre.position`.",
-        db_comment="The genres of the production.",
     )
 
     tags = models.ManyToManyField(
@@ -176,7 +175,6 @@ class Production(BaseModel):
         through="ProductionTag",
         related_name="productions",
         help_text="Tags associated with this production.",
-        db_comment="The tags of the production.",
     )
 
     class Meta(BaseModel.Meta):
