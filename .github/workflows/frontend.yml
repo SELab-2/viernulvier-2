@@ -2,10 +2,10 @@ name: Frontend CI
 
 on:
   push:
-    branches: [main, dev, frontend, dependabot-test]
+    branches: [main, dev, frontend]
     paths: [frontend/**]
   pull_request:
-    branches: [main, dev, frontend, dependabot-test]
+    branches: [main, dev, frontend]
     paths: [frontend/**]
 
 concurrency:
