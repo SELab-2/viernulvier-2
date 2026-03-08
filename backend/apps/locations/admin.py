@@ -19,13 +19,16 @@ class LocationTranslationInline(admin.TabularInline):
     fields = ("language", "name")
     autocomplete_fields = ("language",)
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("language")
+
 
 @admin.register(Location)
 class LocationAdmin(BaseAdmin):
     """Admin configuration for Location objects."""
 
     list_display = ("id", "city", "street", "number", "country", "is_own_location")
-    list_filter = ("is_own_location",)
+    list_filter = ("is_own_location", "country")
     search_fields = (
         "translations__name",
         "city",
@@ -36,7 +39,7 @@ class LocationAdmin(BaseAdmin):
     inlines = [LocationTranslationInline]
 
     def get_queryset(self, request):
-        "Avoiding N+1 queries by prefetching related translations."
+        """Prefetch translations to avoid N+1 queries."""
         return super().get_queryset(request).prefetch_related("translations")
 
 
@@ -45,10 +48,14 @@ class LocationTranslationAdmin(BaseAdmin):
     """Admin configuration for Location translations."""
 
     list_display = ("id", "language", "location", "name")
-    list_filter = ("language", "location")
+    list_filter = ("language__code",)
     search_fields = ("name", "location__city", "location__street")
     ordering = ("id",)
     autocomplete_fields = ("language", "location")
+
+    def get_queryset(self, request):
+        """Select related location and language to avoid N+1 queries."""
+        return super().get_queryset(request).select_related("location", "language")
 
 
 class SpaceTranslationInline(admin.TabularInline):
@@ -56,6 +63,9 @@ class SpaceTranslationInline(admin.TabularInline):
     extra = 1
     fields = ("language", "name")
     autocomplete_fields = ("language",)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("language")
 
 
 @admin.register(Space)
@@ -70,8 +80,13 @@ class SpaceAdmin(BaseAdmin):
     inlines = [SpaceTranslationInline]
 
     def get_queryset(self, request):
-        "Avoiding N+1 queries by prefetching related translations."
-        return super().get_queryset(request).prefetch_related("translations")
+        """Select related location and prefetch translations to avoid N+1 queries."""
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("location")
+            .prefetch_related("translations")
+        )
 
 
 @admin.register(SpaceTranslation)
@@ -79,10 +94,18 @@ class SpaceTranslationAdmin(BaseAdmin):
     """Admin configuration for Space translations."""
 
     list_display = ("id", "language", "space", "name")
-    list_filter = ("language", "space")
+    list_filter = ("language__code",)
     search_fields = ("name", "space__location__city")
     ordering = ("id",)
     autocomplete_fields = ("language", "space")
+
+    def get_queryset(self, request):
+        """Select related space and language to avoid N+1 queries."""
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("space", "space__location", "language")
+        )
 
 
 class HallTranslationInline(admin.TabularInline):
@@ -90,6 +113,9 @@ class HallTranslationInline(admin.TabularInline):
     extra = 1
     fields = ("language", "name", "remark")
     autocomplete_fields = ("language",)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("language")
 
 
 @admin.register(Hall)
@@ -110,8 +136,13 @@ class HallAdmin(BaseAdmin):
     inlines = [HallTranslationInline]
 
     def get_queryset(self, request):
-        "Avoiding N+1 queries by prefetching related translations."
-        return super().get_queryset(request).prefetch_related("translations")
+        """Select related space chain and prefetch translations to avoid N+1 queries."""
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("space", "space__location")
+            .prefetch_related("translations")
+        )
 
 
 @admin.register(HallTranslation)
@@ -119,7 +150,15 @@ class HallTranslationAdmin(BaseAdmin):
     """Admin configuration for Hall translations."""
 
     list_display = ("id", "language", "hall", "name")
-    list_filter = ("language", "hall")
+    list_filter = ("language__code",)
     search_fields = ("name", "hall__space__location__city")
     ordering = ("id",)
     autocomplete_fields = ("language", "hall")
+
+    def get_queryset(self, request):
+        """Select related hall chain and language to avoid N+1 queries."""
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("hall", "hall__space", "hall__space__location", "language")
+        )

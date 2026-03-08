@@ -57,7 +57,6 @@ class ImportLogAdmin(BaseAdmin):
 
     ordering = ("-started_at",)
 
-    # All fields are read-only - import logs must not be edited manually.
     readonly_fields = (
         "source",
         "status",

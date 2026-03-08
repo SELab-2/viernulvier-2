@@ -37,6 +37,9 @@ class TagTranslationInline(admin.TabularInline):
     fields = ("language", "name", "short_description", "url_title")
     ordering = ("language__code",)
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("language")
+
 
 # ===========================================================================
 # Tag admin
@@ -116,7 +119,7 @@ class TagTranslationAdmin(BaseAdmin):
         "name",
     )
 
-    list_filter = ("language",)
+    list_filter = ("language__code",)
 
     search_fields = (
         "name",

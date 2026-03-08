@@ -52,6 +52,9 @@ class ProductionTranslationInline(admin.TabularInline):
         "teaser",
     )
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("language")
+
 
 class ProductionGenreInline(admin.TabularInline):
     """
@@ -68,6 +71,9 @@ class ProductionGenreInline(admin.TabularInline):
     fields = ("genre", "position")
     ordering = ("position",)
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("genre")
+
 
 class ProductionTagInline(admin.TabularInline):
     """
@@ -79,6 +85,9 @@ class ProductionTagInline(admin.TabularInline):
     extra = 1
     autocomplete_fields = ("tag",)
     fields = ("tag",)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("tag")
 
 
 # ===========================================================================
@@ -151,9 +160,9 @@ class ProductionAdmin(BaseAdmin):
     list_filter = (
         "attendance_mode",
         "performer_type",
-        "uit_database_theme",
-        "uit_database_type",
     )
+
+    list_select_related = ("uit_database_theme", "uit_database_type", "media_gallery")
 
     search_fields = (
         "id",
@@ -217,7 +226,7 @@ class ProductionTranslationAdmin(BaseAdmin):
         "artist_name",
     )
 
-    list_filter = ("language",)
+    list_filter = ("language__code",)
 
     search_fields = (
         "title",
@@ -260,8 +269,6 @@ class ProductionGenreAdmin(BaseAdmin):
         "genre",
         "position",
     )
-
-    list_filter = ("genre",)
 
     search_fields = (
         "production__id",

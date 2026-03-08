@@ -36,6 +36,14 @@ class EventPriceInline(admin.TabularInline):
     autocomplete_fields = ("price_rank", "price")
     fields = ("price_rank", "price", "amount", "available")
     ordering = ("price_rank__position",)
+    show_change_link = False
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("price_rank", "price")
+        )
 
 
 # ===========================================================================
@@ -70,11 +78,9 @@ class EventAdmin(BaseAdmin):
         "ends_at",
     )
 
-    list_filter = (
-        "hall",
-        "production",
-        "starts_at",
-    )
+    # FKs uit list_filter halen — die laden ALLE gerelateerde objecten
+    # AutocompleteFilter zoekt pas bij typen
+    list_filter = ("starts_at",)
 
     search_fields = (
         "id",
@@ -84,15 +90,14 @@ class EventAdmin(BaseAdmin):
     )
 
     autocomplete_fields = ("production", "hall")
-
     ordering = ("-starts_at",)
-
     date_hierarchy = "starts_at"
+    list_per_page = 50
+    show_full_result_count = False
 
     inlines = [EventPriceInline]
 
     def get_queryset(self, request):
-        """Optimise the queryset with select_related and prefetch_related."""
         return (
             super()
             .get_queryset(request)
@@ -105,8 +110,5 @@ class EventAdmin(BaseAdmin):
             .prefetch_related(
                 "production__translations",
                 "hall__translations",
-                "prices",
-                "prices__price",
-                "prices__price_rank",
             )
         )
