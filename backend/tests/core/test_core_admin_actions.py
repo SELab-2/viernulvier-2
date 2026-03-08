@@ -78,7 +78,9 @@ class TestTwoStepBulkActionMixin(TestCase):
         self.assertIsNone(response)
         apply_handler.assert_called_once()
         selected_qs = apply_handler.call_args[0][0]
-        self.assertEqual(list(selected_qs.values_list("id", flat=True)), [self.production.id])
+        self.assertEqual(
+            list(selected_qs.values_list("id", flat=True)), [self.production.id]
+        )
 
     def test_run_two_step_bulk_action_apply_with_no_selection_returns_none(self):
         request = self._request_with_messages(
@@ -122,7 +124,9 @@ class TestTwoStepBulkActionMixin(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.template_name, "admin/two_step_action.html")
 
-    def test_run_two_step_bulk_action_initial_step_with_empty_queryset_returns_none(self):
+    def test_run_two_step_bulk_action_initial_step_with_empty_queryset_returns_none(
+        self,
+    ):
         request = self._request_with_messages("get", "/admin/productions/production/")
 
         response = self.admin._run_two_step_bulk_action(

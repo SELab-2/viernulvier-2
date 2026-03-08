@@ -38,11 +38,16 @@ class TestProductionAdminActions(TestCase):
                 "apply": "1",
                 "action": "add_tag_to_selected_productions",
                 "tag": str(tag.pk),
-                ACTION_CHECKBOX_NAME: [str(self.production_1.pk), str(self.production_2.pk)],
+                ACTION_CHECKBOX_NAME: [
+                    str(self.production_1.pk),
+                    str(self.production_2.pk),
+                ],
             },
         )
 
-        response = self.admin.add_tag_to_selected_productions(request, Production.objects.none())
+        response = self.admin.add_tag_to_selected_productions(
+            request, Production.objects.none()
+        )
 
         self.assertIsNone(response)
         self.assertEqual(
@@ -72,19 +77,28 @@ class TestProductionAdminActions(TestCase):
                 "apply": "1",
                 "action": "add_genre_to_selected_productions",
                 "genre": str(target_genre.pk),
-                ACTION_CHECKBOX_NAME: [str(self.production_1.pk), str(self.production_2.pk)],
+                ACTION_CHECKBOX_NAME: [
+                    str(self.production_1.pk),
+                    str(self.production_2.pk),
+                ],
             },
         )
 
-        response = self.admin.add_genre_to_selected_productions(request, Production.objects.none())
+        response = self.admin.add_genre_to_selected_productions(
+            request, Production.objects.none()
+        )
 
         self.assertIsNone(response)
         self.assertEqual(
-            ProductionGenre.objects.filter(production=self.production_1, genre=target_genre).count(),
+            ProductionGenre.objects.filter(
+                production=self.production_1, genre=target_genre
+            ).count(),
             1,
         )
 
-        created_link = ProductionGenre.objects.get(production=self.production_2, genre=target_genre)
+        created_link = ProductionGenre.objects.get(
+            production=self.production_2, genre=target_genre
+        )
         self.assertEqual(created_link.position, 5)
 
     def test_add_tag_action_initial_step_returns_two_step_page(self):

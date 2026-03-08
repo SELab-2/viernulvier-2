@@ -99,7 +99,9 @@ class SearchableMultiSelectFilter(SimpleListFilter):
         qs_without_search.pop(self.search_param, None)
         qs_without_search.pop(self.open_param, None)
         qs_without_search.pop("e", None)
-        self.clear_search_url = f"?{qs_without_search.urlencode()}" if qs_without_search else "?"
+        self.clear_search_url = (
+            f"?{qs_without_search.urlencode()}" if qs_without_search else "?"
+        )
 
         qs_without_self = request.GET.copy()
         qs_without_self.pop(self.search_param, None)
