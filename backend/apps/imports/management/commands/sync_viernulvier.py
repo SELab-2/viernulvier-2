@@ -23,6 +23,8 @@ from apps.imports.scrapers.viernulvier import (
     ModelSyncConfig,
     TranslationConfig,
     M2MConfig,
+    normalize_url,
+    normalize_performer_type,
     sync_viernulvier,
 )
 from apps.locations.models import (
@@ -60,16 +62,24 @@ from apps.tags.models import Tag, TagTranslation
 
 
 def nee_ja_to_bool(value) -> bool:
-    """Convert API "nee"/"ja" strings to Python bool.
+    """Convert various API truthy/falsy values to bool.
 
-    The API sends some booleans as strings:
-        "seat_selection": "nee"  ->  False
-        "open_seating": "ja"     ->  True
+    Supports:
+        "ja", "nee"
+        "true", "false"
+        "1", "0"
+        bool values
     """
     if isinstance(value, bool):
         return value
+
     if isinstance(value, str):
-        return value.strip().lower() == "ja"
+        v = value.strip().lower()
+        if v in {"ja", "true", "1"}:
+            return True
+        if v in {"nee", "false", "0", ""}:
+            return False
+
     return bool(value)
 
 
@@ -563,6 +573,9 @@ PRODUCTION_CONFIG = ModelSyncConfig(
         "eticket_info": None,
         "custom_data": None,
     },
+    value_transforms={
+        "performer_type": normalize_performer_type
+    },
     translations=[
         TranslationConfig(
             api_key="supertitle",
@@ -647,6 +660,7 @@ PRODUCTION_CONFIG = ModelSyncConfig(
             parent_fk="production",
             flat_field="video_1",
             language_fk="language_id",
+            value_transforms={"video_1": normalize_url},
         ),
         TranslationConfig(
             api_key="video_2",
@@ -654,6 +668,7 @@ PRODUCTION_CONFIG = ModelSyncConfig(
             parent_fk="production",
             flat_field="video_2",
             language_fk="language_id",
+            value_transforms={"video_2": normalize_url},
         ),
     ],
     m2m=[
@@ -690,7 +705,14 @@ PRODUCTION_CONFIG = ModelSyncConfig(
 #
 # EventPrice is NOT synchronized here — use the /events/prices endpoint.
 # ===========================================================================
+def _is_not_longterm(item: dict) -> bool:
+    """Filter function to exclude longterm productions based on the production's @id containing "/longterm/"."""
+    production = item.get("production") or {}
+    api_id = production.get("@id", "") if isinstance(production, dict) else str(production)
+    return "/longterm/" not in api_id
+
 EVENT_CONFIG = ModelSyncConfig(
+    item_filter=_is_not_longterm,
     field_map={
         "@id": "external_id",
         "production": "production",  # FK → Production (embedded object with @id)
@@ -736,7 +758,8 @@ EVENT_PRICE_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
         "event": "event",  # FK → Event
-        "price": "price_rank",  # FK → PriceRank
+        "price": "price",  # FK → Price
+        "rank": "price_rank", # FK → PriceRank
         "amount": "amount",
         "available": "available",
         "expires_at": None,

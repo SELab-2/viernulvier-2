@@ -33,8 +33,8 @@ class EventPriceInline(admin.TabularInline):
 
     model = EventPrice
     extra = 0
-    autocomplete_fields = ("price_rank",)
-    fields = ("price_rank", "amount", "available")
+    autocomplete_fields = ("price_rank", "price")
+    fields = ("price_rank", "price", "amount", "available")
     ordering = ("price_rank__position",)
 
 
@@ -106,5 +106,7 @@ class EventAdmin(BaseAdmin):
                 "production__translations",
                 "hall__translations",
                 "prices",
+                "prices__price",
+                "prices__price_rank",
             )
         )

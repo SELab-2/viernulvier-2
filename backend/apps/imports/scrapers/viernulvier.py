@@ -19,6 +19,7 @@ from django.core.exceptions import FieldDoesNotExist, FieldError, ValidationErro
 from django.db import DatabaseError, IntegrityError, transaction, models
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
+from django.core.validators import URLValidator
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +147,7 @@ class ModelSyncConfig:
     m2m: List[M2MConfig] = field(default_factory=list)
     lookup_field: str = "external_id"
     api_id_key: str = "@id"
+    item_filter: Optional[Callable[[Mapping[str, Any]], bool]] = None  # True = save, False = skip
 
 
 # ---------------------------------------------------------------------------
@@ -261,6 +263,21 @@ def fetch_viernulvier(
 # Helper functions
 # ---------------------------------------------------------------------------
 
+def normalize_performer_type(value):
+    return "solo" if value == "person" else value
+
+validator = URLValidator()
+
+def normalize_url(value: str) -> str:
+    """Zet alleen geldige URLs door, anders lege string."""
+    if not value or str(value).strip() in {"0", "None"}:
+        return ""
+    value = str(value).strip()
+    try:
+        validator(value)
+        return value
+    except ValidationError:
+        return ""
 
 def _camel_to_snake(value: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "_", value).lower()
@@ -270,6 +287,12 @@ def _parse_field_value(model_field: models.Field, value: Any) -> Any:
     """Convert an API value to the correct Python type for a model field."""
     if value is None:
         return None
+    if isinstance(model_field, models.TextField):
+        return str(value)
+    if isinstance(model_field, models.CharField):
+        return str(value)
+    if isinstance(model_field, models.URLField):
+        return normalize_url(value)
     if isinstance(model_field, models.DateTimeField) and isinstance(value, str):
         # Repair invalid date strings
         if value.startswith("-"):
@@ -352,6 +375,7 @@ def _build_defaults(
     for api_key, model_field_name in config.field_map.items():
         if model_field_name is None:
             continue
+
         raw_value = item.get(api_key)
         if raw_value is None:
             continue
@@ -634,6 +658,9 @@ def sync_viernulvier(
             continue
 
         lookup_value = _extract_lookup_value(item, config)
+        if config.item_filter and not config.item_filter(item):
+            logger.debug("Item filtered: %s", lookup_value)
+            continue
         if lookup_value is None:
             msg = f"Missing '{config.api_id_key}' for item: {str(item)[:200]}"
             logger.warning(msg)
@@ -649,6 +676,7 @@ def sync_viernulvier(
         sid = transaction.savepoint()
         try:
             defaults = _build_defaults(model, item, config)
+
             obj, created = model.objects.update_or_create(
                 **{config.lookup_field: lookup_value},
                 defaults=defaults,

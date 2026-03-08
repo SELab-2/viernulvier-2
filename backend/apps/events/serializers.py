@@ -28,6 +28,7 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     """
 
     price_rank_display = serializers.SerializerMethodField()
+    price_display = serializers.SerializerMethodField()
 
     def get_price_rank_display(self, obj):
         """Return the price rank name in the project's base language."""
@@ -39,6 +40,16 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             related_name="translations",
             fallback=str(obj.price_rank_id),
         )
+    
+    def get_price_display(self, obj):
+        if not obj.price:
+            return None
+        return self.get_base_translated_value(
+            obj.price,
+            field_name="description",
+            related_name="translations",
+            fallback=str(obj.price_id),
+        )
 
     class Meta:
         model = EventPrice
@@ -47,14 +58,14 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "event",
             "price_rank",
             "price_rank_display",
+            "price",
+            "price_display",
             "amount",
             "available",
         ]
         read_only_fields = ["id"]
         extra_kwargs = {
-            "event": {
-                "help_text": "PK of the event this price entry belongs to.",
-            },
+            "event": {"help_text": "PK of the event this price entry belongs to."},
             "price_rank": {
                 "help_text": (
                     "PK of the associated ``PriceRank`` availability tier. "
@@ -64,11 +75,18 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "price_rank_display": {
                 "help_text": "String for the price rank in the display representation."
             },
-            "amount": {
-                "help_text": "Ticket price in euro (e.g. `18.00`).",
+            "price": {
+                "help_text": (
+                    "PK of the associated ``Price`` category. "
+                    "`null` when the price has been deleted."
+                ),
             },
+            "price_display": {
+                "help_text": "String for the price category in the display representation."
+            },
+            "amount": {"help_text": "Ticket price in euro (e.g. `18.00`)."},
             "available": {
-                "help_text": "Number of tickets available at this price rank for the event.",
+                "help_text": "Number of tickets available at this price rank for the event."
             },
         }
 

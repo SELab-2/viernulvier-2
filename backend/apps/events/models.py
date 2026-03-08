@@ -22,7 +22,7 @@ from django.db.models import F, Q
 
 from apps.core.models import BaseModel
 from apps.locations.models import Hall
-from apps.pricing.models import PriceRank
+from apps.pricing.models import Price, PriceRank
 from apps.productions.models import Production
 
 
@@ -157,6 +157,16 @@ class EventPrice(BaseModel):
         related_name="prices",
         help_text="Event this price entry belongs to.",
         db_comment="The event which the price belongs to.",
+    )
+
+    price = models.ForeignKey(
+        Price,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="event_prices",
+        help_text="Price category for this event price entry.",
+        db_comment="FK to Price.",
     )
 
     price_rank = models.ForeignKey(
