@@ -102,10 +102,15 @@ class Location(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        city = self.city or "Unknown city"
-        street = self.street or "Unknown street"
-        number = self.number or "?"
-        return f"{city} - {street} {number}"
+        name = self.get_base_display_name(related_name="translations", fallback=None)
+
+        street_part = " ".join(filter(None, [self.street, self.number]))
+        city_part = " ".join(filter(None, [self.postal_code, self.city]))
+
+        parts = [p for p in [street_part, city_part] if p]
+        address = ", ".join(parts) if parts else "/"
+
+        return f"{name} - {address}" if name else address
 
 
 class LocationTranslation(BaseModel):
@@ -186,7 +191,12 @@ class Space(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        return f"Space {self.id} - {self.location}"
+        name = self.get_base_display_name(related_name="translations", fallback=f"Space {self.id}")
+        try:
+            city = self.location.city or ""
+            return f"{name} ({city})" if city else name
+        except Exception:
+            return name
 
 
 class SpaceTranslation(BaseModel):
@@ -283,7 +293,12 @@ class Hall(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        return f"Hall {self.id} @ {self.space}"
+        name = self.get_base_display_name(related_name="translations", fallback=f"Hall {self.id}")
+        try:
+            city = self.space.location.city or ""
+            return f"{name} ({city})" if city else name
+        except Exception:
+            return name
 
 
 class HallTranslation(BaseModel):
