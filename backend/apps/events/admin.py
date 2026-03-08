@@ -92,8 +92,6 @@ class EventAdmin(BaseAdmin):
     autocomplete_fields = ("production", "hall")
     ordering = ("-starts_at",)
     date_hierarchy = "starts_at"
-    list_per_page = 50
-    show_full_result_count = False
 
     inlines = [EventPriceInline]
 

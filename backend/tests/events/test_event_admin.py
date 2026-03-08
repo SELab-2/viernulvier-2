@@ -115,6 +115,7 @@ class TestEventsAdminConfiguration(TestCase):
         """Test case for test_event_price_inline_configuration."""
         self.assertEqual(EventPriceInline.extra, 0)
         self.assertIn("price_rank", EventPriceInline.autocomplete_fields)
+        self.assertIn("price", EventPriceInline.autocomplete_fields)
         self.assertEqual(EventPriceInline.fields, ("price_rank", "amount", "available"))
 
 
