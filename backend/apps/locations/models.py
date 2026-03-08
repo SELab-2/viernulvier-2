@@ -93,6 +93,9 @@ class Location(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
+        name = self.get_base_display_name(related_name="translations", fallback=None)
+        if name:
+            return name
         return f"{self.city} - {self.street} {self.number}"
 
 
@@ -174,7 +177,10 @@ class Space(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        return f"Space {self.id} - {self.location}"
+        name = self.get_base_display_name(related_name="translations", fallback=None)
+        if name:
+            return f"{name} @ {self.location}"
+        return f"Space {self.id} @ {self.location}"
 
 
 class SpaceTranslation(BaseModel):
@@ -269,6 +275,9 @@ class Hall(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
+        name = self.get_base_display_name(related_name="translations", fallback=None)
+        if name:
+            return f"{name} @ {self.space}"
         return f"Hall {self.id} @ {self.space}"
 
 

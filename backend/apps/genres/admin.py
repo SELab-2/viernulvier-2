@@ -28,10 +28,17 @@ class GenreAdmin(BaseAdmin):
 
     list_display = ("id", "type", "use_as")
     list_filter = ("use_as",)
-    search_fields = ("type",)
+    search_fields = (
+        "type",
+        "translations__name",
+    )
     ordering = ("id",)
     autocomplete_fields = ("use_as",)
     inlines = [GenreTranslationInline]
+
+    def get_queryset(self, request):
+        """Prefetch translations to avoid N+1 queries on the detail page."""
+        return super().get_queryset(request).prefetch_related("translations")
 
 
 @admin.register(GenreTranslation)

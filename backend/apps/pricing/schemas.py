@@ -39,7 +39,11 @@ _PRICE_RESPONSE = OpenApiExample(
         "step": None,
         "sort_order": 0,
         "cineville_box": False,
-        "description": {"nl": "Volledig tarief", "en": "Full price", "fr": "Plein tarif"},
+        "description": {
+            "nl": "Volledig tarief",
+            "en": "Full price",
+            "fr": "Plein tarif",
+        },
     },
     response_only=True,
 )
@@ -57,7 +61,11 @@ _PRICE_VARIABLE_RESPONSE = OpenApiExample(
         "step": 100,
         "sort_order": 1,
         "cineville_box": False,
-        "description": {"nl": "Zelf kiezen", "en": "Pay what you want", "fr": "Prix libre"},
+        "description": {
+            "nl": "Zelf kiezen",
+            "en": "Pay what you want",
+            "fr": "Prix libre",
+        },
     },
     response_only=True,
 )
@@ -95,7 +103,7 @@ _PRICE_LIST = extend_schema(
     description=(
         "Returns a paginated list of all **Price** objects ordered by `sort_order`.\n\n"
         "The `description` field contains all available translations as a "
-        "language-code dictionary (e.g. {\"en\": \"Early Bird\", \"fr\": \"Prévente\"})."
+        'language-code dictionary (e.g. {"en": "Early Bird", "fr": "Prévente"}).'
     ),
     responses={
         200: PriceSerializer,
@@ -238,7 +246,7 @@ _PRICE_RANK_LIST = extend_schema(
         "Price ranks define the ordered availability tiers that control when a "
         "price level is considered sold out. "
         "The `description` field contains all available translations as a "
-        "language-code dictionary (e.g. {\"en\": \"Standard\", \"fr\": \"Standard\"})."
+        'language-code dictionary (e.g. {"en": "Standard", "fr": "Standard"}).'
     ),
     responses={
         200: PriceRankSerializer,

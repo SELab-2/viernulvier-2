@@ -83,7 +83,12 @@ class Tag(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        return f"Tag of type ({self.type})"
+        name = self.get_base_display_name(
+            related_name="translations",
+            name_field="name",
+            fallback=None,
+        )
+        return name or f"Tag {self.id}"
 
 
 class TagTranslation(BaseModel):

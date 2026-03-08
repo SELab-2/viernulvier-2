@@ -5,13 +5,13 @@ Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
 
 Productions are the core catalogue entity. Each production may have one
-or more events and carries translatable metadata. 
+or more events and carries translatable metadata.
 
 Translation Format
 ------------------
-Metadata fields (title, description, etc.) are returned as dictionaries 
+Metadata fields (title, description, etc.) are returned as dictionaries
 containing all available translations (e.g., {"nl": "...", "en": "..."}).
-The 'Accept-Language' header is not used for filtering these fields, 
+The 'Accept-Language' header is not used for filtering these fields,
 allowing consumers to access all languages in a single request.
 """
 
@@ -48,22 +48,18 @@ class ProductionViewSet(ApiModelViewSet):
 
     serializer_class = ProductionSerializer
 
-    queryset = (
-        Production.objects
-        .select_related(
-            "uit_database_theme",
-            "uit_database_type",
-        )
-        .prefetch_related(
-            "translations__language",
-            "tags",
-            "tags__translations__language",
-            Prefetch(
-                "productiongenre_set",
-                queryset=ProductionGenre.objects
-                    .select_related("genre")
-                    .order_by("position"),
-                to_attr="prefetched_production_genres",
+    queryset = Production.objects.select_related(
+        "uit_database_theme",
+        "uit_database_type",
+    ).prefetch_related(
+        "translations__language",
+        "tags",
+        "tags__translations__language",
+        Prefetch(
+            "productiongenre_set",
+            queryset=ProductionGenre.objects.select_related("genre").order_by(
+                "position"
             ),
-        )
+            to_attr="prefetched_production_genres",
+        ),
     )

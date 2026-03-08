@@ -8,6 +8,7 @@ faker = Faker()
 
 class PriceFactory(factory.django.DjangoModelFactory):
     """Factory for Price model."""
+
     class Meta:
         model = Price
 
@@ -23,6 +24,7 @@ class PriceFactory(factory.django.DjangoModelFactory):
 
 class PriceTranslationFactory(factory.django.DjangoModelFactory):
     """Factory for PriceTranslation model."""
+
     class Meta:
         model = PriceTranslation
 
@@ -33,6 +35,7 @@ class PriceTranslationFactory(factory.django.DjangoModelFactory):
 
 class PriceRankFactory(factory.django.DjangoModelFactory):
     """Factory for PriceRank model."""
+
     class Meta:
         model = PriceRank
 
@@ -42,6 +45,7 @@ class PriceRankFactory(factory.django.DjangoModelFactory):
 
 class PriceRankTranslationFactory(factory.django.DjangoModelFactory):
     """Factory for PriceRankTranslation model."""
+
     class Meta:
         model = PriceRankTranslation
 

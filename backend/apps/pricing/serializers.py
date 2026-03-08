@@ -27,9 +27,16 @@ class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     description = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the human-readable label "
-            "(e.g. {\"en\": \"Full price\", \"fr\": \"Plein tarif\"}). "
+            '(e.g. {"en": "Full price", "fr": "Plein tarif"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
+    )
+
+    display_description = serializers.SerializerMethodField(
+        help_text=(
+            "Human-readable label in the project's base language. "
+            "Falls back to the first available translation when missing."
+        )
     )
 
     class Meta:
@@ -45,8 +52,9 @@ class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             "sort_order",
             "cineville_box",
             "description",
+            "display_description",
         ]
-        read_only_fields = ["id", "description"]
+        read_only_fields = ["id", "description", "display_description"]
         extra_kwargs = {
             "type": {
                 "help_text": "Internal identifier for the price category (e.g. `full`, `student`).",
@@ -87,6 +95,10 @@ class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")
 
+    def get_display_description(self, obj: Price) -> str | None:
+        """Return the price label in the project's base language."""
+        return self.get_base_translated_value(obj, field_name="description")
+
 
 class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """
@@ -99,9 +111,16 @@ class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     description = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the label "
-            "(e.g. {\"en\": \"Early Bird\", \"fr\": \"Prévente\"}). "
+            '(e.g. {"en": "Early Bird", "fr": "Prévente"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
+    )
+
+    display_description = serializers.SerializerMethodField(
+        help_text=(
+            "Human-readable label in the project's base language. "
+            "Falls back to the first available translation when missing."
+        )
     )
 
     class Meta:
@@ -111,8 +130,9 @@ class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMix
             "position",
             "sold_out_buffer",
             "description",
+            "display_description",
         ]
-        read_only_fields = ["id", "description"]
+        read_only_fields = ["id", "description", "display_description"]
         extra_kwargs = {
             "position": {
                 "help_text": "Rank position used for ordering and priority. Must be unique.",
@@ -128,3 +148,6 @@ class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     def get_description(self, obj: PriceRank) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")
+
+    def get_display_description(self, obj: PriceRank) -> str | None:
+        return self.get_base_translated_value(obj, field_name="description")

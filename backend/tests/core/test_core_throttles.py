@@ -1,5 +1,5 @@
 import hashlib
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from django.test import TestCase, override_settings
 from rest_framework.test import APIRequestFactory
 from apps.core.throttles import (
@@ -20,7 +20,6 @@ def make_request(ip="1.2.3.4", ua="TestAgent/1.0", auth="public"):
 
 
 class TestPublicKeyThrottle(TestCase):
-
     def setUp(self):
         self.throttle = PublicKeyThrottle()
         self.view = MagicMock()
@@ -62,8 +61,12 @@ class TestPublicKeyThrottle(TestCase):
         self.assertNotEqual(key_a, key_b)
 
     def test_same_ip_and_ua_produce_same_key(self):
-        key_a = self.throttle.get_cache_key(make_request(ip="1.2.3.4", ua="SameAgent"), self.view)
-        key_b = self.throttle.get_cache_key(make_request(ip="1.2.3.4", ua="SameAgent"), self.view)
+        key_a = self.throttle.get_cache_key(
+            make_request(ip="1.2.3.4", ua="SameAgent"), self.view
+        )
+        key_b = self.throttle.get_cache_key(
+            make_request(ip="1.2.3.4", ua="SameAgent"), self.view
+        )
         self.assertEqual(key_a, key_b)
 
     def test_missing_user_agent_does_not_raise(self):
@@ -88,7 +91,6 @@ class TestPublicKeyThrottle(TestCase):
 
 
 class TestSubclassScopes(TestCase):
-
     def test_minute_throttle_scope(self):
         self.assertEqual(PublicKeyMinuteThrottle.scope, "public_min")
 
@@ -111,7 +113,6 @@ class TestSubclassScopes(TestCase):
 
 
 class TestInternalKeyThrottle(TestCase):
-
     def setUp(self):
         self.throttle = InternalKeyThrottle()
         self.view = MagicMock()
@@ -143,9 +144,9 @@ PROD_REST_FRAMEWORK = {
 
 @override_settings(REST_FRAMEWORK=PROD_REST_FRAMEWORK)
 class TestProductionThrottleConfig(TestCase):
-
     def test_throttle_classes_are_configured(self):
         from django.conf import settings
+
         classes = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"]
         self.assertIn("apps.core.throttles.PublicKeyMinuteThrottle", classes)
         self.assertIn("apps.core.throttles.PublicKeyHourThrottle", classes)
@@ -153,12 +154,19 @@ class TestProductionThrottleConfig(TestCase):
 
     def test_public_minute_rate(self):
         from django.conf import settings
-        self.assertEqual(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["public_min"], "40/minute")
+
+        self.assertEqual(
+            settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["public_min"], "40/minute"
+        )
 
     def test_public_hour_rate(self):
         from django.conf import settings
-        self.assertEqual(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["public_hour"], "800/hour")
+
+        self.assertEqual(
+            settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["public_hour"], "800/hour"
+        )
 
     def test_internal_rate_is_none(self):
         from django.conf import settings
+
         self.assertIsNone(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["internal"])

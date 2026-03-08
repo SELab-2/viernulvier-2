@@ -4,7 +4,11 @@ URL configuration for the API app.
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+)
 from apps.pricing.views import PriceViewSet, PriceRankViewSet
 from apps.languages.views import LanguageViewSet
 from apps.media_library.views import MediaGalleryViewSet, MediaItemViewSet
@@ -17,11 +21,11 @@ from apps.events.views import EventViewSet
 
 router = DefaultRouter()
 
-router.register(r'languages', LanguageViewSet, basename='language')
-router.register(r'media-galleries', MediaGalleryViewSet, basename='media-gallery')
-router.register(r'media-items', MediaItemViewSet, basename='media-item')
-router.register(r'tags', TagViewSet, basename='tag')
-router.register(r'productions', ProductionViewSet, basename='production')
+router.register(r"languages", LanguageViewSet, basename="language")
+router.register(r"media-galleries", MediaGalleryViewSet, basename="media-gallery")
+router.register(r"media-items", MediaItemViewSet, basename="media-item")
+router.register(r"tags", TagViewSet, basename="tag")
+router.register(r"productions", ProductionViewSet, basename="production")
 router.register(r"genre-use-as", GenreUseAsViewSet, basename="genre-use-as")
 router.register(r"genres", GenreViewSet, basename="genre")
 router.register(r"events", EventViewSet, basename="event")
@@ -34,14 +38,11 @@ router.register(r"price-ranks", PriceRankViewSet, basename="price-rank")
 
 urlpatterns = [
     # Include the router URLs
-    path('', include(router.urls)),
-    
+    path("", include(router.urls)),
     # API schema view
-    path('schema/', SpectacularAPIView.as_view(), name='schema'),
-    
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
     # OpenAPI documentation
-    path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    
+    path("docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     # Redoc documentation
-    path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]

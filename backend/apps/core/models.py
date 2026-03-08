@@ -8,6 +8,7 @@ a record is written to the database.
 """
 
 from django.db import models
+from django.conf import settings
 
 
 class BaseModel(models.Model):
@@ -20,6 +21,12 @@ class BaseModel(models.Model):
     in a model's ``clean()`` method is surfaced consistently — whether the
     save originates from the Django admin, the API, a management command,
     or a test.
+
+    Attributes
+    ----------
+    external_id : CharField
+        Optional external identifier for integration with external systems.
+        Can be null or blank.
 
     Validation order (``full_clean``)
     ----------------------------------
@@ -82,3 +89,35 @@ class BaseModel(models.Model):
         """
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @classmethod
+    def base_language_code(cls) -> str:
+        """
+        Returns the project's base language code.
+        """
+        code = getattr(settings, "LANGUAGE_CODE", "en")
+        return code.split("-")[0].lower()
+
+    def get_base_translation(self, related_name="translations"):
+        """
+        Returns the translation object for the base language,
+        falling back to the first available translation.
+        """
+        manager = getattr(self, related_name, None)
+        if not manager:
+            return None
+
+        base_code = self.base_language_code()
+        qs = manager.all()
+        return qs.filter(language__code=base_code).first() or qs.first()
+
+    def get_base_display_name(
+        self,
+        related_name="translations",
+        name_field="name",
+        fallback=None,
+    ):
+        tr = self.get_base_translation(related_name=related_name)
+        if not tr:
+            return fallback
+        return getattr(tr, name_field, None) or fallback

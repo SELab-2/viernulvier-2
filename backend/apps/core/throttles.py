@@ -28,17 +28,23 @@ class PublicKeyThrottle(SimpleRateThrottle):
             "ident": fingerprint,
         }
 
+
 class InternalKeyThrottle(SimpleRateThrottle):
     """No-op throttle for the internal API key."""
+
     scope = "internal"
+
     def get_cache_key(self, request, view):
         return None
-    
-    
+
+
 class PublicKeyMinuteThrottle(PublicKeyThrottle):
     """Throttling for the public API key, limited to x requests per minute per client."""
+
     scope = "public_min"
+
 
 class PublicKeyHourThrottle(PublicKeyThrottle):
     """Throttling for the public API key, limited to x requests per hour per client."""
+
     scope = "public_hour"

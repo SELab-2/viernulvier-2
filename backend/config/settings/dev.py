@@ -1,4 +1,12 @@
-from .base import *
+from . import base as base_settings
+
+for setting_name in dir(base_settings):
+    if setting_name.isupper():
+        globals()[setting_name] = getattr(base_settings, setting_name)
+
+REST_FRAMEWORK = globals().get("REST_FRAMEWORK", {})
+INSTALLED_APPS = list(globals().get("INSTALLED_APPS", []))
+MIDDLEWARE = list(globals().get("MIDDLEWARE", []))
 
 DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
@@ -14,12 +22,12 @@ REST_FRAMEWORK = {
 # If you want to enable throttling in development for testing purposes, you can override the throttle classes and rates here.
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
-    'DEFAULT_THROTTLE_CLASSES': [
-        'apps.core.throttles.PublicKeyMinuteThrottle',
-        'apps.core.throttles.PublicKeyHourThrottle',
-        'apps.core.throttles.InternalKeyThrottle',
+    "DEFAULT_THROTTLE_CLASSES": [
+        "apps.core.throttles.PublicKeyMinuteThrottle",
+        "apps.core.throttles.PublicKeyHourThrottle",
+        "apps.core.throttles.InternalKeyThrottle",
     ],
-    'DEFAULT_THROTTLE_RATES': {
+    "DEFAULT_THROTTLE_RATES": {
         "internal": None,
         "public_min": None,
         "public_hour": None,

@@ -22,7 +22,6 @@ from django.test import TestCase, RequestFactory
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
-from apps.languages.models import Language
 from apps.media_library.admin import (
     MediaGalleryAdmin,
     MediaItemAdmin,
@@ -38,11 +37,19 @@ from apps.media_library.models import (
     MediaItemCrop,
     MediaItemTranslation,
 )
+from tests.factories.language import LanguageFactory
+from tests.factories.media_library import (
+    MediaGalleryFactory,
+    MediaItemCropFactory,
+    MediaItemFactory,
+    MediaItemTranslationFactory,
+)
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_superuser(username="admin"):
     return User.objects.create_superuser(
@@ -50,40 +57,10 @@ def make_superuser(username="admin"):
     )
 
 
-def make_gallery(name="Test Gallery"):
-    return MediaGallery.objects.create(name=name)
-
-
-def make_item(gallery, **kwargs):
-    defaults = {
-        "type": MediaItem.MediaItemType.IMAGE,
-        "format": "jpg",
-        "original_filename": "photo.jpg",
-        "position": 0,
-    }
-    defaults.update(kwargs)
-    return MediaItem.objects.create(gallery=gallery, **defaults)
-
-
-def make_crop(media_item, name="thumbnail", url="https://example.com/thumb.jpg"):
-    return MediaItemCrop.objects.create(media_item=media_item, name=name, url=url)
-
-
-def make_language(code="nl", name="Dutch"):
-    return Language.objects.get_or_create(code=code, defaults={"name": name, "is_active": True})[0]
-
-
-def make_translation(media_item, language, **kwargs):
-    defaults = {"title": "Test", "description": "", "credits": "", "link": ""}
-    defaults.update(kwargs)
-    return MediaItemTranslation.objects.create(
-        media_item=media_item, language=language, **defaults
-    )
-
-
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
+
 
 class TestAdminRegistration(TestCase):
     """Verify all admin classes are registered against their models."""
@@ -119,6 +96,7 @@ class TestAdminRegistration(TestCase):
 # Inheritance
 # ---------------------------------------------------------------------------
 
+
 class TestAdminInheritance(TestCase):
     """All admin classes must extend BaseAdmin (and therefore ModelAdmin)."""
 
@@ -143,6 +121,7 @@ class TestAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 # MediaGalleryAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestMediaGalleryAdminConfiguration(TestCase):
     """Tests for MediaGalleryAdmin meta configuration."""
@@ -170,6 +149,7 @@ class TestMediaGalleryAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # MediaItemAdmin configuration
 # ---------------------------------------------------------------------------
+
 
 class TestMediaItemAdminConfiguration(TestCase):
     """Tests for MediaItemAdmin meta configuration."""
@@ -240,6 +220,7 @@ class TestMediaItemAdminConfiguration(TestCase):
 # MediaItemTranslationAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemTranslationAdminConfiguration(TestCase):
     """Tests for MediaItemTranslationAdmin meta configuration."""
 
@@ -288,6 +269,7 @@ class TestMediaItemTranslationAdminConfiguration(TestCase):
 # MediaItemCropAdmin configuration
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemCropAdminConfiguration(TestCase):
     """Tests for MediaItemCropAdmin meta configuration."""
 
@@ -319,6 +301,7 @@ class TestMediaItemCropAdminConfiguration(TestCase):
 # ---------------------------------------------------------------------------
 # Inline configuration
 # ---------------------------------------------------------------------------
+
 
 class TestMediaItemInline(TestCase):
     """Tests for MediaItemInline configuration."""
@@ -375,6 +358,7 @@ class TestMediaItemCropInline(TestCase):
 # get_queryset optimisation
 # ---------------------------------------------------------------------------
 
+
 class TestMediaItemAdminGetQueryset(TestCase):
     """Verify get_queryset uses select_related for FK optimisation."""
 
@@ -395,20 +379,21 @@ class TestMediaItemAdminGetQueryset(TestCase):
     def test_queryset_has_select_related_for_gallery(self):
         admin = self.model_admin
         request = self._make_request()
-        
+
         self.assertEqual(admin.list_select_related, ("gallery",))
 
         qs = admin.get_queryset(request)
-        
+
         if admin.list_select_related:
             qs = qs.select_related(*admin.list_select_related)
-        
+
         self.assertIn("gallery", qs.query.select_related)
 
 
 # ---------------------------------------------------------------------------
 # Functional changelist / changeform tests
 # ---------------------------------------------------------------------------
+
 
 class TestMediaGalleryAdminChangelist(TestCase):
     """Functional tests for MediaGalleryAdmin via HTTP."""
@@ -422,12 +407,12 @@ class TestMediaGalleryAdminChangelist(TestCase):
         self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changelist_shows_gallery_name(self):
-        make_gallery("Summer Exhibition")
+        MediaGalleryFactory.create(name="Summer Exhibition")
         url = reverse("admin:media_library_mediagallery_changelist")
         self.assertContains(self.client.get(url), "Summer Exhibition")
 
     def test_changeform_returns_200(self):
-        gallery = make_gallery()
+        gallery = MediaGalleryFactory.create()
         url = reverse("admin:media_library_mediagallery_change", args=[gallery.pk])
         self.assertEqual(self.client.get(url).status_code, 200)
 
@@ -442,19 +427,19 @@ class TestMediaItemAdminChangelist(TestCase):
     def setUp(self):
         self.superuser = make_superuser("item_admin")
         self.client.force_login(self.superuser)
-        self.gallery = make_gallery()
+        self.gallery = MediaGalleryFactory.create()
 
     def test_changelist_returns_200(self):
         url = reverse("admin:media_library_mediaitem_changelist")
         self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changelist_with_items(self):
-        make_item(self.gallery)
+        MediaItemFactory.create(gallery=self.gallery)
         url = reverse("admin:media_library_mediaitem_changelist")
         self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changeform_returns_200(self):
-        item = make_item(self.gallery)
+        item = MediaItemFactory.create(gallery=self.gallery)
         url = reverse("admin:media_library_mediaitem_change", args=[item.pk])
         self.assertEqual(self.client.get(url).status_code, 200)
 
@@ -466,7 +451,7 @@ class TestMediaItemAdminChangelist(TestCase):
         )
 
     def test_changelist_filter_by_format(self):
-        make_item(self.gallery, format="jpg")
+        MediaItemFactory.create(gallery=self.gallery, format="jpg")
         url = reverse("admin:media_library_mediaitem_changelist")
         self.assertEqual(self.client.get(url, {"format": "jpg"}).status_code, 200)
 
@@ -481,16 +466,20 @@ class TestMediaItemTranslationAdminChangelist(TestCase):
     def setUp(self):
         self.superuser = make_superuser("trans_admin")
         self.client.force_login(self.superuser)
-        self.gallery = make_gallery()
+        self.gallery = MediaGalleryFactory.create()
 
     def test_changelist_returns_200(self):
         url = reverse("admin:media_library_mediaitemtranslation_changelist")
         self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changeform_returns_200(self):
-        item = make_item(self.gallery)
-        language = make_language()
-        translation = make_translation(item, language, title="Test Titel")
+        item = MediaItemFactory.create(gallery=self.gallery)
+        language = LanguageFactory.create()
+        translation = MediaItemTranslationFactory.create(
+            media_item=item,
+            language=language,
+            title="Test Titel",
+        )
         url = reverse(
             "admin:media_library_mediaitemtranslation_change",
             args=[translation.pk],
@@ -498,9 +487,13 @@ class TestMediaItemTranslationAdminChangelist(TestCase):
         self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changelist_shows_translation_title(self):
-        item = make_item(self.gallery)
-        language = make_language()
-        make_translation(item, language, title="Zichtbare Titel")
+        item = MediaItemFactory.create(gallery=self.gallery)
+        language = LanguageFactory.create()
+        MediaItemTranslationFactory.create(
+            media_item=item,
+            language=language,
+            title="Zichtbare Titel",
+        )
         url = reverse("admin:media_library_mediaitemtranslation_changelist")
         self.assertContains(self.client.get(url), "Zichtbare Titel")
 
@@ -521,21 +514,21 @@ class TestMediaItemCropAdminChangelist(TestCase):
     def setUp(self):
         self.superuser = make_superuser("crop_admin")
         self.client.force_login(self.superuser)
-        self.gallery = make_gallery()
+        self.gallery = MediaGalleryFactory.create()
 
     def test_changelist_returns_200(self):
         url = reverse("admin:media_library_mediaitemcrop_changelist")
         self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changeform_returns_200(self):
-        item = make_item(self.gallery)
-        crop = make_crop(item)
+        item = MediaItemFactory.create(gallery=self.gallery)
+        crop = MediaItemCropFactory.create(media_item=item)
         url = reverse("admin:media_library_mediaitemcrop_change", args=[crop.pk])
         self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changelist_shows_crop_name(self):
-        item = make_item(self.gallery)
-        make_crop(item, name="hero-banner")
+        item = MediaItemFactory.create(gallery=self.gallery)
+        MediaItemCropFactory.create(media_item=item, name="hero-banner")
         url = reverse("admin:media_library_mediaitemcrop_changelist")
         self.assertContains(self.client.get(url), "hero-banner")
 

@@ -27,11 +27,13 @@ from rest_framework.exceptions import ValidationError
 
 from apps.import_log.models import ImportLog
 from apps.import_log.serializers import ImportLogSerializer
+from tests.factories.import_log import ImportLogFactory
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_import_log(**kwargs):
     defaults = {
@@ -40,9 +42,14 @@ def make_import_log(**kwargs):
         "records_total": 0,
         "records_imported": 0,
         "records_failed": 0,
+        "started_at": None,
+        "finished_at": None,
+        "error_message": None,
     }
     defaults.update(kwargs)
-    return ImportLog.objects.create(**defaults)
+    log = ImportLogFactory.build(**defaults)
+    log.save()
+    return log
 
 
 def make_finished_log(duration_seconds=0, **kwargs):
@@ -63,6 +70,7 @@ def make_finished_log(duration_seconds=0, **kwargs):
 # ---------------------------------------------------------------------------
 # Field presence
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogSerializerFields(TestCase):
     """Verify all expected fields are present and no extras are exposed."""
@@ -108,6 +116,7 @@ class TestImportLogSerializerFields(TestCase):
 # Read-only fields
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogSerializerReadOnly(TestCase):
     """All declared fields must be read-only — the serializer is for monitoring only."""
 
@@ -148,6 +157,7 @@ class TestImportLogSerializerReadOnly(TestCase):
 # Scalar field values
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogSerializerScalarFields(TestCase):
     """Verify scalar fields are serialized with the correct values."""
 
@@ -171,6 +181,7 @@ class TestImportLogSerializerScalarFields(TestCase):
 # ---------------------------------------------------------------------------
 # Status choices
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogSerializerStatusChoices(TestCase):
     """Each Status choice must serialize to its string value."""
@@ -201,6 +212,7 @@ class TestImportLogSerializerStatusChoices(TestCase):
 # ---------------------------------------------------------------------------
 # Nullable fields
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogSerializerNullableFields(TestCase):
     """Nullable fields must serialize as None when not set."""
@@ -249,6 +261,7 @@ class TestImportLogSerializerPopulatedNullableFields(TestCase):
 # duration field
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogSerializerDurationNone(TestCase):
     """duration must be None whenever one or both timestamps are missing."""
 
@@ -279,7 +292,6 @@ class TestImportLogSerializerDurationFormat(TestCase):
         self.assertNotIn(".", duration)
 
     def test_duration_matches_hhmmss_pattern(self):
-        import re
         log = make_finished_log(duration_seconds=3661)
         duration = ImportLogSerializer(log).data["duration"]
         self.assertRegex(duration, r"^\d+:\d{2}:\d{2}$")
@@ -327,6 +339,7 @@ class TestImportLogSerializerDurationValues(TestCase):
 # create() and update() overrides
 # ---------------------------------------------------------------------------
 
+
 class TestImportLogSerializerWriteProtection(TestCase):
     """create() and update() must raise ValidationError to protect log integrity."""
 
@@ -358,6 +371,7 @@ class TestImportLogSerializerWriteProtection(TestCase):
 # ---------------------------------------------------------------------------
 # Realistic states
 # ---------------------------------------------------------------------------
+
 
 class TestImportLogSerializerRealisticStates(TestCase):
     """Verify the serializer handles common real-world import states correctly."""
