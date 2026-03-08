@@ -7,6 +7,7 @@ Covers:
 
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
+from django.test import RequestFactory
 from django.test import TestCase
 from django.contrib.auth.models import User
 
@@ -15,6 +16,9 @@ from apps.core.admin import BaseAdmin
 
 class TestBaseAdmin(TestCase):
     """Tests for BaseAdmin."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
 
     def test_inherits_from_model_admin(self):
         self.assertTrue(issubclass(BaseAdmin, ModelAdmin))
@@ -50,3 +54,13 @@ class TestBaseAdmin(TestCase):
 
         self.assertTrue(issubclass(MyAdmin, BaseAdmin))
         self.assertEqual(MyAdmin.list_display, ("id",))
+
+    def test_get_queryset_returns_model_queryset(self):
+        User.objects.create_user(username="u1", password="secret")
+        instance = BaseAdmin(User, admin.site)
+        request = self.factory.get("/admin/auth/user/")
+
+        queryset = instance.get_queryset(request)
+
+        self.assertEqual(queryset.model, User)
+        self.assertTrue(queryset.filter(username="u1").exists())

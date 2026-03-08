@@ -64,7 +64,7 @@ class MediaItemAdmin(BaseAdmin):
         "height",
     )
     list_display_links = ("id", "original_filename")
-    list_filter = ("type", "format", "gallery")
+    list_filter = ("type", "format")
     list_select_related = ("gallery",)
     search_fields = ("original_filename", "gallery__name")
     ordering = ("gallery", "position")

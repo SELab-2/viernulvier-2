@@ -189,9 +189,6 @@ class TestMediaItemAdminConfiguration(TestCase):
     def test_list_filter_contains_format(self):
         self.assertIn("format", self.admin.list_filter)
 
-    def test_list_filter_contains_gallery(self):
-        self.assertIn("gallery", self.admin.list_filter)
-
     # search_fields
     def test_search_fields_contains_original_filename(self):
         self.assertIn("original_filename", self.admin.search_fields)
