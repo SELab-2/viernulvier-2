@@ -5,12 +5,12 @@ with the scraper architecture.
 """
 
 from io import StringIO
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import pytest
 from django.core.management.base import CommandParser, OutputWrapper
 from django.db import models as django_models
-
+from types import SimpleNamespace
 from apps.events.models import Event, EventPrice
 from apps.genres.models import Genre, GenreUseAs
 from apps.imports.management.commands.sync_viernulvier import (
@@ -567,3 +567,32 @@ class TestSyncCommandOptions:
         assert result is None
         assert "Unknown step 'not_a_real_step'" in stderr_buffer.getvalue()
         sync_mock.assert_not_called()
+
+@pytest.mark.parametrize("tqdm_installed", [True, False])
+def test_make_progress_callback(monkeypatch, tqdm_installed, capsys):
+    """Test _make_progress_callback writes progress correctly."""
+
+    command = Command()
+    name = "test_step"
+
+    if tqdm_installed:
+        fake_bar = SimpleNamespace(n=0, refresh=Mock(), close=Mock())
+        fake_tqdm = Mock(return_value=fake_bar)
+        monkeypatch.setattr("apps.imports.management.commands.sync_viernulvier._tqdm", fake_tqdm)
+    else:
+        monkeypatch.setattr("apps.imports.management.commands.sync_viernulvier._tqdm", None)
+
+    callback = command._make_progress_callback(name)
+
+    callback(0, 1000)
+    callback(500, 1000)
+    callback(1000, 1000)
+
+    if tqdm_installed:
+        assert fake_tqdm.call_count == 1
+        assert fake_bar.n == 1000
+        assert fake_bar.refresh.call_count >= 2
+        assert fake_bar.close.call_count == 1
+    else:
+        captured = capsys.readouterr()
+        assert f"{name}: 500/1000" in captured.out or f"{name}: 1000/1000" in captured.out

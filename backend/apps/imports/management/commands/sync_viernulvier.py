@@ -479,7 +479,7 @@ class Command(BaseCommand):
             return
 
         if dry_run:
-            self.stdout.write(self.style.WARNING("⚠  DRY RUN — nothing will be written\n"))
+            self.stdout.write(self.style.WARNING("DRY RUN — nothing will be written\n"))
 
         # Share one ETag cache across all steps so unchanged endpoints return 304
         etag_cache: dict = {}
