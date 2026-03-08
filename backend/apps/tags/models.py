@@ -88,6 +88,7 @@ class Tag(BaseModel):
             name_field="name",
             fallback=None,
         )
+
         return name or f"Tag {self.id}"
 
 
