@@ -178,13 +178,21 @@ def test_event_price_same_rank_different_price_is_allowed():
     price_b = PriceFactory()
 
     ep1 = EventPrice(
-        event=event, price_rank=rank, price=price_a, amount=Decimal("10.00"), available=10
+        event=event,
+        price_rank=rank,
+        price=price_a,
+        amount=Decimal("10.00"),
+        available=10,
     )
     ep1.full_clean()
     ep1.save()
 
     ep2 = EventPrice(
-        event=event, price_rank=rank, price=price_b, amount=Decimal("12.00"), available=5
+        event=event,
+        price_rank=rank,
+        price=price_b,
+        amount=Decimal("12.00"),
+        available=5,
     )
     ep2.full_clean()
     ep2.save()
@@ -200,7 +208,11 @@ def test_event_price_same_price_different_rank_is_allowed():
     price = PriceFactory()
 
     ep1 = EventPrice(
-        event=event, price_rank=rank_a, price=price, amount=Decimal("10.00"), available=10
+        event=event,
+        price_rank=rank_a,
+        price=price,
+        amount=Decimal("10.00"),
+        available=10,
     )
     ep1.full_clean()
     ep1.save()

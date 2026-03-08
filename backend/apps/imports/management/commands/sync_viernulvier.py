@@ -29,7 +29,7 @@ from apps.imports.scrapers.viernulvier import (
     normalize_performer_type,
     normalize_url,
     sync_viernulvier,
-    clean_vendor_id
+    clean_vendor_id,
 )
 from apps.locations.models import (
     Hall,
@@ -95,9 +95,9 @@ GENRE_CONFIG = ModelSyncConfig(
         "type": "type",
         "use_as": "use_as",
         "vendor_id": "vendor_id",
-        "name": None,        # flat dict → TranslationConfig
-        "slug": None,        # no field in GenreTranslation
-        "description": None, # no field in GenreTranslation
+        "name": None,  # flat dict → TranslationConfig
+        "slug": None,  # no field in GenreTranslation
+        "description": None,  # no field in GenreTranslation
     },
     fk_resolvers={"use_as": _resolve_genre_use_as},
     value_transforms={"vendor_id": clean_vendor_id},
@@ -110,8 +110,8 @@ TAG_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
         "source": "source",
-        "sourceType": "source_type",   # camelCase → snake_case
-        "enable": "is_enabled",        # API: "enable" string → model: bool
+        "sourceType": "source_type",  # camelCase → snake_case
+        "enable": "is_enabled",  # API: "enable" string → model: bool
         "external": "is_external",
         "url": "url",
         "type": "type",
@@ -126,8 +126,16 @@ TAG_CONFIG = ModelSyncConfig(
     value_transforms={"is_enabled": nee_ja_to_bool},
     translations=[
         TranslationConfig("name", TagTranslation, "tag", "name", "language_id"),
-        TranslationConfig("short_description", TagTranslation, "tag", "short_description", "language_id"),
-        TranslationConfig("url_title", TagTranslation, "tag", "url_title", "language_id"),
+        TranslationConfig(
+            "short_description",
+            TagTranslation,
+            "tag",
+            "short_description",
+            "language_id",
+        ),
+        TranslationConfig(
+            "url_title", TagTranslation, "tag", "url_title", "language_id"
+        ),
     ],
 )
 
@@ -149,7 +157,9 @@ LOCATION_CONFIG = ModelSyncConfig(
     },
     value_transforms={"is_own_location": nee_ja_to_bool},
     translations=[
-        TranslationConfig("name", LocationTranslation, "location", "name", "language_id"),
+        TranslationConfig(
+            "name", LocationTranslation, "location", "name", "language_id"
+        ),
     ],
 )
 
@@ -207,10 +217,22 @@ MEDIA_ITEM_CONFIG = ModelSyncConfig(
         "link": None,
     },
     translations=[
-        TranslationConfig("title", MediaItemTranslation, "media_item", "title", "language_id"),
-        TranslationConfig("description", MediaItemTranslation, "media_item", "description", "language_id"),
-        TranslationConfig("credits", MediaItemTranslation, "media_item", "credits", "language_id"),
-        TranslationConfig("link", MediaItemTranslation, "media_item", "link", "language_id"),
+        TranslationConfig(
+            "title", MediaItemTranslation, "media_item", "title", "language_id"
+        ),
+        TranslationConfig(
+            "description",
+            MediaItemTranslation,
+            "media_item",
+            "description",
+            "language_id",
+        ),
+        TranslationConfig(
+            "credits", MediaItemTranslation, "media_item", "credits", "language_id"
+        ),
+        TranslationConfig(
+            "link", MediaItemTranslation, "media_item", "link", "language_id"
+        ),
     ],
 )
 
@@ -231,7 +253,9 @@ PRICE_CONFIG = ModelSyncConfig(
         "include_in_price_range": None,
     },
     translations=[
-        TranslationConfig("description", PriceTranslation, "price", "description", "language_id"),
+        TranslationConfig(
+            "description", PriceTranslation, "price", "description", "language_id"
+        ),
     ],
 )
 
@@ -244,7 +268,13 @@ PRICE_RANK_CONFIG = ModelSyncConfig(
         "description": None,
     },
     translations=[
-        TranslationConfig("description", PriceRankTranslation, "price_rank", "description", "language_id"),
+        TranslationConfig(
+            "description",
+            PriceRankTranslation,
+            "price_rank",
+            "description",
+            "language_id",
+        ),
     ],
 )
 
@@ -254,8 +284,8 @@ PRODUCTION_CONFIG = ModelSyncConfig(
         "attendance_mode": "attendance_mode",
         "performer_type": "performer_type",
         "uitdatabank_theme": "uit_database_theme",  # FK → UitDatabaseTheme
-        "uitdatabank_type": "uit_database_type",    # FK → UitDatabaseType
-        "media_gallery": "media_gallery",            # FK → MediaGallery
+        "uitdatabank_type": "uit_database_type",  # FK → UitDatabaseType
+        "media_gallery": "media_gallery",  # FK → MediaGallery
         # Not in our model
         "vendor_id": None,
         "box_office_id": None,
@@ -263,8 +293,8 @@ PRODUCTION_CONFIG = ModelSyncConfig(
         "review_gallery": None,
         "poster_gallery": None,
         "uitdatabank_keywords": None,
-        "events": None,   # reverse relation
-        "genres": None,   # M2M → handled via M2MConfig below
+        "events": None,  # reverse relation
+        "genres": None,  # M2M → handled via M2MConfig below
         # Flat dicts → TranslationConfigs below
         "supertitle": None,
         "title": None,
@@ -288,24 +318,82 @@ PRODUCTION_CONFIG = ModelSyncConfig(
     },
     value_transforms={"performer_type": normalize_performer_type},
     translations=[
-        TranslationConfig("supertitle", ProductionTranslation, "production", "supertitle", "language_id"),
-        TranslationConfig("title", ProductionTranslation, "production", "title", "language_id"),
-        # API uses "artist"; model uses "artist_name"
-        TranslationConfig("artist", ProductionTranslation, "production", "artist_name", "language_id"),
-        TranslationConfig("tagline", ProductionTranslation, "production", "tagline", "language_id"),
-        TranslationConfig("teaser", ProductionTranslation, "production", "teaser", "language_id"),
-        TranslationConfig("description", ProductionTranslation, "production", "description", "language_id"),
-        TranslationConfig("description_short", ProductionTranslation, "production", "description_short", "language_id"),
-        TranslationConfig("description_extra", ProductionTranslation, "production", "description_extra", "language_id"),
-        TranslationConfig("description_2", ProductionTranslation, "production", "description_2", "language_id"),
-        TranslationConfig("meta_title", ProductionTranslation, "production", "meta_title", "language_id"),
-        TranslationConfig("meta_description", ProductionTranslation, "production", "meta_description", "language_id"),
         TranslationConfig(
-            "video_1", ProductionTranslation, "production", "video_1", "language_id",
+            "supertitle",
+            ProductionTranslation,
+            "production",
+            "supertitle",
+            "language_id",
+        ),
+        TranslationConfig(
+            "title", ProductionTranslation, "production", "title", "language_id"
+        ),
+        # API uses "artist"; model uses "artist_name"
+        TranslationConfig(
+            "artist", ProductionTranslation, "production", "artist_name", "language_id"
+        ),
+        TranslationConfig(
+            "tagline", ProductionTranslation, "production", "tagline", "language_id"
+        ),
+        TranslationConfig(
+            "teaser", ProductionTranslation, "production", "teaser", "language_id"
+        ),
+        TranslationConfig(
+            "description",
+            ProductionTranslation,
+            "production",
+            "description",
+            "language_id",
+        ),
+        TranslationConfig(
+            "description_short",
+            ProductionTranslation,
+            "production",
+            "description_short",
+            "language_id",
+        ),
+        TranslationConfig(
+            "description_extra",
+            ProductionTranslation,
+            "production",
+            "description_extra",
+            "language_id",
+        ),
+        TranslationConfig(
+            "description_2",
+            ProductionTranslation,
+            "production",
+            "description_2",
+            "language_id",
+        ),
+        TranslationConfig(
+            "meta_title",
+            ProductionTranslation,
+            "production",
+            "meta_title",
+            "language_id",
+        ),
+        TranslationConfig(
+            "meta_description",
+            ProductionTranslation,
+            "production",
+            "meta_description",
+            "language_id",
+        ),
+        TranslationConfig(
+            "video_1",
+            ProductionTranslation,
+            "production",
+            "video_1",
+            "language_id",
             value_transforms={"video_1": normalize_url},
         ),
         TranslationConfig(
-            "video_2", ProductionTranslation, "production", "video_2", "language_id",
+            "video_2",
+            ProductionTranslation,
+            "production",
+            "video_2",
+            "language_id",
             value_transforms={"video_2": normalize_url},
         ),
     ],
@@ -326,7 +414,9 @@ PRODUCTION_CONFIG = ModelSyncConfig(
 def _is_not_longterm(item: dict) -> bool:
     """Filter out long-term productions (they use a different sync flow)."""
     production = item.get("production") or {}
-    api_id = production.get("@id", "") if isinstance(production, dict) else str(production)
+    api_id = (
+        production.get("@id", "") if isinstance(production, dict) else str(production)
+    )
     return "/longterm/" not in api_id
 
 
@@ -335,7 +425,7 @@ EVENT_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
         "production": "production",  # FK → Production (embedded object with @id)
-        "hall": "hall",              # FK → Hall (nullable)
+        "hall": "hall",  # FK → Hall (nullable)
         "starts_at": "starts_at",
         "ends_at": "ends_at",
         # Not in our model
@@ -348,7 +438,7 @@ EVENT_CONFIG = ModelSyncConfig(
         "secure": None,
         "sms_verification": None,
         "status": None,
-        "prices": None,            # synced separately via /events/prices
+        "prices": None,  # synced separately via /events/prices
         "info": None,
         "eticket_info": None,
         "external_order_url": None,
@@ -358,9 +448,9 @@ EVENT_CONFIG = ModelSyncConfig(
 EVENT_PRICE_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
-        "event": "event",          # FK → Event
-        "price": "price",          # FK → Price
-        "rank": "price_rank",      # FK → PriceRank (API: "rank" → model: "price_rank")
+        "event": "event",  # FK → Event
+        "price": "price",  # FK → Price
+        "rank": "price_rank",  # FK → PriceRank (API: "rank" → model: "price_rank")
         "amount": "amount",
         "available": "available",
         "expires_at": None,
@@ -376,20 +466,30 @@ EVENT_PRICE_CONFIG = ModelSyncConfig(
 # ---------------------------------------------------------------------------
 
 SYNC_STEPS = [
-    ("uitdatabank_themes", UitDatabaseTheme, UITDATABASE_THEME_CONFIG, "/uitdatabank/themes"),
-    ("uitdatabank_types",  UitDatabaseType,  UITDATABASE_TYPE_CONFIG,  "/uitdatabank/types"),
-    ("genres",             Genre,            GENRE_CONFIG,             "/genres"),
-    ("tags",               Tag,              TAG_CONFIG,               "/tags"),
-    ("locations",          Location,         LOCATION_CONFIG,          "/locations"),
-    ("spaces",             Space,            SPACE_CONFIG,             "/spaces"),
-    ("halls",              Hall,             HALL_CONFIG,              "/halls"),
-    ("media_galleries",    MediaGallery,     MEDIA_GALLERY_CONFIG,     "/media/galleries"),
-    ("media_items",        MediaItem,        MEDIA_ITEM_CONFIG,        "/media/items"),
-    ("prices",             Price,            PRICE_CONFIG,             "/prices"),
-    ("price_ranks",        PriceRank,        PRICE_RANK_CONFIG,        "/prices/ranks"),
-    ("productions",        Production,       PRODUCTION_CONFIG,        "/productions"),
-    ("events",             Event,            EVENT_CONFIG,             "/events"),
-    ("event_prices",       EventPrice,       EVENT_PRICE_CONFIG,       "/events/prices"),
+    (
+        "uitdatabank_themes",
+        UitDatabaseTheme,
+        UITDATABASE_THEME_CONFIG,
+        "/uitdatabank/themes",
+    ),
+    (
+        "uitdatabank_types",
+        UitDatabaseType,
+        UITDATABASE_TYPE_CONFIG,
+        "/uitdatabank/types",
+    ),
+    ("genres", Genre, GENRE_CONFIG, "/genres"),
+    ("tags", Tag, TAG_CONFIG, "/tags"),
+    ("locations", Location, LOCATION_CONFIG, "/locations"),
+    ("spaces", Space, SPACE_CONFIG, "/spaces"),
+    ("halls", Hall, HALL_CONFIG, "/halls"),
+    ("media_galleries", MediaGallery, MEDIA_GALLERY_CONFIG, "/media/galleries"),
+    ("media_items", MediaItem, MEDIA_ITEM_CONFIG, "/media/items"),
+    ("prices", Price, PRICE_CONFIG, "/prices"),
+    ("price_ranks", PriceRank, PRICE_RANK_CONFIG, "/prices/ranks"),
+    ("productions", Production, PRODUCTION_CONFIG, "/productions"),
+    ("events", Event, EVENT_CONFIG, "/events"),
+    ("event_prices", EventPrice, EVENT_PRICE_CONFIG, "/events/prices"),
 ]
 
 
@@ -405,8 +505,8 @@ class Command(BaseCommand):
     FILTER_FIELDS = {
         "created": "created_at",
         "updated": "updated_at",
-        "starts":  "starts_at",
-        "ends":    "ends_at",
+        "starts": "starts_at",
+        "ends": "ends_at",
     }
 
     def add_arguments(self, parser):
@@ -506,10 +606,14 @@ class Command(BaseCommand):
                 elapsed = time.monotonic() - step_start
                 total_saved += saved
                 label = "would save" if dry_run else "records"
-                self.stdout.write(self.style.SUCCESS(f"✓ {saved} {label} ({elapsed:.1f}s)"))
+                self.stdout.write(
+                    self.style.SUCCESS(f"✓ {saved} {label} ({elapsed:.1f}s)")
+                )
             except Exception as exc:
                 elapsed = time.monotonic() - step_start
-                self.stdout.write(self.style.ERROR(f"✗ FAILED after {elapsed:.1f}s: {exc}"))
+                self.stdout.write(
+                    self.style.ERROR(f"✗ FAILED after {elapsed:.1f}s: {exc}")
+                )
 
         total_elapsed = time.monotonic() - wall_start
         suffix = " [DRY RUN]" if dry_run else ""

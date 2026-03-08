@@ -304,9 +304,11 @@ class TestGenreAdminFunctional(TestCase):
             GenreTranslation.objects.filter(pk=self.translation.pk).exists()
         )
 
+
 # ---------------------------------------------------------------------------
 # Queryset / performance related tests
 # ---------------------------------------------------------------------------
+
 
 class TestGenreAdminQueryset(TestCase):
     """Test select_related / prefetch_related optimizations."""
@@ -320,14 +322,18 @@ class TestGenreAdminQueryset(TestCase):
         self.use_as = GenreUseAsFactory()
         self.language = LanguageFactory()
         self.genre = GenreFactory(use_as=self.use_as)
-        self.translation = GenreTranslationFactory(genre=self.genre, language=self.language)
+        self.translation = GenreTranslationFactory(
+            genre=self.genre, language=self.language
+        )
 
     def test_genre_get_queryset_selects_use_as_and_prefetches_translations(self):
         qs = self.admin_genre.get_queryset(request=None)
         # Check that select_related('use_as') is applied
         self.assertTrue("use_as" in qs.query.select_related)
         # Check that translations are prefetch_related
-        prefetches = {getattr(x, "prefetch_to", x) for x in qs._prefetch_related_lookups}
+        prefetches = {
+            getattr(x, "prefetch_to", x) for x in qs._prefetch_related_lookups
+        }
         self.assertIn("translations", prefetches)
 
     def test_genre_translation_get_queryset_selects_genre_and_language(self):
@@ -339,6 +345,7 @@ class TestGenreAdminQueryset(TestCase):
 # ---------------------------------------------------------------------------
 # Inline / autocomplete field edge tests
 # ---------------------------------------------------------------------------
+
 
 class TestGenreTranslationInlineEdgeCases(TestCase):
     """Check inline configuration and behavior."""
@@ -360,6 +367,7 @@ class TestGenreTranslationInlineEdgeCases(TestCase):
 # ---------------------------------------------------------------------------
 # Admin functional edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestGenreAdminFunctionalEdgeCases(TestCase):
     """Functional admin tests for edge cases like empty form submission."""

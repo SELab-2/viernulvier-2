@@ -192,10 +192,14 @@ def test_fetch_raises_on_absolute_endpoint(monkeypatch):
     """Absolute URLs passed as endpoint are rejected immediately."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    with pytest.raises(viernulvier.ScraperError, match="endpoint must be a relative path"):
+    with pytest.raises(
+        viernulvier.ScraperError, match="endpoint must be a relative path"
+    ):
         viernulvier.fetch_viernulvier(endpoint="https://evil.com/events")
 
-    with pytest.raises(viernulvier.ScraperError, match="endpoint must be a relative path"):
+    with pytest.raises(
+        viernulvier.ScraperError, match="endpoint must be a relative path"
+    ):
         viernulvier.fetch_viernulvier(endpoint="http://example.com/api")
 
 
@@ -504,7 +508,9 @@ def test_sync_skips_items_without_id(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events", params=None, etag_cache=None: [{"title": "no id"}],
+            lambda endpoint="/events", params=None, etag_cache=None: [
+                {"title": "no id"}
+            ],
         )
 
         caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
@@ -911,6 +917,7 @@ def test_sync_creates_import_log_on_fetch_exception(monkeypatch):
     from apps.import_log.models import ImportLog
 
     with _temp_viernulvier_model() as ViernulvierItem:
+
         def failing_fetch(endpoint="/events", params=None, etag_cache=None):
             raise viernulvier.ScraperError("API connection failed")
 
@@ -1123,9 +1130,7 @@ def test_sync_unexpected_error_branch(monkeypatch):
         def raise_runtime(*_args, **_kwargs):
             raise RuntimeError("unexpected crash")
 
-        monkeypatch.setattr(
-            ViernulvierItem.objects, "update_or_create", raise_runtime
-        )
+        monkeypatch.setattr(ViernulvierItem.objects, "update_or_create", raise_runtime)
 
         saved = viernulvier.sync_viernulvier(
             ViernulvierItem, ModelSyncConfig(lookup_field="id"), endpoint="/events"
@@ -1133,7 +1138,10 @@ def test_sync_unexpected_error_branch(monkeypatch):
 
         assert saved == 0
         log = ImportLog.objects.first()
-        assert "Unexpected error for 1: RuntimeError: unexpected crash" in log.error_message
+        assert (
+            "Unexpected error for 1: RuntimeError: unexpected crash"
+            in log.error_message
+        )
         assert log.records_total == 1
         assert log.records_failed == 1
 
@@ -1247,7 +1255,9 @@ class TestFlexibleFieldMapping:
         field = Event._meta.get_field("starts_at")
         result = _parse_field_value(field, "-0001-01-01T00:00:00+00:00")
 
-        assert result == datetime.datetime(1, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+        assert result == datetime.datetime(
+            1, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
+        )
 
     def test_throws_no_error_for_year_zero_date(self):
         """Year-0000 datetime strings are repaired to 1970."""
@@ -1256,7 +1266,9 @@ class TestFlexibleFieldMapping:
         field = Event._meta.get_field("starts_at")
         result = _parse_field_value(field, "0000-01-01T00:00:00+00:00")
 
-        assert result == datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+        assert result == datetime.datetime(
+            1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
+        )
 
     def test_returns_none_for_missing_value(self):
         from apps.events.models import Event
@@ -1273,7 +1285,9 @@ class TestFlexibleFieldMapping:
             "ticketing_url": "https://example.com",
         }
         fk_cache = FKCache()
-        defaults = viernulvier._build_defaults(Event, item, _PassThroughConfig(), fk_cache)
+        defaults = viernulvier._build_defaults(
+            Event, item, _PassThroughConfig(), fk_cache
+        )
 
         assert "ticketing_url" in defaults
         assert defaults["ticketing_url"] == "https://example.com"
@@ -1299,7 +1313,9 @@ class TestFlexibleFieldMapping:
             "yetAnotherField": {"nested": "object"},
         }
         fk_cache = FKCache()
-        defaults = viernulvier._build_defaults(EventPrice, item, _PassThroughConfig(), fk_cache)
+        defaults = viernulvier._build_defaults(
+            EventPrice, item, _PassThroughConfig(), fk_cache
+        )
 
         assert "event_id" in defaults
         assert "price_rank_id" in defaults
@@ -1328,7 +1344,9 @@ class TestFlexibleFieldMapping:
             "available": 75,
         }
         fk_cache = FKCache()
-        defaults = viernulvier._build_defaults(EventPrice, item, _PassThroughConfig(), fk_cache)
+        defaults = viernulvier._build_defaults(
+            EventPrice, item, _PassThroughConfig(), fk_cache
+        )
 
         assert "price_rank_id" in defaults
         assert "event_id" in defaults
@@ -1380,11 +1398,16 @@ def test_extract_external_id_handles_int():
 
 
 def test_extract_external_id_handles_dict_at_id():
-    assert viernulvier._extract_external_id_from_url({"@id": "/api/v1/x"}) == "/api/v1/x"
+    assert (
+        viernulvier._extract_external_id_from_url({"@id": "/api/v1/x"}) == "/api/v1/x"
+    )
 
 
 def test_extract_external_id_handles_dict_external_id_fallback():
-    assert viernulvier._extract_external_id_from_url({"external_id": "test123"}) == "test123"
+    assert (
+        viernulvier._extract_external_id_from_url({"external_id": "test123"})
+        == "test123"
+    )
 
 
 def test_extract_external_id_handles_dict_id_fallback():
@@ -1419,7 +1442,9 @@ def test_extract_lookup_value_uses_api_id_key():
 
 def test_extract_lookup_value_falls_back_to_external_id():
     config = ModelSyncConfig(api_id_key="@id")
-    assert viernulvier._extract_lookup_value({"external_id": "ext123"}, config) == "ext123"
+    assert (
+        viernulvier._extract_lookup_value({"external_id": "ext123"}, config) == "ext123"
+    )
 
 
 def test_extract_lookup_value_falls_back_to_id():
@@ -1430,9 +1455,15 @@ def test_extract_lookup_value_falls_back_to_id():
 def test_extract_lookup_value_unwraps_nested_dict():
     config = ModelSyncConfig(api_id_key="@id")
     # dict value with "id" key
-    assert viernulvier._extract_lookup_value({"external_id": {"id": "x-1"}}, config) == "x-1"
+    assert (
+        viernulvier._extract_lookup_value({"external_id": {"id": "x-1"}}, config)
+        == "x-1"
+    )
     # dict value with "@id" key
-    assert viernulvier._extract_lookup_value({"@id": {"@id": "nested123"}}, config) == "nested123"
+    assert (
+        viernulvier._extract_lookup_value({"@id": {"@id": "nested123"}}, config)
+        == "nested123"
+    )
 
 
 def test_extract_lookup_value_strips_whitespace():
@@ -1554,12 +1585,12 @@ def test_build_defaults_explicit_mapping_pk_skip_fk_and_transform():
     try:
         config = ModelSyncConfig(
             field_map={
-                "missing_key": "title",       # api key absent → skipped
+                "missing_key": "title",  # api key absent → skipped
                 "unknown_model_field": "does_not_exist",  # model field absent → skipped
-                "pk_field": "id",              # PK → skipped
-                "dict_translation": "title",   # dict value without relation → skipped
-                "fk_custom": "parent",         # FK with custom resolver
-                "title_field": "title",        # scalar with transform
+                "pk_field": "id",  # PK → skipped
+                "dict_translation": "title",  # dict value without relation → skipped
+                "fk_custom": "parent",  # FK with custom resolver
+                "title_field": "title",  # scalar with transform
             },
             value_transforms={"title": lambda v: str(v).upper()},
             fk_resolvers={"parent": lambda raw: 99 if raw else None},
@@ -1568,7 +1599,9 @@ def test_build_defaults_explicit_mapping_pk_skip_fk_and_transform():
 
         item = {
             "pk_field": "item-1",
-            "dict_translation": {"nl": "Titel"},  # dict value for non-FK field → skipped
+            "dict_translation": {
+                "nl": "Titel"
+            },  # dict value for non-FK field → skipped
             "fk_custom": "/api/v1/parents/99",
             "title_field": "hello",
         }
@@ -1699,7 +1732,9 @@ def test_sync_all_translations_returns_for_non_dict_payload():
 
 def test_sync_all_translations_returns_on_empty_config_list():
     """Empty translation_configs list causes immediate return."""
-    viernulvier._sync_all_translations(SimpleNamespace(pk=1), {"title": {"nl": "X"}}, [])
+    viernulvier._sync_all_translations(
+        SimpleNamespace(pk=1), {"title": {"nl": "X"}}, []
+    )
 
 
 def test_sync_all_translations_logs_warning_on_missing_field(caplog):
@@ -1845,7 +1880,9 @@ def test_sync_all_translations_skips_when_transform_returns_none():
         def update_or_create(self, **kwargs):
             update_or_create_called[0] = True
             # defaults should be empty because the only field was filtered out
-            assert not kwargs.get("defaults"), "Expected no defaults when transform returns None"
+            assert not kwargs.get("defaults"), (
+                "Expected no defaults when transform returns None"
+            )
             return (Mock(), True)
 
     class FakeTranslationModel:
@@ -1991,9 +2028,7 @@ def test_sync_m2m_logs_error_on_bulk_create_fallback_failure(caplog):
     fk_cache.set(FakeRelatedModel, "ext-1", 1)
 
     caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
-    viernulvier._sync_m2m(
-        SimpleNamespace(pk=1), {"items": ["ext-1"]}, cfg, fk_cache
-    )
+    viernulvier._sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-1"]}, cfg, fk_cache)
 
     # Source: "Error creating %s for %s pk=%s"
     assert any("Error creating" in r.message for r in caplog.records)

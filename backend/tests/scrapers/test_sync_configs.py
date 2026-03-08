@@ -568,6 +568,7 @@ class TestSyncCommandOptions:
         assert "Unknown step 'not_a_real_step'" in stderr_buffer.getvalue()
         sync_mock.assert_not_called()
 
+
 @pytest.mark.parametrize("tqdm_installed", [True, False])
 def test_make_progress_callback(monkeypatch, tqdm_installed, capsys):
     """Test _make_progress_callback writes progress correctly."""
@@ -578,9 +579,13 @@ def test_make_progress_callback(monkeypatch, tqdm_installed, capsys):
     if tqdm_installed:
         fake_bar = SimpleNamespace(n=0, refresh=Mock(), close=Mock())
         fake_tqdm = Mock(return_value=fake_bar)
-        monkeypatch.setattr("apps.imports.management.commands.sync_viernulvier._tqdm", fake_tqdm)
+        monkeypatch.setattr(
+            "apps.imports.management.commands.sync_viernulvier._tqdm", fake_tqdm
+        )
     else:
-        monkeypatch.setattr("apps.imports.management.commands.sync_viernulvier._tqdm", None)
+        monkeypatch.setattr(
+            "apps.imports.management.commands.sync_viernulvier._tqdm", None
+        )
 
     callback = command._make_progress_callback(name)
 
@@ -595,4 +600,6 @@ def test_make_progress_callback(monkeypatch, tqdm_installed, capsys):
         assert fake_bar.close.call_count == 1
     else:
         captured = capsys.readouterr()
-        assert f"{name}: 500/1000" in captured.out or f"{name}: 1000/1000" in captured.out
+        assert (
+            f"{name}: 500/1000" in captured.out or f"{name}: 1000/1000" in captured.out
+        )

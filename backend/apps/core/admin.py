@@ -31,7 +31,7 @@ class BaseAdmin(admin.ModelAdmin):
     """
 
     # Default pagination and performance settings for all admin changelists.
-    list_per_page = 50 
+    list_per_page = 50
     show_full_result_count = False
 
     def get_queryset(self, request):

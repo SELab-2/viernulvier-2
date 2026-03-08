@@ -67,8 +67,8 @@ ERROR_CONTEXT_PATH = "/api/contexts/Error"
 
 # Retry settings
 MAX_RETRIES = 5
-RETRY_BACKOFF_BASE = 1.5   # seconds
-RETRY_BACKOFF_MAX = 60     # hard ceiling in seconds
+RETRY_BACKOFF_BASE = 1.5  # seconds
+RETRY_BACKOFF_MAX = 60  # hard ceiling in seconds
 RETRY_STATUS_CODES = {429, 500, 502, 503, 504}
 
 # Concurrent page fetching
@@ -193,7 +193,9 @@ class ModelSyncConfig:
 
     field_map: Dict[str, Optional[str]] = field(default_factory=dict)
     value_transforms: Dict[str, Callable[[Any], Any]] = field(default_factory=dict)
-    fk_resolvers: Dict[str, Callable[[Any], Optional[Any]]] = field(default_factory=dict)
+    fk_resolvers: Dict[str, Callable[[Any], Optional[Any]]] = field(
+        default_factory=dict
+    )
     translations: List[TranslationConfig] = field(default_factory=list)
     m2m: List[M2MConfig] = field(default_factory=list)
     lookup_field: str = "external_id"
@@ -235,7 +237,7 @@ def _build_session() -> requests.Session:
 def _backoff_seconds(attempt: int) -> float:
     """Exponential backoff with full jitter, capped at RETRY_BACKOFF_MAX."""
     return min(
-        RETRY_BACKOFF_BASE * (2 ** attempt) + random.uniform(0, 1),
+        RETRY_BACKOFF_BASE * (2**attempt) + random.uniform(0, 1),
         RETRY_BACKOFF_MAX,
     )
 
@@ -284,7 +286,9 @@ def _fetch_with_retry(
                     f"Connection failed after {MAX_RETRIES} attempts: {url}"
                 ) from exc
             wait = _backoff_seconds(attempt)
-            logger.warning("ConnectionError — retry %d in %.1fs: %s", attempt + 1, wait, url)
+            logger.warning(
+                "ConnectionError — retry %d in %.1fs: %s", attempt + 1, wait, url
+            )
             time.sleep(wait)
             continue
         except requests.Timeout as exc:
@@ -309,7 +313,9 @@ def _fetch_with_retry(
             if attempt == MAX_RETRIES:
                 raise RateLimitError(retry_after)
             wait = float(retry_after) if retry_after else _backoff_seconds(attempt)
-            logger.warning("HTTP 429 — waiting %.1fs before retry %d: %s", wait, attempt + 1, url)
+            logger.warning(
+                "HTTP 429 — waiting %.1fs before retry %d: %s", wait, attempt + 1, url
+            )
             time.sleep(wait)
             continue
 
@@ -321,7 +327,10 @@ def _fetch_with_retry(
             wait = _backoff_seconds(attempt)
             logger.warning(
                 "HTTP %d — retry %d in %.1fs: %s",
-                response.status_code, attempt + 1, wait, url,
+                response.status_code,
+                attempt + 1,
+                wait,
+                url,
             )
             time.sleep(wait)
             continue
@@ -445,7 +454,8 @@ def fetch_viernulvier(
     if total_items:
         logger.info(
             "API reports %d total items — %d additional pages to fetch",
-            total_items, len(extra_pages),
+            total_items,
+            len(extra_pages),
         )
 
     # --- Strategy 1: concurrent page fetch (all URLs known upfront) ---
@@ -488,8 +498,13 @@ def fetch_viernulvier(
         view = data.get("view") or {}
         next_raw = view.get("next")
         current_url: Optional[str] = (
-            (next_raw if next_raw.startswith("http") else urljoin(BASE_DOMAIN, next_raw))
-            if next_raw else None
+            (
+                next_raw
+                if next_raw.startswith("http")
+                else urljoin(BASE_DOMAIN, next_raw)
+            )
+            if next_raw
+            else None
         )
         while current_url:
             page_data, page_etag = _fetch_with_retry(
@@ -504,8 +519,13 @@ def fetch_viernulvier(
                 next_view = page_data.get("view") or {}
                 next_raw = next_view.get("next")
                 current_url = (
-                    (next_raw if next_raw.startswith("http") else urljoin(BASE_DOMAIN, next_raw))
-                    if next_raw else None
+                    (
+                        next_raw
+                        if next_raw.startswith("http")
+                        else urljoin(BASE_DOMAIN, next_raw)
+                    )
+                    if next_raw
+                    else None
                 )
             else:
                 all_items.extend(page_data if isinstance(page_data, list) else [])
@@ -556,6 +576,7 @@ def clean_string(value: Any) -> str:
     s = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", s)
     return s
 
+
 def clean_vendor_id(value: Any) -> Optional[str]:
     """
     Transform vendor_id: return None if empty or HTML-like, else return as string.
@@ -566,6 +587,7 @@ def clean_vendor_id(value: Any) -> Optional[str]:
     if not s or s.startswith("<i"):
         return None
     return s
+
 
 def nee_ja_to_bool(value: Any) -> bool:
     """Coerce Dutch/English truthy strings and integers to Python bool.
@@ -612,7 +634,10 @@ def _parse_field_value(model_field: models.Field, value: Any) -> Any:
         max_len = getattr(model_field, "max_length", None)
         if max_len and len(cleaned) > max_len:
             logger.debug(
-                "Field '%s' truncated: %d → %d chars", model_field.name, len(cleaned), max_len
+                "Field '%s' truncated: %d → %d chars",
+                model_field.name,
+                len(cleaned),
+                max_len,
             )
             cleaned = cleaned[:max_len]
         return cleaned
@@ -660,7 +685,9 @@ def _parse_field_value(model_field: models.Field, value: Any) -> Any:
             v = "1970" + v[4:]
         parsed = parse_datetime(v)
         if parsed is None:
-            logger.debug("Cannot parse datetime '%s' for field '%s'", value, model_field.name)
+            logger.debug(
+                "Cannot parse datetime '%s' for field '%s'", value, model_field.name
+            )
         return parsed
 
     if isinstance(model_field, models.DateField) and isinstance(value, str):
@@ -774,7 +801,8 @@ def _resolve_fk(
     except related_model.DoesNotExist:
         logger.warning(
             "FK not found: %s.external_id=%r — sync related models first.",
-            related_model.__name__, ext_id,
+            related_model.__name__,
+            ext_id,
         )
         return None
     except Exception:
@@ -821,7 +849,11 @@ def _build_defaults(
     def _apply(model_field: models.Field, raw_value: Any, field_name: str) -> None:
         if model_field.is_relation and model_field.many_to_one:
             custom = config.fk_resolvers.get(field_name)
-            pk = custom(raw_value) if custom else _resolve_fk(model_field, raw_value, fk_cache)
+            pk = (
+                custom(raw_value)
+                if custom
+                else _resolve_fk(model_field, raw_value, fk_cache)
+            )
             if pk is not None:
                 defaults[f"{model_field.name}_id"] = pk
         else:
@@ -842,7 +874,9 @@ def _build_defaults(
         try:
             model_field = model._meta.get_field(model_field_name)
         except FieldDoesNotExist:
-            logger.warning("Field '%s' does not exist on %s", model_field_name, model.__name__)
+            logger.warning(
+                "Field '%s' does not exist on %s", model_field_name, model.__name__
+            )
             continue
         if not isinstance(model_field, models.Field) or model_field.primary_key:
             continue
@@ -931,7 +965,8 @@ def _sync_all_translations(
                 except FieldDoesNotExist:
                     logger.warning(
                         "Translation field '%s' not found on %s",
-                        cfg.flat_field, trans_model.__name__,
+                        cfg.flat_field,
+                        trans_model.__name__,
                     )
                     continue
 
@@ -1000,13 +1035,17 @@ def _sync_m2m(
         pk = fk_cache.get(related_model, ext_id)
         if pk is None:
             try:
-                obj = related_model.objects.get(**{m2m_config.related_lookup_field: ext_id})
+                obj = related_model.objects.get(
+                    **{m2m_config.related_lookup_field: ext_id}
+                )
                 fk_cache.set(related_model, ext_id, obj.pk)
                 pk = obj.pk
             except related_model.DoesNotExist:
                 logger.warning(
                     "%s with %s=%r not found — sync related models first.",
-                    related_model.__name__, m2m_config.related_lookup_field, ext_id,
+                    related_model.__name__,
+                    m2m_config.related_lookup_field,
+                    ext_id,
                 )
                 continue
 
@@ -1093,7 +1132,9 @@ def sync_viernulvier(
     )
 
     try:
-        items = fetch_viernulvier(endpoint=endpoint, params=params, etag_cache=etag_cache)
+        items = fetch_viernulvier(
+            endpoint=endpoint, params=params, etag_cache=etag_cache
+        )
     except Exception as exc:
         import_log.status = ImportLog.Status.FAILED
         import_log.finished_at = timezone.now()
@@ -1152,7 +1193,9 @@ def sync_viernulvier(
 
         if dry_run:
             defaults = _build_defaults(model, item, config, fk_cache)
-            logger.info("[DRY RUN] Would save %s (%d fields)", lookup_value, len(defaults))
+            logger.info(
+                "[DRY RUN] Would save %s (%d fields)", lookup_value, len(defaults)
+            )
             saved += 1
             if on_progress:
                 on_progress(saved, total)
@@ -1212,7 +1255,9 @@ def sync_viernulvier(
         except Exception:
             transaction.savepoint_rollback(sid)
             exc_type, exc_value, _ = sys.exc_info()
-            msg = f"Unexpected error for {lookup_value}: {exc_type.__name__}: {exc_value}"
+            msg = (
+                f"Unexpected error for {lookup_value}: {exc_type.__name__}: {exc_value}"
+            )
             _record_error(msg)
             logger.error(msg, exc_info=True)
 
@@ -1243,6 +1288,8 @@ def sync_viernulvier(
     import_log.save()
     logger.info(
         "Sync complete: saved=%d, errors=%d%s",
-        saved, errors, " [DRY RUN]" if dry_run else "",
+        saved,
+        errors,
+        " [DRY RUN]" if dry_run else "",
     )
     return saved

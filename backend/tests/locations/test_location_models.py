@@ -27,19 +27,21 @@ pytestmark = pytest.mark.django_db
 class TestLocation:
     def test_all_address_fields_are_optional(self):
         """All address fields are nullable/blank — a bare Location must pass full_clean."""
-        loc = LocationFactory.build(
-            street="", number="", postal_code="", city=""
-        )
+        loc = LocationFactory.build(street="", number="", postal_code="", city="")
         loc.full_clean()  # must not raise
 
     def test_str_without_translation_shows_address(self):
         """Without a translation the __str__ returns the address parts only."""
-        loc = LocationFactory(street="Main St", number="123", city="Gotham", postal_code=None)
+        loc = LocationFactory(
+            street="Main St", number="123", city="Gotham", postal_code=None
+        )
         assert str(loc) == "Main St 123, Gotham"
 
     def test_str_with_translation_shows_name_and_address(self):
         """With a translation the __str__ returns '<name> - <address>'."""
-        loc = LocationFactory(street="Main St", number="123", city="Gotham", postal_code="1000")
+        loc = LocationFactory(
+            street="Main St", number="123", city="Gotham", postal_code="1000"
+        )
         LocationTranslationFactory(location=loc, name="HQ")
         assert str(loc) == "HQ - Main St 123, 1000 Gotham"
 

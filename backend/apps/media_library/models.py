@@ -71,7 +71,7 @@ class MediaItem(BaseModel):
         VIDEO = "video", "Video"
         AUDIO = "audio", "Audio"
         OTHER = "other", "Other"
-        
+
     gallery = models.ForeignKey(
         MediaGallery,
         on_delete=models.CASCADE,

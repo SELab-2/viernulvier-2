@@ -40,7 +40,7 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             related_name="translations",
             fallback=str(obj.price_rank_id),
         )
-    
+
     def get_price_display(self, obj):
         if not obj.price:
             return None

@@ -268,15 +268,11 @@ class TestPricingAdminChangelists(TestCase):
 
     def test_price_changelist_filter_by_type(self):
         url = admin_changelist_url(Price)
-        self.assertEqual(
-            self.client.get(url, {"type": "Student"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"type": "Student"}).status_code, 200)
 
     def test_price_changelist_filter_by_cineville_box(self):
         url = admin_changelist_url(Price)
-        self.assertEqual(
-            self.client.get(url, {"cineville_box": "0"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"cineville_box": "0"}).status_code, 200)
 
     def test_price_translation_changelist_returns_200(self):
         self.assertEqual(

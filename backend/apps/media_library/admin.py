@@ -21,8 +21,10 @@ class MediaItemInline(admin.TabularInline):
     classes = ("collapse",)
 
     def get_queryset(self, request):
-        return super().get_queryset(request).only(
-            "type", "format", "original_filename", "position", "gallery_id"
+        return (
+            super()
+            .get_queryset(request)
+            .only("type", "format", "original_filename", "position", "gallery_id")
         )
 
 

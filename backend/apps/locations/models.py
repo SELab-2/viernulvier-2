@@ -191,7 +191,9 @@ class Space(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        name = self.get_base_display_name(related_name="translations", fallback=f"Space {self.id}")
+        name = self.get_base_display_name(
+            related_name="translations", fallback=f"Space {self.id}"
+        )
         try:
             city = self.location.city or ""
             return f"{name} ({city})" if city else name
@@ -293,7 +295,9 @@ class Hall(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        name = self.get_base_display_name(related_name="translations", fallback=f"Hall {self.id}")
+        name = self.get_base_display_name(
+            related_name="translations", fallback=f"Hall {self.id}"
+        )
         try:
             city = self.space.location.city or ""
             return f"{name} ({city})" if city else name

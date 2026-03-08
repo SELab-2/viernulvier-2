@@ -340,10 +340,18 @@ class TestEventPriceSerializerDisplayFields(TestCase):
         )
         cls.rank = PriceRankFactory(position=1)
         cls.price = None  # simulate deleted price
-        cls.ep = EventPriceFactory(event=cls.event, price_rank=cls.rank, price=cls.price, amount="15.00", available=10)
+        cls.ep = EventPriceFactory(
+            event=cls.event,
+            price_rank=cls.rank,
+            price=cls.price,
+            amount="15.00",
+            available=10,
+        )
 
     def test_price_rank_display_and_price_display(self):
-        serializer = EventPriceSerializer(self.ep, context={"request": _drf_request(APIRequestFactory(), "/dummy")})
+        serializer = EventPriceSerializer(
+            self.ep, context={"request": _drf_request(APIRequestFactory(), "/dummy")}
+        )
         data = serializer.data
 
         # price_rank_display should fallback to ID if translations are missing
@@ -367,17 +375,22 @@ class TestEventSerializerNestedPricesReadOnly(TestCase):
             starts_at=timezone.now(),
             ends_at=timezone.now() + timedelta(hours=1),
         )
-        cls.ep = EventPriceFactory(event=cls.event, price_rank=cls.rank, amount="10.00", available=5)
+        cls.ep = EventPriceFactory(
+            event=cls.event, price_rank=cls.rank, amount="10.00", available=5
+        )
 
     def test_nested_prices_read_only_on_partial_update(self):
         # Attempt to update prices via EventSerializer (read-only)
         payload = {
             "ticketing_url": "https://example.com/updated",
-            "prices": [
-                {"price_rank": self.rank.id, "amount": "20.00", "available": 1}
-            ],
+            "prices": [{"price_rank": self.rank.id, "amount": "20.00", "available": 1}],
         }
-        serializer = EventSerializer(self.event, data=payload, partial=True, context={"request": _drf_request(self.factory, "/dummy")})
+        serializer = EventSerializer(
+            self.event,
+            data=payload,
+            partial=True,
+            context={"request": _drf_request(self.factory, "/dummy")},
+        )
         self.assertTrue(serializer.is_valid(), serializer.errors)
         updated_event = serializer.save()
 
