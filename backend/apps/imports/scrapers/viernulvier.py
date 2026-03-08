@@ -556,6 +556,16 @@ def clean_string(value: Any) -> str:
     s = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", s)
     return s
 
+def clean_vendor_id(value: Any) -> Optional[str]:
+    """
+    Transform vendor_id: return None if empty or HTML-like, else return as string.
+    """
+    if value is None:
+        return None
+    s = str(value).strip()
+    if not s or s.startswith("<i"):
+        return None
+    return s
 
 def nee_ja_to_bool(value: Any) -> bool:
     """Coerce Dutch/English truthy strings and integers to Python bool.

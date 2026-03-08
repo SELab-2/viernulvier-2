@@ -29,6 +29,7 @@ from apps.imports.scrapers.viernulvier import (
     normalize_performer_type,
     normalize_url,
     sync_viernulvier,
+    clean_vendor_id
 )
 from apps.locations.models import (
     Hall,
@@ -93,12 +94,13 @@ GENRE_CONFIG = ModelSyncConfig(
         "@id": "external_id",
         "type": "type",
         "use_as": "use_as",
-        "vendor_id": None,
+        "vendor_id": "vendor_id",
         "name": None,        # flat dict → TranslationConfig
         "slug": None,        # no field in GenreTranslation
         "description": None, # no field in GenreTranslation
     },
     fk_resolvers={"use_as": _resolve_genre_use_as},
+    value_transforms={"vendor_id": clean_vendor_id},
     translations=[
         TranslationConfig("name", GenreTranslation, "genre", "name", "language_id"),
     ],
