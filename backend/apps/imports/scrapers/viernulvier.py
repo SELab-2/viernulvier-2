@@ -882,7 +882,7 @@ def _sync_all_translations(
     values from every config in the group are merged, then saved with a
     single update_or_create call.
 
-    Without batching: 13 fields × 3 languages = 39 queries per production.
+    Without batching: 13 fields x 3 languages = 39 queries per production.
     With batching:                               3 queries per production.
 
     Configs targeting different translation models are handled independently.
