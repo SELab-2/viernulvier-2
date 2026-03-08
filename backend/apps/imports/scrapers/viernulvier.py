@@ -890,8 +890,7 @@ def _sync_all_translations(
     if not translation_configs:
         return
 
-    GroupKey = Tuple[Type[models.Model], str, str]
-    groups: Dict[GroupKey, List[TranslationConfig]] = defaultdict(list)
+    groups = defaultdict(list)
     for cfg in translation_configs:
         groups[(cfg.model, cfg.parent_fk, cfg.language_fk)].append(cfg)
 
