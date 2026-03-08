@@ -12,6 +12,8 @@ the list and detail pages free of N+1 queries.
 """
 
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
 
 from apps.core.admin import BaseAdmin
 from .models import Event, EventPrice
@@ -92,6 +94,21 @@ class EventAdmin(BaseAdmin):
     date_hierarchy = "starts_at"
 
     inlines = [EventPriceInline]
+    readonly_fields = ("production_admin_link",)
+
+    @admin.display(description="Production details")
+    def production_admin_link(self, obj):
+        """Return a link to the related Production admin change page."""
+        if not obj or not obj.production_id:
+            return "-"
+
+        url = reverse("admin:productions_production_change", args=[obj.production_id])
+        translation = obj.production.get_base_translation(related_name="translations")
+        artist_name = (getattr(translation, "artist_name", "") or "").strip()
+        label = (
+            f"{obj.production} by {artist_name}" if artist_name else str(obj.production)
+        )
+        return format_html('<a href="{}">{}</a>', url, label)
 
     def get_queryset(self, request):
         return (

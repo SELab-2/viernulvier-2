@@ -1,0 +1,115 @@
+{% load i18n %}
+<details class="filter generic-multiselect-filter" style="margin-bottom:10px;" {% if spec.is_open %}open{% endif %}>
+  <summary style="cursor:pointer; margin:0;"><span style="margin-left:6px;">{{ title }}</span></summary>
+  <form method="get">
+    <input type="hidden" name="{{ spec.open_param }}" value="1">
+    {% for param in spec.hidden_params %}
+      <input type="hidden" name="{{ param.key }}" value="{{ param.val }}">
+    {% endfor %}
+
+    <div style="display:flex; gap:6px; margin:8px 0 6px; align-items:center; flex-wrap:nowrap;">
+      <input
+        type="search"
+        name="{{ spec.search_param }}"
+        value="{{ spec.search_value }}"
+        list="{{ spec.parameter_name }}_suggestions"
+        autocomplete="off"
+        placeholder="{% trans 'Search in list...' %}"
+        aria-label="{% trans 'Search in list' %}"
+        class="vTextField"
+        style="flex:1 1 auto; min-width:0; margin:0;"
+      >
+      {% if spec.search_value %}
+        <a href="{{ spec.clear_search_url }}" style="white-space:nowrap;">{% trans "Clear" %}</a>
+      {% endif %}
+    </div>
+
+    <datalist id="{{ spec.parameter_name }}_suggestions">
+      {% for val, label in spec.lookup_choices %}
+        <option value="{{ label }}"></option>
+      {% endfor %}
+    </datalist>
+
+    <div style="max-height: 220px; overflow: auto; margin:0 0 6px;" data-multiselect-options>
+      {% if spec.lookup_choices %}
+        {% if spec.selected_values %}
+          <div style="margin:4px 0; color:#666; font-size:11px; text-transform:uppercase; letter-spacing:.02em;">{% trans "Selected" %}</div>
+          {% for val, label in spec.lookup_choices %}
+            {% if val in spec.selected_values %}
+              <div data-option-row data-selected-row="1" data-option-label="{{ label|lower }}" style="margin:0 0 2px;">
+                <label style="display:flex; gap:6px; align-items:flex-start; cursor:pointer;">
+                  <input
+                    type="checkbox"
+                    name="{{ spec.parameter_name }}"
+                    value="{{ val }}"
+                    onchange="this.form.submit()"
+                    checked
+                  >
+                  {{ label }}
+                </label>
+              </div>
+            {% endif %}
+          {% endfor %}
+
+          <hr style="margin:6px 0; border:none; border-top:1px solid #ddd;">
+        {% endif %}
+
+        <div style="margin:4px 0; color:#666; font-size:11px; text-transform:uppercase; letter-spacing:.02em;">{% trans "Available" %}</div>
+        {% for val, label in spec.lookup_choices %}
+          {% if val not in spec.selected_values %}
+            <div data-option-row data-option-label="{{ label|lower }}" style="margin:0 0 2px;">
+              <label style="display:flex; gap:6px; align-items:flex-start; cursor:pointer;">
+                <input
+                  type="checkbox"
+                  name="{{ spec.parameter_name }}"
+                  value="{{ val }}"
+                  onchange="this.form.submit()"
+                >
+                {{ label }}
+              </label>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <em>
+          {% if spec.search_value %}
+            {% trans "No results for your search" %}
+          {% else %}
+            {% trans "No results" %}
+          {% endif %}
+        </em>
+      {% endif %}
+    </div>
+
+    {% if spec.selected_values %}
+      <a href="{{ spec.reset_url }}">{% trans "Reset" %}</a>
+    {% endif %}
+  </form>
+</details>
+
+<script>
+  (function () {
+    const container = document.currentScript.previousElementSibling;
+    if (!container) return;
+
+    const searchInput = container.querySelector('input[name="{{ spec.search_param }}"]');
+    const rows = container.querySelectorAll('[data-option-row]');
+    if (!searchInput || !rows.length) return;
+
+    const normalize = (value) => (value || '').toLowerCase().trim();
+    const applyClientFilter = () => {
+      const term = normalize(searchInput.value);
+      rows.forEach((row) => {
+        if (row.getAttribute('data-selected-row') === '1') {
+          row.style.display = '';
+          return;
+        }
+        const label = row.getAttribute('data-option-label') || '';
+        row.style.display = !term || label.includes(term) ? '' : 'none';
+      });
+    };
+
+    searchInput.addEventListener('input', applyClientFilter);
+    applyClientFilter();
+  })();
+</script>

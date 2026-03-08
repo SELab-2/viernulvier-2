@@ -9,8 +9,9 @@ from apps.core.admin import BaseAdmin
 from apps.events.admin import EventAdmin, EventPriceInline
 from apps.events.models import Event
 from tests.factories.event import EventFactory
+from tests.factories.language import LanguageFactory
 from tests.factories.location import HallFactory
-from tests.factories.production import ProductionFactory
+from tests.factories.production import ProductionFactory, ProductionTranslationFactory
 
 
 # ---------------------------------------------------------------------------
@@ -82,9 +83,9 @@ class TestEventsAdminConfiguration(TestCase):
         for field in ["production", "hall", "starts_at", "ends_at"]:
             self.assertIn(field, admin_obj.list_display)
 
-        # autocomplete_fields
-        for field in ["production", "hall"]:
-            self.assertIn(field, admin_obj.autocomplete_fields)
+        self.assertIn("production", admin_obj.autocomplete_fields)
+        self.assertIn("hall", admin_obj.autocomplete_fields)
+        self.assertIn("production_admin_link", admin_obj.readonly_fields)
 
         # inlines
         self.assertTrue(admin_obj.inlines)
@@ -95,6 +96,11 @@ class TestEventsAdminConfiguration(TestCase):
         self.assertIn("price_rank", EventPriceInline.autocomplete_fields)
         self.assertIn("price", EventPriceInline.autocomplete_fields)
         self.assertEqual(EventPriceInline.fields, ("price_rank", "price", "amount", "available"))
+
+    def test_production_admin_link_returns_dash_without_object(self):
+        admin_obj = EventAdmin(Event, self.site)
+
+        self.assertEqual(admin_obj.production_admin_link(None), "-")
 
 
 # ---------------------------------------------------------------------------
@@ -162,6 +168,30 @@ class TestEventsAdminChangelists(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_event_changeform_returns_200(self):
-        url = admin_change_url(Event, self.event.pk)
-        response = self.client.get(url)
+        """Test case for test_event_changeform_returns_200."""
+        response = self.client.get(admin_change_url(Event, self.event.pk))
         self.assertEqual(response.status_code, 200)
+
+    def test_event_changeform_shows_production_admin_link(self):
+        response = self.client.get(admin_change_url(Event, self.event.pk))
+        production_admin_url = reverse(
+            "admin:productions_production_change", args=[self.prod.pk]
+        )
+
+        self.assertContains(response, production_admin_url)
+
+        # Link text can vary (e.g. "<production> by <artist>") depending on
+        # available base translation data, but the target URL must always exist.
+        self.assertContains(response, "Production details")
+
+    def test_event_changeform_shows_artist_name_in_production_link(self):
+        language = LanguageFactory(code="nl", name="Dutch")
+        ProductionTranslationFactory(
+            production=self.prod,
+            language=language,
+            title="Event Titel",
+            artist_name="Artiest Naam",
+        )
+
+        response = self.client.get(admin_change_url(Event, self.event.pk))
+        self.assertContains(response, "by Artiest Naam")
