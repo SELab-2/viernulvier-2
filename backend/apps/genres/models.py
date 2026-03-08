@@ -46,9 +46,18 @@ class Genre(BaseModel):
     or Book Presentation. Each genre has:
 
     - A technical ``type`` (internal snake_case identifier)
+    - An optional ``vendor_id`` provided by the upstream Viernulvier API
     - A ``use_as`` relationship defining its role in the system
     - One or more ``translations`` (localised display names)
     """
+
+    vendor_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Vendor-specific identifier from the upstream API.",
+        db_comment="Vendor identifier for the genre.",
+    )
 
     type = models.CharField(
         max_length=50,
@@ -79,7 +88,15 @@ class Genre(BaseModel):
             related_name="translations",
             fallback=None,
         )
-        return f"{name} ({self.type})" if name else self.type
+
+        if name:
+            return f"{name} ({self.type})"
+
+        stripped_vendor_id = self.vendor_id.strip() if self.vendor_id else ""
+        if stripped_vendor_id != "":
+            return stripped_vendor_id
+
+        return self.type
 
 
 class GenreTranslation(BaseModel):
