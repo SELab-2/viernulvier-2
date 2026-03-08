@@ -26,11 +26,17 @@ class GenreUseAsAdmin(BaseAdmin):
 class GenreAdmin(BaseAdmin):
     """Admin configuration for genres."""
 
-    list_display = ("id", "type", "use_as")
+    list_display = (
+        "id",
+        "type",
+        "use_as",
+        "__str__",
+    )
     list_filter = ("use_as",)
     search_fields = (
         "type",
         "translations__name",
+        "vendor_id",
     )
     ordering = ("id",)
     autocomplete_fields = ("use_as",)

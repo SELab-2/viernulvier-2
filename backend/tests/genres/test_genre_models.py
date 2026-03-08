@@ -48,6 +48,21 @@ class TestGenre:
 
         assert str(genre) == "EN Festival (Festival)"
 
+    def test_str_uses_vendor_id_when_translation_missing(self):
+        genre = GenreFactory(type="theater", vendor_id="opera")
+
+        assert str(genre) == "opera"
+
+    def test_str_falls_back_to_type_when_translation_and_vendor_id_blank(self):
+        genre = GenreFactory(type="theater", vendor_id="")
+
+        assert str(genre) == "theater"
+
+    def test_str_falls_back_to_type_when_translation_and_vendor_id_none(self):
+        genre = GenreFactory(type="theater", vendor_id=None)
+
+        assert str(genre) == "theater"
+
     def test_delete_cascades_to_translations(self):
         genre = GenreFactory()
         GenreTranslationFactory.create_batch(
