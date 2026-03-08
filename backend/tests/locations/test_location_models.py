@@ -1,5 +1,4 @@
 import pytest
-from django.core.exceptions import ValidationError
 from apps.locations.models import (
     LocationTranslation,
     Space,

@@ -46,7 +46,7 @@ class MediaGallery(BaseModel):
         ordering = ["name"]
 
     def __str__(self) -> str:
-        return self.name if self.name else f"Unnamed Gallery"
+        return self.name if self.name else "Unnamed Gallery"
 
 
 class MediaItem(BaseModel):

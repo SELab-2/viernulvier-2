@@ -21,6 +21,7 @@ from tests.factories.event import EventFactory, EventPriceFactory
 from tests.factories.location import HallFactory
 from tests.factories.pricing import PriceRankFactory
 from tests.factories.production import ProductionFactory
+from apps.events.serializers import EventPriceSerializer
 
 
 def _drf_request(factory: APIRequestFactory, path: str) -> Request:
@@ -322,7 +323,6 @@ class TestEventSerializerDeserialization(TestCase):
         self.assertEqual(updated.production_id, self.production.id)
         self.assertEqual(updated.hall_id, self.hall.id)
 
-from apps.events.serializers import EventPriceSerializer
 
 class TestEventPriceSerializerDisplayFields(TestCase):
     """Test EventPriceSerializer display fields: price_rank_display & price_display."""

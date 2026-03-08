@@ -16,7 +16,7 @@ import datetime
 import logging
 from contextlib import contextmanager
 from types import SimpleNamespace
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock
 
 import pytest
 import requests
