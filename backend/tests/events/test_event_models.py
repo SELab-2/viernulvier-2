@@ -177,3 +177,14 @@ def test_event_price_set_null_when_price_rank_deleted():
 
     ep.refresh_from_db()
     assert ep.price_rank_id is None
+
+
+def test_event_price_str_representation():
+    """Test case for test_event_price_str_representation."""
+    prod = Production.objects.create()
+    hall = make_hall()
+    event = Event.objects.create(production=prod, hall=hall, starts_at=timezone.now())
+    rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+    event_price = EventPrice.objects.create(event=event, price_rank=rank, amount="10.00", available=10)
+
+    assert str(event_price) == f"EventPrice {event_price.id} - Event {event.id} / Rank {rank.id}"

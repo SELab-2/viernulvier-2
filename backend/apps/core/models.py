@@ -62,6 +62,13 @@ class BaseModel(models.Model):
                     raise ValidationError("This name is not allowed.")
     """
 
+    external_id = models.CharField(
+        null=True,
+        blank=True,
+        help_text="Optional external identifier for integration with the viernulvier database.",
+        db_comment="External identifier from the viernulvier database.",
+    )
+
     class Meta:
         abstract = True
 
