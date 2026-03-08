@@ -20,7 +20,6 @@ from django.db.models import Max
 from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
 from apps.genres.models import Genre
 from apps.tags.models import Tag
-from .admin_filters import ArtistNameFilter, GenreFilter, TagFilter
 from .models import (
     Production,
     ProductionGenre,
