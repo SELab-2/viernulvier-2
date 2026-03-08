@@ -88,7 +88,8 @@ class Tag(BaseModel):
             name_field="name",
             fallback=None,
         )
-        return name or f"Tag {self.id}"
+        
+        return name or f"Tag {self.id}"        
 
 
 class TagTranslation(BaseModel):

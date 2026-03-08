@@ -23,7 +23,7 @@ class TagFilter(SearchableMultiSelectFilter):
 
     def get_option_queryset(self):
         """Return tag options as ``(id, label)`` tuples for the filter UI."""
-        tags = Tag.objects.all()
+        tags = Tag.objects.prefetch_related("translations")
         if self.search_value:
             search_q = (
                 Q(type__icontains=self.search_value)
@@ -33,9 +33,9 @@ class TagFilter(SearchableMultiSelectFilter):
                 tags = tags.filter(search_q | Q(id__in=self.selected_values))
             else:
                 tags = tags.filter(search_q)
-        tags = tags.distinct().order_by("type")
+        tags = tags.distinct().order_by("type", "id")
         return [
-            (str(tag.id), tag.type)
+            (str(tag.id), tag.type.strip() or str(tag))
             for tag in tags
         ]
 

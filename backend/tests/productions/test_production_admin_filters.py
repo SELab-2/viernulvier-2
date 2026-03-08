@@ -117,3 +117,12 @@ class TestProductionAdminFilters(TestCase):
         )
         option_values = [value for value, _ in filter_instance.lookups(filter_instance.request, self.admin)]
         self.assertEqual(option_values, ["Jane Doe", "Zed Artist"])
+
+    def test_tag_filter_uses_non_empty_label_when_type_is_blank(self):
+        tag_without_type = TagFactory(type="")
+        TagTranslationFactory(tag=tag_without_type, language=self.language, name="Zonder type")
+
+        filter_instance = self._build_filter(TagFilter, "")
+        lookup_map = dict(filter_instance.lookups(filter_instance.request, self.admin))
+
+        self.assertEqual(lookup_map[str(tag_without_type.pk)], "Zonder type")
