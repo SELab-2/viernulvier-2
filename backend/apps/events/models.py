@@ -198,14 +198,14 @@ class EventPrice(BaseModel):
         ordering = ["price_rank__position", "id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["event", "price_rank"],
-                name="uniq_event_price_rank",
+                fields=["event", "price_rank", "price"],
+                name="uniq_event_rank_price",
             )
         ]
         indexes = [
             models.Index(fields=["event"], name="idx_event_price_event"),
             models.Index(
-                fields=["event", "price_rank"], name="idx_event_price_event_rank"
+                fields=["event", "price_rank", "price"], name="idx_event_rank_price"
             ),
         ]
 
