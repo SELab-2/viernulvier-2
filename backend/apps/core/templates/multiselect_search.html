@@ -14,8 +14,8 @@
         value="{{ spec.search_value }}"
         list="{{ spec.parameter_name }}_suggestions"
         autocomplete="off"
-        placeholder="{% trans 'Zoek in lijst...' %}"
-        aria-label="{% trans 'Zoek in lijst' %}"
+        placeholder="{% trans 'Search in list...' %}"
+        aria-label="{% trans 'Search in list' %}"
         class="vTextField"
         style="flex:1 1 auto; min-width:0; margin:0;"
       >
@@ -33,7 +33,7 @@
     <div style="max-height: 220px; overflow: auto; margin:0 0 6px;" data-multiselect-options>
       {% if spec.lookup_choices %}
         {% if spec.selected_values %}
-          <div style="margin:4px 0; color:#666; font-size:11px; text-transform:uppercase; letter-spacing:.02em;">{% trans "Geselecteerd" %}</div>
+          <div style="margin:4px 0; color:#666; font-size:11px; text-transform:uppercase; letter-spacing:.02em;">{% trans "Selected" %}</div>
           {% for val, label in spec.lookup_choices %}
             {% if val in spec.selected_values %}
               <div data-option-row data-selected-row="1" data-option-label="{{ label|lower }}" style="margin:0 0 2px;">
@@ -54,7 +54,7 @@
           <hr style="margin:6px 0; border:none; border-top:1px solid #ddd;">
         {% endif %}
 
-        <div style="margin:4px 0; color:#666; font-size:11px; text-transform:uppercase; letter-spacing:.02em;">{% trans "Beschikbaar" %}</div>
+        <div style="margin:4px 0; color:#666; font-size:11px; text-transform:uppercase; letter-spacing:.02em;">{% trans "Available" %}</div>
         {% for val, label in spec.lookup_choices %}
           {% if val not in spec.selected_values %}
             <div data-option-row data-option-label="{{ label|lower }}" style="margin:0 0 2px;">
@@ -73,9 +73,9 @@
       {% else %}
         <em>
           {% if spec.search_value %}
-            {% trans "Geen resultaten voor je zoekterm" %}
+            {% trans "No results for your search" %}
           {% else %}
-            {% trans "Geen resultaten" %}
+            {% trans "No results" %}
           {% endif %}
         </em>
       {% endif %}
