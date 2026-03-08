@@ -321,3 +321,70 @@ class TestEventSerializerDeserialization(TestCase):
         self.assertEqual(updated.ticketing_url, "https://example.com/new")
         self.assertEqual(updated.production_id, self.production.id)
         self.assertEqual(updated.hall_id, self.hall.id)
+
+from apps.events.serializers import EventPriceSerializer
+
+class TestEventPriceSerializerDisplayFields(TestCase):
+    """Test EventPriceSerializer display fields: price_rank_display & price_display."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.factory = APIRequestFactory()
+        cls.production = ProductionFactory()
+        cls.hall = HallFactory()
+        cls.event = EventFactory(
+            production=cls.production,
+            hall=cls.hall,
+            starts_at=timezone.now(),
+            ends_at=timezone.now() + timedelta(hours=1),
+        )
+        cls.rank = PriceRankFactory(position=1)
+        cls.price = None  # simulate deleted price
+        cls.ep = EventPriceFactory(event=cls.event, price_rank=cls.rank, price=cls.price, amount="15.00", available=10)
+
+    def test_price_rank_display_and_price_display(self):
+        serializer = EventPriceSerializer(self.ep, context={"request": _drf_request(APIRequestFactory(), "/dummy")})
+        data = serializer.data
+
+        # price_rank_display should fallback to ID if translations are missing
+        self.assertEqual(data["price_rank_display"], str(self.rank.id))
+        # price_display should fallback to None since price is None
+        self.assertIsNone(data["price_display"])
+
+
+class TestEventSerializerNestedPricesReadOnly(TestCase):
+    """Test that EventSerializer nested prices remain read-only even on update."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.factory = APIRequestFactory()
+        cls.production = ProductionFactory()
+        cls.hall = HallFactory()
+        cls.rank = PriceRankFactory(position=1)
+        cls.event = EventFactory(
+            production=cls.production,
+            hall=cls.hall,
+            starts_at=timezone.now(),
+            ends_at=timezone.now() + timedelta(hours=1),
+        )
+        cls.ep = EventPriceFactory(event=cls.event, price_rank=cls.rank, amount="10.00", available=5)
+
+    def test_nested_prices_read_only_on_partial_update(self):
+        # Attempt to update prices via EventSerializer (read-only)
+        payload = {
+            "ticketing_url": "https://example.com/updated",
+            "prices": [
+                {"price_rank": self.rank.id, "amount": "20.00", "available": 1}
+            ],
+        }
+        serializer = EventSerializer(self.event, data=payload, partial=True, context={"request": _drf_request(self.factory, "/dummy")})
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        updated_event = serializer.save()
+
+        # ticketing_url is updated
+        self.assertEqual(updated_event.ticketing_url, payload["ticketing_url"])
+        # prices are unchanged
+        self.assertEqual(updated_event.prices.count(), 1)
+        price_obj = updated_event.prices.first()
+        self.assertEqual(price_obj.amount, Decimal("10.00"))
+        self.assertEqual(price_obj.available, 5)

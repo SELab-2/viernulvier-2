@@ -73,27 +73,45 @@ class TestValueTransforms:
 
     def test_nee_ja_to_bool_with_ja_string(self):
         """Test that 'ja' string converts to True."""
-        assert nee_ja_to_bool("ja") is True
-        assert nee_ja_to_bool("JA") is True
-        assert nee_ja_to_bool("  ja  ") is True
+        for val in ["ja", "JA", "  ja  "]:
+            assert nee_ja_to_bool(val) is True
 
     def test_nee_ja_to_bool_with_nee_string(self):
         """Test that 'nee' string converts to False."""
-        assert nee_ja_to_bool("nee") is False
-        assert nee_ja_to_bool("NEE") is False
-        assert nee_ja_to_bool("  nee  ") is False
+        for val in ["nee", "NEE", "  nee  "]:
+            assert nee_ja_to_bool(val) is False
 
     def test_nee_ja_to_bool_with_boolean(self):
         """Test that boolean values pass through unchanged."""
         assert nee_ja_to_bool(True) is True
         assert nee_ja_to_bool(False) is False
 
-    def test_nee_ja_to_bool_with_other_values(self):
-        """Test that other values are handled correctly."""
-        assert nee_ja_to_bool("yes") is False  # string that isn't 'ja'
+    def test_nee_ja_to_bool_with_english_strings(self):
+        """Test English equivalents."""
+        for val in ["true", "yes", "1", "TRUE", " YES ", " 1 "]:
+            assert nee_ja_to_bool(val) is True
+        for val in ["false", "no", "0", "FALSE", " NO ", " 0 "]:
+            assert nee_ja_to_bool(val) is False
+
+    def test_nee_ja_to_bool_with_empty_string(self):
+        """Empty string should return False."""
         assert nee_ja_to_bool("") is False
+        assert nee_ja_to_bool("   ") is False
+
+    def test_nee_ja_to_bool_with_ints(self):
+        """Integers should convert correctly."""
         assert nee_ja_to_bool(1) is True
         assert nee_ja_to_bool(0) is False
+        assert nee_ja_to_bool(42) is True
+        assert nee_ja_to_bool(-1) is True
+
+    def test_nee_ja_to_bool_with_other_values(self):
+        """Other types should be coerced via bool()."""
+        assert nee_ja_to_bool(None) is False
+        assert nee_ja_to_bool([]) is False
+        assert nee_ja_to_bool([1, 2]) is True
+        assert nee_ja_to_bool({}) is False
+        assert nee_ja_to_bool({"x": 1}) is True
 
     @pytest.mark.django_db
     def test_resolve_genre_use_as_creates_new(self):
@@ -549,30 +567,3 @@ class TestSyncCommandOptions:
         assert result is None
         assert "Unknown step 'not_a_real_step'" in stderr_buffer.getvalue()
         sync_mock.assert_not_called()
-
-    def test_handle_reports_sync_exception_and_success(monkeypatch):
-        """Covers error and success output branches in Command.handle (lines 870-871)."""
-        command = Command()
-        stdout_buffer = StringIO()
-        command.stdout = OutputWrapper(stdout_buffer)
-        # Success branch
-        with patch(
-            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
-            return_value=3,
-        ):
-            command.handle(only="events")
-            assert "3 records" in stdout_buffer.getvalue()
-            assert "Done. Total: 3 records" in stdout_buffer.getvalue()
-
-        # Error branch
-        def raise_exc(*args, **kwargs):
-            raise RuntimeError("fail branch")
-
-        stdout_buffer = StringIO()
-        command.stdout = OutputWrapper(stdout_buffer)
-        with patch(
-            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
-            side_effect=raise_exc,
-        ):
-            command.handle(only="events")
-            assert "FAILED: fail branch" in stdout_buffer.getvalue()

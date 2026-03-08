@@ -26,16 +26,33 @@ pytestmark = pytest.mark.django_db
 
 
 class TestLocation:
-    def test_requires_mandatory_fields(self):
+    def test_all_address_fields_are_optional(self):
+        """All address fields are nullable/blank — a bare Location must pass full_clean."""
         loc = LocationFactory.build(
-            street="", number="", postal_code="", city="", country=""
+            street="", number="", postal_code="", city=""
         )
-        with pytest.raises(ValidationError):
-            loc.full_clean()
+        loc.full_clean()  # must not raise
 
-    def test_str_representation(self):
-        loc = LocationFactory(street="Main St", number="123", city="Gotham")
-        assert str(loc) == "Gotham - Main St 123"
+    def test_str_without_translation_shows_address(self):
+        """Without a translation the __str__ returns the address parts only."""
+        loc = LocationFactory(street="Main St", number="123", city="Gotham", postal_code=None)
+        assert str(loc) == "Main St 123, Gotham"
+
+    def test_str_with_translation_shows_name_and_address(self):
+        """With a translation the __str__ returns '<name> - <address>'."""
+        loc = LocationFactory(street="Main St", number="123", city="Gotham", postal_code="1000")
+        LocationTranslationFactory(location=loc, name="HQ")
+        assert str(loc) == "HQ - Main St 123, 1000 Gotham"
+
+    def test_str_omits_empty_parts(self):
+        """Parts that are empty/None are omitted gracefully."""
+        loc = LocationFactory(street=None, number=None, postal_code=None, city="Gotham")
+        assert str(loc) == "Gotham"
+
+    def test_str_fallback_when_no_address(self):
+        """A location with no address fields at all returns '/'."""
+        loc = LocationFactory(street=None, number=None, postal_code=None, city=None)
+        assert str(loc) == "/"
 
     def test_reverse_relation_spaces(self):
         loc = LocationFactory()
@@ -48,7 +65,6 @@ class TestLocationTranslation:
         loc = LocationFactory()
         lang = LanguageFactory()
         LocationTranslationFactory(location=loc, language=lang)
-        # Trying to create duplicate should raise IntegrityError at save()
         with pytest.raises(Exception):
             LocationTranslationFactory(location=loc, language=lang)
 
@@ -74,15 +90,24 @@ class TestLocationTranslation:
 
 
 class TestSpace:
-    def test_requires_location(self):
-        space = SpaceFactory.build(location=None)
-        with pytest.raises(ValidationError):
-            space.full_clean()
-
-    def test_str_representation(self):
-        loc = LocationFactory(city="Gotham", street="Main St", number="1")
+    def test_str_without_translation_shows_fallback_with_city(self):
+        """Without a translation the __str__ uses the fallback id and appends the city."""
+        loc = LocationFactory(city="Gotham")
         space = SpaceFactory(location=loc)
-        assert str(space) == f"Space {space.id} @ {loc}"
+        assert str(space) == f"Space {space.id} (Gotham)"
+
+    def test_str_with_translation_shows_name_with_city(self):
+        """With a translation the __str__ uses the translation name and appends the city."""
+        loc = LocationFactory(city="Gotham")
+        space = SpaceFactory(location=loc)
+        SpaceTranslationFactory(space=space, name="Main Hall")
+        assert str(space) == "Main Hall (Gotham)"
+
+    def test_str_without_city_omits_parentheses(self):
+        """When the location has no city, __str__ returns only the name/fallback."""
+        loc = LocationFactory(city=None)
+        space = SpaceFactory(location=loc)
+        assert str(space) == f"Space {space.id}"
 
     def test_reverse_relation_translations(self):
         space = SpaceFactory()
@@ -119,15 +144,32 @@ class TestSpaceTranslation:
 
 
 class TestHall:
-    def test_requires_space(self):
+    def test_space_is_optional(self):
+        """space FK is nullable — a Hall without a space must pass full_clean."""
         hall = HallFactory.build(space=None)
-        with pytest.raises(ValidationError):
-            hall.full_clean()
+        hall.full_clean()  # must not raise
 
-    def test_str_representation(self):
-        space = SpaceFactory()
+    def test_str_without_translation_shows_fallback_with_city(self):
+        """Without a translation the __str__ uses the fallback id and appends the city."""
+        loc = LocationFactory(city="Gotham")
+        space = SpaceFactory(location=loc)
         hall = HallFactory(space=space)
-        assert str(hall) == f"Hall {hall.id} @ {space}"
+        assert str(hall) == f"Hall {hall.id} (Gotham)"
+
+    def test_str_with_translation_shows_name_with_city(self):
+        """With a translation the __str__ uses the translation name and appends the city."""
+        loc = LocationFactory(city="Gotham")
+        space = SpaceFactory(location=loc)
+        hall = HallFactory(space=space)
+        HallTranslationFactory(hall=hall, name="Grand Hall")
+        assert str(hall) == "Grand Hall (Gotham)"
+
+    def test_str_without_city_omits_parentheses(self):
+        """When the parent space has no city, __str__ returns only the name/fallback."""
+        loc = LocationFactory(city=None)
+        space = SpaceFactory(location=loc)
+        hall = HallFactory(space=space)
+        assert str(hall) == f"Hall {hall.id}"
 
     def test_reverse_relation_translations(self):
         hall = HallFactory()

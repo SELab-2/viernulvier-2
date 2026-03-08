@@ -78,8 +78,6 @@ class EventAdmin(BaseAdmin):
         "ends_at",
     )
 
-    # FKs uit list_filter halen — die laden ALLE gerelateerde objecten
-    # AutocompleteFilter zoekt pas bij typen
     list_filter = ("starts_at",)
 
     search_fields = (

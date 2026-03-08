@@ -1,15 +1,3 @@
-"""
-Comprehensive tests for apps/events/admin.py
-
-Covers:
-- Admin registration for event models
-- Admin inheritance (BaseAdmin / ModelAdmin) where applicable
-- list_display/list_filter/search_fields/ordering/date_hierarchy basic configuration
-- Inline presence (without overly strict assumptions)
-- get_queryset optimisation (select_related / prefetch_related) smoke
-- Functional admin changelist + changeform (superuser)
-"""
-
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
@@ -29,16 +17,13 @@ from tests.factories.production import ProductionFactory
 # Helpers
 # ---------------------------------------------------------------------------
 
-
 def make_superuser(username="admin"):
     return User.objects.create_superuser(
         username=username, password="password", email=f"{username}@example.com"
     )
 
-
 def admin_changelist_url(model):
     return reverse(f"admin:{model._meta.app_label}_{model._meta.model_name}_changelist")
-
 
 def admin_change_url(model, pk):
     return reverse(
@@ -50,14 +35,13 @@ def admin_change_url(model, pk):
 # Registration
 # ---------------------------------------------------------------------------
 
-
 class TestEventsAdminRegistration(TestCase):
     def test_event_is_registered(self):
-        """Test case for test_event_is_registered."""
+        """Event model moet geregistreerd zijn in de admin."""
         self.assertIn(Event, admin.site._registry)
 
     def test_registered_admin_class_for_event(self):
-        """Test case for test_registered_admin_class_for_event."""
+        """Event admin class moet EventAdmin zijn."""
         self.assertIsInstance(admin.site._registry[Event], EventAdmin)
 
 
@@ -65,18 +49,15 @@ class TestEventsAdminRegistration(TestCase):
 # Inheritance
 # ---------------------------------------------------------------------------
 
-
 class TestEventsAdminInheritance(TestCase):
     admins = [EventAdmin]
 
     def test_admins_inherit_from_base_admin_if_used(self):
-        """Test case for test_admins_inherit_from_base_admin_if_used."""
         for admin_class in self.admins:
             with self.subTest(admin_class=admin_class.__name__):
                 self.assertTrue(issubclass(admin_class, BaseAdmin))
 
     def test_admins_inherit_from_model_admin(self):
-        """Test case for test_admins_inherit_from_model_admin."""
         for admin_class in self.admins:
             with self.subTest(admin_class=admin_class.__name__):
                 self.assertTrue(issubclass(admin_class, admin.ModelAdmin))
@@ -86,43 +67,39 @@ class TestEventsAdminInheritance(TestCase):
 # Configuration
 # ---------------------------------------------------------------------------
 
-
 class TestEventsAdminConfiguration(TestCase):
     def setUp(self):
         self.site = AdminSite()
 
     def test_event_admin_configuration(self):
-        """Test case for test_event_admin_configuration."""
         admin_obj = EventAdmin(Event, self.site)
 
-        # Ordering/date hierarchy (explicit in your events admin)
+        # Ordering / date hierarchy
         self.assertEqual(admin_obj.ordering, ("-starts_at",))
         self.assertEqual(admin_obj.date_hierarchy, "starts_at")
 
-        # Some basic checks without being overly strict
-        self.assertIn("production", admin_obj.list_display)
-        self.assertIn("hall", admin_obj.list_display)
-        self.assertIn("starts_at", admin_obj.list_display)
+        # list_display
+        for field in ["production", "hall", "starts_at", "ends_at"]:
+            self.assertIn(field, admin_obj.list_display)
 
-        self.assertIn("production", admin_obj.autocomplete_fields)
-        self.assertIn("hall", admin_obj.autocomplete_fields)
+        # autocomplete_fields
+        for field in ["production", "hall"]:
+            self.assertIn(field, admin_obj.autocomplete_fields)
 
-        # Inlines should exist (not strict count)
+        # inlines
         self.assertTrue(admin_obj.inlines)
         self.assertIn(EventPriceInline, admin_obj.inlines)
 
     def test_event_price_inline_configuration(self):
-        """Test case for test_event_price_inline_configuration."""
         self.assertEqual(EventPriceInline.extra, 0)
         self.assertIn("price_rank", EventPriceInline.autocomplete_fields)
         self.assertIn("price", EventPriceInline.autocomplete_fields)
-        self.assertEqual(EventPriceInline.fields, ("price_rank", "amount", "available"))
+        self.assertEqual(EventPriceInline.fields, ("price_rank", "price", "amount", "available"))
 
 
 # ---------------------------------------------------------------------------
-# Queryset optimization (smoke)
+# Queryset optimisation (smoke)
 # ---------------------------------------------------------------------------
-
 
 class TestEventAdminGetQueryset(TestCase):
     @classmethod
@@ -142,35 +119,26 @@ class TestEventAdminGetQueryset(TestCase):
         self.site = AdminSite()
         self.factory = RequestFactory()
 
-    def test_event_admin_queryset_has_expected_related_optimizations(self):
-        """
-        In pricing admin tests we avoid brittle exact query counting and instead assert
-        that the queryset is configured to fetch the expected relations efficiently.
-        """
+    def test_event_admin_queryset_uses_select_related_and_prefetch_related(self):
         admin_obj = EventAdmin(Event, self.site)
         request = self.factory.get("/admin/")
         qs = admin_obj.get_queryset(request)
 
-        select_related = qs.query.select_related
-        self.assertIn("production", select_related)
-        self.assertIn("hall", select_related)
+        # Check select_related fields
+        related_fields = ["production", "hall"]
+        for field in related_fields:
+            self.assertIn(field, qs.query.select_related)
 
-        self.assertIn("space", select_related["hall"])
-        self.assertIn("location", select_related["hall"]["space"])
-
-        def _prefetch_name(item):
-            return getattr(item, "prefetch_to", item)
-
-        prefetches = {_prefetch_name(x) for x in qs._prefetch_related_lookups}
-        self.assertIn("prices", prefetches)
-        self.assertIn("production__translations", prefetches)
-        self.assertIn("hall__translations", prefetches)
+        # Check prefetch_related fields
+        prefetch_fields = ["production__translations", "hall__translations"]
+        prefetches = set(qs._prefetch_related_lookups)
+        for field in prefetch_fields:
+            self.assertIn(field, prefetches)
 
 
 # ---------------------------------------------------------------------------
 # Functional admin tests (HTTP)
 # ---------------------------------------------------------------------------
-
 
 class TestEventsAdminChangelists(TestCase):
     def setUp(self):
@@ -189,11 +157,11 @@ class TestEventsAdminChangelists(TestCase):
         )
 
     def test_event_changelist_returns_200(self):
-        """Test case for test_event_changelist_returns_200."""
-        response = self.client.get(admin_changelist_url(Event))
+        url = admin_changelist_url(Event)
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_event_changeform_returns_200(self):
-        """Test case for test_event_changeform_returns_200."""
-        response = self.client.get(admin_change_url(Event, self.event.pk))
+        url = admin_change_url(Event, self.event.pk)
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)

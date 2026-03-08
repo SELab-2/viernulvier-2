@@ -144,8 +144,7 @@ class TestGenreTranslationAdminConfig(TestCase):
             self.assertIn(field, self.admin.list_display)
 
     def test_list_filter(self):
-        self.assertIn("language", self.admin.list_filter)
-        self.assertIn("genre", self.admin.list_filter)
+        self.assertIn("language__code", self.admin.list_filter)
 
     def test_search_fields(self):
         self.assertIn("name", self.admin.search_fields)
@@ -304,3 +303,117 @@ class TestGenreAdminFunctional(TestCase):
         self.assertFalse(
             GenreTranslation.objects.filter(pk=self.translation.pk).exists()
         )
+
+# ---------------------------------------------------------------------------
+# Queryset / performance related tests
+# ---------------------------------------------------------------------------
+
+class TestGenreAdminQueryset(TestCase):
+    """Test select_related / prefetch_related optimizations."""
+
+    def setUp(self):
+        self.site = admin.site
+        self.admin_genre = GenreAdmin(Genre, self.site)
+        self.admin_translation = GenreTranslationAdmin(GenreTranslation, self.site)
+        self.use_as_admin = GenreUseAsAdmin(GenreUseAs, self.site)
+
+        self.use_as = GenreUseAsFactory()
+        self.language = LanguageFactory()
+        self.genre = GenreFactory(use_as=self.use_as)
+        self.translation = GenreTranslationFactory(genre=self.genre, language=self.language)
+
+    def test_genre_get_queryset_selects_use_as_and_prefetches_translations(self):
+        qs = self.admin_genre.get_queryset(request=None)
+        # Check that select_related('use_as') is applied
+        self.assertTrue("use_as" in qs.query.select_related)
+        # Check that translations are prefetch_related
+        prefetches = {getattr(x, "prefetch_to", x) for x in qs._prefetch_related_lookups}
+        self.assertIn("translations", prefetches)
+
+    def test_genre_translation_get_queryset_selects_genre_and_language(self):
+        qs = self.admin_translation.get_queryset(request=None)
+        self.assertTrue("genre" in qs.query.select_related)
+        self.assertTrue("language" in qs.query.select_related)
+
+
+# ---------------------------------------------------------------------------
+# Inline / autocomplete field edge tests
+# ---------------------------------------------------------------------------
+
+class TestGenreTranslationInlineEdgeCases(TestCase):
+    """Check inline configuration and behavior."""
+
+    def setUp(self):
+        self.inline = GenreTranslationInline(Genre, admin.site)
+
+    def test_inline_model_is_correct(self):
+        self.assertIs(self.inline.model, GenreTranslation)
+
+    def test_inline_fields_and_autocomplete(self):
+        self.assertEqual(self.inline.fields, ("language", "name"))
+        self.assertIn("language", self.inline.autocomplete_fields)
+
+    def test_inline_extra_forms_default(self):
+        self.assertEqual(self.inline.extra, 1)
+
+
+# ---------------------------------------------------------------------------
+# Admin functional edge cases
+# ---------------------------------------------------------------------------
+
+class TestGenreAdminFunctionalEdgeCases(TestCase):
+    """Functional admin tests for edge cases like empty form submission."""
+
+    def setUp(self):
+        self.superuser = User.objects.create_superuser(
+            username="admin", password="password", email="admin@example.com"
+        )
+        self.client.force_login(self.superuser)
+        self.use_as = GenreUseAsFactory()
+        self.language = LanguageFactory()
+        self.genre = GenreFactory(type="Theater", use_as=self.use_as)
+        self.translation = GenreTranslationFactory(
+            genre=self.genre, language=self.language, name="Theater"
+        )
+
+    def test_genre_add_with_empty_translation(self):
+        url = reverse("admin:genres_genre_add")
+        response = self.client.post(
+            url,
+            {
+                "type": "Concert",
+                "use_as": self.use_as.pk,
+                "translations-TOTAL_FORMS": 1,
+                "translations-INITIAL_FORMS": 0,
+                "translations-MIN_NUM_FORMS": 0,
+                "translations-MAX_NUM_FORMS": 1000,
+                "translations-0-id": "",
+                "translations-0-language": "",
+                "translations-0-name": "",
+            },
+            follow=True,
+        )
+        # Should still succeed, translation will be ignored
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Genre.objects.filter(type="Concert").exists())
+
+    def test_genre_change_partial_translation_update(self):
+        url = reverse("admin:genres_genre_change", args=[self.genre.pk])
+        response = self.client.post(
+            url,
+            {
+                "type": "Drama",
+                "use_as": self.use_as.pk,
+                "translations-TOTAL_FORMS": 1,
+                "translations-INITIAL_FORMS": 1,
+                "translations-MIN_NUM_FORMS": 0,
+                "translations-MAX_NUM_FORMS": 1000,
+                "translations-0-id": self.translation.pk,
+                "translations-0-language": self.language.pk,
+                "translations-0-name": "Updated Theater",
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.translation.refresh_from_db()
+        self.assertEqual(self.translation.name, "Updated Theater")
