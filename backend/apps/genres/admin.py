@@ -26,15 +26,25 @@ class GenreUseAsAdmin(BaseAdmin):
 class GenreAdmin(BaseAdmin):
     """Admin configuration for genres."""
 
-    list_display = ("id", "type", "use_as")
+    list_display = (
+        "id",
+        "type",
+        "use_as",
+        "name",
+    )
     list_filter = ("use_as",)
     search_fields = (
         "type",
         "translations__name",
+        "vendor_id",
     )
     ordering = ("id",)
     autocomplete_fields = ("use_as",)
     inlines = [GenreTranslationInline]
+
+    @admin.display(description="Name")
+    def name(self, obj):
+        return str(obj)
 
     def get_queryset(self, request):
         """Prefetch translations to avoid N+1 queries on the detail page."""
