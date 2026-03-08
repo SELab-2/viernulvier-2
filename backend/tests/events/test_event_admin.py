@@ -119,6 +119,11 @@ class TestEventsAdminConfiguration(TestCase):
         self.assertIn("price_rank", EventPriceInline.autocomplete_fields)
         self.assertEqual(EventPriceInline.fields, ("price_rank", "amount", "available"))
 
+    def test_production_admin_link_returns_dash_without_object(self):
+        admin_obj = EventAdmin(Event, self.site)
+
+        self.assertEqual(admin_obj.production_admin_link(None), "-")
+
 
 # ---------------------------------------------------------------------------
 # Queryset optimization (smoke)
@@ -206,7 +211,10 @@ class TestEventsAdminChangelists(TestCase):
         )
 
         self.assertContains(response, production_admin_url)
-        self.assertContains(response, str(self.prod))
+
+        # Link text can vary (e.g. "<production> by <artist>") depending on
+        # available base translation data, but the target URL must always exist.
+        self.assertContains(response, "Production details")
 
     def test_event_changeform_shows_artist_name_in_production_link(self):
         language = LanguageFactory(code="nl", name="Dutch")

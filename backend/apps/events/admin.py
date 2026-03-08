@@ -101,7 +101,7 @@ class EventAdmin(BaseAdmin):
         url = reverse("admin:productions_production_change", args=[obj.production_id])
         translation = obj.production.get_base_translation(related_name="translations")
         artist_name = (getattr(translation, "artist_name", "") or "").strip()
-        label = f"{obj.production} by '{artist_name}'" if artist_name else str(obj.production)
+        label = f"{obj.production} by {artist_name}" if artist_name else str(obj.production)
         return format_html('<a href="{}">{}</a>', url, label)
 
     def get_queryset(self, request):
