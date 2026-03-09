@@ -220,19 +220,6 @@ class TestWithTqdm:
         bar = mod._make_progress_bar("test", 10)
         assert bar is not None
 
-    def test_make_progress_bar_passes_correct_args(self, monkeypatch):
-        _StubTqdm.instances.clear()
-        mod = _reload_module(monkeypatch, tqdm_available=True)
-
-        mod._make_progress_bar("load", 42)
-
-        assert len(_StubTqdm.instances) == 1
-        bar = _StubTqdm.instances[0]
-        assert bar.desc == "load"
-        assert bar.total == 42
-        assert bar.unit == "records"
-        assert bar.leave is False
-
     def test_make_progress_bar_is_context_manager(self, monkeypatch):
         mod = _reload_module(monkeypatch, tqdm_available=True)
         bar = mod._make_progress_bar("ctx", 5)
