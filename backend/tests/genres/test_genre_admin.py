@@ -46,9 +46,7 @@ class TestGenreAdminRegistration(TestCase):
 
     def test_genretranslation_registered(self):
         self.assertIn(GenreTranslation, admin.site._registry)
-        self.assertIsInstance(
-            admin.site._registry[GenreTranslation], GenreTranslationAdmin
-        )
+        self.assertIsInstance(admin.site._registry[GenreTranslation], GenreTranslationAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -161,9 +159,7 @@ class TestGenreAdminFunctional(TestCase):
     """Functional admin flows for genre models."""
 
     def setUp(self):
-        self.superuser = User.objects.create_superuser(
-            username="admin", password="password", email="admin@example.com"
-        )
+        self.superuser = User.objects.create_superuser(username="admin", password="password", email="admin@example.com")
         self.client.force_login(self.superuser)
 
         self.use_as = GenreUseAsFactory(name="genre")
@@ -277,9 +273,7 @@ class TestGenreAdminFunctional(TestCase):
         self.assertTrue(GenreTranslation.objects.filter(name="Theatre").exists())
 
     def test_translation_change(self):
-        url = reverse(
-            "admin:genres_genretranslation_change", args=[self.translation.pk]
-        )
+        url = reverse("admin:genres_genretranslation_change", args=[self.translation.pk])
         response = self.client.post(
             url,
             {
@@ -294,14 +288,10 @@ class TestGenreAdminFunctional(TestCase):
         self.assertEqual(self.translation.name, "Teater")
 
     def test_translation_delete(self):
-        url = reverse(
-            "admin:genres_genretranslation_delete", args=[self.translation.pk]
-        )
+        url = reverse("admin:genres_genretranslation_delete", args=[self.translation.pk])
         response = self.client.post(url, {"post": "yes"}, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(
-            GenreTranslation.objects.filter(pk=self.translation.pk).exists()
-        )
+        self.assertFalse(GenreTranslation.objects.filter(pk=self.translation.pk).exists())
 
 
 # ---------------------------------------------------------------------------
@@ -321,18 +311,14 @@ class TestGenreAdminQueryset(TestCase):
         self.use_as = GenreUseAsFactory()
         self.language = LanguageFactory()
         self.genre = GenreFactory(use_as=self.use_as)
-        self.translation = GenreTranslationFactory(
-            genre=self.genre, language=self.language
-        )
+        self.translation = GenreTranslationFactory(genre=self.genre, language=self.language)
 
     def test_genre_get_queryset_selects_use_as_and_prefetches_translations(self):
         qs = self.admin_genre.get_queryset(request=None)
         # Check that select_related('use_as') is applied
         self.assertTrue("use_as" in qs.query.select_related)
         # Check that translations are prefetch_related
-        prefetches = {
-            getattr(x, "prefetch_to", x) for x in qs._prefetch_related_lookups
-        }
+        prefetches = {getattr(x, "prefetch_to", x) for x in qs._prefetch_related_lookups}
         self.assertIn("translations", prefetches)
 
     def test_genre_translation_get_queryset_selects_genre_and_language(self):
@@ -372,16 +358,12 @@ class TestGenreAdminFunctionalEdgeCases(TestCase):
     """Functional admin tests for edge cases like empty form submission."""
 
     def setUp(self):
-        self.superuser = User.objects.create_superuser(
-            username="admin", password="password", email="admin@example.com"
-        )
+        self.superuser = User.objects.create_superuser(username="admin", password="password", email="admin@example.com")
         self.client.force_login(self.superuser)
         self.use_as = GenreUseAsFactory()
         self.language = LanguageFactory()
         self.genre = GenreFactory(type="Theater", use_as=self.use_as)
-        self.translation = GenreTranslationFactory(
-            genre=self.genre, language=self.language, name="Theater"
-        )
+        self.translation = GenreTranslationFactory(genre=self.genre, language=self.language, name="Theater")
 
     def test_genre_add_with_empty_translation(self):
         url = reverse("admin:genres_genre_add")

@@ -26,9 +26,7 @@ class TagFilter(SearchableMultiSelectFilter):
         """Return tag options as ``(id, label)`` tuples for the filter UI."""
         tags = Tag.objects.prefetch_related("translations")
         if self.search_value:
-            search_q = Q(type__icontains=self.search_value) | Q(
-                translations__name__icontains=self.search_value
-            )
+            search_q = Q(type__icontains=self.search_value) | Q(translations__name__icontains=self.search_value)
             if self.selected_values:
                 tags = tags.filter(search_q | Q(id__in=self.selected_values))
             else:
@@ -61,9 +59,7 @@ class GenreFilter(SearchableMultiSelectFilter):
         """Return genre options as ``(id, label)`` tuples."""
         genres = Genre.objects.all()
         if self.search_value:
-            search_q = Q(type__icontains=self.search_value) | Q(
-                translations__name__icontains=self.search_value
-            )
+            search_q = Q(type__icontains=self.search_value) | Q(translations__name__icontains=self.search_value)
             if self.selected_values:
                 genres = genres.filter(search_q | Q(id__in=self.selected_values))
             else:
@@ -111,14 +107,10 @@ class ArtistNameFilter(SearchableMultiSelectFilter):
 
         name_values = list(names)
         if self.selected_values:
-            name_values = sorted(
-                set(name_values) | set(self.selected_values), key=str.lower
-            )
+            name_values = sorted(set(name_values) | set(self.selected_values), key=str.lower)
 
         return [(name, name) for name in name_values]
 
     def filter_queryset(self, queryset):
         """Filter productions by selected artist names (OR semantics)."""
-        return queryset.filter(
-            translations__artist_name__in=self.selected_values
-        ).distinct()
+        return queryset.filter(translations__artist_name__in=self.selected_values).distinct()

@@ -231,10 +231,7 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         through_model = Production.tags.through
 
         through_model.objects.bulk_create(
-            [
-                through_model(production_id=production_id, tag_id=tag.id)
-                for production_id in production_ids
-            ],
+            [through_model(production_id=production_id, tag_id=tag.id) for production_id in production_ids],
             ignore_conflicts=True,
         )
 

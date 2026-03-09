@@ -157,9 +157,7 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "apps.core.authentications.ApiKeyAuthentication"
-    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.core.authentications.ApiKeyAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.ApiKeyPermission"],
     "DEFAULT_THROTTLE_CLASSES": ["apps.core.throttles.PublicKeyThrottle"],
     "DEFAULT_THROTTLE_RATES": {
@@ -211,7 +209,7 @@ SPECTACULAR_SETTINGS = {
         "tagsSorter": "alpha",  # Sort tags alfabetically
         "operationsSorter": "method",  # Sort endpoints on HTTP method
         "tryItOutEnabled": True,
-        "docExpansion": "none",  # Collapsed by default for a cleaner look 
+        "docExpansion": "none",  # Collapsed by default for a cleaner look
         "defaultModelsExpandDepth": 0,  # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
     },
     "TAGS": [

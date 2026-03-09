@@ -46,9 +46,7 @@ def admin_changelist_url(model):
 
 
 def admin_change_url(model, pk):
-    return reverse(
-        f"admin:{model._meta.app_label}_{model._meta.model_name}_change", args=[pk]
-    )
+    return reverse(f"admin:{model._meta.app_label}_{model._meta.model_name}_change", args=[pk])
 
 
 # ---------------------------------------------------------------------------
@@ -72,12 +70,8 @@ class TestPricingAdminRegistration(TestCase):
     def test_registered_admin_classes(self):
         self.assertIsInstance(admin.site._registry[Price], PriceAdmin)
         self.assertIsInstance(admin.site._registry[PriceRank], PriceRankAdmin)
-        self.assertIsInstance(
-            admin.site._registry[PriceTranslation], PriceTranslationAdmin
-        )
-        self.assertIsInstance(
-            admin.site._registry[PriceRankTranslation], PriceRankTranslationAdmin
-        )
+        self.assertIsInstance(admin.site._registry[PriceTranslation], PriceTranslationAdmin)
+        self.assertIsInstance(admin.site._registry[PriceRankTranslation], PriceRankTranslationAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -193,12 +187,8 @@ class TestPricingTranslationAdminGetQueryset(TestCase):
         )
         cls.rank = PriceRankFactory.create(position=1, sold_out_buffer=0)
 
-        cls.price_tr = PriceTranslationFactory.create(
-            price=cls.price, language=cls.lang, description="Standard ticket"
-        )
-        cls.rank_tr = PriceRankTranslationFactory.create(
-            price_rank=cls.rank, language=cls.lang, description="First rank"
-        )
+        cls.price_tr = PriceTranslationFactory.create(price=cls.price, language=cls.lang, description="Standard ticket")
+        cls.rank_tr = PriceRankTranslationFactory.create(price_rank=cls.rank, language=cls.lang, description="First rank")
 
     def setUp(self):
         self.site = AdminSite()
@@ -248,20 +238,14 @@ class TestPricingAdminChangelists(TestCase):
         )
         self.rank = PriceRankFactory.create(position=1, sold_out_buffer=0)
 
-        self.price_tr = PriceTranslationFactory.create(
-            price=self.price, language=self.lang, description="Student ticket"
-        )
-        self.rank_tr = PriceRankTranslationFactory.create(
-            price_rank=self.rank, language=self.lang, description="First rank"
-        )
+        self.price_tr = PriceTranslationFactory.create(price=self.price, language=self.lang, description="Student ticket")
+        self.rank_tr = PriceRankTranslationFactory.create(price_rank=self.rank, language=self.lang, description="First rank")
 
     def test_price_changelist_returns_200(self):
         self.assertEqual(self.client.get(admin_changelist_url(Price)).status_code, 200)
 
     def test_price_changeform_returns_200(self):
-        self.assertEqual(
-            self.client.get(admin_change_url(Price, self.price.pk)).status_code, 200
-        )
+        self.assertEqual(self.client.get(admin_change_url(Price, self.price.pk)).status_code, 200)
 
     def test_price_changelist_filter_by_type(self):
         url = admin_changelist_url(Price)
@@ -272,34 +256,24 @@ class TestPricingAdminChangelists(TestCase):
         self.assertEqual(self.client.get(url, {"cineville_box": "0"}).status_code, 200)
 
     def test_price_translation_changelist_returns_200(self):
-        self.assertEqual(
-            self.client.get(admin_changelist_url(PriceTranslation)).status_code, 200
-        )
+        self.assertEqual(self.client.get(admin_changelist_url(PriceTranslation)).status_code, 200)
 
     def test_price_translation_changeform_returns_200(self):
         self.assertEqual(
-            self.client.get(
-                admin_change_url(PriceTranslation, self.price_tr.pk)
-            ).status_code,
+            self.client.get(admin_change_url(PriceTranslation, self.price_tr.pk)).status_code,
             200,
         )
 
     def test_price_translation_changelist_filter_by_language_code(self):
         """Changelist filter must use language__code lookup."""
         url = admin_changelist_url(PriceTranslation)
-        self.assertEqual(
-            self.client.get(url, {"language__code": "nl"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"language__code": "nl"}).status_code, 200)
 
     def test_price_rank_changelist_returns_200(self):
-        self.assertEqual(
-            self.client.get(admin_changelist_url(PriceRank)).status_code, 200
-        )
+        self.assertEqual(self.client.get(admin_changelist_url(PriceRank)).status_code, 200)
 
     def test_price_rank_changeform_returns_200(self):
-        self.assertEqual(
-            self.client.get(admin_change_url(PriceRank, self.rank.pk)).status_code, 200
-        )
+        self.assertEqual(self.client.get(admin_change_url(PriceRank, self.rank.pk)).status_code, 200)
 
     def test_price_rank_translation_changelist_returns_200(self):
         self.assertEqual(
@@ -309,15 +283,11 @@ class TestPricingAdminChangelists(TestCase):
 
     def test_price_rank_translation_changeform_returns_200(self):
         self.assertEqual(
-            self.client.get(
-                admin_change_url(PriceRankTranslation, self.rank_tr.pk)
-            ).status_code,
+            self.client.get(admin_change_url(PriceRankTranslation, self.rank_tr.pk)).status_code,
             200,
         )
 
     def test_price_rank_translation_changelist_filter_by_language_code(self):
         """Changelist filter must use language__code lookup."""
         url = admin_changelist_url(PriceRankTranslation)
-        self.assertEqual(
-            self.client.get(url, {"language__code": "nl"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"language__code": "nl"}).status_code, 200)

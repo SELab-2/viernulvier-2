@@ -63,12 +63,8 @@ class TestPublicKeyThrottle(TestCase):
         self.assertNotEqual(key_a, key_b)
 
     def test_same_ip_and_ua_produce_same_key(self):
-        key_a = self.throttle.get_cache_key(
-            make_request(ip="1.2.3.4", ua="SameAgent"), self.view
-        )
-        key_b = self.throttle.get_cache_key(
-            make_request(ip="1.2.3.4", ua="SameAgent"), self.view
-        )
+        key_a = self.throttle.get_cache_key(make_request(ip="1.2.3.4", ua="SameAgent"), self.view)
+        key_b = self.throttle.get_cache_key(make_request(ip="1.2.3.4", ua="SameAgent"), self.view)
         self.assertEqual(key_a, key_b)
 
     def test_missing_user_agent_does_not_raise(self):
@@ -157,16 +153,12 @@ class TestProductionThrottleConfig(TestCase):
     def test_public_minute_rate(self):
         from django.conf import settings
 
-        self.assertEqual(
-            settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["public_min"], "40/minute"
-        )
+        self.assertEqual(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["public_min"], "40/minute")
 
     def test_public_hour_rate(self):
         from django.conf import settings
 
-        self.assertEqual(
-            settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["public_hour"], "800/hour"
-        )
+        self.assertEqual(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["public_hour"], "800/hour")
 
     def test_internal_rate_is_none(self):
         from django.conf import settings

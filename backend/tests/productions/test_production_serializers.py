@@ -327,12 +327,8 @@ class TestProductionSerializerMultipleTranslations(TestCase):
         self.production = ProductionFactory.create()
         self.nl = LanguageFactory.create(code="nl", name="Dutch")
         self.en = LanguageFactory.create(code="en", name="English")
-        ProductionTranslationFactory.create(
-            production=self.production, language=self.nl, title="Titel NL"
-        )
-        ProductionTranslationFactory.create(
-            production=self.production, language=self.en, title="Title EN"
-        )
+        ProductionTranslationFactory.create(production=self.production, language=self.nl, title="Titel NL")
+        ProductionTranslationFactory.create(production=self.production, language=self.en, title="Title EN")
 
     def test_title_contains_both_language_codes(self):
         data = ProductionSerializer(self.production).data

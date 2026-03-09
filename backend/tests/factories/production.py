@@ -45,16 +45,8 @@ class ProductionFactory(factory.django.DjangoModelFactory):
     uit_database_theme = SubFactory(UitDatabaseThemeFactory)
     uit_database_type = SubFactory(UitDatabaseTypeFactory)
     media_gallery = SubFactory(MediaGalleryFactory)
-    attendance_mode = LazyFunction(
-        lambda: faker.random_element(
-            [choice[0] for choice in Production.AttendanceMode.choices]
-        )
-    )
-    performer_type = LazyFunction(
-        lambda: faker.random_element(
-            [choice[0] for choice in Production.PerformerType.choices]
-        )
-    )
+    attendance_mode = LazyFunction(lambda: faker.random_element([choice[0] for choice in Production.AttendanceMode.choices]))
+    performer_type = LazyFunction(lambda: faker.random_element([choice[0] for choice in Production.PerformerType.choices]))
 
 
 class ProductionTranslationFactory(factory.django.DjangoModelFactory):

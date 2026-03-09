@@ -231,14 +231,10 @@ def test_fetch_raises_on_absolute_endpoint(monkeypatch):
     """Absolute URLs passed as endpoint are rejected immediately."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
-    with pytest.raises(
-        viernulvier.ScraperError, match="endpoint must be a relative path"
-    ):
+    with pytest.raises(viernulvier.ScraperError, match="endpoint must be a relative path"):
         viernulvier.fetch_viernulvier(endpoint="https://evil.com/events")
 
-    with pytest.raises(
-        viernulvier.ScraperError, match="endpoint must be a relative path"
-    ):
+    with pytest.raises(viernulvier.ScraperError, match="endpoint must be a relative path"):
         viernulvier.fetch_viernulvier(endpoint="http://example.com/api")
 
 
@@ -252,9 +248,7 @@ def test_fetch_raises_on_json_ld_error_context(monkeypatch):
     }
     _mock_build_session(monkeypatch, [(200, error_payload)])
 
-    with pytest.raises(
-        viernulvier.ScraperError, match="status=403.*detail=Forbidden: access denied"
-    ):
+    with pytest.raises(viernulvier.ScraperError, match="status=403.*detail=Forbidden: access denied"):
         viernulvier.fetch_viernulvier(endpoint="/events")
 
 
@@ -351,9 +345,7 @@ def test_fetch_accepts_query_params(monkeypatch):
 
     monkeypatch.setattr(viernulvier, "_build_session", fake_build_session)
 
-    viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"created_at[after]": "2024-01-01T00:00:00Z"}
-    )
+    viernulvier.fetch_viernulvier(endpoint="/events", params={"created_at[after]": "2024-01-01T00:00:00Z"})
 
     assert captured["params"] == {"created_at[after]": "2024-01-01T00:00:00Z"}
 
@@ -393,9 +385,7 @@ def test_fetch_params_applied_to_initial_request_only(monkeypatch):
 
     monkeypatch.setattr(viernulvier, "_build_session", fake_build_session)
 
-    result = viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"created_at[after]": "2024-01-01T00:00:00Z"}
-    )
+    result = viernulvier.fetch_viernulvier(endpoint="/events", params={"created_at[after]": "2024-01-01T00:00:00Z"})
 
     assert len(result) == 2
     assert captured_params_list[0] == {"created_at[after]": "2024-01-01T00:00:00Z"}
@@ -480,9 +470,7 @@ def test_fetch_preserves_timestamp_format(monkeypatch):
     monkeypatch.setattr(viernulvier, "_build_session", fake_build_session)
 
     iso_timestamp = "2024-12-25T10:30:45Z"
-    viernulvier.fetch_viernulvier(
-        endpoint="/events", params={"created_at[after]": iso_timestamp}
-    )
+    viernulvier.fetch_viernulvier(endpoint="/events", params={"created_at[after]": iso_timestamp})
 
     assert captured["params"]["created_at[after]"] == iso_timestamp
 
@@ -654,9 +642,7 @@ class TestHTTPRetryEdgeCases:
 
         _mock_session(monkeypatch, responses)
         etag_cache = {"https://www.viernulvier.gent/api/v1/events": "old-etag"}
-        result = viernulvier.fetch_viernulvier(
-            endpoint="/events", etag_cache=etag_cache
-        )
+        result = viernulvier.fetch_viernulvier(endpoint="/events", etag_cache=etag_cache)
         assert result == []
         assert etag_cache["https://www.viernulvier.gent/api/v1/events"] == "old-etag"
 
@@ -777,9 +763,7 @@ class TestConcurrentPagination:
                     "@context": "ctx",
                     "member": [{"@id": "1"}],
                     "totalItems": 3,
-                    "view": {
-                        "last": "https://www.viernulvier.gent/api/v1/events?page=3"
-                    },
+                    "view": {"last": "https://www.viernulvier.gent/api/v1/events?page=3"},
                 }
             )
 
@@ -787,9 +771,7 @@ class TestConcurrentPagination:
         result = viernulvier.fetch_viernulvier(endpoint="/events")
         assert len(result) == 3
 
-    def test_page_fetch_error_logged_and_other_pages_returned(
-        self, monkeypatch, caplog
-    ):
+    def test_page_fetch_error_logged_and_other_pages_returned(self, monkeypatch, caplog):
         monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
         def responses(url, n):
@@ -800,9 +782,7 @@ class TestConcurrentPagination:
                     "@context": "ctx",
                     "member": [{"@id": "1"}],
                     "totalItems": 2,
-                    "view": {
-                        "last": "https://www.viernulvier.gent/api/v1/events?page=2"
-                    },
+                    "view": {"last": "https://www.viernulvier.gent/api/v1/events?page=2"},
                 }
             )
 
@@ -823,9 +803,7 @@ class TestConcurrentPagination:
                     "@context": "ctx",
                     "member": [{"@id": "1"}],
                     "totalItems": 2,
-                    "view": {
-                        "last": "https://www.viernulvier.gent/api/v1/events?page=2"
-                    },
+                    "view": {"last": "https://www.viernulvier.gent/api/v1/events?page=2"},
                 }
             )
 
@@ -846,9 +824,7 @@ class TestSequentialFallback:
                     {
                         "@context": "ctx",
                         "member": [{"@id": "1"}],
-                        "view": {
-                            "next": "https://www.viernulvier.gent/api/v1/events?page=2"
-                        },
+                        "view": {"next": "https://www.viernulvier.gent/api/v1/events?page=2"},
                     }
                 )
             return _make_status_response(304, {})
@@ -888,9 +864,7 @@ class TestSequentialFallback:
                     {
                         "@context": "ctx",
                         "member": [{"@id": "1"}],
-                        "view": {
-                            "next": "https://www.viernulvier.gent/api/v1/events?page=2"
-                        },
+                        "view": {"next": "https://www.viernulvier.gent/api/v1/events?page=2"},
                     }
                 )
             return _make_ok_response([{"@id": "2"}, {"@id": "3"}])
@@ -919,9 +893,7 @@ def test_sync_persists_items(monkeypatch):
             ],
         )
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 2
         assert ViernulvierItem.objects.count() == 2
@@ -937,14 +909,10 @@ def test_sync_updates_existing_item(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events", params=None, etag_cache=None: [
-                {"@id": "https://example.com/1", "title": "new"}
-            ],
+            lambda endpoint="/events", params=None, etag_cache=None: [{"@id": "https://example.com/1", "title": "new"}],
         )
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
@@ -959,16 +927,12 @@ def test_sync_skips_items_without_id(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events", params=None, etag_cache=None: [
-                {"title": "no id"}
-            ],
+            lambda endpoint="/events", params=None, etag_cache=None: [{"title": "no id"}],
         )
 
         caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 0
         assert ViernulvierItem.objects.count() == 0
@@ -983,16 +947,12 @@ def test_sync_skips_empty_string_id(monkeypatch, caplog):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events", params=None, etag_cache=None: [
-                {"@id": "", "title": "A"}
-            ],
+            lambda endpoint="/events", params=None, etag_cache=None: [{"@id": "", "title": "A"}],
         )
 
         caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 0
         assert ViernulvierItem.objects.count() == 0
@@ -1015,9 +975,7 @@ def test_sync_skips_duplicate_ids_in_batch(monkeypatch, caplog):
 
         caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
@@ -1041,9 +999,7 @@ def test_sync_handles_special_chars_and_nulls(monkeypatch):
             ],
         )
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 1
         obj = ViernulvierItem.objects.get(id="https://example.com/9")
@@ -1056,18 +1012,14 @@ def test_sync_handles_special_chars_and_nulls(monkeypatch):
 def test_sync_handles_large_payload(monkeypatch):
     """50-item batch is fully persisted."""
     with _temp_viernulvier_model() as ViernulvierItem:
-        items = [
-            {"@id": f"https://example.com/{i}", "title": f"T{i}"} for i in range(50)
-        ]
+        items = [{"@id": f"https://example.com/{i}", "title": f"T{i}"} for i in range(50)]
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
             lambda endpoint="/events", params=None, etag_cache=None: items,
         )
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 50
         assert ViernulvierItem.objects.count() == 50
@@ -1099,9 +1051,7 @@ def test_sync_continues_on_database_errors(monkeypatch, caplog):
         monkeypatch.setattr(ViernulvierItem.objects, "update_or_create", boom_once)
         caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
@@ -1127,9 +1077,7 @@ def test_sync_all_items_fail_returns_zero(monkeypatch):
 
         monkeypatch.setattr(ViernulvierItem.objects, "update_or_create", boom)
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 0
         assert ViernulvierItem.objects.count() == 0
@@ -1151,16 +1099,11 @@ def test_sync_logs_finish_message_with_saved_and_error_count(monkeypatch, caplog
 
         caplog.set_level(logging.INFO, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 1
         assert any(
-            "Sync complete:" in r.message
-            and "saved=1" in r.message
-            and "errors=1" in r.message
-            for r in caplog.records
+            "Sync complete:" in r.message and "saved=1" in r.message and "errors=1" in r.message for r in caplog.records
         )
 
 
@@ -1180,9 +1123,7 @@ def test_sync_continues_when_item_is_not_dict(monkeypatch, caplog):
 
         caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
@@ -1204,9 +1145,7 @@ def test_sync_passes_params_to_fetch(monkeypatch):
         monkeypatch.setattr(viernulvier, "fetch_viernulvier", mock_fetch)
 
         params = {"created_at[after]": "2024-01-01T00:00:00Z"}
-        viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events", params=params
-        )
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events", params=params)
 
         assert captured["endpoint"] == "/events"
         assert captured["params"] == params
@@ -1225,9 +1164,7 @@ def test_sync_without_params_still_works(monkeypatch):
             ],
         )
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
@@ -1264,9 +1201,7 @@ def test_sync_on_progress_called_with_cumulative_counts(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda **_: [
-                {"@id": f"https://example.com/{i}", "title": str(i)} for i in range(3)
-            ],
+            lambda **_: [{"@id": f"https://example.com/{i}", "title": str(i)} for i in range(3)],
         )
         calls = []
         sync_viernulvier(
@@ -1348,14 +1283,10 @@ def test_sync_etag_cache_passed_to_fetch(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint=None, params=None, etag_cache=None: (
-                captured.update({"etag_cache": etag_cache}) or []
-            ),
+            lambda endpoint=None, params=None, etag_cache=None: captured.update({"etag_cache": etag_cache}) or [],
         )
         shared_cache = {"key": "val"}
-        sync_viernulvier(
-            M, _PassThroughConfig(), endpoint="/e", etag_cache=shared_cache
-        )
+        sync_viernulvier(M, _PassThroughConfig(), endpoint="/e", etag_cache=shared_cache)
         assert captured["etag_cache"] is shared_cache
 
 
@@ -1380,9 +1311,7 @@ def test_sync_creates_import_log_on_success(monkeypatch):
             ],
         )
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 2
         assert ImportLog.objects.count() == 1
@@ -1415,9 +1344,7 @@ def test_sync_creates_import_log_with_params_in_source(monkeypatch):
         )
 
         params = {"created_at[after]": "2024-01-01T00:00:00Z", "page": "1"}
-        viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events", params=params
-        )
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events", params=params)
 
         log = ImportLog.objects.first()
         assert "viernulvier:/events?" in log.source
@@ -1442,9 +1369,7 @@ def test_sync_creates_import_log_on_partial_success(monkeypatch):
             ],
         )
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 2
         log = ImportLog.objects.first()
@@ -1471,9 +1396,7 @@ def test_sync_creates_import_log_on_all_failures(monkeypatch):
             ],
         )
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 0
         log = ImportLog.objects.first()
@@ -1498,9 +1421,7 @@ def test_sync_creates_import_log_on_fetch_exception(monkeypatch):
         monkeypatch.setattr(viernulvier, "fetch_viernulvier", failing_fetch)
 
         with pytest.raises(viernulvier.ScraperError):
-            viernulvier.sync_viernulvier(
-                ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-            )
+            viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         log = ImportLog.objects.first()
         assert log.status == ImportLog.Status.FAILED
@@ -1525,9 +1446,7 @@ def test_sync_creates_import_log_on_empty_response(monkeypatch):
             lambda endpoint="/events", params=None, etag_cache=None: [],
         )
 
-        count = viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        count = viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert count == 0
         log = ImportLog.objects.first()
@@ -1552,9 +1471,7 @@ def test_sync_import_log_timestamps_are_sequential(monkeypatch):
             ],
         )
 
-        viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         log = ImportLog.objects.first()
         assert log.finished_at >= log.started_at
@@ -1575,12 +1492,8 @@ def test_sync_import_log_tracks_multiple_syncs(monkeypatch):
             ],
         )
 
-        viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
-        viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
 
         assert ImportLog.objects.count() == 2
         logs = ImportLog.objects.order_by("started_at")
@@ -1603,12 +1516,8 @@ def test_sync_import_log_different_endpoints_tracked_separately(monkeypatch):
             ],
         )
 
-        viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/events"
-        )
-        viernulvier.sync_viernulvier(
-            ViernulvierItem, _PassThroughConfig(), endpoint="/venues"
-        )
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/events")
+        viernulvier.sync_viernulvier(ViernulvierItem, _PassThroughConfig(), endpoint="/venues")
 
         sources = list(ImportLog.objects.values_list("source", flat=True))
         assert "viernulvier:/events" in sources
@@ -1630,21 +1539,15 @@ def test_sync_validation_error_formats_messages(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events", params=None, etag_cache=None: [
-                {"@id": "1", "title": "A"}
-            ],
+            lambda endpoint="/events", params=None, etag_cache=None: [{"@id": "1", "title": "A"}],
         )
 
         def raise_validation(*_args, **_kwargs):
             raise ValidationError({"title": ["invalid"], "__all__": ["bad state"]})
 
-        monkeypatch.setattr(
-            ViernulvierItem.objects, "update_or_create", raise_validation
-        )
+        monkeypatch.setattr(ViernulvierItem.objects, "update_or_create", raise_validation)
 
-        saved = viernulvier.sync_viernulvier(
-            ViernulvierItem, ModelSyncConfig(lookup_field="id"), endpoint="/events"
-        )
+        saved = viernulvier.sync_viernulvier(ViernulvierItem, ModelSyncConfig(lookup_field="id"), endpoint="/events")
 
         assert saved == 0
         log = ImportLog.objects.first()
@@ -1663,21 +1566,15 @@ def test_sync_database_error_branch(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events", params=None, etag_cache=None: [
-                {"@id": "1", "title": "A"}
-            ],
+            lambda endpoint="/events", params=None, etag_cache=None: [{"@id": "1", "title": "A"}],
         )
 
         def raise_integrity(*_args, **_kwargs):
             raise IntegrityError("db exploded")
 
-        monkeypatch.setattr(
-            ViernulvierItem.objects, "update_or_create", raise_integrity
-        )
+        monkeypatch.setattr(ViernulvierItem.objects, "update_or_create", raise_integrity)
 
-        saved = viernulvier.sync_viernulvier(
-            ViernulvierItem, ModelSyncConfig(lookup_field="id"), endpoint="/events"
-        )
+        saved = viernulvier.sync_viernulvier(ViernulvierItem, ModelSyncConfig(lookup_field="id"), endpoint="/events")
 
         assert saved == 0
         log = ImportLog.objects.first()
@@ -1696,9 +1593,7 @@ def test_sync_unexpected_error_branch(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events", params=None, etag_cache=None: [
-                {"@id": "1", "title": "A"}
-            ],
+            lambda endpoint="/events", params=None, etag_cache=None: [{"@id": "1", "title": "A"}],
         )
 
         def raise_runtime(*_args, **_kwargs):
@@ -1706,16 +1601,11 @@ def test_sync_unexpected_error_branch(monkeypatch):
 
         monkeypatch.setattr(ViernulvierItem.objects, "update_or_create", raise_runtime)
 
-        saved = viernulvier.sync_viernulvier(
-            ViernulvierItem, ModelSyncConfig(lookup_field="id"), endpoint="/events"
-        )
+        saved = viernulvier.sync_viernulvier(ViernulvierItem, ModelSyncConfig(lookup_field="id"), endpoint="/events")
 
         assert saved == 0
         log = ImportLog.objects.first()
-        assert (
-            "Unexpected error for 1: RuntimeError: unexpected crash"
-            in log.error_message
-        )
+        assert "Unexpected error for 1: RuntimeError: unexpected crash" in log.error_message
         assert log.records_total == 1
         assert log.records_failed == 1
 
@@ -1730,9 +1620,7 @@ def test_sync_calls_m2m_and_commits_savepoint(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events", params=None, etag_cache=None: [
-                {"@id": "1", "title": "A", "rels": []}
-            ],
+            lambda endpoint="/events", params=None, etag_cache=None: [{"@id": "1", "title": "A", "rels": []}],
         )
 
         called = {"m2m": 0, "commits": 0}
@@ -1762,9 +1650,7 @@ def test_sync_calls_m2m_and_commits_savepoint(monkeypatch):
             ],
         )
 
-        saved = viernulvier.sync_viernulvier(
-            ViernulvierItem, config, endpoint="/events"
-        )
+        saved = viernulvier.sync_viernulvier(ViernulvierItem, config, endpoint="/events")
 
         assert saved == 1
         assert called["m2m"] == 1
@@ -1780,9 +1666,7 @@ def test_sync_executes_translations(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint="/events", params=None, etag_cache=None: [
-                {"@id": "1", "title": "A"}
-            ],
+            lambda endpoint="/events", params=None, etag_cache=None: [{"@id": "1", "title": "A"}],
         )
 
         called = {"translations": 0}
@@ -1790,9 +1674,7 @@ def test_sync_executes_translations(monkeypatch):
         def fake_sync_all_translations(*_args, **_kwargs):
             called["translations"] += 1
 
-        monkeypatch.setattr(
-            viernulvier, "_sync_all_translations", fake_sync_all_translations
-        )
+        monkeypatch.setattr(viernulvier, "_sync_all_translations", fake_sync_all_translations)
 
         config = ModelSyncConfig(
             lookup_field="id",
@@ -1806,9 +1688,7 @@ def test_sync_executes_translations(monkeypatch):
             ],
         )
 
-        saved = viernulvier.sync_viernulvier(
-            ViernulvierItem, config, endpoint="/events"
-        )
+        saved = viernulvier.sync_viernulvier(ViernulvierItem, config, endpoint="/events")
 
         assert saved == 1
         assert called["translations"] == 1
@@ -1828,9 +1708,7 @@ class TestFlexibleFieldMapping:
         field = Event._meta.get_field("starts_at")
         result = _parse_field_value(field, "-0001-01-01T00:00:00+00:00")
 
-        assert result == datetime.datetime(
-            1, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
-        )
+        assert result == datetime.datetime(1, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
 
     def test_throws_no_error_for_year_zero_date(self):
         """Year-0000 datetime strings are repaired to 1970."""
@@ -1839,9 +1717,7 @@ class TestFlexibleFieldMapping:
         field = Event._meta.get_field("starts_at")
         result = _parse_field_value(field, "0000-01-01T00:00:00+00:00")
 
-        assert result == datetime.datetime(
-            1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
-        )
+        assert result == datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
 
     def test_returns_none_for_missing_value(self):
         from apps.events.models import Event
@@ -1858,9 +1734,7 @@ class TestFlexibleFieldMapping:
             "ticketing_url": "https://example.com",
         }
         fk_cache = FKCache()
-        defaults = viernulvier._build_defaults(
-            Event, item, _PassThroughConfig(), fk_cache
-        )
+        defaults = viernulvier._build_defaults(Event, item, _PassThroughConfig(), fk_cache)
 
         assert "ticketing_url" in defaults
         assert defaults["ticketing_url"] == "https://example.com"
@@ -1886,9 +1760,7 @@ class TestFlexibleFieldMapping:
             "yetAnotherField": {"nested": "object"},
         }
         fk_cache = FKCache()
-        defaults = viernulvier._build_defaults(
-            EventPrice, item, _PassThroughConfig(), fk_cache
-        )
+        defaults = viernulvier._build_defaults(EventPrice, item, _PassThroughConfig(), fk_cache)
 
         assert "event_id" in defaults
         assert "price_rank_id" in defaults
@@ -1917,9 +1789,7 @@ class TestFlexibleFieldMapping:
             "available": 75,
         }
         fk_cache = FKCache()
-        defaults = viernulvier._build_defaults(
-            EventPrice, item, _PassThroughConfig(), fk_cache
-        )
+        defaults = viernulvier._build_defaults(EventPrice, item, _PassThroughConfig(), fk_cache)
 
         assert "price_rank_id" in defaults
         assert "event_id" in defaults
@@ -1994,9 +1864,7 @@ class TestParseFieldValue:
 
     def test_datetimefield_unparseable_returns_none(self, caplog):
         caplog.set_level(logging.DEBUG, logger=viernulvier.logger.name)
-        assert (
-            _parse_field_value(models.DateTimeField(), "definitely-not-a-date") is None
-        )
+        assert _parse_field_value(models.DateTimeField(), "definitely-not-a-date") is None
 
     def test_datefield_valid_string(self):
         result = _parse_field_value(models.DateField(), "2024-07-04")
@@ -2047,9 +1915,7 @@ def test_parse_field_value_none_returns_none():
 
 
 class TestNormalizeUrl:
-    @pytest.mark.parametrize(
-        "value", ["", "0", "none", "null", "undefined", "-", "n/a", "nvt", None]
-    )
+    @pytest.mark.parametrize("value", ["", "0", "none", "null", "undefined", "-", "n/a", "nvt", None])
     def test_empty_like_values_return_empty_string(self, value):
         assert normalize_url(value) == ""
 
@@ -2139,16 +2005,11 @@ def test_extract_external_id_handles_int():
 
 
 def test_extract_external_id_handles_dict_at_id():
-    assert (
-        viernulvier._extract_external_id_from_url({"@id": "/api/v1/x"}) == "/api/v1/x"
-    )
+    assert viernulvier._extract_external_id_from_url({"@id": "/api/v1/x"}) == "/api/v1/x"
 
 
 def test_extract_external_id_handles_dict_external_id_fallback():
-    assert (
-        viernulvier._extract_external_id_from_url({"external_id": "test123"})
-        == "test123"
-    )
+    assert viernulvier._extract_external_id_from_url({"external_id": "test123"}) == "test123"
 
 
 def test_extract_external_id_handles_dict_id_fallback():
@@ -2191,9 +2052,7 @@ def test_extract_lookup_value_uses_api_id_key():
 
 def test_extract_lookup_value_falls_back_to_external_id():
     config = ModelSyncConfig(api_id_key="@id")
-    assert (
-        viernulvier._extract_lookup_value({"external_id": "ext123"}, config) == "ext123"
-    )
+    assert viernulvier._extract_lookup_value({"external_id": "ext123"}, config) == "ext123"
 
 
 def test_extract_lookup_value_falls_back_to_id():
@@ -2203,14 +2062,8 @@ def test_extract_lookup_value_falls_back_to_id():
 
 def test_extract_lookup_value_unwraps_nested_dict():
     config = ModelSyncConfig(api_id_key="@id")
-    assert (
-        viernulvier._extract_lookup_value({"external_id": {"id": "x-1"}}, config)
-        == "x-1"
-    )
-    assert (
-        viernulvier._extract_lookup_value({"@id": {"@id": "nested123"}}, config)
-        == "nested123"
-    )
+    assert viernulvier._extract_lookup_value({"external_id": {"id": "x-1"}}, config) == "x-1"
+    assert viernulvier._extract_lookup_value({"@id": {"@id": "nested123"}}, config) == "nested123"
 
 
 def test_extract_lookup_value_strips_whitespace():
@@ -2512,9 +2365,7 @@ def test_build_defaults_uses_auto_fk_resolver(monkeypatch):
     with connection.schema_editor() as schema_editor:
         schema_editor.create_model(AutoFkModel)
     try:
-        monkeypatch.setattr(
-            viernulvier, "_resolve_fk", lambda _field, _raw, _cache: 123
-        )
+        monkeypatch.setattr(viernulvier, "_resolve_fk", lambda _field, _raw, _cache: 123)
 
         config = ModelSyncConfig(field_map={"fk_auto": "parent"}, lookup_field="id")
         fk_cache = FKCache()
@@ -2579,9 +2430,7 @@ def test_build_defaults_skips_none_field_map_value():
             lookup_field="external_id",
         )
         fk_cache = FKCache()
-        defaults = viernulvier._build_defaults(
-            TestModel, {"api_name": "should_be_ignored"}, config, fk_cache
-        )
+        defaults = viernulvier._build_defaults(TestModel, {"api_name": "should_be_ignored"}, config, fk_cache)
         assert "name" not in defaults
     finally:
         with connection.schema_editor() as schema_editor:
@@ -2742,15 +2591,11 @@ class TestSyncAllTranslations:
             parent_fk="parent",
             flat_field="title",
         )
-        viernulvier._sync_all_translations(
-            SimpleNamespace(pk=1), {"title": "not-dict"}, [cfg]
-        )
+        viernulvier._sync_all_translations(SimpleNamespace(pk=1), {"title": "not-dict"}, [cfg])
 
     def test_returns_on_empty_config_list(self):
         """Empty translation_configs list causes immediate return."""
-        viernulvier._sync_all_translations(
-            SimpleNamespace(pk=1), {"title": {"nl": "X"}}, []
-        )
+        viernulvier._sync_all_translations(SimpleNamespace(pk=1), {"title": {"nl": "X"}}, [])
 
     def test_logs_warning_on_missing_field(self, caplog):
         """Warning is logged when a configured flat_field does not exist on the model."""
@@ -2771,9 +2616,7 @@ class TestSyncAllTranslations:
         )
 
         caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
-        viernulvier._sync_all_translations(
-            SimpleNamespace(pk=1), {"title": {"nl": "Hallo"}}, [cfg]
-        )
+        viernulvier._sync_all_translations(SimpleNamespace(pk=1), {"title": {"nl": "Hallo"}}, [cfg])
         assert any("Translation field" in r.message for r in caplog.records)
 
     def test_logs_error_on_update_or_create_failure(self, caplog):
@@ -2801,9 +2644,7 @@ class TestSyncAllTranslations:
         )
 
         caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
-        viernulvier._sync_all_translations(
-            SimpleNamespace(pk=1), {"title": {"nl": "Hallo"}}, [cfg]
-        )
+        viernulvier._sync_all_translations(SimpleNamespace(pk=1), {"title": {"nl": "Hallo"}}, [cfg])
         assert any("Error syncing" in r.message for r in caplog.records)
 
     def test_skips_none_language_values(self):
@@ -2877,9 +2718,7 @@ class TestSyncAllTranslations:
             value_transforms={"title": lambda v: None},
         )
 
-        viernulvier._sync_all_translations(
-            SimpleNamespace(pk=1), {"title": {"nl": "hallo"}}, [cfg]
-        )
+        viernulvier._sync_all_translations(SimpleNamespace(pk=1), {"title": {"nl": "hallo"}}, [cfg])
 
         mock_manager.update_or_create.assert_not_called()
 
@@ -2925,9 +2764,7 @@ class TestSyncM2M:
             related_fk="related",
         )
         fk_cache = FKCache()
-        viernulvier._sync_m2m(
-            SimpleNamespace(pk=1), {"genres": "not-a-list"}, cfg, fk_cache
-        )
+        viernulvier._sync_m2m(SimpleNamespace(pk=1), {"genres": "not-a-list"}, cfg, fk_cache)
         through_model.objects.filter.assert_not_called()
 
     def test_warns_when_related_object_not_found(self, caplog):
@@ -2964,9 +2801,7 @@ class TestSyncM2M:
         fk_cache._loaded[FakeRelatedModel] = True
 
         caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
-        viernulvier._sync_m2m(
-            SimpleNamespace(pk=1), {"items": ["ext-missing"]}, cfg, fk_cache
-        )
+        viernulvier._sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-missing"]}, cfg, fk_cache)
         assert any("not found" in r.message for r in caplog.records)
 
     def test_logs_error_on_bulk_create_fallback_failure(self, caplog):
@@ -3011,9 +2846,7 @@ class TestSyncM2M:
         fk_cache.set(FakeRelatedModel, "ext-1", 1)
 
         caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
-        viernulvier._sync_m2m(
-            SimpleNamespace(pk=1), {"items": ["ext-1"]}, cfg, fk_cache
-        )
+        viernulvier._sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-1"]}, cfg, fk_cache)
         assert any("Error creating" in r.message for r in caplog.records)
 
     def test_extra_fields_from_dict_item_applied(self):
@@ -3210,9 +3043,7 @@ def test_sequential_page_etag_stored_in_cache(monkeypatch):
                 {
                     "@context": "ctx",
                     "member": [{"@id": "1"}],
-                    "view": {
-                        "next": "https://www.viernulvier.gent/api/v1/events?page=2"
-                    },
+                    "view": {"next": "https://www.viernulvier.gent/api/v1/events?page=2"},
                 }
             )
         return _make_ok_response({"member": [{"@id": "2"}]}, etag="seq-page-2-etag")
@@ -3240,10 +3071,7 @@ def test_parse_field_value_urlfield_branch(monkeypatch):
 
     monkeypatch.setattr(builtins, "isinstance", patched_isinstance)
 
-    assert (
-        viernulvier._parse_field_value(url_field, "https://example.com")
-        == "https://example.com"
-    )
+    assert viernulvier._parse_field_value(url_field, "https://example.com") == "https://example.com"
     assert viernulvier._parse_field_value(url_field, "not-a-url") == ""
 
 
@@ -3354,9 +3182,7 @@ def test_sync_caches_external_id_after_create(monkeypatch):
         monkeypatch.setattr(
             viernulvier,
             "fetch_viernulvier",
-            lambda endpoint=None, params=None, etag_cache=None: [
-                {"@id": "ext-001", "title": "Cached Item"}
-            ],
+            lambda endpoint=None, params=None, etag_cache=None: [{"@id": "ext-001", "title": "Cached Item"}],
         )
 
         captured_cache = {}
@@ -3412,10 +3238,7 @@ def test_build_defaults_logs_warning_for_nonexistent_field(caplog):
         # Valid field is still mapped
         assert defaults.get("title") == "hello"
         # Warning was logged for the missing field
-        assert any(
-            "does_not_exist_on_model" in r.message and "does not exist" in r.message
-            for r in caplog.records
-        )
+        assert any("does_not_exist_on_model" in r.message and "does not exist" in r.message for r in caplog.records)
     finally:
         with connection.schema_editor() as se:
             se.delete_model(SimpleModel)

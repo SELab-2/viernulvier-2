@@ -71,10 +71,7 @@ class TestTagViewSetClass(TestCase):
         queryset = TagViewSet().get_queryset()
         lookups = queryset._prefetch_related_lookups
 
-        lookup_names = [
-            lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup
-            for lookup in lookups
-        ]
+        lookup_names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
 
         self.assertIn("translations", lookup_names)
 

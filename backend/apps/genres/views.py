@@ -38,9 +38,5 @@ class GenreViewSet(ApiModelViewSet):
     Each genre links to a usage context and supports multiple translations.
     """
 
-    queryset = (
-        Genre.objects.select_related("use_as")
-        .prefetch_related("translations__language")
-        .all()
-    )
+    queryset = Genre.objects.select_related("use_as").prefetch_related("translations__language").all()
     serializer_class = GenreSerializer

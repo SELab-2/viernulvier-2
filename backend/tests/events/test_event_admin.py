@@ -41,9 +41,7 @@ def admin_changelist_url(model):
 
 
 def admin_change_url(model, pk):
-    return reverse(
-        f"admin:{model._meta.app_label}_{model._meta.model_name}_change", args=[pk]
-    )
+    return reverse(f"admin:{model._meta.app_label}_{model._meta.model_name}_change", args=[pk])
 
 
 # ---------------------------------------------------------------------------
@@ -112,9 +110,7 @@ class TestEventsAdminConfiguration(TestCase):
         self.assertEqual(EventPriceInline.extra, 0)
         self.assertIn("price_rank", EventPriceInline.autocomplete_fields)
         self.assertIn("price", EventPriceInline.autocomplete_fields)
-        self.assertEqual(
-            EventPriceInline.fields, ("price_rank", "price", "amount", "available")
-        )
+        self.assertEqual(EventPriceInline.fields, ("price_rank", "price", "amount", "available"))
 
     def test_production_admin_link_returns_dash_without_object(self):
         admin_obj = EventAdmin(Event, self.site)
@@ -195,9 +191,7 @@ class TestEventsAdminChangelists(TestCase):
 
     def test_event_changeform_shows_production_admin_link(self):
         response = self.client.get(admin_change_url(Event, self.event.pk))
-        production_admin_url = reverse(
-            "admin:productions_production_change", args=[self.prod.pk]
-        )
+        production_admin_url = reverse("admin:productions_production_change", args=[self.prod.pk])
 
         self.assertContains(response, production_admin_url)
 

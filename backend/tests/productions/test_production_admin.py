@@ -470,16 +470,12 @@ class TestProductionAdminChangelist(TestCase):
     def test_changelist_filter_by_attendance_mode(self):
         ProductionFactory.create(attendance_mode="offline")
         url = reverse("admin:productions_production_changelist")
-        self.assertEqual(
-            self.client.get(url, {"attendance_mode": "offline"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"attendance_mode": "offline"}).status_code, 200)
 
     def test_changelist_filter_by_performer_type(self):
         ProductionFactory.create(performer_type="solo")
         url = reverse("admin:productions_production_changelist")
-        self.assertEqual(
-            self.client.get(url, {"performer_type": "solo"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"performer_type": "solo"}).status_code, 200)
 
     def test_changelist_search(self):
         url = reverse("admin:productions_production_changelist")
@@ -498,29 +494,21 @@ class TestProductionTranslationAdminChangelist(TestCase):
     def test_changeform_returns_200(self):
         production = ProductionFactory.create()
         language = LanguageFactory.create(code="en", name="English")
-        translation = ProductionTranslationFactory.create(
-            production=production, language=language, title="Test Title"
-        )
-        url = reverse(
-            "admin:productions_productiontranslation_change", args=[translation.pk]
-        )
+        translation = ProductionTranslationFactory.create(production=production, language=language, title="Test Title")
+        url = reverse("admin:productions_productiontranslation_change", args=[translation.pk])
         self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changelist_shows_translation_title(self):
         production = ProductionFactory.create()
         language = LanguageFactory.create(code="en", name="English")
-        ProductionTranslationFactory.create(
-            production=production, language=language, title="Visible Title"
-        )
+        ProductionTranslationFactory.create(production=production, language=language, title="Visible Title")
         url = reverse("admin:productions_productiontranslation_changelist")
         self.assertContains(self.client.get(url), "Visible Title")
 
     def test_changelist_filter_by_language_code(self):
         """Changelist filter must use language__code lookup."""
         url = reverse("admin:productions_productiontranslation_changelist")
-        self.assertEqual(
-            self.client.get(url, {"language__code": "en"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"language__code": "en"}).status_code, 200)
 
 
 class TestProductionGenreAdminChangelist(TestCase):
@@ -546,7 +534,5 @@ class TestProductionTagAdminChangelist(TestCase):
         production = ProductionFactory.create()
         tag = TagFactory.create()
         production_tag = ProductionTagFactory.create(production=production, tag=tag)
-        url = reverse(
-            "admin:productions_productiontag_change", args=[production_tag.pk]
-        )
+        url = reverse("admin:productions_productiontag_change", args=[production_tag.pk])
         self.assertEqual(self.client.get(url).status_code, 200)

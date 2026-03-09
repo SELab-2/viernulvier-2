@@ -62,12 +62,8 @@ class TestLocationSerializerTranslations(TestCase):
         self.lang_en = LanguageFactory(code="en", name="English")
         self.lang_nl = LanguageFactory(code="nl", name="Dutch")
         self.location = LocationFactory()
-        LocationTranslationFactory(
-            location=self.location, language=self.lang_en, name="Main Hall"
-        )
-        LocationTranslationFactory(
-            location=self.location, language=self.lang_nl, name="Hoofdzaal"
-        )
+        LocationTranslationFactory(location=self.location, language=self.lang_en, name="Main Hall")
+        LocationTranslationFactory(location=self.location, language=self.lang_nl, name="Hoofdzaal")
 
     def test_translated_name_dict(self):
         data = LocationSerializer(self.location).data
@@ -181,12 +177,8 @@ class TestHallDisplayNameBaseLanguage:
         nl = Language.objects.create(code="nl", name="Dutch")
 
         hall = _make_hall()
-        HallTranslation.objects.create(
-            hall=hall, language=nl, name="Grote Zaal", remark="Opmerking NL"
-        )
-        HallTranslation.objects.create(
-            hall=hall, language=en, name="Main Hall", remark="Remark EN"
-        )
+        HallTranslation.objects.create(hall=hall, language=nl, name="Grote Zaal", remark="Opmerking NL")
+        HallTranslation.objects.create(hall=hall, language=en, name="Main Hall", remark="Remark EN")
 
         data = HallSerializer(hall, context=_display_ctx()).data
         assert data["display_name"] == "Main Hall"

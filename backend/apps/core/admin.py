@@ -57,9 +57,7 @@ class TwoStepBulkActionMixin:
 
     def _action_changelist_url(self):
         """Return changelist URL for the current admin model."""
-        return reverse(
-            f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist"
-        )
+        return reverse(f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist")
 
     def _render_two_step_action_page(
         self,

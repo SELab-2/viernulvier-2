@@ -29,9 +29,7 @@ class LocationFactory(factory.django.DjangoModelFactory):
     country = factory.LazyFunction(faker.country)
     phone_1 = factory.LazyFunction(faker.phone_number)
     phone_2 = factory.LazyFunction(faker.phone_number)
-    is_own_location = factory.LazyFunction(
-        lambda: faker.boolean(chance_of_getting_true=50)
-    )
+    is_own_location = factory.LazyFunction(lambda: faker.boolean(chance_of_getting_true=50))
 
 
 class LocationTranslationFactory(factory.django.DjangoModelFactory):
@@ -40,9 +38,7 @@ class LocationTranslationFactory(factory.django.DjangoModelFactory):
 
     location = factory.SubFactory(LocationFactory)
     language = factory.SubFactory(LanguageFactory)
-    name = factory.LazyAttribute(
-        lambda o: f"{o.location.city} {o.location.street} ({o.language.code})"
-    )
+    name = factory.LazyAttribute(lambda o: f"{o.location.city} {o.location.street} ({o.language.code})")
 
 
 # ==============================
@@ -76,12 +72,8 @@ class HallFactory(factory.django.DjangoModelFactory):
         model = Hall
 
     space = factory.SubFactory(SpaceFactory)
-    seat_selection = factory.LazyFunction(
-        lambda: faker.boolean(chance_of_getting_true=50)
-    )
-    open_seating = factory.LazyFunction(
-        lambda: faker.boolean(chance_of_getting_true=50)
-    )
+    seat_selection = factory.LazyFunction(lambda: faker.boolean(chance_of_getting_true=50))
+    open_seating = factory.LazyFunction(lambda: faker.boolean(chance_of_getting_true=50))
 
 
 class HallTranslationFactory(factory.django.DjangoModelFactory):

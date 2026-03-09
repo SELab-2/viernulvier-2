@@ -258,6 +258,4 @@ class TestImportLogAdminChangelist(TestCase):
     def test_changelist_search_by_error_message(self):
         make_import_log(status=ImportLog.Status.FAILED, error_message="connection refused")
         url = reverse("admin:import_log_importlog_changelist")
-        self.assertEqual(
-            self.client.get(url, {"q": "connection refused"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"q": "connection refused"}).status_code, 200)

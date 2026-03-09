@@ -79,9 +79,7 @@ class TestMediaItem:
 
     def test_position_defaults_to_zero(self):
         gallery = MediaGalleryFactory()
-        item = MediaItemFactory.create(
-            gallery=gallery, type=MediaItem.MediaItemType.IMAGE, position=0
-        )
+        item = MediaItemFactory.create(gallery=gallery, type=MediaItem.MediaItemType.IMAGE, position=0)
         assert item.position == 0
 
     def test_ordering_by_position(self):
@@ -103,15 +101,11 @@ class TestMediaItem:
 
     def test_str_with_filename(self):
         """IMAGE type value is 'foto', so str must reflect that."""
-        item = MediaItemFactory(
-            type=MediaItem.MediaItemType.IMAGE, original_filename="banner.jpg"
-        )
+        item = MediaItemFactory(type=MediaItem.MediaItemType.IMAGE, original_filename="banner.jpg")
         assert str(item) == "foto - banner.jpg"
 
     def test_str_without_filename(self):
-        item = MediaItemFactory(
-            type=MediaItem.MediaItemType.VIDEO, original_filename=""
-        )
+        item = MediaItemFactory(type=MediaItem.MediaItemType.VIDEO, original_filename="")
         assert str(item) == "video - Unnamed"
 
     def test_image_type_value_is_foto(self):

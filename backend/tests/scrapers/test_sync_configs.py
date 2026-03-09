@@ -60,9 +60,7 @@ from apps.tags.models import Tag
 def get_model_field_names(model):
     """Get all field names from a Django model, excluding auto-generated fields."""
     return {
-        field.name
-        for field in model._meta.get_fields()
-        if isinstance(field, django_models.Field) and not field.auto_created
+        field.name for field in model._meta.get_fields() if isinstance(field, django_models.Field) and not field.auto_created
     }
 
 
@@ -254,10 +252,7 @@ class TestConfigCompatibility:
 
             for api_field, model_field in config.field_map.items():
                 if model_field is not None:
-                    field_exists = (
-                        model_field in model_fields
-                        or f"{model_field}_id" in model_fields
-                    )
+                    field_exists = model_field in model_fields or f"{model_field}_id" in model_fields
                     assert field_exists, (
                         f"Config for {model.__name__}: mapped field '{model_field}' "
                         f"(from API field '{api_field}') doesn't exist in model"
@@ -277,8 +272,7 @@ class TestConfigCompatibility:
 
                 for field_name in config.value_transforms.keys():
                     assert field_name in model_fields, (
-                        f"Config for {model.__name__}: value_transform field '{field_name}' "
-                        f"doesn't exist in model"
+                        f"Config for {model.__name__}: value_transform field '{field_name}' doesn't exist in model"
                     )
 
     def test_fk_resolvers_reference_model_fields(self):
@@ -293,8 +287,7 @@ class TestConfigCompatibility:
 
                 for field_name in config.fk_resolvers.keys():
                     assert field_name in model_fields, (
-                        f"Config for {model.__name__}: fk_resolver field '{field_name}' "
-                        f"doesn't exist in model"
+                        f"Config for {model.__name__}: fk_resolver field '{field_name}' doesn't exist in model"
                     )
 
 
@@ -332,9 +325,7 @@ class TestSyncStepsConfiguration:
     def test_sync_steps_unique_endpoints(self):
         """Test that sync step endpoints are unique."""
         endpoints = [endpoint for *_, endpoint in SYNC_STEPS]
-        assert len(endpoints) == len(set(endpoints)), (
-            "Duplicate sync step endpoints found"
-        )
+        assert len(endpoints) == len(set(endpoints)), "Duplicate sync step endpoints found"
 
     def test_sync_steps_matches_configs(self):
         """Test that all defined configs are used in SYNC_STEPS."""
@@ -358,9 +349,7 @@ class TestSyncStepsConfiguration:
         ]
 
         for config in defined_configs:
-            assert config in configs_in_steps, (
-                f"Config {config} is defined but not used in SYNC_STEPS"
-            )
+            assert config in configs_in_steps, f"Config {config} is defined but not used in SYNC_STEPS"
 
         assert len(configs_in_steps) == len(defined_configs), (
             f"SYNC_STEPS has {len(configs_in_steps)} configs but {len(defined_configs)} are defined"
@@ -404,14 +393,10 @@ class TestExternalIDMapping:
 
         for name, model, config in configs:
             model_fields = get_model_field_names(model)
-            assert "external_id" in model_fields, (
-                f"Model {name} doesn't have external_id field"
-            )
+            assert "external_id" in model_fields, f"Model {name} doesn't have external_id field"
 
             if "@id" in config.field_map:
-                assert config.field_map["@id"] == "external_id", (
-                    f"Config for {name} doesn't map '@id' to 'external_id'"
-                )
+                assert config.field_map["@id"] == "external_id", f"Config for {name} doesn't map '@id' to 'external_id'"
 
 
 # ===========================================================================
@@ -438,9 +423,7 @@ class TestConfigIntegration:
 
         for config in all_configs:
             for attr in required_attributes:
-                assert hasattr(config, attr), (
-                    f"Config {config} missing required attribute '{attr}'"
-                )
+                assert hasattr(config, attr), f"Config {config} missing required attribute '{attr}'"
 
     def test_translation_configs_compatible_with_sync_translations(self):
         """Test that translation configs have required attributes."""
@@ -457,9 +440,7 @@ class TestConfigIntegration:
                         "language_fk",
                     ]
                     for attr in required:
-                        assert hasattr(trans_cfg, attr), (
-                            f"TranslationConfig missing required attribute '{attr}'"
-                        )
+                        assert hasattr(trans_cfg, attr), f"TranslationConfig missing required attribute '{attr}'"
 
     def test_m2m_configs_compatible_with_sync_m2m(self):
         """Test that M2M configs have required attributes."""
@@ -477,9 +458,7 @@ class TestConfigIntegration:
                         "related_lookup_field",
                     ]
                     for attr in required:
-                        assert hasattr(m2m_cfg, attr), (
-                            f"M2MConfig missing required attribute '{attr}'"
-                        )
+                        assert hasattr(m2m_cfg, attr), f"M2MConfig missing required attribute '{attr}'"
 
     def test_lookup_field_exists_in_all_models(self):
         """Test that lookup_field specified in config exists in the model."""
@@ -487,9 +466,7 @@ class TestConfigIntegration:
             model_fields = get_model_field_names(model)
             lookup_field = config.lookup_field
 
-            assert lookup_field in model_fields, (
-                f"Model {model.__name__} doesn't have lookup_field '{lookup_field}'"
-            )
+            assert lookup_field in model_fields, f"Model {model.__name__} doesn't have lookup_field '{lookup_field}'"
 
 
 # ===========================================================================
@@ -507,9 +484,7 @@ class TestSyncCommandOptions:
 
         command.add_arguments(parser)
 
-        option_strings = {
-            option for action in parser._actions for option in action.option_strings
-        }
+        option_strings = {option for action in parser._actions for option in action.option_strings}
 
         assert "--only" in option_strings
         for prefix in command.FILTER_FIELDS:
@@ -553,9 +528,7 @@ class TestSyncCommandOptions:
         command.stdout = OutputWrapper(stdout_buffer)
         command.stderr = OutputWrapper(stderr_buffer)
 
-        with patch(
-            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier"
-        ) as sync_mock:
+        with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier") as sync_mock:
             result = command.handle(only="not_a_real_step")
 
         assert result is None
@@ -573,13 +546,9 @@ def test_make_progress_callback(monkeypatch, tqdm_installed, capsys):
     if tqdm_installed:
         fake_bar = SimpleNamespace(n=0, refresh=Mock(), close=Mock())
         fake_tqdm = Mock(return_value=fake_bar)
-        monkeypatch.setattr(
-            "apps.imports.management.commands.sync_viernulvier._tqdm", fake_tqdm
-        )
+        monkeypatch.setattr("apps.imports.management.commands.sync_viernulvier._tqdm", fake_tqdm)
     else:
-        monkeypatch.setattr(
-            "apps.imports.management.commands.sync_viernulvier._tqdm", None
-        )
+        monkeypatch.setattr("apps.imports.management.commands.sync_viernulvier._tqdm", None)
 
     callback = command._make_progress_callback(name)
 
@@ -594,9 +563,7 @@ def test_make_progress_callback(monkeypatch, tqdm_installed, capsys):
         assert fake_bar.close.call_count == 1
     else:
         captured = capsys.readouterr()
-        assert (
-            f"{name}: 500/1000" in captured.out or f"{name}: 1000/1000" in captured.out
-        )
+        assert f"{name}: 500/1000" in captured.out or f"{name}: 1000/1000" in captured.out
 
 
 # ===========================================================================
@@ -606,14 +573,10 @@ def test_make_progress_callback(monkeypatch, tqdm_installed, capsys):
 
 class TestIsNotLongterm:
     def test_normal_production_returns_true(self):
-        assert (
-            _is_not_longterm({"production": {"@id": "/api/v1/productions/123"}}) is True
-        )
+        assert _is_not_longterm({"production": {"@id": "/api/v1/productions/123"}}) is True
 
     def test_longterm_production_returns_false(self):
-        assert (
-            _is_not_longterm({"production": {"@id": "/api/v1/longterm/456"}}) is False
-        )
+        assert _is_not_longterm({"production": {"@id": "/api/v1/longterm/456"}}) is False
 
     def test_string_production_normal_returns_true(self):
         assert _is_not_longterm({"production": "/api/v1/productions/99"}) is True
@@ -754,9 +717,7 @@ class TestManagementCommandCoverage:
 
         fake_bar = SimpleNamespace(n=0, refresh=Mock(), close=Mock())
         fake_tqdm = Mock(return_value=fake_bar)
-        monkeypatch.setattr(
-            "apps.imports.management.commands.sync_viernulvier._tqdm", fake_tqdm
-        )
+        monkeypatch.setattr("apps.imports.management.commands.sync_viernulvier._tqdm", fake_tqdm)
 
         cb = cmd._make_progress_callback("step")
         assert fake_tqdm.call_count == 0  # lazy — not yet created
@@ -800,15 +761,11 @@ class TestManagementCommandCoverage:
 
         importlib.reload(cmd_module)
 
-    def test_make_progress_callback_no_tqdm_writes_at_500_intervals(
-        self, monkeypatch, capsys
-    ):
+    def test_make_progress_callback_no_tqdm_writes_at_500_intervals(self, monkeypatch, capsys):
         """Without tqdm, progress is written to stdout every 500 records and at total."""
         cmd = Command()
         cmd.stdout = OutputWrapper(StringIO())
-        monkeypatch.setattr(
-            "apps.imports.management.commands.sync_viernulvier._tqdm", None
-        )
+        monkeypatch.setattr("apps.imports.management.commands.sync_viernulvier._tqdm", None)
 
         cb = cmd._make_progress_callback("mystep")
         cb(0, 2000)

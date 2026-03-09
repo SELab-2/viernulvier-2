@@ -74,10 +74,7 @@ class TestProductionViewSetClass(TestCase):
     def test_queryset_has_prefetch_for_tags(self):
         queryset = ProductionViewSet().get_queryset()
         lookups = queryset._prefetch_related_lookups
-        lookup_names = [
-            lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup
-            for lookup in lookups
-        ]
+        lookup_names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("tags", lookup_names)
 
 
@@ -150,20 +147,14 @@ class TestProductionViewSetList(TestCase):
 class TestProductionViewSetDetail(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.production = ProductionFactory.create(
-            attendance_mode="offline", performer_type="solo"
-        )
+        self.production = ProductionFactory.create(attendance_mode="offline", performer_type="solo")
 
     def test_detail_with_public_key_returns_200(self):
-        response = self.client.get(
-            f"/api/productions/{self.production.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/productions/{self.production.pk}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_detail_with_internal_key_returns_200(self):
-        response = self.client.get(
-            f"/api/productions/{self.production.pk}/", **int_headers()
-        )
+        response = self.client.get(f"/api/productions/{self.production.pk}/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_detail_without_auth_header_returns_403(self):
@@ -171,27 +162,19 @@ class TestProductionViewSetDetail(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_detail_with_wrong_key_returns_403(self):
-        response = self.client.get(
-            f"/api/productions/{self.production.pk}/", **wrong_headers()
-        )
+        response = self.client.get(f"/api/productions/{self.production.pk}/", **wrong_headers())
         self.assertIn(response.status_code, (401, 403))
 
     def test_detail_returns_correct_id(self):
-        response = self.client.get(
-            f"/api/productions/{self.production.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/productions/{self.production.pk}/", **pub_headers())
         self.assertEqual(response.data["id"], self.production.pk)
 
     def test_detail_returns_correct_attendance_mode(self):
-        response = self.client.get(
-            f"/api/productions/{self.production.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/productions/{self.production.pk}/", **pub_headers())
         self.assertEqual(response.data["attendance_mode"], "offline")
 
     def test_detail_returns_correct_performer_type(self):
-        response = self.client.get(
-            f"/api/productions/{self.production.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/productions/{self.production.pk}/", **pub_headers())
         self.assertEqual(response.data["performer_type"], "solo")
 
     def test_detail_returns_404_for_nonexistent_id(self):
@@ -223,9 +206,7 @@ class TestProductionViewSetCreate(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_create_with_wrong_key_returns_403(self):
-        response = self.client.post(
-            "/api/productions/", self.payload, **wrong_headers()
-        )
+        response = self.client.post("/api/productions/", self.payload, **wrong_headers())
         self.assertIn(response.status_code, (401, 403))
 
     def test_create_persists_production_to_database(self):
@@ -248,9 +229,7 @@ class TestProductionViewSetCreate(TestCase):
 class TestProductionViewSetUpdate(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.production = ProductionFactory.create(
-            attendance_mode="offline", performer_type="solo"
-        )
+        self.production = ProductionFactory.create(attendance_mode="offline", performer_type="solo")
         self.payload = {"attendance_mode": "online", "performer_type": "group"}
 
     def test_put_with_internal_key_returns_200(self):
@@ -262,9 +241,7 @@ class TestProductionViewSetUpdate(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_put_without_auth_returns_403(self):
-        response = self.client.put(
-            f"/api/productions/{self.production.pk}/", self.payload
-        )
+        response = self.client.put(f"/api/productions/{self.production.pk}/", self.payload)
         self.assertIn(response.status_code, (401, 403))
 
     def test_put_updates_attendance_mode(self):
@@ -282,9 +259,7 @@ class TestProductionViewSetUpdate(TestCase):
 class TestProductionViewSetPartialUpdate(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.production = ProductionFactory.create(
-            attendance_mode="offline", performer_type="solo"
-        )
+        self.production = ProductionFactory.create(attendance_mode="offline", performer_type="solo")
 
     def test_patch_with_internal_key_returns_200(self):
         response = self.client.patch(
@@ -380,41 +355,29 @@ class TestProductionViewSetResponseStructure(TestCase):
         )
 
     def test_detail_contains_nested_uit_database_theme(self):
-        response = self.client.get(
-            f"/api/productions/{self.production.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/productions/{self.production.pk}/", **pub_headers())
         self.assertEqual(response.data["uit_database_theme"]["name"], "Drama")
 
     def test_detail_contains_nested_uit_database_type(self):
-        response = self.client.get(
-            f"/api/productions/{self.production.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/productions/{self.production.pk}/", **pub_headers())
         self.assertEqual(response.data["uit_database_type"]["name"], "Theater")
 
     def test_detail_title_is_translated_dict(self):
-        response = self.client.get(
-            f"/api/productions/{self.production.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/productions/{self.production.pk}/", **pub_headers())
         self.assertIsInstance(response.data["title"], dict)
         self.assertIn("nl", response.data["title"])
 
     def test_detail_title_nl_value_is_correct(self):
-        response = self.client.get(
-            f"/api/productions/{self.production.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/productions/{self.production.pk}/", **pub_headers())
         self.assertEqual(response.data["title"]["nl"], "Test Titel")
 
     def test_detail_description_nl_value_is_correct(self):
-        response = self.client.get(
-            f"/api/productions/{self.production.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/productions/{self.production.pk}/", **pub_headers())
         self.assertEqual(response.data["description"]["nl"], "Test Beschrijving")
 
     def test_detail_title_is_empty_dict_without_translations(self):
         production_no_trans = ProductionFactory.create()
-        response = self.client.get(
-            f"/api/productions/{production_no_trans.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/productions/{production_no_trans.pk}/", **pub_headers())
         self.assertEqual(response.data["title"], {})
 
 

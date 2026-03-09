@@ -36,11 +36,7 @@ class ImportLogFactory(factory.django.DjangoModelFactory):
 
     started_at = LazyFunction(timezone.now)
     finished_at = LazyAttribute(
-        lambda o: (
-            o.started_at + timedelta(minutes=faker.random_int(min=1, max=60))
-            if o.started_at
-            else None
-        )
+        lambda o: o.started_at + timedelta(minutes=faker.random_int(min=1, max=60)) if o.started_at else None
     )
 
     error_message = None

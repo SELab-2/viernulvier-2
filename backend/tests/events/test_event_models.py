@@ -92,9 +92,7 @@ def test_event_allows_null_starts_or_ends():
     prod = ProductionFactory()
     hall = HallFactory()
 
-    e1 = Event(
-        production=prod, hall=hall, starts_at=None, ends_at=None, ticketing_url=""
-    )
+    e1 = Event(production=prod, hall=hall, starts_at=None, ends_at=None, ticketing_url="")
     e1.full_clean()
     e1.save()
     assert e1.id is not None
@@ -157,15 +155,11 @@ def test_event_price_unique_per_event_price_rank_and_price():
     rank = PriceRankFactory(position=1, sold_out_buffer=0)
     price = PriceFactory()
 
-    ep1 = EventPrice(
-        event=event, price_rank=rank, price=price, amount=Decimal("10.00"), available=10
-    )
+    ep1 = EventPrice(event=event, price_rank=rank, price=price, amount=Decimal("10.00"), available=10)
     ep1.full_clean()
     ep1.save()
 
-    ep2 = EventPrice(
-        event=event, price_rank=rank, price=price, amount=Decimal("12.00"), available=5
-    )
+    ep2 = EventPrice(event=event, price_rank=rank, price=price, amount=Decimal("12.00"), available=5)
     with pytest.raises(ValidationError):
         ep2.full_clean()
 
@@ -217,9 +211,7 @@ def test_event_price_same_price_different_rank_is_allowed():
     ep1.full_clean()
     ep1.save()
 
-    ep2 = EventPrice(
-        event=event, price_rank=rank_b, price=price, amount=Decimal("9.00"), available=8
-    )
+    ep2 = EventPrice(event=event, price_rank=rank_b, price=price, amount=Decimal("9.00"), available=8)
     ep2.full_clean()
     ep2.save()
 

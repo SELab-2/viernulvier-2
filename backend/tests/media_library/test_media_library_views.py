@@ -85,26 +85,17 @@ class TestMediaGalleryViewSetClass(TestCase):
 
     def test_queryset_prefetches_media_items(self):
         lookups = MediaGalleryViewSet.queryset._prefetch_related_lookups
-        names = [
-            lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup
-            for lookup in lookups
-        ]
+        names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("media_items", names)
 
     def test_queryset_prefetches_media_item_translations(self):
         lookups = MediaGalleryViewSet.queryset._prefetch_related_lookups
-        names = [
-            lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup
-            for lookup in lookups
-        ]
+        names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("media_items__translations__language", names)
 
     def test_queryset_prefetches_media_item_crops(self):
         lookups = MediaGalleryViewSet.queryset._prefetch_related_lookups
-        names = [
-            lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup
-            for lookup in lookups
-        ]
+        names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("media_items__crops", names)
 
 
@@ -131,18 +122,12 @@ class TestMediaItemViewSetClass(TestCase):
 
     def test_queryset_prefetches_translations(self):
         lookups = MediaItemViewSet.queryset._prefetch_related_lookups
-        names = [
-            lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup
-            for lookup in lookups
-        ]
+        names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("translations__language", names)
 
     def test_queryset_prefetches_crops(self):
         lookups = MediaItemViewSet.queryset._prefetch_related_lookups
-        names = [
-            lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup
-            for lookup in lookups
-        ]
+        names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
         self.assertIn("crops", names)
 
     def test_queryset_is_ordered_by_position(self):
@@ -208,15 +193,11 @@ class TestMediaGalleryViewSetDetail(TestCase):
         self.gallery = MediaGalleryFactory.create(name="Detail Gallery")
 
     def test_detail_with_public_key_returns_200(self):
-        response = self.client.get(
-            f"/api/media-galleries/{self.gallery.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/media-galleries/{self.gallery.pk}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_detail_with_internal_key_returns_200(self):
-        response = self.client.get(
-            f"/api/media-galleries/{self.gallery.pk}/", **int_headers()
-        )
+        response = self.client.get(f"/api/media-galleries/{self.gallery.pk}/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_detail_without_auth_returns_401_or_403(self):
@@ -224,9 +205,7 @@ class TestMediaGalleryViewSetDetail(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_detail_returns_correct_name(self):
-        response = self.client.get(
-            f"/api/media-galleries/{self.gallery.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/media-galleries/{self.gallery.pk}/", **pub_headers())
         self.assertEqual(response.data["name"], "Detail Gallery")
 
     def test_detail_unknown_id_returns_404(self):
@@ -234,19 +213,13 @@ class TestMediaGalleryViewSetDetail(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_detail_media_items_is_list(self):
-        response = self.client.get(
-            f"/api/media-galleries/{self.gallery.pk}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/media-galleries/{self.gallery.pk}/", **pub_headers())
         self.assertIsInstance(response.data["media_items"], list)
 
     def test_detail_nested_media_items_included(self):
         MediaItemFactory.create(gallery=self.gallery)
-        MediaItemFactory.create(
-            gallery=self.gallery, position=1, original_filename="b.jpg"
-        )
-        response = self.client.get(
-            f"/api/media-galleries/{self.gallery.pk}/", **pub_headers()
-        )
+        MediaItemFactory.create(gallery=self.gallery, position=1, original_filename="b.jpg")
+        response = self.client.get(f"/api/media-galleries/{self.gallery.pk}/", **pub_headers())
         self.assertEqual(len(response.data["media_items"]), 2)
 
 
@@ -560,12 +533,8 @@ class TestMediaGalleryViewSetPrefetch(TestCase):
             gallery = MediaGalleryFactory(name=f"Gallery {g}")
             for i in range(3):
                 item = MediaItemFactory(gallery=gallery, position=i)
-                MediaItemTranslationFactory(
-                    media_item=item, language=self.lang_nl, title=f"NL {g}-{i}"
-                )
-                MediaItemTranslationFactory(
-                    media_item=item, language=self.lang_en, title=f"EN {g}-{i}"
-                )
+                MediaItemTranslationFactory(media_item=item, language=self.lang_nl, title=f"NL {g}-{i}")
+                MediaItemTranslationFactory(media_item=item, language=self.lang_en, title=f"EN {g}-{i}")
                 MediaItemCropFactory(media_item=item, name=f"crop_{g}_{i}_1")
                 MediaItemCropFactory(media_item=item, name=f"crop_{g}_{i}_2")
 
@@ -589,12 +558,8 @@ class TestMediaItemViewSetPrefetch(TestCase):
 
         for i in range(6):
             item = MediaItemFactory(gallery=self.gallery, position=i)
-            MediaItemTranslationFactory(
-                media_item=item, language=self.lang_nl, title=f"NL {i}"
-            )
-            MediaItemTranslationFactory(
-                media_item=item, language=self.lang_en, title=f"EN {i}"
-            )
+            MediaItemTranslationFactory(media_item=item, language=self.lang_nl, title=f"NL {i}")
+            MediaItemTranslationFactory(media_item=item, language=self.lang_en, title=f"EN {i}")
             MediaItemCropFactory(media_item=item, name=f"crop_{i}_a")
             MediaItemCropFactory(media_item=item, name=f"crop_{i}_b")
 

@@ -66,9 +66,7 @@ class TestGenre:
 
     def test_delete_cascades_to_translations(self):
         genre = GenreFactory()
-        GenreTranslationFactory.create_batch(
-            2, genre=genre
-        )  # Create 2 translations for the genre
+        GenreTranslationFactory.create_batch(2, genre=genre)  # Create 2 translations for the genre
 
         genre.delete()  # Delete the genre, which should cascade to the translations
 

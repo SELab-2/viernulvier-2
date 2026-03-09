@@ -216,9 +216,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertTrue(
-            Event.objects.filter(ticketing_url="https://example.com/new").exists()
-        )
+        self.assertTrue(Event.objects.filter(ticketing_url="https://example.com/new").exists())
 
     def test_create_with_public_key_returns_403(self):
         """Test case for test_create_with_public_key_returns_403."""
@@ -484,12 +482,8 @@ class TestEventViewSetPrefetch(TestCase):
             HallTranslationFactory(hall=hall, language=self.lang_en, name=f"Hall {idx}")
 
             rank = PriceRankFactory(position=idx + 1)
-            PriceRankTranslationFactory(
-                price_rank=rank, language=self.lang_nl, description="NL"
-            )
-            PriceRankTranslationFactory(
-                price_rank=rank, language=self.lang_en, description="EN"
-            )
+            PriceRankTranslationFactory(price_rank=rank, language=self.lang_nl, description="NL")
+            PriceRankTranslationFactory(price_rank=rank, language=self.lang_en, description="EN")
 
             event = EventFactory(
                 production=production,

@@ -104,11 +104,7 @@ class RateLimitError(ScraperError):
 
     def __init__(self, retry_after: Optional[int] = None) -> None:
         self.retry_after = retry_after
-        msg = (
-            f"Rate limited by API (Retry-After: {retry_after}s)"
-            if retry_after
-            else "Rate limited by API"
-        )
+        msg = f"Rate limited by API (Retry-After: {retry_after}s)" if retry_after else "Rate limited by API"
         super().__init__(msg)
 
 
@@ -193,9 +189,7 @@ class ModelSyncConfig:
 
     field_map: Dict[str, Optional[str]] = field(default_factory=dict)
     value_transforms: Dict[str, Callable[[Any], Any]] = field(default_factory=dict)
-    fk_resolvers: Dict[str, Callable[[Any], Optional[Any]]] = field(
-        default_factory=dict
-    )
+    fk_resolvers: Dict[str, Callable[[Any], Optional[Any]]] = field(default_factory=dict)
     translations: List[TranslationConfig] = field(default_factory=list)
     m2m: List[M2MConfig] = field(default_factory=list)
     lookup_field: str = "external_id"
@@ -277,25 +271,17 @@ def _fetch_with_retry(
 
     for attempt in range(MAX_RETRIES + 1):
         try:
-            response = session.get(
-                url, params=params, headers=headers, timeout=DEFAULT_TIMEOUT
-            )
+            response = session.get(url, params=params, headers=headers, timeout=DEFAULT_TIMEOUT)
         except requests.ConnectionError as exc:
             if attempt == MAX_RETRIES:
-                raise ScraperError(
-                    f"Connection failed after {MAX_RETRIES} attempts: {url}"
-                ) from exc
+                raise ScraperError(f"Connection failed after {MAX_RETRIES} attempts: {url}") from exc
             wait = _backoff_seconds(attempt)
-            logger.warning(
-                "ConnectionError — retry %d in %.1fs: %s", attempt + 1, wait, url
-            )
+            logger.warning("ConnectionError — retry %d in %.1fs: %s", attempt + 1, wait, url)
             time.sleep(wait)
             continue
         except requests.Timeout as exc:
             if attempt == MAX_RETRIES:
-                raise ScraperError(
-                    f"Request timed out after {MAX_RETRIES} attempts: {url}"
-                ) from exc
+                raise ScraperError(f"Request timed out after {MAX_RETRIES} attempts: {url}") from exc
             wait = _backoff_seconds(attempt)
             logger.warning("Timeout — retry %d in %.1fs: %s", attempt + 1, wait, url)
             time.sleep(wait)
@@ -313,17 +299,13 @@ def _fetch_with_retry(
             if attempt == MAX_RETRIES:
                 raise RateLimitError(retry_after)
             wait = float(retry_after) if retry_after else _backoff_seconds(attempt)
-            logger.warning(
-                "HTTP 429 — waiting %.1fs before retry %d: %s", wait, attempt + 1, url
-            )
+            logger.warning("HTTP 429 — waiting %.1fs before retry %d: %s", wait, attempt + 1, url)
             time.sleep(wait)
             continue
 
         if response.status_code in RETRY_STATUS_CODES:
             if attempt == MAX_RETRIES:
-                raise ScraperError(
-                    f"HTTP {response.status_code} after {MAX_RETRIES} attempts: {url}"
-                )
+                raise ScraperError(f"HTTP {response.status_code} after {MAX_RETRIES} attempts: {url}")
             wait = _backoff_seconds(attempt)
             logger.warning(
                 "HTTP %d — retry %d in %.1fs: %s",
@@ -427,9 +409,7 @@ def fetch_viernulvier(
     session = _build_session()
 
     logger.info("Fetching: %s", url)
-    data, new_etag = _fetch_with_retry(
-        session, url, params=params, etag=etag_cache.get(url)
-    )
+    data, new_etag = _fetch_with_retry(session, url, params=params, etag=etag_cache.get(url))
     if new_etag:
         etag_cache[url] = new_etag
 
@@ -481,11 +461,7 @@ def fetch_viernulvier(
                         etag_cache[page_url] = page_etag
                     if page_data is None:
                         continue  # 304
-                    page_results[page_url] = (
-                        page_data.get("member", [])
-                        if isinstance(page_data, dict)
-                        else page_data
-                    )
+                    page_results[page_url] = page_data.get("member", []) if isinstance(page_data, dict) else page_data
                 except ScraperError as exc:
                     logger.error("Page fetch failed for %s: %s", page_url, exc)
 
@@ -498,18 +474,10 @@ def fetch_viernulvier(
         view = data.get("view") or {}
         next_raw = view.get("next")
         current_url: Optional[str] = (
-            (
-                next_raw
-                if next_raw.startswith("http")
-                else urljoin(BASE_DOMAIN, next_raw)
-            )
-            if next_raw
-            else None
+            (next_raw if next_raw.startswith("http") else urljoin(BASE_DOMAIN, next_raw)) if next_raw else None
         )
         while current_url:
-            page_data, page_etag = _fetch_with_retry(
-                session, current_url, etag=etag_cache.get(current_url)
-            )
+            page_data, page_etag = _fetch_with_retry(session, current_url, etag=etag_cache.get(current_url))
             if page_etag:
                 etag_cache[current_url] = page_etag
             if page_data is None:
@@ -519,13 +487,7 @@ def fetch_viernulvier(
                 next_view = page_data.get("view") or {}
                 next_raw = next_view.get("next")
                 current_url = (
-                    (
-                        next_raw
-                        if next_raw.startswith("http")
-                        else urljoin(BASE_DOMAIN, next_raw)
-                    )
-                    if next_raw
-                    else None
+                    (next_raw if next_raw.startswith("http") else urljoin(BASE_DOMAIN, next_raw)) if next_raw else None
                 )
             else:
                 all_items.extend(page_data if isinstance(page_data, list) else [])
@@ -653,27 +615,21 @@ def _parse_field_value(model_field: models.Field, value: Any) -> Any:
         try:
             return Decimal(str(value))
         except (InvalidOperation, ValueError, TypeError):
-            logger.warning(
-                "Cannot convert '%s' to Decimal for field '%s'", value, model_field.name
-            )
+            logger.warning("Cannot convert '%s' to Decimal for field '%s'", value, model_field.name)
             return None
 
     if isinstance(model_field, models.IntegerField):
         try:
             return int(value)
         except (ValueError, TypeError):
-            logger.warning(
-                "Cannot convert '%s' to int for field '%s'", value, model_field.name
-            )
+            logger.warning("Cannot convert '%s' to int for field '%s'", value, model_field.name)
             return None
 
     if isinstance(model_field, models.FloatField):
         try:
             return float(value)
         except (ValueError, TypeError):
-            logger.warning(
-                "Cannot convert '%s' to float for field '%s'", value, model_field.name
-            )
+            logger.warning("Cannot convert '%s' to float for field '%s'", value, model_field.name)
             return None
 
     if isinstance(model_field, models.DateTimeField) and isinstance(value, str):
@@ -685,9 +641,7 @@ def _parse_field_value(model_field: models.Field, value: Any) -> Any:
             v = "1970" + v[4:]
         parsed = parse_datetime(v)
         if parsed is None:
-            logger.debug(
-                "Cannot parse datetime '%s' for field '%s'", value, model_field.name
-            )
+            logger.debug("Cannot parse datetime '%s' for field '%s'", value, model_field.name)
         return parsed
 
     if isinstance(model_field, models.DateField) and isinstance(value, str):
@@ -806,9 +760,7 @@ def _resolve_fk(
         )
         return None
     except Exception:
-        logger.exception(
-            "Error resolving FK %s external_id=%r", related_model.__name__, ext_id
-        )
+        logger.exception("Error resolving FK %s external_id=%r", related_model.__name__, ext_id)
         return None
 
 
@@ -849,11 +801,7 @@ def _build_defaults(
     def _apply(model_field: models.Field, raw_value: Any, field_name: str) -> None:
         if model_field.is_relation and model_field.many_to_one:
             custom = config.fk_resolvers.get(field_name)
-            pk = (
-                custom(raw_value)
-                if custom
-                else _resolve_fk(model_field, raw_value, fk_cache)
-            )
+            pk = custom(raw_value) if custom else _resolve_fk(model_field, raw_value, fk_cache)
             if pk is not None:
                 defaults[f"{model_field.name}_id"] = pk
         else:
@@ -874,9 +822,7 @@ def _build_defaults(
         try:
             model_field = model._meta.get_field(model_field_name)
         except FieldDoesNotExist:
-            logger.warning(
-                "Field '%s' does not exist on %s", model_field_name, model.__name__
-            )
+            logger.warning("Field '%s' does not exist on %s", model_field_name, model.__name__)
             continue
         if not isinstance(model_field, models.Field) or model_field.primary_key:
             continue
@@ -1035,9 +981,7 @@ def _sync_m2m(
         pk = fk_cache.get(related_model, ext_id)
         if pk is None:
             try:
-                obj = related_model.objects.get(
-                    **{m2m_config.related_lookup_field: ext_id}
-                )
+                obj = related_model.objects.get(**{m2m_config.related_lookup_field: ext_id})
                 fk_cache.set(related_model, ext_id, obj.pk)
                 pk = obj.pk
             except related_model.DoesNotExist:
@@ -1132,9 +1076,7 @@ def sync_viernulvier(
     )
 
     try:
-        items = fetch_viernulvier(
-            endpoint=endpoint, params=params, etag_cache=etag_cache
-        )
+        items = fetch_viernulvier(endpoint=endpoint, params=params, etag_cache=etag_cache)
     except Exception as exc:
         import_log.status = ImportLog.Status.FAILED
         import_log.finished_at = timezone.now()
@@ -1193,9 +1135,7 @@ def sync_viernulvier(
 
         if dry_run:
             defaults = _build_defaults(model, item, config, fk_cache)
-            logger.info(
-                "[DRY RUN] Would save %s (%d fields)", lookup_value, len(defaults)
-            )
+            logger.info("[DRY RUN] Would save %s (%d fields)", lookup_value, len(defaults))
             saved += 1
             if on_progress:
                 on_progress(saved, total)
@@ -1237,11 +1177,7 @@ def sync_viernulvier(
 
         except ValidationError as exc:
             transaction.savepoint_rollback(sid)
-            msgs = [
-                f"{f}: {err}" if f != "__all__" else err
-                for f, errs in exc.message_dict.items()
-                for err in errs
-            ]
+            msgs = [f"{f}: {err}" if f != "__all__" else err for f, errs in exc.message_dict.items() for err in errs]
             _record_error(f"Validation error for {lookup_value}: {'; '.join(msgs)}")
             logger.error("Validation error for %s: %s", lookup_value, "; ".join(msgs))
 
@@ -1255,18 +1191,12 @@ def sync_viernulvier(
         except Exception:
             transaction.savepoint_rollback(sid)
             exc_type, exc_value, _ = sys.exc_info()
-            msg = (
-                f"Unexpected error for {lookup_value}: {exc_type.__name__}: {exc_value}"
-            )
+            msg = f"Unexpected error for {lookup_value}: {exc_type.__name__}: {exc_value}"
             _record_error(msg)
             logger.error(msg, exc_info=True)
 
     # Finalise import log
-    truncation_note = (
-        f" (showing first {MAX_ERROR_MESSAGES} of {errors})"
-        if errors > MAX_ERROR_MESSAGES
-        else ""
-    )
+    truncation_note = f" (showing first {MAX_ERROR_MESSAGES} of {errors})" if errors > MAX_ERROR_MESSAGES else ""
     import_log.records_total = total
     import_log.records_imported = saved
     import_log.records_failed = errors
@@ -1276,14 +1206,10 @@ def sync_viernulvier(
         import_log.status = ImportLog.Status.SUCCESS
     elif saved > 0:
         import_log.status = ImportLog.Status.PARTIAL_SUCCESS
-        import_log.error_message = (
-            f"{errors} records failed{truncation_note}: {', '.join(error_messages)}"
-        )
+        import_log.error_message = f"{errors} records failed{truncation_note}: {', '.join(error_messages)}"
     else:
         import_log.status = ImportLog.Status.FAILED
-        import_log.error_message = (
-            f"All {errors} records failed{truncation_note}: {', '.join(error_messages)}"
-        )
+        import_log.error_message = f"All {errors} records failed{truncation_note}: {', '.join(error_messages)}"
 
     import_log.save()
     logger.info(

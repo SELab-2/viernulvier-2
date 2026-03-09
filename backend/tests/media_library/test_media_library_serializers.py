@@ -451,12 +451,8 @@ class TestMediaGallerySerializerMediaItems(TestCase):
         self.assertEqual(len(data["media_items"]), 1)
 
     def test_media_items_contains_multiple_items(self):
-        MediaItemFactory.create(
-            gallery=self.gallery, position=0, original_filename="a.jpg"
-        )
-        MediaItemFactory.create(
-            gallery=self.gallery, position=1, original_filename="b.jpg"
-        )
+        MediaItemFactory.create(gallery=self.gallery, position=0, original_filename="a.jpg")
+        MediaItemFactory.create(gallery=self.gallery, position=1, original_filename="b.jpg")
         data = serialize_gallery(self.gallery)
         self.assertEqual(len(data["media_items"]), 2)
 
@@ -482,15 +478,9 @@ class TestMediaGallerySerializerMediaItems(TestCase):
         self.assertEqual(set(data["media_items"][0].keys()), expected)
 
     def test_media_items_are_ordered_by_position(self):
-        MediaItemFactory.create(
-            gallery=self.gallery, position=2, original_filename="second.jpg"
-        )
-        MediaItemFactory.create(
-            gallery=self.gallery, position=0, original_filename="first.jpg"
-        )
-        MediaItemFactory.create(
-            gallery=self.gallery, position=1, original_filename="middle.jpg"
-        )
+        MediaItemFactory.create(gallery=self.gallery, position=2, original_filename="second.jpg")
+        MediaItemFactory.create(gallery=self.gallery, position=0, original_filename="first.jpg")
+        MediaItemFactory.create(gallery=self.gallery, position=1, original_filename="middle.jpg")
         data = serialize_gallery(self.gallery)
         positions = [item["position"] for item in data["media_items"]]
         self.assertEqual(positions, sorted(positions))

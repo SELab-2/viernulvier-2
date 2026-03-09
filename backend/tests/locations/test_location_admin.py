@@ -57,9 +57,7 @@ class TestLocationAdminRegistration(TestCase):
 
     def test_location_translation_registered(self):
         self.assertIn(LocationTranslation, admin.site._registry)
-        self.assertIsInstance(
-            admin.site._registry[LocationTranslation], LocationTranslationAdmin
-        )
+        self.assertIsInstance(admin.site._registry[LocationTranslation], LocationTranslationAdmin)
 
     def test_space_registered(self):
         self.assertIn(Space, admin.site._registry)
@@ -67,9 +65,7 @@ class TestLocationAdminRegistration(TestCase):
 
     def test_space_translation_registered(self):
         self.assertIn(SpaceTranslation, admin.site._registry)
-        self.assertIsInstance(
-            admin.site._registry[SpaceTranslation], SpaceTranslationAdmin
-        )
+        self.assertIsInstance(admin.site._registry[SpaceTranslation], SpaceTranslationAdmin)
 
     def test_hall_registered(self):
         self.assertIn(Hall, admin.site._registry)
@@ -77,9 +73,7 @@ class TestLocationAdminRegistration(TestCase):
 
     def test_hall_translation_registered(self):
         self.assertIn(HallTranslation, admin.site._registry)
-        self.assertIsInstance(
-            admin.site._registry[HallTranslation], HallTranslationAdmin
-        )
+        self.assertIsInstance(admin.site._registry[HallTranslation], HallTranslationAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -254,24 +248,16 @@ class TestLocationAdminFunctional(TestCase):
     """Functional admin flows for location models."""
 
     def setUp(self):
-        self.superuser = User.objects.create_superuser(
-            "admin", "admin@example.com", "password"
-        )
+        self.superuser = User.objects.create_superuser("admin", "admin@example.com", "password")
         self.client.force_login(self.superuser)
 
         self.language = LanguageFactory(code="en")
         self.location = LocationFactory()
-        self.location_translation = LocationTranslationFactory(
-            location=self.location, language=self.language, name="Venue"
-        )
+        self.location_translation = LocationTranslationFactory(location=self.location, language=self.language, name="Venue")
         self.space = SpaceFactory(location=self.location)
-        self.space_translation = SpaceTranslationFactory(
-            space=self.space, language=self.language, name="Room A"
-        )
+        self.space_translation = SpaceTranslationFactory(space=self.space, language=self.language, name="Room A")
         self.hall = HallFactory(space=self.space)
-        self.hall_translation = HallTranslationFactory(
-            hall=self.hall, language=self.language, name="Hall 1", remark="Notes"
-        )
+        self.hall_translation = HallTranslationFactory(hall=self.hall, language=self.language, name="Hall 1", remark="Notes")
 
     # Location -----------------------------------------------------------------
 
@@ -356,11 +342,7 @@ class TestLocationAdminFunctional(TestCase):
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            LocationTranslation.objects.filter(
-                name="Venue Added", language=new_language
-            ).exists()
-        )
+        self.assertTrue(LocationTranslation.objects.filter(name="Venue Added", language=new_language).exists())
 
     def test_location_translation_change(self):
         url = reverse(
@@ -387,9 +369,7 @@ class TestLocationAdminFunctional(TestCase):
         )
         response = self.client.post(url, {"post": "yes"}, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(
-            LocationTranslation.objects.filter(pk=self.location_translation.pk).exists()
-        )
+        self.assertFalse(LocationTranslation.objects.filter(pk=self.location_translation.pk).exists())
 
     # Space ---------------------------------------------------------------------
 
@@ -458,16 +438,10 @@ class TestLocationAdminFunctional(TestCase):
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            SpaceTranslation.objects.filter(
-                name="Room B", language=new_language
-            ).exists()
-        )
+        self.assertTrue(SpaceTranslation.objects.filter(name="Room B", language=new_language).exists())
 
     def test_space_translation_change(self):
-        url = reverse(
-            "admin:locations_spacetranslation_change", args=[self.space_translation.pk]
-        )
+        url = reverse("admin:locations_spacetranslation_change", args=[self.space_translation.pk])
         response = self.client.post(
             url,
             {
@@ -482,14 +456,10 @@ class TestLocationAdminFunctional(TestCase):
         self.assertEqual(self.space_translation.name, "Room C")
 
     def test_space_translation_delete(self):
-        url = reverse(
-            "admin:locations_spacetranslation_delete", args=[self.space_translation.pk]
-        )
+        url = reverse("admin:locations_spacetranslation_delete", args=[self.space_translation.pk])
         response = self.client.post(url, {"post": "yes"}, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(
-            SpaceTranslation.objects.filter(pk=self.space_translation.pk).exists()
-        )
+        self.assertFalse(SpaceTranslation.objects.filter(pk=self.space_translation.pk).exists())
 
     # Hall ----------------------------------------------------------------------
 
@@ -564,16 +534,10 @@ class TestLocationAdminFunctional(TestCase):
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            HallTranslation.objects.filter(
-                name="Hall X", language=new_language
-            ).exists()
-        )
+        self.assertTrue(HallTranslation.objects.filter(name="Hall X", language=new_language).exists())
 
     def test_hall_translation_change(self):
-        url = reverse(
-            "admin:locations_halltranslation_change", args=[self.hall_translation.pk]
-        )
+        url = reverse("admin:locations_halltranslation_change", args=[self.hall_translation.pk])
         response = self.client.post(
             url,
             {
@@ -589,11 +553,7 @@ class TestLocationAdminFunctional(TestCase):
         self.assertEqual(self.hall_translation.name, "Hall Y")
 
     def test_hall_translation_delete(self):
-        url = reverse(
-            "admin:locations_halltranslation_delete", args=[self.hall_translation.pk]
-        )
+        url = reverse("admin:locations_halltranslation_delete", args=[self.hall_translation.pk])
         response = self.client.post(url, {"post": "yes"}, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(
-            HallTranslation.objects.filter(pk=self.hall_translation.pk).exists()
-        )
+        self.assertFalse(HallTranslation.objects.filter(pk=self.hall_translation.pk).exists())

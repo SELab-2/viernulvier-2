@@ -221,9 +221,7 @@ class TestTagTranslationAdminFunctional(TestCase):
         self.client.force_login(self.superuser)
         self.lang = LanguageFactory.create(code="nl", name="Dutch")
         self.tag = TagFactory.create(type="genre")
-        self.translation = TagTranslationFactory.create(
-            tag=self.tag, language=self.lang, name="Genre", url_title="genre"
-        )
+        self.translation = TagTranslationFactory.create(tag=self.tag, language=self.lang, name="Genre", url_title="genre")
 
     def test_changelist_returns_200(self):
         url = reverse("admin:tags_tagtranslation_changelist")
@@ -236,6 +234,4 @@ class TestTagTranslationAdminFunctional(TestCase):
     def test_changelist_filter_by_language_code(self):
         """Changelist filter must use language__code lookup."""
         url = reverse("admin:tags_tagtranslation_changelist")
-        self.assertEqual(
-            self.client.get(url, {"language__code": "nl"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"language__code": "nl"}).status_code, 200)

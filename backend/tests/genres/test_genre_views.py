@@ -91,12 +91,8 @@ class TestGenreViewSetPrefetch(TestCase):
 
         for idx in range(5):
             genre = GenreFactory(type=f"genre-{idx}")
-            GenreTranslationFactory(
-                genre=genre, language=self.lang_nl, name=f"NL {idx}"
-            )
-            GenreTranslationFactory(
-                genre=genre, language=self.lang_en, name=f"EN {idx}"
-            )
+            GenreTranslationFactory(genre=genre, language=self.lang_nl, name=f"NL {idx}")
+            GenreTranslationFactory(genre=genre, language=self.lang_en, name=f"EN {idx}")
 
     def test_list_prefetches_translations_bounded_queries(self):
         with CaptureQueriesContext(connection) as ctx:
@@ -136,22 +132,16 @@ class TestGenreUseAsViewSet(TestCase):
 
     # retrieve
     def test_retrieve_public_key(self):
-        response = self.client.get(
-            f"/api/genre-use-as/{self.use_as.id}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/genre-use-as/{self.use_as.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["name"], "genre")
 
     def test_retrieve_internal_key(self):
-        response = self.client.get(
-            f"/api/genre-use-as/{self.use_as.id}/", **int_headers()
-        )
+        response = self.client.get(f"/api/genre-use-as/{self.use_as.id}/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_wrong_key(self):
-        response = self.client.get(
-            f"/api/genre-use-as/{self.use_as.id}/", **wrong_headers()
-        )
+        response = self.client.get(f"/api/genre-use-as/{self.use_as.id}/", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     # create
@@ -215,16 +205,12 @@ class TestGenreUseAsViewSet(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_delete_internal_key(self):
-        response = self.client.delete(
-            f"/api/genre-use-as/{self.use_as.id}/", **int_headers()
-        )
+        response = self.client.delete(f"/api/genre-use-as/{self.use_as.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
         self.assertFalse(GenreUseAs.objects.filter(id=self.use_as.id).exists())
 
     def test_delete_public_key_denied(self):
-        response = self.client.delete(
-            f"/api/genre-use-as/{self.use_as.id}/", **pub_headers()
-        )
+        response = self.client.delete(f"/api/genre-use-as/{self.use_as.id}/", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
 

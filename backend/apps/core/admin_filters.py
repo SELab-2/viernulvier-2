@@ -82,11 +82,7 @@ class SearchableMultiSelectFilter(SimpleListFilter):
         self.open_param = current_open_param
         self.search_value = request.GET.get(self.search_param, "").strip()
         self.selected_values = request.GET.getlist(self.parameter_name)
-        self.is_open = (
-            request.GET.get(self.open_param) == "1"
-            or bool(self.search_value)
-            or bool(self.selected_values)
-        )
+        self.is_open = request.GET.get(self.open_param) == "1" or bool(self.search_value) or bool(self.selected_values)
 
         self.hidden_params = [
             {"key": key, "val": value}
@@ -99,9 +95,7 @@ class SearchableMultiSelectFilter(SimpleListFilter):
         qs_without_search.pop(self.search_param, None)
         qs_without_search.pop(self.open_param, None)
         qs_without_search.pop("e", None)
-        self.clear_search_url = (
-            f"?{qs_without_search.urlencode()}" if qs_without_search else "?"
-        )
+        self.clear_search_url = f"?{qs_without_search.urlencode()}" if qs_without_search else "?"
 
         qs_without_self = request.GET.copy()
         qs_without_self.pop(self.search_param, None)

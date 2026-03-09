@@ -94,9 +94,7 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         ),
     )
 
-    display_name = serializers.SerializerMethodField(
-        help_text="Human-readable space name in the project's base language."
-    )
+    display_name = serializers.SerializerMethodField(help_text="Human-readable space name in the project's base language.")
 
     class Meta:
         model = Space
@@ -133,9 +131,7 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         ),
     )
 
-    display_name = serializers.SerializerMethodField(
-        help_text="Human-readable hall name in the project's base language."
-    )
+    display_name = serializers.SerializerMethodField(help_text="Human-readable hall name in the project's base language.")
 
     remark = serializers.SerializerMethodField(
         help_text=(

@@ -15,9 +15,7 @@ class SmallResultsSetPagination(PageNumberPagination):
     """
 
     page_size = 10  # Default number of items per page for small datasets
-    page_size_query_param = (
-        "page_size"  # Allow clients to set page size via query parameter
-    )
+    page_size_query_param = "page_size"  # Allow clients to set page size via query parameter
     max_page_size = 50  # Maximum number of items per page to prevent abuse
 
 
@@ -27,9 +25,7 @@ class StandardResultsSetPagination(PageNumberPagination):
     """
 
     page_size = 20  # Default number of items per page
-    page_size_query_param = (
-        "page_size"  # Allow clients to set page size via query parameter
-    )
+    page_size_query_param = "page_size"  # Allow clients to set page size via query parameter
     max_page_size = 100  # Maximum number of items per page to prevent abuse
 
 
@@ -39,7 +35,5 @@ class LargeResultsSetPagination(PageNumberPagination):
     """
 
     page_size = 100  # Default number of items per page for large datasets
-    page_size_query_param = (
-        "page_size"  # Allow clients to set page size via query parameter
-    )
+    page_size_query_param = "page_size"  # Allow clients to set page size via query parameter
     max_page_size = 500  # Maximum number of items per page to prevent abuse

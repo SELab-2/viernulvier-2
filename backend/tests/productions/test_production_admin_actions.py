@@ -45,9 +45,7 @@ class TestProductionAdminActions(TestCase):
             },
         )
 
-        response = self.admin.add_tag_to_selected_productions(
-            request, Production.objects.none()
-        )
+        response = self.admin.add_tag_to_selected_productions(request, Production.objects.none())
 
         self.assertIsNone(response)
         self.assertEqual(
@@ -84,21 +82,15 @@ class TestProductionAdminActions(TestCase):
             },
         )
 
-        response = self.admin.add_genre_to_selected_productions(
-            request, Production.objects.none()
-        )
+        response = self.admin.add_genre_to_selected_productions(request, Production.objects.none())
 
         self.assertIsNone(response)
         self.assertEqual(
-            ProductionGenre.objects.filter(
-                production=self.production_1, genre=target_genre
-            ).count(),
+            ProductionGenre.objects.filter(production=self.production_1, genre=target_genre).count(),
             1,
         )
 
-        created_link = ProductionGenre.objects.get(
-            production=self.production_2, genre=target_genre
-        )
+        created_link = ProductionGenre.objects.get(production=self.production_2, genre=target_genre)
         self.assertEqual(created_link.position, 5)
 
     def test_add_tag_action_initial_step_returns_two_step_page(self):

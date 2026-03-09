@@ -60,9 +60,7 @@ class TestLocationViewSetClass(TestCase):
         self.assertEqual(LocationViewSet.queryset.model, Location)
 
     def test_prefetch_translations(self):
-        self.assertIn(
-            "translations__language", LocationViewSet.queryset._prefetch_related_lookups
-        )
+        self.assertIn("translations__language", LocationViewSet.queryset._prefetch_related_lookups)
 
 
 class TestSpaceViewSetClass(TestCase):
@@ -78,9 +76,7 @@ class TestSpaceViewSetClass(TestCase):
         self.assertIn("location", SpaceViewSet.queryset.query.select_related)
 
     def test_prefetch_translations(self):
-        self.assertIn(
-            "translations__language", SpaceViewSet.queryset._prefetch_related_lookups
-        )
+        self.assertIn("translations__language", SpaceViewSet.queryset._prefetch_related_lookups)
 
 
 class TestHallViewSetClass(TestCase):
@@ -98,9 +94,7 @@ class TestHallViewSetClass(TestCase):
         self.assertIn("location", sel.get("space", {}))
 
     def test_prefetch_translations(self):
-        self.assertIn(
-            "translations__language", HallViewSet.queryset._prefetch_related_lookups
-        )
+        self.assertIn("translations__language", HallViewSet.queryset._prefetch_related_lookups)
 
 
 # ---------------------------------------------------------------------------
@@ -119,12 +113,8 @@ class TestLocationViewSetPrefetch(TestCase):
 
         for idx in range(5):
             loc = LocationFactory(city=f"City {idx}")
-            LocationTranslationFactory(
-                location=loc, language=self.lang_nl, name=f"Stad {idx}"
-            )
-            LocationTranslationFactory(
-                location=loc, language=self.lang_en, name=f"City {idx}"
-            )
+            LocationTranslationFactory(location=loc, language=self.lang_nl, name=f"Stad {idx}")
+            LocationTranslationFactory(location=loc, language=self.lang_en, name=f"City {idx}")
 
     def test_location_list_bounded_queries(self):
         with CaptureQueriesContext(connection) as ctx:
@@ -185,16 +175,12 @@ class TestLocationViewSet(TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_retrieve_public(self):
-        response = self.client.get(
-            f"/api/locations/{self.location.id}/", **pub_headers()
-        )
+        response = self.client.get(f"/api/locations/{self.location.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.location.id)
 
     def test_retrieve_wrong_key(self):
-        response = self.client.get(
-            f"/api/locations/{self.location.id}/", **wrong_headers()
-        )
+        response = self.client.get(f"/api/locations/{self.location.id}/", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     def test_create_internal(self):
@@ -208,9 +194,7 @@ class TestLocationViewSet(TestCase):
             "phone_2": "",
             "is_own_location": True,
         }
-        response = self.client.post(
-            "/api/locations/", payload, format="json", **int_headers()
-        )
+        response = self.client.post("/api/locations/", payload, format="json", **int_headers())
         self.assertEqual(response.status_code, 201)
         self.assertTrue(Location.objects.filter(city="Gent", street="Main").exists())
 
@@ -222,9 +206,7 @@ class TestLocationViewSet(TestCase):
             "city": "Gent",
             "country": "Belgium",
         }
-        response = self.client.post(
-            "/api/locations/", payload, format="json", **pub_headers()
-        )
+        response = self.client.post("/api/locations/", payload, format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_update_internal(self):
@@ -246,9 +228,7 @@ class TestLocationViewSet(TestCase):
         self.assertEqual(self.location.street, "Updated")
 
     def test_delete_internal(self):
-        response = self.client.delete(
-            f"/api/locations/{self.location.id}/", **int_headers()
-        )
+        response = self.client.delete(f"/api/locations/{self.location.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
         self.assertFalse(Location.objects.filter(id=self.location.id).exists())
 

@@ -22,9 +22,7 @@ class EventFactory(factory.django.DjangoModelFactory):
     production = SubFactory(ProductionFactory)
     hall = SubFactory(HallFactory)
     starts_at = LazyFunction(timezone.now)
-    ends_at = LazyAttribute(
-        lambda obj: (obj.starts_at + timedelta(hours=2)) if obj.starts_at else None
-    )
+    ends_at = LazyAttribute(lambda obj: (obj.starts_at + timedelta(hours=2)) if obj.starts_at else None)
     ticketing_url = LazyFunction(lambda: faker.url())
 
 
@@ -36,7 +34,5 @@ class EventPriceFactory(factory.django.DjangoModelFactory):
 
     event = SubFactory(EventFactory)
     price_rank = SubFactory(PriceRankFactory)
-    amount = LazyFunction(
-        lambda: faker.pydecimal(left_digits=2, right_digits=2, positive=True)
-    )
+    amount = LazyFunction(lambda: faker.pydecimal(left_digits=2, right_digits=2, positive=True))
     available = LazyFunction(lambda: faker.random_int(min=1, max=500))

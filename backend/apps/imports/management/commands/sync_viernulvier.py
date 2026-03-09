@@ -133,9 +133,7 @@ TAG_CONFIG = ModelSyncConfig(
             "short_description",
             "language_id",
         ),
-        TranslationConfig(
-            "url_title", TagTranslation, "tag", "url_title", "language_id"
-        ),
+        TranslationConfig("url_title", TagTranslation, "tag", "url_title", "language_id"),
     ],
 )
 
@@ -157,9 +155,7 @@ LOCATION_CONFIG = ModelSyncConfig(
     },
     value_transforms={"is_own_location": nee_ja_to_bool},
     translations=[
-        TranslationConfig(
-            "name", LocationTranslation, "location", "name", "language_id"
-        ),
+        TranslationConfig("name", LocationTranslation, "location", "name", "language_id"),
     ],
 )
 
@@ -217,9 +213,7 @@ MEDIA_ITEM_CONFIG = ModelSyncConfig(
         "link": None,
     },
     translations=[
-        TranslationConfig(
-            "title", MediaItemTranslation, "media_item", "title", "language_id"
-        ),
+        TranslationConfig("title", MediaItemTranslation, "media_item", "title", "language_id"),
         TranslationConfig(
             "description",
             MediaItemTranslation,
@@ -227,12 +221,8 @@ MEDIA_ITEM_CONFIG = ModelSyncConfig(
             "description",
             "language_id",
         ),
-        TranslationConfig(
-            "credits", MediaItemTranslation, "media_item", "credits", "language_id"
-        ),
-        TranslationConfig(
-            "link", MediaItemTranslation, "media_item", "link", "language_id"
-        ),
+        TranslationConfig("credits", MediaItemTranslation, "media_item", "credits", "language_id"),
+        TranslationConfig("link", MediaItemTranslation, "media_item", "link", "language_id"),
     ],
 )
 
@@ -253,9 +243,7 @@ PRICE_CONFIG = ModelSyncConfig(
         "include_in_price_range": None,
     },
     translations=[
-        TranslationConfig(
-            "description", PriceTranslation, "price", "description", "language_id"
-        ),
+        TranslationConfig("description", PriceTranslation, "price", "description", "language_id"),
     ],
 )
 
@@ -325,19 +313,11 @@ PRODUCTION_CONFIG = ModelSyncConfig(
             "supertitle",
             "language_id",
         ),
-        TranslationConfig(
-            "title", ProductionTranslation, "production", "title", "language_id"
-        ),
+        TranslationConfig("title", ProductionTranslation, "production", "title", "language_id"),
         # API uses "artist"; model uses "artist_name"
-        TranslationConfig(
-            "artist", ProductionTranslation, "production", "artist_name", "language_id"
-        ),
-        TranslationConfig(
-            "tagline", ProductionTranslation, "production", "tagline", "language_id"
-        ),
-        TranslationConfig(
-            "teaser", ProductionTranslation, "production", "teaser", "language_id"
-        ),
+        TranslationConfig("artist", ProductionTranslation, "production", "artist_name", "language_id"),
+        TranslationConfig("tagline", ProductionTranslation, "production", "tagline", "language_id"),
+        TranslationConfig("teaser", ProductionTranslation, "production", "teaser", "language_id"),
         TranslationConfig(
             "description",
             ProductionTranslation,
@@ -414,9 +394,7 @@ PRODUCTION_CONFIG = ModelSyncConfig(
 def _is_not_longterm(item: dict) -> bool:
     """Filter out long-term productions (they use a different sync flow)."""
     production = item.get("production") or {}
-    api_id = (
-        production.get("@id", "") if isinstance(production, dict) else str(production)
-    )
+    api_id = production.get("@id", "") if isinstance(production, dict) else str(production)
     return "/longterm/" not in api_id
 
 
@@ -514,10 +492,7 @@ class Command(BaseCommand):
             "--only",
             type=str,
             metavar="STEP",
-            help=(
-                "Run only this sync step. "
-                f"Choices: {', '.join(name for name, *_ in SYNC_STEPS)}"
-            ),
+            help=(f"Run only this sync step. Choices: {', '.join(name for name, *_ in SYNC_STEPS)}"),
         )
         parser.add_argument(
             "--dry-run",
@@ -566,18 +541,11 @@ class Command(BaseCommand):
                     params[f"{api_field}[strictly_{bound}]"] = strict
 
         steps_to_run = [
-            (name, model, config, endpoint)
-            for name, model, config, endpoint in SYNC_STEPS
-            if only is None or name == only
+            (name, model, config, endpoint) for name, model, config, endpoint in SYNC_STEPS if only is None or name == only
         ]
 
         if only and not steps_to_run:
-            self.stderr.write(
-                self.style.ERROR(
-                    f"Unknown step '{only}'. "
-                    f"Choices: {', '.join(n for n, *_ in SYNC_STEPS)}"
-                )
-            )
+            self.stderr.write(self.style.ERROR(f"Unknown step '{only}'. Choices: {', '.join(n for n, *_ in SYNC_STEPS)}"))
             return
 
         if dry_run:
@@ -606,22 +574,14 @@ class Command(BaseCommand):
                 elapsed = time.monotonic() - step_start
                 total_saved += saved
                 label = "would save" if dry_run else "records"
-                self.stdout.write(
-                    self.style.SUCCESS(f"✓ {saved} {label} ({elapsed:.1f}s)")
-                )
+                self.stdout.write(self.style.SUCCESS(f"✓ {saved} {label} ({elapsed:.1f}s)"))
             except Exception as exc:
                 elapsed = time.monotonic() - step_start
-                self.stdout.write(
-                    self.style.ERROR(f"✗ FAILED after {elapsed:.1f}s: {exc}")
-                )
+                self.stdout.write(self.style.ERROR(f"✗ FAILED after {elapsed:.1f}s: {exc}"))
 
         total_elapsed = time.monotonic() - wall_start
         suffix = " [DRY RUN]" if dry_run else ""
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"\nDone{suffix}. Total: {total_saved} records in {total_elapsed:.1f}s"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"\nDone{suffix}. Total: {total_saved} records in {total_elapsed:.1f}s"))
 
     def _make_progress_callback(self, name: str) -> Callable[[int, int], None]:
         """Return an on_progress callback that drives a tqdm bar (if available)."""

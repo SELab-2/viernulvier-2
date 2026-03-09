@@ -78,9 +78,7 @@ class TestTwoStepBulkActionMixin(TestCase):
         self.assertIsNone(response)
         apply_handler.assert_called_once()
         selected_qs = apply_handler.call_args[0][0]
-        self.assertEqual(
-            list(selected_qs.values_list("id", flat=True)), [self.production.id]
-        )
+        self.assertEqual(list(selected_qs.values_list("id", flat=True)), [self.production.id])
 
     def test_run_two_step_bulk_action_apply_with_no_selection_returns_none(self):
         request = self._request_with_messages(

@@ -371,12 +371,8 @@ class TestTagDisplayNameBaseLanguage:
             is_external=False,
             is_enabled=True,
         )
-        TagTranslation.objects.create(
-            tag=tag, language=nl, name="Thema", short_description="", url_title=""
-        )
-        TagTranslation.objects.create(
-            tag=tag, language=en, name="Theme", short_description="", url_title=""
-        )
+        TagTranslation.objects.create(tag=tag, language=nl, name="Thema", short_description="", url_title="")
+        TagTranslation.objects.create(tag=tag, language=en, name="Theme", short_description="", url_title="")
 
         data = TagSerializer(tag, context=_display_ctx()).data
         assert data["display_name"] == "Theme"
@@ -394,9 +390,7 @@ class TestTagDisplayNameBaseLanguage:
             is_external=False,
             is_enabled=True,
         )
-        TagTranslation.objects.create(
-            tag=tag, language=nl, name="Thema", short_description="", url_title=""
-        )
+        TagTranslation.objects.create(tag=tag, language=nl, name="Thema", short_description="", url_title="")
 
         data = TagSerializer(tag, context=_display_ctx()).data
         assert data["display_name"] == "Thema"

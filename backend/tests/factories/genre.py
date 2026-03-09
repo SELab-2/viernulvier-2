@@ -30,8 +30,6 @@ class GenreTranslationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = GenreTranslation
 
-    name = factory.LazyAttribute(
-        lambda _: faker.word()
-    )  # Random name for the translation
+    name = factory.LazyAttribute(lambda _: faker.word())  # Random name for the translation
     language = factory.SubFactory(LanguageFactory)
     genre = factory.SubFactory(GenreFactory)

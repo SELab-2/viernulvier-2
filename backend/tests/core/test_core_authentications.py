@@ -231,9 +231,7 @@ class TestUnicodeErrors:
         with _patch_get_auth(b"\xff\xfe validkey"):
             with pytest.raises(AuthenticationFailed) as exc_info:
                 auth.authenticate(MagicMock())
-        assert "Invalid characters in authentication scheme" in str(
-            exc_info.value.detail
-        )
+        assert "Invalid characters in authentication scheme" in str(exc_info.value.detail)
 
     def test_invalid_utf8_in_key_raises_with_message(self, auth):
         """Valid scheme, but invalid UTF-8 bytes in the key part."""
@@ -603,9 +601,7 @@ class TestTimingSafeComparison:
                     wraps=secrets.compare_digest,
                 ) as mock_cd:
                     auth.authenticate(MagicMock())
-        assert mock_cd.called, (
-            "secrets.compare_digest must be used for the internal key check."
-        )
+        assert mock_cd.called, "secrets.compare_digest must be used for the internal key check."
 
     def test_compare_digest_is_called_for_public_key(self, auth):
         with _patch_get_auth(VALID_PUBLIC_HEADER):
@@ -615,9 +611,7 @@ class TestTimingSafeComparison:
                     wraps=secrets.compare_digest,
                 ) as mock_cd:
                     auth.authenticate(MagicMock())
-        assert mock_cd.called, (
-            "secrets.compare_digest must be used for the public key check."
-        )
+        assert mock_cd.called, "secrets.compare_digest must be used for the public key check."
 
     def test_compare_digest_called_twice_when_internal_mismatches(self, auth):
         """

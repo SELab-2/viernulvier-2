@@ -11,9 +11,7 @@ from .models import Hall, Location, Space
 from .schemas import extend_schema, hall_schema, location_schema, space_schema
 from .serializers import HallSerializer, LocationSerializer, SpaceSerializer
 
-_TAG = (
-    "Locations"  # Reusable tag for all location-related endpoints in the OpenAPI docs
-)
+_TAG = "Locations"  # Reusable tag for all location-related endpoints in the OpenAPI docs
 
 
 @extend_schema(tags=[_TAG])
@@ -30,9 +28,7 @@ class LocationViewSet(ApiModelViewSet):
     Translations are managed via the Location Translation endpoints.
     """
 
-    queryset = (
-        Location.objects.prefetch_related("translations__language").order_by("id").all()
-    )
+    queryset = Location.objects.prefetch_related("translations__language").order_by("id").all()
     serializer_class = LocationSerializer
 
 
@@ -49,12 +45,7 @@ class SpaceViewSet(ApiModelViewSet):
     rendering translated fields and related lookups.
     """
 
-    queryset = (
-        Space.objects.select_related("location")
-        .prefetch_related("translations__language")
-        .order_by("id")
-        .all()
-    )
+    queryset = Space.objects.select_related("location").prefetch_related("translations__language").order_by("id").all()
     serializer_class = SpaceSerializer
 
 

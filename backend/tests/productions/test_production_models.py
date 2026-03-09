@@ -56,9 +56,7 @@ class TestUitDatabaseType:
     def test_reverse_relation_productions(self):
         """Verify reverse relation from type to linked productions."""
         production_type = UitDatabaseTypeFactory()
-        productions = ProductionFactory.create_batch(
-            2, uit_database_type=production_type
-        )
+        productions = ProductionFactory.create_batch(2, uit_database_type=production_type)
 
         assert production_type.productions.count() == 2
         assert all(p.uit_database_type == production_type for p in productions)
@@ -152,9 +150,7 @@ class TestProductionTranslation:
         ProductionTranslationFactory.create(production=production, language=language)
 
         with pytest.raises(ValidationError):
-            ProductionTranslationFactory.create(
-                production=production, language=language
-            )
+            ProductionTranslationFactory.create(production=production, language=language)
 
     def test_same_language_allowed_for_different_productions(self):
         """Allow one language to be reused across different productions."""
@@ -168,9 +164,7 @@ class TestProductionTranslation:
     def test_reverse_relation_from_production(self):
         """Expose translations through the production reverse relation."""
         production = ProductionFactory.create()
-        translations = ProductionTranslationFactory.create_batch(
-            2, production=production
-        )
+        translations = ProductionTranslationFactory.create_batch(2, production=production)
 
         assert production.translations.count() == 2
         assert all(t.production == production for t in translations)
@@ -252,9 +246,7 @@ class TestProductionGenre:
         """Verify the string representation of a ProductionGenre instance."""
         production = ProductionFactory.create()
         genre = GenreFactory.create()
-        production_genre = ProductionGenreFactory.create(
-            production=production, genre=genre
-        )
+        production_genre = ProductionGenreFactory.create(production=production, genre=genre)
 
         expected_str = f"{genre.type}"
         assert str(production_genre) == expected_str

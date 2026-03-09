@@ -89,8 +89,6 @@ class TestBaseModel:
         obj.save()
         assert CoreDummy.objects.get(pk=obj.pk).name == "second"
 
-    def test_get_base_translation_returns_none_without_related_manager(
-        self, core_dummy_table
-    ):
+    def test_get_base_translation_returns_none_without_related_manager(self, core_dummy_table):
         obj = CoreDummyFactory.build(name="valid")
         assert obj.get_base_translation(related_name="translations") is None

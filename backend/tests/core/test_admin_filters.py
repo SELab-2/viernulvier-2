@@ -32,9 +32,7 @@ class TestSearchableMultiSelectFilter(TestCase):
     def _build_filter(self, query_string):
         request = self.factory.get(f"/admin/languages/language/?{query_string}")
         params = request.GET.copy()
-        return DummyLanguageCodeFilter(
-            request, params, Language, self.model_admin
-        ), params
+        return DummyLanguageCodeFilter(request, params, Language, self.model_admin), params
 
     def test_expected_parameters_include_value_search_and_open(self):
         filter_instance, _ = self._build_filter("")
@@ -66,16 +64,12 @@ class TestSearchableMultiSelectFilter(TestCase):
 
     def test_queryset_applies_selected_values(self):
         filter_instance, _ = self._build_filter("code=nl")
-        queryset = filter_instance.queryset(
-            filter_instance.request, Language.objects.order_by("code")
-        )
+        queryset = filter_instance.queryset(filter_instance.request, Language.objects.order_by("code"))
         self.assertEqual(list(queryset.values_list("code", flat=True)), ["nl"])
 
     def test_queryset_returns_unfiltered_when_nothing_selected(self):
         filter_instance, _ = self._build_filter("")
-        queryset = filter_instance.queryset(
-            filter_instance.request, Language.objects.order_by("code")
-        )
+        queryset = filter_instance.queryset(filter_instance.request, Language.objects.order_by("code"))
         self.assertEqual(list(queryset.values_list("code", flat=True)), ["en", "nl"])
 
     def test_lookups_applies_search_branch(self):
@@ -93,6 +87,4 @@ class TestSearchableMultiSelectFilter(TestCase):
 
     def test_base_filter_queryset_raises_not_implemented(self):
         with self.assertRaises(NotImplementedError):
-            SearchableMultiSelectFilter.filter_queryset(
-                object(), Language.objects.all()
-            )
+            SearchableMultiSelectFilter.filter_queryset(object(), Language.objects.all())

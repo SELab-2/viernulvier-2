@@ -53,12 +53,7 @@ class GenreAdmin(BaseAdmin):
 
     def get_queryset(self, request):
         """Select related use_as and prefetch translations to avoid N+1 queries."""
-        return (
-            super()
-            .get_queryset(request)
-            .select_related("use_as")
-            .prefetch_related("translations")
-        )
+        return super().get_queryset(request).select_related("use_as").prefetch_related("translations")
 
 
 @admin.register(GenreTranslation)

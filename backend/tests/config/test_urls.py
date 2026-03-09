@@ -55,11 +55,7 @@ class TestConfigUrls(SimpleTestCase):
             urls_module = _reload_config_urls_module()
 
         regex_patterns = [
-            pattern.pattern.regex.pattern
-            for pattern in urls_module.urlpatterns
-            if hasattr(pattern.pattern, "regex")
+            pattern.pattern.regex.pattern for pattern in urls_module.urlpatterns if hasattr(pattern.pattern, "regex")
         ]
 
-        self.assertTrue(
-            any("^media/(?P<path>.*)$" == regex for regex in regex_patterns)
-        )
+        self.assertTrue(any("^media/(?P<path>.*)$" == regex for regex in regex_patterns))

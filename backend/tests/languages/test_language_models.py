@@ -92,9 +92,7 @@ class TestLanguageModel:
         """
         language = LanguageFactory.create(code="de", name="German")
 
-        location_translations = LocationTranslationFactory.create_batch(
-            2, language=language
-        )
+        location_translations = LocationTranslationFactory.create_batch(2, language=language)
         space_translation = SpaceTranslationFactory.create(language=language)
         hall_translation = HallTranslationFactory.create(language=language)
 

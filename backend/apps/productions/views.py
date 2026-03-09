@@ -56,9 +56,7 @@ class ProductionViewSet(ApiModelViewSet):
         "tags__translations__language",
         Prefetch(
             "productiongenre_set",
-            queryset=ProductionGenre.objects.select_related("genre").order_by(
-                "position"
-            ),
+            queryset=ProductionGenre.objects.select_related("genre").order_by("position"),
             to_attr="prefetched_production_genres",
         ),
     )

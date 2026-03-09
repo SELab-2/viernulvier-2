@@ -102,11 +102,7 @@ class TranslatableSerializerMixin:
         """
         translations = getattr(obj, related_name).all()
 
-        return {
-            t.language.code: getattr(t, field_name)
-            for t in translations
-            if getattr(t, field_name)
-        }
+        return {t.language.code: getattr(t, field_name) for t in translations if getattr(t, field_name)}
 
     def get_base_language_code(self) -> str:
         """
