@@ -2,7 +2,8 @@
 URL configuration for the API app.
 """
 
-from django.urls import path, include
+from django.urls import include, path
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -18,6 +19,14 @@ from apps.productions.views import ProductionViewSet
 from apps.genres.views import GenreUseAsViewSet, GenreViewSet
 from apps.locations.views import HallViewSet, LocationViewSet, SpaceViewSet
 from apps.events.views import EventViewSet
+from apps.genres.views import GenreUseAsViewSet, GenreViewSet
+from apps.import_log.views import ImportLogViewSet
+from apps.languages.views import LanguageViewSet
+from apps.locations.views import HallViewSet, LocationViewSet, SpaceViewSet
+from apps.media_library.views import MediaGalleryViewSet, MediaItemViewSet
+from apps.pricing.views import PriceRankViewSet, PriceViewSet
+from apps.productions.views import ProductionViewSet
+from apps.tags.views import TagViewSet
 
 router = DefaultRouter()
 

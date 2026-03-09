@@ -7,9 +7,9 @@ from apps.core.views import ApiModelViewSet
 from apps.languages.models import Language
 from apps.pricing.models import (
     Price,
-    PriceTranslation,
     PriceRank,
     PriceRankTranslation,
+    PriceTranslation,
 )
 from apps.pricing.views import PriceViewSet, PriceRankViewSet
 from tests.factories.language import LanguageFactory
@@ -96,18 +96,12 @@ class TestPriceRankViewSetPrefetch(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.lang_en = LanguageFactory.create(code="en", name="English", is_active=True)
-        self.lang_nl = LanguageFactory.create(
-            code="nl", name="Nederlands", is_active=True
-        )
+        self.lang_nl = LanguageFactory.create(code="nl", name="Nederlands", is_active=True)
 
         for idx in range(5):
             rank = PriceRankFactory(position=idx)
-            PriceRankTranslationFactory(
-                price_rank=rank, language=self.lang_en, description=f"Rank {idx} en"
-            )
-            PriceRankTranslationFactory(
-                price_rank=rank, language=self.lang_nl, description=f"Rank {idx} nl"
-            )
+            PriceRankTranslationFactory(price_rank=rank, language=self.lang_en, description=f"Rank {idx} en")
+            PriceRankTranslationFactory(price_rank=rank, language=self.lang_nl, description=f"Rank {idx} nl")
 
     def test_price_rank_list_bounded_queries(self):
         with CaptureQueriesContext(connection) as ctx:
@@ -133,9 +127,7 @@ class _PriceSetupMixin(TestCase):
         Language.objects.all().delete()
 
         self.lang_en = LanguageFactory.create(code="en", name="English", is_active=True)
-        self.lang_nl = LanguageFactory.create(
-            code="nl", name="Nederlands", is_active=True
-        )
+        self.lang_nl = LanguageFactory.create(code="nl", name="Nederlands", is_active=True)
 
         self.p1 = PriceFactory.create(
             type="A",
@@ -157,22 +149,14 @@ class _PriceSetupMixin(TestCase):
             sort_order=5,
             cineville_box=False,
         )
-        PriceTranslationFactory.create(
-            price=self.p1, language=self.lang_en, description="A en"
-        )
-        PriceTranslationFactory.create(
-            price=self.p1, language=self.lang_nl, description="A nl"
-        )
+        PriceTranslationFactory.create(price=self.p1, language=self.lang_en, description="A en")
+        PriceTranslationFactory.create(price=self.p1, language=self.lang_nl, description="A nl")
 
         # extra data to exercise prefetches
         for idx in range(4):
             price = PriceFactory.create(type=f"X{idx}")
-            PriceTranslationFactory.create(
-                price=price, language=self.lang_en, description=f"X{idx} en"
-            )
-            PriceTranslationFactory.create(
-                price=price, language=self.lang_nl, description=f"X{idx} nl"
-            )
+            PriceTranslationFactory.create(price=price, language=self.lang_en, description=f"X{idx} en")
+            PriceTranslationFactory.create(price=price, language=self.lang_nl, description=f"X{idx} nl")
 
 
 # ---------------------------------------------------------------------------
@@ -573,9 +557,7 @@ class _PriceRankSetupMixin(TestCase):
 
         self.r1 = PriceRankFactory.create(position=1, sold_out_buffer=0)
         self.r2 = PriceRankFactory.create(position=2, sold_out_buffer=0)
-        PriceRankTranslationFactory.create(
-            price_rank=self.r1, language=self.lang, description="R1"
-        )
+        PriceRankTranslationFactory.create(price_rank=self.r1, language=self.lang, description="R1")
 
 
 # ---------------------------------------------------------------------------

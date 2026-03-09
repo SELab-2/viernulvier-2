@@ -20,8 +20,9 @@ Nested relations
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
-from apps.tags.serializers import TagSerializer
 from apps.genres.serializers import GenreSerializer
+from apps.tags.serializers import TagSerializer
+
 from .models import Production, UitDatabaseTheme, UitDatabaseType
 
 
@@ -193,16 +194,10 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         ]
         extra_kwargs = {
             "attendance_mode": {
-                "help_text": (
-                    "How the audience attends the production. "
-                    "Accepted values: `offline`, `online`."
-                ),
+                "help_text": ("How the audience attends the production. Accepted values: `offline`, `online`."),
             },
             "performer_type": {
-                "help_text": (
-                    "Whether the performance is by a group or a solo artist. "
-                    "Accepted values: `group`, `solo`."
-                ),
+                "help_text": ("Whether the performance is by a group or a solo artist. Accepted values: `group`, `solo`."),
             },
         }
 

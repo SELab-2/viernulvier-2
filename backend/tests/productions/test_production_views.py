@@ -255,15 +255,11 @@ class TestProductionViewSetUpdate(TestCase):
         self.payload = {"attendance_mode": "online", "performer_type": "group"}
 
     def test_put_with_internal_key_returns_200(self):
-        response = self.client.put(
-            f"/api/productions/{self.production.pk}/", self.payload, **int_headers()
-        )
+        response = self.client.put(f"/api/productions/{self.production.pk}/", self.payload, **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_put_with_public_key_returns_403(self):
-        response = self.client.put(
-            f"/api/productions/{self.production.pk}/", self.payload, **pub_headers()
-        )
+        response = self.client.put(f"/api/productions/{self.production.pk}/", self.payload, **pub_headers())
         self.assertIn(response.status_code, (401, 403))
 
     def test_put_without_auth_returns_403(self):
@@ -273,9 +269,7 @@ class TestProductionViewSetUpdate(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_put_updates_attendance_mode(self):
-        self.client.put(
-            f"/api/productions/{self.production.pk}/", self.payload, **int_headers()
-        )
+        self.client.put(f"/api/productions/{self.production.pk}/", self.payload, **int_headers())
         self.production.refresh_from_db()
         self.assertEqual(self.production.attendance_mode, "online")
 
@@ -310,9 +304,7 @@ class TestProductionViewSetPartialUpdate(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_patch_without_auth_returns_403(self):
-        response = self.client.patch(
-            f"/api/productions/{self.production.pk}/", {"attendance_mode": "online"}
-        )
+        response = self.client.patch(f"/api/productions/{self.production.pk}/", {"attendance_mode": "online"})
         self.assertIn(response.status_code, (401, 403))
 
     def test_patch_only_updates_specified_field(self):
@@ -338,15 +330,11 @@ class TestProductionViewSetDelete(TestCase):
         self.production = ProductionFactory.create()
 
     def test_delete_with_internal_key_returns_204(self):
-        response = self.client.delete(
-            f"/api/productions/{self.production.pk}/", **int_headers()
-        )
+        response = self.client.delete(f"/api/productions/{self.production.pk}/", **int_headers())
         self.assertEqual(response.status_code, 204)
 
     def test_delete_with_public_key_returns_403(self):
-        response = self.client.delete(
-            f"/api/productions/{self.production.pk}/", **pub_headers()
-        )
+        response = self.client.delete(f"/api/productions/{self.production.pk}/", **pub_headers())
         self.assertIn(response.status_code, (401, 403))
 
     def test_delete_without_auth_returns_403(self):
@@ -354,9 +342,7 @@ class TestProductionViewSetDelete(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_delete_with_wrong_key_returns_403(self):
-        response = self.client.delete(
-            f"/api/productions/{self.production.pk}/", **wrong_headers()
-        )
+        response = self.client.delete(f"/api/productions/{self.production.pk}/", **wrong_headers())
         self.assertIn(response.status_code, (401, 403))
 
     def test_delete_removes_production_from_database(self):

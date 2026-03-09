@@ -41,7 +41,6 @@ from tests.factories.media_library import (
     MediaItemCropFactory,
 )
 
-
 PUB_KEY = "pub-media-library-view-test-key"
 INT_KEY = "int-media-library-view-test-key"
 

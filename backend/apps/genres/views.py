@@ -8,7 +8,7 @@ on routing and queryset configuration only.
 from apps.core.views import ApiModelViewSet
 
 from .models import Genre, GenreUseAs
-from .schemas import genre_schema, genre_use_as_schema, extend_schema
+from .schemas import extend_schema, genre_schema, genre_use_as_schema
 from .serializers import GenreSerializer, GenreUseAsSerializer
 
 _TAG = "Genres"  # Reusable tag for all genre-related endpoints in the OpenAPI docs

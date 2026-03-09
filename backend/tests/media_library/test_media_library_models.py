@@ -15,16 +15,15 @@ from django.core.exceptions import ValidationError
 
 from apps.media_library.models import (
     MediaItem,
-    MediaItemTranslation,
     MediaItemCrop,
+    MediaItemTranslation,
 )
-
 from tests.factories.language import LanguageFactory
 from tests.factories.media_library import (
     MediaGalleryFactory,
+    MediaItemCropFactory,
     MediaItemFactory,
     MediaItemTranslationFactory,
-    MediaItemCropFactory,
 )
 
 pytestmark = pytest.mark.django_db

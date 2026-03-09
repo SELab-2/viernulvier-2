@@ -13,7 +13,7 @@ Covers:
 
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
@@ -46,16 +46,13 @@ from tests.factories.production import (
 )
 from tests.factories.tag import TagFactory
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
 def make_superuser(username="admin"):
-    return User.objects.create_superuser(
-        username=username, password="password", email=f"{username}@example.com"
-    )
+    return User.objects.create_superuser(username=username, password="password", email=f"{username}@example.com")
 
 
 # ---------------------------------------------------------------------------
@@ -74,33 +71,25 @@ class TestAdminRegistration(TestCase):
         self.assertIn(ProductionTranslation, admin.site._registry)
 
     def test_registered_admin_is_production_translation_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[ProductionTranslation], ProductionTranslationAdmin
-        )
+        self.assertIsInstance(admin.site._registry[ProductionTranslation], ProductionTranslationAdmin)
 
     def test_uit_database_theme_is_registered(self):
         self.assertIn(UitDatabaseTheme, admin.site._registry)
 
     def test_registered_admin_is_uit_database_theme_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[UitDatabaseTheme], UitDatabaseThemeAdmin
-        )
+        self.assertIsInstance(admin.site._registry[UitDatabaseTheme], UitDatabaseThemeAdmin)
 
     def test_uit_database_type_is_registered(self):
         self.assertIn(UitDatabaseType, admin.site._registry)
 
     def test_registered_admin_is_uit_database_type_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[UitDatabaseType], UitDatabaseTypeAdmin
-        )
+        self.assertIsInstance(admin.site._registry[UitDatabaseType], UitDatabaseTypeAdmin)
 
     def test_production_genre_is_registered(self):
         self.assertIn(ProductionGenre, admin.site._registry)
 
     def test_registered_admin_is_production_genre_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[ProductionGenre], ProductionGenreAdmin
-        )
+        self.assertIsInstance(admin.site._registry[ProductionGenre], ProductionGenreAdmin)
 
     def test_production_tag_is_registered(self):
         self.assertIn(ProductionTag, admin.site._registry)

@@ -11,10 +11,12 @@ Covers:
 
 from datetime import timedelta
 from decimal import Decimal
+
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
+
 from apps.events.models import Event, EventPrice
 from apps.events.serializers import EventSerializer
 from tests.factories.event import EventFactory, EventPriceFactory

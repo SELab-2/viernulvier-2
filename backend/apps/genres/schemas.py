@@ -13,14 +13,14 @@ from drf_spectacular.utils import (
 )
 
 from apps.core.openapi import (
+    RESPONSE_204_DELETED,
     RESPONSE_400,
     RESPONSE_401,
     RESPONSE_403,
     RESPONSE_404,
-    RESPONSE_204_DELETED,
 )
-from .serializers import GenreSerializer, GenreUseAsSerializer
 
+from .serializers import GenreSerializer, GenreUseAsSerializer
 
 # ===========================================================================
 # GenreUseAs — examples
@@ -70,10 +70,7 @@ _USE_AS_LIST = extend_schema(
 
 _USE_AS_RETRIEVE = extend_schema(
     summary="Retrieve a genre usage context",
-    description=(
-        "Returns the full representation of a single **GenreUseAs** object "
-        "identified by its primary key."
-    ),
+    description=("Returns the full representation of a single **GenreUseAs** object identified by its primary key."),
     responses={
         200: GenreUseAsSerializer,
         401: RESPONSE_401,
@@ -174,8 +171,7 @@ _GENRE_INPUT = OpenApiExample(
     "Genre — request body",
     summary="Payload for creating a new genre",
     description=(
-        "Only `type` and `use_as` are required. "
-        "Localised names are added via the translation endpoints after creation."
+        "Only `type` and `use_as` are required. Localised names are added via the translation endpoints after creation."
     ),
     value={"type": "contemporary_dance", "use_as": 1},
     request_only=True,
@@ -243,9 +239,7 @@ _GENRE_CREATE = extend_schema(
 _GENRE_UPDATE = extend_schema(
     summary="Replace a genre",
     description=(
-        "Fully replaces an existing **Genre**. "
-        "All writable fields must be supplied.\n\n"
-        "> **Requires an internal API key.**"
+        "Fully replaces an existing **Genre**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
     ),
     request=GenreSerializer,
     responses={

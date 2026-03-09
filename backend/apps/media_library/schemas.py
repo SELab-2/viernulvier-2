@@ -13,14 +13,14 @@ from drf_spectacular.utils import (
 )
 
 from apps.core.openapi import (
+    RESPONSE_204_DELETED,
     RESPONSE_400,
     RESPONSE_401,
     RESPONSE_403,
     RESPONSE_404,
-    RESPONSE_204_DELETED,
 )
-from .serializers import MediaGallerySerializer, MediaItemSerializer
 
+from .serializers import MediaGallerySerializer, MediaItemSerializer
 
 # ===========================================================================
 # Shared nested examples
@@ -208,8 +208,7 @@ _ITEM_INPUT = OpenApiExample(
     "MediaItem — request body",
     summary="Payload for creating a new media item",
     description=(
-        "`gallery` and `type` are required. "
-        "Localised metadata is added via the translation endpoints after creation."
+        "`gallery` and `type` are required. Localised metadata is added via the translation endpoints after creation."
     ),
     value={
         "gallery": 1,

@@ -99,9 +99,7 @@ class TestLanguageAdminFunctional(TestCase):
     """Functional admin tests using Django's test client."""
 
     def setUp(self):
-        self.superuser = User.objects.create_superuser(
-            username="admin", password="password", email="admin@example.com"
-        )
+        self.superuser = User.objects.create_superuser(username="admin", password="password", email="admin@example.com")
         self.client.force_login(self.superuser)
         LanguageFactory(code="nl", name="Dutch", is_active=True)
         LanguageFactory(code="en", name="English", is_active=False)

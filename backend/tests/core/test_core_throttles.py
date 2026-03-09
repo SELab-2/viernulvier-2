@@ -2,11 +2,12 @@ import hashlib
 from unittest.mock import MagicMock
 from django.test import TestCase, override_settings
 from rest_framework.test import APIRequestFactory
+
 from apps.core.throttles import (
-    PublicKeyThrottle,
-    PublicKeyMinuteThrottle,
-    PublicKeyHourThrottle,
     InternalKeyThrottle,
+    PublicKeyHourThrottle,
+    PublicKeyMinuteThrottle,
+    PublicKeyThrottle,
 )
 
 

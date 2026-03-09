@@ -10,10 +10,10 @@ Covers:
 """
 
 from unittest.mock import MagicMock
+
 from django.test import TestCase
 
 from apps.core.serializers import TranslatableSerializerMixin
-
 
 # ---------------------------------------------------------------------------
 # Fake domain objects

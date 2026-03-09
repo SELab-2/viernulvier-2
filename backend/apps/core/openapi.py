@@ -31,7 +31,6 @@ Then reference them in ``extend_schema`` decorators::
 
 from drf_spectacular.utils import OpenApiResponse
 
-
 # ---------------------------------------------------------------------------
 # 400 Bad Request
 # ---------------------------------------------------------------------------
@@ -85,9 +84,7 @@ requested action (e.g. a public key attempting a POST, PUT, PATCH, or DELETE).
 # 404 Not Found
 # ---------------------------------------------------------------------------
 
-RESPONSE_404 = OpenApiResponse(
-    description="**Not Found** — No resource exists with the given identifier."
-)
+RESPONSE_404 = OpenApiResponse(description="**Not Found** — No resource exists with the given identifier.")
 """
 Returned when the requested primary key does not match any record in the
 database.
@@ -97,9 +94,7 @@ database.
 # 204 No Content (successful deletion)
 # ---------------------------------------------------------------------------
 
-RESPONSE_204_DELETED = OpenApiResponse(
-    description="**No Content** — The resource was permanently deleted."
-)
+RESPONSE_204_DELETED = OpenApiResponse(description="**No Content** — The resource was permanently deleted.")
 """
 Returned on successful ``DELETE`` requests. The response body is empty.
 """

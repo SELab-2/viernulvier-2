@@ -18,7 +18,7 @@ Covers:
 
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
@@ -45,16 +45,13 @@ from tests.factories.media_library import (
     MediaItemTranslationFactory,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
 def make_superuser(username="admin"):
-    return User.objects.create_superuser(
-        username=username, password="password", email=f"{username}@example.com"
-    )
+    return User.objects.create_superuser(username=username, password="password", email=f"{username}@example.com")
 
 
 # ---------------------------------------------------------------------------
@@ -81,9 +78,7 @@ class TestAdminRegistration(TestCase):
         self.assertIn(MediaItemTranslation, admin.site._registry)
 
     def test_registered_admin_is_media_item_translation_admin(self):
-        self.assertIsInstance(
-            admin.site._registry[MediaItemTranslation], MediaItemTranslationAdmin
-        )
+        self.assertIsInstance(admin.site._registry[MediaItemTranslation], MediaItemTranslationAdmin)
 
     def test_media_item_crop_is_registered(self):
         self.assertIn(MediaItemCrop, admin.site._registry)
@@ -496,9 +491,7 @@ class TestMediaItemTranslationAdminChangelist(TestCase):
 
     def test_changelist_filter_by_language(self):
         url = reverse("admin:media_library_mediaitemtranslation_changelist")
-        self.assertEqual(
-            self.client.get(url, {"language__code": "nl"}).status_code, 200
-        )
+        self.assertEqual(self.client.get(url, {"language__code": "nl"}).status_code, 200)
 
     def test_changelist_search(self):
         url = reverse("admin:media_library_mediaitemtranslation_changelist")

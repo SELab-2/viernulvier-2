@@ -68,8 +68,7 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "event": {"help_text": "PK of the event this price entry belongs to."},
             "price_rank": {
                 "help_text": (
-                    "PK of the associated ``PriceRank`` availability tier. "
-                    "`null` when the rank has been deleted."
+                    "PK of the associated ``PriceRank`` availability tier. `null` when the rank has been deleted."
                 ),
             },
             "price_rank_display": {
@@ -167,8 +166,7 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             },
             "hall": {
                 "help_text": (
-                    "PK of the hall in which the event takes place. "
-                    "`null` for online or location-independent events."
+                    "PK of the hall in which the event takes place. `null` for online or location-independent events."
                 ),
             },
             "hall_display": {
@@ -178,10 +176,7 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
                 "help_text": "ISO 8601 UTC datetime at which the event begins.",
             },
             "ends_at": {
-                "help_text": (
-                    "ISO 8601 UTC datetime at which the event ends. "
-                    "Must be strictly later than `starts_at`."
-                ),
+                "help_text": ("ISO 8601 UTC datetime at which the event ends. Must be strictly later than `starts_at`."),
             },
             "ticketing_url": {
                 "help_text": "Public URL where tickets for this event can be purchased. Empty string when not applicable.",

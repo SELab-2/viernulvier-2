@@ -1,5 +1,6 @@
 import factory
 from faker import Faker
+
 from apps.languages.models import Language
 
 faker = Faker()

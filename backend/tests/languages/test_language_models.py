@@ -1,14 +1,14 @@
 import pytest
 from django.core.exceptions import ValidationError
-from tests.factories.language import LanguageFactory
 from tests.factories.genre import GenreTranslationFactory
-from tests.factories.media_library import MediaItemTranslationFactory
+from tests.factories.language import LanguageFactory
 from tests.factories.location import (
+    HallTranslationFactory,
     LocationTranslationFactory,
     SpaceTranslationFactory,
-    HallTranslationFactory,
 )
-from tests.factories.pricing import PriceTranslationFactory, PriceRankTranslationFactory
+from tests.factories.media_library import MediaItemTranslationFactory
+from tests.factories.pricing import PriceRankTranslationFactory, PriceTranslationFactory
 from tests.factories.tag import TagTranslationFactory
 
 pytestmark = pytest.mark.django_db
@@ -75,7 +75,10 @@ class TestLanguageModel:
         assert all(str(tr).startswith("en - ") for tr in translations)
 
     def test_media_item_translations_related_name(self):
-        """Language should expose media item translations via media_item_translations."""
+        """
+        Language should expose media item translations
+        via media_item_translations.
+        """
         language = LanguageFactory.create(code="fr", name="French")
         translations = MediaItemTranslationFactory.create_batch(2, language=language)
 
@@ -83,7 +86,9 @@ class TestLanguageModel:
         assert all(tr.language == language for tr in translations)
 
     def test_location_space_hall_translations_related_names(self):
-        """Language should expose location, space, and hall translations via <location|space|hall>_translations."""
+        """Language should expose location, space, and hall translations
+        via <location|space|hall>_translations.
+        """
         language = LanguageFactory.create(code="de", name="German")
 
         location_translations = LocationTranslationFactory.create_batch(

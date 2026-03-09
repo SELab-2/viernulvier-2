@@ -15,8 +15,8 @@ language in a single query.
 from django.contrib import admin
 
 from apps.core.admin import BaseAdmin
-from .models import Tag, TagTranslation
 
+from .models import Tag, TagTranslation
 
 # ===========================================================================
 # Inline

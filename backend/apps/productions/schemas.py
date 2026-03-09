@@ -18,14 +18,14 @@ from drf_spectacular.utils import (
 )
 
 from apps.core.openapi import (
+    RESPONSE_204_DELETED,
     RESPONSE_400,
     RESPONSE_401,
     RESPONSE_403,
     RESPONSE_404,
-    RESPONSE_204_DELETED,
 )
-from .serializers import ProductionSerializer
 
+from .serializers import ProductionSerializer
 
 # ===========================================================================
 # Production — examples

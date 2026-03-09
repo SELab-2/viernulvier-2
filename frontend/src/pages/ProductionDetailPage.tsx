@@ -4,25 +4,25 @@ import { useTranslation } from 'react-i18next'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 
 const ProductionDetailPage = () => {
-    const { id } = useParams<{ id: string }>()
-    const navigate = useNavigate()
-    const { t } = useTranslation()
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { t } = useTranslation()
 
-    return (
-        <Container maxWidth="md" sx={{ py: 4 }}>
-            <Stack spacing={3}>
-                <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/productions')}>
-                    {t('productions.backToProductions')}
-                </Button>
-                <Typography variant="h4" component="h1">
-                    {t('productions.detailTitle')}: {id}
-                </Typography>
-                <Paper elevation={2} sx={{ p: 3 }}>
-                    <Typography variant="body1">{t('productions.detailPlaceholder', { id })}</Typography>
-                </Paper>
-            </Stack>
-        </Container>
-    )
+  return (
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Stack spacing={3}>
+        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/productions')}>
+          {t('productions.backToProductions')}
+        </Button>
+        <Typography variant="h4" component="h1">
+          {t('productions.detailTitle')}: {id}
+        </Typography>
+        <Paper elevation={2} sx={{ p: 3 }}>
+          <Typography variant="body1">{t('productions.detailPlaceholder', { id })}</Typography>
+        </Paper>
+      </Stack>
+    </Container>
+  )
 }
 
 export default ProductionDetailPage

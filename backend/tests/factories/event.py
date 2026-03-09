@@ -1,14 +1,14 @@
 from datetime import timedelta
 
 import factory
-from factory.declarations import LazyAttribute, LazyFunction, SubFactory
 from django.utils import timezone
+from factory.declarations import LazyAttribute, LazyFunction, SubFactory
 from faker import Faker
 
 from apps.events.models import Event, EventPrice
-from tests.factories.production import ProductionFactory
-from tests.factories.pricing import PriceRankFactory
 from tests.factories.location import HallFactory
+from tests.factories.pricing import PriceRankFactory
+from tests.factories.production import ProductionFactory
 
 faker = Faker()
 

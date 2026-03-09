@@ -1,7 +1,9 @@
 from datetime import timedelta
+
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
+
 from apps.core.views import ApiModelViewSet
 from apps.events.models import Event
 from apps.events.views import EventViewSet
@@ -13,7 +15,6 @@ from tests.factories.event import EventPriceFactory
 from tests.factories.production import ProductionTranslationFactory
 from tests.factories.location import HallTranslationFactory
 from tests.factories.language import LanguageFactory
-
 
 PUB_KEY = "pub-event-view-test-key"
 INT_KEY = "int-event-view-test-key"

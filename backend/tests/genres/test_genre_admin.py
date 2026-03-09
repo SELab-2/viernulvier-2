@@ -28,7 +28,6 @@ from tests.factories.genre import (
 )
 from tests.factories.language import LanguageFactory
 
-
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------

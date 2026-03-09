@@ -21,8 +21,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from rest_framework.exceptions import AuthenticationFailed
-from apps.core.authentications import ApiKeyAuthentication
 
+from apps.core.authentications import ApiKeyAuthentication
 
 # ===========================================================================
 # Shared test constants
@@ -570,9 +570,7 @@ class TestSchemeCaseInsensitivity:
         with _patch_get_auth(header):
             with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
                 result = auth.authenticate(MagicMock())
-        assert result == (None, "internal"), (
-            f"Scheme variant '{scheme}' should have been accepted."
-        )
+        assert result == (None, "internal"), f"Scheme variant '{scheme}' should have been accepted."
 
     def test_key_comparison_itself_is_case_sensitive(self, auth):
         """
@@ -633,9 +631,7 @@ class TestTimingSafeComparison:
                     wraps=secrets.compare_digest,
                 ) as mock_cd:
                     auth.authenticate(MagicMock())
-        assert mock_cd.call_count == 2, (
-            "compare_digest should be called once per configured key."
-        )
+        assert mock_cd.call_count == 2, "compare_digest should be called once per configured key."
 
     def test_compare_digest_called_once_when_internal_matches(self, auth):
         """
@@ -664,9 +660,7 @@ class TestTimingSafeComparison:
                 ) as mock_cd:
                     auth.authenticate(MagicMock())
         args, _ = mock_cd.call_args
-        assert all(isinstance(a, bytes) for a in args), (
-            "Both arguments to compare_digest must be bytes."
-        )
+        assert all(isinstance(a, bytes) for a in args), "Both arguments to compare_digest must be bytes."
 
 
 # ===========================================================================

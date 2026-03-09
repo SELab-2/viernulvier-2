@@ -13,6 +13,7 @@ available translations as a language-code dictionary
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
+
 from .models import Price, PriceRank
 
 

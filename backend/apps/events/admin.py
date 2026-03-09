@@ -16,8 +16,8 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from apps.core.admin import BaseAdmin
-from .models import Event, EventPrice
 
+from .models import Event, EventPrice
 
 # ===========================================================================
 # Inline

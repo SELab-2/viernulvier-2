@@ -1,12 +1,12 @@
-import pytest
-from django.core.exceptions import ValidationError
-from apps.import_log.models import ImportLog
-from django.db import transaction
-from django.utils import timezone
 from datetime import timedelta
 
-from tests.factories.import_log import ImportLogFactory
+import pytest
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.utils import timezone
 
+from apps.import_log.models import ImportLog
+from tests.factories.import_log import ImportLogFactory
 
 pytestmark = pytest.mark.django_db
 

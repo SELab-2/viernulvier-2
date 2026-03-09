@@ -1,6 +1,7 @@
 import factory
 from faker import Faker
-from apps.pricing.models import Price, PriceTranslation, PriceRank, PriceRankTranslation
+
+from apps.pricing.models import Price, PriceRank, PriceRankTranslation, PriceTranslation
 from tests.factories.language import LanguageFactory
 
 faker = Faker()

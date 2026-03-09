@@ -12,8 +12,8 @@ admin exists purely for monitoring and debugging purposes.
 from django.contrib import admin
 
 from apps.core.admin import BaseAdmin
-from .models import ImportLog
 
+from .models import ImportLog
 
 # ===========================================================================
 # ImportLog admin

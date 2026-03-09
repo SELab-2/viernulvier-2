@@ -33,10 +33,9 @@ from unittest.mock import MagicMock
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
-from apps.core.views import ApiModelViewSet
 from apps.core.authentications import ApiKeyAuthentication
 from apps.core.permissions import ApiKeyPermission
-
+from apps.core.views import ApiModelViewSet
 
 INT_KEY = "int-view-test-key"
 PUB_KEY = "pub-view-test-key"

@@ -1,16 +1,15 @@
 import factory
 from faker import Faker
 
-from tests.factories.language import LanguageFactory
-
 from apps.locations.models import (
+    Hall,
+    HallTranslation,
     Location,
     LocationTranslation,
     Space,
     SpaceTranslation,
-    Hall,
-    HallTranslation,
 )
+from tests.factories.language import LanguageFactory
 
 faker = Faker()
 

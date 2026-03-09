@@ -11,6 +11,12 @@ REST_FRAMEWORK = globals().get("REST_FRAMEWORK", {})
 DEBUG = False
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
+DEBUG = False
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+
+CSRF_TRUSTED_ORIGINS = [f"https://{host.strip()}" for host in ALLOWED_HOSTS if host.strip()]
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

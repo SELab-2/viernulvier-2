@@ -9,7 +9,7 @@ jobs:
     name: Django check (gate)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check for backend changes
         id: filter
         uses: dorny/paths-filter@v3
@@ -24,7 +24,7 @@ jobs:
 
       - name: Wait for Backend CI
         if: steps.filter.outputs.backend == 'true'
-        uses: lewagon/wait-on-check-action@v1.3.4
+        uses: lewagon/wait-on-check-action@v1.5.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           check-name: 'Django check + Pytest'
@@ -36,7 +36,7 @@ jobs:
     name: Lint / Test / Build (gate)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check for frontend changes
         id: filter
         uses: dorny/paths-filter@v3
@@ -51,7 +51,7 @@ jobs:
 
       - name: Wait for Frontend CI
         if: steps.filter.outputs.frontend == 'true'
-        uses: lewagon/wait-on-check-action@v1.3.4
+        uses: lewagon/wait-on-check-action@v1.5.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           check-name: 'Lint / Test / Build'

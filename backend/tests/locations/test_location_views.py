@@ -25,7 +25,6 @@ from tests.factories.location import (
     SpaceFactory,
 )
 
-
 PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"
 

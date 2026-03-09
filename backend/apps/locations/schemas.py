@@ -13,14 +13,14 @@ from drf_spectacular.utils import (
 )
 
 from apps.core.openapi import (
+    RESPONSE_204_DELETED,
     RESPONSE_400,
     RESPONSE_401,
     RESPONSE_403,
     RESPONSE_404,
-    RESPONSE_204_DELETED,
 )
-from .serializers import HallSerializer, LocationSerializer, SpaceSerializer
 
+from .serializers import HallSerializer, LocationSerializer, SpaceSerializer
 
 # ===========================================================================
 # Location — examples
@@ -270,9 +270,7 @@ _SPACE_CREATE = extend_schema(
 _SPACE_UPDATE = extend_schema(
     summary="Replace a space",
     description=(
-        "Fully replaces an existing **Space**. "
-        "All writable fields must be supplied.\n\n"
-        "> **Requires an internal API key.**"
+        "Fully replaces an existing **Space**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
     ),
     request=SpaceSerializer,
     responses={
@@ -420,9 +418,7 @@ _HALL_CREATE = extend_schema(
 _HALL_UPDATE = extend_schema(
     summary="Replace a hall",
     description=(
-        "Fully replaces an existing **Hall**. "
-        "All writable fields must be supplied.\n\n"
-        "> **Requires an internal API key.**"
+        "Fully replaces an existing **Hall**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
     ),
     request=HallSerializer,
     responses={

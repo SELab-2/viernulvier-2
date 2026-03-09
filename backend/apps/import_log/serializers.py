@@ -82,14 +82,12 @@ class ImportLogSerializer(serializers.ModelSerializer):
             },
             "finished_at": {
                 "help_text": (
-                    "ISO 8601 UTC timestamp at which the import run ended. "
-                    "`null` while the run is still in progress."
+                    "ISO 8601 UTC timestamp at which the import run ended. `null` while the run is still in progress."
                 ),
             },
             "error_message": {
                 "help_text": (
-                    "Human-readable error detail populated when the run fails. "
-                    "`null` when the run completed without error."
+                    "Human-readable error detail populated when the run fails. `null` when the run completed without error."
                 ),
             },
         }

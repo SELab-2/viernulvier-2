@@ -1,5 +1,9 @@
 """
-This module defines custom pagination classes for the API endpoints. Each class inherits from Django REST Framework's PageNumberPagination and sets specific defaults for page size and maximum page size to suit different types of datasets (small, standard, large). These pagination classes can be used in views to control how results are paginated when returned to clients.
+This module defines custom pagination classes for the API endpoints.
+Each class inherits from Django REST Framework's PageNumberPagination and sets
+specific defaults for page size and maximum page size to suit different types
+of datasets (small, standard, large). These pagination classes can be used in
+views to control how results are paginated when returned to clients.
 """
 
 from rest_framework.pagination import PageNumberPagination

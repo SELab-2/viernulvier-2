@@ -16,7 +16,6 @@ allowing consumers to access all languages in a single request.
 """
 
 from django.db.models import Prefetch
-
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet

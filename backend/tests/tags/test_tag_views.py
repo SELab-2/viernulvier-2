@@ -27,7 +27,6 @@ from apps.tags.views import TagViewSet
 from tests.factories.language import LanguageFactory
 from tests.factories.tag import TagFactory, TagTranslationFactory
 
-
 PUB_KEY = "pub-tag-view-test-key"
 INT_KEY = "int-tag-view-test-key"
 
@@ -202,9 +201,7 @@ class TestTagViewSetRetrieve(TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_retrieve_nonexistent_returns_404(self):
-        response = self.client.get(
-            "/api/tags/00000000-0000-0000-0000-000000000000/", **int_headers()
-        )
+        response = self.client.get("/api/tags/00000000-0000-0000-0000-000000000000/", **int_headers())
         self.assertEqual(response.status_code, 404)
 
     def test_retrieve_includes_translations(self):
@@ -238,9 +235,7 @@ class TestTagViewSetCreate(TestCase):
         }
 
     def test_create_with_internal_key_returns_201(self):
-        response = self.client.post(
-            "/api/tags/", self.payload, format="json", **int_headers()
-        )
+        response = self.client.post("/api/tags/", self.payload, format="json", **int_headers())
         self.assertEqual(response.status_code, 201)
 
     def test_create_with_internal_key_persists_to_db(self):
@@ -248,9 +243,7 @@ class TestTagViewSetCreate(TestCase):
         self.assertTrue(Tag.objects.filter(type="mood").exists())
 
     def test_create_with_public_key_returns_403(self):
-        response = self.client.post(
-            "/api/tags/", self.payload, format="json", **pub_headers()
-        )
+        response = self.client.post("/api/tags/", self.payload, format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_create_without_auth_returns_401(self):
@@ -258,9 +251,7 @@ class TestTagViewSetCreate(TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_create_with_wrong_key_returns_401(self):
-        response = self.client.post(
-            "/api/tags/", self.payload, format="json", **wrong_headers()
-        )
+        response = self.client.post("/api/tags/", self.payload, format="json", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
 
@@ -283,28 +274,20 @@ class TestTagViewSetUpdate(TestCase):
         }
 
     def test_put_with_internal_key_returns_200(self):
-        response = self.client.put(
-            f"/api/tags/{self.tag.id}/", self.payload, format="json", **int_headers()
-        )
+        response = self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_put_with_internal_key_updates_db(self):
-        self.client.put(
-            f"/api/tags/{self.tag.id}/", self.payload, format="json", **int_headers()
-        )
+        self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json", **int_headers())
         self.tag.refresh_from_db()
         self.assertEqual(self.tag.type, "updated-genre")
 
     def test_put_with_public_key_returns_403(self):
-        response = self.client.put(
-            f"/api/tags/{self.tag.id}/", self.payload, format="json", **pub_headers()
-        )
+        response = self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_put_without_auth_returns_401(self):
-        response = self.client.put(
-            f"/api/tags/{self.tag.id}/", self.payload, format="json"
-        )
+        response = self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json")
         self.assertEqual(response.status_code, 401)
 
 
@@ -348,9 +331,7 @@ class TestTagViewSetPartialUpdate(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_patch_without_auth_returns_401(self):
-        response = self.client.patch(
-            f"/api/tags/{self.tag.id}/", {"is_enabled": False}, format="json"
-        )
+        response = self.client.patch(f"/api/tags/{self.tag.id}/", {"is_enabled": False}, format="json")
         self.assertEqual(response.status_code, 401)
 
 

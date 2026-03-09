@@ -1,4 +1,5 @@
 from . import base as base_settings
+import os
 
 for setting_name in dir(base_settings):
     if setting_name.isupper():
@@ -9,17 +10,17 @@ INSTALLED_APPS = list(globals().get("INSTALLED_APPS", []))
 MIDDLEWARE = list(globals().get("MIDDLEWARE", []))
 
 DEBUG = True
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "").split(",") if host.strip()]
+
 
 REST_FRAMEWORK = {
-    **REST_FRAMEWORK,
+    **REST_FRAMEWORK,  # noqa: F405
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
 }
 
-# If you want to enable throttling in development for testing purposes, you can override the throttle classes and rates here.
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
     "DEFAULT_THROTTLE_CLASSES": [

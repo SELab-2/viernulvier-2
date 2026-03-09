@@ -29,7 +29,6 @@ from apps.import_log.models import ImportLog
 from apps.import_log.serializers import ImportLogSerializer
 from tests.factories.import_log import ImportLogFactory
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -121,9 +120,7 @@ class TestImportLogSerializerReadOnly(TestCase):
     """All declared fields must be read-only — the serializer is for monitoring only."""
 
     def setUp(self):
-        self.meta_read_only = set(
-            getattr(ImportLogSerializer.Meta, "read_only_fields", [])
-        )
+        self.meta_read_only = set(getattr(ImportLogSerializer.Meta, "read_only_fields", []))
 
     def test_source_is_read_only(self):
         self.assertIn("source", self.meta_read_only)
@@ -193,14 +190,10 @@ class TestImportLogSerializerStatusChoices(TestCase):
         self.assertEqual(self._serialize_status(ImportLog.Status.PENDING), "PENDING")
 
     def test_status_in_progress(self):
-        self.assertEqual(
-            self._serialize_status(ImportLog.Status.IN_PROGRESS), "IN_PROGRESS"
-        )
+        self.assertEqual(self._serialize_status(ImportLog.Status.IN_PROGRESS), "IN_PROGRESS")
 
     def test_status_partial_success(self):
-        self.assertEqual(
-            self._serialize_status(ImportLog.Status.PARTIAL_SUCCESS), "PARTIAL_SUCCESS"
-        )
+        self.assertEqual(self._serialize_status(ImportLog.Status.PARTIAL_SUCCESS), "PARTIAL_SUCCESS")
 
     def test_status_success(self):
         self.assertEqual(self._serialize_status(ImportLog.Status.SUCCESS), "SUCCESS")

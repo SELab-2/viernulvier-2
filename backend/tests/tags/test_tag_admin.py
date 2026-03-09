@@ -199,9 +199,7 @@ class TestTagTranslationAdminConfiguration(TestCase):
 
 class TestTagAdminFunctional(TestCase):
     def setUp(self):
-        self.superuser = User.objects.create_superuser(
-            username="admin", password="secret", email="admin@example.com"
-        )
+        self.superuser = User.objects.create_superuser(username="admin", password="secret", email="admin@example.com")
         self.client.force_login(self.superuser)
         self.tag = TagFactory.create(type="genre")
 
@@ -220,9 +218,7 @@ class TestTagAdminFunctional(TestCase):
 
 class TestTagTranslationAdminFunctional(TestCase):
     def setUp(self):
-        self.superuser = User.objects.create_superuser(
-            username="admin", password="secret", email="admin@example.com"
-        )
+        self.superuser = User.objects.create_superuser(username="admin", password="secret", email="admin@example.com")
         self.client.force_login(self.superuser)
         self.lang = LanguageFactory.create(code="nl", name="Dutch")
         self.tag = TagFactory.create(type="genre")

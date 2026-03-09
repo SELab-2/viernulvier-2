@@ -1,10 +1,24 @@
+"""
+Comprehensive tests for apps/events/admin.py
+
+Covers:
+- Admin registration for event models
+- Admin inheritance (BaseAdmin / ModelAdmin) where applicable
+- list_display/list_filter/search_fields/ordering/date_hierarchy basic configuration
+- Inline presence (without overly strict assumptions)
+- get_queryset optimisation (select_related / prefetch_related) smoke
+- Functional admin changelist + changeform (superuser)
+"""
+
+from datetime import timedelta
+
 from django.contrib import admin
-from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
+from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
-from datetime import timedelta
+
 from apps.core.admin import BaseAdmin
 from apps.events.admin import EventAdmin, EventPriceInline
 from apps.events.models import Event
@@ -20,9 +34,7 @@ from tests.factories.production import ProductionFactory, ProductionTranslationF
 
 
 def make_superuser(username="admin"):
-    return User.objects.create_superuser(
-        username=username, password="password", email=f"{username}@example.com"
-    )
+    return User.objects.create_superuser(username=username, password="password", email=f"{username}@example.com")
 
 
 def admin_changelist_url(model):

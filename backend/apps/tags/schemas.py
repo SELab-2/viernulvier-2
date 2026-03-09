@@ -13,14 +13,14 @@ from drf_spectacular.utils import (
 )
 
 from apps.core.openapi import (
+    RESPONSE_204_DELETED,
     RESPONSE_400,
     RESPONSE_401,
     RESPONSE_403,
     RESPONSE_404,
-    RESPONSE_204_DELETED,
 )
-from .serializers import TagSerializer
 
+from .serializers import TagSerializer
 
 # ===========================================================================
 # Tag — examples
@@ -144,9 +144,7 @@ _TAG_CREATE = extend_schema(
 _TAG_UPDATE = extend_schema(
     summary="Replace a tag",
     description=(
-        "Fully replaces an existing **Tag**. "
-        "All writable fields must be supplied.\n\n"
-        "> **Requires an internal API key.**"
+        "Fully replaces an existing **Tag**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
     ),
     request=TagSerializer,
     responses={

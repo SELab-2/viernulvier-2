@@ -26,12 +26,11 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.core.views import ApiReadOnlyViewSet, ApiModelViewSet
+from apps.core.views import ApiModelViewSet, ApiReadOnlyViewSet
 from apps.import_log.models import ImportLog
 from apps.import_log.serializers import ImportLogSerializer
 from apps.import_log.views import ImportLogViewSet
 from tests.factories.import_log import ImportLogFactory
-
 
 PUB_KEY = "pub-import-log-view-test-key"
 INT_KEY = "int-import-log-view-test-key"
@@ -161,9 +160,7 @@ class TestImportLogViewSetList(TestCase):
 
     def test_list_duration_is_none_when_timestamps_missing(self):
         response = self.client.get("/api/import-logs/", **pub_headers())
-        item = next(
-            r for r in response.data["results"] if r["source"] == "import_a.json"
-        )
+        item = next(r for r in response.data["results"] if r["source"] == "import_a.json")
         self.assertIsNone(item["duration"])
 
     def test_list_duration_is_string_when_timestamps_set(self):
@@ -204,9 +201,7 @@ class TestImportLogViewSetDetail(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_detail_with_wrong_key_returns_401_or_403(self):
-        response = self.client.get(
-            f"/api/import-logs/{self.log.pk}/", **wrong_headers()
-        )
+        response = self.client.get(f"/api/import-logs/{self.log.pk}/", **wrong_headers())
         self.assertIn(response.status_code, (401, 403))
 
     def test_detail_returns_correct_source(self):

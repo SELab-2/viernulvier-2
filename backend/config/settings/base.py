@@ -10,10 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-from pathlib import Path
 import os
-from dotenv import load_dotenv
 import textwrap
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,12 +23,8 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-PUBLIC_API_KEY = os.getenv(
-    "PUBLIC_API_KEY", "dev-key-for-local"
-)  # API key for our API (only read)
-INTERNAL_API_KEY = os.getenv(
-    "INTERNAL_API_KEY", "key for everything"
-)  # API key for our API to change also values
+PUBLIC_API_KEY = os.getenv("PUBLIC_API_KEY", "dev-key-for-local")  # API key for our API (only read)
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "key for everything")  # API key for our API to change also values
 DEBUG = False
 ALLOWED_HOSTS = []
 
@@ -144,6 +141,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field

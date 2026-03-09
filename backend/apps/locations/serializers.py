@@ -12,6 +12,7 @@ as a dictionary (e.g. {"en": "Main Hall", "fr": "Grande Salle"}).
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
+
 from .models import Hall, Location, Space
 
 

@@ -11,8 +11,8 @@ Covers:
 """
 
 from django.contrib import admin
-from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
+from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
@@ -20,8 +20,8 @@ from apps.core.admin import BaseAdmin
 from apps.pricing.admin import (
     PriceAdmin,
     PriceRankAdmin,
-    PriceTranslationAdmin,
     PriceRankTranslationAdmin,
+    PriceTranslationAdmin,
 )
 from apps.pricing.models import Price, PriceRank, PriceTranslation, PriceRankTranslation
 from tests.factories.language import LanguageFactory
@@ -39,9 +39,7 @@ from tests.factories.pricing import (
 
 
 def make_superuser(username="admin"):
-    return User.objects.create_superuser(
-        username=username, password="password", email=f"{username}@example.com"
-    )
+    return User.objects.create_superuser(username=username, password="password", email=f"{username}@example.com")
 
 
 def admin_changelist_url(model):
