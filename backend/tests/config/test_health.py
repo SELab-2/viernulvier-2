@@ -1,12 +1,13 @@
 # tests/test_health_view.py
 
 import json
+from unittest.mock import MagicMock, patch
 
-from django.test import TestCase, RequestFactory
 from django.db.utils import OperationalError
-from unittest.mock import patch, MagicMock
+from django.test import RequestFactory, TestCase
 
 from config.health import health
+
 
 class HealthViewTests(TestCase):
     """

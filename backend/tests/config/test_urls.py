@@ -1,7 +1,7 @@
 import importlib
-from django.test import TestCase, Client, override_settings
-from django.urls import clear_url_caches, resolve, get_resolver
-from django.conf import settings
+
+from django.test import Client, TestCase, override_settings
+from django.urls import clear_url_caches, get_resolver, resolve
 
 import config.urls
 from config.health import health

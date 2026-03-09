@@ -25,7 +25,6 @@ from apps.locations.models import Hall
 from apps.pricing.models import Price, PriceRank
 from apps.productions.models import Production
 
-
 # ===========================================================================
 # Event
 # ===========================================================================

@@ -6,12 +6,12 @@ from __future__ import annotations
 
 import datetime
 import logging
+import sys
+import types
 from contextlib import contextmanager
 from decimal import Decimal
-import sys
 from types import SimpleNamespace
 from unittest.mock import Mock
-import types
 
 import pytest
 import requests
