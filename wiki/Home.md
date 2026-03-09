@@ -12,7 +12,7 @@ The system consists of:
 - PostgreSQL database
 - React + TypeScript frontend
 - Dockerized deployment
-- Role-based authentication
+- API key-based authentication with public read-only and internal CRUD access levels
 - Import pipeline for external data sources
 
 ---

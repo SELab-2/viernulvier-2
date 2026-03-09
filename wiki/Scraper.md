@@ -1,330 +1,106 @@
-This guide explains how to use the `sync_viernulvier` Django management command to synchronize data from the Viernulvier/Peppered API to your local database.
+# Import Pipeline & Import Log
+
+This page documents the import pipeline monitoring infrastructure for the VIERNULVIER archive project.
 
 ## Overview
 
-The `sync_viernulvier` command fetches data from the Viernulvier/Peppered API (`https://www.viernulvier.gent/api/v1`) and synchronizes it with your local Django database. It supports:
+The import pipeline ingests data from external sources (e.g. the Viernulvier/Peppered API) and stores it in the Django database. Each pipeline run is tracked via an `ImportLog` record, which provides a lightweight audit trail of every import job.
 
-- **Full synchronization** of all data models
-- **Selective synchronization** of specific model types
-- **Filtering** by creation date, update date, event start/end times
-- **Inclusive and exclusive** date range filters
+The `import_log` app exposes a **read-only API endpoint** at `/api/import-logs/` for monitoring pipeline activity. Import logs are created and updated exclusively by the import pipeline itself — they cannot be created or modified via the API or Django admin.
 
 ---
 
-## Basic Usage
+## ImportLog Model
 
-### Sync Everything
+Defined in `apps/import_log/models.py`.
 
-To synchronize all data from the API:
+### Fields
 
-```bash
-python manage.py sync_viernulvier
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | integer | Auto-generated primary key |
+| `source` | string (max 255) | Identifier for the data source (e.g. a URL or file name) |
+| `status` | string | Current state of the import run (see [Status Values](#status-values)) |
+| `records_total` | positive integer | Total number of records encountered |
+| `records_imported` | positive integer | Number of records successfully imported |
+| `records_failed` | positive integer | Number of records that could not be imported |
+| `started_at` | datetime (ISO 8601) | Timestamp at which the import run began (`null` if not started) |
+| `finished_at` | datetime (ISO 8601) | Timestamp at which the import run ended (`null` while in progress) |
+| `error_message` | text | Human-readable error detail when the run fails (`null` on success) |
 
-This will process all sync steps in the correct order (respecting foreign key dependencies).
+### Status Values
 
-### Sync a Specific Step
+| Status | Description |
+|--------|-------------|
+| `PENDING` | Import run is queued but has not started yet |
+| `IN_PROGRESS` | Import run is currently executing |
+| `PARTIAL_SUCCESS` | Import run completed, but some records failed |
+| `SUCCESS` | Import run completed successfully with no failures |
+| `FAILED` | Import run encountered a fatal error and was aborted |
 
-To synchronize only a specific model type:
+### Constraints
 
-```bash
-python manage.py sync_viernulvier --only <step_name>
-```
-
-For example, to sync only events:
-
-```bash
-python manage.py sync_viernulvier --only events
-```
-
----
-
-## Available Sync Steps
-
-The following sync steps are available (listed in dependency order):
-
-| Step Name              | Model              | API Endpoint            | Description                           |
-|------------------------|--------------------|-------------------------|---------------------------------------|
-| `uitdatabank_themes`   | UitDatabaseTheme   | `/uitdatabank/themes`   | UiTdatabank themes                    |
-| `uitdatabank_types`    | UitDatabaseType    | `/uitdatabank/types`    | UiTdatabank types                     |
-| `genres`               | Genre              | `/genres`               | Production genres                     |
-| `tags`                 | Tag                | `/tags`                 | Tags for categorization               |
-| `locations`            | Location           | `/locations`            | Physical locations/venues             |
-| `spaces`               | Space              | `/spaces`               | Spaces within locations               |
-| `halls`                | Hall               | `/halls`                | Halls within spaces                   |
-| `media_galleries`      | MediaGallery       | `/media/galleries`      | Media galleries                       |
-| `media_items`          | MediaItem          | `/media/items`          | Individual media items (images, etc.) |
-| `prices`               | Price              | `/prices`               | Base price definitions                |
-| `price_ranks`          | PriceRank          | `/prices/ranks`         | Price rank categories                 |
-| `productions`          | Production         | `/productions`          | Productions/shows                     |
-| `events`               | Event              | `/events`               | Specific event instances              |
-| `event_prices`         | EventPrice         | `/events/prices`        | Pricing for specific events           |
-
-**Note:** Steps are executed in dependency order. For example, `events` depends on `productions` and `halls`, so those must be synced first.
+- `finished_at` must not be earlier than `started_at` (enforced via a database-level check constraint).
+- Records are ordered by `started_at` descending (most recent first) by default.
 
 ---
 
-## Filtering Options
+## API Endpoint
 
-The command supports filtering by four different time-based criteria:
+The `ImportLogViewSet` exposes the import log data as a read-only REST endpoint.
 
-### Filter Prefixes
-
-- **`created`** - Filters by record creation timestamp (`created_at` in API)
-- **`updated`** - Filters by record update timestamp (`updated_at` in API)
-- **`starts`** - Filters by event start time (`starts_at` in API)
-- **`ends`** - Filters by event end time (`ends_at` in API)
-
-### Filter Boundaries
-
-Each prefix supports two types of boundaries:
-
-1. **Inclusive boundaries** (`--{prefix}-after`, `--{prefix}-before`)
-   - Includes records at the exact timestamp
-   
-2. **Exclusive boundaries** (`--{prefix}-after-x`, `--{prefix}-before-x`)
-   - Excludes records at the exact timestamp
-
-### Filter Format
-
-All timestamp filters accept ISO 8601 formatted datetime strings:
+### Base URL
 
 ```
-YYYY-MM-DDTHH:MM:SSZ
-YYYY-MM-DDTHH:MM:SS+HH:MM
+/api/import-logs/
 ```
 
-Example: `2024-01-01T00:00:00Z` or `2024-01-01T00:00:00+00:00`
-
----
-
-## Examples
-
-### 1. Sync Events Created After a Date (Inclusive)
-
-Get all events created on or after June 1, 2024:
-
-```bash
-python manage.py sync_viernulvier --only events --created-after 2024-06-01T00:00:00Z
-```
-
-**API Parameter:** `created_at[after]=2024-06-01T00:00:00Z`
-
----
-
-### 2. Sync Events Updated Before a Date (Inclusive)
-
-Get all events updated on or before June 1, 2024:
-
-```bash
-python manage.py sync_viernulvier --only events --updated-before 2024-06-01T00:00:00Z
-```
-
-**API Parameter:** `updated_at[before]=2024-06-01T00:00:00Z`
-
----
-
-### 3. Sync Events Starting After a Date (Exclusive)
-
-Get all events starting strictly after June 1, 2024 (excluding events starting exactly at that time):
-
-```bash
-python manage.py sync_viernulvier --only events --starts-after-x 2024-06-01T00:00:00Z
-```
-
-**API Parameter:** `starts_at[strictly_after]=2024-06-01T00:00:00Z`
-
----
-
-### 4. Sync Events Ending Before a Date (Exclusive)
-
-Get all events ending strictly before June 1, 2024 (excluding events ending exactly at that time):
-
-```bash
-python manage.py sync_viernulvier --only events --ends-before-x 2024-06-01T00:00:00Z
-```
-
-**API Parameter:** `ends_at[strictly_before]=2024-06-01T00:00:00Z`
-
----
-
-### 5. Combine Multiple Filters
-
-Get events created after January 1, 2024, that start between June 1 and July 1, 2024:
-
-```bash
-python manage.py sync_viernulvier --only events \
-  --created-after 2024-01-01T00:00:00Z \
-  --starts-after 2024-06-01T00:00:00Z \
-  --starts-before 2024-07-01T00:00:00Z
-```
-
----
-
-### 6. Sync Recent Productions
-
-Get all productions updated in the last month:
-
-```bash
-python manage.py sync_viernulvier --only productions \
-  --updated-after 2024-02-01T00:00:00Z
-```
-
----
-
-### 7. Sync Everything with Time Filter
-
-Sync all models, but only fetch records updated after a specific date:
-
-```bash
-python manage.py sync_viernulvier --updated-after 2024-01-01T00:00:00Z
-```
-
----
-
-### 8. Full Incremental Sync
-
-To do a daily incremental sync of all new/updated data from the previous day:
-
-```bash
-python manage.py sync_viernulvier --updated-after 2024-06-01T00:00:00Z
-```
-
----
-
-## How It Works
-
-### Sync Process
-
-1. **API Request**: The command makes paginated GET requests to the Viernulvier API endpoints
-2. **Data Mapping**: Each API field is mapped to the corresponding Django model field using configuration
-3. **Upsert Logic**: Records are created or updated based on the `external_id` field
-4. **Translations**: Multi-language fields are synced to separate translation models
-5. **Relationships**: Foreign keys and many-to-many relationships are resolved and linked
-6. **Transaction Safety**: Each record is saved within a database transaction for data integrity
-
-### Field Mapping
-
-The scraper uses a `ModelSyncConfig` for each model that defines:
-
-- **field_map**: Maps API field names to Django model field names
-- **translations**: Configuration for translatable fields (title, description, etc.)
-- **m2m**: Configuration for many-to-many relationships
-- **value_transforms**: Custom transformation functions for specific fields
-
-### External IDs
-
-All synchronized models must have an `external_id` field that stores the API's `@id` value. This is used as the unique identifier for update-or-create operations.
-
----
-
-## Troubleshooting
-
-### Unknown Step Error
-
-If you get an error like:
-
-```
-Unknown step 'event'. Choices: uitdatabank_themes, uitdatabank_types, ...
-```
-
-Make sure you're using the exact step name from the [Available Sync Steps](#available-sync-steps) table. The names are case-sensitive and use underscores.
-
-### Foreign Key Errors
-
-If you get foreign key constraint errors, you may need to sync dependency models first:
-
-```bash
-# Sync in order
-python manage.py sync_viernulvier --only locations
-python manage.py sync_viernulvier --only halls
-python manage.py sync_viernulvier --only productions
-python manage.py sync_viernulvier --only events
-```
-
-Or just run without `--only` to sync everything in the correct order.
-
-### API Connection Issues
-
-If the API is unreachable, check:
-
-1. Your internet connection
-2. The API base URL in `apps/imports/scrapers/viernulvier.py` (`BASE_URL`)
-3. Whether the API is currently available at `https://www.viernulvier.gent/api/v1`
-
-### Date Format Errors
-
-Ensure your datetime strings follow the [ISO 8601 format](https://www.iso8601.com/).
-
----
-
-## Additional Options
-
-### Help Command
-
-To see all available options:
-
-```bash
-python manage.py sync_viernulvier --help
-```
-
-### Logging
-
-The scraper uses Python's logging module. To see detailed logs, configure Django logging in your settings:
-
-```python
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'apps.imports.scrapers.viernulvier': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        },
-    },
+### Supported Actions
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/api/import-logs/` | List all import logs (paginated, most recent first) |
+| `GET` | `/api/import-logs/{id}/` | Retrieve a single import log by ID |
+
+Write operations (`POST`, `PUT`, `PATCH`, `DELETE`) are not supported.
+
+### Authentication
+
+Both `PUBLIC_API_KEY` (read-only) and `INTERNAL_API_KEY` (full CRUD) grant read access to this endpoint. See the [API Overview](API%20Overview.md) for authentication details.
+
+### Example Response
+
+```json
+{
+  "id": 1,
+  "source": "https://www.viernulvier.gent/api/v1/events",
+  "status": "SUCCESS",
+  "records_total": 200,
+  "records_imported": 200,
+  "records_failed": 0,
+  "started_at": "2025-09-01T02:00:00Z",
+  "finished_at": "2025-09-01T02:01:43Z",
+  "duration": "0:01:43",
+  "error_message": null
 }
 ```
 
+> **Note:** The `duration` field is computed by the serializer as `finished_at - started_at`, formatted as `HH:MM:SS`. It returns `null` when either timestamp is absent.
+
 ---
 
-## Quick Reference
+## Django Admin
 
-### All Filter Options
-
-| Option                   | Description                                          |
-|--------------------------|------------------------------------------------------|
-| `--created-after`        | Records created on or after this timestamp           |
-| `--created-before`       | Records created on or before this timestamp          |
-| `--created-after-x`      | Records created strictly after this timestamp        |
-| `--created-before-x`     | Records created strictly before this timestamp       |
-| `--updated-after`        | Records updated on or after this timestamp           |
-| `--updated-before`       | Records updated on or before this timestamp          |
-| `--updated-after-x`      | Records updated strictly after this timestamp        |
-| `--updated-before-x`     | Records updated strictly before this timestamp       |
-| `--starts-after`         | Events starting on or after this timestamp           |
-| `--starts-before`        | Events starting on or before this timestamp          |
-| `--starts-after-x`       | Events starting strictly after this timestamp        |
-| `--starts-before-x`      | Events starting strictly before this timestamp       |
-| `--ends-after`           | Events ending on or after this timestamp             |
-| `--ends-before`          | Events ending on or before this timestamp            |
-| `--ends-after-x`         | Events ending strictly after this timestamp          |
-| `--ends-before-x`        | Events ending strictly before this timestamp         |
+Import logs are accessible in the Django admin at `/admin/import_log/importlog/` as a **read-only** view. The admin allows filtering by `status` and searching by `source` or `error_message`. Manual creation and editing of import logs via the admin is disabled to preserve audit integrity.
 
 ---
 
 ## Contributing
 
-If you need to add support for additional API endpoints or models:
+When implementing or extending the import pipeline:
 
-1. Add the model configuration in `apps/imports/management/commands/sync_viernulvier.py`
-2. Add the sync step to the `SYNC_STEPS` list (in dependency order)
-3. Test with `--only` flag first
-4. Update this documentation
-
-Make sure there exists a model for Django, and it is present in the database.
+1. Create an `ImportLog` record at the start of each pipeline run and update it as records are processed.
+2. Use the `status` field to reflect the current state of the run.
+3. Populate `error_message` on failure for debuggability.
+4. Do not expose write operations for `ImportLog` via the API or admin — it is an append-only audit trail.
 
