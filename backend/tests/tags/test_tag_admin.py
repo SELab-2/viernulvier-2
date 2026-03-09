@@ -31,21 +31,17 @@ from tests.factories.tag import TagFactory, TagTranslationFactory
 
 
 class TestTagAdminRegistration(TestCase):
-    """Verify TagAdmin and TagTranslationAdmin are registered."""
-
     def test_tag_is_registered(self):
         self.assertIn(Tag, admin.site._registry)
 
     def test_registered_admin_is_tag_admin(self):
-        registered = admin.site._registry[Tag]
-        self.assertIsInstance(registered, TagAdmin)
+        self.assertIsInstance(admin.site._registry[Tag], TagAdmin)
 
     def test_tag_translation_is_registered(self):
         self.assertIn(TagTranslation, admin.site._registry)
 
     def test_registered_admin_is_tag_translation_admin(self):
-        registered = admin.site._registry[TagTranslation]
-        self.assertIsInstance(registered, TagTranslationAdmin)
+        self.assertIsInstance(admin.site._registry[TagTranslation], TagTranslationAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -54,8 +50,6 @@ class TestTagAdminRegistration(TestCase):
 
 
 class TestTagAdminInheritance(TestCase):
-    """TagAdmin and TagTranslationAdmin must extend BaseAdmin."""
-
     def test_tag_admin_inherits_from_base_admin(self):
         self.assertTrue(issubclass(TagAdmin, BaseAdmin))
 
@@ -75,8 +69,6 @@ class TestTagAdminInheritance(TestCase):
 
 
 class TestTagAdminConfiguration(TestCase):
-    """Tests for individual meta configuration of TagAdmin."""
-
     def setUp(self):
         self.admin = TagAdmin(Tag, admin.site)
 
@@ -125,8 +117,7 @@ class TestTagAdminConfiguration(TestCase):
     # -- inlines --------------------------------------------------------------
 
     def test_inlines_contains_tag_translation_inline(self):
-        inline_types = [i for i in self.admin.inlines]
-        self.assertIn(TagTranslationInline, inline_types)
+        self.assertIn(TagTranslationInline, self.admin.inlines)
 
 
 # ---------------------------------------------------------------------------
@@ -135,8 +126,6 @@ class TestTagAdminConfiguration(TestCase):
 
 
 class TestTagTranslationInlineConfiguration(TestCase):
-    """Tests for TagTranslationInline."""
-
     def setUp(self):
         self.inline = TagTranslationInline(Tag, admin.site)
 
@@ -156,8 +145,6 @@ class TestTagTranslationInlineConfiguration(TestCase):
 
 
 class TestTagTranslationAdminConfiguration(TestCase):
-    """Tests for individual meta configuration of TagTranslationAdmin."""
-
     def setUp(self):
         self.admin = TagTranslationAdmin(TagTranslation, admin.site)
 
@@ -180,8 +167,13 @@ class TestTagTranslationAdminConfiguration(TestCase):
 
     # -- list_filter ----------------------------------------------------------
 
-    def test_list_filter_contains_language(self):
-        self.assertIn("language", self.admin.list_filter)
+    def test_list_filter_contains_language_code(self):
+        """list_filter must use 'language__code', not plain 'language'."""
+        self.assertIn("language__code", self.admin.list_filter)
+
+    def test_list_filter_does_not_contain_plain_language(self):
+        """plain 'language' was replaced by 'language__code'."""
+        self.assertNotIn("language", self.admin.list_filter)
 
     # -- search_fields --------------------------------------------------------
 
@@ -206,8 +198,6 @@ class TestTagTranslationAdminConfiguration(TestCase):
 
 
 class TestTagAdminFunctional(TestCase):
-    """Smoke tests: changelist and changeform load without errors."""
-
     def setUp(self):
         self.superuser = User.objects.create_superuser(
             username="admin", password="secret", email="admin@example.com"
@@ -217,23 +207,18 @@ class TestTagAdminFunctional(TestCase):
 
     def test_changelist_returns_200(self):
         url = reverse("admin:tags_tag_changelist")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changeform_returns_200(self):
         url = reverse("admin:tags_tag_change", args=[self.tag.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_add_form_returns_200(self):
         url = reverse("admin:tags_tag_add")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
 
 class TestTagTranslationAdminFunctional(TestCase):
-    """Smoke tests for TagTranslationAdmin."""
-
     def setUp(self):
         self.superuser = User.objects.create_superuser(
             username="admin", password="secret", email="admin@example.com"
@@ -247,10 +232,15 @@ class TestTagTranslationAdminFunctional(TestCase):
 
     def test_changelist_returns_200(self):
         url = reverse("admin:tags_tagtranslation_changelist")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changeform_returns_200(self):
         url = reverse("admin:tags_tagtranslation_change", args=[self.translation.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_changelist_filter_by_language_code(self):
+        """Changelist filter must use language__code lookup."""
+        url = reverse("admin:tags_tagtranslation_changelist")
+        self.assertEqual(
+            self.client.get(url, {"language__code": "nl"}).status_code, 200
+        )

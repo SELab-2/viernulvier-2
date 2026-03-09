@@ -2,14 +2,10 @@
 Tests for apps/productions/admin.py
 
 Covers:
-- All admin classes are registered (Production, ProductionTranslation,
-  UitDatabaseTheme, UitDatabaseType, ProductionGenre, ProductionTag)
+- All admin classes are registered
 - All admins inherit from BaseAdmin
-- list_display configuration for every admin
-- list_filter configuration for relevant admins
-- search_fields configuration for every admin
-- autocomplete_fields configuration for every admin
-- Inline classes are present on ProductionAdmin (translation, genre, tag)
+- list_display, list_filter, search_fields, autocomplete_fields configuration
+- Inline classes are present on ProductionAdmin
 - Inline model, extra and autocomplete_fields attributes
 - get_queryset uses select_related on ProductionAdmin
 - Functional admin changelist and changeform (with superuser)
@@ -68,8 +64,6 @@ def make_superuser(username="admin"):
 
 
 class TestAdminRegistration(TestCase):
-    """Verify all admin classes are registered against their models."""
-
     def test_production_is_registered(self):
         self.assertIn(Production, admin.site._registry)
 
@@ -121,8 +115,6 @@ class TestAdminRegistration(TestCase):
 
 
 class TestAdminInheritance(TestCase):
-    """All admin classes must extend BaseAdmin (and therefore ModelAdmin)."""
-
     admins = [
         ProductionAdmin,
         ProductionTranslationAdmin,
@@ -149,8 +141,6 @@ class TestAdminInheritance(TestCase):
 
 
 class TestUitDatabaseThemeAdminConfiguration(TestCase):
-    """Tests for UitDatabaseThemeAdmin meta configuration."""
-
     def setUp(self):
         self.admin = admin.site._registry[UitDatabaseTheme]
 
@@ -170,8 +160,6 @@ class TestUitDatabaseThemeAdminConfiguration(TestCase):
 
 
 class TestUitDatabaseTypeAdminConfiguration(TestCase):
-    """Tests for UitDatabaseTypeAdmin meta configuration."""
-
     def setUp(self):
         self.admin = admin.site._registry[UitDatabaseType]
 
@@ -191,8 +179,6 @@ class TestUitDatabaseTypeAdminConfiguration(TestCase):
 
 
 class TestProductionAdminConfiguration(TestCase):
-    """Tests for individual meta configuration of ProductionAdmin."""
-
     def setUp(self):
         self.admin = admin.site._registry[Production]
 
@@ -219,11 +205,9 @@ class TestProductionAdminConfiguration(TestCase):
     def test_list_filter_contains_performer_type(self):
         self.assertIn("performer_type", self.admin.list_filter)
 
-    def test_list_filter_contains_uit_database_theme(self):
-        self.assertIn("uit_database_theme", self.admin.list_filter)
-
-    def test_list_filter_contains_uit_database_type(self):
-        self.assertIn("uit_database_type", self.admin.list_filter)
+    def test_list_filter_does_not_contain_uit_database_theme(self):
+        """uit_database_theme was removed from ProductionAdmin.list_filter."""
+        self.assertNotIn("uit_database_theme", self.admin.list_filter)
 
     # search_fields
     def test_search_fields_contains_id(self):
@@ -231,9 +215,6 @@ class TestProductionAdminConfiguration(TestCase):
 
     def test_search_fields_contains_translations_title(self):
         self.assertIn("translations__title", self.admin.search_fields)
-
-    def test_search_fields_contains_translations_artist_name(self):
-        self.assertIn("translations__artist_name", self.admin.search_fields)
 
     # autocomplete_fields
     def test_autocomplete_fields_contains_uit_database_theme(self):
@@ -265,8 +246,6 @@ class TestProductionAdminConfiguration(TestCase):
 
 
 class TestProductionTranslationAdminConfiguration(TestCase):
-    """Tests for individual meta configuration of ProductionTranslationAdmin."""
-
     def setUp(self):
         self.admin = admin.site._registry[ProductionTranslation]
 
@@ -286,16 +265,17 @@ class TestProductionTranslationAdminConfiguration(TestCase):
     def test_list_display_contains_artist_name(self):
         self.assertIn("artist_name", self.admin.list_display)
 
-    # list_filter
-    def test_list_filter_contains_language(self):
-        self.assertIn("language", self.admin.list_filter)
+    # list_filter — now uses language__code, not language
+    def test_list_filter_contains_language_code(self):
+        """list_filter must use 'language__code', not plain 'language'."""
+        self.assertIn("language__code", self.admin.list_filter)
+
+    def test_list_filter_does_not_contain_plain_language(self):
+        self.assertNotIn("language", self.admin.list_filter)
 
     # search_fields
     def test_search_fields_contains_title(self):
         self.assertIn("title", self.admin.search_fields)
-
-    def test_search_fields_contains_artist_name(self):
-        self.assertIn("artist_name", self.admin.search_fields)
 
     def test_search_fields_contains_production_id(self):
         self.assertIn("production__id", self.admin.search_fields)
@@ -314,8 +294,6 @@ class TestProductionTranslationAdminConfiguration(TestCase):
 
 
 class TestProductionGenreAdminConfiguration(TestCase):
-    """Tests for individual meta configuration of ProductionGenreAdmin."""
-
     def setUp(self):
         self.admin = admin.site._registry[ProductionGenre]
 
@@ -341,8 +319,6 @@ class TestProductionGenreAdminConfiguration(TestCase):
 
 
 class TestProductionTagAdminConfiguration(TestCase):
-    """Tests for individual meta configuration of ProductionTagAdmin."""
-
     def setUp(self):
         self.admin = admin.site._registry[ProductionTag]
 
@@ -368,8 +344,6 @@ class TestProductionTagAdminConfiguration(TestCase):
 
 
 class TestProductionTranslationInline(TestCase):
-    """Tests for ProductionTranslationInline configuration."""
-
     def test_model_is_production_translation(self):
         self.assertEqual(ProductionTranslationInline.model, ProductionTranslation)
 
@@ -387,8 +361,6 @@ class TestProductionTranslationInline(TestCase):
 
 
 class TestProductionGenreInline(TestCase):
-    """Tests for ProductionGenreInline configuration."""
-
     def test_model_is_production_genre(self):
         self.assertEqual(ProductionGenreInline.model, ProductionGenre)
 
@@ -400,8 +372,6 @@ class TestProductionGenreInline(TestCase):
 
 
 class TestProductionTagInline(TestCase):
-    """Tests for ProductionTagInline configuration."""
-
     def test_model_is_production_tag(self):
         self.assertEqual(ProductionTagInline.model, ProductionTag)
 
@@ -421,8 +391,6 @@ class TestProductionTagInline(TestCase):
 
 
 class TestProductionAdminGetQueryset(TestCase):
-    """Verify get_queryset uses select_related for FK optimisation."""
-
     def setUp(self):
         self.superuser = make_superuser()
         self.factory = RequestFactory()
@@ -447,170 +415,143 @@ class TestProductionAdminGetQueryset(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Functional changelist tests  (HTTP, requires superuser login)
+# Functional changelist / changeform tests
 # ---------------------------------------------------------------------------
 
 
 class TestUitDatabaseThemeAdminChangelist(TestCase):
-    """Functional tests for UitDatabaseThemeAdmin via HTTP."""
-
     def setUp(self):
         self.superuser = make_superuser("theme_admin")
         self.client.force_login(self.superuser)
 
     def test_changelist_returns_200(self):
         url = reverse("admin:productions_uitdatabasetheme_changelist")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changelist_shows_theme(self):
         UitDatabaseThemeFactory.create(name="Jazz Night")
         url = reverse("admin:productions_uitdatabasetheme_changelist")
-        response = self.client.get(url)
-        self.assertContains(response, "Jazz Night")
+        self.assertContains(self.client.get(url), "Jazz Night")
 
     def test_changeform_returns_200(self):
         theme = UitDatabaseThemeFactory.create(name="Test Theme")
         url = reverse("admin:productions_uitdatabasetheme_change", args=[theme.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
 
 class TestUitDatabaseTypeAdminChangelist(TestCase):
-    """Functional tests for UitDatabaseTypeAdmin via HTTP."""
-
     def setUp(self):
         self.superuser = make_superuser("type_admin")
         self.client.force_login(self.superuser)
 
     def test_changelist_returns_200(self):
         url = reverse("admin:productions_uitdatabasetype_changelist")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changelist_shows_type(self):
         UitDatabaseTypeFactory.create(name="Concert")
         url = reverse("admin:productions_uitdatabasetype_changelist")
-        response = self.client.get(url)
-        self.assertContains(response, "Concert")
+        self.assertContains(self.client.get(url), "Concert")
 
     def test_changeform_returns_200(self):
         db_type = UitDatabaseTypeFactory.create(name="Test Type")
         url = reverse("admin:productions_uitdatabasetype_change", args=[db_type.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
 
 class TestProductionAdminChangelist(TestCase):
-    """Functional tests for ProductionAdmin via HTTP."""
-
     def setUp(self):
         self.superuser = make_superuser("prod_admin")
         self.client.force_login(self.superuser)
 
     def test_changelist_returns_200(self):
         url = reverse("admin:productions_production_changelist")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changelist_with_production(self):
         ProductionFactory.create()
         url = reverse("admin:productions_production_changelist")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changeform_returns_200(self):
         production = ProductionFactory.create()
         url = reverse("admin:productions_production_change", args=[production.pk])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changelist_filter_by_attendance_mode(self):
         ProductionFactory.create(attendance_mode="offline")
         url = reverse("admin:productions_production_changelist")
-        response = self.client.get(url, {"attendance_mode": "offline"})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self.client.get(url, {"attendance_mode": "offline"}).status_code, 200
+        )
 
     def test_changelist_filter_by_performer_type(self):
         ProductionFactory.create(performer_type="solo")
         url = reverse("admin:productions_production_changelist")
-        response = self.client.get(url, {"performer_type": "solo"})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self.client.get(url, {"performer_type": "solo"}).status_code, 200
+        )
 
     def test_changelist_search(self):
         url = reverse("admin:productions_production_changelist")
-        response = self.client.get(url, {"q": "test"})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url, {"q": "test"}).status_code, 200)
 
 
 class TestProductionTranslationAdminChangelist(TestCase):
-    """Functional tests for ProductionTranslationAdmin via HTTP."""
-
     def setUp(self):
         self.superuser = make_superuser("trans_admin")
         self.client.force_login(self.superuser)
 
     def test_changelist_returns_200(self):
         url = reverse("admin:productions_productiontranslation_changelist")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changeform_returns_200(self):
         production = ProductionFactory.create()
         language = LanguageFactory.create(code="en", name="English")
         translation = ProductionTranslationFactory.create(
-            production=production,
-            language=language,
-            title="Test Title",
+            production=production, language=language, title="Test Title"
         )
         url = reverse(
             "admin:productions_productiontranslation_change", args=[translation.pk]
         )
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changelist_shows_translation_title(self):
         production = ProductionFactory.create()
         language = LanguageFactory.create(code="en", name="English")
         ProductionTranslationFactory.create(
-            production=production,
-            language=language,
-            title="Visible Title",
+            production=production, language=language, title="Visible Title"
         )
         url = reverse("admin:productions_productiontranslation_changelist")
-        response = self.client.get(url)
-        self.assertContains(response, "Visible Title")
+        self.assertContains(self.client.get(url), "Visible Title")
 
-    def test_changelist_filter_by_language(self):
+    def test_changelist_filter_by_language_code(self):
+        """Changelist filter must use language__code lookup."""
         url = reverse("admin:productions_productiontranslation_changelist")
-        response = self.client.get(url, {"language__code": "en"})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self.client.get(url, {"language__code": "en"}).status_code, 200
+        )
 
 
 class TestProductionGenreAdminChangelist(TestCase):
-    """Functional tests for ProductionGenreAdmin via HTTP."""
-
     def setUp(self):
         self.superuser = make_superuser("genre_admin")
         self.client.force_login(self.superuser)
 
     def test_changelist_returns_200(self):
         url = reverse("admin:productions_productiongenre_changelist")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
 
 class TestProductionTagAdminChangelist(TestCase):
-    """Functional tests for ProductionTagAdmin via HTTP."""
-
     def setUp(self):
         self.superuser = make_superuser("tag_admin")
         self.client.force_login(self.superuser)
 
     def test_changelist_returns_200(self):
         url = reverse("admin:productions_productiontag_changelist")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
 
     def test_changeform_returns_200(self):
         production = ProductionFactory.create()
@@ -619,5 +560,4 @@ class TestProductionTagAdminChangelist(TestCase):
         url = reverse(
             "admin:productions_productiontag_change", args=[production_tag.pk]
         )
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)

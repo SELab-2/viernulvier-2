@@ -22,7 +22,7 @@ from django.db.models import F, Q
 
 from apps.core.models import BaseModel
 from apps.locations.models import Hall
-from apps.pricing.models import PriceRank
+from apps.pricing.models import Price, PriceRank
 from apps.productions.models import Production
 
 
@@ -159,6 +159,16 @@ class EventPrice(BaseModel):
         db_comment="The event which the price belongs to.",
     )
 
+    price = models.ForeignKey(
+        Price,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="event_prices",
+        help_text="Price category for this event price entry.",
+        db_comment="FK to Price.",
+    )
+
     price_rank = models.ForeignKey(
         PriceRank,
         null=True,
@@ -188,14 +198,14 @@ class EventPrice(BaseModel):
         ordering = ["price_rank__position", "id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["event", "price_rank"],
-                name="uniq_event_price_rank",
+                fields=["event", "price_rank", "price"],
+                name="uniq_event_rank_price",
             )
         ]
         indexes = [
             models.Index(fields=["event"], name="idx_event_price_event"),
             models.Index(
-                fields=["event", "price_rank"], name="idx_event_price_event_rank"
+                fields=["event", "price_rank", "price"], name="idx_event_rank_price"
             ),
         ]
 

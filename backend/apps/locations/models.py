@@ -36,30 +36,39 @@ class Location(BaseModel):
 
     street = models.CharField(
         max_length=255,
+        null=True,
+        blank=True,
         help_text="Street name of the location.",
         db_comment="Street name of the location.",
     )
 
     number = models.CharField(
         max_length=20,
+        null=True,
+        blank=True,
         help_text="Street / house number.",
         db_comment="Street number of the location.",
     )
 
     postal_code = models.CharField(
         max_length=20,
+        null=True,
+        blank=True,
         help_text="Postal or ZIP code.",
         db_comment="Postal code of the location.",
     )
 
     city = models.CharField(
         max_length=100,
+        null=True,
+        blank=True,
         help_text="City in which the location sits.",
         db_comment="City of the location.",
     )
 
     country = models.CharField(
         max_length=100,
+        default="BE",
         help_text="Country in which the location sits.",
         db_comment="Country of the location.",
     )
@@ -94,9 +103,14 @@ class Location(BaseModel):
 
     def __str__(self) -> str:
         name = self.get_base_display_name(related_name="translations", fallback=None)
-        if name:
-            return name
-        return f"{self.city} - {self.street} {self.number}"
+
+        street_part = " ".join(filter(None, [self.street, self.number]))
+        city_part = " ".join(filter(None, [self.postal_code, self.city]))
+
+        parts = [p for p in [street_part, city_part] if p]
+        address = ", ".join(parts) if parts else "/"
+
+        return f"{name} - {address}" if name else address
 
 
 class LocationTranslation(BaseModel):
@@ -177,10 +191,14 @@ class Space(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        name = self.get_base_display_name(related_name="translations", fallback=None)
-        if name:
-            return f"{name} @ {self.location}"
-        return f"Space {self.id} @ {self.location}"
+        name = self.get_base_display_name(
+            related_name="translations", fallback=f"Space {self.id}"
+        )
+        try:
+            city = self.location.city or ""
+            return f"{name} ({city})" if city else name
+        except Exception:
+            return name
 
 
 class SpaceTranslation(BaseModel):
@@ -251,6 +269,8 @@ class Hall(BaseModel):
     space = models.ForeignKey(
         Space,
         on_delete=models.CASCADE,
+        blank=True,
+        null=True,
         related_name="halls",
         help_text="Parent space this hall belongs to.",
         db_comment="FK to Space.",
@@ -275,10 +295,14 @@ class Hall(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        name = self.get_base_display_name(related_name="translations", fallback=None)
-        if name:
-            return f"{name} @ {self.space}"
-        return f"Hall {self.id} @ {self.space}"
+        name = self.get_base_display_name(
+            related_name="translations", fallback=f"Hall {self.id}"
+        )
+        try:
+            city = self.space.location.city or ""
+            return f"{name} ({city})" if city else name
+        except Exception:
+            return name
 
 
 class HallTranslation(BaseModel):

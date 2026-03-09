@@ -190,6 +190,17 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": r"/api/",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    "SECURITY": [{"ApiKey": []}],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "ApiKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "Authorization",
+                "description": "Use `Api-Key <KEY>` to authenticate.",
+            }
+        }
+    },
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,
         "displayOperationId": False,

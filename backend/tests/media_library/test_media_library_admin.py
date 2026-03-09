@@ -241,8 +241,8 @@ class TestMediaItemTranslationAdminConfiguration(TestCase):
         self.assertIn("credits", self.admin.list_display)
 
     # list_filter
-    def test_list_filter_contains_language(self):
-        self.assertIn("language", self.admin.list_filter)
+    def test_list_filter_contains_language_code(self):
+        self.assertIn("language__code", self.admin.list_filter)
 
     # search_fields
     def test_search_fields_contains_title(self):

@@ -15,6 +15,9 @@ class PriceTranslationInline(admin.TabularInline):
     autocomplete_fields = ("language",)
     ordering = ("language",)
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("language")
+
 
 @admin.register(Price)
 class PriceAdmin(BaseAdmin):
@@ -31,13 +34,13 @@ class PriceAdmin(BaseAdmin):
         "sort_order",
         "cineville_box",
     )
-    list_filter = ("type", "visibility", "membership", "cineville_box")
+    list_filter = ("type", "visibility", "cineville_box")
     search_fields = ("id", "type")
     ordering = ("sort_order", "id")
     inlines = [PriceTranslationInline]
 
     def get_queryset(self, request):
-        """Prefetch translations to avoid N+1 queries on the list page."""
+        """Prefetch translations to avoid N+1 queries on the detail page."""
         return super().get_queryset(request).prefetch_related("translations")
 
 
@@ -46,7 +49,7 @@ class PriceTranslationAdmin(BaseAdmin):
     """Admin configuration for Price translations."""
 
     list_display = ("id", "price", "language", "description")
-    list_filter = ("language",)
+    list_filter = ("language__code",)
     search_fields = ("price__id", "language__code", "description")
     ordering = ("price", "language")
     autocomplete_fields = ("price", "language")
@@ -65,6 +68,9 @@ class PriceRankTranslationInline(admin.TabularInline):
     autocomplete_fields = ("language",)
     ordering = ("language",)
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("language")
+
 
 @admin.register(PriceRank)
 class PriceRankAdmin(BaseAdmin):
@@ -75,13 +81,17 @@ class PriceRankAdmin(BaseAdmin):
     ordering = ("position", "id")
     inlines = [PriceRankTranslationInline]
 
+    def get_queryset(self, request):
+        """Prefetch translations to avoid N+1 queries on the detail page."""
+        return super().get_queryset(request).prefetch_related("translations")
+
 
 @admin.register(PriceRankTranslation)
 class PriceRankTranslationAdmin(BaseAdmin):
     """Admin configuration for PriceRank translations."""
 
     list_display = ("id", "price_rank", "language", "description")
-    list_filter = ("language",)
+    list_filter = ("language__code",)
     search_fields = ("price_rank__id", "language__code", "description")
     ordering = ("price_rank", "language")
     autocomplete_fields = ("price_rank", "language")

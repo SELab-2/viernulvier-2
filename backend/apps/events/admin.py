@@ -35,9 +35,13 @@ class EventPriceInline(admin.TabularInline):
 
     model = EventPrice
     extra = 0
-    autocomplete_fields = ("price_rank",)
-    fields = ("price_rank", "amount", "available")
+    autocomplete_fields = ("price_rank", "price")
+    fields = ("price_rank", "price", "amount", "available")
     ordering = ("price_rank__position",)
+    show_change_link = False
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("price_rank", "price")
 
 
 # ===========================================================================
@@ -82,9 +86,7 @@ class EventAdmin(BaseAdmin):
     )
 
     autocomplete_fields = ("production", "hall")
-
     ordering = ("-starts_at",)
-
     date_hierarchy = "starts_at"
 
     inlines = [EventPriceInline]
@@ -105,7 +107,6 @@ class EventAdmin(BaseAdmin):
         return format_html('<a href="{}">{}</a>', url, label)
 
     def get_queryset(self, request):
-        """Optimise the queryset with select_related and prefetch_related."""
         return (
             super()
             .get_queryset(request)
@@ -118,6 +119,5 @@ class EventAdmin(BaseAdmin):
             .prefetch_related(
                 "production__translations",
                 "hall__translations",
-                "prices",
             )
         )

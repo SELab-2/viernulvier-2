@@ -55,6 +55,34 @@ class TestBaseAdmin(TestCase):
         self.assertTrue(issubclass(MyAdmin, BaseAdmin))
         self.assertEqual(MyAdmin.list_display, ("id",))
 
+    def test_list_per_page_default(self):
+        """BaseAdmin should have a default list_per_page value."""
+        instance = BaseAdmin(User, admin.site)
+        self.assertEqual(instance.list_per_page, 50)
+
+    def test_list_per_page_can_be_overridden(self):
+        """Subclasses should be able to override list_per_page."""
+
+        class MyAdmin(BaseAdmin):
+            list_per_page = 100
+
+        instance = MyAdmin(User, admin.site)
+        self.assertEqual(instance.list_per_page, 100)
+
+    def test_show_full_result_count_default(self):
+        """BaseAdmin should have show_full_result_count set to False by default."""
+        instance = BaseAdmin(User, admin.site)
+        self.assertFalse(instance.show_full_result_count)
+
+    def test_show_full_result_count_can_be_overridden(self):
+        """Subclasses should be able to override show_full_result_count."""
+
+        class MyAdmin(BaseAdmin):
+            show_full_result_count = True
+
+        instance = MyAdmin(User, admin.site)
+        self.assertTrue(instance.show_full_result_count)
+
     def test_get_queryset_returns_model_queryset(self):
         User.objects.create_user(username="u1", password="secret")
         instance = BaseAdmin(User, admin.site)
