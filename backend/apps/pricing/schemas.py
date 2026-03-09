@@ -39,7 +39,11 @@ _PRICE_RESPONSE = OpenApiExample(
         "step": None,
         "sort_order": 0,
         "cineville_box": False,
-        "description": {"nl": "Volledig tarief", "en": "Full price", "fr": "Plein tarif"},
+        "description": {
+            "nl": "Volledig tarief",
+            "en": "Full price",
+            "fr": "Plein tarif",
+        },
     },
     response_only=True,
 )
@@ -57,7 +61,11 @@ _PRICE_VARIABLE_RESPONSE = OpenApiExample(
         "step": 100,
         "sort_order": 1,
         "cineville_box": False,
-        "description": {"nl": "Zelf kiezen", "en": "Pay what you want", "fr": "Prix libre"},
+        "description": {
+            "nl": "Zelf kiezen",
+            "en": "Pay what you want",
+            "fr": "Prix libre",
+        },
     },
     response_only=True,
 )

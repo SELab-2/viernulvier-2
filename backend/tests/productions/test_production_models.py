@@ -242,6 +242,15 @@ class TestProductionGenre:
         assert production_genre.production is not None
         assert production_genre.genre is not None
 
+    def test_production_genre_string_representation(self):
+        """Verify the string representation of a ProductionGenre instance."""
+        production = ProductionFactory.create()
+        genre = GenreFactory.create()
+        production_genre = ProductionGenreFactory.create(production=production, genre=genre)
+
+        expected_str = f"{genre.type}"
+        assert str(production_genre) == expected_str
+
     def test_position_must_be_positive_or_zero(self):
         """Reject negative position values for genre ordering."""
         production_genre = ProductionGenreFactory.build(position=-1)

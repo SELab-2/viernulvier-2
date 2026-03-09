@@ -1,5 +1,10 @@
-from .base import *  # noqa: F403
-from .base import REST_FRAMEWORK
+from . import base as base_settings
+
+for setting_name in dir(base_settings):
+    if setting_name.isupper():
+        globals()[setting_name] = getattr(base_settings, setting_name)
+
+REST_FRAMEWORK = globals().get("REST_FRAMEWORK", {})
 
 # Test settings for the Django project. These settings are used when running tests.
 

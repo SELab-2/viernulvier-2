@@ -33,8 +33,8 @@ class MediaGallery(BaseModel):
 
     name = models.CharField(
         max_length=255,
-        null=False,
-        blank=False,
+        blank=True,
+        null=True,
         help_text="Human-readable name of the gallery.",
         db_comment="Name of the media gallery.",
     )
@@ -46,7 +46,7 @@ class MediaGallery(BaseModel):
         ordering = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return self.name if self.name else "Unnamed Gallery"
 
 
 class MediaItem(BaseModel):
@@ -58,7 +58,7 @@ class MediaItem(BaseModel):
 
     Attributes:
         gallery:           The parent gallery this item belongs to.
-        type:              Media type — one of ``image``, ``video``, ``audio``.
+        type:              Media type — one of ``foto``, ``video``, ``audio``, ``other``.
         format:            File format / extension (e.g. ``jpg``, ``mp4``).
         original_filename: Original filename as uploaded.
         position:          Display order within the gallery (ascending).
@@ -67,13 +67,16 @@ class MediaItem(BaseModel):
     """
 
     class MediaItemType(models.TextChoices):
-        IMAGE = "image", "Image"
+        IMAGE = "foto", "Foto"
         VIDEO = "video", "Video"
         AUDIO = "audio", "Audio"
+        OTHER = "other", "Other"
 
     gallery = models.ForeignKey(
         MediaGallery,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name="media_items",
         help_text="Parent gallery this item belongs to.",
         db_comment="FK to MediaGallery.",
@@ -84,7 +87,7 @@ class MediaItem(BaseModel):
         choices=MediaItemType.choices,
         null=False,
         blank=False,
-        help_text="Media type: `image`, `video`, or `audio`.",
+        help_text="Media type: `foto`, `video`, `audio`, or `other`.",
         db_comment="Type of media item.",
     )
 
@@ -167,7 +170,7 @@ class MediaItemTranslation(BaseModel):
     )
 
     title = models.CharField(
-        max_length=255,
+        max_length=2000,
         blank=True,
         default="",
         help_text="Localised display title of the media item.",
@@ -182,16 +185,16 @@ class MediaItemTranslation(BaseModel):
     )
 
     credits = models.CharField(
-        max_length=255,
+        max_length=300,
         blank=True,
         default="",
         help_text="Localised attribution or credits for the media item.",
         db_comment="Translated credits for the media item.",
     )
 
-    link = models.URLField(
+    link = models.CharField(
+        max_length=255,
         blank=True,
-        default="",
         help_text="Localised external URL related to the media item.",
         db_comment="Translated external link for the media item.",
     )

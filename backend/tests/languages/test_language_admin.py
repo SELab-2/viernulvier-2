@@ -19,6 +19,7 @@ from django.urls import reverse
 from apps.core.admin import BaseAdmin
 from apps.languages.admin import LanguageAdmin
 from apps.languages.models import Language
+from tests.factories.language import LanguageFactory
 
 
 class TestLanguageAdminRegistration(TestCase):
@@ -100,8 +101,8 @@ class TestLanguageAdminFunctional(TestCase):
     def setUp(self):
         self.superuser = User.objects.create_superuser(username="admin", password="password", email="admin@example.com")
         self.client.force_login(self.superuser)
-        Language.objects.create(code="nl", name="Dutch", is_active=True)
-        Language.objects.create(code="en", name="English", is_active=False)
+        LanguageFactory(code="nl", name="Dutch", is_active=True)
+        LanguageFactory(code="en", name="English", is_active=False)
 
     # -- Changelist -----------------------------------------------------------
 
