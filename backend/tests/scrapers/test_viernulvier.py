@@ -173,33 +173,44 @@ def _reload_module(monkeypatch, tqdm_available: bool):
         # Force ImportError by removing tqdm from sys.modules
         monkeypatch.delitem(sys.modules, "tqdm", raising=False)
         # Inject a broken finder so 'import tqdm' raises ImportError
-        monkeypatch.setitem(sys.modules, "tqdm", None)   # None -> ImportError
+        monkeypatch.setitem(sys.modules, "tqdm", None)  # None -> ImportError
 
     import apps.imports.management.commands.sync_viernulvier
+
     return apps.imports.management.commands.sync_viernulvier
+
 
 class _StubTqdm:
     """Minimal tqdm stand-in that records calls."""
+
     instances: list = []
 
     def __init__(self, *, total, desc, unit, leave):
         self.total = total
-        self.desc  = desc
-        self.unit  = unit
+        self.desc = desc
+        self.unit = unit
         self.leave = leave
         _StubTqdm.instances.append(self)
 
-    def __enter__(self):  return self
-    def __exit__(self, *_): pass
-    def update(self, n=1): pass
-    def close(self):       pass
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        pass
+
+    def update(self, n=1):
+        pass
+
+    def close(self):
+        pass
+
 
 # ---------------------------------------------------------------------------
 # Tqdm presence handling
 # ---------------------------------------------------------------------------
 
-class TestWithTqdm:
 
+class TestWithTqdm:
     def test_tqdm_is_not_none(self, monkeypatch):
         mod = _reload_module(monkeypatch, tqdm_available=True)
         assert mod._tqdm is not None
@@ -217,9 +228,9 @@ class TestWithTqdm:
 
         assert len(_StubTqdm.instances) == 1
         bar = _StubTqdm.instances[0]
-        assert bar.desc  == "load"
+        assert bar.desc == "load"
         assert bar.total == 42
-        assert bar.unit  == "records"
+        assert bar.unit == "records"
         assert bar.leave is False
 
     def test_make_progress_bar_is_context_manager(self, monkeypatch):
@@ -231,7 +242,6 @@ class TestWithTqdm:
 
 
 class TestWithoutTqdm:
-
     def test_tqdm_is_none_when_missing(self, monkeypatch):
         mod = _reload_module(monkeypatch, tqdm_available=False)
         assert mod._tqdm is None
@@ -253,9 +263,11 @@ def test_make_progress_bar_signature(monkeypatch, tqdm_available):
     """_make_progress_bar(name, total) must always accept exactly these two args."""
     mod = _reload_module(monkeypatch, tqdm_available=tqdm_available)
     import inspect
+
     sig = inspect.signature(mod._make_progress_bar)
     params = list(sig.parameters)
     assert params == ["name", "total"]
+
 
 # ---------------------------------------------------------------------------
 # fetch_viernulvier — HTTP layer
