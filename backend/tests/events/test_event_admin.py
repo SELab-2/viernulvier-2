@@ -42,7 +42,7 @@ def admin_change_url(model, pk):
 
 class TestEventsAdminRegistration(TestCase):
     def test_event_is_registered(self):
-        """Event model moet geregistreerd zijn in de admin."""
+        """Event model has to be registered in admin."""
         self.assertIn(Event, admin.site._registry)
 
     def test_registered_admin_class_for_event(self):
