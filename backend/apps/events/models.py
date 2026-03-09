@@ -25,6 +25,7 @@ from apps.locations.models import Hall
 from apps.pricing.models import Price, PriceRank
 from apps.productions.models import Production
 
+
 # ===========================================================================
 # Event
 # ===========================================================================
@@ -98,7 +99,11 @@ class Event(BaseModel):
         ordering = ["starts_at"]
         constraints = [
             models.CheckConstraint(
-                condition=(Q(ends_at__gte=F("starts_at")) | Q(starts_at__isnull=True) | Q(ends_at__isnull=True)),
+                condition=(
+                    Q(ends_at__gte=F("starts_at"))
+                    | Q(starts_at__isnull=True)
+                    | Q(ends_at__isnull=True)
+                ),
                 name="event_ends_after_starts",
             )
         ]
@@ -199,7 +204,9 @@ class EventPrice(BaseModel):
         ]
         indexes = [
             models.Index(fields=["event"], name="idx_event_price_event"),
-            models.Index(fields=["event", "price_rank", "price"], name="idx_event_rank_price"),
+            models.Index(
+                fields=["event", "price_rank", "price"], name="idx_event_rank_price"
+            ),
         ]
 
     def __str__(self) -> str:
