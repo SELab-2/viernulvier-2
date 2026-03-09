@@ -121,6 +121,12 @@ class TestSpace:
         loc.delete()
         assert Space.objects.count() == 0
 
+    def test_str_falls_back_to_name_when_location_raises(self):
+        """When location is None in memory, __str__ returns only the fallback name."""
+        space = SpaceFactory()
+        space.location = None
+        assert str(space) == f"Space {space.id}"
+
 
 class TestSpaceTranslation:
     def test_str(self):
@@ -182,6 +188,11 @@ class TestHall:
         HallFactory(space=space)
         space.delete()
         assert Hall.objects.count() == 0
+
+    def test_str_falls_back_to_name_when_space_raises(self):
+        """When space is None, __str__ returns only the fallback name."""
+        hall = HallFactory(space=None)
+        assert str(hall) == f"Hall {hall.id}"
 
 
 class TestHallTranslation:

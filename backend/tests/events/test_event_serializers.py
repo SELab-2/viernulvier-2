@@ -19,9 +19,14 @@ from apps.events.models import Event, EventPrice
 from apps.events.serializers import EventSerializer
 from tests.factories.event import EventFactory, EventPriceFactory
 from tests.factories.location import HallFactory
-from tests.factories.pricing import PriceRankFactory
+from tests.factories.pricing import (
+    PriceRankFactory,
+    PriceFactory,
+    PriceTranslationFactory,
+)
 from tests.factories.production import ProductionFactory
 from apps.events.serializers import EventPriceSerializer
+from tests.factories.language import LanguageFactory
 
 
 def _drf_request(factory: APIRequestFactory, path: str) -> Request:
@@ -358,6 +363,39 @@ class TestEventPriceSerializerDisplayFields(TestCase):
         self.assertEqual(data["price_rank_display"], str(self.rank.id))
         # price_display should fallback to None since price is None
         self.assertIsNone(data["price_display"])
+
+    def test_price_display_falls_back_to_id_when_no_translation(self):
+        """When price exists but has no translations, price_display falls back to the price PK."""
+        price = PriceFactory()
+        ep = EventPriceFactory(
+            event=self.event,
+            price_rank=self.rank,
+            price=price,
+            amount="15.00",
+            available=10,
+        )
+        serializer = EventPriceSerializer(
+            ep, context={"request": _drf_request(APIRequestFactory(), "/dummy")}
+        )
+        self.assertEqual(serializer.data["price_display"], str(price.id))
+
+    def test_price_display_returns_translated_description(self):
+        """When price has a translation, price_display returns the translated description."""
+        price = PriceFactory()
+        lang = LanguageFactory()
+        PriceTranslationFactory(price=price, language=lang, description="Student")
+
+        ep = EventPriceFactory(
+            event=self.event,
+            price_rank=self.rank,
+            price=price,
+            amount="15.00",
+            available=10,
+        )
+        serializer = EventPriceSerializer(
+            ep, context={"request": _drf_request(APIRequestFactory(), "/dummy")}
+        )
+        self.assertEqual(serializer.data["price_display"], "Student")
 
 
 class TestEventSerializerNestedPricesReadOnly(TestCase):

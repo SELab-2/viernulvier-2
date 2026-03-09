@@ -4,6 +4,8 @@ This module tests that all sync configurations are properly structured and compa
 with the scraper architecture.
 """
 
+import importlib
+import sys
 from io import StringIO
 from types import SimpleNamespace
 from unittest.mock import patch, Mock
@@ -783,6 +785,21 @@ class TestManagementCommandCoverage:
         result = cmd_module._make_progress_bar("step", 100)
         # Either the tqdm bar or None is acceptable depending on branch
         assert result is None or result == fake_bar
+
+    def test_make_progress_bar_graceful_degradation_when_tqdm_missing(monkeypatch):
+        """Controls that _make_progress_bar returns None and doesn't error when _tqdm is None."""
+
+        with patch.dict(sys.modules, {"tqdm": None}):
+            import apps.imports.management.commands.sync_viernulvier as cmd_module
+
+            importlib.reload(cmd_module)
+
+            assert cmd_module._tqdm is None
+
+            result = cmd_module._make_progress_bar("test", 100)
+            assert result is None
+
+        importlib.reload(cmd_module)
 
     def test_make_progress_callback_no_tqdm_writes_at_500_intervals(
         self, monkeypatch, capsys
