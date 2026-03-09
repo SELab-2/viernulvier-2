@@ -27,7 +27,6 @@ from tests.factories.language import LanguageFactory
 from tests.factories.location import HallFactory
 from tests.factories.production import ProductionFactory, ProductionTranslationFactory
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

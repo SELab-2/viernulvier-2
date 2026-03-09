@@ -7,8 +7,8 @@ the project. Inheriting from it guarantees that model-level validation
 a record is written to the database.
 """
 
-from django.db import models
 from django.conf import settings
+from django.db import models
 
 
 class BaseModel(models.Model):

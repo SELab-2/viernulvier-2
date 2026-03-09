@@ -14,7 +14,6 @@ to their values (e.g., {"nl": "...", "en": "..."}).
 """
 
 from django.db.models import Prefetch
-
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet

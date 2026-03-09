@@ -33,7 +33,6 @@ from tests.factories.production import (
 )
 from tests.factories.tag import TagFactory
 
-
 # ---------------------------------------------------------------------------
 # UitDatabaseThemeSerializer
 # ---------------------------------------------------------------------------

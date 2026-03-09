@@ -11,7 +11,9 @@ through-table. It is nested read-only inside ``EventSerializer`` via the
 """
 
 from rest_framework import serializers
+
 from apps.core.serializers import TranslatableSerializerMixin
+
 from .models import Event, EventPrice
 
 

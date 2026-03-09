@@ -10,20 +10,21 @@ Covers:
 """
 
 import pytest
-from rest_framework.test import APIRequestFactory
 from django.test import TestCase, override_settings
+from rest_framework.test import APIRequestFactory
+
 from apps.genres.models import Genre, GenreTranslation, GenreUseAs
 from apps.genres.serializers import (
     GenreSerializer,
     GenreUseAsSerializer,
 )
+from apps.languages.models import Language
 from tests.factories.genre import (
     GenreFactory,
     GenreTranslationFactory,
     GenreUseAsFactory,
 )
 from tests.factories.language import LanguageFactory
-from apps.languages.models import Language
 
 
 class TestGenreUseAsSerializerFields(TestCase):

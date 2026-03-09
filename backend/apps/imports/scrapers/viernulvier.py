@@ -34,7 +34,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from django.core.exceptions import FieldDoesNotExist, FieldError, ValidationError
 from django.core.validators import URLValidator
-from django.db import DatabaseError, IntegrityError, transaction, models
+from django.db import DatabaseError, IntegrityError, models, transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 

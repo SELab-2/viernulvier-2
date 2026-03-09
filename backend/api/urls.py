@@ -5,19 +5,7 @@ URL configuration for the API app.
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularSwaggerView,
-    SpectacularRedocView,
-)
-from apps.pricing.views import PriceViewSet, PriceRankViewSet
-from apps.languages.views import LanguageViewSet
-from apps.media_library.views import MediaGalleryViewSet, MediaItemViewSet
-from apps.import_log.views import ImportLogViewSet
-from apps.tags.views import TagViewSet
-from apps.productions.views import ProductionViewSet
-from apps.genres.views import GenreUseAsViewSet, GenreViewSet
-from apps.locations.views import HallViewSet, LocationViewSet, SpaceViewSet
+
 from apps.events.views import EventViewSet
 from apps.genres.views import GenreUseAsViewSet, GenreViewSet
 from apps.import_log.views import ImportLogViewSet

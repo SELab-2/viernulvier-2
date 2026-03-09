@@ -7,8 +7,7 @@ changes (e.g. adding a global ``list_per_page``, disabling bulk delete,
 or injecting request-scoped context) only need to be made in one place.
 """
 
-from django.contrib import admin
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.template.response import TemplateResponse
 from django.urls import reverse

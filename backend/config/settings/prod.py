@@ -32,8 +32,10 @@ REST_FRAMEWORK = {
         "apps.core.throttles.InternalKeyThrottle",  # Unrestricted
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "public_min": "40/minute",  # So a single client can't exhaust the entire minute budget in one burst
-        "public_hour": "800/hour",  # Allows for sustained usage without hitting limits too quickly, while still protecting against abuse.
+        # So a single client can't exhaust the entire minute budget in one burst
+        "public_min": "40/minute",
+        # Allows for sustained usage without hitting limits too quickly, while still protecting against abuse.
+        "public_hour": "800/hour",
         "internal": None,
     },
 }

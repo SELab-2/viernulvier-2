@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from apps.core.spectacular_extensions import ApiKeyAuthenticationScheme
 

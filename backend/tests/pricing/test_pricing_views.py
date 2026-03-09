@@ -11,7 +11,7 @@ from apps.pricing.models import (
     PriceRankTranslation,
     PriceTranslation,
 )
-from apps.pricing.views import PriceViewSet, PriceRankViewSet
+from apps.pricing.views import PriceRankViewSet, PriceViewSet
 from tests.factories.language import LanguageFactory
 from tests.factories.pricing import (
     PriceFactory,
@@ -19,7 +19,6 @@ from tests.factories.pricing import (
     PriceRankTranslationFactory,
     PriceTranslationFactory,
 )
-
 
 PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"

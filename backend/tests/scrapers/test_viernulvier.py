@@ -14,8 +14,7 @@ from unittest.mock import Mock
 import pytest
 import requests
 from django.core.exceptions import FieldDoesNotExist, ValidationError
-from django.db import IntegrityError
-from django.db import connection, models
+from django.db import IntegrityError, connection, models
 from django.test.utils import isolate_apps
 
 from apps.imports.scrapers import viernulvier
@@ -37,7 +36,6 @@ from apps.imports.scrapers.viernulvier import (
     normalize_url,
     sync_viernulvier,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -709,7 +707,7 @@ def test_rate_limit_error_without_retry_after():
 
 
 def test_backoff_seconds_capped_at_max():
-    from apps.imports.scrapers.viernulvier import _backoff_seconds, RETRY_BACKOFF_MAX
+    from apps.imports.scrapers.viernulvier import RETRY_BACKOFF_MAX, _backoff_seconds
 
     for attempt in range(10):
         val = _backoff_seconds(attempt)
@@ -1869,7 +1867,7 @@ class TestFlexibleFieldMapping:
 
     def test_skips_unknown_fields_event_price(self):
         """Unknown API fields are silently ignored."""
-        from apps.events.models import EventPrice, Event
+        from apps.events.models import Event, EventPrice
         from apps.pricing.models import PriceRank
         from apps.productions.models import Production
 
@@ -1903,7 +1901,7 @@ class TestFlexibleFieldMapping:
 
     def test_handles_known_fields_correctly(self):
         """Known FK and scalar fields are resolved and placed in defaults."""
-        from apps.events.models import EventPrice, Event
+        from apps.events.models import Event, EventPrice
         from apps.pricing.models import PriceRank
         from apps.productions.models import Production
 

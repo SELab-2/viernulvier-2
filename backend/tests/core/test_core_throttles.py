@@ -1,5 +1,6 @@
 import hashlib
 from unittest.mock import MagicMock
+
 from django.test import TestCase, override_settings
 from rest_framework.test import APIRequestFactory
 

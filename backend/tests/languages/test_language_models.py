@@ -1,5 +1,6 @@
 import pytest
 from django.core.exceptions import ValidationError
+
 from tests.factories.genre import GenreTranslationFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.location import (

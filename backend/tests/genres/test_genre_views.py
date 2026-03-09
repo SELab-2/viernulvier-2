@@ -25,7 +25,6 @@ from tests.factories.genre import (
 )
 from tests.factories.language import LanguageFactory
 
-
 PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"
 

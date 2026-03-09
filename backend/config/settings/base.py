@@ -211,7 +211,7 @@ SPECTACULAR_SETTINGS = {
         "tagsSorter": "alpha",  # Sort tags alfabetically
         "operationsSorter": "method",  # Sort endpoints on HTTP method
         "tryItOutEnabled": True,
-        "docExpansion": "none",  # Collapsed by default for a cleaner look (set to 'list' to expand tags and endpoints, or 'full' to expand everything)
+        "docExpansion": "none",  # Collapsed by default for a cleaner look 
         "defaultModelsExpandDepth": 0,  # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
     },
     "TAGS": [

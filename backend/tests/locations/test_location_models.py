@@ -1,20 +1,20 @@
 import pytest
+
 from apps.locations.models import (
+    Hall,
+    HallTranslation,
     LocationTranslation,
     Space,
     SpaceTranslation,
-    Hall,
-    HallTranslation,
 )
-
 from tests.factories.language import LanguageFactory
 from tests.factories.location import (
+    HallFactory,
+    HallTranslationFactory,
     LocationFactory,
     LocationTranslationFactory,
     SpaceFactory,
     SpaceTranslationFactory,
-    HallFactory,
-    HallTranslationFactory,
 )
 
 pytestmark = pytest.mark.django_db

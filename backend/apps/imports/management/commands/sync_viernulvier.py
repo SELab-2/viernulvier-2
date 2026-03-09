@@ -20,16 +20,16 @@ from typing import Any, Callable, Optional
 from django.core.management.base import BaseCommand
 
 from apps.events.models import Event, EventPrice
-from apps.genres.models import Genre, GenreUseAs, GenreTranslation
+from apps.genres.models import Genre, GenreTranslation, GenreUseAs
 from apps.imports.scrapers.viernulvier import (
     M2MConfig,
     ModelSyncConfig,
     TranslationConfig,
+    clean_vendor_id,
     nee_ja_to_bool,
     normalize_performer_type,
     normalize_url,
     sync_viernulvier,
-    clean_vendor_id,
 )
 from apps.locations.models import (
     Hall,

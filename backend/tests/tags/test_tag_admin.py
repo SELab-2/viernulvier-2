@@ -24,7 +24,6 @@ from apps.tags.models import Tag, TagTranslation
 from tests.factories.language import LanguageFactory
 from tests.factories.tag import TagFactory, TagTranslationFactory
 
-
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------

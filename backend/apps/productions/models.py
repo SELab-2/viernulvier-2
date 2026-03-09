@@ -27,7 +27,6 @@ from apps.media_library.models import MediaGallery
 from apps.tags.models import Tag
 
 
-
 class UitDatabaseTheme(BaseModel):
     """
     A theme classification imported from the UIT Database.

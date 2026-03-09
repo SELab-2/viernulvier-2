@@ -23,7 +23,7 @@ from apps.pricing.admin import (
     PriceRankTranslationAdmin,
     PriceTranslationAdmin,
 )
-from apps.pricing.models import Price, PriceRank, PriceTranslation, PriceRankTranslation
+from apps.pricing.models import Price, PriceRank, PriceRankTranslation, PriceTranslation
 from tests.factories.language import LanguageFactory
 from tests.factories.pricing import (
     PriceFactory,
@@ -31,7 +31,6 @@ from tests.factories.pricing import (
     PriceRankTranslationFactory,
     PriceTranslationFactory,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

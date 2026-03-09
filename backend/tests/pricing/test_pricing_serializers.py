@@ -11,17 +11,18 @@ Covers:
 """
 
 import pytest
-from rest_framework.test import APIRequestFactory
 from django.test import TestCase, override_settings
 from rest_framework.request import Request
+from rest_framework.test import APIRequestFactory
+
 from apps.languages.models import Language
 from apps.pricing.models import Price, PriceRank, PriceRankTranslation
-from apps.pricing.serializers import PriceSerializer, PriceRankSerializer
+from apps.pricing.serializers import PriceRankSerializer, PriceSerializer
 from tests.factories.language import LanguageFactory
 from tests.factories.pricing import (
     PriceFactory,
-    PriceTranslationFactory,
     PriceRankFactory,
+    PriceTranslationFactory,
 )
 
 

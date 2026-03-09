@@ -33,7 +33,6 @@ from tests.factories.production import (
     UitDatabaseTypeFactory,
 )
 
-
 PUB_KEY = "pub-production-view-test-key"
 INT_KEY = "int-production-view-test-key"
 

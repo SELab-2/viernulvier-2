@@ -8,11 +8,11 @@ Covers:
 """
 
 import pytest
-from django.test import override_settings
+from django.test import TestCase, override_settings
 from rest_framework.test import APIRequestFactory
-from django.test import TestCase
+
 from apps.languages.models import Language
-from apps.locations.models import Hall, Location, Space, HallTranslation
+from apps.locations.models import Hall, HallTranslation, Location, Space
 from apps.locations.serializers import (
     HallSerializer,
     LocationSerializer,

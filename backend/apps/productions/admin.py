@@ -13,13 +13,14 @@ add the necessary ``select_related`` and ``prefetch_related`` calls, keeping
 the list and detail pages free of N+1 queries.
 """
 
-from django.contrib import admin
 from django import forms
+from django.contrib import admin
 from django.db.models import Max
 
 from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
 from apps.genres.models import Genre
 from apps.tags.models import Tag
+
 from .models import (
     Production,
     ProductionGenre,

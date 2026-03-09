@@ -18,17 +18,16 @@ from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 
 from apps.events.models import Event, EventPrice
-from apps.events.serializers import EventSerializer
+from apps.events.serializers import EventPriceSerializer, EventSerializer
 from tests.factories.event import EventFactory, EventPriceFactory
+from tests.factories.language import LanguageFactory
 from tests.factories.location import HallFactory
 from tests.factories.pricing import (
-    PriceRankFactory,
     PriceFactory,
+    PriceRankFactory,
     PriceTranslationFactory,
 )
 from tests.factories.production import ProductionFactory
-from apps.events.serializers import EventPriceSerializer
-from tests.factories.language import LanguageFactory
 
 
 def _drf_request(factory: APIRequestFactory, path: str) -> Request:

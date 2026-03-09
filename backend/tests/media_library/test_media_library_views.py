@@ -36,9 +36,9 @@ from apps.media_library.views import MediaGalleryViewSet, MediaItemViewSet
 from tests.factories.language import LanguageFactory
 from tests.factories.media_library import (
     MediaGalleryFactory,
+    MediaItemCropFactory,
     MediaItemFactory,
     MediaItemTranslationFactory,
-    MediaItemCropFactory,
 )
 
 PUB_KEY = "pub-media-library-view-test-key"

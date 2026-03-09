@@ -8,7 +8,7 @@ import importlib
 import sys
 from io import StringIO
 from types import SimpleNamespace
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from django.core.management.base import CommandParser, OutputWrapper
@@ -17,41 +17,40 @@ from django.db import models as django_models
 from apps.events.models import Event, EventPrice
 from apps.genres.models import Genre, GenreUseAs
 from apps.imports.management.commands.sync_viernulvier import (
-    UITDATABASE_THEME_CONFIG,
-    UITDATABASE_TYPE_CONFIG,
+    EVENT_CONFIG,
+    EVENT_PRICE_CONFIG,
     GENRE_CONFIG,
-    TAG_CONFIG,
-    LOCATION_CONFIG,
-    SPACE_CONFIG,
     HALL_CONFIG,
+    LOCATION_CONFIG,
     MEDIA_GALLERY_CONFIG,
     MEDIA_ITEM_CONFIG,
     PRICE_CONFIG,
     PRICE_RANK_CONFIG,
     PRODUCTION_CONFIG,
-    EVENT_CONFIG,
-    EVENT_PRICE_CONFIG,
+    SPACE_CONFIG,
     SYNC_STEPS,
+    TAG_CONFIG,
+    UITDATABASE_THEME_CONFIG,
+    UITDATABASE_TYPE_CONFIG,
     Command,
     _is_not_longterm,
-    nee_ja_to_bool,
     _resolve_genre_use_as,
+    nee_ja_to_bool,
 )
 from apps.imports.scrapers.viernulvier import (
+    M2MConfig,
     ModelSyncConfig,
     TranslationConfig,
-    M2MConfig,
 )
-from apps.locations.models import Location, Space, Hall
+from apps.locations.models import Hall, Location, Space
 from apps.media_library.models import MediaGallery, MediaItem
 from apps.pricing.models import Price, PriceRank
 from apps.productions.models import (
+    Production,
     UitDatabaseTheme,
     UitDatabaseType,
-    Production,
 )
 from apps.tags.models import Tag
-
 
 # ===========================================================================
 # Helper Functions

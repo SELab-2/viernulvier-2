@@ -15,12 +15,12 @@ Covers:
 import pytest
 from django.test import TestCase, override_settings
 from rest_framework.test import APIRequestFactory
+
 from apps.languages.models import Language
 from apps.tags.models import Tag, TagTranslation
 from apps.tags.serializers import TagSerializer
 from tests.factories.language import LanguageFactory
 from tests.factories.tag import TagFactory, TagTranslationFactory
-
 
 # ---------------------------------------------------------------------------
 # Field presence
