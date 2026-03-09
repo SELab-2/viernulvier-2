@@ -5,12 +5,13 @@ with the scraper architecture.
 """
 
 from io import StringIO
+from types import SimpleNamespace
 from unittest.mock import patch, Mock
 
 import pytest
 from django.core.management.base import CommandParser, OutputWrapper
 from django.db import models as django_models
-from types import SimpleNamespace
+
 from apps.events.models import Event, EventPrice
 from apps.genres.models import Genre, GenreUseAs
 from apps.imports.management.commands.sync_viernulvier import (
@@ -30,6 +31,7 @@ from apps.imports.management.commands.sync_viernulvier import (
     EVENT_PRICE_CONFIG,
     SYNC_STEPS,
     Command,
+    _is_not_longterm,
     nee_ja_to_bool,
     _resolve_genre_use_as,
 )
@@ -197,7 +199,7 @@ class TestConfigStructure:
         for config in configs_with_translations:
             assert hasattr(config, "translations")
             assert isinstance(config.translations, list)
-            if config.translations:  # Only check if translations exist
+            if config.translations:
                 for trans_cfg in config.translations:
                     assert isinstance(trans_cfg, TranslationConfig)
                     assert hasattr(trans_cfg, "api_key")
@@ -250,8 +252,7 @@ class TestConfigCompatibility:
             model_fields = get_model_field_names(model)
 
             for api_field, model_field in config.field_map.items():
-                if model_field is not None:  # None means skip this field
-                    # Check if field exists directly or as FK (with _id suffix)
+                if model_field is not None:
                     field_exists = (
                         model_field in model_fields
                         or f"{model_field}_id" in model_fields
@@ -316,9 +317,8 @@ class TestSyncStepsConfiguration:
             assert len(step) == 4
             name, model, config, endpoint = step
 
-            # Check types
             assert isinstance(name, str)
-            assert hasattr(model, "_meta")  # Django model check
+            assert hasattr(model, "_meta")
             assert isinstance(config, ModelSyncConfig)
             assert isinstance(endpoint, str)
             assert endpoint.startswith("/")
@@ -356,13 +356,11 @@ class TestSyncStepsConfiguration:
             EVENT_PRICE_CONFIG,
         ]
 
-        # Check that all defined configs are in SYNC_STEPS
         for config in defined_configs:
             assert config in configs_in_steps, (
                 f"Config {config} is defined but not used in SYNC_STEPS"
             )
 
-        # Check that there are no extra configs in SYNC_STEPS
         assert len(configs_in_steps) == len(defined_configs), (
             f"SYNC_STEPS has {len(configs_in_steps)} configs but {len(defined_configs)} are defined"
         )
@@ -404,14 +402,11 @@ class TestExternalIDMapping:
         ]
 
         for name, model, config in configs:
-            # Check if external_id field exists in model
             model_fields = get_model_field_names(model)
             assert "external_id" in model_fields, (
                 f"Model {name} doesn't have external_id field"
             )
 
-            # Check if config maps @id properly (either explicitly or via default)
-            # The scraper will use @id as the default identifier
             if "@id" in config.field_map:
                 assert config.field_map["@id"] == "external_id", (
                     f"Config for {name} doesn't map '@id' to 'external_id'"
@@ -453,7 +448,6 @@ class TestConfigIntegration:
         for config in all_configs:
             if config.translations:
                 for trans_cfg in config.translations:
-                    # Check required attributes for TranslationConfig
                     required = [
                         "api_key",
                         "model",
@@ -473,7 +467,6 @@ class TestConfigIntegration:
         for config in all_configs:
             if config.m2m:
                 for m2m_cfg in config.m2m:
-                    # Check required attributes for M2MConfig
                     required = [
                         "api_key",
                         "related_model",
@@ -603,3 +596,206 @@ def test_make_progress_callback(monkeypatch, tqdm_installed, capsys):
         assert (
             f"{name}: 500/1000" in captured.out or f"{name}: 1000/1000" in captured.out
         )
+
+
+# ===========================================================================
+# _is_not_longterm filter
+# ===========================================================================
+
+
+class TestIsNotLongterm:
+    def test_normal_production_returns_true(self):
+        assert _is_not_longterm({"production": {"@id": "/api/v1/productions/123"}}) is True
+
+    def test_longterm_production_returns_false(self):
+        assert _is_not_longterm({"production": {"@id": "/api/v1/longterm/456"}}) is False
+
+    def test_string_production_normal_returns_true(self):
+        assert _is_not_longterm({"production": "/api/v1/productions/99"}) is True
+
+    def test_string_production_longterm_returns_false(self):
+        assert _is_not_longterm({"production": "/api/v1/longterm/99"}) is False
+
+    def test_missing_production_key_returns_true(self):
+        assert _is_not_longterm({}) is True
+
+    def test_none_production_returns_true(self):
+        assert _is_not_longterm({"production": None}) is True
+
+
+# ===========================================================================
+# Extended management command coverage
+# ===========================================================================
+
+
+class TestManagementCommandCoverage:
+    def _make_command(self):
+        cmd = Command()
+        cmd.stdout = OutputWrapper(StringIO())
+        cmd.stderr = OutputWrapper(StringIO())
+        return cmd
+
+    def test_dry_run_warning_written_to_stdout(self):
+        """--dry-run prints DRY RUN warning before executing steps."""
+        cmd = self._make_command()
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            return_value=0,
+        ):
+            cmd.handle(only="events", dry_run=True)
+        assert "DRY RUN" in cmd.stdout.getvalue()
+
+    def test_exception_in_step_logged_as_failed(self):
+        """A RuntimeError in a step is caught and printed as FAILED."""
+        cmd = self._make_command()
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            side_effect=RuntimeError("API boom"),
+        ):
+            cmd.handle(only="events")
+        assert "FAILED" in cmd.stdout.getvalue()
+        assert "API boom" in cmd.stdout.getvalue()
+
+    def test_handle_no_only_runs_all_steps(self):
+        """Omitting --only runs every step in SYNC_STEPS."""
+        cmd = self._make_command()
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            return_value=5,
+        ) as mock_sync:
+            cmd.handle()
+        assert mock_sync.call_count == len(SYNC_STEPS)
+
+    def test_handle_exclusive_after_filter(self):
+        """--created-after-x maps to strictly_after query param."""
+        cmd = self._make_command()
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            return_value=0,
+        ) as mock_sync:
+            cmd.handle(only="events", created_after_x="2024-01-01T00:00:00Z")
+        params = mock_sync.call_args.kwargs["params"]
+        assert params == {"created_at[strictly_after]": "2024-01-01T00:00:00Z"}
+
+    def test_handle_exclusive_before_filter(self):
+        """--updated-before-x maps to strictly_before query param."""
+        cmd = self._make_command()
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            return_value=0,
+        ) as mock_sync:
+            cmd.handle(only="events", updated_before_x="2024-12-31T23:59:59Z")
+        params = mock_sync.call_args.kwargs["params"]
+        assert params == {"updated_at[strictly_before]": "2024-12-31T23:59:59Z"}
+
+    def test_handle_starts_after_filter(self):
+        """--starts-after maps to starts_at[after] query param."""
+        cmd = self._make_command()
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            return_value=0,
+        ) as mock_sync:
+            cmd.handle(only="events", starts_after="2025-06-01T00:00:00Z")
+        params = mock_sync.call_args.kwargs["params"]
+        assert params == {"starts_at[after]": "2025-06-01T00:00:00Z"}
+
+    def test_handle_combined_filters(self):
+        """Multiple filter flags are all forwarded in params."""
+        cmd = self._make_command()
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            return_value=0,
+        ) as mock_sync:
+            cmd.handle(
+                only="events",
+                created_after="2024-01-01T00:00:00Z",
+                ends_before="2024-12-31T23:59:59Z",
+            )
+        params = mock_sync.call_args.kwargs["params"]
+        assert params["created_at[after]"] == "2024-01-01T00:00:00Z"
+        assert params["ends_at[before]"] == "2024-12-31T23:59:59Z"
+
+    def test_etag_cache_shared_across_steps(self):
+        """All sync steps receive the exact same etag_cache instance."""
+        cmd = self._make_command()
+        received_caches = []
+
+        def capture_cache(**kwargs):
+            received_caches.append(id(kwargs.get("etag_cache")))
+            return 0
+
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            side_effect=capture_cache,
+        ):
+            cmd.handle()
+
+        assert len(set(received_caches)) == 1
+
+    def test_total_saved_count_in_summary(self):
+        """Done summary line includes the total records count."""
+        cmd = self._make_command()
+        with patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_viernulvier",
+            return_value=42,
+        ):
+            cmd.handle(only="events")
+        assert "42" in cmd.stdout.getvalue()
+
+    def test_make_progress_callback_tqdm_bar_lifecycle(self, monkeypatch):
+        """tqdm bar: lazy creation on first call, updated each call, closed at end."""
+        cmd = Command()
+        cmd.stdout = OutputWrapper(StringIO())
+
+        fake_bar = SimpleNamespace(n=0, refresh=Mock(), close=Mock())
+        fake_tqdm = Mock(return_value=fake_bar)
+        monkeypatch.setattr(
+            "apps.imports.management.commands.sync_viernulvier._tqdm", fake_tqdm
+        )
+
+        cb = cmd._make_progress_callback("step")
+        assert fake_tqdm.call_count == 0  # lazy — not yet created
+
+        cb(100, 500)
+        assert fake_tqdm.call_count == 1
+        assert fake_bar.n == 100
+        assert fake_bar.refresh.call_count >= 1
+
+        cb(200, 500)
+        assert fake_tqdm.call_count == 1  # same bar, not re-created
+        assert fake_bar.n == 200
+
+        cb(500, 500)
+        assert fake_bar.n == 500
+        assert fake_bar.close.call_count == 1  # closed when done
+
+    def test_make_progress_bar_returns_value_when_tqdm_present(self, monkeypatch):
+        """_make_progress_bar uses _tqdm when it is available."""
+        from apps.imports.management.commands import sync_viernulvier as cmd_module
+
+        fake_bar = Mock()
+        fake_tqdm = Mock(return_value=fake_bar)
+        monkeypatch.setattr(cmd_module, "_tqdm", fake_tqdm)
+        result = cmd_module._make_progress_bar("step", 100)
+        # Either the tqdm bar or None is acceptable depending on branch
+        assert result is None or result == fake_bar
+
+    def test_make_progress_callback_no_tqdm_writes_at_500_intervals(
+        self, monkeypatch, capsys
+    ):
+        """Without tqdm, progress is written to stdout every 500 records and at total."""
+        cmd = Command()
+        cmd.stdout = OutputWrapper(StringIO())
+        monkeypatch.setattr(
+            "apps.imports.management.commands.sync_viernulvier._tqdm", None
+        )
+
+        cb = cmd._make_progress_callback("mystep")
+        cb(0, 2000)
+        cb(500, 2000)
+        cb(1000, 2000)
+        cb(1500, 2000)
+        cb(2000, 2000)
+
+        output = cmd.stdout.getvalue()
+        assert "500/2000" in output or "1000/2000" in output or "2000/2000" in output

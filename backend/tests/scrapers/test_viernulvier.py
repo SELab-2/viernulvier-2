@@ -1,20 +1,13 @@
-"""Tests for Viernulvier scraper fetch, error handling, and persistence.
-
-Key fixes vs original:
-- HTTP mocking: source uses requests.Session internally; tests mock _build_session
-  instead of patching requests.get (which is never called directly).
-- _sync_translations removed; _sync_all_translations takes a LIST of TranslationConfig
-  and calls update_or_create with language_id (not language).
-- _build_defaults / _resolve_fk / _sync_m2m all require a FKCache argument.
-- _fetch_single_page does not exist; removed tests that depend on it.
-- Log messages corrected to match English source strings.
-- _sync_m2m uses bulk_create + individual-save fallback, not objects.create.
-- dict payload without @context returns [] (not ScraperError).
 """
+Tests for Viernulvier scraper fetch, error handling, and persistence.
+"""
+
+from __future__ import annotations
 
 import datetime
 import logging
 from contextlib import contextmanager
+from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -30,8 +23,20 @@ from apps.imports.scrapers.viernulvier import (
     FKCache,
     M2MConfig,
     ModelSyncConfig,
+    RateLimitError,
+    ScraperError,
     TranslationConfig,
+    _build_defaults,
+    _discover_extra_pages,
+    _extract_external_id_from_url,
     _parse_field_value,
+    _sync_all_translations,
+    _sync_m2m,
+    clean_string,
+    clean_vendor_id,
+    normalize_performer_type,
+    normalize_url,
+    sync_viernulvier,
 )
 
 
@@ -80,10 +85,48 @@ def _mock_build_session(monkeypatch, response_sequence=None, *, raise_exc=None):
         return session
 
     monkeypatch.setattr(viernulvier, "_build_session", fake_build_session)
-    # Skip real sleeps in retry loops
     monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
 
-    return call_index  # callers can inspect how many requests were made
+    return call_index
+
+
+def _make_ok_response(data, etag=None):
+    r = Mock()
+    r.status_code = 200
+    r.ok = True
+    r.headers = Mock()
+    r.headers.get = Mock(return_value=etag)
+    r.json.return_value = data
+    return r
+
+
+def _make_status_response(status, headers=None):
+    r = Mock()
+    r.status_code = status
+    r.ok = status < 400
+    r.headers = Mock()
+    header_dict = headers or {}
+    r.headers.get = lambda k, d=None: header_dict.get(k, d)
+    return r
+
+
+def _mock_session(monkeypatch, responses_fn):
+    """responses_fn(url, call_count) -> Mock response or raise."""
+    call_count = [0]
+    monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
+
+    def fake_build_session():
+        session = Mock()
+
+        def fake_get(url, params=None, headers=None, timeout=None):
+            call_count[0] += 1
+            return responses_fn(url, call_count[0])
+
+        session.get.side_effect = fake_get
+        return session
+
+    monkeypatch.setattr(viernulvier, "_build_session", fake_build_session)
+    return call_count
 
 
 @contextmanager
@@ -122,7 +165,6 @@ class _PassThroughConfig(ModelSyncConfig):
 def test_fetch_raises_on_http_error(monkeypatch):
     """5xx errors after all retries are exhausted raise ScraperError."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
-    # Return 500 for every call (covers all MAX_RETRIES attempts)
     _mock_build_session(monkeypatch, [(500, "")] * (viernulvier.MAX_RETRIES + 1))
 
     with pytest.raises(viernulvier.ScraperError):
@@ -251,7 +293,6 @@ def test_fetch_dict_without_context_or_member_returns_empty(monkeypatch):
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
     _mock_build_session(monkeypatch, [(200, {"foo": "bar"})])
 
-    # Source: members = data.get("member", []) → [], @context not in data → all_items = []
     result = viernulvier.fetch_viernulvier(endpoint="/events")
     assert result == []
 
@@ -450,6 +491,402 @@ def test_fetch_preserves_timestamp_format(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# HTTP Retry edge cases
+# ---------------------------------------------------------------------------
+
+
+class TestHTTPRetryEdgeCases:
+    def test_parse_retry_after_integer_header(self):
+        from apps.imports.scrapers.viernulvier import _parse_retry_after
+        r = Mock()
+        r.headers = Mock()
+        r.headers.get = Mock(return_value="30")
+        assert _parse_retry_after(r) == 30
+
+    def test_parse_retry_after_non_integer_returns_none(self):
+        from apps.imports.scrapers.viernulvier import _parse_retry_after
+        r = Mock()
+        r.headers = Mock()
+        r.headers.get = Mock(return_value="Wed, 21 Oct 2015 07:28:00 GMT")
+        assert _parse_retry_after(r) is None
+
+    def test_parse_retry_after_missing_returns_none(self):
+        from apps.imports.scrapers.viernulvier import _parse_retry_after
+        r = Mock()
+        r.headers = Mock()
+        r.headers.get = Mock(return_value=None)
+        assert _parse_retry_after(r) is None
+
+    def test_429_with_numeric_retry_after_uses_header_as_wait(self, monkeypatch):
+        """HTTP 429 with numeric Retry-After uses that value as the sleep time."""
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+        call_count = [0]
+
+        def responses(url, n):
+            call_count[0] = n
+            if n == 1:
+                r = _make_status_response(429, {"Retry-After": "45"})
+                r.ok = False
+                return r
+            return _make_ok_response([])
+
+        # _mock_session patches time.sleep to a no-op; overwrite it afterwards
+        # so the capture lambda wins.
+        _mock_session(monkeypatch, responses)
+        sleep_args = []
+        monkeypatch.setattr(viernulvier.time, "sleep", lambda t: sleep_args.append(t))
+
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+        assert result == []
+        assert 45.0 in sleep_args
+
+    def test_429_without_retry_after_uses_backoff(self, monkeypatch):
+        """HTTP 429 with no Retry-After falls back to exponential backoff."""
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+        def responses(url, n):
+            if n == 1:
+                r = _make_status_response(429, {})
+                r.ok = False
+                return r
+            return _make_ok_response([])
+
+        # Overwrite after _mock_session so our capture lambda wins.
+        _mock_session(monkeypatch, responses)
+        sleep_args = []
+        monkeypatch.setattr(viernulvier.time, "sleep", lambda t: sleep_args.append(t))
+
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+        assert result == []
+        assert sleep_args and sleep_args[0] != 45.0
+
+    def test_429_all_retries_exhausted_raises_rate_limit_error(self, monkeypatch):
+        """RateLimitError raised when all 429 retries exhausted."""
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+        monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
+
+        def responses(url, n):
+            r = _make_status_response(429, {"Retry-After": "1"})
+            r.ok = False
+            return r
+
+        _mock_session(monkeypatch, responses)
+        with pytest.raises(RateLimitError) as exc_info:
+            viernulvier.fetch_viernulvier(endpoint="/events")
+        assert exc_info.value.retry_after == 1
+
+    def test_429_without_retry_after_raises_with_none(self, monkeypatch):
+        """RateLimitError.retry_after is None when Retry-After header is absent."""
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+        monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
+
+        def responses(url, n):
+            r = _make_status_response(429, {})
+            r.ok = False
+            return r
+
+        _mock_session(monkeypatch, responses)
+        with pytest.raises(RateLimitError) as exc_info:
+            viernulvier.fetch_viernulvier(endpoint="/events")
+        assert exc_info.value.retry_after is None
+
+    def test_5xx_retries_then_succeeds(self, monkeypatch):
+        """5xx on attempt 1, success on attempt 2."""
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+        def responses(url, n):
+            if n == 1:
+                r = _make_status_response(503, {})
+                r.ok = False
+                return r
+            return _make_ok_response({"member": [{"@id": "1"}]})
+
+        _mock_session(monkeypatch, responses)
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+        assert len(result) == 1
+
+    def test_connection_error_retries_then_succeeds(self, monkeypatch):
+        """ConnectionError on attempt 1, success on attempt 2."""
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+        call_count = [0]
+
+        def responses(url, n):
+            call_count[0] = n
+            if n == 1:
+                raise requests.ConnectionError("network down")
+            return _make_ok_response([])
+
+        _mock_session(monkeypatch, responses)
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+        assert result == []
+        assert call_count[0] == 2
+
+    def test_connection_error_all_retries_exhausted(self, monkeypatch):
+        """ScraperError raised after all ConnectionError retries exhausted."""
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+        def responses(url, n):
+            raise requests.ConnectionError("always down")
+
+        _mock_session(monkeypatch, responses)
+        with pytest.raises(ScraperError, match="Connection failed"):
+            viernulvier.fetch_viernulvier(endpoint="/events")
+
+    def test_timeout_retries_then_succeeds(self, monkeypatch):
+        """Timeout on attempt 1, success on attempt 2."""
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+        def responses(url, n):
+            if n == 1:
+                raise requests.Timeout()
+            return _make_ok_response([])
+
+        _mock_session(monkeypatch, responses)
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+        assert result == []
+
+    def test_304_not_modified_returns_empty_and_preserves_etag(self, monkeypatch):
+        """304 returns empty list; cached ETag is preserved in etag_cache."""
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+        def responses(url, n):
+            return _make_status_response(304, {})
+
+        _mock_session(monkeypatch, responses)
+        etag_cache = {"https://www.viernulvier.gent/api/v1/events": "old-etag"}
+        result = viernulvier.fetch_viernulvier(endpoint="/events", etag_cache=etag_cache)
+        assert result == []
+        assert etag_cache["https://www.viernulvier.gent/api/v1/events"] == "old-etag"
+
+    def test_etag_from_response_stored_in_cache(self, monkeypatch):
+        """ETag header in response is stored in etag_cache."""
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+        def responses(url, n):
+            return _make_ok_response({"member": []}, etag="new-etag-789")
+
+        _mock_session(monkeypatch, responses)
+        etag_cache = {}
+        viernulvier.fetch_viernulvier(endpoint="/events", etag_cache=etag_cache)
+        assert "new-etag-789" in etag_cache.values()
+
+    def test_list_payload_returned_directly(self, monkeypatch):
+        """A plain JSON list (not dict) is returned as-is."""
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+        def responses(url, n):
+            return _make_ok_response([{"@id": "1"}, {"@id": "2"}])
+
+        _mock_session(monkeypatch, responses)
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+        assert len(result) == 2
+
+
+# ---------------------------------------------------------------------------
+# RateLimitError
+# ---------------------------------------------------------------------------
+
+
+def test_rate_limit_error_with_retry_after():
+    err = RateLimitError(retry_after=120)
+    assert err.retry_after == 120
+    assert "120" in str(err)
+
+
+def test_rate_limit_error_without_retry_after():
+    err = RateLimitError()
+    assert err.retry_after is None
+    assert "Rate limited" in str(err)
+
+
+# ---------------------------------------------------------------------------
+# _backoff_seconds
+# ---------------------------------------------------------------------------
+
+
+def test_backoff_seconds_capped_at_max():
+    from apps.imports.scrapers.viernulvier import _backoff_seconds, RETRY_BACKOFF_MAX
+
+    for attempt in range(10):
+        val = _backoff_seconds(attempt)
+        assert 0 < val <= RETRY_BACKOFF_MAX
+
+
+def test_backoff_seconds_increases_with_attempt():
+    from apps.imports.scrapers.viernulvier import _backoff_seconds
+
+    avg_0 = sum(_backoff_seconds(0) for _ in range(20)) / 20
+    avg_3 = sum(_backoff_seconds(3) for _ in range(20)) / 20
+    assert avg_3 > avg_0
+
+
+# ---------------------------------------------------------------------------
+# _discover_extra_pages
+# ---------------------------------------------------------------------------
+
+
+class TestDiscoverExtraPages:
+    def test_no_view_key_returns_empty(self):
+        assert _discover_extra_pages({}) == []
+
+    def test_empty_view_returns_empty(self):
+        assert _discover_extra_pages({"view": {}}) == []
+
+    def test_last_url_without_page_param_returns_empty(self):
+        data = {"view": {"last": "https://example.com/api/events"}}
+        assert _discover_extra_pages(data) == []
+
+    def test_last_url_with_page_param_returns_pages_2_to_n(self):
+        data = {"view": {"last": "https://www.viernulvier.gent/api/v1/events?page=4"}}
+        pages = _discover_extra_pages(data)
+        assert len(pages) == 3
+        assert all("page=" in p for p in pages)
+        assert "page=2" in pages[0]
+        assert "page=4" in pages[2]
+
+    def test_relative_last_url_becomes_absolute(self):
+        data = {"view": {"last": "/api/v1/events?page=3"}}
+        pages = _discover_extra_pages(data)
+        assert all(p.startswith("http") for p in pages)
+
+    def test_single_page_url_returns_empty(self):
+        """If last=page=1, there are no extra pages."""
+        data = {"view": {"last": "https://example.com/api/events?page=1"}}
+        pages = _discover_extra_pages(data)
+        assert pages == []
+
+
+# ---------------------------------------------------------------------------
+# Pagination — concurrent + sequential edge cases
+# ---------------------------------------------------------------------------
+
+
+class TestConcurrentPagination:
+    def test_fetches_all_pages_concurrently(self, monkeypatch):
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+        def responses(url, n):
+            if "page=2" in url:
+                return _make_ok_response({"member": [{"@id": "2"}]})
+            if "page=3" in url:
+                return _make_ok_response({"member": [{"@id": "3"}]})
+            return _make_ok_response(
+                {
+                    "@context": "ctx",
+                    "member": [{"@id": "1"}],
+                    "totalItems": 3,
+                    "view": {"last": "https://www.viernulvier.gent/api/v1/events?page=3"},
+                }
+            )
+
+        _mock_session(monkeypatch, responses)
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+        assert len(result) == 3
+
+    def test_page_fetch_error_logged_and_other_pages_returned(self, monkeypatch, caplog):
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+        def responses(url, n):
+            if "page=2" in url:
+                raise ScraperError("page 2 failed")
+            return _make_ok_response(
+                {
+                    "@context": "ctx",
+                    "member": [{"@id": "1"}],
+                    "totalItems": 2,
+                    "view": {"last": "https://www.viernulvier.gent/api/v1/events?page=2"},
+                }
+            )
+
+        _mock_session(monkeypatch, responses)
+        caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+        assert any(item["@id"] == "1" for item in result)
+        assert any("Page fetch failed" in r.message for r in caplog.records)
+
+    def test_304_on_concurrent_page_silently_skipped(self, monkeypatch):
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+
+        def responses(url, n):
+            if "page=2" in url:
+                return _make_status_response(304, {})
+            return _make_ok_response(
+                {
+                    "@context": "ctx",
+                    "member": [{"@id": "1"}],
+                    "totalItems": 2,
+                    "view": {"last": "https://www.viernulvier.gent/api/v1/events?page=2"},
+                }
+            )
+
+        _mock_session(monkeypatch, responses)
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+        assert len(result) == 1
+
+
+class TestSequentialFallback:
+    def test_304_on_next_page_breaks_loop(self, monkeypatch):
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+        call_count = [0]
+
+        def responses(url, n):
+            call_count[0] = n
+            if n == 1:
+                return _make_ok_response(
+                    {
+                        "@context": "ctx",
+                        "member": [{"@id": "1"}],
+                        "view": {"next": "https://www.viernulvier.gent/api/v1/events?page=2"},
+                    }
+                )
+            return _make_status_response(304, {})
+
+        _mock_session(monkeypatch, responses)
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+        assert len(result) == 1
+
+    def test_relative_next_url_made_absolute(self, monkeypatch):
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+        captured_urls = []
+
+        def responses(url, n):
+            captured_urls.append(url)
+            if n == 1:
+                return _make_ok_response(
+                    {
+                        "@context": "ctx",
+                        "member": [{"@id": "1"}],
+                        "view": {"next": "/api/v1/events?page=2"},
+                    }
+                )
+            return _make_ok_response({"member": [{"@id": "2"}]})
+
+        _mock_session(monkeypatch, responses)
+        viernulvier.fetch_viernulvier(endpoint="/events")
+        assert captured_urls[1].startswith("http")
+
+    def test_list_response_on_next_page_appended(self, monkeypatch):
+        monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
+        call_count = [0]
+
+        def responses(url, n):
+            call_count[0] = n
+            if n == 1:
+                return _make_ok_response(
+                    {
+                        "@context": "ctx",
+                        "member": [{"@id": "1"}],
+                        "view": {"next": "https://www.viernulvier.gent/api/v1/events?page=2"},
+                    }
+                )
+            return _make_ok_response([{"@id": "2"}, {"@id": "3"}])
+
+        _mock_session(monkeypatch, responses)
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+        assert len(result) == 3
+
+
+# ---------------------------------------------------------------------------
 # sync_viernulvier — basic persistence
 # ---------------------------------------------------------------------------
 
@@ -521,7 +958,6 @@ def test_sync_skips_items_without_id(monkeypatch, caplog):
 
         assert count == 0
         assert ViernulvierItem.objects.count() == 0
-        # Source: "Missing '@id' in item: ..."
         assert any("Missing '@id' in item:" in r.message for r in caplog.records)
 
 
@@ -571,7 +1007,6 @@ def test_sync_skips_duplicate_ids_in_batch(monkeypatch, caplog):
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
-        # Source: "Duplicate item skipped: %s"
         assert any("Duplicate item skipped:" in r.message for r in caplog.records)
 
 
@@ -696,7 +1131,7 @@ def test_sync_logs_finish_message_with_saved_and_error_count(monkeypatch, caplog
             "fetch_viernulvier",
             lambda endpoint="/events", params=None, etag_cache=None: [
                 {"@id": "https://example.com/1", "title": "A"},
-                {"title": "no id"},  # will fail
+                {"title": "no id"},
             ],
         )
 
@@ -707,7 +1142,6 @@ def test_sync_logs_finish_message_with_saved_and_error_count(monkeypatch, caplog
         )
 
         assert count == 1
-        # Source: "Sync complete: saved=%d, errors=%d%s"
         assert any(
             "Sync complete:" in r.message
             and "saved=1" in r.message
@@ -783,6 +1217,121 @@ def test_sync_without_params_still_works(monkeypatch):
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
+
+
+# ---------------------------------------------------------------------------
+# sync_viernulvier — dry_run / on_progress / item_filter / MAX_ERROR_MESSAGES
+# ---------------------------------------------------------------------------
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_dry_run_does_not_write_to_db(monkeypatch):
+    """dry_run=True fetches and parses but writes nothing."""
+    with _temp_viernulvier_model() as M:
+        monkeypatch.setattr(
+            viernulvier, "fetch_viernulvier",
+            lambda **_: [
+                {"@id": "https://example.com/1", "title": "A"},
+                {"@id": "https://example.com/2", "title": "B"},
+            ],
+        )
+        count = sync_viernulvier(M, _PassThroughConfig(), endpoint="/e", dry_run=True)
+        assert count == 2
+        assert M.objects.count() == 0
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_on_progress_called_with_cumulative_counts(monkeypatch):
+    """on_progress is called after each save with (saved, total)."""
+    with _temp_viernulvier_model() as M:
+        monkeypatch.setattr(
+            viernulvier, "fetch_viernulvier",
+            lambda **_: [
+                {"@id": f"https://example.com/{i}", "title": str(i)}
+                for i in range(3)
+            ],
+        )
+        calls = []
+        sync_viernulvier(
+            M, _PassThroughConfig(), endpoint="/e",
+            on_progress=lambda saved, total: calls.append((saved, total)),
+        )
+        assert calls == [(1, 3), (2, 3), (3, 3)]
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_dry_run_on_progress_also_called(monkeypatch):
+    """on_progress is also invoked in dry_run mode."""
+    with _temp_viernulvier_model() as M:
+        monkeypatch.setattr(
+            viernulvier, "fetch_viernulvier",
+            lambda **_: [{"@id": "https://example.com/1"}],
+        )
+        calls = []
+        sync_viernulvier(
+            M, _PassThroughConfig(), endpoint="/e",
+            dry_run=True,
+            on_progress=lambda s, t: calls.append((s, t)),
+        )
+        assert calls == [(1, 1)]
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_item_filter_excludes_items(monkeypatch):
+    """item_filter returning False causes the item to be skipped."""
+    with _temp_viernulvier_model() as M:
+        monkeypatch.setattr(
+            viernulvier, "fetch_viernulvier",
+            lambda **_: [
+                {"@id": "https://example.com/keep/1"},
+                {"@id": "https://example.com/longterm/2"},
+            ],
+        )
+        config = ModelSyncConfig(
+            lookup_field="id",
+            item_filter=lambda item: "longterm" not in item.get("@id", ""),
+        )
+        count = sync_viernulvier(M, config, endpoint="/e")
+        assert count == 1
+        assert M.objects.count() == 1
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_max_error_messages_capped(monkeypatch):
+    """Error messages list is capped at MAX_ERROR_MESSAGES."""
+    from apps.import_log.models import ImportLog
+
+    with _temp_viernulvier_model() as M:
+        n = viernulvier.MAX_ERROR_MESSAGES + 5
+        monkeypatch.setattr(
+            viernulvier, "fetch_viernulvier",
+            lambda **_: [{"title": f"no-id-{i}"} for i in range(n)],
+        )
+        sync_viernulvier(M, _PassThroughConfig(), endpoint="/e")
+        log = ImportLog.objects.first()
+        assert f"showing first {viernulvier.MAX_ERROR_MESSAGES} of" in log.error_message
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_sync_etag_cache_passed_to_fetch(monkeypatch):
+    """sync_viernulvier passes the same etag_cache object to fetch_viernulvier."""
+    with _temp_viernulvier_model() as M:
+        captured = {}
+        monkeypatch.setattr(
+            viernulvier, "fetch_viernulvier",
+            lambda endpoint=None, params=None, etag_cache=None: (
+                captured.update({"etag_cache": etag_cache}) or []
+            ),
+        )
+        shared_cache = {"key": "val"}
+        sync_viernulvier(M, _PassThroughConfig(), endpoint="/e", etag_cache=shared_cache)
+        assert captured["etag_cache"] is shared_cache
 
 
 # ---------------------------------------------------------------------------
@@ -863,7 +1412,7 @@ def test_sync_creates_import_log_on_partial_success(monkeypatch):
             "fetch_viernulvier",
             lambda endpoint="/events", params=None, etag_cache=None: [
                 {"@id": "https://example.com/1", "title": "Event A"},
-                {"title": "Event B"},  # missing @id → fails
+                {"title": "Event B"},
                 {"@id": "https://example.com/3", "title": "Event C"},
             ],
         )
@@ -1216,7 +1765,6 @@ def test_sync_executes_translations(monkeypatch):
         def fake_sync_all_translations(*_args, **_kwargs):
             called["translations"] += 1
 
-        # Source calls _sync_all_translations, not _sync_translations
         monkeypatch.setattr(
             viernulvier, "_sync_all_translations", fake_sync_all_translations
         )
@@ -1354,8 +1902,87 @@ class TestFlexibleFieldMapping:
 
 
 # ---------------------------------------------------------------------------
-# _parse_field_value
+# _parse_field_value — comprehensive type coverage
 # ---------------------------------------------------------------------------
+
+
+class TestParseFieldValue:
+    def test_charfield_cleans_and_returns(self):
+        f = models.CharField(max_length=100)
+        assert _parse_field_value(f, "  hello  ") == "hello"
+
+    def test_charfield_truncates_to_max_length(self):
+        f = models.CharField(max_length=5)
+        result = _parse_field_value(f, "hello world")
+        assert result == "hello"
+        assert len(result) == 5
+
+    def test_textfield_none_returns_none(self):
+        assert _parse_field_value(models.TextField(), None) is None
+
+    def test_urlfield_valid_url_returned(self):
+        f = models.URLField()
+        assert _parse_field_value(f, "https://example.com") == "https://example.com"
+
+    def test_booleanfield_ja_true(self):
+        assert _parse_field_value(models.BooleanField(), "ja") is True
+
+    def test_booleanfield_nee_false(self):
+        assert _parse_field_value(models.BooleanField(), "nee") is False
+
+    def test_decimalfield_valid_string(self):
+        f = models.DecimalField(max_digits=10, decimal_places=2)
+        assert _parse_field_value(f, "25.50") == Decimal("25.50")
+
+    def test_decimalfield_integer_input(self):
+        f = models.DecimalField(max_digits=10, decimal_places=2)
+        assert _parse_field_value(f, 10) == Decimal("10")
+
+    def test_decimalfield_invalid_returns_none(self, caplog):
+        f = models.DecimalField(max_digits=10, decimal_places=2)
+        caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
+        assert _parse_field_value(f, "not-a-decimal") is None
+
+    def test_integerfield_valid_string(self):
+        assert _parse_field_value(models.IntegerField(), "42") == 42
+
+    def test_integerfield_invalid_returns_none(self, caplog):
+        caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
+        assert _parse_field_value(models.IntegerField(), "abc") is None
+
+    def test_floatfield_valid(self):
+        assert _parse_field_value(models.FloatField(), "3.14") == pytest.approx(3.14)
+
+    def test_floatfield_invalid_returns_none(self, caplog):
+        caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
+        assert _parse_field_value(models.FloatField(), "xyz") is None
+
+    def test_datetimefield_negative_year_repaired(self):
+        result = _parse_field_value(models.DateTimeField(), "-2024-06-01T00:00:00Z")
+        assert result is not None
+        assert result.year == 2024
+
+    def test_datetimefield_year_zero_mapped_to_1970(self):
+        result = _parse_field_value(models.DateTimeField(), "0000-12-25T10:00:00Z")
+        assert result is not None
+        assert result.year == 1970
+
+    def test_datetimefield_unparseable_returns_none(self, caplog):
+        caplog.set_level(logging.DEBUG, logger=viernulvier.logger.name)
+        assert _parse_field_value(models.DateTimeField(), "definitely-not-a-date") is None
+
+    def test_datefield_valid_string(self):
+        result = _parse_field_value(models.DateField(), "2024-07-04")
+        assert result is not None
+        assert result.year == 2024
+        assert result.month == 7
+        assert result.day == 4
+
+    def test_jsonfield_passthrough(self):
+        assert _parse_field_value(models.JSONField(), {"key": "val"}) == {"key": "val"}
+
+    def test_none_passthrough(self):
+        assert _parse_field_value(models.IntegerField(), None) is None
 
 
 def test_parse_field_value_datetime_negative_year():
@@ -1385,6 +2012,93 @@ def test_parse_field_value_datefield_string():
 def test_parse_field_value_none_returns_none():
     field = models.DateTimeField()
     assert viernulvier._parse_field_value(field, None) is None
+
+
+# ---------------------------------------------------------------------------
+# Value normalization
+# ---------------------------------------------------------------------------
+
+
+class TestNormalizeUrl:
+    @pytest.mark.parametrize(
+        "value", ["", "0", "none", "null", "undefined", "-", "n/a", "nvt", None]
+    )
+    def test_empty_like_values_return_empty_string(self, value):
+        assert normalize_url(value) == ""
+
+    def test_valid_https_url_returned(self):
+        assert normalize_url("https://example.com/path") == "https://example.com/path"
+
+    def test_invalid_url_returns_empty(self):
+        assert normalize_url("not-a-url") == ""
+
+    def test_whitespace_stripped_before_validation(self):
+        assert normalize_url("  https://example.com  ") == "https://example.com"
+
+    def test_case_insensitive_empty_checks(self):
+        assert normalize_url("NONE") == ""
+        assert normalize_url("NULL") == ""
+        assert normalize_url("N/A") == ""
+
+
+class TestCleanString:
+    def test_strips_surrounding_whitespace(self):
+        assert clean_string("  hello  ") == "hello"
+
+    def test_removes_null_byte(self):
+        result = clean_string("hello\x00world")
+        assert "\x00" not in result
+        assert "hello" in result
+
+    def test_keeps_tab_newline_cr(self):
+        # Use CR in the middle — str.strip() inside clean_string would eat a trailing \r
+        result = clean_string("a\tb\rc\nd")
+        assert "\t" in result
+        assert "\r" in result
+        assert "\n" in result
+
+    def test_removes_other_control_chars(self):
+        assert clean_string("a\x01\x08\x0b\x0c\x0e\x1fb") == "ab"
+
+    def test_none_returns_empty_string(self):
+        assert clean_string(None) == ""
+
+    def test_preserves_unicode(self):
+        assert clean_string("Café 🎭") == "Café 🎭"
+
+
+class TestCleanVendorId:
+    def test_none_returns_none(self):
+        assert clean_vendor_id(None) is None
+
+    def test_empty_string_returns_none(self):
+        assert clean_vendor_id("") is None
+
+    def test_whitespace_only_returns_none(self):
+        assert clean_vendor_id("   ") is None
+
+    def test_html_like_value_returns_none(self):
+        assert clean_vendor_id("<i class='icon'>vendor</i>") is None
+
+    def test_valid_string_returned_stripped(self):
+        assert clean_vendor_id("  ABC123  ") == "ABC123"
+
+    def test_valid_string_no_stripping_needed(self):
+        assert clean_vendor_id("V42") == "V42"
+
+
+class TestNormalizePerformerType:
+    def test_person_maps_to_solo(self):
+        assert normalize_performer_type("person") == "solo"
+
+    def test_group_passed_through_lowercase(self):
+        assert normalize_performer_type("GROUP") == "group"
+
+    def test_none_returns_empty_string(self):
+        assert normalize_performer_type(None) == ""
+
+    def test_unknown_value_lowercased(self):
+        assert normalize_performer_type("DUO") == "duo"
 
 
 # ---------------------------------------------------------------------------
@@ -1430,6 +2144,14 @@ def test_extract_external_id_handles_list():
     assert viernulvier._extract_external_id_from_url([]) is None
 
 
+def test_extract_external_id_handles_dict_all_none_values():
+    assert viernulvier._extract_external_id_from_url({"foo": "bar"}) is None
+
+
+def test_extract_external_id_non_string_non_int_non_dict_returns_none():
+    assert viernulvier._extract_external_id_from_url(3.14) is None
+
+
 # ---------------------------------------------------------------------------
 # _extract_lookup_value
 # ---------------------------------------------------------------------------
@@ -1454,12 +2176,10 @@ def test_extract_lookup_value_falls_back_to_id():
 
 def test_extract_lookup_value_unwraps_nested_dict():
     config = ModelSyncConfig(api_id_key="@id")
-    # dict value with "id" key
     assert (
         viernulvier._extract_lookup_value({"external_id": {"id": "x-1"}}, config)
         == "x-1"
     )
-    # dict value with "@id" key
     assert (
         viernulvier._extract_lookup_value({"@id": {"@id": "nested123"}}, config)
         == "nested123"
@@ -1524,7 +2244,7 @@ def test_resolve_fk_warns_on_missing_related(caplog):
 
     field = SimpleNamespace(remote_field=SimpleNamespace(model=FakeRelatedModel))
     fk_cache = FKCache()
-    fk_cache._loaded[FakeRelatedModel] = True  # skip warmup
+    fk_cache._loaded[FakeRelatedModel] = True
 
     caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
     result = viernulvier._resolve_fk(field, "missing", fk_cache)
@@ -1562,6 +2282,143 @@ def test_resolve_fk_logs_error_on_unexpected_exception(caplog):
     assert any("Error resolving FK" in r.message for r in caplog.records)
 
 
+def test_resolve_fk_db_hit_populates_cache():
+    """Successful DB lookup on cache miss stores the result in the cache."""
+
+    class FakeValuesList:
+        def get(self, external_id=None, **_):
+            return 42
+
+    class FakeRelatedModel:
+        __name__ = "FakeRelated"
+
+        class DoesNotExist(Exception):
+            pass
+
+        class objects:
+            @staticmethod
+            def values_list(*_args, **_kwargs):
+                return FakeValuesList()
+
+    field = SimpleNamespace(remote_field=SimpleNamespace(model=FakeRelatedModel))
+    fk_cache = FKCache()
+    fk_cache._loaded[FakeRelatedModel] = True
+
+    result = viernulvier._resolve_fk(field, "ext-42", fk_cache)
+    assert result == 42
+    # Second call hits cache
+    assert fk_cache.get(FakeRelatedModel, "ext-42") == 42
+
+
+# ---------------------------------------------------------------------------
+# FKCache
+# ---------------------------------------------------------------------------
+
+
+class TestFKCache:
+    def _make_queryable(self, rows):
+        class QS:
+            def iterator(self):
+                return iter(rows)
+
+        class M:
+            __name__ = "M"
+
+            class objects:
+                @staticmethod
+                def values_list(*a, **k):
+                    return QS()
+
+        return M
+
+    def test_warmup_populates_cache(self):
+        M = self._make_queryable([("ext-1", 1), ("ext-2", 2)])
+        cache = FKCache()
+        cache.warmup(M)
+        assert cache._loaded[M] is True
+        assert cache.get(M, "ext-1") == 1
+        assert cache.get(M, "ext-2") == 2
+
+    def test_warmup_skipped_on_second_call(self):
+        call_count = [0]
+
+        class QS:
+            def iterator(self):
+                call_count[0] += 1
+                return iter([])
+
+        class M:
+            __name__ = "M"
+
+            class objects:
+                @staticmethod
+                def values_list(*a, **k):
+                    return QS()
+
+        cache = FKCache()
+        cache.warmup(M)
+        cache.warmup(M)
+        assert call_count[0] == 1
+
+    def test_warmup_failure_marks_loaded_false(self, caplog):
+        class QS:
+            def iterator(self):
+                raise Exception("no external_id")
+
+        class M:
+            __name__ = "NoExtId"
+
+            class objects:
+                @staticmethod
+                def values_list(*a, **k):
+                    return QS()
+
+        caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
+        cache = FKCache()
+        cache.warmup(M)
+        assert cache._loaded[M] is False
+
+    def test_warmup_failure_not_retried(self):
+        call_count = [0]
+
+        class QS:
+            def iterator(self):
+                call_count[0] += 1
+                raise Exception("boom")
+
+        class M:
+            __name__ = "Bad"
+
+            class objects:
+                @staticmethod
+                def values_list(*a, **k):
+                    return QS()
+
+        cache = FKCache()
+        cache.warmup(M)
+        cache.warmup(M)
+        assert call_count[0] == 1
+
+    def test_set_then_get_returns_value(self):
+        cache = FKCache()
+
+        class M:
+            __name__ = "M"
+
+        cache._loaded[M] = True
+        cache.set(M, "ext-99", 99)
+        assert cache.get(M, "ext-99") == 99
+
+    def test_get_returns_none_on_miss(self):
+        cache = FKCache()
+
+        class M:
+            __name__ = "M"
+
+        cache._loaded[M] = True
+        assert cache.get(M, "nonexistent") is None
+
+
 # ---------------------------------------------------------------------------
 # _build_defaults
 # ---------------------------------------------------------------------------
@@ -1585,12 +2442,12 @@ def test_build_defaults_explicit_mapping_pk_skip_fk_and_transform():
     try:
         config = ModelSyncConfig(
             field_map={
-                "missing_key": "title",  # api key absent → skipped
-                "unknown_model_field": "does_not_exist",  # model field absent → skipped
-                "pk_field": "id",  # PK → skipped
-                "dict_translation": "title",  # dict value without relation → skipped
-                "fk_custom": "parent",  # FK with custom resolver
-                "title_field": "title",  # scalar with transform
+                "missing_key": "title",
+                "unknown_model_field": "does_not_exist",
+                "pk_field": "id",
+                "dict_translation": "title",
+                "fk_custom": "parent",
+                "title_field": "title",
             },
             value_transforms={"title": lambda v: str(v).upper()},
             fk_resolvers={"parent": lambda raw: 99 if raw else None},
@@ -1599,9 +2456,7 @@ def test_build_defaults_explicit_mapping_pk_skip_fk_and_transform():
 
         item = {
             "pk_field": "item-1",
-            "dict_translation": {
-                "nl": "Titel"
-            },  # dict value for non-FK field → skipped
+            "dict_translation": {"nl": "Titel"},
             "fk_custom": "/api/v1/parents/99",
             "title_field": "hello",
         }
@@ -1706,203 +2561,302 @@ def test_build_defaults_skips_none_field_map_value():
             schema_editor.delete_model(TestModel)
 
 
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_build_defaults_auto_maps_camel_case():
+    """Auto-mapping converts camelCase API keys to snake_case field names."""
+
+    class CamelModel(models.Model):
+        my_field = models.CharField(max_length=100, null=True)
+
+        class Meta:
+            app_label = "tests"
+
+    with connection.schema_editor() as se:
+        se.create_model(CamelModel)
+    try:
+        defaults = _build_defaults(
+            CamelModel,
+            {"myField": "hello"},
+            ModelSyncConfig(),
+            FKCache(),
+        )
+        assert defaults.get("my_field") == "hello"
+    finally:
+        with connection.schema_editor() as se:
+            se.delete_model(CamelModel)
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_build_defaults_auto_map_skips_list_values():
+    """Auto-mapping skips list values (they are handled via M2M configs)."""
+
+    class LModel(models.Model):
+        title = models.CharField(max_length=100, null=True)
+
+        class Meta:
+            app_label = "tests"
+
+    with connection.schema_editor() as se:
+        se.create_model(LModel)
+    try:
+        defaults = _build_defaults(
+            LModel,
+            {"title": "ok", "genres": ["url1", "url2"]},
+            ModelSyncConfig(),
+            FKCache(),
+        )
+        assert "title" in defaults
+        assert "genres" not in defaults
+    finally:
+        with connection.schema_editor() as se:
+            se.delete_model(LModel)
+
+
+@isolate_apps("tests")
+@pytest.mark.django_db(transaction=True)
+def test_build_defaults_explicit_map_dict_value_for_non_relation_skipped():
+    """A flat-dict value for a non-relation field in field_map is skipped (it's a translation)."""
+
+    class TModel(models.Model):
+        title = models.CharField(max_length=100, null=True)
+
+        class Meta:
+            app_label = "tests"
+
+    with connection.schema_editor() as se:
+        se.create_model(TModel)
+    try:
+        config = ModelSyncConfig(field_map={"title_dict": "title"})
+        defaults = _build_defaults(
+            TModel,
+            {"title_dict": {"nl": "Titel", "en": "Title"}},
+            config,
+            FKCache(),
+        )
+        assert "title" not in defaults
+    finally:
+        with connection.schema_editor() as se:
+            se.delete_model(TModel)
+
+
 # ---------------------------------------------------------------------------
-# _sync_all_translations  (was _sync_translations in old tests)
+# _sync_all_translations
 # ---------------------------------------------------------------------------
 
 
-def test_sync_all_translations_returns_for_non_dict_payload():
-    """Early exit when translation payload is not a dict."""
-
-    class FakeTranslationModel:
-        __name__ = "FakeTranslationModel"
-
-    cfg = TranslationConfig(
-        api_key="title",
-        model=FakeTranslationModel,
-        parent_fk="parent",
-        flat_field="title",
-    )
-
-    # Should not raise; update_or_create never called
-    viernulvier._sync_all_translations(
-        SimpleNamespace(pk=1), {"title": "not-dict"}, [cfg]
-    )
-
-
-def test_sync_all_translations_returns_on_empty_config_list():
-    """Empty translation_configs list causes immediate return."""
-    viernulvier._sync_all_translations(
-        SimpleNamespace(pk=1), {"title": {"nl": "X"}}, []
-    )
-
-
-def test_sync_all_translations_logs_warning_on_missing_field(caplog):
-    """Warning is logged when a configured flat_field does not exist on the model."""
-
+def _fake_trans_model(call_log):
     class FakeMeta:
-        def get_field(self, _name):
-            raise FieldDoesNotExist("missing")
-
-    class FakeTranslationModel:
-        __name__ = "FakeTranslationModel"
-        _meta = FakeMeta()
-
-    cfg = TranslationConfig(
-        api_key="title",
-        model=FakeTranslationModel,
-        parent_fk="parent",
-        flat_field="title",
-    )
-
-    caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
-    viernulvier._sync_all_translations(
-        SimpleNamespace(pk=1), {"title": {"nl": "Hallo"}}, [cfg]
-    )
-
-    # Source: "Translation field '%s' not found on %s"
-    assert any("Translation field" in r.message for r in caplog.records)
-
-
-def test_sync_all_translations_logs_error_on_update_or_create_failure(caplog):
-    """update_or_create exceptions are caught and logged as errors."""
-
-    class FakeMeta:
-        def get_field(self, _name):
-            f = models.CharField(name="title", max_length=255)
+        def get_field(self, name):
+            f = models.CharField(name=name, max_length=255)
             return f
 
     class FakeManager:
-        def update_or_create(self, **_kwargs):
-            raise RuntimeError("write failed")
-
-    class FakeTranslationModel:
-        __name__ = "FakeTranslationModel"
-        _meta = FakeMeta()
-        objects = FakeManager()
-
-    cfg = TranslationConfig(
-        api_key="title",
-        model=FakeTranslationModel,
-        parent_fk="parent",
-        flat_field="title",
-    )
-
-    caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
-    viernulvier._sync_all_translations(
-        SimpleNamespace(pk=1), {"title": {"nl": "Hallo"}}, [cfg]
-    )
-
-    # Source: "Error syncing %s translations for ..."
-    assert any("Error syncing" in r.message for r in caplog.records)
-
-
-def test_sync_all_translations_skips_none_language_values():
-    """Languages with None values are skipped; non-None values are processed."""
-    called_with_langs = []
-
-    class FakeMeta:
-        def get_field(self, _name):
-            return models.CharField(name="title", max_length=255)
-
-    class FakeManager:
         def update_or_create(self, **kwargs):
-            # language_fk default is "language_id"
-            called_with_langs.append(kwargs.get("language_id"))
+            call_log.append(kwargs)
             return (Mock(), True)
 
-    class FakeTranslationModel:
-        __name__ = "FakeTranslationModel"
+    class FakeTrans:
+        __name__ = "FakeTrans"
         _meta = FakeMeta()
         objects = FakeManager()
 
-    cfg = TranslationConfig(
-        api_key="title",
-        model=FakeTranslationModel,
-        parent_fk="parent",
-        flat_field="title",
-    )
-
-    # "de": None → skipped; "nl" and "fr" (even empty string) → processed
-    viernulvier._sync_all_translations(
-        SimpleNamespace(pk=1),
-        {"title": {"nl": "Hallo", "fr": "Bonjour", "de": None}},
-        [cfg],
-    )
-
-    assert "nl" in called_with_langs
-    assert "fr" in called_with_langs
-    assert "de" not in called_with_langs
+    return FakeTrans
 
 
-def test_sync_all_translations_applies_value_transform():
-    """value_transforms are applied before persisting translated values."""
-    saved_updates = {}
+class TestSyncAllTranslations:
+    def test_multiple_configs_same_model_batched_per_language(self):
+        """Two TranslationConfigs for the same model → ONE update_or_create per language."""
+        calls = []
+        FT = _fake_trans_model(calls)
 
-    class FakeMeta:
-        def get_field(self, _name):
-            return models.CharField(name="title", max_length=255)
+        configs = [
+            TranslationConfig("title", FT, "parent", "title"),
+            TranslationConfig("description", FT, "parent", "description"),
+        ]
+        _sync_all_translations(
+            SimpleNamespace(pk=1),
+            {
+                "title": {"nl": "Titel", "en": "Title"},
+                "description": {"nl": "Beschrijving", "en": "Description"},
+            },
+            configs,
+        )
+        assert len(calls) == 2
+        langs = {c["language_id"] for c in calls}
+        assert langs == {"nl", "en"}
+        nl_call = next(c for c in calls if c["language_id"] == "nl")
+        assert nl_call["defaults"]["title"] == "Titel"
+        assert nl_call["defaults"]["description"] == "Beschrijving"
 
-    class FakeManager:
-        def update_or_create(self, **kwargs):
-            saved_updates.update(kwargs.get("defaults", {}))
-            return (Mock(), True)
+    def test_empty_language_code_skipped(self):
+        """Empty string language codes are silently skipped."""
+        calls = []
+        FT = _fake_trans_model(calls)
+        cfg = TranslationConfig("title", FT, "parent", "title")
+        _sync_all_translations(
+            SimpleNamespace(pk=1),
+            {"title": {"": "no-lang", "nl": "Hallo"}},
+            [cfg],
+        )
+        assert len(calls) == 1
+        assert calls[0]["language_id"] == "nl"
 
-    class FakeTranslationModel:
-        __name__ = "FakeTranslationModel"
-        _meta = FakeMeta()
-        objects = FakeManager()
+    def test_returns_for_non_dict_payload(self):
+        """Early exit when translation payload is not a dict."""
 
-    cfg = TranslationConfig(
-        api_key="title",
-        model=FakeTranslationModel,
-        parent_fk="parent",
-        flat_field="title",
-        value_transforms={"title": lambda v: str(v).upper()},
-    )
+        class FakeTranslationModel:
+            __name__ = "FakeTranslationModel"
 
-    viernulvier._sync_all_translations(
-        SimpleNamespace(pk=1), {"title": {"nl": "hallo"}}, [cfg]
-    )
+        cfg = TranslationConfig(
+            api_key="title",
+            model=FakeTranslationModel,
+            parent_fk="parent",
+            flat_field="title",
+        )
+        viernulvier._sync_all_translations(
+            SimpleNamespace(pk=1), {"title": "not-dict"}, [cfg]
+        )
 
-    assert saved_updates.get("title") == "HALLO"
+    def test_returns_on_empty_config_list(self):
+        """Empty translation_configs list causes immediate return."""
+        viernulvier._sync_all_translations(
+            SimpleNamespace(pk=1), {"title": {"nl": "X"}}, []
+        )
 
+    def test_logs_warning_on_missing_field(self, caplog):
+        """Warning is logged when a configured flat_field does not exist on the model."""
 
-def test_sync_all_translations_skips_when_transform_returns_none():
-    """If a transform returns None the field is omitted from the update."""
-    update_or_create_called = [False]
+        class FakeMeta:
+            def get_field(self, _name):
+                raise FieldDoesNotExist("missing")
 
-    class FakeMeta:
-        def get_field(self, _name):
-            return models.CharField(name="title", max_length=255)
+        class FakeTranslationModel:
+            __name__ = "FakeTranslationModel"
+            _meta = FakeMeta()
 
-    class FakeManager:
-        def update_or_create(self, **kwargs):
-            update_or_create_called[0] = True
-            # defaults should be empty because the only field was filtered out
-            assert not kwargs.get("defaults"), (
-                "Expected no defaults when transform returns None"
-            )
-            return (Mock(), True)
+        cfg = TranslationConfig(
+            api_key="title",
+            model=FakeTranslationModel,
+            parent_fk="parent",
+            flat_field="title",
+        )
 
-    class FakeTranslationModel:
-        __name__ = "FakeTranslationModel"
-        _meta = FakeMeta()
-        objects = FakeManager()
+        caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
+        viernulvier._sync_all_translations(
+            SimpleNamespace(pk=1), {"title": {"nl": "Hallo"}}, [cfg]
+        )
+        assert any("Translation field" in r.message for r in caplog.records)
 
-    cfg = TranslationConfig(
-        api_key="title",
-        model=FakeTranslationModel,
-        parent_fk="parent",
-        flat_field="title",
-        value_transforms={"title": lambda v: None},
-    )
+    def test_logs_error_on_update_or_create_failure(self, caplog):
+        """update_or_create exceptions are caught and logged as errors."""
 
-    viernulvier._sync_all_translations(
-        SimpleNamespace(pk=1), {"title": {"nl": "hallo"}}, [cfg]
-    )
-    # update_or_create should NOT be called because field_updates is empty
-    assert not update_or_create_called[0]
+        class FakeMeta:
+            def get_field(self, _name):
+                f = models.CharField(name="title", max_length=255)
+                return f
+
+        class FakeManager:
+            def update_or_create(self, **_kwargs):
+                raise RuntimeError("write failed")
+
+        class FakeTranslationModel:
+            __name__ = "FakeTranslationModel"
+            _meta = FakeMeta()
+            objects = FakeManager()
+
+        cfg = TranslationConfig(
+            api_key="title",
+            model=FakeTranslationModel,
+            parent_fk="parent",
+            flat_field="title",
+        )
+
+        caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
+        viernulvier._sync_all_translations(
+            SimpleNamespace(pk=1), {"title": {"nl": "Hallo"}}, [cfg]
+        )
+        assert any("Error syncing" in r.message for r in caplog.records)
+
+    def test_skips_none_language_values(self):
+        """Languages with None values are skipped; non-None values are processed."""
+        called_with_langs = []
+
+        class FakeMeta:
+            def get_field(self, _name):
+                return models.CharField(name="title", max_length=255)
+
+        class FakeManager:
+            def update_or_create(self, **kwargs):
+                called_with_langs.append(kwargs.get("language_id"))
+                return (Mock(), True)
+
+        class FakeTranslationModel:
+            __name__ = "FakeTranslationModel"
+            _meta = FakeMeta()
+            objects = FakeManager()
+
+        cfg = TranslationConfig(
+            api_key="title",
+            model=FakeTranslationModel,
+            parent_fk="parent",
+            flat_field="title",
+        )
+
+        viernulvier._sync_all_translations(
+            SimpleNamespace(pk=1),
+            {"title": {"nl": "Hallo", "fr": "Bonjour", "de": None}},
+            [cfg],
+        )
+
+        assert "nl" in called_with_langs
+        assert "fr" in called_with_langs
+        assert "de" not in called_with_langs
+
+    def test_applies_value_transform(self):
+        """value_transforms are applied before persisting translated values."""
+        calls = []
+        FT = _fake_trans_model(calls)
+        cfg = TranslationConfig(
+            "title", FT, "parent", "title",
+            value_transforms={"title": str.upper},
+        )
+        _sync_all_translations(
+            SimpleNamespace(pk=1), {"title": {"nl": "hallo"}}, [cfg]
+        )
+        assert calls[0]["defaults"]["title"] == "HALLO"
+
+    def test_transform_returning_none_omits_field_no_call(self):
+        """If the only field has transform → None, update_or_create is skipped."""
+        saved_updates = {}
+
+        class FakeMeta:
+            def get_field(self, _name):
+                return models.CharField(name="title", max_length=255)
+
+        class FakeManager:
+            def update_or_create(self, **kwargs):
+                saved_updates.update(kwargs.get("defaults", {}))
+                return (Mock(), True)
+
+        class FakeTranslationModel:
+            __name__ = "FakeTranslationModel"
+            _meta = FakeMeta()
+            objects = FakeManager()
+
+        cfg = TranslationConfig(
+            api_key="title",
+            model=FakeTranslationModel,
+            parent_fk="parent",
+            flat_field="title",
+            value_transforms={"title": lambda v: None},
+        )
+
+        viernulvier._sync_all_translations(
+            SimpleNamespace(pk=1), {"title": {"nl": "hallo"}}, [cfg]
+        )
+        assert not saved_updates
 
 
 # ---------------------------------------------------------------------------
@@ -1910,125 +2864,248 @@ def test_sync_all_translations_skips_when_transform_returns_none():
 # ---------------------------------------------------------------------------
 
 
-def test_sync_m2m_returns_early_when_payload_is_not_list():
-    """_sync_m2m does nothing if the API value for the key is not a list."""
-    through_model = Mock()
+def _make_m2m_setup():
+    created_rows = []
 
-    cfg = M2MConfig(
-        api_key="genres",
-        related_model=Mock(),
-        through_model=through_model,
-        parent_fk="parent",
-        related_fk="related",
-    )
-    fk_cache = FKCache()
-
-    viernulvier._sync_m2m(
-        SimpleNamespace(pk=1), {"genres": "not-a-list"}, cfg, fk_cache
-    )
-
-    through_model.objects.filter.assert_not_called()
-
-
-def test_sync_m2m_warns_when_related_object_not_found(caplog):
-    """A missing related object is skipped with a warning."""
-
-    class FakeDoesNotExist(Exception):
-        pass
-
-    class FakeRelatedModel:
+    class FakeRelated:
         __name__ = "FakeRelated"
-        DoesNotExist = FakeDoesNotExist
+        DoesNotExist = Exception
+
+        def __init__(self, pk=None):
+            self.pk = pk
+
+    class FakeThrough:
+        __name__ = "FakeThrough"
+
+        def __init__(self, **kwargs):
+            created_rows.append(dict(kwargs))
 
         class objects:
             @staticmethod
-            def get(**_kwargs):
-                raise FakeRelatedModel.DoesNotExist()
-
-    class FakeThroughModel:
-        __name__ = "FakeThroughModel"
-
-        class objects:
-            @staticmethod
-            def filter(**_kw):
+            def filter(**_):
                 return SimpleNamespace(delete=lambda: None)
 
             @staticmethod
-            def bulk_create(objs, **_kw):
+            def bulk_create(objs, **_):
                 pass
 
-    cfg = M2MConfig(
-        api_key="items",
-        related_model=FakeRelatedModel,
-        through_model=FakeThroughModel,
-        parent_fk="parent",
-        related_fk="related",
-    )
-    fk_cache = FKCache()
-    fk_cache._loaded[FakeRelatedModel] = True  # skip warmup
-
-    caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
-    viernulvier._sync_m2m(
-        SimpleNamespace(pk=1), {"items": ["ext-missing"]}, cfg, fk_cache
-    )
-
-    # Source: "%s with %s=%r not found — sync related models first."
-    assert any("not found" in r.message for r in caplog.records)
+    return FakeRelated, FakeThrough, created_rows
 
 
-def test_sync_m2m_logs_error_on_bulk_create_fallback_failure(caplog):
-    """When bulk_create fails and individual save also fails, an error is logged."""
+class TestSyncM2M:
+    def test_returns_early_when_payload_is_not_list(self):
+        """_sync_m2m does nothing if the API value for the key is not a list."""
+        through_model = Mock()
+        cfg = M2MConfig(
+            api_key="genres", related_model=Mock(), through_model=through_model,
+            parent_fk="parent", related_fk="related",
+        )
+        fk_cache = FKCache()
+        viernulvier._sync_m2m(
+            SimpleNamespace(pk=1), {"genres": "not-a-list"}, cfg, fk_cache
+        )
+        through_model.objects.filter.assert_not_called()
 
-    class FakeRelatedModel:
-        __name__ = "FakeRelated"
+    def test_warns_when_related_object_not_found(self, caplog):
+        """A missing related object is skipped with a warning."""
 
-        class DoesNotExist(Exception):
+        class FakeDoesNotExist(Exception):
             pass
 
-        def __init__(self, **kwargs):
-            self._kwargs = kwargs
-            self.pk = kwargs.get("pk", 1)
+        class FakeRelatedModel:
+            __name__ = "FakeRelated"
+            DoesNotExist = FakeDoesNotExist
 
-        class objects:
-            @staticmethod
-            def get(**_kwargs):
-                obj = FakeRelatedModel(pk=1)
-                return obj
+            class objects:
+                @staticmethod
+                def get(**_kwargs):
+                    raise FakeRelatedModel.DoesNotExist()
 
-    created_objs = []
+        class FakeThroughModel:
+            __name__ = "FakeThroughModel"
 
-    class FakeThroughModel:
-        __name__ = "FakeThroughModel"
+            class objects:
+                @staticmethod
+                def filter(**_kw):
+                    return SimpleNamespace(delete=lambda: None)
 
-        def __init__(self, **kwargs):
-            self._kwargs = kwargs
-            created_objs.append(self)
+                @staticmethod
+                def bulk_create(objs, **_kw):
+                    pass
 
-        def save(self):
-            raise RuntimeError("save failed")
+        cfg = M2MConfig(
+            api_key="items", related_model=FakeRelatedModel, through_model=FakeThroughModel,
+            parent_fk="parent", related_fk="related",
+        )
+        fk_cache = FKCache()
+        fk_cache._loaded[FakeRelatedModel] = True
 
-        class objects:
-            @staticmethod
-            def filter(**_kw):
-                return SimpleNamespace(delete=lambda: None)
+        caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
+        viernulvier._sync_m2m(
+            SimpleNamespace(pk=1), {"items": ["ext-missing"]}, cfg, fk_cache
+        )
+        assert any("not found" in r.message for r in caplog.records)
 
-            @staticmethod
-            def bulk_create(objs, **_kw):
-                raise RuntimeError("bulk_create failed")
+    def test_logs_error_on_bulk_create_fallback_failure(self, caplog):
+        """When bulk_create fails and individual save also fails, an error is logged."""
 
-    cfg = M2MConfig(
-        api_key="items",
-        related_model=FakeRelatedModel,
-        through_model=FakeThroughModel,
-        parent_fk="parent",
-        related_fk="related",
-    )
-    fk_cache = FKCache()
-    fk_cache._loaded[FakeRelatedModel] = True
-    fk_cache.set(FakeRelatedModel, "ext-1", 1)
+        class FakeRelatedModel:
+            __name__ = "FakeRelated"
 
-    caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
-    viernulvier._sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-1"]}, cfg, fk_cache)
+            class DoesNotExist(Exception):
+                pass
 
-    # Source: "Error creating %s for %s pk=%s"
-    assert any("Error creating" in r.message for r in caplog.records)
+            def __init__(self, **kwargs):
+                self._kwargs = kwargs
+                self.pk = kwargs.get("pk", 1)
+
+            class objects:
+                @staticmethod
+                def get(**_kwargs):
+                    return FakeRelatedModel(pk=1)
+
+        created_objs = []
+
+        class FakeThroughModel:
+            __name__ = "FakeThroughModel"
+
+            def __init__(self, **kwargs):
+                self._kwargs = kwargs
+                created_objs.append(self)
+
+            def save(self):
+                raise RuntimeError("save failed")
+
+            class objects:
+                @staticmethod
+                def filter(**_kw):
+                    return SimpleNamespace(delete=lambda: None)
+
+                @staticmethod
+                def bulk_create(objs, **_kw):
+                    raise RuntimeError("bulk_create failed")
+
+        cfg = M2MConfig(
+            api_key="items", related_model=FakeRelatedModel, through_model=FakeThroughModel,
+            parent_fk="parent", related_fk="related",
+        )
+        fk_cache = FKCache()
+        fk_cache._loaded[FakeRelatedModel] = True
+        fk_cache.set(FakeRelatedModel, "ext-1", 1)
+
+        caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
+        viernulvier._sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-1"]}, cfg, fk_cache)
+        assert any("Error creating" in r.message for r in caplog.records)
+
+    def test_extra_fields_from_dict_item_applied(self):
+        """position field in dict item is stored in the through row."""
+        FR, FT, rows = _make_m2m_setup()
+        cache = FKCache()
+        cache._loaded[FR] = True
+        cache.set(FR, "ext-1", 1)
+
+        cfg = M2MConfig(
+            api_key="genres", related_model=FR, through_model=FT,
+            parent_fk="production", related_fk="genre",
+            extra_fields={"position": "position"},
+        )
+        _sync_m2m(
+            SimpleNamespace(pk=10),
+            {"genres": [{"@id": "ext-1", "position": 7}]},
+            cfg, cache,
+        )
+        assert rows[0]["position"] == 7
+
+    def test_position_auto_filled_from_index_for_url_strings(self):
+        """When raw item is a plain string, position is the list index."""
+        FR, FT, rows = _make_m2m_setup()
+        cache = FKCache()
+        cache._loaded[FR] = True
+        cache.set(FR, "ext-A", 10)
+        cache.set(FR, "ext-B", 20)
+
+        cfg = M2MConfig(
+            api_key="genres", related_model=FR, through_model=FT,
+            parent_fk="production", related_fk="genre",
+            extra_fields={"position": "position"},
+        )
+        _sync_m2m(
+            SimpleNamespace(pk=10),
+            {"genres": ["ext-A", "ext-B"]},
+            cfg, cache,
+        )
+        assert rows[0]["position"] == 0
+        assert rows[1]["position"] == 1
+
+    def test_empty_ext_id_items_skipped(self):
+        """None / empty string / empty dict items are skipped."""
+        bulk_called = [False]
+        FR, _, _ = _make_m2m_setup()
+
+        class FT:
+            __name__ = "FT"
+
+            class objects:
+                @staticmethod
+                def filter(**_):
+                    return SimpleNamespace(delete=lambda: None)
+
+                @staticmethod
+                def bulk_create(objs, **_):
+                    bulk_called[0] = True
+
+        cache = FKCache()
+        cache._loaded[FR] = True
+
+        cfg = M2MConfig(
+            api_key="items", related_model=FR, through_model=FT,
+            parent_fk="prod", related_fk="rel",
+        )
+        _sync_m2m(
+            SimpleNamespace(pk=1),
+            {"items": [None, "", {}]},
+            cfg, cache,
+        )
+        assert not bulk_called[0]
+
+    def test_cache_miss_triggers_db_lookup(self):
+        """Cache miss falls back to DB and populates cache on success."""
+
+        class FR:
+            __name__ = "FR"
+            DoesNotExist = Exception
+
+            def __init__(self, pk=None):
+                self.pk = pk
+
+            class objects:
+                @staticmethod
+                def get(**kwargs):
+                    return SimpleNamespace(pk=99)
+
+        created_rows = []
+
+        class FT:
+            __name__ = "FT"
+
+            def __init__(self, **kw):
+                created_rows.append(kw)
+
+            class objects:
+                @staticmethod
+                def filter(**_):
+                    return SimpleNamespace(delete=lambda: None)
+
+                @staticmethod
+                def bulk_create(objs, **_):
+                    pass
+
+        cache = FKCache()
+        cache._loaded[FR] = True
+
+        cfg = M2MConfig(
+            api_key="items", related_model=FR, through_model=FT,
+            parent_fk="prod", related_fk="rel",
+        )
+        _sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-miss"]}, cfg, cache)
+        assert created_rows
