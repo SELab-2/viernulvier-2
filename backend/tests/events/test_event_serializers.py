@@ -17,30 +17,21 @@ from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 from apps.events.models import Event, EventPrice
 from apps.events.serializers import EventSerializer
-from apps.productions.models import Production
-from apps.locations.models import Location, Space, Hall
-from apps.pricing.models import PriceRank
+from tests.factories.event import EventFactory, EventPriceFactory
+from tests.factories.location import HallFactory
+from tests.factories.pricing import (
+    PriceRankFactory,
+    PriceFactory,
+    PriceTranslationFactory,
+)
+from tests.factories.production import ProductionFactory
+from apps.events.serializers import EventPriceSerializer
+from tests.factories.language import LanguageFactory
 
 
 def _drf_request(factory: APIRequestFactory, path: str) -> Request:
     django_req = factory.get(path)
     return Request(django_req)
-
-
-def _make_hall() -> Hall:
-    """Create a minimal Hall with required Location/Space dependencies."""
-    location = Location.objects.create(
-        street="Main Street",
-        number="1",
-        postal_code="9000",
-        city="Ghent",
-        country="BE",
-        phone_1=None,
-        phone_2=None,
-        is_own_location=False,
-    )
-    space = Space.objects.create(location=location)
-    return Hall.objects.create(space=space, seat_selection=False, open_seating=False)
 
 
 class TestEventSerializerFields(TestCase):
@@ -49,11 +40,11 @@ class TestEventSerializerFields(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.factory = APIRequestFactory()
-        cls.production = Production.objects.create()
-        cls.hall = _make_hall()
+        cls.production = ProductionFactory()
+        cls.hall = HallFactory()
 
         now = timezone.now()
-        cls.event = Event.objects.create(
+        cls.event = EventFactory(
             production=cls.production,
             hall=cls.hall,
             starts_at=now,
@@ -63,19 +54,43 @@ class TestEventSerializerFields(TestCase):
 
     def test_expected_fields_are_present(self):
         """EventSerializer exposes the expected fields."""
-        serializer = EventSerializer(self.event, context={"request": _drf_request(self.factory, "/dummy")})
+        serializer = EventSerializer(
+            self.event, context={"request": _drf_request(self.factory, "/dummy")}
+        )
         data = serializer.data
 
-        expected = {"id", "production", "hall", "starts_at", "ends_at", "ticketing_url", "prices"}
+        expected = {
+            "id",
+            "production",
+            "production_display",
+            "hall",
+            "hall_display",
+            "starts_at",
+            "ends_at",
+            "ticketing_url",
+            "prices",
+        }
         for f in expected:
             self.assertIn(f, data)
 
     def test_no_extra_fields_are_exposed(self):
         """EventSerializer should not expose extra fields."""
-        serializer = EventSerializer(self.event, context={"request": _drf_request(self.factory, "/dummy")})
+        serializer = EventSerializer(
+            self.event, context={"request": _drf_request(self.factory, "/dummy")}
+        )
         self.assertEqual(
             set(serializer.data.keys()),
-            {"id", "production", "hall", "starts_at", "ends_at", "ticketing_url", "prices"},
+            {
+                "id",
+                "production",
+                "production_display",
+                "hall",
+                "hall_display",
+                "starts_at",
+                "ends_at",
+                "ticketing_url",
+                "prices",
+            },
         )
 
 
@@ -85,11 +100,11 @@ class TestEventSerializerSerialization(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.factory = APIRequestFactory()
-        cls.production = Production.objects.create()
-        cls.hall = _make_hall()
+        cls.production = ProductionFactory()
+        cls.hall = HallFactory()
 
         now = timezone.now()
-        cls.event = Event.objects.create(
+        cls.event = EventFactory(
             production=cls.production,
             hall=cls.hall,
             starts_at=now,
@@ -97,16 +112,16 @@ class TestEventSerializerSerialization(TestCase):
             ticketing_url="https://example.com/tickets",
         )
 
-        cls.rank_1 = PriceRank.objects.create(position=1, sold_out_buffer=0)
-        cls.rank_2 = PriceRank.objects.create(position=2, sold_out_buffer=0)
+        cls.rank_1 = PriceRankFactory(position=1, sold_out_buffer=0)
+        cls.rank_2 = PriceRankFactory(position=2, sold_out_buffer=0)
 
-        cls.ep_1 = EventPrice.objects.create(
+        cls.ep_1 = EventPriceFactory(
             event=cls.event,
             price_rank=cls.rank_1,
             amount=Decimal("12.50"),
             available=100,
         )
-        cls.ep_2 = EventPrice.objects.create(
+        cls.ep_2 = EventPriceFactory(
             event=cls.event,
             price_rank=cls.rank_2,
             amount=Decimal("9.00"),
@@ -115,7 +130,9 @@ class TestEventSerializerSerialization(TestCase):
 
     def test_serializes_event_core_fields(self):
         """Event core fields serialize correctly."""
-        serializer = EventSerializer(self.event, context={"request": _drf_request(self.factory, "/dummy")})
+        serializer = EventSerializer(
+            self.event, context={"request": _drf_request(self.factory, "/dummy")}
+        )
         data = serializer.data
 
         self.assertEqual(data["production"], self.production.id)
@@ -127,12 +144,16 @@ class TestEventSerializerSerialization(TestCase):
 
     def test_prices_is_list(self):
         """Nested prices field is a list."""
-        serializer = EventSerializer(self.event, context={"request": _drf_request(self.factory, "/dummy")})
+        serializer = EventSerializer(
+            self.event, context={"request": _drf_request(self.factory, "/dummy")}
+        )
         self.assertIsInstance(serializer.data["prices"], list)
 
     def test_prices_contains_expected_items(self):
         """Nested EventPrice items include expected keys/values."""
-        serializer = EventSerializer(self.event, context={"request": _drf_request(self.factory, "/dummy")})
+        serializer = EventSerializer(
+            self.event, context={"request": _drf_request(self.factory, "/dummy")}
+        )
         prices = serializer.data["prices"]
 
         by_rank = {p["price_rank"]: p for p in prices}
@@ -146,14 +167,49 @@ class TestEventSerializerSerialization(TestCase):
 
         self.assertIn(str(item["amount"]), {"12.50", "12.5"})
 
+    def test_hall_display_is_none_when_event_has_no_hall(self):
+        event = EventFactory(
+            production=self.production,
+            hall=None,
+            starts_at=timezone.now(),
+            ends_at=timezone.now() + timedelta(hours=1),
+            ticketing_url="https://example.com/tickets",
+        )
+
+        data = EventSerializer(
+            event, context={"request": _drf_request(self.factory, "/dummy")}
+        ).data
+        self.assertIsNone(data["hall_display"])
+
+    def test_price_rank_display_is_none_when_price_rank_is_null(self):
+        event = EventFactory(
+            production=self.production,
+            hall=self.hall,
+            starts_at=timezone.now(),
+            ends_at=timezone.now() + timedelta(hours=1),
+            ticketing_url="https://example.com/tickets",
+        )
+        EventPriceFactory(
+            event=event,
+            price_rank=None,
+            amount=Decimal("12.50"),
+            available=10,
+        )
+
+        data = EventSerializer(
+            event, context={"request": _drf_request(self.factory, "/dummy")}
+        ).data
+        self.assertEqual(len(data["prices"]), 1)
+        self.assertIsNone(data["prices"][0]["price_rank_display"])
+
 
 class TestEventSerializerDeserialization(TestCase):
     """dict → model (create / update)."""
 
     def setUp(self):
         self.factory = APIRequestFactory()
-        self.production = Production.objects.create()
-        self.hall = _make_hall()
+        self.production = ProductionFactory()
+        self.hall = HallFactory()
         self.now = timezone.now()
 
     def test_valid_data_is_valid(self):
@@ -165,7 +221,9 @@ class TestEventSerializerDeserialization(TestCase):
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
             "ticketing_url": "https://example.com/tickets",
         }
-        serializer = EventSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
+        serializer = EventSerializer(
+            data=data, context={"request": _drf_request(self.factory, "/dummy")}
+        )
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
     def test_valid_data_saves_to_db(self):
@@ -177,7 +235,9 @@ class TestEventSerializerDeserialization(TestCase):
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
             "ticketing_url": "https://example.com/tickets",
         }
-        serializer = EventSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
+        serializer = EventSerializer(
+            data=data, context={"request": _drf_request(self.factory, "/dummy")}
+        )
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
         event = serializer.save()
@@ -189,7 +249,7 @@ class TestEventSerializerDeserialization(TestCase):
         """
         `prices` is read-only on EventSerializer; providing it in input should not create prices.
         """
-        rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+        rank = PriceRankFactory(position=1, sold_out_buffer=0)
 
         data = {
             "production": self.production.id,
@@ -198,16 +258,25 @@ class TestEventSerializerDeserialization(TestCase):
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
             "ticketing_url": "https://example.com/tickets",
             "prices": [
-                {"event": 999, "price_rank": rank.id, "amount": "10.00", "available": 1},
+                {
+                    "event": 999,
+                    "price_rank": rank.id,
+                    "amount": "10.00",
+                    "available": 1,
+                },
             ],
         }
-        serializer = EventSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
+        serializer = EventSerializer(
+            data=data, context={"request": _drf_request(self.factory, "/dummy")}
+        )
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
         event = serializer.save()
         self.assertEqual(EventPrice.objects.filter(event=event).count(), 0)
 
-        out = EventSerializer(event, context={"request": _drf_request(self.factory, "/dummy")}).data
+        out = EventSerializer(
+            event, context={"request": _drf_request(self.factory, "/dummy")}
+        ).data
         self.assertEqual(out["prices"], [])
 
     def test_missing_production_is_invalid(self):
@@ -218,7 +287,9 @@ class TestEventSerializerDeserialization(TestCase):
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
             "ticketing_url": "https://example.com/tickets",
         }
-        serializer = EventSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
+        serializer = EventSerializer(
+            data=data, context={"request": _drf_request(self.factory, "/dummy")}
+        )
         self.assertFalse(serializer.is_valid())
         self.assertIn("production", serializer.errors)
 
@@ -230,7 +301,9 @@ class TestEventSerializerDeserialization(TestCase):
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
             "ticketing_url": "https://example.com/tickets",
         }
-        serializer = EventSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
+        serializer = EventSerializer(
+            data=data, context={"request": _drf_request(self.factory, "/dummy")}
+        )
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
     def test_partial_update_ticketing_url_only(self):
@@ -254,3 +327,115 @@ class TestEventSerializerDeserialization(TestCase):
         self.assertEqual(updated.ticketing_url, "https://example.com/new")
         self.assertEqual(updated.production_id, self.production.id)
         self.assertEqual(updated.hall_id, self.hall.id)
+
+
+class TestEventPriceSerializerDisplayFields(TestCase):
+    """Test EventPriceSerializer display fields: price_rank_display & price_display."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.factory = APIRequestFactory()
+        cls.production = ProductionFactory()
+        cls.hall = HallFactory()
+        cls.event = EventFactory(
+            production=cls.production,
+            hall=cls.hall,
+            starts_at=timezone.now(),
+            ends_at=timezone.now() + timedelta(hours=1),
+        )
+        cls.rank = PriceRankFactory(position=1)
+        cls.price = None  # simulate deleted price
+        cls.ep = EventPriceFactory(
+            event=cls.event,
+            price_rank=cls.rank,
+            price=cls.price,
+            amount="15.00",
+            available=10,
+        )
+
+    def test_price_rank_display_and_price_display(self):
+        serializer = EventPriceSerializer(
+            self.ep, context={"request": _drf_request(APIRequestFactory(), "/dummy")}
+        )
+        data = serializer.data
+
+        # price_rank_display should fallback to ID if translations are missing
+        self.assertEqual(data["price_rank_display"], str(self.rank.id))
+        # price_display should fallback to None since price is None
+        self.assertIsNone(data["price_display"])
+
+    def test_price_display_falls_back_to_id_when_no_translation(self):
+        """When price exists but has no translations, price_display falls back to the price PK."""
+        price = PriceFactory()
+        ep = EventPriceFactory(
+            event=self.event,
+            price_rank=self.rank,
+            price=price,
+            amount="15.00",
+            available=10,
+        )
+        serializer = EventPriceSerializer(
+            ep, context={"request": _drf_request(APIRequestFactory(), "/dummy")}
+        )
+        self.assertEqual(serializer.data["price_display"], str(price.id))
+
+    def test_price_display_returns_translated_description(self):
+        """When price has a translation, price_display returns the translated description."""
+        price = PriceFactory()
+        lang = LanguageFactory()
+        PriceTranslationFactory(price=price, language=lang, description="Student")
+
+        ep = EventPriceFactory(
+            event=self.event,
+            price_rank=self.rank,
+            price=price,
+            amount="15.00",
+            available=10,
+        )
+        serializer = EventPriceSerializer(
+            ep, context={"request": _drf_request(APIRequestFactory(), "/dummy")}
+        )
+        self.assertEqual(serializer.data["price_display"], "Student")
+
+
+class TestEventSerializerNestedPricesReadOnly(TestCase):
+    """Test that EventSerializer nested prices remain read-only even on update."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.factory = APIRequestFactory()
+        cls.production = ProductionFactory()
+        cls.hall = HallFactory()
+        cls.rank = PriceRankFactory(position=1)
+        cls.event = EventFactory(
+            production=cls.production,
+            hall=cls.hall,
+            starts_at=timezone.now(),
+            ends_at=timezone.now() + timedelta(hours=1),
+        )
+        cls.ep = EventPriceFactory(
+            event=cls.event, price_rank=cls.rank, amount="10.00", available=5
+        )
+
+    def test_nested_prices_read_only_on_partial_update(self):
+        # Attempt to update prices via EventSerializer (read-only)
+        payload = {
+            "ticketing_url": "https://example.com/updated",
+            "prices": [{"price_rank": self.rank.id, "amount": "20.00", "available": 1}],
+        }
+        serializer = EventSerializer(
+            self.event,
+            data=payload,
+            partial=True,
+            context={"request": _drf_request(self.factory, "/dummy")},
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        updated_event = serializer.save()
+
+        # ticketing_url is updated
+        self.assertEqual(updated_event.ticketing_url, payload["ticketing_url"])
+        # prices are unchanged
+        self.assertEqual(updated_event.prices.count(), 1)
+        price_obj = updated_event.prices.first()
+        self.assertEqual(price_obj.amount, Decimal("10.00"))
+        self.assertEqual(price_obj.available, 5)

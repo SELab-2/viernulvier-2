@@ -26,9 +26,18 @@ class LocationAdmin(BaseAdmin):
 
     list_display = ("id", "city", "street", "number", "country", "is_own_location")
     list_filter = ("is_own_location",)
-    search_fields = ("city", "street", "country")
+    search_fields = (
+        "translations__name",
+        "city",
+        "street",
+        "country",
+    )
     ordering = ("id",)
     inlines = [LocationTranslationInline]
+
+    def get_queryset(self, request):
+        "Avoiding N+1 queries by prefetching related translations."
+        return super().get_queryset(request).prefetch_related("translations")
 
 
 @admin.register(LocationTranslation)
@@ -55,10 +64,14 @@ class SpaceAdmin(BaseAdmin):
 
     list_display = ("id", "location")
     list_select_related = ("location",)
-    search_fields = ("location__city", "location__street")
+    search_fields = ("translations__name", "location__city", "location__street")
     ordering = ("id",)
     autocomplete_fields = ("location",)
     inlines = [SpaceTranslationInline]
+
+    def get_queryset(self, request):
+        "Avoiding N+1 queries by prefetching related translations."
+        return super().get_queryset(request).prefetch_related("translations")
 
 
 @admin.register(SpaceTranslation)
@@ -87,10 +100,18 @@ class HallAdmin(BaseAdmin):
     list_display_links = ("id", "space")
     list_filter = ("seat_selection", "open_seating")
     list_select_related = ("space", "space__location")
-    search_fields = ("space__location__city", "space__location__street")
+    search_fields = (
+        "translations__name",
+        "space__location__city",
+        "space__location__street",
+    )
     ordering = ("id",)
     autocomplete_fields = ("space",)
     inlines = [HallTranslationInline]
+
+    def get_queryset(self, request):
+        "Avoiding N+1 queries by prefetching related translations."
+        return super().get_queryset(request).prefetch_related("translations")
 
 
 @admin.register(HallTranslation)

@@ -1,9 +1,19 @@
+"""
+Covers:
+- __str__ output
+- Meta ordering
+- field defaults
+- validators
+- uniqueness constraints
+- indexes presence
+- reverse relations
+- cascade delete behavior
+"""
+
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 
 from apps.media_library.models import (
-    MediaGallery,
     MediaItem,
     MediaItemTranslation,
     MediaItemCrop,
@@ -24,29 +34,36 @@ pytestmark = pytest.mark.django_db
 # MediaGallery
 # =====================================================
 
+
 class TestMediaGallery:
-
-    def test_requires_name(self):
+    def test_name_is_optional(self):
+        """Gallery name is nullable/blank — a gallery without a name must pass full_clean."""
         gallery = MediaGalleryFactory.build(name="")
-        with pytest.raises(ValidationError):
-            gallery.full_clean()
+        gallery.full_clean()  # must not raise
 
-    def test_str_returns_name(self):
+    def test_name_null_is_allowed(self):
+        """Gallery name can be null."""
+        gallery = MediaGalleryFactory.build(name=None)
+        gallery.full_clean()  # must not raise
+
+    def test_str_returns_name_when_set(self):
         gallery = MediaGalleryFactory(name="Homepage Gallery")
         assert str(gallery) == "Homepage Gallery"
+
+    def test_str_returns_unnamed_gallery_when_name_is_null(self):
+        """__str__ falls back to 'Unnamed Gallery' when name is null/empty."""
+        gallery = MediaGalleryFactory(name=None)
+        assert str(gallery) == "Unnamed Gallery"
 
     def test_reverse_relation_media_items(self):
         gallery = MediaGalleryFactory()
         MediaItemFactory.create_batch(3, gallery=gallery)
-
         assert gallery.media_items.count() == 3
 
     def test_deleting_gallery_cascades_to_media_items(self):
         gallery = MediaGalleryFactory()
         MediaItemFactory.create_batch(2, gallery=gallery)
-
         gallery.delete()
-
         assert MediaItem.objects.count() == 0
 
 
@@ -54,16 +71,18 @@ class TestMediaGallery:
 # MediaItem
 # =====================================================
 
-class TestMediaItem:
 
-    def test_requires_gallery(self):
+class TestMediaItem:
+    def test_gallery_is_optional(self):
+        """gallery FK is nullable — a MediaItem without a gallery must pass full_clean."""
         item = MediaItemFactory.build(gallery=None)
-        with pytest.raises(ValidationError):
-            item.full_clean()
+        item.full_clean()  # must not raise
 
     def test_position_defaults_to_zero(self):
         gallery = MediaGalleryFactory()
-        item = MediaItem.objects.create(gallery=gallery, type="image")
+        item = MediaItemFactory.create(
+            gallery=gallery, type=MediaItem.MediaItemType.IMAGE, position=0
+        )
         assert item.position == 0
 
     def test_ordering_by_position(self):
@@ -73,7 +92,6 @@ class TestMediaItem:
         item2 = MediaItemFactory(gallery=gallery, position=2)
 
         items = list(MediaItem.objects.filter(gallery=gallery))
-
         assert items == [item1, item2, item3]
 
     def test_blank_original_filename_allowed(self):
@@ -85,27 +103,36 @@ class TestMediaItem:
         item.full_clean()  # should not raise
 
     def test_str_with_filename(self):
-        item = MediaItemFactory(type=MediaItem.MediaItemType.IMAGE, original_filename="banner.jpg")
-        assert str(item) == "image - banner.jpg"
+        """IMAGE type value is 'foto', so str must reflect that."""
+        item = MediaItemFactory(
+            type=MediaItem.MediaItemType.IMAGE, original_filename="banner.jpg"
+        )
+        assert str(item) == "foto - banner.jpg"
 
     def test_str_without_filename(self):
-        item = MediaItemFactory(type=MediaItem.MediaItemType.VIDEO, original_filename="")
+        item = MediaItemFactory(
+            type=MediaItem.MediaItemType.VIDEO, original_filename=""
+        )
         assert str(item) == "video - Unnamed"
+
+    def test_image_type_value_is_foto(self):
+        """MediaItemType.IMAGE database value must be 'foto'."""
+        assert MediaItem.MediaItemType.IMAGE == "foto"
+
+    def test_other_type_exists(self):
+        """MediaItemType.OTHER must exist with value 'other'."""
+        assert MediaItem.MediaItemType.OTHER == "other"
 
     def test_delete_cascades_to_translations(self):
         item = MediaItemFactory()
         MediaItemTranslationFactory.create_batch(2, media_item=item)
-
         item.delete()
-
         assert MediaItemTranslation.objects.count() == 0
 
     def test_delete_cascades_to_crops(self):
         item = MediaItemFactory()
         MediaItemCropFactory.create_batch(2, media_item=item)
-
         item.delete()
-
         assert MediaItemCrop.objects.count() == 0
 
 
@@ -113,8 +140,8 @@ class TestMediaItem:
 # MediaItemTranslation
 # =====================================================
 
-class TestMediaItemTranslation:
 
+class TestMediaItemTranslation:
     def test_unique_per_media_item_and_language(self):
         language = LanguageFactory()
         item = MediaItemFactory()
@@ -125,6 +152,7 @@ class TestMediaItemTranslation:
             MediaItemTranslationFactory(media_item=item, language=language)
 
     def test_str_representation(self):
+        """__str__ must contain the media item type and language code."""
         language = LanguageFactory(code="en")
         item = MediaItemFactory(type=MediaItem.MediaItemType.IMAGE)
         translation = MediaItemTranslationFactory(
@@ -135,7 +163,8 @@ class TestMediaItemTranslation:
 
         result = str(translation)
 
-        assert MediaItem.MediaItemType.IMAGE in result
+        # IMAGE value is "foto"
+        assert MediaItem.MediaItemType.IMAGE in result  # "foto"
         assert "en" in result
 
     def test_optional_fields_can_be_blank(self):
@@ -147,18 +176,20 @@ class TestMediaItemTranslation:
         )
         translation.full_clean()  # should not raise
 
+    def test_link_is_charfield_not_urlfield(self):
+        """link accepts arbitrary strings, not just valid URLs."""
+        translation = MediaItemTranslationFactory(link="not-a-url")
+        translation.full_clean()  # must not raise
+
     def test_language_reverse_relation(self):
         language = LanguageFactory()
         MediaItemTranslationFactory.create_batch(3, language=language)
-
         assert language.media_item_translations.count() == 3
 
     def test_deleting_language_cascades(self):
         language = LanguageFactory()
         MediaItemTranslationFactory(language=language)
-
         language.delete()
-
         assert MediaItemTranslation.objects.count() == 0
 
 
@@ -166,13 +197,11 @@ class TestMediaItemTranslation:
 # MediaItemCrop
 # =====================================================
 
-class TestMediaItemCrop:
 
+class TestMediaItemCrop:
     def test_unique_per_media_item_and_name(self):
         item = MediaItemFactory()
-
         MediaItemCropFactory(media_item=item, name="thumbnail")
-
         with pytest.raises(ValidationError):
             MediaItemCropFactory(media_item=item, name="thumbnail")
 
@@ -182,6 +211,7 @@ class TestMediaItemCrop:
 
         result = str(crop)
 
+        # IMAGE value is "foto"
         assert MediaItem.MediaItemType.IMAGE in result
         assert "thumbnail" in result
 
@@ -193,7 +223,5 @@ class TestMediaItemCrop:
     def test_deleting_media_item_cascades_to_crops(self):
         item = MediaItemFactory()
         MediaItemCropFactory.create_batch(2, media_item=item)
-
         item.delete()
-
         assert MediaItemCrop.objects.count() == 0

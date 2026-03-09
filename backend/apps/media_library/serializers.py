@@ -41,7 +41,7 @@ class MediaItemCropSerializer(serializers.ModelSerializer):
         }
 
 
-class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
+class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """
     Represents a MediaItem with its translated metadata and nested crops.
 
@@ -56,15 +56,22 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     title = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the title "
-            "(e.g. {\"en\": \"Poster\", \"fr\": \"Affiche\"}). "
+            '(e.g. {"en": "Poster", "fr": "Affiche"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
+    )
+
+    display_title = serializers.SerializerMethodField(
+        help_text=(
+            "Title in the project's base language (derived from settings.LANGUAGE_CODE). "
+            "Falls back to the first available translation when missing."
+        )
     )
 
     description = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the description "
-            "(e.g. {\"en\": \"Event poster\", \"fr\": \"Affiche de l'événement\"}). "
+            '(e.g. {"en": "Event poster", "fr": "Affiche de l\'événement"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -72,7 +79,7 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     credits = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the credits string "
-            "(e.g. {\"en\": \"Photo by John Doe\", \"fr\": \"Photo par John Doe\"}). "
+            '(e.g. {"en": "Photo by John Doe", "fr": "Photo par John Doe"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -80,8 +87,8 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     link = serializers.SerializerMethodField(
         help_text=(
             "Dictionary containing all available translations of the external URL "
-            "(e.g. {\"en\": \"https://example.com/en\", "
-            "\"fr\": \"https://example.com/fr\"}). "
+            '(e.g. {"en": "https://example.com/en", '
+            '"fr": "https://example.com/fr"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -100,12 +107,21 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
             "width",
             "height",
             "title",
+            "display_title",
             "description",
             "credits",
             "link",
             "crops",
         ]
-        read_only_fields = ["id", "title", "description", "credits", "link", "crops"]
+        read_only_fields = [
+            "id",
+            "display_title",
+            "title",
+            "description",
+            "credits",
+            "link",
+            "crops",
+        ]
         extra_kwargs = {
             "gallery": {
                 "help_text": "Primary key of the parent **MediaGallery** this item belongs to.",
@@ -133,6 +149,10 @@ class MediaItemSerializer(serializers.ModelSerializer, TranslatableSerializerMix
     def get_title(self, obj: MediaItem) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "title")
+
+    def get_display_title(self, obj: MediaItem) -> str | None:
+        """Return the media item title in the project's base language."""
+        return self.get_base_translated_value(obj, "title")
 
     def get_description(self, obj: MediaItem) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""

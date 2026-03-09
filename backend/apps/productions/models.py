@@ -168,7 +168,6 @@ class Production(BaseModel):
         through="ProductionGenre",
         related_name="productions",
         help_text="Genres associated with this production, ordered by `ProductionGenre.position`.",
-        db_comment="The genres of the production.",
     )
 
     tags = models.ManyToManyField(
@@ -177,7 +176,6 @@ class Production(BaseModel):
         through="ProductionTag",
         related_name="productions",
         help_text="Tags associated with this production.",
-        db_comment="The tags of the production.",
     )
 
     class Meta(BaseModel.Meta):
@@ -187,7 +185,12 @@ class Production(BaseModel):
         ordering = ["-id"]
 
     def __str__(self) -> str:
-        return f"Production {self.id}"
+        title = self.get_base_display_name(
+            related_name="translations",
+            name_field="title",
+            fallback=None,
+        )
+        return title or f"Production {self.id}"
 
 
 class ProductionTranslation(BaseModel):
@@ -236,59 +239,64 @@ class ProductionTranslation(BaseModel):
         db_column="language_code",
     )
 
-    supertitle = models.CharField(
-        max_length=200,
+    supertitle = models.TextField(
+        max_length=400,
         blank=True,
         help_text="Short line displayed above the main title (e.g. a season label).",
         db_comment="The supertitle of the production in the given language.",
     )
 
-    title = models.CharField(
-        max_length=200,
+    title = models.TextField(
+        max_length=400,
         blank=True,
         help_text="Main display title of the production in this language.",
         db_comment="The title of the production in the given language.",
     )
 
-    artist_name = models.CharField(
-        max_length=200,
+    artist_name = models.TextField(
+        max_length=500,
         blank=True,
         help_text="Name of the performing artist or company in this language.",
         db_comment="The name of the artist of the production in the given language.",
     )
 
-    tagline = models.CharField(
-        max_length=200,
+    tagline = models.TextField(
+        max_length=500,
         blank=True,
         help_text="One-line marketing phrase for the production.",
         db_comment="The tagline of the production in the given language.",
     )
 
     teaser = models.TextField(
+        max_length=500,
         blank=True,
         help_text="Short promotional text. May contain HTML — sanitise before saving.",
         db_comment="The teaser of the production in the given language.",
     )
 
     description = models.TextField(
+        max_length=5000,
         blank=True,
         help_text="Full-length description of the production. May contain HTML — sanitise before saving.",
         db_comment="The description of the production in the given language.",
     )
 
     description_short = models.TextField(
+        max_length=1000,
         blank=True,
         help_text="Condensed version of the description, suitable for cards and previews.",
         db_comment="The short description of the production in the given language.",
     )
 
     description_extra = models.TextField(
+        max_length=2000,
         blank=True,
         help_text="Supplementary description block (e.g. practical information).",
         db_comment="The extra description of the production in the given language.",
     )
 
     description_2 = models.TextField(
+        max_length=2000,
         blank=True,
         help_text="Secondary description block for additional editorial content.",
         db_comment="The second description of the production in the given language.",
@@ -306,14 +314,15 @@ class ProductionTranslation(BaseModel):
         db_comment="The URL of the second video of the production in the given language.",
     )
 
-    meta_title = models.CharField(
-        max_length=200,
+    meta_title = models.TextField(
+        max_length=500,
         blank=True,
         help_text="SEO page title override. Falls back to `title` when empty.",
         db_comment="The meta title of the production in the given language.",
     )
 
     meta_description = models.TextField(
+        max_length=500,
         blank=True,
         help_text="SEO meta description. Ideally 120–160 characters.",
         db_comment="The meta description of the production in the given language.",
@@ -374,7 +383,7 @@ class ProductionTag(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"Tag {self.tag.type} for Production {self.production.id}"
+        return f"Tag {self.tag} for {self.production}"
 
 
 class ProductionGenre(BaseModel):
@@ -425,4 +434,4 @@ class ProductionGenre(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.genre.type}"
+        return str(self.genre)

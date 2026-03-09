@@ -36,7 +36,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     name = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the tag name "
-            "(e.g. {\"en\": \"Contemporary\", \"fr\": \"Contemporain\"}). "
+            '(e.g. {"en": "Contemporary", "fr": "Contemporain"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -44,7 +44,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     short_description = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the tag's short description "
-            "(e.g. {\"en\": \"Contemporary performing arts\", \"fr\": \"Arts du spectacle contemporain\"}). "
+            '(e.g. {"en": "Contemporary performing arts", "fr": "Arts du spectacle contemporain"}). '
             "Read-only — use the translation endpoints to manage translations."
         ),
     )
@@ -52,8 +52,29 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     url_title = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the URL-safe title "
-            "(e.g. {\"en\": \"contemporary\", \"fr\": \"contemporain\"}). "
+            '(e.g. {"en": "contemporary", "fr": "contemporain"}). '
             "Read-only — use the translation endpoints to manage translations."
+        ),
+    )
+
+    display_name = serializers.SerializerMethodField(
+        help_text=(
+            "Tag name in the project's base language (derived from settings.LANGUAGE_CODE). "
+            "Falls back to the first available translation when missing."
+        ),
+    )
+
+    display_short_description = serializers.SerializerMethodField(
+        help_text=(
+            "Short description in the project's base language (derived from settings.LANGUAGE_CODE). "
+            "Falls back to the first available translation when missing."
+        ),
+    )
+
+    display_url_title = serializers.SerializerMethodField(
+        help_text=(
+            "URL-safe title in the project's base language (derived from settings.LANGUAGE_CODE). "
+            "Falls back to the first available translation when missing."
         ),
     )
 
@@ -67,11 +88,22 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "type",
             "is_external",
             "is_enabled",
+            "display_name",
+            "display_short_description",
+            "display_url_title",
             "name",
             "short_description",
             "url_title",
         ]
-        read_only_fields = ["id", "name", "short_description", "url_title"]
+        read_only_fields = [
+            "id",
+            "name",
+            "short_description",
+            "display_name",
+            "display_short_description",
+            "display_url_title",
+            "url_title",
+        ]
         extra_kwargs = {
             "url": {
                 "help_text": "Public URL of the tag in the originating system. Empty string when not applicable.",
@@ -108,3 +140,15 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     def get_url_title(self, obj: Tag) -> str:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "url_title")
+
+    def get_display_name(self, obj: Tag) -> str | None:
+        """Return the base-language tag name (with fallback)."""
+        return self.get_base_translated_value(obj, field_name="name")
+
+    def get_display_short_description(self, obj: Tag) -> str | None:
+        """Return the base-language short description (with fallback)."""
+        return self.get_base_translated_value(obj, field_name="short_description")
+
+    def get_display_url_title(self, obj: Tag) -> str | None:
+        """Return the base-language URL title (with fallback)."""
+        return self.get_base_translated_value(obj, field_name="url_title")

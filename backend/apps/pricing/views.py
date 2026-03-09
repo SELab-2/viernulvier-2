@@ -34,16 +34,12 @@ class PriceViewSet(ApiModelViewSet):
     """
 
     serializer_class = PriceSerializer
-    queryset = (
-        Price.objects
-        .prefetch_related(
-            Prefetch(
-                "translations",
-                queryset=PriceTranslation.objects.select_related("language"),
-            )
+    queryset = Price.objects.prefetch_related(
+        Prefetch(
+            "translations",
+            queryset=PriceTranslation.objects.select_related("language"),
         )
-        .order_by("sort_order", "id")
-    )
+    ).order_by("sort_order", "id")
 
 
 @extend_schema(tags=[_TAG])
@@ -63,13 +59,9 @@ class PriceRankViewSet(ApiModelViewSet):
     """
 
     serializer_class = PriceRankSerializer
-    queryset = (
-        PriceRank.objects
-        .prefetch_related(
-            Prefetch(
-                "translations",
-                queryset=PriceRankTranslation.objects.select_related("language"),
-            )
+    queryset = PriceRank.objects.prefetch_related(
+        Prefetch(
+            "translations",
+            queryset=PriceRankTranslation.objects.select_related("language"),
         )
-        .order_by("position", "id")
-    )
+    ).order_by("position", "id")

@@ -8,11 +8,9 @@ assembled into two `extend_schema_view` decorators at the bottom of the file.
 
 from drf_spectacular.utils import (
     OpenApiExample,
-    OpenApiParameter,
     extend_schema,
     extend_schema_view,
 )
-from drf_spectacular.types import OpenApiTypes
 
 from apps.core.openapi import (
     RESPONSE_400,
@@ -167,11 +165,7 @@ _GENRE_RESPONSE_MULTILINGUAL = OpenApiExample(
         "id": 10,
         "type": "theater",
         "use_as": 1,
-        "name": {
-            "nl": "Theater",
-            "en": "Theatre",
-            "fr": "Théâtre"
-        }
+        "name": {"nl": "Theater", "en": "Theatre", "fr": "Théâtre"},
     },
     response_only=True,
 )
@@ -201,9 +195,7 @@ _GENRE_PARTIAL_INPUT = OpenApiExample(
 
 _GENRE_LIST = extend_schema(
     summary="List all genres",
-    description=(
-        "Returns a paginated list of all **Genre** objects.\n\n"
-    ),
+    description=("Returns a paginated list of all **Genre** objects.\n\n"),
     responses={
         200: GenreSerializer,
         401: RESPONSE_401,

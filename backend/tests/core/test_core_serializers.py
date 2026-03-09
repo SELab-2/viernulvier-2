@@ -19,6 +19,7 @@ from apps.core.serializers import TranslatableSerializerMixin
 # Fake domain objects
 # ---------------------------------------------------------------------------
 
+
 def make_translation(lang_code: str, **field_values):
     """Build a mock translation object."""
     t = MagicMock()
@@ -41,8 +42,8 @@ def make_obj(translations: list):
 # Tests
 # ---------------------------------------------------------------------------
 
-class TestTranslatableSerializerMixin(TestCase):
 
+class TestTranslatableSerializerMixin(TestCase):
     def setUp(self):
         # Concrete class (mixin has no abstract methods)
         self.mixin = TranslatableSerializerMixin()
