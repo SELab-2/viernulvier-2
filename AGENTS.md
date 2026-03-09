@@ -32,6 +32,15 @@ This file applies to the full repository unless a deeper `AGENTS.md` is added in
 From `backend/`:
 
 ```bash
+# Linting and formatting (must pass in CI)
+ruff check .
+ruff format --check .
+
+# Django system and migration checks (must pass in CI)
+python manage.py check
+python manage.py makemigrations --check --dry-run
+
+# Run full test suite
 pytest
 ```
 
@@ -53,6 +62,8 @@ pytest tests/<area>
 From `frontend/`:
 
 ```bash
+npm ci
+npm run lint
 npm test
 npm run build
 ```
