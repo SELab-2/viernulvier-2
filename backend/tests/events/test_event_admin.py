@@ -46,7 +46,7 @@ class TestEventsAdminRegistration(TestCase):
         self.assertIn(Event, admin.site._registry)
 
     def test_registered_admin_class_for_event(self):
-        """Event admin class moet EventAdmin zijn."""
+        """Event admin class has to be of type EventAdmin."""
         self.assertIsInstance(admin.site._registry[Event], EventAdmin)
 
 
