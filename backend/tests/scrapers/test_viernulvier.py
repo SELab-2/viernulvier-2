@@ -497,6 +497,7 @@ def test_fetch_preserves_timestamp_format(monkeypatch):
 class TestHTTPRetryEdgeCases:
     def test_parse_retry_after_integer_header(self):
         from apps.imports.scrapers.viernulvier import _parse_retry_after
+
         r = Mock()
         r.headers = Mock()
         r.headers.get = Mock(return_value="30")
@@ -504,6 +505,7 @@ class TestHTTPRetryEdgeCases:
 
     def test_parse_retry_after_non_integer_returns_none(self):
         from apps.imports.scrapers.viernulvier import _parse_retry_after
+
         r = Mock()
         r.headers = Mock()
         r.headers.get = Mock(return_value="Wed, 21 Oct 2015 07:28:00 GMT")
@@ -511,6 +513,7 @@ class TestHTTPRetryEdgeCases:
 
     def test_parse_retry_after_missing_returns_none(self):
         from apps.imports.scrapers.viernulvier import _parse_retry_after
+
         r = Mock()
         r.headers = Mock()
         r.headers.get = Mock(return_value=None)
@@ -653,7 +656,9 @@ class TestHTTPRetryEdgeCases:
 
         _mock_session(monkeypatch, responses)
         etag_cache = {"https://www.viernulvier.gent/api/v1/events": "old-etag"}
-        result = viernulvier.fetch_viernulvier(endpoint="/events", etag_cache=etag_cache)
+        result = viernulvier.fetch_viernulvier(
+            endpoint="/events", etag_cache=etag_cache
+        )
         assert result == []
         assert etag_cache["https://www.viernulvier.gent/api/v1/events"] == "old-etag"
 
@@ -774,7 +779,9 @@ class TestConcurrentPagination:
                     "@context": "ctx",
                     "member": [{"@id": "1"}],
                     "totalItems": 3,
-                    "view": {"last": "https://www.viernulvier.gent/api/v1/events?page=3"},
+                    "view": {
+                        "last": "https://www.viernulvier.gent/api/v1/events?page=3"
+                    },
                 }
             )
 
@@ -782,7 +789,9 @@ class TestConcurrentPagination:
         result = viernulvier.fetch_viernulvier(endpoint="/events")
         assert len(result) == 3
 
-    def test_page_fetch_error_logged_and_other_pages_returned(self, monkeypatch, caplog):
+    def test_page_fetch_error_logged_and_other_pages_returned(
+        self, monkeypatch, caplog
+    ):
         monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
         def responses(url, n):
@@ -793,7 +802,9 @@ class TestConcurrentPagination:
                     "@context": "ctx",
                     "member": [{"@id": "1"}],
                     "totalItems": 2,
-                    "view": {"last": "https://www.viernulvier.gent/api/v1/events?page=2"},
+                    "view": {
+                        "last": "https://www.viernulvier.gent/api/v1/events?page=2"
+                    },
                 }
             )
 
@@ -814,7 +825,9 @@ class TestConcurrentPagination:
                     "@context": "ctx",
                     "member": [{"@id": "1"}],
                     "totalItems": 2,
-                    "view": {"last": "https://www.viernulvier.gent/api/v1/events?page=2"},
+                    "view": {
+                        "last": "https://www.viernulvier.gent/api/v1/events?page=2"
+                    },
                 }
             )
 
@@ -835,7 +848,9 @@ class TestSequentialFallback:
                     {
                         "@context": "ctx",
                         "member": [{"@id": "1"}],
-                        "view": {"next": "https://www.viernulvier.gent/api/v1/events?page=2"},
+                        "view": {
+                            "next": "https://www.viernulvier.gent/api/v1/events?page=2"
+                        },
                     }
                 )
             return _make_status_response(304, {})
@@ -875,7 +890,9 @@ class TestSequentialFallback:
                     {
                         "@context": "ctx",
                         "member": [{"@id": "1"}],
-                        "view": {"next": "https://www.viernulvier.gent/api/v1/events?page=2"},
+                        "view": {
+                            "next": "https://www.viernulvier.gent/api/v1/events?page=2"
+                        },
                     }
                 )
             return _make_ok_response([{"@id": "2"}, {"@id": "3"}])
@@ -1229,7 +1246,8 @@ def test_sync_dry_run_does_not_write_to_db(monkeypatch):
     """dry_run=True fetches and parses but writes nothing."""
     with _temp_viernulvier_model() as M:
         monkeypatch.setattr(
-            viernulvier, "fetch_viernulvier",
+            viernulvier,
+            "fetch_viernulvier",
             lambda **_: [
                 {"@id": "https://example.com/1", "title": "A"},
                 {"@id": "https://example.com/2", "title": "B"},
@@ -1246,15 +1264,17 @@ def test_sync_on_progress_called_with_cumulative_counts(monkeypatch):
     """on_progress is called after each save with (saved, total)."""
     with _temp_viernulvier_model() as M:
         monkeypatch.setattr(
-            viernulvier, "fetch_viernulvier",
+            viernulvier,
+            "fetch_viernulvier",
             lambda **_: [
-                {"@id": f"https://example.com/{i}", "title": str(i)}
-                for i in range(3)
+                {"@id": f"https://example.com/{i}", "title": str(i)} for i in range(3)
             ],
         )
         calls = []
         sync_viernulvier(
-            M, _PassThroughConfig(), endpoint="/e",
+            M,
+            _PassThroughConfig(),
+            endpoint="/e",
             on_progress=lambda saved, total: calls.append((saved, total)),
         )
         assert calls == [(1, 3), (2, 3), (3, 3)]
@@ -1266,12 +1286,15 @@ def test_sync_dry_run_on_progress_also_called(monkeypatch):
     """on_progress is also invoked in dry_run mode."""
     with _temp_viernulvier_model() as M:
         monkeypatch.setattr(
-            viernulvier, "fetch_viernulvier",
+            viernulvier,
+            "fetch_viernulvier",
             lambda **_: [{"@id": "https://example.com/1"}],
         )
         calls = []
         sync_viernulvier(
-            M, _PassThroughConfig(), endpoint="/e",
+            M,
+            _PassThroughConfig(),
+            endpoint="/e",
             dry_run=True,
             on_progress=lambda s, t: calls.append((s, t)),
         )
@@ -1284,7 +1307,8 @@ def test_sync_item_filter_excludes_items(monkeypatch):
     """item_filter returning False causes the item to be skipped."""
     with _temp_viernulvier_model() as M:
         monkeypatch.setattr(
-            viernulvier, "fetch_viernulvier",
+            viernulvier,
+            "fetch_viernulvier",
             lambda **_: [
                 {"@id": "https://example.com/keep/1"},
                 {"@id": "https://example.com/longterm/2"},
@@ -1308,7 +1332,8 @@ def test_sync_max_error_messages_capped(monkeypatch):
     with _temp_viernulvier_model() as M:
         n = viernulvier.MAX_ERROR_MESSAGES + 5
         monkeypatch.setattr(
-            viernulvier, "fetch_viernulvier",
+            viernulvier,
+            "fetch_viernulvier",
             lambda **_: [{"title": f"no-id-{i}"} for i in range(n)],
         )
         sync_viernulvier(M, _PassThroughConfig(), endpoint="/e")
@@ -1323,13 +1348,16 @@ def test_sync_etag_cache_passed_to_fetch(monkeypatch):
     with _temp_viernulvier_model() as M:
         captured = {}
         monkeypatch.setattr(
-            viernulvier, "fetch_viernulvier",
+            viernulvier,
+            "fetch_viernulvier",
             lambda endpoint=None, params=None, etag_cache=None: (
                 captured.update({"etag_cache": etag_cache}) or []
             ),
         )
         shared_cache = {"key": "val"}
-        sync_viernulvier(M, _PassThroughConfig(), endpoint="/e", etag_cache=shared_cache)
+        sync_viernulvier(
+            M, _PassThroughConfig(), endpoint="/e", etag_cache=shared_cache
+        )
         assert captured["etag_cache"] is shared_cache
 
 
@@ -1968,7 +1996,9 @@ class TestParseFieldValue:
 
     def test_datetimefield_unparseable_returns_none(self, caplog):
         caplog.set_level(logging.DEBUG, logger=viernulvier.logger.name)
-        assert _parse_field_value(models.DateTimeField(), "definitely-not-a-date") is None
+        assert (
+            _parse_field_value(models.DateTimeField(), "definitely-not-a-date") is None
+        )
 
     def test_datefield_valid_string(self):
         result = _parse_field_value(models.DateField(), "2024-07-04")
@@ -2818,12 +2848,13 @@ class TestSyncAllTranslations:
         calls = []
         FT = _fake_trans_model(calls)
         cfg = TranslationConfig(
-            "title", FT, "parent", "title",
+            "title",
+            FT,
+            "parent",
+            "title",
             value_transforms={"title": str.upper},
         )
-        _sync_all_translations(
-            SimpleNamespace(pk=1), {"title": {"nl": "hallo"}}, [cfg]
-        )
+        _sync_all_translations(SimpleNamespace(pk=1), {"title": {"nl": "hallo"}}, [cfg])
         assert calls[0]["defaults"]["title"] == "HALLO"
 
     def test_transform_returning_none_omits_field_no_call(self):
@@ -2896,8 +2927,11 @@ class TestSyncM2M:
         """_sync_m2m does nothing if the API value for the key is not a list."""
         through_model = Mock()
         cfg = M2MConfig(
-            api_key="genres", related_model=Mock(), through_model=through_model,
-            parent_fk="parent", related_fk="related",
+            api_key="genres",
+            related_model=Mock(),
+            through_model=through_model,
+            parent_fk="parent",
+            related_fk="related",
         )
         fk_cache = FKCache()
         viernulvier._sync_m2m(
@@ -2933,8 +2967,11 @@ class TestSyncM2M:
                     pass
 
         cfg = M2MConfig(
-            api_key="items", related_model=FakeRelatedModel, through_model=FakeThroughModel,
-            parent_fk="parent", related_fk="related",
+            api_key="items",
+            related_model=FakeRelatedModel,
+            through_model=FakeThroughModel,
+            parent_fk="parent",
+            related_fk="related",
         )
         fk_cache = FKCache()
         fk_cache._loaded[FakeRelatedModel] = True
@@ -2985,15 +3022,20 @@ class TestSyncM2M:
                     raise RuntimeError("bulk_create failed")
 
         cfg = M2MConfig(
-            api_key="items", related_model=FakeRelatedModel, through_model=FakeThroughModel,
-            parent_fk="parent", related_fk="related",
+            api_key="items",
+            related_model=FakeRelatedModel,
+            through_model=FakeThroughModel,
+            parent_fk="parent",
+            related_fk="related",
         )
         fk_cache = FKCache()
         fk_cache._loaded[FakeRelatedModel] = True
         fk_cache.set(FakeRelatedModel, "ext-1", 1)
 
         caplog.set_level(logging.ERROR, logger=viernulvier.logger.name)
-        viernulvier._sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-1"]}, cfg, fk_cache)
+        viernulvier._sync_m2m(
+            SimpleNamespace(pk=1), {"items": ["ext-1"]}, cfg, fk_cache
+        )
         assert any("Error creating" in r.message for r in caplog.records)
 
     def test_extra_fields_from_dict_item_applied(self):
@@ -3004,14 +3046,18 @@ class TestSyncM2M:
         cache.set(FR, "ext-1", 1)
 
         cfg = M2MConfig(
-            api_key="genres", related_model=FR, through_model=FT,
-            parent_fk="production", related_fk="genre",
+            api_key="genres",
+            related_model=FR,
+            through_model=FT,
+            parent_fk="production",
+            related_fk="genre",
             extra_fields={"position": "position"},
         )
         _sync_m2m(
             SimpleNamespace(pk=10),
             {"genres": [{"@id": "ext-1", "position": 7}]},
-            cfg, cache,
+            cfg,
+            cache,
         )
         assert rows[0]["position"] == 7
 
@@ -3024,14 +3070,18 @@ class TestSyncM2M:
         cache.set(FR, "ext-B", 20)
 
         cfg = M2MConfig(
-            api_key="genres", related_model=FR, through_model=FT,
-            parent_fk="production", related_fk="genre",
+            api_key="genres",
+            related_model=FR,
+            through_model=FT,
+            parent_fk="production",
+            related_fk="genre",
             extra_fields={"position": "position"},
         )
         _sync_m2m(
             SimpleNamespace(pk=10),
             {"genres": ["ext-A", "ext-B"]},
-            cfg, cache,
+            cfg,
+            cache,
         )
         assert rows[0]["position"] == 0
         assert rows[1]["position"] == 1
@@ -3057,13 +3107,17 @@ class TestSyncM2M:
         cache._loaded[FR] = True
 
         cfg = M2MConfig(
-            api_key="items", related_model=FR, through_model=FT,
-            parent_fk="prod", related_fk="rel",
+            api_key="items",
+            related_model=FR,
+            through_model=FT,
+            parent_fk="prod",
+            related_fk="rel",
         )
         _sync_m2m(
             SimpleNamespace(pk=1),
             {"items": [None, "", {}]},
-            cfg, cache,
+            cfg,
+            cache,
         )
         assert not bulk_called[0]
 
@@ -3103,8 +3157,11 @@ class TestSyncM2M:
         cache._loaded[FR] = True
 
         cfg = M2MConfig(
-            api_key="items", related_model=FR, through_model=FT,
-            parent_fk="prod", related_fk="rel",
+            api_key="items",
+            related_model=FR,
+            through_model=FT,
+            parent_fk="prod",
+            related_fk="rel",
         )
         _sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-miss"]}, cfg, cache)
         assert created_rows

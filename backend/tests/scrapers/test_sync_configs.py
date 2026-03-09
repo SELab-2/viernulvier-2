@@ -605,10 +605,14 @@ def test_make_progress_callback(monkeypatch, tqdm_installed, capsys):
 
 class TestIsNotLongterm:
     def test_normal_production_returns_true(self):
-        assert _is_not_longterm({"production": {"@id": "/api/v1/productions/123"}}) is True
+        assert (
+            _is_not_longterm({"production": {"@id": "/api/v1/productions/123"}}) is True
+        )
 
     def test_longterm_production_returns_false(self):
-        assert _is_not_longterm({"production": {"@id": "/api/v1/longterm/456"}}) is False
+        assert (
+            _is_not_longterm({"production": {"@id": "/api/v1/longterm/456"}}) is False
+        )
 
     def test_string_production_normal_returns_true(self):
         assert _is_not_longterm({"production": "/api/v1/productions/99"}) is True
