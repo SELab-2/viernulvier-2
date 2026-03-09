@@ -28,7 +28,6 @@ from apps.imports.scrapers.viernulvier import (
     TranslationConfig,
     _build_defaults,
     _discover_extra_pages,
-    _extract_external_id_from_url,
     _parse_field_value,
     _sync_all_translations,
     _sync_m2m,
