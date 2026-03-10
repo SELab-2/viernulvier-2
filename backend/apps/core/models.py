@@ -118,7 +118,7 @@ class BaseModel(models.Model):
         fallback=None,
     ):
         """
-        Returns the display name for the base language, falling 
+        Returns the display name for the base language, falling
         back to the first available translation or a provided default.
         """
         tr = self.get_base_translation(related_name=related_name)

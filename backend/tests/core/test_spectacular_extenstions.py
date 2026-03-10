@@ -15,7 +15,7 @@ def test_api_key_authentication_scheme_security_definition():
         "type": "apiKey",
         "in": "header",
         "name": "Authorization",
-        "description": "Use `Api-Key <KEY>` to authenticate.",
+        "description": "Use `Api-Key <Key>` to authenticate.",
     }
 
 

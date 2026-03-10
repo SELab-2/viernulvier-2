@@ -14,7 +14,7 @@ class EventPriceInline(admin.TabularInline):
     Inline for managing price tiers directly inside the Event change page.
 
     Editors can add, update, or remove ``EventPrice`` entries - specifying
-    the price rank, the price, the ticket amount, and the number of available seats - 
+    the price rank, the price, the ticket amount, and the number of available seats -
     without leaving the event form.
     """
 

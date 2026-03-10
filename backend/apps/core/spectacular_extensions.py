@@ -15,5 +15,5 @@ class ApiKeyAuthenticationScheme(OpenApiAuthenticationExtension):
             "type": "apiKey",
             "in": "header",
             "name": "Authorization",
-            "description": "Use `Api-Key <your_key>` to authenticate.",
+            "description": "Use `Api-Key <Key>` to authenticate.",
         }
