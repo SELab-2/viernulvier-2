@@ -27,14 +27,19 @@ from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
-from apps.languages.models import Language
 from apps.media_library.models import (
     MediaGallery,
     MediaItem,
-    MediaItemTranslation,
 )
 from apps.media_library.serializers import MediaGallerySerializer, MediaItemSerializer
 from apps.media_library.views import MediaGalleryViewSet, MediaItemViewSet
+from tests.factories.language import LanguageFactory
+from tests.factories.media_library import (
+    MediaGalleryFactory,
+    MediaItemCropFactory,
+    MediaItemFactory,
+    MediaItemTranslationFactory,
+)
 
 PUB_KEY = "pub-media-library-view-test-key"
 INT_KEY = "int-media-library-view-test-key"
@@ -46,40 +51,19 @@ INT_KEY = "int-media-library-view-test-key"
 
 
 def int_headers():
-    return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
+    return {"HTTP_X_API_KEY": INT_KEY}
 
 
 def pub_headers():
-    return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
+    return {"HTTP_X_API_KEY": PUB_KEY}
 
 
 def wrong_headers():
-    return {"HTTP_AUTHORIZATION": "Api-Key completely-wrong-key"}
+    return {"HTTP_X_API_KEY": "completely-wrong-key"}
 
 
-def make_gallery(name="Test Gallery"):
-    return MediaGallery.objects.create(name=name)
-
-
-def make_item(gallery, **kwargs):
-    defaults = {
-        "type": MediaItem.MediaItemType.IMAGE,
-        "format": "jpg",
-        "original_filename": "photo.jpg",
-        "position": 0,
-    }
-    defaults.update(kwargs)
-    return MediaItem.objects.create(gallery=gallery, **defaults)
-
-
-def make_language(code="nl", name="Dutch"):
-    return Language.objects.get_or_create(code=code, defaults={"name": name, "is_active": True})[0]
-
-
-def make_translation(media_item, language, **kwargs):
-    defaults = {"title": "Test", "description": "", "credits": "", "link": ""}
-    defaults.update(kwargs)
-    return MediaItemTranslation.objects.create(media_item=media_item, language=language, **defaults)
+def results_list(response):
+    return response.data.get("results", response.data)
 
 
 # ---------------------------------------------------------------------------
@@ -161,8 +145,8 @@ class TestMediaGalleryViewSetList(TestCase):
     def setUp(self):
         self.client = APIClient()
         MediaGallery.objects.all().delete()
-        self.gallery_a = make_gallery("Gallery A")
-        self.gallery_b = make_gallery("Gallery B")
+        self.gallery_a = MediaGalleryFactory.create(name="Gallery A")
+        self.gallery_b = MediaGalleryFactory.create(name="Gallery B")
 
     def test_list_with_public_key_returns_200(self):
         response = self.client.get("/api/media-galleries/", **pub_headers())
@@ -206,7 +190,7 @@ class TestMediaGalleryViewSetList(TestCase):
 class TestMediaGalleryViewSetDetail(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.gallery = make_gallery("Detail Gallery")
+        self.gallery = MediaGalleryFactory.create(name="Detail Gallery")
 
     def test_detail_with_public_key_returns_200(self):
         response = self.client.get(f"/api/media-galleries/{self.gallery.pk}/", **pub_headers())
@@ -233,8 +217,8 @@ class TestMediaGalleryViewSetDetail(TestCase):
         self.assertIsInstance(response.data["media_items"], list)
 
     def test_detail_nested_media_items_included(self):
-        make_item(self.gallery)
-        make_item(self.gallery, position=1, original_filename="b.jpg")
+        MediaItemFactory.create(gallery=self.gallery)
+        MediaItemFactory.create(gallery=self.gallery, position=1, original_filename="b.jpg")
         response = self.client.get(f"/api/media-galleries/{self.gallery.pk}/", **pub_headers())
         self.assertEqual(len(response.data["media_items"]), 2)
 
@@ -248,7 +232,7 @@ class TestMediaGalleryViewSetDetail(TestCase):
 class TestMediaGalleryViewSetWrite(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.gallery = make_gallery()
+        self.gallery = MediaGalleryFactory.create()
 
     def test_post_with_internal_key_returns_201(self):
         response = self.client.post(
@@ -341,9 +325,17 @@ class TestMediaItemViewSetList(TestCase):
     def setUp(self):
         self.client = APIClient()
         MediaItem.objects.all().delete()
-        self.gallery = make_gallery()
-        self.item_a = make_item(self.gallery, position=0, original_filename="a.jpg")
-        self.item_b = make_item(self.gallery, position=1, original_filename="b.jpg")
+        self.gallery = MediaGalleryFactory.create()
+        self.item_a = MediaItemFactory.create(
+            gallery=self.gallery,
+            position=0,
+            original_filename="a.jpg",
+        )
+        self.item_b = MediaItemFactory.create(
+            gallery=self.gallery,
+            position=1,
+            original_filename="b.jpg",
+        )
 
     def test_list_with_public_key_returns_200(self):
         response = self.client.get("/api/media-items/", **pub_headers())
@@ -400,8 +392,11 @@ class TestMediaItemViewSetList(TestCase):
 class TestMediaItemViewSetDetail(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.gallery = make_gallery()
-        self.item = make_item(self.gallery, original_filename="detail.jpg")
+        self.gallery = MediaGalleryFactory.create()
+        self.item = MediaItemFactory.create(
+            gallery=self.gallery,
+            original_filename="detail.jpg",
+        )
 
     def test_detail_with_public_key_returns_200(self):
         response = self.client.get(f"/api/media-items/{self.item.pk}/", **pub_headers())
@@ -428,8 +423,12 @@ class TestMediaItemViewSetDetail(TestCase):
         self.assertIsInstance(response.data["crops"], list)
 
     def test_detail_translated_title_is_dict(self):
-        language = make_language("nl")
-        make_translation(self.item, language, title="NL Titel")
+        language = LanguageFactory.create(code="nl")
+        MediaItemTranslationFactory.create(
+            media_item=self.item,
+            language=language,
+            title="NL Titel",
+        )
         response = self.client.get(f"/api/media-items/{self.item.pk}/", **pub_headers())
         self.assertIsInstance(response.data["title"], dict)
         self.assertEqual(response.data["title"]["nl"], "NL Titel")
@@ -444,8 +443,8 @@ class TestMediaItemViewSetDetail(TestCase):
 class TestMediaItemViewSetWrite(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.gallery = make_gallery()
-        self.item = make_item(self.gallery)
+        self.gallery = MediaGalleryFactory.create()
+        self.item = MediaItemFactory.create(gallery=self.gallery)
 
     def test_post_with_internal_key_returns_201(self):
         response = self.client.post(
@@ -514,3 +513,59 @@ class TestMediaItemViewSetWrite(TestCase):
     def test_delete_without_auth_returns_401_or_403(self):
         response = self.client.delete(f"/api/media-items/{self.item.pk}/")
         self.assertIn(response.status_code, (401, 403))
+
+
+# ---------------------------------------------------------------------------
+# N+1 guards — queryset prefetches
+# ---------------------------------------------------------------------------
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestMediaGalleryViewSetPrefetch(TestCase):
+    """Ensure gallery list stays bounded in query count when nested data grows."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.lang_nl = LanguageFactory.create(code="nl", name="Dutch")
+        self.lang_en = LanguageFactory.create(code="en", name="English")
+
+        for g in range(3):
+            gallery = MediaGalleryFactory(name=f"Gallery {g}")
+            for i in range(3):
+                item = MediaItemFactory(gallery=gallery, position=i)
+                MediaItemTranslationFactory(media_item=item, language=self.lang_nl, title=f"NL {g}-{i}")
+                MediaItemTranslationFactory(media_item=item, language=self.lang_en, title=f"EN {g}-{i}")
+                MediaItemCropFactory(media_item=item, name=f"crop_{g}_{i}_1")
+                MediaItemCropFactory(media_item=item, name=f"crop_{g}_{i}_2")
+
+    def test_gallery_list_prefetches_nested_relations(self):
+        with self.assertNumQueries(6):
+            response = self.client.get("/api/media-galleries/", **pub_headers())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(results_list(response)), 3)
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestMediaItemViewSetPrefetch(TestCase):
+    """Ensure media item list remains bounded in queries with translations and crops."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.lang_nl = LanguageFactory.create(code="nl", name="Dutch")
+        self.lang_en = LanguageFactory.create(code="en", name="English")
+        self.gallery = MediaGalleryFactory(name="Prefetch Gallery")
+
+        for i in range(6):
+            item = MediaItemFactory(gallery=self.gallery, position=i)
+            MediaItemTranslationFactory(media_item=item, language=self.lang_nl, title=f"NL {i}")
+            MediaItemTranslationFactory(media_item=item, language=self.lang_en, title=f"EN {i}")
+            MediaItemCropFactory(media_item=item, name=f"crop_{i}_a")
+            MediaItemCropFactory(media_item=item, name=f"crop_{i}_b")
+
+    def test_item_list_prefetches_related_models(self):
+        with self.assertNumQueries(5):
+            response = self.client.get("/api/media-items/", **pub_headers())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(results_list(response)), 6)

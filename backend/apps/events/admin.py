@@ -12,6 +12,8 @@ the list and detail pages free of N+1 queries.
 """
 
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
 
 from apps.core.admin import BaseAdmin
 
@@ -33,9 +35,13 @@ class EventPriceInline(admin.TabularInline):
 
     model = EventPrice
     extra = 0
-    autocomplete_fields = ("price_rank",)
-    fields = ("price_rank", "amount", "available")
+    autocomplete_fields = ("price_rank", "price")
+    fields = ("price_rank", "price", "amount", "available")
     ordering = ("price_rank__position",)
+    show_change_link = False
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("price_rank", "price")
 
 
 # ===========================================================================
@@ -70,11 +76,7 @@ class EventAdmin(BaseAdmin):
         "ends_at",
     )
 
-    list_filter = (
-        "hall",
-        "production",
-        "starts_at",
-    )
+    list_filter = ("starts_at",)
 
     search_fields = (
         "id",
@@ -84,15 +86,25 @@ class EventAdmin(BaseAdmin):
     )
 
     autocomplete_fields = ("production", "hall")
-
     ordering = ("-starts_at",)
-
     date_hierarchy = "starts_at"
 
     inlines = [EventPriceInline]
+    readonly_fields = ("production_admin_link",)
+
+    @admin.display(description="Production details")
+    def production_admin_link(self, obj):
+        """Return a link to the related Production admin change page."""
+        if not obj or not obj.production_id:
+            return "-"
+
+        url = reverse("admin:productions_production_change", args=[obj.production_id])
+        translation = obj.production.get_base_translation(related_name="translations")
+        artist_name = (getattr(translation, "artist_name", "") or "").strip()
+        label = f"{obj.production} by {artist_name}" if artist_name else str(obj.production)
+        return format_html('<a href="{}">{}</a>', url, label)
 
     def get_queryset(self, request):
-        """Optimise the queryset with select_related and prefetch_related."""
         return (
             super()
             .get_queryset(request)
@@ -105,6 +117,5 @@ class EventAdmin(BaseAdmin):
             .prefetch_related(
                 "production__translations",
                 "hall__translations",
-                "prices",
             )
         )

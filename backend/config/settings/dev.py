@@ -1,7 +1,14 @@
 import os
 
-from .base import *  # noqa: F403
-from .base import INSTALLED_APPS, MIDDLEWARE, REST_FRAMEWORK
+from . import base as base_settings
+
+for setting_name in dir(base_settings):
+    if setting_name.isupper():
+        globals()[setting_name] = getattr(base_settings, setting_name)
+
+REST_FRAMEWORK = globals().get("REST_FRAMEWORK", {})
+INSTALLED_APPS = list(globals().get("INSTALLED_APPS", []))
+MIDDLEWARE = list(globals().get("MIDDLEWARE", []))
 
 DEBUG = True
 ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "").split(",") if host.strip()]

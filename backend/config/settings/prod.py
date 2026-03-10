@@ -1,7 +1,15 @@
 import os
 
-from .base import *  # noqa: F403, F401
-from .base import REST_FRAMEWORK
+from . import base as base_settings
+
+for setting_name in dir(base_settings):
+    if setting_name.isupper():
+        globals()[setting_name] = getattr(base_settings, setting_name)
+
+REST_FRAMEWORK = globals().get("REST_FRAMEWORK", {})
+
+DEBUG = False
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 DEBUG = False
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")

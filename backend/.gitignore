@@ -4,7 +4,6 @@ venv/
 .env
 
 *__pycache__
-*migrations
 .pytest_cache
 
 .idea/

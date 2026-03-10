@@ -116,10 +116,6 @@ class Price(BaseModel):
         ordering = ["sort_order", "id"]
         constraints = [
             models.CheckConstraint(
-                condition=(Q(minimum__isnull=True, maximum__isnull=True) | Q(minimum__isnull=False, maximum__isnull=False)),
-                name="price_min_max_both_null_or_both_set",
-            ),
-            models.CheckConstraint(
                 condition=(Q(minimum__isnull=True, maximum__isnull=True) | Q(minimum__lte=F("maximum"))),
                 name="price_min_lte_max",
             ),

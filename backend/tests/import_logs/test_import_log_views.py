@@ -30,6 +30,7 @@ from apps.core.views import ApiModelViewSet, ApiReadOnlyViewSet
 from apps.import_log.models import ImportLog
 from apps.import_log.serializers import ImportLogSerializer
 from apps.import_log.views import ImportLogViewSet
+from tests.factories.import_log import ImportLogFactory
 
 PUB_KEY = "pub-import-log-view-test-key"
 INT_KEY = "int-import-log-view-test-key"
@@ -41,15 +42,15 @@ INT_KEY = "int-import-log-view-test-key"
 
 
 def int_headers():
-    return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
+    return {"HTTP_X_API_KEY": INT_KEY}
 
 
 def pub_headers():
-    return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
+    return {"HTTP_X_API_KEY": PUB_KEY}
 
 
 def wrong_headers():
-    return {"HTTP_AUTHORIZATION": "Api-Key completely-wrong-key"}
+    return {"HTTP_X_API_KEY": "completely-wrong-key"}
 
 
 def make_import_log(**kwargs):
@@ -59,9 +60,14 @@ def make_import_log(**kwargs):
         "records_total": 10,
         "records_imported": 10,
         "records_failed": 0,
+        "started_at": None,
+        "finished_at": None,
+        "error_message": None,
     }
     defaults.update(kwargs)
-    return ImportLog.objects.create(**defaults)
+    log = ImportLogFactory.build(**defaults)
+    log.save()
+    return log
 
 
 def make_finished_log(source="finished.json", duration_seconds=60, **kwargs):

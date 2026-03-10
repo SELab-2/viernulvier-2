@@ -3,9 +3,9 @@ Comprehensive tests for apps/pricing/admin.py
 
 Covers:
 - Admin registration for pricing models
-- Admin inheritance (BaseAdmin / ModelAdmin) where applicable
-- list_display/list_filter/search_fields/ordering basic configuration
-- Inline presence (without overly strict assumptions)
+- Admin inheritance (BaseAdmin / ModelAdmin)
+- list_display/list_filter/search_fields/ordering configuration
+- Inline presence
 - get_queryset optimisation on translation admins (select_related)
 - Functional admin changelist + changeform (superuser)
 """
@@ -17,7 +17,6 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
-from apps.languages.models import Language
 from apps.pricing.admin import (
     PriceAdmin,
     PriceRankAdmin,
@@ -25,6 +24,13 @@ from apps.pricing.admin import (
     PriceTranslationAdmin,
 )
 from apps.pricing.models import Price, PriceRank, PriceRankTranslation, PriceTranslation
+from tests.factories.language import LanguageFactory
+from tests.factories.pricing import (
+    PriceFactory,
+    PriceRankFactory,
+    PriceRankTranslationFactory,
+    PriceTranslationFactory,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -50,23 +56,18 @@ def admin_change_url(model, pk):
 
 class TestPricingAdminRegistration(TestCase):
     def test_price_is_registered(self):
-        """Test case for test_price_is_registered."""
         self.assertIn(Price, admin.site._registry)
 
     def test_price_rank_is_registered(self):
-        """Test case for test_price_rank_is_registered."""
         self.assertIn(PriceRank, admin.site._registry)
 
     def test_price_translation_is_registered(self):
-        """Test case for test_price_translation_is_registered."""
         self.assertIn(PriceTranslation, admin.site._registry)
 
     def test_price_rank_translation_is_registered(self):
-        """Test case for test_price_rank_translation_is_registered."""
         self.assertIn(PriceRankTranslation, admin.site._registry)
 
     def test_registered_admin_classes(self):
-        """Test case for test_registered_admin_classes."""
         self.assertIsInstance(admin.site._registry[Price], PriceAdmin)
         self.assertIsInstance(admin.site._registry[PriceRank], PriceRankAdmin)
         self.assertIsInstance(admin.site._registry[PriceTranslation], PriceTranslationAdmin)
@@ -74,28 +75,31 @@ class TestPricingAdminRegistration(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Inheritance (mirrors production admin tests style)
+# Inheritance
 # ---------------------------------------------------------------------------
 
 
 class TestPricingAdminInheritance(TestCase):
-    admins = [PriceAdmin, PriceRankAdmin, PriceTranslationAdmin, PriceRankTranslationAdmin]
+    admins = [
+        PriceAdmin,
+        PriceRankAdmin,
+        PriceTranslationAdmin,
+        PriceRankTranslationAdmin,
+    ]
 
     def test_admins_inherit_from_base_admin_if_used(self):
-        """Test case for test_admins_inherit_from_base_admin_if_used."""
         for admin_class in self.admins:
             with self.subTest(admin_class=admin_class.__name__):
                 self.assertTrue(issubclass(admin_class, BaseAdmin))
 
     def test_admins_inherit_from_model_admin(self):
-        """Test case for test_admins_inherit_from_model_admin."""
         for admin_class in self.admins:
             with self.subTest(admin_class=admin_class.__name__):
                 self.assertTrue(issubclass(admin_class, admin.ModelAdmin))
 
 
 # ---------------------------------------------------------------------------
-# Configuration (extends your existing config tests)
+# Configuration
 # ---------------------------------------------------------------------------
 
 
@@ -103,42 +107,75 @@ class TestPricingAdminConfiguration(TestCase):
     def setUp(self):
         self.site = AdminSite()
 
-    def test_price_admin_configuration(self):
-        """Test case for test_price_admin_configuration."""
+    def test_price_admin_list_filter_contains_type(self):
         admin_obj = PriceAdmin(Price, self.site)
-
         self.assertIn("type", admin_obj.list_filter)
+
+    def test_price_admin_list_filter_contains_visibility(self):
+        admin_obj = PriceAdmin(Price, self.site)
         self.assertIn("visibility", admin_obj.list_filter)
-        self.assertIn("membership", admin_obj.list_filter)
+
+    def test_price_admin_list_filter_contains_cineville_box(self):
+        admin_obj = PriceAdmin(Price, self.site)
         self.assertIn("cineville_box", admin_obj.list_filter)
 
+    def test_price_admin_list_filter_does_not_contain_membership(self):
+        """membership was removed from PriceAdmin.list_filter."""
+        admin_obj = PriceAdmin(Price, self.site)
+        self.assertNotIn("membership", admin_obj.list_filter)
+
+    def test_price_admin_search_fields_contains_id(self):
+        admin_obj = PriceAdmin(Price, self.site)
         self.assertIn("id", admin_obj.search_fields)
+
+    def test_price_admin_ordering(self):
+        admin_obj = PriceAdmin(Price, self.site)
         self.assertEqual(admin_obj.ordering, ("sort_order", "id"))
 
-        # Inlines should exist (not necessarily strict count)
+    def test_price_admin_has_inlines(self):
+        admin_obj = PriceAdmin(Price, self.site)
         self.assertTrue(admin_obj.inlines)
 
-    def test_price_rank_admin_configuration(self):
-        """Test case for test_price_rank_admin_configuration."""
+    def test_price_rank_admin_ordering(self):
         admin_obj = PriceRankAdmin(PriceRank, self.site)
-
         self.assertEqual(admin_obj.ordering, ("position", "id"))
+
+    def test_price_rank_admin_search_fields_contains_id(self):
+        admin_obj = PriceRankAdmin(PriceRank, self.site)
         self.assertIn("id", admin_obj.search_fields)
+
+    def test_price_rank_admin_search_fields_contains_position(self):
+        admin_obj = PriceRankAdmin(PriceRank, self.site)
         self.assertIn("position", admin_obj.search_fields)
+
+    def test_price_rank_admin_has_inlines(self):
+        admin_obj = PriceRankAdmin(PriceRank, self.site)
         self.assertTrue(admin_obj.inlines)
+
+    def test_price_translation_admin_list_filter_uses_language_code(self):
+        """list_filter uses 'language__code', not 'language'."""
+        admin_obj = PriceTranslationAdmin(PriceTranslation, self.site)
+        self.assertIn("language__code", admin_obj.list_filter)
+        self.assertNotIn("language", admin_obj.list_filter)
+
+    def test_price_rank_translation_admin_list_filter_uses_language_code(self):
+        """list_filter uses 'language__code', not 'language'."""
+        admin_obj = PriceRankTranslationAdmin(PriceRankTranslation, self.site)
+        self.assertIn("language__code", admin_obj.list_filter)
+        self.assertNotIn("language", admin_obj.list_filter)
 
 
 # ---------------------------------------------------------------------------
-# Queryset optimization (keeps your existing idea, but structured like production)
+# Queryset optimisation
 # ---------------------------------------------------------------------------
 
 
 class TestPricingTranslationAdminGetQueryset(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.lang = Language.objects.create(code="en", name="English")
+        cls.lang = LanguageFactory.create(code="en", name="English")
 
-        cls.price = Price.objects.create(
+        cls.price = PriceFactory.create(
             type="Standard",
             visibility="public",
             membership="",
@@ -148,17 +185,16 @@ class TestPricingTranslationAdminGetQueryset(TestCase):
             sort_order=0,
             cineville_box=False,
         )
-        cls.rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+        cls.rank = PriceRankFactory.create(position=1, sold_out_buffer=0)
 
-        cls.price_tr = PriceTranslation.objects.create(price=cls.price, language=cls.lang, description="Standard ticket")
-        cls.rank_tr = PriceRankTranslation.objects.create(price_rank=cls.rank, language=cls.lang, description="First rank")
+        cls.price_tr = PriceTranslationFactory.create(price=cls.price, language=cls.lang, description="Standard ticket")
+        cls.rank_tr = PriceRankTranslationFactory.create(price_rank=cls.rank, language=cls.lang, description="First rank")
 
     def setUp(self):
         self.site = AdminSite()
         self.factory = RequestFactory()
 
     def test_price_translation_admin_select_related(self):
-        """Test case for test_price_translation_admin_select_related."""
         admin_obj = PriceTranslationAdmin(PriceTranslation, self.site)
         request = self.factory.get("/admin/")
         qs = admin_obj.get_queryset(request)
@@ -169,7 +205,6 @@ class TestPricingTranslationAdminGetQueryset(TestCase):
             _ = obj.language.code
 
     def test_price_rank_translation_admin_select_related(self):
-        """Test case for test_price_rank_translation_admin_select_related."""
         admin_obj = PriceRankTranslationAdmin(PriceRankTranslation, self.site)
         request = self.factory.get("/admin/")
         qs = admin_obj.get_queryset(request)
@@ -190,8 +225,8 @@ class TestPricingAdminChangelists(TestCase):
         self.superuser = make_superuser("pricing_admin")
         self.client.force_login(self.superuser)
 
-        self.lang = Language.objects.create(code="nl", name="Dutch")
-        self.price = Price.objects.create(
+        self.lang = LanguageFactory.create(code="nl", name="Dutch")
+        self.price = PriceFactory.create(
             type="Student",
             visibility="public",
             membership="",
@@ -201,49 +236,58 @@ class TestPricingAdminChangelists(TestCase):
             sort_order=1,
             cineville_box=False,
         )
-        self.rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
+        self.rank = PriceRankFactory.create(position=1, sold_out_buffer=0)
 
-        self.price_tr = PriceTranslation.objects.create(price=self.price, language=self.lang, description="Student ticket")
-        self.rank_tr = PriceRankTranslation.objects.create(
-            price_rank=self.rank, language=self.lang, description="First rank"
-        )
+        self.price_tr = PriceTranslationFactory.create(price=self.price, language=self.lang, description="Student ticket")
+        self.rank_tr = PriceRankTranslationFactory.create(price_rank=self.rank, language=self.lang, description="First rank")
 
     def test_price_changelist_returns_200(self):
-        """Test case for test_price_changelist_returns_200."""
-        response = self.client.get(admin_changelist_url(Price))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(admin_changelist_url(Price)).status_code, 200)
 
     def test_price_changeform_returns_200(self):
-        """Test case for test_price_changeform_returns_200."""
-        response = self.client.get(admin_change_url(Price, self.price.pk))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(admin_change_url(Price, self.price.pk)).status_code, 200)
+
+    def test_price_changelist_filter_by_type(self):
+        url = admin_changelist_url(Price)
+        self.assertEqual(self.client.get(url, {"type": "Student"}).status_code, 200)
+
+    def test_price_changelist_filter_by_cineville_box(self):
+        url = admin_changelist_url(Price)
+        self.assertEqual(self.client.get(url, {"cineville_box": "0"}).status_code, 200)
 
     def test_price_translation_changelist_returns_200(self):
-        """Test case for test_price_translation_changelist_returns_200."""
-        response = self.client.get(admin_changelist_url(PriceTranslation))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(admin_changelist_url(PriceTranslation)).status_code, 200)
 
     def test_price_translation_changeform_returns_200(self):
-        """Test case for test_price_translation_changeform_returns_200."""
-        response = self.client.get(admin_change_url(PriceTranslation, self.price_tr.pk))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self.client.get(admin_change_url(PriceTranslation, self.price_tr.pk)).status_code,
+            200,
+        )
+
+    def test_price_translation_changelist_filter_by_language_code(self):
+        """Changelist filter must use language__code lookup."""
+        url = admin_changelist_url(PriceTranslation)
+        self.assertEqual(self.client.get(url, {"language__code": "nl"}).status_code, 200)
 
     def test_price_rank_changelist_returns_200(self):
-        """Test case for test_price_rank_changelist_returns_200."""
-        response = self.client.get(admin_changelist_url(PriceRank))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(admin_changelist_url(PriceRank)).status_code, 200)
 
     def test_price_rank_changeform_returns_200(self):
-        """Test case for test_price_rank_changeform_returns_200."""
-        response = self.client.get(admin_change_url(PriceRank, self.rank.pk))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get(admin_change_url(PriceRank, self.rank.pk)).status_code, 200)
 
     def test_price_rank_translation_changelist_returns_200(self):
-        """Test case for test_price_rank_translation_changelist_returns_200."""
-        response = self.client.get(admin_changelist_url(PriceRankTranslation))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self.client.get(admin_changelist_url(PriceRankTranslation)).status_code,
+            200,
+        )
 
     def test_price_rank_translation_changeform_returns_200(self):
-        """Test case for test_price_rank_translation_changeform_returns_200."""
-        response = self.client.get(admin_change_url(PriceRankTranslation, self.rank_tr.pk))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self.client.get(admin_change_url(PriceRankTranslation, self.rank_tr.pk)).status_code,
+            200,
+        )
+
+    def test_price_rank_translation_changelist_filter_by_language_code(self):
+        """Changelist filter must use language__code lookup."""
+        url = admin_changelist_url(PriceRankTranslation)
+        self.assertEqual(self.client.get(url, {"language__code": "nl"}).status_code, 200)

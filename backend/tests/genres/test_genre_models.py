@@ -44,15 +44,29 @@ class TestGenre:
 
     def test_str_representation_contains_translations(self):
         genre = GenreFactory(type="Festival")
-        GenreTranslationFactory(genre=genre, language__code="en", name="Festival")
-        GenreTranslationFactory(genre=genre, language__code="nl", name="Festival NL")
+        GenreTranslationFactory(genre=genre, language__code="en", name="EN Festival")
+        GenreTranslationFactory(genre=genre, language__code="nl", name="NL Festival")
 
-        assert str(genre) == "Festival"
+        assert str(genre) == "EN Festival (Festival)"
+
+    def test_str_uses_vendor_id_when_translation_missing(self):
+        genre = GenreFactory(type="theater", vendor_id="opera")
+
+        assert str(genre) == "opera"
+
+    def test_str_falls_back_to_type_when_translation_and_vendor_id_blank(self):
+        genre = GenreFactory(type="theater", vendor_id="")
+
+        assert str(genre) == "theater"
+
+    def test_str_falls_back_to_type_when_translation_and_vendor_id_none(self):
+        genre = GenreFactory(type="theater", vendor_id=None)
+
+        assert str(genre) == "theater"
 
     def test_delete_cascades_to_translations(self):
         genre = GenreFactory()
-        # Create 2 translations for the genre
-        GenreTranslationFactory.create_batch(2, genre=genre)
+        GenreTranslationFactory.create_batch(2, genre=genre)  # Create 2 translations for the genre
 
         genre.delete()  # Delete the genre, which should cascade to the translations
 

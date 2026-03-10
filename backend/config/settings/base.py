@@ -51,6 +51,7 @@ LOCAL_APPS = [
     "apps.events",
     "apps.genres",
     "apps.import_log",
+    "apps.imports",
     "apps.tags",
     "apps.pricing",
     "apps.locations",
@@ -93,22 +94,17 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.environ.get("DB_NAME", "viernulvier_archief"),
-#         "USER": os.environ.get("DB_USER", "postgres"),
-#         "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-#         "HOST": os.environ.get("DB_HOST", "localhost"),
-#         "PORT": os.environ.get("DB_PORT", "5432"),
-#     }
-# }
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("DB_NAME", "viernulvier_archief"),
+        "USER": os.environ.get("DB_USER", "postgres"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -193,6 +189,17 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": r"/api/",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    "SECURITY": [{"ApiKey": []}],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "ApiKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-API-Key",
+                "description": "Use the `X-API-Key` header to authenticate.",
+            }
+        }
+    },
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,
         "displayOperationId": False,
@@ -206,7 +213,10 @@ SPECTACULAR_SETTINGS = {
         "defaultModelsExpandDepth": 0,  # TODO Shows the ‘Models’ section at the bottom for a cleaner look (to hide put -1)
     },
     "TAGS": [
-        {"name": "Productions", "description": "Production management and translations."},
+        {
+            "name": "Productions",
+            "description": "Production management and translations.",
+        },
         {"name": "Events", "description": "Event instances and pricing information."},
         {"name": "Media", "description": "Media galleries, items and crops."},
         {"name": "Locations", "description": "Locations, halls and spaces."},
