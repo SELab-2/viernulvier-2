@@ -55,13 +55,13 @@ RESPONSE_401 = OpenApiResponse(
         "**Unauthorized** — No API key was provided or the key is invalid.\n\n"
         "Include your key in every request:\n"
         "```\n"
-        "Authorization: Api-Key <your_key>\n"
+        "X-API-Key: <your_key>\n"
         "```"
     )
 )
 """
-Returned when the ``Authorization`` header is absent, malformed, or contains
-an unrecognised key. The ``WWW-Authenticate: Api-Key`` header is included
+Returned when the ``X-API-Key`` header is absent or contains an unrecognised
+key. The ``WWW-Authenticate: X-API-Key`` header is included
 in the response so clients know which scheme to use.
 """
 

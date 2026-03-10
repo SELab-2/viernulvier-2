@@ -1,6 +1,6 @@
 # API Overview
 
-This backend exposes a **RESTful API** built with **Django REST Framework (DRF)**.  
+This backend exposes a **RESTful API** built with **Django REST Framework (DRF)**.
 It provides endpoints for interacting with the application's data and supports full CRUD operations.
 
 ---
@@ -9,10 +9,10 @@ It provides endpoints for interacting with the application's data and supports f
 
 Two interactive documentation interfaces are available:
 
-| Interface | URL | Description |
-|-----------|-----|-------------|
-| **Swagger (OpenAPI)** | [/api/docs/](https://sel2-2.ugent.be/api/docs/) | Interactive docs with request/response examples |
-| **Redoc** | [/api/redoc/](https://sel2-2.ugent.be/api/redoc/) | Structured, readable endpoint reference |
+| Interface             | URL                                               | Description                                     |
+| --------------------- | ------------------------------------------------- | ----------------------------------------------- |
+| **Swagger (OpenAPI)** | [/api/docs/](https://sel2-2.ugent.be/api/docs/)   | Interactive docs with request/response examples |
+| **Redoc**             | [/api/redoc/](https://sel2-2.ugent.be/api/redoc/) | Structured, readable endpoint reference         |
 
 ---
 
@@ -22,7 +22,7 @@ Every incoming request passes through the following pipeline:
 
 ```mermaid
 flowchart TD
-    A([Incoming Request]) --> B{Authorization
+    A([Incoming Request]) --> B{X-API-Key
     Header present?}
 
     B -- No --> C([HTTP 401 Unauthorized])
@@ -62,18 +62,18 @@ flowchart TD
 
 ### Header Format
 
-All requests **must** include an `Authorization` header:
+All requests **must** include an `X-API-Key` header:
 
 ```
-Authorization: Api-Key <YOUR_KEY>
+X-API-Key: <YOUR_KEY>
 ```
 
 ### Supported Key Types
 
-| Key | `request.auth` value | Access Level |
-|-----|----------------------|--------------|
-| `INTERNAL_API_KEY` | `"internal"` | Full CRUD access |
-| `PUBLIC_API_KEY` | `"public"` | Read-only access |
+| Key                | `request.auth` value | Access Level     |
+| ------------------ | -------------------- | ---------------- |
+| `INTERNAL_API_KEY` | `"internal"`         | Full CRUD access |
+| `PUBLIC_API_KEY`   | `"public"`           | Read-only access |
 
 > Key comparisons use `secrets.compare_digest` to prevent **timing attacks**.
 
@@ -85,12 +85,12 @@ Works in tandem with `ApiKeyAuthentication` to enforce access control based on t
 
 ### Access Matrix
 
-| `request.auth` | Allowed Methods | Result |
-|----------------|-----------------|--------|
-| `"internal"` | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS` | ✅ Allowed |
-| `"public"` | `GET`, `HEAD`, `OPTIONS` | ✅ Allowed |
-| `"public"` | `POST`, `PUT`, `PATCH`, `DELETE` | ❌ HTTP 403 |
-| `None` (unauthenticated) | Any | ❌ HTTP 401 |
+| `request.auth`           | Allowed Methods                                            | Result      |
+| ------------------------ | ---------------------------------------------------------- | ----------- |
+| `"internal"`             | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS` | ✅ Allowed  |
+| `"public"`               | `GET`, `HEAD`, `OPTIONS`                                   | ✅ Allowed  |
+| `"public"`               | `POST`, `PUT`, `PATCH`, `DELETE`                           | ❌ HTTP 403 |
+| `None` (unauthenticated) | Any                                                        | ❌ HTTP 401 |
 
 > Safe methods are defined as `GET`, `HEAD`, and `OPTIONS`.
 
@@ -102,12 +102,13 @@ Works in tandem with `ApiKeyAuthentication` to enforce access control based on t
 
 Rate limiting is applied to all requests authenticated with a `PUBLIC_API_KEY`.
 
-| Throttle Class | Scope |
-|----------------|-------|
+| Throttle Class            | Scope                                    |
+| ------------------------- | ---------------------------------------- |
 | `PublicKeyMinuteThrottle` | Max X requests **per minute** per client |
-| `PublicKeyHourThrottle` | Max X requests **per hour** per client |
+| `PublicKeyHourThrottle`   | Max X requests **per hour** per client   |
 
 **Client identification:**
+
 - Clients are identified by a combination of **IP address + User-Agent**.
 - A `SHA-256` hash of this combination is used as the cache key - raw IPs and user agents are never stored.
 - Built on DRF's `SimpleRateThrottle` using `get_ident()` for IP resolution.
@@ -120,12 +121,12 @@ Rate limiting is applied to all requests authenticated with a `PUBLIC_API_KEY`.
 
 ## Summary
 
-| Aspect | Internal Key | Public Key |
-|--------|-------------|------------|
-| **HTTP Methods** | All (CRUD) | Read-only (`GET`, `HEAD`, `OPTIONS`) |
-| **Rate Limiting** | None | Per-minute & per-hour |
-| **`request.auth`** | `"internal"` | `"public"` |
-| **Use case** | Server-to-server / admin | Third-party / external clients |
+| Aspect             | Internal Key             | Public Key                           |
+| ------------------ | ------------------------ | ------------------------------------ |
+| **HTTP Methods**   | All (CRUD)               | Read-only (`GET`, `HEAD`, `OPTIONS`) |
+| **Rate Limiting**  | None                     | Per-minute & per-hour                |
+| **`request.auth`** | `"internal"`             | `"public"`                           |
+| **Use case**       | Server-to-server / admin | Third-party / external clients       |
 
 - All requests **must** include a valid API key.
 - Unauthenticated requests receive **HTTP 401**.

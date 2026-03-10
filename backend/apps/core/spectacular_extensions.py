@@ -3,7 +3,7 @@ from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
 class ApiKeyAuthenticationScheme(OpenApiAuthenticationExtension):
     """
-    OpenAPI extension for drf-spectacular to document Api-Key auth.
+    OpenAPI extension for drf-spectacular to document X-API-Key auth.
     """
 
     target_class = "apps.core.authentications.ApiKeyAuthentication"
@@ -14,6 +14,6 @@ class ApiKeyAuthenticationScheme(OpenApiAuthenticationExtension):
         return {
             "type": "apiKey",
             "in": "header",
-            "name": "Authorization",
-            "description": "Use `Api-Key <KEY>` to authenticate.",
+            "name": "X-API-Key",
+            "description": "Use the `X-API-Key` header to authenticate.",
         }
