@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next'
 
 const NAV_LINKS = [
   { labelKey: 'nav.home', to: '/' },
-  { labelKey: 'nav.events', to: '/events' },
-  { labelKey: 'nav.productions', to: '/productions' },
+  { labelKey: 'nav.events', to: '/series' },
+  { labelKey: 'nav.productions', to: '/artists' },
 ] as const
 
 const Navbar = () => {
@@ -16,13 +16,13 @@ const Navbar = () => {
     i18n.changeLanguage(language)
   }
 
-/**
- * Checks if the current route matches the given route.
- *
- * @param {string} to - The route to check.
- *
- * @returns {boolean} - True if the current route matches the given route, false otherwise.
- */
+  /**
+   * Checks if the current route matches the given route.
+   *
+   * @param {string} to - The route to check.
+   *
+   * @returns {boolean} - True if the current route matches the given route, false otherwise.
+   */
   const isActive = (to: string) =>
     to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
 

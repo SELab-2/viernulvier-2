@@ -1,9 +1,9 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import HomePage from './pages/HomePage'
-import EventsPage from './pages/EventsPage'
-import EventDetailPage from './pages/EventDetailPage'
-import ProductionsPage from './pages/ProductionsPage'
-import ProductionDetailPage from './pages/ProductionDetailPage'
+import SeriesPage from './pages/SeriesPage'
+import SeriesDetailPage from './pages/SeriesDetailPage'
+import ArtistsPage from './pages/ArtistsPage'
+import ArtistDetailPage from './pages/ArtistDetailPage'
 import Navbar from './components/Navbar'
 
 const Router = () => {
@@ -12,10 +12,14 @@ const Router = () => {
       <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/events" element={<EventsPage />} />
-        <Route path="/events/:id" element={<EventDetailPage />} />
-        <Route path="/productions" element={<ProductionsPage />} />
-        <Route path="/productions/:id" element={<ProductionDetailPage />} />
+        <Route path="/series" element={<SeriesPage />} />
+        <Route path="/series/:id" element={<SeriesDetailPage />} />
+        <Route path="/artists" element={<ArtistsPage />} />
+        <Route path="/artists/:id" element={<ArtistDetailPage />} />
+        <Route path="/events" element={<Navigate to="/series" replace />} />
+        <Route path="/events/:id" element={<Navigate to="/series" replace />} />
+        <Route path="/productions" element={<Navigate to="/artists" replace />} />
+        <Route path="/productions/:id" element={<Navigate to="/artists" replace />} />
       </Routes>
     </BrowserRouter>
   )
