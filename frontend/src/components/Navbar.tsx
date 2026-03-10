@@ -1,4 +1,13 @@
-import { AppBar, Toolbar, Button, Stack, Box, Typography, IconButton, Container } from '@mui/material'
+import {
+  AppBar,
+  Toolbar,
+  Button,
+  Stack,
+  Box,
+  Typography,
+  IconButton,
+  Container,
+} from '@mui/material'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
@@ -174,10 +183,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             </Box>
 
             {/* Language switcher */}
-            <Box
-              component="li"
-              sx={{ pl: 2, ml: 1 }}
-            >
+            <Box component="li" sx={{ pl: 2, ml: 1 }}>
               <Button
                 size="small"
                 color="inherit"
