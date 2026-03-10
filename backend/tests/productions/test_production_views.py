@@ -43,15 +43,15 @@ INT_KEY = "int-production-view-test-key"
 
 
 def int_headers():
-    return {"HTTP_AUTHORIZATION": f"Api-Key {INT_KEY}"}
+    return {"HTTP_X_API_KEY": INT_KEY}
 
 
 def pub_headers():
-    return {"HTTP_AUTHORIZATION": f"Api-Key {PUB_KEY}"}
+    return {"HTTP_X_API_KEY": PUB_KEY}
 
 
 def wrong_headers():
-    return {"HTTP_AUTHORIZATION": "Api-Key completely-wrong-key"}
+    return {"HTTP_X_API_KEY": "completely-wrong-key"}
 
 
 # ---------------------------------------------------------------------------
