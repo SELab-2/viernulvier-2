@@ -13,13 +13,14 @@ from django.test import TestCase
 
 from apps.languages.models import Language
 from apps.languages.serializers import LanguageSerializer
+from tests.factories.language import LanguageFactory
 
 
 class TestLanguageSerializerFields(TestCase):
     """Verify that the correct fields are exposed."""
 
     def setUp(self):
-        self.lang = Language(code="nl", name="Dutch", is_active=True)
+        self.lang = LanguageFactory.build(code="nl", name="Dutch", is_active=True)
 
     def test_expected_fields_are_present(self):
         serializer = LanguageSerializer(self.lang)
@@ -37,37 +38,37 @@ class TestLanguageSerializerSerialization(TestCase):
     """Model → dict serialization."""
 
     def test_serializes_active_language_correctly(self):
-        lang = Language.objects.create(code="nl", name="Dutch", is_active=True)
+        lang = LanguageFactory(code="nl", name="Dutch", is_active=True)
         serializer = LanguageSerializer(lang)
         self.assertEqual(serializer.data["code"], "nl")
         self.assertEqual(serializer.data["name"], "Dutch")
         self.assertTrue(serializer.data["is_active"])
 
     def test_serializes_inactive_language_correctly(self):
-        lang = Language.objects.create(code="la", name="Latin", is_active=False)
+        lang = LanguageFactory(code="la", name="Latin", is_active=False)
         serializer = LanguageSerializer(lang)
         self.assertFalse(serializer.data["is_active"])
 
     def test_serializes_queryset(self):
-        Language.objects.create(code="nl", name="Dutch", is_active=True)
-        Language.objects.create(code="en", name="English", is_active=True)
+        LanguageFactory(code="nl", name="Dutch", is_active=True)
+        LanguageFactory(code="en", name="English", is_active=True)
         serializer = LanguageSerializer(Language.objects.all(), many=True)
         codes = [item["code"] for item in serializer.data]
         self.assertIn("nl", codes)
         self.assertIn("en", codes)
 
     def test_code_is_string(self):
-        lang = Language.objects.create(code="en", name="English", is_active=True)
+        lang = LanguageFactory(code="en", name="English", is_active=True)
         data = LanguageSerializer(lang).data
         self.assertIsInstance(data["code"], str)
 
     def test_name_is_string(self):
-        lang = Language.objects.create(code="en", name="English", is_active=True)
+        lang = LanguageFactory(code="en", name="English", is_active=True)
         data = LanguageSerializer(lang).data
         self.assertIsInstance(data["name"], str)
 
     def test_is_active_is_bool(self):
-        lang = Language.objects.create(code="en", name="English", is_active=True)
+        lang = LanguageFactory(code="en", name="English", is_active=True)
         data = LanguageSerializer(lang).data
         self.assertIsInstance(data["is_active"], bool)
 
@@ -86,7 +87,7 @@ class TestLanguageSerializerDeserialization(TestCase):
         data = {"code": "nl", "name": "Dutch", "is_active": True}
         serializer = LanguageSerializer(data=data)
         self.assertTrue(serializer.is_valid())
-        _ = serializer.save()
+        serializer.save()
         self.assertEqual(Language.objects.get(code="nl").name, "Dutch")
 
     def test_is_active_defaults_or_is_provided(self):
@@ -125,7 +126,7 @@ class TestLanguageSerializerDeserialization(TestCase):
         self.assertIn("name", serializer.errors)
 
     def test_duplicate_code_is_invalid(self):
-        Language.objects.create(code="nl", name="Dutch", is_active=True)
+        LanguageFactory(code="nl", name="Dutch", is_active=True)
         data = {"code": "nl", "name": "Nederlands", "is_active": True}
         serializer = LanguageSerializer(data=data)
         self.assertFalse(serializer.is_valid())
@@ -134,7 +135,7 @@ class TestLanguageSerializerDeserialization(TestCase):
     # -- Partial update -------------------------------------------------------
 
     def test_partial_update_name_only(self):
-        lang = Language.objects.create(code="nl", name="Dutch", is_active=True)
+        lang = LanguageFactory(code="nl", name="Dutch", is_active=True)
         serializer = LanguageSerializer(lang, data={"name": "Nederlands"}, partial=True)
         self.assertTrue(serializer.is_valid(), serializer.errors)
         updated = serializer.save()
@@ -142,7 +143,7 @@ class TestLanguageSerializerDeserialization(TestCase):
         self.assertEqual(updated.code, "nl")  # unchanged
 
     def test_partial_update_is_active_only(self):
-        lang = Language.objects.create(code="nl", name="Dutch", is_active=True)
+        lang = LanguageFactory(code="nl", name="Dutch", is_active=True)
         serializer = LanguageSerializer(lang, data={"is_active": False}, partial=True)
         self.assertTrue(serializer.is_valid(), serializer.errors)
         updated = serializer.save()

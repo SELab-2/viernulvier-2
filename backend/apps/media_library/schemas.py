@@ -47,7 +47,11 @@ _MEDIA_ITEM_EXAMPLE = {
         "en": "The official poster.",
         "fr": "L'affiche officielle.",
     },
-    "credits": {"nl": "Foto: Jan Janssen", "en": "Photo: Jan Janssen", "fr": "Photo : Jan Janssen"},
+    "credits": {
+        "nl": "Foto: Jan Janssen",
+        "en": "Photo: Jan Janssen",
+        "fr": "Photo : Jan Janssen",
+    },
     "link": {"nl": "", "en": "", "fr": ""},
     "crops": [_CROP_EXAMPLE],
 }

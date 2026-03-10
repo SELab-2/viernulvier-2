@@ -14,7 +14,6 @@ from django.test import TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
-from apps.languages.models import Language
 from apps.locations.admin import (
     HallAdmin,
     HallTranslationAdmin,
@@ -346,7 +345,10 @@ class TestLocationAdminFunctional(TestCase):
         self.assertTrue(LocationTranslation.objects.filter(name="Venue Added", language=new_language).exists())
 
     def test_location_translation_change(self):
-        url = reverse("admin:locations_locationtranslation_change", args=[self.location_translation.pk])
+        url = reverse(
+            "admin:locations_locationtranslation_change",
+            args=[self.location_translation.pk],
+        )
         response = self.client.post(
             url,
             {
@@ -361,7 +363,10 @@ class TestLocationAdminFunctional(TestCase):
         self.assertEqual(self.location_translation.name, "Venue Updated")
 
     def test_location_translation_delete(self):
-        url = reverse("admin:locations_locationtranslation_delete", args=[self.location_translation.pk])
+        url = reverse(
+            "admin:locations_locationtranslation_delete",
+            args=[self.location_translation.pk],
+        )
         response = self.client.post(url, {"post": "yes"}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(LocationTranslation.objects.filter(pk=self.location_translation.pk).exists())
@@ -517,7 +522,7 @@ class TestLocationAdminFunctional(TestCase):
 
     def test_hall_translation_add(self):
         url = reverse("admin:locations_halltranslation_add")
-        new_language = Language.objects.create(code="es", name="Spanish", is_active=True)
+        new_language = LanguageFactory(code="es", name="Spanish")
         response = self.client.post(
             url,
             {

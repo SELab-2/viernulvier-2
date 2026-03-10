@@ -12,10 +12,12 @@ through-table. It is nested read-only inside ``EventSerializer`` via the
 
 from rest_framework import serializers
 
+from apps.core.serializers import TranslatableSerializerMixin
+
 from .models import Event, EventPrice
 
 
-class EventPriceSerializer(serializers.ModelSerializer):
+class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """
     Represents a single price tier assigned to an event.
 
@@ -27,35 +29,61 @@ class EventPriceSerializer(serializers.ModelSerializer):
     to create or modify price entries.
     """
 
+    price_rank_display = serializers.SerializerMethodField()
+    price_display = serializers.SerializerMethodField()
+
+    def get_price_rank_display(self, obj):
+        """Return the price rank name in the project's base language."""
+        if not obj.price_rank:
+            return None
+        return self.get_base_translated_value(
+            obj.price_rank,
+            field_name="description",
+            related_name="translations",
+            fallback=str(obj.price_rank_id),
+        )
+
+    def get_price_display(self, obj):
+        if not obj.price:
+            return None
+        return self.get_base_translated_value(
+            obj.price,
+            field_name="description",
+            related_name="translations",
+            fallback=str(obj.price_id),
+        )
+
     class Meta:
         model = EventPrice
         fields = [
             "id",
             "event",
             "price_rank",
+            "price_rank_display",
+            "price",
+            "price_display",
             "amount",
             "available",
         ]
         read_only_fields = ["id"]
         extra_kwargs = {
-            "event": {
-                "help_text": "PK of the event this price entry belongs to.",
-            },
+            "event": {"help_text": "PK of the event this price entry belongs to."},
             "price_rank": {
                 "help_text": (
                     "PK of the associated ``PriceRank`` availability tier. `null` when the rank has been deleted."
                 ),
             },
-            "amount": {
-                "help_text": "Ticket price in euro (e.g. `18.00`).",
+            "price_rank_display": {"help_text": "String for the price rank in the display representation."},
+            "price": {
+                "help_text": ("PK of the associated ``Price`` category. `null` when the price has been deleted."),
             },
-            "available": {
-                "help_text": "Number of tickets available at this price rank for the event.",
-            },
+            "price_display": {"help_text": "String for the price category in the display representation."},
+            "amount": {"help_text": "Ticket price in euro (e.g. `18.00`)."},
+            "available": {"help_text": "Number of tickets available at this price rank for the event."},
         }
 
 
-class EventSerializer(serializers.ModelSerializer):
+class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """
     Full representation of an Event.
 
@@ -85,12 +113,37 @@ class EventSerializer(serializers.ModelSerializer):
         ),
     )
 
+    production_display = serializers.SerializerMethodField()
+    hall_display = serializers.SerializerMethodField()
+
+    def get_production_display(self, obj):
+        """Return the production name in the project's base language."""
+        return self.get_base_translated_value(
+            obj.production,
+            field_name="title",
+            related_name="translations",
+            fallback=str(obj.production_id),
+        )
+
+    def get_hall_display(self, obj):
+        """Return the hall name in the project's base language."""
+        if not obj.hall:
+            return None
+        return self.get_base_translated_value(
+            obj.hall,
+            field_name="name",
+            related_name="translations",
+            fallback=str(obj.hall_id),
+        )
+
     class Meta:
         model = Event
         fields = [
             "id",
             "production",
+            "production_display",
             "hall",
+            "hall_display",
             "starts_at",
             "ends_at",
             "ticketing_url",
@@ -101,11 +154,13 @@ class EventSerializer(serializers.ModelSerializer):
             "production": {
                 "help_text": "PK of the production this event is a performance of.",
             },
+            "production_display": {"help_text": "String for the production in the display representation."},
             "hall": {
                 "help_text": (
                     "PK of the hall in which the event takes place. `null` for online or location-independent events."
                 ),
             },
+            "hall_display": {"help_text": "String for the hall in the display representation."},
             "starts_at": {
                 "help_text": "ISO 8601 UTC datetime at which the event begins.",
             },

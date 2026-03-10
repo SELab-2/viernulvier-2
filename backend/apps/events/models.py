@@ -22,7 +22,7 @@ from django.db.models import F, Q
 
 from apps.core.models import BaseModel
 from apps.locations.models import Hall
-from apps.pricing.models import PriceRank
+from apps.pricing.models import Price, PriceRank
 from apps.productions.models import Production
 
 # ===========================================================================
@@ -98,7 +98,7 @@ class Event(BaseModel):
         ordering = ["starts_at"]
         constraints = [
             models.CheckConstraint(
-                condition=Q(ends_at__gt=F("starts_at")),
+                condition=(Q(ends_at__gte=F("starts_at")) | Q(starts_at__isnull=True) | Q(ends_at__isnull=True)),
                 name="event_ends_after_starts",
             )
         ]
@@ -112,11 +112,13 @@ class Event(BaseModel):
         flow, rather than only at the database layer.
         """
         super().clean()
-        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
-            raise ValidationError("Event end time must be after start time.")
+        if self.starts_at and self.ends_at and self.ends_at < self.starts_at:
+            raise ValidationError("Event end time cannot be before start time.")
 
     def __str__(self) -> str:
-        return f"Event {self.id} - {self.production} @ {self.starts_at}"
+        production = str(self.production) if self.production else "Unknown Production"
+        date = self.starts_at.strftime("%Y-%m-%d %H:%M") if self.starts_at else "TBA"
+        return f"{production} @ {date}"
 
 
 # ===========================================================================
@@ -152,6 +154,16 @@ class EventPrice(BaseModel):
         db_comment="The event which the price belongs to.",
     )
 
+    price = models.ForeignKey(
+        Price,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="event_prices",
+        help_text="Price category for this event price entry.",
+        db_comment="FK to Price.",
+    )
+
     price_rank = models.ForeignKey(
         PriceRank,
         null=True,
@@ -181,14 +193,15 @@ class EventPrice(BaseModel):
         ordering = ["price_rank__position", "id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["event", "price_rank"],
-                name="uniq_event_price_rank",
+                fields=["event", "price_rank", "price"],
+                name="uniq_event_rank_price",
             )
         ]
         indexes = [
             models.Index(fields=["event"], name="idx_event_price_event"),
-            models.Index(fields=["event", "price_rank"], name="idx_event_price_event_rank"),
+            models.Index(fields=["event", "price_rank", "price"], name="idx_event_rank_price"),
         ]
 
     def __str__(self) -> str:
-        return f"EventPrice {self.id} - Event {self.event_id} / Rank {self.price_rank_id}"
+        rank = str(self.price_rank) if self.price_rank else "No rank"
+        return f"{self.event} - {rank} (€{self.amount})"

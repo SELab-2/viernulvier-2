@@ -8,13 +8,22 @@ Covers:
 - Basic response field presence
 """
 
+from django.db import connection
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
 from apps.locations.models import Hall, Location, Space
 from apps.locations.views import HallViewSet, LocationViewSet, SpaceViewSet
-from tests.factories.location import HallFactory, LocationFactory, SpaceFactory
+from tests.factories.language import LanguageFactory
+from tests.factories.location import (
+    HallFactory,
+    HallTranslationFactory,
+    LocationFactory,
+    LocationTranslationFactory,
+    SpaceFactory,
+)
 
 PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"
@@ -30,6 +39,10 @@ def pub_headers():
 
 def wrong_headers():
     return {"HTTP_AUTHORIZATION": "Api-Key completely-wrong-key"}
+
+
+def results_list(response):
+    return response.data.get("results", response.data)
 
 
 # ---------------------------------------------------------------------------
@@ -82,6 +95,57 @@ class TestHallViewSetClass(TestCase):
 
     def test_prefetch_translations(self):
         self.assertIn("translations__language", HallViewSet.queryset._prefetch_related_lookups)
+
+
+# ---------------------------------------------------------------------------
+# N+1 guards — queryset prefetches
+# ---------------------------------------------------------------------------
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestLocationViewSetPrefetch(TestCase):
+    """Ensure location list stays bounded in queries with translations present."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.lang_nl = LanguageFactory(code="nl", name="Dutch")
+        self.lang_en = LanguageFactory(code="en", name="English")
+
+        for idx in range(5):
+            loc = LocationFactory(city=f"City {idx}")
+            LocationTranslationFactory(location=loc, language=self.lang_nl, name=f"Stad {idx}")
+            LocationTranslationFactory(location=loc, language=self.lang_en, name=f"City {idx}")
+
+    def test_location_list_bounded_queries(self):
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.get("/api/locations/?ordering=id", **pub_headers())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(results_list(response)), 5)
+        self.assertEqual(len(ctx), 4)
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestHallViewSetPrefetch(TestCase):
+    """Ensure hall list remains bounded with related space/location and translations."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.lang_nl = LanguageFactory(code="nl", name="Dutch")
+        self.lang_en = LanguageFactory(code="en", name="English")
+
+        for idx in range(4):
+            hall = HallFactory()
+            HallTranslationFactory(hall=hall, language=self.lang_nl, name=f"Zaal {idx}")
+            HallTranslationFactory(hall=hall, language=self.lang_en, name=f"Hall {idx}")
+
+    def test_hall_list_bounded_queries(self):
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.get("/api/halls/?ordering=id", **pub_headers())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(results_list(response)), 4)
+        self.assertLessEqual(len(ctx), 12)
 
 
 # ---------------------------------------------------------------------------
@@ -153,7 +217,12 @@ class TestLocationViewSet(TestCase):
             "city": "Gent",
             "country": "Belgium",
         }
-        response = self.client.put(f"/api/locations/{self.location.id}/", payload, format="json", **int_headers())
+        response = self.client.put(
+            f"/api/locations/{self.location.id}/",
+            payload,
+            format="json",
+            **int_headers(),
+        )
         self.assertEqual(response.status_code, 200)
         self.location.refresh_from_db()
         self.assertEqual(self.location.street, "Updated")

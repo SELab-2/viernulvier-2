@@ -1,4 +1,6 @@
+from django.db import connection
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
@@ -10,6 +12,13 @@ from apps.pricing.models import (
     PriceTranslation,
 )
 from apps.pricing.views import PriceRankViewSet, PriceViewSet
+from tests.factories.language import LanguageFactory
+from tests.factories.pricing import (
+    PriceFactory,
+    PriceRankFactory,
+    PriceRankTranslationFactory,
+    PriceTranslationFactory,
+)
 
 PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"
@@ -75,6 +84,34 @@ class TestPriceRankViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
+# PriceRank N+1 guard
+# ---------------------------------------------------------------------------
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestPriceRankViewSetPrefetch(TestCase):
+    """Ensure price rank list stays bounded when translations exist."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.lang_en = LanguageFactory.create(code="en", name="English", is_active=True)
+        self.lang_nl = LanguageFactory.create(code="nl", name="Nederlands", is_active=True)
+
+        for idx in range(5):
+            rank = PriceRankFactory(position=idx)
+            PriceRankTranslationFactory(price_rank=rank, language=self.lang_en, description=f"Rank {idx} en")
+            PriceRankTranslationFactory(price_rank=rank, language=self.lang_nl, description=f"Rank {idx} nl")
+
+    def test_price_rank_list_bounded_queries(self):
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.get("/api/price-ranks/?ordering=id", **pub_headers())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(results_list(response)), 5)
+        self.assertLessEqual(len(ctx), 3)
+
+
+# ---------------------------------------------------------------------------
 # Prices — shared setup mixin
 # ---------------------------------------------------------------------------
 
@@ -88,10 +125,10 @@ class _PriceSetupMixin(TestCase):
         Price.objects.all().delete()
         Language.objects.all().delete()
 
-        self.lang_en = Language.objects.create(code="en", name="English", is_active=True)
-        self.lang_nl = Language.objects.create(code="nl", name="Nederlands", is_active=True)
+        self.lang_en = LanguageFactory.create(code="en", name="English", is_active=True)
+        self.lang_nl = LanguageFactory.create(code="nl", name="Nederlands", is_active=True)
 
-        self.p1 = Price.objects.create(
+        self.p1 = PriceFactory.create(
             type="A",
             visibility="public",
             membership="",
@@ -101,7 +138,7 @@ class _PriceSetupMixin(TestCase):
             sort_order=1,
             cineville_box=False,
         )
-        self.p2 = Price.objects.create(
+        self.p2 = PriceFactory.create(
             type="B",
             visibility="public",
             membership="",
@@ -111,8 +148,14 @@ class _PriceSetupMixin(TestCase):
             sort_order=5,
             cineville_box=False,
         )
-        PriceTranslation.objects.create(price=self.p1, language=self.lang_en, description="A en")
-        PriceTranslation.objects.create(price=self.p1, language=self.lang_nl, description="A nl")
+        PriceTranslationFactory.create(price=self.p1, language=self.lang_en, description="A en")
+        PriceTranslationFactory.create(price=self.p1, language=self.lang_nl, description="A nl")
+
+        # extra data to exercise prefetches
+        for idx in range(4):
+            price = PriceFactory.create(type=f"X{idx}")
+            PriceTranslationFactory.create(price=price, language=self.lang_en, description=f"X{idx} en")
+            PriceTranslationFactory.create(price=price, language=self.lang_nl, description=f"X{idx} nl")
 
 
 # ---------------------------------------------------------------------------
@@ -167,6 +210,14 @@ class TestPriceViewSetList(_PriceSetupMixin):
         """Test case for test_list_with_wrong_key_returns_401."""
         response = self.client.get("/api/prices/", **wrong_headers())
         self.assertEqual(response.status_code, 401)
+
+    def test_list_prefetches_translations_bounded_queries(self):
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.get("/api/prices/?ordering=id", **pub_headers())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(results_list(response)), 4)
+        self.assertLessEqual(len(ctx), 10)
 
 
 # ---------------------------------------------------------------------------
@@ -274,7 +325,12 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
         """Test case for test_create_without_auth_returns_401."""
         response = self.client.post(
             "/api/prices/",
-            {"type": "C", "visibility": "public", "sort_order": 10, "cineville_box": False},
+            {
+                "type": "C",
+                "visibility": "public",
+                "sort_order": 10,
+                "cineville_box": False,
+            },
             format="json",
         )
         self.assertEqual(response.status_code, 401)
@@ -283,7 +339,12 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
         """Test case for test_create_with_wrong_key_returns_401."""
         response = self.client.post(
             "/api/prices/",
-            {"type": "C", "visibility": "public", "sort_order": 10, "cineville_box": False},
+            {
+                "type": "C",
+                "visibility": "public",
+                "sort_order": 10,
+                "cineville_box": False,
+            },
             format="json",
             **wrong_headers(),
         )
@@ -293,7 +354,11 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
         """Test case for test_create_missing_required_field_returns_400."""
         response = self.client.post(
             "/api/prices/",
-            {"visibility": "public", "sort_order": 10, "cineville_box": False},  # missing type
+            {
+                "visibility": "public",
+                "sort_order": 10,
+                "cineville_box": False,
+            },  # missing type
             format="json",
             **int_headers(),
         )
@@ -487,11 +552,11 @@ class _PriceRankSetupMixin(TestCase):
         PriceRank.objects.all().delete()
         Language.objects.all().delete()
 
-        self.lang = Language.objects.create(code="en", name="English", is_active=True)
+        self.lang = LanguageFactory.create(code="en", name="English", is_active=True)
 
-        self.r1 = PriceRank.objects.create(position=1, sold_out_buffer=0)
-        self.r2 = PriceRank.objects.create(position=2, sold_out_buffer=0)
-        PriceRankTranslation.objects.create(price_rank=self.r1, language=self.lang, description="R1")
+        self.r1 = PriceRankFactory.create(position=1, sold_out_buffer=0)
+        self.r2 = PriceRankFactory.create(position=2, sold_out_buffer=0)
+        PriceRankTranslationFactory.create(price_rank=self.r1, language=self.lang, description="R1")
 
 
 # ---------------------------------------------------------------------------
