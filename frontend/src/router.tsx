@@ -6,10 +6,15 @@ import ArtistsPage from './pages/ArtistsPage'
 import ArtistDetailPage from './pages/ArtistDetailPage'
 import Navbar from './components/Navbar'
 
-const Router = () => {
+type RouterProps = {
+  mode: 'light' | 'dark'
+  onToggleMode: () => void
+}
+
+const Router = ({ mode, onToggleMode }: RouterProps) => {
   return (
     <BrowserRouter>
-      <Navbar />
+      <Navbar mode={mode} onToggleMode={onToggleMode} />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/series" element={<SeriesPage />} />
