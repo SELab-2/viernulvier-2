@@ -41,7 +41,7 @@ Common commands:
 
 - Create app: `python manage.py startapp <app_name> apps/<app_name>`
 - Dev server: `python manage.py runserver`
-- Create migrations: `python manage.py makemigrations <app_name>`
+- Create migrations: `python manage.py makemigrations <app_name>` or for everything in one: `python manage.py makemigrations`
 - Apply migrations: `python manage.py migrate`
 
 ### Frontend (React + Vite)
