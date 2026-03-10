@@ -23,7 +23,7 @@ Project documentation is available in the GitHub Wiki:
 
 ## Project Structure
 
-- `backend/`: Django API, models, serializers, tests
+- `backend/`: Django API, models, serializers, admins, views and tests
 - `frontend/`: React/Vite frontend in TypeScript
 - `infrastructure/`: Docker Compose and Nginx configuration
 
