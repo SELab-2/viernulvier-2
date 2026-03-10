@@ -19,6 +19,7 @@ This file applies to the full repository unless a deeper `AGENTS.md` is added in
 - Do not rename/move files unless needed for the task.
 - Preserve existing patterns and style in each folder.
 - Never commit secrets, tokens, or private keys.
+- Add inline code documentation (comments/docstrings) for non-trivial logic, complex functions, and important state management.
 - Update docs when behavior, architecture, operational runbooks, or developer workflow changes.
 - When implementation changes affect documented behavior, update relevant pages in `wiki/` in the same change set.
 
@@ -93,5 +94,6 @@ npm run build
 
 - Read nearby files before editing to match conventions.
 - Prefer precise edits over broad refactors.
+- Add code documentation where needed, especially around non-trivial logic and state handling.
 - Explain assumptions in PR/commit messages when context is uncertain.
 - If a change could be breaking, call it out explicitly and suggest a migration path.
