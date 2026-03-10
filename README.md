@@ -10,16 +10,16 @@ Project documentation is available in the GitHub Wiki:
 
 ## Team Roles
 
-| Role | Name |
-|---|---|
-| Leader | Tobit |
-| Tech Lead | Elias |
-| SysAdmin | Jasper |
-| Communication | Arne |
-| Testing | Florian |
-| DB | Daan |
-| Frontend | Noah |
-| Backend | Prince |
+| Role                       | Name    |
+| -------------------------- | ------- |
+| Group Leader               | Tobit   |
+| Technical Lead             | Elias   |
+| SysAdmin                   | Jasper  |
+| Customer Relations Officer | Arne    |
+| Test Manager               | Florian |
+| Database Manager           | Daan    |
+| Frontend Manager           | Noah    |
+| Backend Manager            | Prince  |
 
 ## Project Structure
 
