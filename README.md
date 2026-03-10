@@ -54,7 +54,7 @@ cd frontend
 
 Common commands:
 
-- Install dependencies: `npm install`
+- Install dependencies: `npm ci`
 - Start dev server: `npm run dev`
 - Run tests: `npm test`
 - Build for production: `npm run build`
@@ -76,7 +76,3 @@ Use the PR template for every pull request and include at least:
 3. Type of change
 4. Testing instructions
 5. Reviewer checklist
-
-## Additional Documentation
-
-- [GitHub Wiki](https://github.com/SELab-2/viernulvier-2/wiki)
