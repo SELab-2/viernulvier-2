@@ -80,6 +80,7 @@ npm run build
 ## Wiki / Documentation
 
 - Treat `wiki/` as the canonical source for project process and operational docs.
+- Write documentation in English.
 - Keep docs close to code changes: if an endpoint, workflow, or deployment step changes, update matching wiki pages.
 - Prefer updating existing pages over creating duplicates for the same topic.
 
