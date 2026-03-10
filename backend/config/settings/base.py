@@ -195,8 +195,8 @@ SPECTACULAR_SETTINGS = {
             "ApiKey": {
                 "type": "apiKey",
                 "in": "header",
-                "name": "Authorization",
-                "description": "Use `Api-Key <KEY>` to authenticate.",
+                "name": "X-API-Key",
+                "description": "Use the `X-API-Key` header to authenticate.",
             }
         }
     },
