@@ -4,9 +4,12 @@
     "english": "English",
     "dutch": "Dutch",
     "nav": {
-        "home": "Home",
-        "events": "Events",
-        "productions": "Productions"
+        "home": "Archive",
+        "events": "Series",
+        "productions": "Artists",
+        "mainNav": "Main navigation",
+        "languageSwitcher": "Language",
+        "openMenu": "Open menu"
     },
     "events": {
         "title": "Events",
