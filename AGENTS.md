@@ -11,6 +11,7 @@ This file applies to the full repository unless a deeper `AGENTS.md` is added in
 - `backend/`: Django + DRF API, domain apps under `backend/apps/`, tests under `backend/tests/`.
 - `frontend/`: React + TypeScript + Vite SPA, tests in `frontend/src/__tests__/`.
 - `infrastructure/`: Docker Compose and nginx/certbot deployment assets.
+- `wiki/`: Project documentation pages and team knowledge base.
 
 ## Core Rules
 
@@ -18,7 +19,8 @@ This file applies to the full repository unless a deeper `AGENTS.md` is added in
 - Do not rename/move files unless needed for the task.
 - Preserve existing patterns and style in each folder.
 - Never commit secrets, tokens, or private keys.
-- Update docs when behavior or developer workflow changes.
+- Update docs when behavior, architecture, operational runbooks, or developer workflow changes.
+- When implementation changes affect documented behavior, update relevant pages in `wiki/` in the same change set.
 
 ## Backend (Django)
 
@@ -74,12 +76,18 @@ npm run build
 - Avoid hardcoding environment-specific credentials or host-specific paths.
 - Validate nginx and compose edits for both syntax and consistency.
 
+## Wiki / Documentation
+
+- Treat `wiki/` as the canonical source for project process and operational docs.
+- Keep docs close to code changes: if an endpoint, workflow, or deployment step changes, update matching wiki pages.
+- Prefer updating existing pages over creating duplicates for the same topic.
+
 ## Pull Request / Change Checklist
 
 - Code is formatted and consistent with local style.
 - Relevant tests are added/updated and passing.
 - No unrelated files were changed.
-- Documentation and config examples are updated if needed.
+- Documentation, wiki pages, and config examples are updated if needed.
 
 ## Notes for AI Agents
 
