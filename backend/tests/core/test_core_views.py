@@ -1,5 +1,5 @@
 """
-Tests for apps/core/views.py — ApiModelViewSet
+Tests for apps/core/views.py - ApiModelViewSet
 
 The refactored ViewSet uses:
     authentication_classes = [ApiKeyAuthentication]
@@ -9,8 +9,8 @@ All access-control logic lives in those two classes (tested separately).
 These tests verify that the ViewSet is wired correctly and produces the
 expected HTTP responses end-to-end.
 
-Unit tests  → check class attributes (authentication_classes, permission_classes)
-Integration → full HTTP cycle via LanguageViewSet (the only concrete subclass)
+Unit tests  -> check class attributes (authentication_classes, permission_classes)
+Integration -> full HTTP cycle via LanguageViewSet (the only concrete subclass)
 
 HTTP access matrix
 ─────────────────────────────────────────────────────────────────────
@@ -23,9 +23,9 @@ PUT                 200             403           403         401
 PATCH               200             403           403         401
 DELETE              204             403           403         401
 ─────────────────────────────────────────────────────────────────────
-Note: "wrong key" triggers AuthenticationFailed → 403 (DRF default when
-      no WWW-Authenticate is set). "no header" → auth returns None →
-      anonymous → 401 (DRF sends WWW-Authenticate).
+Note: "wrong key" triggers AuthenticationFailed -> 403 (DRF default when
+      no WWW-Authenticate is set). "no header" -> auth returns None ->
+      anonymous -> 401 (DRF sends WWW-Authenticate).
 """
 
 from unittest.mock import MagicMock
@@ -96,7 +96,7 @@ class TestApiModelViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Integration — GET list
+# Integration - GET list
 # ---------------------------------------------------------------------------
 
 
@@ -122,13 +122,13 @@ class TestApiModelViewSetList(TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_list_no_auth_returns_401(self):
-        """No header → authentication returns None → DRF sends 401."""
+        """No header -> authentication returns None -> DRF sends 401."""
         response = self.client.get("/api/languages/")
         self.assertEqual(response.status_code, 401)
 
 
 # ---------------------------------------------------------------------------
-# Integration — GET retrieve
+# Integration - GET retrieve
 # ---------------------------------------------------------------------------
 
 
@@ -167,7 +167,7 @@ class TestApiModelViewSetRetrieve(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Integration — POST create
+# Integration - POST create
 # ---------------------------------------------------------------------------
 
 
@@ -200,7 +200,7 @@ class TestApiModelViewSetCreate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Integration — PUT full update
+# Integration - PUT full update
 # ---------------------------------------------------------------------------
 
 
@@ -243,7 +243,7 @@ class TestApiModelViewSetUpdate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Integration — PATCH partial update
+# Integration - PATCH partial update
 # ---------------------------------------------------------------------------
 
 
@@ -274,7 +274,7 @@ class TestApiModelViewSetPartialUpdate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Integration — DELETE
+# Integration - DELETE
 # ---------------------------------------------------------------------------
 
 

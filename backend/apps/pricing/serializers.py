@@ -29,7 +29,7 @@ class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         help_text=(
             "Dictionary containing all available translations of the human-readable label "
             '(e.g. {"en": "Full price", "fr": "Plein tarif"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -113,7 +113,7 @@ class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMix
         help_text=(
             "Dictionary containing all available translations of the label "
             '(e.g. {"en": "Early Bird", "fr": "Prévente"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 

@@ -44,12 +44,12 @@ class EventViewSet(ApiModelViewSet):
     - ``prefetch_related`` with explicit ``Prefetch`` objects is used for
       all one-to-many relations to avoid N+1 queries:
 
-        * ``prices`` — ``EventPrice`` rows with their ``price_rank`` joined
+        * ``prices`` - ``EventPrice`` rows with their ``price_rank`` joined
           in a single query.
-        * ``production__translations`` — needed by the serialiser to resolve
+        * ``production__translations`` - needed by the serialiser to resolve
           localised production metadata.
-        * ``hall__translations`` — needed to resolve localised hall names.
-        * ``prices__price_rank__translations`` — needed to resolve localised
+        * ``hall__translations`` - needed to resolve localised hall names.
+        * ``prices__price_rank__translations`` - needed to resolve localised
           price rank descriptions when the API consumer expands that data.
     """
 

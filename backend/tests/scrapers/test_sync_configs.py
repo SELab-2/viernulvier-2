@@ -720,7 +720,7 @@ class TestManagementCommandCoverage:
         monkeypatch.setattr("apps.imports.management.commands.sync_viernulvier._tqdm", fake_tqdm)
 
         cb = cmd._make_progress_callback("step")
-        assert fake_tqdm.call_count == 0  # lazy — not yet created
+        assert fake_tqdm.call_count == 0  # lazy - not yet created
 
         cb(100, 500)
         assert fake_tqdm.call_count == 1

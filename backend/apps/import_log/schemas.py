@@ -7,7 +7,7 @@ assembled into a single ``extend_schema_view`` decorator at the bottom of
 the file.
 
 The imports app exposes a read-only endpoint. Only ``list`` and ``retrieve``
-actions are available — write operations are not supported by design.
+actions are available - write operations are not supported by design.
 
 Import logs are created and updated exclusively by the internal import
 pipeline and are exposed here purely for monitoring purposes.
@@ -28,11 +28,11 @@ from apps.core.openapi import (
 from .serializers import ImportLogSerializer
 
 # ===========================================================================
-# ImportLog — examples
+# ImportLog - examples
 # ===========================================================================
 
 _IMPORT_LOG_SUCCESS_RESPONSE = OpenApiExample(
-    "ImportLog — successful run",
+    "ImportLog - successful run",
     summary="A completed import run with no failures",
     value={
         "id": 1,
@@ -50,7 +50,7 @@ _IMPORT_LOG_SUCCESS_RESPONSE = OpenApiExample(
 )
 
 _IMPORT_LOG_PARTIAL_RESPONSE = OpenApiExample(
-    "ImportLog — partial success",
+    "ImportLog - partial success",
     summary="A run that completed but with some failed records",
     value={
         "id": 2,
@@ -68,7 +68,7 @@ _IMPORT_LOG_PARTIAL_RESPONSE = OpenApiExample(
 )
 
 _IMPORT_LOG_FAILED_RESPONSE = OpenApiExample(
-    "ImportLog — failed run",
+    "ImportLog - failed run",
     summary="A run that failed before completing",
     value={
         "id": 3,
@@ -86,7 +86,7 @@ _IMPORT_LOG_FAILED_RESPONSE = OpenApiExample(
 )
 
 _IMPORT_LOG_IN_PROGRESS_RESPONSE = OpenApiExample(
-    "ImportLog — in progress",
+    "ImportLog - in progress",
     summary="A run that is currently executing",
     value={
         "id": 4,
@@ -105,7 +105,7 @@ _IMPORT_LOG_IN_PROGRESS_RESPONSE = OpenApiExample(
 
 
 # ===========================================================================
-# ImportLog — per-action schemas
+# ImportLog - per-action schemas
 # ===========================================================================
 
 _IMPORT_LOG_LIST = extend_schema(
@@ -115,7 +115,7 @@ _IMPORT_LOG_LIST = extend_schema(
         "most recent to oldest by `started_at`.\n\n"
         "Use the `status` filter on the response to isolate failed or "
         "in-progress runs. The computed `duration` field provides the total "
-        "wall-clock time of each run as `HH:MM:SS` — `null` while a run has "
+        "wall-clock time of each run as `HH:MM:SS` - `null` while a run has "
         "not yet finished.\n\n"
         "> **Read-only.** Import logs are managed exclusively by the import "
         "pipeline and cannot be created or modified via this endpoint."
@@ -157,7 +157,7 @@ _IMPORT_LOG_RETRIEVE = extend_schema(
 
 
 # ===========================================================================
-# Assembled decorator — imported and applied in views.py
+# Assembled decorator - imported and applied in views.py
 # ===========================================================================
 
 import_log_schema = extend_schema_view(

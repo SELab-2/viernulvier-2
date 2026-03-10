@@ -37,7 +37,7 @@ from drf_spectacular.utils import OpenApiResponse
 
 RESPONSE_400 = OpenApiResponse(
     description=(
-        "**Bad Request** — The request body failed validation.\n\n"
+        "**Bad Request** - The request body failed validation.\n\n"
         "The response body contains field-level error details under `errors`."
     )
 )
@@ -52,7 +52,7 @@ Field-level messages are nested under the relevant field name.
 
 RESPONSE_401 = OpenApiResponse(
     description=(
-        "**Unauthorized** — No API key was provided or the key is invalid.\n\n"
+        "**Unauthorized** - No API key was provided or the key is invalid.\n\n"
         "Include your key in every request:\n"
         "```\n"
         "Authorization: Api-Key <your_key>\n"
@@ -71,7 +71,7 @@ in the response so clients know which scheme to use.
 
 RESPONSE_403 = OpenApiResponse(
     description=(
-        "**Forbidden** — Your API key does not have sufficient permissions.\n\n"
+        "**Forbidden** - Your API key does not have sufficient permissions.\n\n"
         "Write operations require an **internal** key. Public keys are read-only."
     )
 )
@@ -84,7 +84,7 @@ requested action (e.g. a public key attempting a POST, PUT, PATCH, or DELETE).
 # 404 Not Found
 # ---------------------------------------------------------------------------
 
-RESPONSE_404 = OpenApiResponse(description="**Not Found** — No resource exists with the given identifier.")
+RESPONSE_404 = OpenApiResponse(description="**Not Found** - No resource exists with the given identifier.")
 """
 Returned when the requested primary key does not match any record in the
 database.
@@ -94,7 +94,7 @@ database.
 # 204 No Content (successful deletion)
 # ---------------------------------------------------------------------------
 
-RESPONSE_204_DELETED = OpenApiResponse(description="**No Content** — The resource was permanently deleted.")
+RESPONSE_204_DELETED = OpenApiResponse(description="**No Content** - The resource was permanently deleted.")
 """
 Returned on successful ``DELETE`` requests. The response body is empty.
 """

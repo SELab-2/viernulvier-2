@@ -106,7 +106,7 @@ class TestPriceSerializerFields(TestCase):
 
 
 class TestPriceSerializerSerialization(TestCase):
-    """Model → dict serialization."""
+    """Model -> dict serialization."""
 
     @classmethod
     def setUpTestData(cls):
@@ -246,7 +246,7 @@ class TestPriceSerializerTranslationEdgeCases(TestCase):
 
 
 class TestPriceSerializerDeserialization(TestCase):
-    """dict → model (create / update)."""
+    """dict -> model (create / update)."""
 
     def setUp(self):
         self.factory = APIRequestFactory()

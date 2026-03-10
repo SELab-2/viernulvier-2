@@ -6,9 +6,9 @@ Test categories:
     2.  Wrong authentication scheme (not Api-Key)
     3.  Malformed headers (too few / too many parts)
     4.  UnicodeDecodeError in scheme or key
-    5.  Valid INTERNAL_API_KEY  → (None, "internal")
-    6.  Valid PUBLIC_API_KEY    → (None, "public")
-    7.  Invalid / unknown key   → AuthenticationFailed
+    5.  Valid INTERNAL_API_KEY  -> (None, "internal")
+    6.  Valid PUBLIC_API_KEY    -> (None, "public")
+    7.  Invalid / unknown key   -> AuthenticationFailed
     8.  Settings without configured keys
     9.  authenticate_header()
     10. Case-insensitivity of the scheme
@@ -89,7 +89,7 @@ class TestNoAuthorizationHeader:
     """
 
     def test_returns_none_when_raw_auth_is_empty_bytes(self, auth):
-        """get_authorization_header returns b'' → authenticate returns None."""
+        """get_authorization_header returns b'' -> authenticate returns None."""
         with _patch_get_auth(b""):
             result = auth.authenticate(MagicMock())
         assert result is None
@@ -107,7 +107,7 @@ class TestNoAuthorizationHeader:
 
     def test_settings_are_not_accessed_when_header_absent(self, auth):
         """
-        If there is no header we bail out early — Django settings
+        If there is no header we bail out early - Django settings
         must not be accessed at all.
         """
         with _patch_get_auth(b""):
@@ -157,7 +157,7 @@ class TestWrongScheme:
 
     def test_whitespace_only_header_returns_none(self, auth):
         """
-        b"   " splits to [] (empty list) → parts is falsy → returns None
+        b"   " splits to [] (empty list) -> parts is falsy -> returns None
         before we even inspect a scheme.
         """
         with _patch_get_auth(b"   "):
@@ -203,7 +203,7 @@ class TestMalformedHeaders:
                 auth.authenticate(MagicMock())
 
     def test_key_with_internal_space_raises(self, auth):
-        """A key value containing a space produces three parts → malformed."""
+        """A key value containing a space produces three parts -> malformed."""
         with _patch_get_auth(b"Api-Key ke y"):
             with pytest.raises(AuthenticationFailed):
                 auth.authenticate(MagicMock())
@@ -223,7 +223,7 @@ class TestMalformedHeaders:
 class TestUnicodeErrors:
     """
     Bytes that cannot be decoded as UTF-8 must raise AuthenticationFailed
-    with an appropriate message — never a raw UnicodeDecodeError.
+    with an appropriate message - never a raw UnicodeDecodeError.
     """
 
     def test_invalid_utf8_in_scheme_raises_with_message(self, auth):
@@ -264,7 +264,7 @@ class TestUnicodeErrors:
 
 
 # ===========================================================================
-# 5. Successful authentication — INTERNAL key
+# 5. Successful authentication - INTERNAL key
 # ===========================================================================
 
 
@@ -281,7 +281,7 @@ class TestInternalKeySuccess:
         assert result == (None, "internal")
 
     def test_first_element_of_tuple_is_none(self, auth):
-        """DRF treats the first element as the authenticated user — must be None."""
+        """DRF treats the first element as the authenticated user - must be None."""
         with _patch_get_auth(VALID_INTERNAL_HEADER):
             with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
                 user, _ = auth.authenticate(MagicMock())
@@ -324,7 +324,7 @@ class TestInternalKeySuccess:
 
 
 # ===========================================================================
-# 6. Successful authentication — PUBLIC key
+# 6. Successful authentication - PUBLIC key
 # ===========================================================================
 
 
@@ -418,7 +418,7 @@ class TestInvalidKey:
                     auth.authenticate(MagicMock())
 
     def test_uppercased_key_value_is_rejected(self, auth):
-        """Key comparison must be case-sensitive — an uppercased key must fail."""
+        """Key comparison must be case-sensitive - an uppercased key must fail."""
         with _patch_get_auth(f"Api-Key {INTERNAL_KEY.upper()}".encode()):
             with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
                 with pytest.raises(AuthenticationFailed):
@@ -440,7 +440,7 @@ class TestInvalidKey:
 
     def test_scheme_only_header_is_malformed_not_invalid_key(self, auth):
         """
-        'Api-Key  ' splits to [b'Api-Key'] — 1 part — which is a malformed
+        'Api-Key  ' splits to [b'Api-Key'] - 1 part - which is a malformed
         header, not an invalid-key situation.
         """
         with _patch_get_auth(b"Api-Key  "):
@@ -488,7 +488,7 @@ class TestMissingSettings:
         getattr(settings, "INTERNAL_API_KEY", None) must gracefully return
         None when the attribute does not exist on the settings object at all.
         """
-        mock_settings = MagicMock(spec=[])  # spec=[] → no attributes defined
+        mock_settings = MagicMock(spec=[])  # spec=[] -> no attributes defined
         with _patch_get_auth(b"Api-Key somekey"):
             with patch("apps.core.authentications.settings", mock_settings):
                 with pytest.raises(AuthenticationFailed):
@@ -497,7 +497,7 @@ class TestMissingSettings:
     def test_empty_string_key_in_settings_is_skipped(self, auth):
         """
         An empty string configured as a key is falsy, so the comparison
-        block is skipped entirely — no key must match an empty-string setting.
+        block is skipped entirely - no key must match an empty-string setting.
         """
         with _patch_get_auth(b"Api-Key somekey"):
             with _patch_settings(internal="", public=""):
@@ -629,7 +629,7 @@ class TestTimingSafeComparison:
 
     def test_compare_digest_called_once_when_internal_matches(self, auth):
         """
-        When the internal key matches we short-circuit — compare_digest
+        When the internal key matches we short-circuit - compare_digest
         must only be called once (for the internal check).
         """
         with _patch_get_auth(VALID_INTERNAL_HEADER):
@@ -694,7 +694,7 @@ class TestEdgeCases:
         assert auth.keyword == "api-key"
 
     def test_no_header_returns_none_not_empty_tuple(self, auth):
-        """None and () are both falsy but semantically different — must be None."""
+        """None and () are both falsy but semantically different - must be None."""
         with _patch_get_auth(b""):
             result = auth.authenticate(MagicMock())
         assert result is None
@@ -716,7 +716,7 @@ class TestEdgeCases:
     def test_multiple_sequential_calls_are_stateless(self, auth):
         """
         Calling authenticate() multiple times in sequence must not cause
-        any state leakage — each call must be fully independent.
+        any state leakage - each call must be fully independent.
         """
         with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
             with _patch_get_auth(VALID_INTERNAL_HEADER):

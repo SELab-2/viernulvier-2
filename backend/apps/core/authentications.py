@@ -15,8 +15,8 @@ format (the scheme is case-insensitive):
 
 Two keys are supported, each granting a different level of access:
 
-- ``INTERNAL_API_KEY`` — full CRUD access (``request.auth == "internal"``).
-- ``PUBLIC_API_KEY``   — read-only access (``request.auth == "public"``).
+- ``INTERNAL_API_KEY`` - full CRUD access (``request.auth == "internal"``).
+- ``PUBLIC_API_KEY``   - read-only access (``request.auth == "public"``).
 
 The resulting ``request.auth`` value is consumed by
 :class:`~apps.core.permissions.ApiKeyPermission` to enforce per-action
@@ -67,10 +67,10 @@ class ApiKeyAuthentication(BaseAuthentication):
         -----
         1. Read the raw ``Authorization`` header bytes via DRF's helper.
         2. Return ``None`` (unauthenticated, not an error) if the header is
-           absent or does not use the ``Api-Key`` scheme — this allows other
+           absent or does not use the ``Api-Key`` scheme - this allows other
            authenticators in the chain to run.
         3. Reject malformed headers (wrong number of parts, non-UTF-8 bytes)
-           with ``AuthenticationFailed`` (→ HTTP 401).
+           with ``AuthenticationFailed`` (-> HTTP 401).
         4. Compare the extracted key against ``INTERNAL_API_KEY`` and then
            ``PUBLIC_API_KEY`` using :func:`secrets.compare_digest`.
         5. Raise ``AuthenticationFailed`` if neither key matches.
@@ -82,14 +82,14 @@ class ApiKeyAuthentication(BaseAuthentication):
 
         Raises:
             :exc:`~rest_framework.exceptions.AuthenticationFailed`:
-                On malformed headers or invalid keys (→ HTTP 401).
+                On malformed headers or invalid keys (-> HTTP 401).
         """
 
         # Retrieve the raw Authorization header as bytes.
         # DRF returns it as bytes for consistent low-level handling.
         raw_auth = get_authorization_header(request)
 
-        # No Authorization header at all — let other authenticators run.
+        # No Authorization header at all - let other authenticators run.
         if not raw_auth:
             return None
 
@@ -135,7 +135,7 @@ class ApiKeyAuthentication(BaseAuthentication):
         if public_key and secrets.compare_digest(key_bytes, public_key.encode("utf-8")):
             return (None, "public")
 
-        # No match — reject the request.
+        # No match - reject the request.
         raise AuthenticationFailed("Invalid API key.")
 
     def authenticate_header(self, request) -> str:

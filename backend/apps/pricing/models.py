@@ -28,7 +28,7 @@ class Price(BaseModel):
 
     Prices are typed (e.g. ``full``, ``student``) and carry visibility and
     membership rules. Variable pricing is supported via the ``minimum``,
-    ``maximum``, and ``step`` fields — either all three are set or all three
+    ``maximum``, and ``step`` fields - either all three are set or all three
     are ``null``.
 
     Attributes:

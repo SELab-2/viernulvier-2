@@ -11,7 +11,7 @@ Events are scheduled occurrences of productions:
 - An **EventPrice** records the ticket amount and available capacity for a
   specific :class:`~apps.pricing.models.PriceRank` within an event.
 
-A database-level check constraint guarantees that ``ends_at > starts_at``
+A database-level check constraint guarantees that ``ends_at >= starts_at``
 for every event. The same rule is enforced at the application level via
 :meth:`Event.clean`.
 """
@@ -25,10 +25,6 @@ from apps.locations.models import Hall
 from apps.pricing.models import Price, PriceRank
 from apps.productions.models import Production
 
-# ===========================================================================
-# Event
-# ===========================================================================
-
 
 class Event(BaseModel):
     """
@@ -39,7 +35,7 @@ class Event(BaseModel):
     per price rank. The ``hall`` FK is nullable to support online or
     location-independent events.
 
-    The constraint ``ends_at > starts_at`` is enforced both at the
+    The constraint ``ends_at >= starts_at`` is enforced both at the
     database level (``CheckConstraint``) and at the application level
     (:meth:`clean`), so validation fires in both the admin and the API.
 
@@ -49,7 +45,7 @@ class Event(BaseModel):
                        ``null`` for online or location-independent events.
         starts_at:     Date and time at which the event begins (UTC).
         ends_at:       Date and time at which the event ends (UTC).
-                       Must be strictly later than ``starts_at``.
+                       Must be later or equal to ``starts_at``.
         ticketing_url: Public URL where tickets can be purchased.
     """
 
@@ -81,7 +77,7 @@ class Event(BaseModel):
     ends_at = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="ISO 8601 UTC datetime at which the event ends. Must be strictly later than `starts_at`.",
+        help_text="ISO 8601 UTC datetime at which the event ends. Must be later or equal to `starts_at`.",
         db_comment="The time at which the event ends.",
     )
 
@@ -105,7 +101,7 @@ class Event(BaseModel):
 
     def clean(self) -> None:
         """
-        Enforce that ``ends_at`` is strictly later than ``starts_at``.
+        Enforce that ``ends_at`` is later or equal to ``starts_at``.
 
         This mirrors the database-level ``CheckConstraint`` so that the
         validation error surfaces in the Django admin and any form-based
@@ -119,11 +115,6 @@ class Event(BaseModel):
         production = str(self.production) if self.production else "Unknown Production"
         date = self.starts_at.strftime("%Y-%m-%d %H:%M") if self.starts_at else "TBA"
         return f"{production} @ {date}"
-
-
-# ===========================================================================
-# EventPrice
-# ===========================================================================
 
 
 class EventPrice(BaseModel):
@@ -140,6 +131,8 @@ class EventPrice(BaseModel):
 
     Attributes:
         event:       The event this price entry belongs to.
+        price:       Price category for this event price entry.
+                     ``null`` when the price has been deleted.
         price_rank:  The price rank availability tier.
                      ``null`` when the rank has been deleted.
         amount:      Ticket price in euro.

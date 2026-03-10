@@ -9,12 +9,12 @@ Covers:
 - Queryset prefetch_related for media_items, translations, crops (gallery viewset)
 - Queryset select_related for gallery, prefetch_related for translations/crops (item viewset)
 - MediaItemViewSet queryset is ordered by position
-- GET  /api/media-galleries/       — public key ✓, internal key ✓
-- GET  /api/media-galleries/<id>/  — public key ✓, internal key ✓
-- POST /api/media-galleries/       — internal key ✓, public key ✗
-- PUT  /api/media-galleries/<id>/  — internal key ✓, public key ✗
-- PATCH /api/media-galleries/<id>/ — internal key ✓, public key ✗
-- DELETE /api/media-galleries/<id>/— internal key ✓, public key ✗
+- GET  /api/media-galleries/       - public key ✓, internal key ✓
+- GET  /api/media-galleries/<id>/  - public key ✓, internal key ✓
+- POST /api/media-galleries/       - internal key ✓, public key ✗
+- PUT  /api/media-galleries/<id>/  - internal key ✓, public key ✗
+- PATCH /api/media-galleries/<id>/ - internal key ✓, public key ✗
+- DELETE /api/media-galleries/<id>/- internal key ✓, public key ✗
 - All methods rejected without auth header
 - All methods rejected with a completely wrong key
 - Same auth matrix for /api/media-items/
@@ -67,7 +67,7 @@ def results_list(response):
 
 
 # ---------------------------------------------------------------------------
-# Class-level tests — MediaGalleryViewSet
+# Class-level tests - MediaGalleryViewSet
 # ---------------------------------------------------------------------------
 
 
@@ -100,7 +100,7 @@ class TestMediaGalleryViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Class-level tests — MediaItemViewSet
+# Class-level tests - MediaItemViewSet
 # ---------------------------------------------------------------------------
 
 
@@ -136,7 +136,7 @@ class TestMediaItemViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/media-galleries/ — list
+# GET /api/media-galleries/ - list
 # ---------------------------------------------------------------------------
 
 
@@ -182,7 +182,7 @@ class TestMediaGalleryViewSetList(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/media-galleries/<id>/ — detail
+# GET /api/media-galleries/<id>/ - detail
 # ---------------------------------------------------------------------------
 
 
@@ -224,7 +224,7 @@ class TestMediaGalleryViewSetDetail(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Write methods — /api/media-galleries/
+# Write methods - /api/media-galleries/
 # ---------------------------------------------------------------------------
 
 
@@ -316,7 +316,7 @@ class TestMediaGalleryViewSetWrite(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/media-items/ — list
+# GET /api/media-items/ - list
 # ---------------------------------------------------------------------------
 
 
@@ -384,7 +384,7 @@ class TestMediaItemViewSetList(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/media-items/<id>/ — detail
+# GET /api/media-items/<id>/ - detail
 # ---------------------------------------------------------------------------
 
 
@@ -435,7 +435,7 @@ class TestMediaItemViewSetDetail(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Write methods — /api/media-items/
+# Write methods - /api/media-items/
 # ---------------------------------------------------------------------------
 
 
@@ -516,7 +516,7 @@ class TestMediaItemViewSetWrite(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# N+1 guards — queryset prefetches
+# N+1 guards - queryset prefetches
 # ---------------------------------------------------------------------------
 
 

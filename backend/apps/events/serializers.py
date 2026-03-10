@@ -109,7 +109,7 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         read_only=True,
         help_text=(
             "Price tiers assigned to this event, ordered by price rank. "
-            "Read-only — use the Event Price endpoints to manage entries."
+            "Read-only - use the Event Price endpoints to manage entries."
         ),
     )
 

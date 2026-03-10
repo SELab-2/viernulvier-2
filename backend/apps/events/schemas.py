@@ -28,11 +28,11 @@ from apps.core.openapi import (
 from .serializers import EventSerializer
 
 # ===========================================================================
-# Event — examples
+# Event - examples
 # ===========================================================================
 
 _EVENT_RESPONSE = OpenApiExample(
-    "Event — response",
+    "Event - response",
     summary="An event with nested prices",
     value={
         "id": 42,
@@ -45,6 +45,7 @@ _EVENT_RESPONSE = OpenApiExample(
             {
                 "id": 101,
                 "event": 42,
+                "price": 1,
                 "price_rank": 1,
                 "amount": "18.00",
                 "available": 120,
@@ -52,6 +53,7 @@ _EVENT_RESPONSE = OpenApiExample(
             {
                 "id": 102,
                 "event": 42,
+                "price": 2,
                 "price_rank": 2,
                 "amount": "12.00",
                 "available": 40,
@@ -62,7 +64,7 @@ _EVENT_RESPONSE = OpenApiExample(
 )
 
 _EVENT_NO_HALL_RESPONSE = OpenApiExample(
-    "Event — response (no hall)",
+    "Event - response (no hall)",
     summary="An online event without a hall assignment",
     value={
         "id": 55,
@@ -77,7 +79,7 @@ _EVENT_NO_HALL_RESPONSE = OpenApiExample(
 )
 
 _EVENT_INPUT = OpenApiExample(
-    "Event — request body",
+    "Event - request body",
     summary="Payload for creating a new event",
     value={
         "production": 1,
@@ -90,7 +92,7 @@ _EVENT_INPUT = OpenApiExample(
 )
 
 _EVENT_PARTIAL_INPUT = OpenApiExample(
-    "Event — partial request body",
+    "Event - partial request body",
     summary="Only the fields you want to change",
     value={"ticketing_url": "https://tickets.example.com/events/42/updated"},
     request_only=True,
@@ -98,15 +100,16 @@ _EVENT_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# EventPrice — examples
+# EventPrice - examples
 # ===========================================================================
 
 _EVENT_PRICE_RESPONSE = OpenApiExample(
-    "EventPrice — response",
+    "EventPrice - response",
     summary="A single price entry for an event",
     value={
         "id": 101,
         "event": 42,
+        "price": 1,
         "price_rank": 1,
         "amount": "18.00",
         "available": 120,
@@ -115,10 +118,11 @@ _EVENT_PRICE_RESPONSE = OpenApiExample(
 )
 
 _EVENT_PRICE_INPUT = OpenApiExample(
-    "EventPrice — request body",
+    "EventPrice - request body",
     summary="Payload for creating an event price",
     value={
         "event": 42,
+        "price": 1,
         "price_rank": 1,
         "amount": "18.00",
         "available": 120,
@@ -127,7 +131,7 @@ _EVENT_PRICE_INPUT = OpenApiExample(
 )
 
 _EVENT_PRICE_PARTIAL_INPUT = OpenApiExample(
-    "EventPrice — partial request body",
+    "EventPrice - partial request body",
     summary="Only the fields you want to change",
     value={"available": 80},
     request_only=True,
@@ -135,7 +139,7 @@ _EVENT_PRICE_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# Event — per-action schemas
+# Event - per-action schemas
 # ===========================================================================
 
 _EVENT_LIST = extend_schema(
@@ -176,7 +180,7 @@ _EVENT_CREATE = extend_schema(
         "Creates a new **Event** for an existing production.\n\n"
         "- `production` is required.\n"
         "- `hall` is optional; omit or set to `null` for online events.\n"
-        "- `ends_at` must be strictly later than `starts_at` — the API enforces "
+        "- `ends_at` must be strictly later than `starts_at` - the API enforces "
         "  this with a database-level check constraint.\n"
         "- Prices must be added separately via the **Event Price** endpoints "
         "  after creation.\n\n"
@@ -244,7 +248,7 @@ _EVENT_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# Assembled decorator — imported and applied in views.py
+# Assembled decorator - imported and applied in views.py
 # ===========================================================================
 
 event_schema = extend_schema_view(

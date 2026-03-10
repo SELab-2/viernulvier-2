@@ -1,15 +1,15 @@
 """
-Tests for apps/languages/views.py — LanguageViewSet
+Tests for apps/languages/views.py - LanguageViewSet
 
 Covers:
 - ViewSet inherits from ApiModelViewSet
 - lookup_field is "code"
-- GET  /api/languages/          — public key ✓, internal key ✓ (OR logic)
-- GET  /api/languages/<code>/   — public key ✓, internal key ✓ (OR logic)
-- POST /api/languages/          — internal key ✓, public key ✗
-- PUT  /api/languages/<code>/   — internal key ✓, public key ✗
-- PATCH /api/languages/<code>/  — internal key ✓, public key ✗
-- DELETE /api/languages/<code>/ — internal key ✓, public key ✗
+- GET  /api/languages/          - public key ✓, internal key ✓ (OR logic)
+- GET  /api/languages/<code>/   - public key ✓, internal key ✓ (OR logic)
+- POST /api/languages/          - internal key ✓, public key ✗
+- PUT  /api/languages/<code>/   - internal key ✓, public key ✗
+- PATCH /api/languages/<code>/  - internal key ✓, public key ✗
+- DELETE /api/languages/<code>/ - internal key ✓, public key ✗
 - All methods rejected without auth header
 - All methods rejected with a completely wrong key
 - Response structure / fields
@@ -66,7 +66,7 @@ class TestLanguageViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/languages/  — list
+# GET /api/languages/  - list
 # ---------------------------------------------------------------------------
 
 
@@ -119,7 +119,7 @@ class TestLanguageViewSetList(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/languages/<code>/  — retrieve
+# GET /api/languages/<code>/  - retrieve
 # ---------------------------------------------------------------------------
 
 
@@ -162,7 +162,7 @@ class TestLanguageViewSetRetrieve(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/languages/  — create
+# POST /api/languages/  - create
 # ---------------------------------------------------------------------------
 
 
@@ -248,7 +248,7 @@ class TestLanguageViewSetCreate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# PUT /api/languages/<code>/  — full update
+# PUT /api/languages/<code>/  - full update
 # ---------------------------------------------------------------------------
 
 
@@ -308,7 +308,7 @@ class TestLanguageViewSetUpdate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# PATCH /api/languages/<code>/  — partial update
+# PATCH /api/languages/<code>/  - partial update
 # ---------------------------------------------------------------------------
 
 
@@ -368,7 +368,7 @@ class TestLanguageViewSetPartialUpdate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# DELETE /api/languages/<code>/  — destroy
+# DELETE /api/languages/<code>/  - destroy
 # ---------------------------------------------------------------------------
 
 

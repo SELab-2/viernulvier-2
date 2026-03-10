@@ -35,7 +35,7 @@ class TestLanguageSerializerFields(TestCase):
 
 
 class TestLanguageSerializerSerialization(TestCase):
-    """Model → dict serialization."""
+    """Model -> dict serialization."""
 
     def test_serializes_active_language_correctly(self):
         lang = LanguageFactory(code="nl", name="Dutch", is_active=True)
@@ -74,7 +74,7 @@ class TestLanguageSerializerSerialization(TestCase):
 
 
 class TestLanguageSerializerDeserialization(TestCase):
-    """dict → model (create / update)."""
+    """dict -> model (create / update)."""
 
     # -- Valid data -----------------------------------------------------------
 

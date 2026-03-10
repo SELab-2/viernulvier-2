@@ -112,7 +112,7 @@ class TestPriceRankViewSetPrefetch(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Prices — shared setup mixin
+# Prices - shared setup mixin
 # ---------------------------------------------------------------------------
 
 
@@ -159,7 +159,7 @@ class _PriceSetupMixin(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/prices/ — list
+# GET /api/prices/ - list
 # ---------------------------------------------------------------------------
 
 
@@ -221,7 +221,7 @@ class TestPriceViewSetList(_PriceSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/prices/<id>/ — retrieve
+# GET /api/prices/<id>/ - retrieve
 # ---------------------------------------------------------------------------
 
 
@@ -259,7 +259,7 @@ class TestPriceViewSetRetrieve(_PriceSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/prices/ — create (internal only)
+# POST /api/prices/ - create (internal only)
 # ---------------------------------------------------------------------------
 
 
@@ -366,7 +366,7 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# PUT /api/prices/<id>/ — full update (internal only)
+# PUT /api/prices/<id>/ - full update (internal only)
 # ---------------------------------------------------------------------------
 
 
@@ -450,7 +450,7 @@ class TestPriceViewSetUpdate(_PriceSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# PATCH /api/prices/<id>/ — partial update (internal only)
+# PATCH /api/prices/<id>/ - partial update (internal only)
 # ---------------------------------------------------------------------------
 
 
@@ -507,7 +507,7 @@ class TestPriceViewSetPartialUpdate(_PriceSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# DELETE /api/prices/<id>/ — destroy (internal only)
+# DELETE /api/prices/<id>/ - destroy (internal only)
 # ---------------------------------------------------------------------------
 
 
@@ -539,7 +539,7 @@ class TestPriceViewSetDelete(_PriceSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# Price ranks — shared setup mixin
+# Price ranks - shared setup mixin
 # ---------------------------------------------------------------------------
 
 
@@ -560,7 +560,7 @@ class _PriceRankSetupMixin(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/price-ranks/ — list
+# GET /api/price-ranks/ - list
 # ---------------------------------------------------------------------------
 
 
@@ -595,7 +595,7 @@ class TestPriceRankViewSetList(_PriceRankSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/price-ranks/ — create (internal only)
+# POST /api/price-ranks/ - create (internal only)
 # ---------------------------------------------------------------------------
 
 
