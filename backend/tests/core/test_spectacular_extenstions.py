@@ -6,7 +6,7 @@ from apps.core.spectacular_extensions import ApiKeyAuthenticationScheme
 
 
 def test_api_key_authentication_scheme_security_definition():
-    """get_security_definition must describe the Api-Key header setup."""
+    """get_security_definition must describe the X-API-Key header setup."""
     scheme = ApiKeyAuthenticationScheme(target=MagicMock())
 
     result = scheme.get_security_definition(auto_schema=None)
@@ -14,8 +14,8 @@ def test_api_key_authentication_scheme_security_definition():
     assert result == {
         "type": "apiKey",
         "in": "header",
-        "name": "Authorization",
-        "description": "Use `Api-Key <KEY>` to authenticate.",
+        "name": "X-API-Key",
+        "description": "Use the `X-API-Key` header to authenticate.",
     }
 
 
