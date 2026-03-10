@@ -6,7 +6,7 @@ Web application project with a Django backend and a React + Vite frontend.
 
 Project documentation is available in the GitHub Wiki:
 
-- [GitHub Wiki](https://github.com/SELab-2/viernulvier-2/wiki)
+- [GitHub Wiki](https://github.com/SELab-2/viernulvier-2/wiki), also available under `wiki/`
 
 ## Team Roles
 
