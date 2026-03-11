@@ -146,7 +146,6 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "hall_display",
             "starts_at",
             "ends_at",
-            "ticketing_url",
             "prices",
         ]
         read_only_fields = ["id", "prices"]
@@ -166,8 +165,5 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             },
             "ends_at": {
                 "help_text": ("ISO 8601 UTC datetime at which the event ends. Must be strictly later than `starts_at`."),
-            },
-            "ticketing_url": {
-                "help_text": "Public URL where tickets for this event can be purchased. Empty string when not applicable.",
             },
         }

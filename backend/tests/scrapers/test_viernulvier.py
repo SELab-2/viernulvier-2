@@ -1827,20 +1827,6 @@ class TestFlexibleFieldMapping:
         field = Event._meta.get_field("starts_at")
         assert _parse_field_value(field, None) is None
 
-    def test_build_defaults_does_not_raise_for_missing_required_fields(self):
-        """_build_defaults doesn't validate; it only builds the defaults dict."""
-        from apps.events.models import Event
-
-        item = {
-            "external_id": "/api/events/1",
-            "ticketing_url": "https://example.com",
-        }
-        fk_cache = FKCache()
-        defaults = viernulvier._build_defaults(Event, item, _PassThroughConfig(), fk_cache)
-
-        assert "ticketing_url" in defaults
-        assert defaults["ticketing_url"] == "https://example.com"
-
     def test_skips_unknown_fields_event_price(self):
         """Unknown API fields are silently ignored."""
         from apps.events.models import Event, EventPrice

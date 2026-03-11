@@ -40,7 +40,6 @@ _EVENT_RESPONSE = OpenApiExample(
         "hall": 3,
         "starts_at": "2025-09-15T19:30:00Z",
         "ends_at": "2025-09-15T21:30:00Z",
-        "ticketing_url": "https://tickets.example.com/events/42",
         "prices": [
             {
                 "id": 101,
@@ -72,7 +71,6 @@ _EVENT_NO_HALL_RESPONSE = OpenApiExample(
         "hall": None,
         "starts_at": "2025-10-01T20:00:00Z",
         "ends_at": "2025-10-01T21:00:00Z",
-        "ticketing_url": "https://stream.example.com/events/55",
         "prices": [],
     },
     response_only=True,
@@ -86,7 +84,6 @@ _EVENT_INPUT = OpenApiExample(
         "hall": 3,
         "starts_at": "2025-09-15T19:30:00Z",
         "ends_at": "2025-09-15T21:30:00Z",
-        "ticketing_url": "https://tickets.example.com/events/42",
     },
     request_only=True,
 )
@@ -94,7 +91,7 @@ _EVENT_INPUT = OpenApiExample(
 _EVENT_PARTIAL_INPUT = OpenApiExample(
     "Event - partial request body",
     summary="Only the fields you want to change",
-    value={"ticketing_url": "https://tickets.example.com/events/42/updated"},
+    value={"starts_at": "2025-09-15T20:00:00Z"},
     request_only=True,
 )
 

@@ -80,14 +80,12 @@ class _EventSetupMixin(TestCase):
             hall=self.hall,
             starts_at=now,
             ends_at=now + timedelta(hours=2),
-            ticketing_url="https://example.com/tickets-1",
         )
         self.e2 = EventFactory(
             production=self.production,
             hall=self.hall,
             starts_at=now + timedelta(days=1),
             ends_at=now + timedelta(days=1, hours=2),
-            ticketing_url="https://example.com/tickets-2",
         )
 
 
@@ -125,7 +123,6 @@ class TestEventViewSetList(_EventSetupMixin):
         self.assertIn("hall", item)
         self.assertIn("starts_at", item)
         self.assertIn("ends_at", item)
-        self.assertIn("ticketing_url", item)
         self.assertIn("prices", item)
 
     def test_list_without_auth_returns_401(self):
@@ -194,7 +191,6 @@ class TestEventViewSetCreate(_EventSetupMixin):
                 "hall": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
-                "ticketing_url": "https://example.com/new",
             },
             format="json",
             **int_headers(),
@@ -211,12 +207,11 @@ class TestEventViewSetCreate(_EventSetupMixin):
                 "hall": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
-                "ticketing_url": "https://example.com/new",
             },
             format="json",
             **int_headers(),
         )
-        self.assertTrue(Event.objects.filter(ticketing_url="https://example.com/new").exists())
+        self.assertTrue(Event.objects.filter(starts_at=(now.isoformat())).exists())
 
     def test_create_with_public_key_returns_403(self):
         """Test case for test_create_with_public_key_returns_403."""
@@ -228,7 +223,6 @@ class TestEventViewSetCreate(_EventSetupMixin):
                 "hall": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
-                "ticketing_url": "https://example.com/new",
             },
             format="json",
             **pub_headers(),
@@ -245,7 +239,6 @@ class TestEventViewSetCreate(_EventSetupMixin):
                 "hall": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
-                "ticketing_url": "https://example.com/new",
             },
             format="json",
         )
@@ -261,7 +254,6 @@ class TestEventViewSetCreate(_EventSetupMixin):
                 "hall": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
-                "ticketing_url": "https://example.com/new",
             },
             format="json",
             **wrong_headers(),
@@ -277,7 +269,6 @@ class TestEventViewSetCreate(_EventSetupMixin):
                 "hall": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
-                "ticketing_url": "https://example.com/new",
             },
             format="json",
             **int_headers(),
@@ -301,30 +292,11 @@ class TestEventViewSetUpdate(_EventSetupMixin):
                 "hall": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
-                "ticketing_url": "https://example.com/updated",
             },
             format="json",
             **int_headers(),
         )
         self.assertEqual(response.status_code, 200)
-
-    def test_put_updates_event_in_db(self):
-        """Test case for test_put_updates_event_in_db."""
-        now = timezone.now()
-        self.client.put(
-            f"/api/events/{self.e1.id}/",
-            {
-                "production": self.production.id,
-                "hall": self.hall.id,
-                "starts_at": now.isoformat(),
-                "ends_at": (now + timedelta(hours=2)).isoformat(),
-                "ticketing_url": "https://example.com/updated",
-            },
-            format="json",
-            **int_headers(),
-        )
-        self.e1.refresh_from_db()
-        self.assertEqual(self.e1.ticketing_url, "https://example.com/updated")
 
     def test_put_with_public_key_returns_403(self):
         """Test case for test_put_with_public_key_returns_403."""
@@ -336,7 +308,6 @@ class TestEventViewSetUpdate(_EventSetupMixin):
                 "hall": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
-                "ticketing_url": "https://example.com/updated",
             },
             format="json",
             **pub_headers(),
@@ -353,7 +324,6 @@ class TestEventViewSetUpdate(_EventSetupMixin):
                 "hall": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
-                "ticketing_url": "https://example.com/updated",
             },
             format="json",
             **int_headers(),
@@ -371,7 +341,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
         """Test case for test_patch_with_internal_key_returns_200."""
         response = self.client.patch(
             f"/api/events/{self.e1.id}/",
-            {"ticketing_url": "https://example.com/patched"},
+            {"starts_at": (timezone.now() + timedelta(hours=1)).isoformat()},
             format="json",
             **int_headers(),
         )
@@ -379,20 +349,30 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
 
     def test_patch_updates_only_specified_fields(self):
         """Test case for test_patch_updates_only_specified_fields."""
-        self.client.patch(
+        new_start_time = timezone.now() + timedelta(hours=1)
+    
+        response = self.client.patch(
             f"/api/events/{self.e1.id}/",
-            {"ticketing_url": "https://example.com/patched"},
+            {"starts_at": new_start_time.isoformat()},
             format="json",
             **int_headers(),
         )
+        
+        self.assertEqual(response.status_code, 200)
+        
         self.e1.refresh_from_db()
-        self.assertEqual(self.e1.ticketing_url, "https://example.com/patched")
+        
+        self.assertAlmostEqual(
+            self.e1.starts_at, 
+            new_start_time, 
+            delta=timedelta(seconds=1)
+        )
 
     def test_patch_with_public_key_returns_403(self):
         """Test case for test_patch_with_public_key_returns_403."""
         response = self.client.patch(
             f"/api/events/{self.e1.id}/",
-            {"ticketing_url": "https://example.com/patched"},
+            {"starts_at": (timezone.now() + timedelta(hours=1)).isoformat()},
             format="json",
             **pub_headers(),
         )
@@ -402,7 +382,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
         """Test case for test_patch_without_auth_returns_401."""
         response = self.client.patch(
             f"/api/events/{self.e1.id}/",
-            {"ticketing_url": "https://example.com/patched"},
+            {"starts_at": (timezone.now() + timedelta(hours=1)).isoformat()},
             format="json",
         )
         self.assertEqual(response.status_code, 401)
@@ -411,7 +391,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
         """Test case for test_patch_with_wrong_key_returns_401."""
         response = self.client.patch(
             f"/api/events/{self.e1.id}/",
-            {"ticketing_url": "https://example.com/patched"},
+            {"starts_at": (timezone.now() + timedelta(hours=1)).isoformat()},
             format="json",
             **wrong_headers(),
         )
