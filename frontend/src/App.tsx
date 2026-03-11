@@ -20,6 +20,9 @@ const App = () => {
         palette: {
           mode,
         },
+        typography: {
+          fontFamily: ['ABC Monument Grotesk', 'Helvetica', 'Arial', 'sans-serif'].join(','),
+        },
       }),
     [mode],
   )
