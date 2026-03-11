@@ -66,8 +66,8 @@ class TranslatableSerializerMixin:
         """
         Build a ``{language_code: value}`` dictionary for a translated field.
 
-        Reads translation rows from ``obj.<related_name>.all()`` — which is
-        expected to be a prefetched queryset — and returns a dictionary of
+        Reads translation rows from ``obj.<related_name>.all()`` - which is
+        expected to be a prefetched queryset - and returns a dictionary of
         all languages that have a non-empty value for ``field_name``.
 
         Parameters

@@ -15,7 +15,7 @@ from .models import Genre, GenreUseAs
 
 class GenreUseAsSerializer(serializers.ModelSerializer):
     """
-    Represents a GenreUseAs object — the role a genre plays in the system.
+    Represents a GenreUseAs object - the role a genre plays in the system.
     """
 
     class Meta:
@@ -41,7 +41,7 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         help_text=(
             "Dictionary containing all available translations of the genre name, "
             'e.g. {"en": "Theatre", "fr": "Théâtre"}. '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 

@@ -23,25 +23,25 @@ from apps.core.openapi import (
 from .serializers import GenreSerializer, GenreUseAsSerializer
 
 # ===========================================================================
-# GenreUseAs — examples
+# GenreUseAs - examples
 # ===========================================================================
 
 _USE_AS_RESPONSE = OpenApiExample(
-    "GenreUseAs — response",
+    "GenreUseAs - response",
     summary="A usage-context object",
     value={"id": 1, "name": "genre"},
     response_only=True,
 )
 
 _USE_AS_INPUT = OpenApiExample(
-    "GenreUseAs — request body",
+    "GenreUseAs - request body",
     summary="Payload for creating or updating a usage context",
     value={"name": "category"},
     request_only=True,
 )
 
 _USE_AS_PARTIAL_INPUT = OpenApiExample(
-    "GenreUseAs — partial request body",
+    "GenreUseAs - partial request body",
     summary="Only the fields you want to change",
     value={"name": "updated-tag"},
     request_only=True,
@@ -49,14 +49,14 @@ _USE_AS_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# GenreUseAs — per-action schemas
+# GenreUseAs - per-action schemas
 # ===========================================================================
 
 _USE_AS_LIST = extend_schema(
     summary="List all genre usage contexts",
     description=(
         "Returns a paginated list of all **GenreUseAs** objects.\n\n"
-        "These objects define the *role* a genre plays in the system — "
+        "These objects define the *role* a genre plays in the system - "
         "for example as a production classification (`genre`) or as a "
         "lightweight label (`tag`)."
     ),
@@ -152,14 +152,15 @@ _USE_AS_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# Genre — examples
+# Genre - examples
 # ===========================================================================
 
 _GENRE_RESPONSE_MULTILINGUAL = OpenApiExample(
-    "Genre — Multilingual Response",
+    "Genre - Multilingual Response",
     summary="Example of a genre with all available translations",
     value={
         "id": 10,
+        "vendor_id": "theater-123",
         "type": "theater",
         "use_as": 1,
         "name": {"nl": "Theater", "en": "Theatre", "fr": "Théâtre"},
@@ -168,25 +169,25 @@ _GENRE_RESPONSE_MULTILINGUAL = OpenApiExample(
 )
 
 _GENRE_INPUT = OpenApiExample(
-    "Genre — request body",
+    "Genre - request body",
     summary="Payload for creating a new genre",
     description=(
         "Only `type` and `use_as` are required. Localised names are added via the translation endpoints after creation."
     ),
-    value={"type": "contemporary_dance", "use_as": 1},
+    value={"type": "contemporary_dance", "use_as": 1, "vendor_id": "theater-123"},
     request_only=True,
 )
 
 _GENRE_PARTIAL_INPUT = OpenApiExample(
-    "Genre — partial request body",
+    "Genre - partial request body",
     summary="Only the fields you want to change",
-    value={"use_as": 2},
+    value={"use_as": 2, "vendor_id": "theater-123"},
     request_only=True,
 )
 
 
 # ===========================================================================
-# Genre — per-action schemas
+# Genre - per-action schemas
 # ===========================================================================
 
 _GENRE_LIST = extend_schema(
@@ -288,7 +289,7 @@ _GENRE_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# Assembled decorators — imported and applied in views.py
+# Assembled decorators - imported and applied in views.py
 # ===========================================================================
 
 genre_use_as_schema = extend_schema_view(

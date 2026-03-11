@@ -23,25 +23,25 @@ from apps.core.openapi import (
 from .serializers import LanguageSerializer
 
 # ===========================================================================
-# Language — examples
+# Language - examples
 # ===========================================================================
 
 _LANGUAGE_RESPONSE = OpenApiExample(
-    "Language — response",
+    "Language - response",
     summary="A language object",
     value={"code": "nl", "name": "Dutch", "is_active": True},
     response_only=True,
 )
 
 _LANGUAGE_INPUT = OpenApiExample(
-    "Language — request body",
+    "Language - request body",
     summary="Payload for creating a new language",
     value={"code": "fr", "name": "French", "is_active": False},
     request_only=True,
 )
 
 _LANGUAGE_PARTIAL_INPUT = OpenApiExample(
-    "Language — partial request body",
+    "Language - partial request body",
     summary="Only the fields you want to change",
     value={"is_active": True},
     request_only=True,
@@ -49,7 +49,7 @@ _LANGUAGE_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# Language — per-action schemas
+# Language - per-action schemas
 # ===========================================================================
 
 _LANGUAGE_LIST = extend_schema(
@@ -157,7 +157,7 @@ _LANGUAGE_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# Assembled decorator — imported and applied in views.py
+# Assembled decorator - imported and applied in views.py
 # ===========================================================================
 
 language_schema = extend_schema_view(

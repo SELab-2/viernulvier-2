@@ -23,11 +23,11 @@ from apps.core.openapi import (
 from .serializers import TagSerializer
 
 # ===========================================================================
-# Tag — examples
+# Tag - examples
 # ===========================================================================
 
 _TAG_RESPONSE = OpenApiExample(
-    "Tag — response",
+    "Tag - response",
     summary="A tag with localised fields",
     value={
         "id": 12,
@@ -45,7 +45,7 @@ _TAG_RESPONSE = OpenApiExample(
 )
 
 _TAG_INTERNAL_RESPONSE = OpenApiExample(
-    "Tag — internal (system) response",
+    "Tag - internal (system) response",
     summary="A tag created internally without an external source",
     value={
         "id": 5,
@@ -63,7 +63,7 @@ _TAG_INTERNAL_RESPONSE = OpenApiExample(
 )
 
 _TAG_INPUT = OpenApiExample(
-    "Tag — request body",
+    "Tag - request body",
     summary="Payload for creating a new tag",
     value={
         "url": "",
@@ -77,7 +77,7 @@ _TAG_INPUT = OpenApiExample(
 )
 
 _TAG_PARTIAL_INPUT = OpenApiExample(
-    "Tag — partial request body",
+    "Tag - partial request body",
     summary="Only the fields you want to change",
     value={"is_enabled": False},
     request_only=True,
@@ -85,7 +85,7 @@ _TAG_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# Tag — per-action schemas
+# Tag - per-action schemas
 # ===========================================================================
 
 _TAG_LIST = extend_schema(
@@ -193,7 +193,7 @@ _TAG_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# Assembled decorator — imported and applied in views.py
+# Assembled decorator - imported and applied in views.py
 # ===========================================================================
 
 tag_schema = extend_schema_view(

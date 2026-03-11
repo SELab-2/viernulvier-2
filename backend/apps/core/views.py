@@ -3,8 +3,8 @@ Base ViewSet classes for the core app.
 
 All app-level ViewSets inherit from one of the two classes defined here:
 
-- :class:`ApiModelViewSet`    — full CRUD, access gated by key scope.
-- :class:`ApiReadOnlyViewSet` — list + retrieve only, no write routes registered.
+- :class:`ApiModelViewSet`    - full CRUD, access gated by key scope.
+- :class:`ApiReadOnlyViewSet` - list + retrieve only, no write routes registered.
 
 Both classes wire up :class:`~apps.core.authentications.ApiKeyAuthentication`
 and :class:`~apps.core.permissions.ApiKeyPermission` as their authentication
@@ -42,9 +42,9 @@ class ApiModelViewSet(ModelViewSet):
 
     Access control is enforced by :class:`~apps.core.permissions.ApiKeyPermission`:
 
-    - **Internal key** → all routes are accessible.
-    - **Public key**   → only ``list`` and ``retrieve`` (safe methods).
-    - **No valid key** → ``HTTP 401`` from the authenticator or ``HTTP 403``
+    - **Internal key** -> all routes are accessible.
+    - **Public key**   -> only ``list`` and ``retrieve`` (safe methods).
+    - **No valid key** -> ``HTTP 401`` from the authenticator or ``HTTP 403``
       from the permission class.
 
     Subclasses must define ``serializer_class`` and ``queryset``. Use
@@ -60,7 +60,7 @@ class ApiReadOnlyViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     """
     Base ViewSet for read-only access.
 
-    Only the ``list`` and ``retrieve`` routes are registered — write
+    Only the ``list`` and ``retrieve`` routes are registered - write
     routes (``create``, ``update``, ``partial_update``, ``destroy``) are
     excluded at the class level by not including the corresponding DRF
     mixins. This means they return ``HTTP 405 Method Not Allowed`` even

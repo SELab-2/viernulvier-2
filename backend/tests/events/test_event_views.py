@@ -61,7 +61,7 @@ class TestEventViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Events — shared setup mixin
+# Events - shared setup mixin
 # ---------------------------------------------------------------------------
 
 
@@ -92,7 +92,7 @@ class _EventSetupMixin(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/events/ — list
+# GET /api/events/ - list
 # ---------------------------------------------------------------------------
 
 
@@ -140,7 +140,7 @@ class TestEventViewSetList(_EventSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/events/<id>/ — retrieve
+# GET /api/events/<id>/ - retrieve
 # ---------------------------------------------------------------------------
 
 
@@ -179,7 +179,7 @@ class TestEventViewSetRetrieve(_EventSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/events/ — create (internal only)
+# POST /api/events/ - create (internal only)
 # ---------------------------------------------------------------------------
 
 
@@ -286,7 +286,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# PUT /api/events/<id>/ — full update (internal only)
+# PUT /api/events/<id>/ - full update (internal only)
 # ---------------------------------------------------------------------------
 
 
@@ -362,7 +362,7 @@ class TestEventViewSetUpdate(_EventSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# PATCH /api/events/<id>/ — partial update (internal only)
+# PATCH /api/events/<id>/ - partial update (internal only)
 # ---------------------------------------------------------------------------
 
 
@@ -419,7 +419,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# DELETE /api/events/<id>/ — destroy (internal only)
+# DELETE /api/events/<id>/ - destroy (internal only)
 # ---------------------------------------------------------------------------
 
 
@@ -451,7 +451,7 @@ class TestEventViewSetDelete(_EventSetupMixin):
 
 
 # ---------------------------------------------------------------------------
-# N+1 guard — queryset prefetches
+# N+1 guard - queryset prefetches
 # ---------------------------------------------------------------------------
 
 
