@@ -21,6 +21,7 @@ from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
 from apps.genres.models import Genre
 from apps.tags.models import Tag
 
+from .admin_filters import ArtistNameFilter, GenreFilter, TagFilter
 from .models import (
     Production,
     ProductionGenre,
@@ -181,6 +182,9 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
     list_filter = (
         "attendance_mode",
         "performer_type",
+        TagFilter,
+        GenreFilter,
+        ArtistNameFilter,
     )
 
     list_select_related = ("uit_database_theme", "uit_database_type", "media_gallery")
