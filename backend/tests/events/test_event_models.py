@@ -63,7 +63,6 @@ def test_event_clean_raises_when_ends_before_starts():
         hall=hall,
         starts_at=now,
         ends_at=now - timedelta(minutes=1),
-        ticketing_url="",
     )
     with pytest.raises(ValidationError):
         e.full_clean()
@@ -80,7 +79,6 @@ def test_event_allows_equal_start_and_end():
         hall=hall,
         starts_at=now,
         ends_at=now,
-        ticketing_url="",
     )
     e.full_clean()
     e.save()
@@ -92,7 +90,7 @@ def test_event_allows_null_starts_or_ends():
     prod = ProductionFactory()
     hall = HallFactory()
 
-    e1 = Event(production=prod, hall=hall, starts_at=None, ends_at=None, ticketing_url="")
+    e1 = Event(production=prod, hall=hall, starts_at=None, ends_at=None)
     e1.full_clean()
     e1.save()
     assert e1.id is not None
@@ -102,7 +100,6 @@ def test_event_allows_null_starts_or_ends():
         hall=hall,
         starts_at=timezone.now(),
         ends_at=None,
-        ticketing_url="",
     )
     e2.full_clean()
     e2.save()
@@ -119,7 +116,6 @@ def test_event_allows_end_without_start():
         hall=hall,
         starts_at=None,
         ends_at=timezone.now(),
-        ticketing_url="",
     )
     e3.full_clean()
     e3.save()

@@ -1,15 +1,16 @@
 """
 Serializers for the Events app.
 
-Field-level ``help_text`` and ``extra_kwargs`` are picked up automatically
-by drf-spectacular and rendered in the Swagger UI, so descriptions do not
-need to be repeated inside the schema decorators.
+Field-level ``help_text`` and ``extra_kwargs`` are picked up automatically by
+drf-spectacular and rendered in the Swagger UI, so descriptions do not need to
+be repeated inside the schema decorators.
 
 ``EventPriceSerializer`` is a flat serializer for the ``EventPrice``
 through-table. It is nested read-only inside ``EventSerializer`` via the
 ``prices`` reverse relation.
 """
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
@@ -32,6 +33,7 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     price_rank_display = serializers.SerializerMethodField()
     price_display = serializers.SerializerMethodField()
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_price_rank_display(self, obj):
         """Return the price rank name in the project's base language."""
         if not obj.price_rank:
@@ -43,6 +45,7 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             fallback=str(obj.price_rank_id),
         )
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_price_display(self, obj):
         if not obj.price:
             return None
@@ -116,6 +119,7 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     production_display = serializers.SerializerMethodField()
     hall_display = serializers.SerializerMethodField()
 
+    @extend_schema_field(serializers.CharField())
     def get_production_display(self, obj):
         """Return the production name in the project's base language."""
         return self.get_base_translated_value(
@@ -125,6 +129,7 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             fallback=str(obj.production_id),
         )
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_hall_display(self, obj):
         """Return the hall name in the project's base language."""
         if not obj.hall:
@@ -146,7 +151,6 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "hall_display",
             "starts_at",
             "ends_at",
-            "ticketing_url",
             "prices",
         ]
         read_only_fields = ["id", "prices"]
@@ -166,8 +170,5 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             },
             "ends_at": {
                 "help_text": ("ISO 8601 UTC datetime at which the event ends. Must be strictly later than `starts_at`."),
-            },
-            "ticketing_url": {
-                "help_text": "Public URL where tickets for this event can be purchased. Empty string when not applicable.",
             },
         }
