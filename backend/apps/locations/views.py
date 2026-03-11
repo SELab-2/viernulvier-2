@@ -7,11 +7,12 @@ on routing and queryset configuration only.
 
 from apps.core.views import ApiModelViewSet
 
+from .filters import HallFilter, LocationFilter, SpaceFilter
 from .models import Hall, Location, Space
 from .schemas import extend_schema, hall_schema, location_schema, space_schema
 from .serializers import HallSerializer, LocationSerializer, SpaceSerializer
 
-_TAG = "Locations"  # Reusable tag for all location-related endpoints in the OpenAPI docs
+_TAG = "Locations"
 
 
 @extend_schema(tags=[_TAG])
@@ -20,16 +21,54 @@ class LocationViewSet(ApiModelViewSet):
     """
     CRUD endpoints for Location objects.
 
-    A location represents a physical venue or address. It is the top of
-    the three-level hierarchy: Location -> Space -> Hall.
+    A location represents a physical venue or address. It is the top of the
+    three-level hierarchy: Location → Space → Hall.
 
-    Translated fields (e.g. `name`) return all available translations
-    as a dictionary (e.g. {"en": "City Hall", "fr": "Hôtel de Ville"}).
-    Translations are managed via the Location Translation endpoints.
+    Translated fields (e.g. ``name``) return all available translations as a
+    language-code dictionary. Translations are managed via the dedicated
+    Location Translation endpoints.
+
+    Filtering
+    ---------
+    ``?city=gent``
+        Substring match on the city name.
+    ``?country=BE``
+        Exact country code match (case-insensitive).
+    ``?postal_code=9000``
+        Exact postal code match.
+    ``?is_own_location=true``
+        Only venues owned or operated by the organisation.
+    ``?name=stadsschouwburg``
+        Substring match across all translated location names.
+    ``?external_id=abc``
+        Exact match on the external identifier.
+
+    Ordering
+    --------
+    ``?ordering=city`` / ``?ordering=-city``
+        Alphabetical by city.
+    ``?ordering=country`` / ``?ordering=-country``
+        Alphabetical by country.
+    ``?ordering=id`` / ``?ordering=-id``
+        By creation order (default ascending).
+
+    Search
+    ------
+    ``?search=gent``
+        Full-text search across ``city``, ``country``, ``street``,
+        and translated names.
     """
 
-    queryset = Location.objects.prefetch_related("translations__language").order_by("id").all()
+    queryset = (
+        Location.objects.prefetch_related("translations__language")
+        .order_by("id")
+    )
     serializer_class = LocationSerializer
+
+    filterset_class = LocationFilter
+    ordering_fields = ["id", "city", "country", "postal_code"]
+    ordering = ["id"]
+    search_fields = ["city", "country", "street", "translations__name"]
 
 
 @extend_schema(tags=[_TAG])
@@ -41,12 +80,39 @@ class SpaceViewSet(ApiModelViewSet):
     A space is a distinct physical area (building, wing, …) within a location.
     It groups one or more halls.
 
-    Prefetches translations and the owning location to avoid N+1 queries when
-    rendering translated fields and related lookups.
+    Filtering
+    ---------
+    ``?location=3``
+        Spaces belonging to a specific location.
+    ``?name=foyer``
+        Substring match across all translated space names.
+    ``?external_id=abc``
+        Exact match on the external identifier.
+
+    Ordering
+    --------
+    ``?ordering=location`` / ``?ordering=-location``
+        Group by parent location FK.
+    ``?ordering=id`` / ``?ordering=-id``
+        By creation order (default ascending).
+
+    Search
+    ------
+    ``?search=studio``
+        Full-text search across translated space names.
     """
 
-    queryset = Space.objects.select_related("location").prefetch_related("translations__language").order_by("id").all()
+    queryset = (
+        Space.objects.select_related("location")
+        .prefetch_related("translations__language")
+        .order_by("id")
+    )
     serializer_class = SpaceSerializer
+
+    filterset_class = SpaceFilter
+    ordering_fields = ["id", "location"]
+    ordering = ["id"]
+    search_fields = ["translations__name"]
 
 
 @extend_schema(tags=[_TAG])
@@ -56,17 +122,45 @@ class HallViewSet(ApiModelViewSet):
     CRUD endpoints for Hall objects.
 
     A hall is a specific room or auditorium within a space. It carries
-    seating configuration flags and supports localised `name` and `remark`
-    fields.
+    seating configuration flags and supports localised ``name`` and
+    ``remark`` fields.
 
-    Prefetches translations and selects the related space and location so
-    hall listings remain efficient even when translated fields are rendered.
+    Filtering
+    ---------
+    ``?space=2``
+        Halls belonging to a specific space.
+    ``?location=1``
+        Halls in any space belonging to a specific location.
+    ``?seat_selection=true``
+        Only halls that allow seat selection.
+    ``?open_seating=true``
+        Only halls with general-admission seating.
+    ``?name=grote+zaal``
+        Substring match across all translated hall names.
+    ``?external_id=abc``
+        Exact match on the external identifier.
+
+    Ordering
+    --------
+    ``?ordering=space`` / ``?ordering=-space``
+        Group by parent space FK.
+    ``?ordering=id`` / ``?ordering=-id``
+        By creation order (default ascending).
+
+    Search
+    ------
+    ``?search=zaal``
+        Full-text search across translated hall names and remarks.
     """
 
     queryset = (
         Hall.objects.select_related("space", "space__location")
         .prefetch_related("translations__language")
         .order_by("id")
-        .all()
     )
     serializer_class = HallSerializer
+
+    filterset_class = HallFilter
+    ordering_fields = ["id", "space"]
+    ordering = ["id"]
+    search_fields = ["translations__name", "translations__remark"]
