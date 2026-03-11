@@ -1,67 +1,78 @@
 # viernulvier-2
 
-## Rolverdeling
+Web application project with a Django backend and a React + Vite frontend.
 
-| Rol           | Naam     |
-|---------------|----------|
-| Leader        | Tobit    |
-| Tech Lead     | Elias    |
-| SysAdmin      | Jasper   |
-| Communicatie  | Arne     |
-| Test          | Florian  |
-| DB            | Daan     |
-| Frontend      | Noah     |
-| Backend       | Prince   |
+## Wiki
 
-## Backend
+Project documentation is available in the GitHub Wiki:
 
-### Important things to change
+- [GitHub Wiki](https://github.com/SELab-2/viernulvier-2/wiki), also available under `wiki/`
 
-- TODOS
-- Test folder nice structure
+## Team Roles
 
-### Packages
+| Role                       | Name    |
+| -------------------------- | ------- |
+| Group Leader               | Tobit   |
+| Technical Lead             | Elias   |
+| SysAdmin                   | Jasper  |
+| Customer Relations Officer | Arne    |
+| Test Manager               | Florian |
+| Database Manager           | Daan    |
+| Frontend Manager           | Noah    |
+| Backend Manager            | Prince  |
 
-- django
-- djangorestframework
-- pytest
-- pytest-django
+## Project Structure
 
-### Belangrijke commands:
+- `backend/`: Django API, models, serializers, admins, views and tests
+- `frontend/`: React/Vite frontend in TypeScript
+- `infrastructure/`: Docker Compose and Nginx configuration
 
-- make an app (i.e. genres): ```python manage.py startapp genres apps/genres```
-- start de dev server: ```python manage.py runserver```
-- migrations aanmaken voor X: ```python manage.py makemigrations X```
-    -- bv. ```python manage.py makemigrations languages```
-- migrate: ```python manage.py migrate```
+## Quick Start
 
-## Frontend
+### Backend (Django)
 
-See wiki pages
+Go to the backend folder:
 
-## Dependency Management
+```bash
+cd backend
+```
 
-Dependencies are automatically monitored and updated using **Dependabot**. Updates run weekly on Mondays and are automatically approved and merged based on version type (patch/minor auto-merge, major requires manual review).
+Common commands:
 
-For information on how Dependabot is configured, what gets updated, and the auto-merge workflow, see [`DEPENDABOT`](.github/DEPENDABOT.md).
+- Create app: `python manage.py startapp <app_name> apps/<app_name>`
+- Dev server: `python manage.py runserver`
+- Create migrations: `python manage.py makemigrations <app_name>` or for everything in one: `python manage.py makemigrations`
+- Apply migrations: `python manage.py migrate`
 
-## Adding a Pull Request
+### Frontend (React + Vite)
 
-When creating a PR, please follow these guidelines:
+Go to the frontend folder:
 
-1. **Use the PR Template:**
-   - The PR template will automatically show when you create a new pull request. Ensure that all relevant sections are filled out.
+```bash
+cd frontend
+```
 
-2. **Key Sections to Include:**
-   - **Description:** Provide a brief description of the changes and their purpose.
-   - **Related Issues:** Link any issues that this PR addresses.
-   - **Type of Change:** Select the appropriate category.
-   - **Testing Instructions:** Describe which tests and environments need to be ran.
-   - **Checklist for Reviewers:** Confirm that all required tasks are complete before submission.
+Common commands:
 
-Thanks! ^^
+- Install dependencies: `npm ci`
+- Start dev server: `npm run dev`
+- Run tests: `npm test`
+- Build for production: `npm run build`
 
-## Frontend
+## Dependencies
 
-See wiki pages
----
+Dependencies are automatically monitored with Dependabot.
+
+More information about configuration and auto-merge flow:
+
+- [Dependabot documentation](.github/DEPENDABOT.md)
+
+## Pull Requests
+
+Use the PR template for every pull request and include at least:
+
+1. Description of the change
+2. Linked issue(s)
+3. Type of change
+4. Testing instructions
+5. Reviewer checklist
