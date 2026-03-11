@@ -34,7 +34,7 @@ class ProductionViewSet(ApiModelViewSet):
     """
     CRUD endpoints for Production objects.
 
-    A production is the central catalogue record — it groups events and
+    A production is the central catalogue record - it groups events and
     carries all translated metadata (title, artist name, description, etc.).
 
     Translated fields are returned as language-code dictionaries via

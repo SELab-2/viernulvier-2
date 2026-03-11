@@ -26,7 +26,7 @@ class PriceFilter(BaseModelFilter):
         (e.g. ``?membership=cineville``). Use ``?membership=`` for prices
         with no membership requirement.
     ``cineville_box``
-        Boolean flag — ``?cineville_box=true`` returns only Cineville
+        Boolean flag - ``?cineville_box=true`` returns only Cineville
         box prices.
     ``description``
         Case-insensitive substring match across translated descriptions

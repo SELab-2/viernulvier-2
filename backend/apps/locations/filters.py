@@ -24,7 +24,7 @@ class LocationFilter(BaseModelFilter):
     ``postal_code``
         Exact match on the postal code (e.g. ``?postal_code=9000``).
     ``is_own_location``
-        Boolean flag — ``?is_own_location=true`` returns only venues
+        Boolean flag - ``?is_own_location=true`` returns only venues
         owned or operated by the organisation.
     ``name``
         Case-insensitive substring match across translated location names
@@ -83,10 +83,10 @@ class HallFilter(BaseModelFilter):
         Exact match on the grandparent location ID via the space → location
         chain (e.g. ``?location=1``).
     ``seat_selection``
-        Boolean flag — ``?seat_selection=true`` returns halls that allow
+        Boolean flag - ``?seat_selection=true`` returns halls that allow
         visitors to choose a specific seat.
     ``open_seating``
-        Boolean flag — ``?open_seating=true`` returns halls with
+        Boolean flag - ``?open_seating=true`` returns halls with
         general-admission seating.
     ``name``
         Case-insensitive substring match across translated hall names

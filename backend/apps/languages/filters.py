@@ -22,7 +22,7 @@ class LanguageFilter(BaseModelFilter):
         Case-insensitive substring match on the display name
         (e.g. ``?name=dutch``).
     ``is_active``
-        Boolean flag — ``?is_active=true`` returns only active languages.
+        Boolean flag - ``?is_active=true`` returns only active languages.
     """
 
     code = django_filters.CharFilter(lookup_expr="iexact")

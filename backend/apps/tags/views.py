@@ -18,11 +18,12 @@ from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
 
+from .filters import TagFilter
 from .models import Tag, TagTranslation
 from .schemas import tag_schema
 from .serializers import TagSerializer
 
-_TAG = "Tags"  # Reusable tag for all tag-related endpoints in the OpenAPI docs
+_TAG = "Tags"
 
 
 @extend_schema(tags=[_TAG])
@@ -31,16 +32,40 @@ class TagViewSet(ApiModelViewSet):
     """
     CRUD endpoints for Tag objects.
 
-    Tags are classification labels attached to productions.
+    Tags are classification labels attached to productions. They support
+    localised names and descriptions via the ``TagTranslation`` model.
 
-    Translated fields (name, short description, URL title)
-    are returned as language-code dictionaries via
-    ``TranslatableSerializerMixin``.
+    Filtering
+    ---------
+    ``?type=theme``
+        Substring match on the internal type / category.
+    ``?source=uitdatabank``
+        Substring match on the originating system identifier.
+    ``?source_type=targetAudience``
+        Substring match on the source sub-classification.
+    ``?is_external=true``
+        Only tags imported from an external system.
+    ``?is_enabled=true``
+        Only active (enabled) tags.
+    ``?name=contemporary``
+        Substring match across all translated tag names.
+    ``?external_id=abc``
+        Exact match on the external identifier.
 
-    Queryset strategy
-    -----------------
-    ``prefetch_related("translations")`` loads all translations in a
-    single additional query to avoid N+1 lookups.
+    Ordering
+    --------
+    ``?ordering=type`` / ``?ordering=-type``
+        Alphabetical by internal type.
+    ``?ordering=source`` / ``?ordering=-source``
+        Alphabetical by originating system.
+    ``?ordering=id`` / ``?ordering=-id``
+        By creation order (default ascending).
+
+    Search
+    ------
+    ``?search=contemporary``
+        Full-text search across ``type``, ``source``, ``source_type``,
+        and translated tag names.
     """
 
     serializer_class = TagSerializer
@@ -49,4 +74,9 @@ class TagViewSet(ApiModelViewSet):
             "translations",
             queryset=TagTranslation.objects.select_related("language"),
         )
-    )
+    ).order_by("id")
+
+    filterset_class = TagFilter
+    ordering_fields = ["id", "type", "source", "is_enabled", "is_external"]
+    ordering = ["id"]
+    search_fields = ["type", "source", "source_type", "translations__name"]

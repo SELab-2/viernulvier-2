@@ -5,7 +5,7 @@ Schema annotations are kept in schemas.py so this file stays focused
 on routing logic only.
 
 The imports app exposes a read-only endpoint for monitoring the data
-ingestion pipeline. Write operations are intentionally not supported —
+ingestion pipeline. Write operations are intentionally not supported -
 import logs are created and updated exclusively by the import pipeline.
 """
 
@@ -68,7 +68,7 @@ class ImportLogViewSet(ApiReadOnlyViewSet):
 
     Queryset strategy
     -----------------
-    No ``select_related`` or ``prefetch_related`` is needed — ``ImportLog``
+    No ``select_related`` or ``prefetch_related`` is needed - ``ImportLog``
     has no FK or M2M relations rendered by the serializer.
     """
 

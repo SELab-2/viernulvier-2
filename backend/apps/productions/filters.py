@@ -30,13 +30,13 @@ class ProductionFilter(BaseModelFilter):
         Exact match on the UIT Database type FK ID
         (e.g. ``?uit_database_type=7``).
     ``genre``
-        Exact match on a genre ID — returns all productions that have this
+        Exact match on a genre ID - returns all productions that have this
         genre attached (e.g. ``?genre=2``).
     ``tag``
-        Exact match on a tag ID — returns all productions that have this
+        Exact match on a tag ID - returns all productions that have this
         tag attached (e.g. ``?tag=5``).
     ``has_media``
-        Boolean flag — ``?has_media=true`` returns only productions with
+        Boolean flag - ``?has_media=true`` returns only productions with
         a media gallery assigned.
     ``title``
         Case-insensitive substring match across all translated titles

@@ -33,7 +33,7 @@ class ImportLogFilter(BaseModelFilter):
     ``finished_at_before``
         Only runs that finished on or before the given datetime.
     ``has_error``
-        Boolean — ``?has_error=true`` returns only runs with an error message set.
+        Boolean - ``?has_error=true`` returns only runs with an error message set.
     """
 
     source = django_filters.CharFilter(lookup_expr="icontains")
