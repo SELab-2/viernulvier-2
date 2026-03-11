@@ -47,10 +47,7 @@ class MediaItemFilter(BaseModelFilter):
         (e.g. ``?original_filename=poster``).
     """
 
-    file_format = django_filters.CharFilter(
-        field_name="format",
-        lookup_expr="icontains"
-    )
+    file_format = django_filters.CharFilter(field_name="format", lookup_expr="icontains")
     original_filename = django_filters.CharFilter(lookup_expr="icontains")
 
     class Meta:

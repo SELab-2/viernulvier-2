@@ -30,8 +30,8 @@ class Event(BaseModel):
     """
     A scheduled occurrence of a production inside a hall.
 
-    An event has a start and end time, and a set of :class:`EventPrice` 
-    entries that define capacity and pricing per price rank. The ``hall`` 
+    An event has a start and end time, and a set of :class:`EventPrice`
+    entries that define capacity and pricing per price rank. The ``hall``
     FK is nullable to support online or location-independent events.
 
     The constraint ``ends_at >= starts_at`` is enforced both at the
