@@ -59,10 +59,7 @@ class LocationViewSet(ApiModelViewSet):
         and translated names.
     """
 
-    queryset = (
-        Location.objects.prefetch_related("translations__language")
-        .order_by("id")
-    )
+    queryset = Location.objects.prefetch_related("translations__language").order_by("id")
     serializer_class = LocationSerializer
 
     filterset_class = LocationFilter
@@ -102,11 +99,7 @@ class SpaceViewSet(ApiModelViewSet):
         Full-text search across translated space names.
     """
 
-    queryset = (
-        Space.objects.select_related("location")
-        .prefetch_related("translations__language")
-        .order_by("id")
-    )
+    queryset = Space.objects.select_related("location").prefetch_related("translations__language").order_by("id")
     serializer_class = SpaceSerializer
 
     filterset_class = SpaceFilter
@@ -154,9 +147,7 @@ class HallViewSet(ApiModelViewSet):
     """
 
     queryset = (
-        Hall.objects.select_related("space", "space__location")
-        .prefetch_related("translations__language")
-        .order_by("id")
+        Hall.objects.select_related("space", "space__location").prefetch_related("translations__language").order_by("id")
     )
     serializer_class = HallSerializer
 

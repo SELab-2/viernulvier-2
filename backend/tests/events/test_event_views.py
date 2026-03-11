@@ -350,23 +350,19 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
     def test_patch_updates_only_specified_fields(self):
         """Test case for test_patch_updates_only_specified_fields."""
         new_start_time = timezone.now() + timedelta(hours=1)
-    
+
         response = self.client.patch(
             f"/api/events/{self.e1.id}/",
             {"starts_at": new_start_time.isoformat()},
             format="json",
             **int_headers(),
         )
-        
+
         self.assertEqual(response.status_code, 200)
-        
+
         self.e1.refresh_from_db()
-        
-        self.assertAlmostEqual(
-            self.e1.starts_at, 
-            new_start_time, 
-            delta=timedelta(seconds=1)
-        )
+
+        self.assertAlmostEqual(self.e1.starts_at, new_start_time, delta=timedelta(seconds=1))
 
     def test_patch_with_public_key_returns_403(self):
         """Test case for test_patch_with_public_key_returns_403."""

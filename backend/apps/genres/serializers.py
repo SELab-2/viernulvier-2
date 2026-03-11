@@ -57,7 +57,8 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         required=False,
         allow_blank=True,
         help_text=(
-            "Vendor-specific identifier from the upstream API. Optional, but can be used to link back to the original source."
+            "Vendor-specific identifier from the upstream API. Optional, but "
+            "can be used to link back to the original source."
         ),
     )
 
@@ -79,7 +80,8 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             },
             "vendor_id": {
                 "help_text": (
-                    "Vendor-specific identifier from the upstream API. Optional, but can be used to link back to the original source."
+                    "Vendor-specific identifier from the upstream API. Optional, but "
+                    "can be used to link back to the original source."
                 ),
             },
         }

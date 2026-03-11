@@ -90,11 +90,7 @@ class GenreViewSet(ApiModelViewSet):
         Full-text search across ``type`` and translated ``name`` fields.
     """
 
-    queryset = (
-        Genre.objects.select_related("use_as")
-        .prefetch_related("translations__language")
-        .order_by("id")
-    )
+    queryset = Genre.objects.select_related("use_as").prefetch_related("translations__language").order_by("id")
     serializer_class = GenreSerializer
 
     filterset_class = GenreFilter

@@ -7,7 +7,7 @@ import django_filters
 from apps.core.filters import BaseModelFilter
 
 from .models import Event
-from django.db.models import Q
+
 
 class EventFilter(BaseModelFilter):
     """
@@ -38,18 +38,10 @@ class EventFilter(BaseModelFilter):
     hall = django_filters.NumberFilter(field_name="hall__id")
     location = django_filters.NumberFilter(field_name="hall__space__location__id")
 
-    starts_at_after = django_filters.IsoDateTimeFilter(
-        field_name="starts_at", lookup_expr="gte"
-    )
-    starts_at_before = django_filters.IsoDateTimeFilter(
-        field_name="starts_at", lookup_expr="lte"
-    )
-    ends_at_after = django_filters.IsoDateTimeFilter(
-        field_name="ends_at", lookup_expr="gte"
-    )
-    ends_at_before = django_filters.IsoDateTimeFilter(
-        field_name="ends_at", lookup_expr="lte"
-    )
+    starts_at_after = django_filters.IsoDateTimeFilter(field_name="starts_at", lookup_expr="gte")
+    starts_at_before = django_filters.IsoDateTimeFilter(field_name="starts_at", lookup_expr="lte")
+    ends_at_after = django_filters.IsoDateTimeFilter(field_name="ends_at", lookup_expr="gte")
+    ends_at_before = django_filters.IsoDateTimeFilter(field_name="ends_at", lookup_expr="lte")
 
     class Meta:
         model = Event

@@ -38,18 +38,10 @@ class ImportLogFilter(BaseModelFilter):
 
     source = django_filters.CharFilter(lookup_expr="icontains")
 
-    started_at_after = django_filters.IsoDateTimeFilter(
-        field_name="started_at", lookup_expr="gte"
-    )
-    started_at_before = django_filters.IsoDateTimeFilter(
-        field_name="started_at", lookup_expr="lte"
-    )
-    finished_at_after = django_filters.IsoDateTimeFilter(
-        field_name="finished_at", lookup_expr="gte"
-    )
-    finished_at_before = django_filters.IsoDateTimeFilter(
-        field_name="finished_at", lookup_expr="lte"
-    )
+    started_at_after = django_filters.IsoDateTimeFilter(field_name="started_at", lookup_expr="gte")
+    started_at_before = django_filters.IsoDateTimeFilter(field_name="started_at", lookup_expr="lte")
+    finished_at_after = django_filters.IsoDateTimeFilter(field_name="finished_at", lookup_expr="gte")
+    finished_at_before = django_filters.IsoDateTimeFilter(field_name="finished_at", lookup_expr="lte")
 
     has_error = django_filters.BooleanFilter(
         field_name="error_message",

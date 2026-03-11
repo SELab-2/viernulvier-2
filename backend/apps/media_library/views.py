@@ -46,14 +46,11 @@ class MediaGalleryViewSet(ApiModelViewSet):
     """
 
     serializer_class = MediaGallerySerializer
-    queryset = (
-        MediaGallery.objects.prefetch_related(
-            "media_items",
-            "media_items__translations__language",
-            "media_items__crops",
-        )
-        .order_by("name")
-    )
+    queryset = MediaGallery.objects.prefetch_related(
+        "media_items",
+        "media_items__translations__language",
+        "media_items__crops",
+    ).order_by("name")
 
     filterset_class = MediaGalleryFilter
     ordering_fields = ["id", "name"]
