@@ -96,7 +96,7 @@ class Production(BaseModel):
         uit_database_theme: Optional FK to a UIT Database theme classification.
         uit_database_type:  Optional FK to a UIT Database type classification.
         media_gallery:      Optional FK to the associated media gallery.
-        attendance_mode:    How the audience attends — ``offline`` or ``online``.
+        attendance_mode:    How the audience attends - ``offline`` or ``online``.
         performer_type:     Whether the act is a ``group`` or ``solo`` artist.
         genres:             Ordered M2M to :class:`~apps.genres.models.Genre`
                             via :class:`ProductionGenre`.
@@ -270,14 +270,14 @@ class ProductionTranslation(BaseModel):
     teaser = models.TextField(
         max_length=500,
         blank=True,
-        help_text="Short promotional text. May contain HTML — sanitise before saving.",
+        help_text="Short promotional text. May contain HTML - sanitise before saving.",
         db_comment="The teaser of the production in the given language.",
     )
 
     description = models.TextField(
         max_length=5000,
         blank=True,
-        help_text="Full-length description of the production. May contain HTML — sanitise before saving.",
+        help_text="Full-length description of the production. May contain HTML - sanitise before saving.",
         db_comment="The description of the production in the given language.",
     )
 
@@ -349,7 +349,7 @@ class ProductionTag(BaseModel):
     Through-table for the many-to-many relation between Productions and Tags.
 
     Each combination of production and tag must be unique. There is no
-    ordering requirement — tags are an unordered set on a production.
+    ordering requirement - tags are an unordered set on a production.
 
     Attributes:
         production: The production the tag is attached to.

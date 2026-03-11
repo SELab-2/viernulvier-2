@@ -14,8 +14,8 @@ Every request must include the following header:
 
 Two keys are supported, each granting a different level of access:
 
-- ``INTERNAL_API_KEY`` — full CRUD access (``request.auth == "internal"``).
-- ``PUBLIC_API_KEY``   — read-only access (``request.auth == "public"``).
+- ``INTERNAL_API_KEY`` - full CRUD access (``request.auth == "internal"``).
+- ``PUBLIC_API_KEY``   - read-only access (``request.auth == "public"``).
 
 The resulting ``request.auth`` value is consumed by
 :class:`~apps.core.permissions.ApiKeyPermission` to enforce per-action
@@ -84,7 +84,7 @@ class ApiKeyAuthentication(BaseAuthentication):
         # HTTP_<HEADER_NAME> convention.
         raw_key = request.META.get(self.header_name)
 
-        # No API key header at all — let other authenticators run.
+        # No API key header at all - let other authenticators run.
         if not raw_key:
             return None
 
@@ -109,7 +109,7 @@ class ApiKeyAuthentication(BaseAuthentication):
         if public_key and secrets.compare_digest(key_bytes, public_key.encode("utf-8")):
             return (None, "public")
 
-        # No match — reject the request.
+        # No match - reject the request.
         raise AuthenticationFailed("Invalid API key.")
 
     def authenticate_header(self, request) -> str:

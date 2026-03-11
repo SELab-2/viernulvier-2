@@ -3,8 +3,8 @@ Models for the Media app.
 
 The media hierarchy is two levels deep:
 
-    MediaGallery  →  MediaItem  →  MediaItemTranslation
-                                →  MediaItemCrop
+    MediaGallery  ->  MediaItem  ->  MediaItemTranslation
+                                ->  MediaItemCrop
 
 - A **MediaGallery** is a named collection of media items.
 - A **MediaItem** is a single image, video, or audio file within a gallery.
@@ -58,7 +58,7 @@ class MediaItem(BaseModel):
 
     Attributes:
         gallery:           The parent gallery this item belongs to.
-        type:              Media type — one of ``foto``, ``video``, ``audio``, ``other``.
+        type:              Media type - one of ``foto``, ``video``, ``audio``, ``other``.
         format:            File format / extension (e.g. ``jpg``, ``mp4``).
         original_filename: Original filename as uploaded.
         position:          Display order within the gallery (ascending).

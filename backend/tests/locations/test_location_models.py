@@ -26,7 +26,7 @@ pytestmark = pytest.mark.django_db
 
 class TestLocation:
     def test_all_address_fields_are_optional(self):
-        """All address fields are nullable/blank — a bare Location must pass full_clean."""
+        """All address fields are nullable/blank - a bare Location must pass full_clean."""
         loc = LocationFactory.build(street="", number="", postal_code="", city="")
         loc.full_clean()  # must not raise
 
@@ -148,7 +148,7 @@ class TestSpaceTranslation:
 
 class TestHall:
     def test_space_is_optional(self):
-        """space FK is nullable — a Hall without a space must pass full_clean."""
+        """space FK is nullable - a Hall without a space must pass full_clean."""
         hall = HallFactory.build(space=None)
         hall.full_clean()  # must not raise
 

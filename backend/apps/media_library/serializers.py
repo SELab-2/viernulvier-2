@@ -21,7 +21,7 @@ class MediaItemCropSerializer(serializers.ModelSerializer):
     """
     Represents a named crop variant of a MediaItem.
 
-    Read-only — crops are managed via the Media Item Crop endpoints.
+    Read-only - crops are managed via the Media Item Crop endpoints.
     """
 
     class Meta:
@@ -48,7 +48,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
 
     Translated fields (`title`, `description`, `credits`, `link`) return all
     available translations as dictionaries (e.g. {"en": "Poster", "fr": "Affiche"}).
-    All translated fields are read-only — use the Media Item Translation
+    All translated fields are read-only - use the Media Item Translation
     endpoints to manage them.
 
     Nested `crops` is a read-only list of all pre-rendered crop variants.
@@ -58,7 +58,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
         help_text=(
             "Dictionary containing all available translations of the title "
             '(e.g. {"en": "Poster", "fr": "Affiche"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -73,7 +73,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
         help_text=(
             "Dictionary containing all available translations of the description "
             '(e.g. {"en": "Event poster", "fr": "Affiche de l\'événement"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -81,7 +81,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
         help_text=(
             "Dictionary containing all available translations of the credits string "
             '(e.g. {"en": "Photo by John Doe", "fr": "Photo par John Doe"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -90,7 +90,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
             "Dictionary containing all available translations of the external URL "
             '(e.g. {"en": "https://example.com/en", '
             '"fr": "https://example.com/fr"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 

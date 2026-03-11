@@ -71,12 +71,12 @@ class TestTagSerializerFields(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Serialization — scalar fields
+# Serialization - scalar fields
 # ---------------------------------------------------------------------------
 
 
 class TestTagSerializerScalarFields(TestCase):
-    """Model → dict for non-translated fields."""
+    """Model -> dict for non-translated fields."""
 
     def test_serializes_type_correctly(self):
         tag = TagFactory.create(type="mood")
@@ -135,7 +135,7 @@ class TestTagSerializerScalarFields(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Serialization — translated fields
+# Serialization - translated fields
 # ---------------------------------------------------------------------------
 
 
@@ -268,7 +268,7 @@ class TestTagSerializerTranslatedFields(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Serialization — queryset
+# Serialization - queryset
 # ---------------------------------------------------------------------------
 
 
@@ -288,7 +288,7 @@ class TestTagSerializerQueryset(TestCase):
 
 
 class TestTagSerializerDeserialization(TestCase):
-    """dict → model (create / update)."""
+    """dict -> model (create / update)."""
 
     def _valid_payload(self, **overrides):
         payload = {

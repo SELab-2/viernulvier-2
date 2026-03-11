@@ -254,7 +254,7 @@ class TestProductionTranslationAdminConfiguration(TestCase):
     def test_list_display_contains_artist_name(self):
         self.assertIn("artist_name", self.admin.list_display)
 
-    # list_filter — now uses language__code, not language
+    # list_filter - now uses language__code, not language
     def test_list_filter_contains_language_code(self):
         """list_filter must use 'language__code', not plain 'language'."""
         self.assertIn("language__code", self.admin.list_filter)

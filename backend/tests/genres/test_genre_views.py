@@ -1,5 +1,5 @@
 """
-Tests for apps/genres/views.py — Genre viewsets
+Tests for apps/genres/views.py - Genre viewsets
 
 Covers:
 - ViewSet inheritance from ApiModelViewSet
@@ -76,7 +76,7 @@ class TestGenreViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# N+1 guard — translations are prefetched
+# N+1 guard - translations are prefetched
 # ---------------------------------------------------------------------------
 
 

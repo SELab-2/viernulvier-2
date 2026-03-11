@@ -11,10 +11,10 @@ translations as language-code dictionaries
 
 Nested relations
 ----------------
-- ``UitDatabaseThemeSerializer`` / ``UitDatabaseTypeSerializer`` — simple
+- ``UitDatabaseThemeSerializer`` / ``UitDatabaseTypeSerializer`` - simple
   read-only nested representations of the classification FK targets.
-- ``GenreSerializer`` — nested per production, ordered by ``position``.
-- ``TagSerializer`` — nested many-to-many, carries its own translated fields.
+- ``GenreSerializer`` - nested per production, ordered by ``position``.
+- ``TagSerializer`` - nested many-to-many, carries its own translated fields.
 """
 
 from rest_framework import serializers
@@ -70,9 +70,9 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
     Nested relations
     ----------------
-    - ``uit_database_theme`` / ``uit_database_type`` — nested FK objects.
-    - ``tags`` — many-to-many, serialised with ``TagSerializer``.
-    - ``genres`` — ordered by ``position`` via ``ProductionGenre.position``.
+    - ``uit_database_theme`` / ``uit_database_type`` - nested FK objects.
+    - ``tags`` - many-to-many, serialised with ``TagSerializer``.
+    - ``genres`` - ordered by ``position`` via ``ProductionGenre.position``.
     """
 
     # ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         help_text=(
             "Dictionary of all available translations for the production title "
             '(e.g. {"en": "Title", "fr": "Titre"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -91,7 +91,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         help_text=(
             "Dictionary of all available translations for the artist or company name "
             '(e.g. {"en": "Artist", "fr": "Artiste"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -99,7 +99,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         help_text=(
             "Dictionary of all available translations for the short tagline "
             '(e.g. {"en": "Short tagline", "fr": "Accroche courte"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -107,7 +107,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         help_text=(
             "Dictionary of all available translations for the teaser text "
             '(e.g. {"en": "Teaser", "fr": "Teaser"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -115,7 +115,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         help_text=(
             "Dictionary of all available translations for the long-form description "
             '(e.g. {"en": "Full description", "fr": "Description complète"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -156,7 +156,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     genres = serializers.SerializerMethodField(
         help_text=(
             "Genres attached to this production, ordered by their configured `position`. "
-            "Read-only — use the genre endpoints to manage genre assignments."
+            "Read-only - use the genre endpoints to manage genre assignments."
         ),
     )
 
@@ -218,7 +218,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         if production_genres is not None:
             genres = [pg.genre for pg in production_genres]
         else:
-            # Fallback — will trigger an additional query per production.
+            # Fallback - will trigger an additional query per production.
             genres = obj.genres.all().order_by("productiongenre__position")
 
         return GenreSerializer(genres, many=True).data

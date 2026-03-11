@@ -42,7 +42,7 @@ class TestGenreUseAsSerializerFields(TestCase):
 
 
 class TestGenreUseAsSerializerSerialization(TestCase):
-    """Model → dict serialization for GenreUseAsSerializer."""
+    """Model -> dict serialization for GenreUseAsSerializer."""
 
     def test_serializes_instance(self):
         use_as = GenreUseAsFactory(name="tag")
@@ -63,7 +63,7 @@ class TestGenreUseAsSerializerSerialization(TestCase):
 
 
 class TestGenreUseAsSerializerDeserialization(TestCase):
-    """dict → model validation for GenreUseAsSerializer."""
+    """dict -> model validation for GenreUseAsSerializer."""
 
     def test_valid_data_creates(self):
         serializer = GenreUseAsSerializer(data={"name": "genre"})
@@ -98,7 +98,7 @@ class TestGenreSerializerFields(TestCase):
 
 
 class TestGenreSerializerSerialization(TestCase):
-    """Model → dict serialization for GenreSerializer."""
+    """Model -> dict serialization for GenreSerializer."""
 
     def setUp(self):
         self.use_as = GenreUseAsFactory(name="genre")
@@ -135,7 +135,7 @@ class TestGenreSerializerSerialization(TestCase):
 
 
 class TestGenreSerializerDeserialization(TestCase):
-    """dict → model validation for GenreSerializer."""
+    """dict -> model validation for GenreSerializer."""
 
     def setUp(self):
         self.use_as = GenreUseAsFactory(name="genre")

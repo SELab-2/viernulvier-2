@@ -58,11 +58,11 @@ _MEDIA_ITEM_EXAMPLE = {
 
 
 # ===========================================================================
-# MediaGallery — examples
+# MediaGallery - examples
 # ===========================================================================
 
 _GALLERY_RESPONSE = OpenApiExample(
-    "MediaGallery — response",
+    "MediaGallery - response",
     summary="A gallery with nested media items",
     value={
         "id": 1,
@@ -73,14 +73,14 @@ _GALLERY_RESPONSE = OpenApiExample(
 )
 
 _GALLERY_INPUT = OpenApiExample(
-    "MediaGallery — request body",
+    "MediaGallery - request body",
     summary="Payload for creating a new gallery",
     value={"name": "Production Images 2024"},
     request_only=True,
 )
 
 _GALLERY_PARTIAL_INPUT = OpenApiExample(
-    "MediaGallery — partial request body",
+    "MediaGallery - partial request body",
     summary="Only the fields you want to change",
     value={"name": "Production Images 2025"},
     request_only=True,
@@ -88,7 +88,7 @@ _GALLERY_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# MediaGallery — per-action schemas
+# MediaGallery - per-action schemas
 # ===========================================================================
 
 _GALLERY_LIST = extend_schema(
@@ -194,18 +194,18 @@ _GALLERY_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# MediaItem — examples
+# MediaItem - examples
 # ===========================================================================
 
 _ITEM_RESPONSE = OpenApiExample(
-    "MediaItem — response",
+    "MediaItem - response",
     summary="A media item with localised metadata and crops",
     value=_MEDIA_ITEM_EXAMPLE,
     response_only=True,
 )
 
 _ITEM_INPUT = OpenApiExample(
-    "MediaItem — request body",
+    "MediaItem - request body",
     summary="Payload for creating a new media item",
     description=(
         "`gallery` and `type` are required. Localised metadata is added via the translation endpoints after creation."
@@ -223,7 +223,7 @@ _ITEM_INPUT = OpenApiExample(
 )
 
 _ITEM_PARTIAL_INPUT = OpenApiExample(
-    "MediaItem — partial request body",
+    "MediaItem - partial request body",
     summary="Only the fields you want to change",
     value={"position": 2},
     request_only=True,
@@ -231,7 +231,7 @@ _ITEM_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# MediaItem — per-action schemas
+# MediaItem - per-action schemas
 # ===========================================================================
 
 _ITEM_LIST = extend_schema(
@@ -338,7 +338,7 @@ _ITEM_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# Assembled decorators — imported and applied in views.py
+# Assembled decorators - imported and applied in views.py
 # ===========================================================================
 
 media_gallery_schema = extend_schema_view(

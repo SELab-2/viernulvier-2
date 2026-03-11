@@ -7,7 +7,7 @@ Key design decisions
 - FK resolution via a warm in-memory cache (one bulk query per model) to
   avoid the classic N+1 problem.
 - Concurrent page fetching via ThreadPoolExecutor (page order preserved).
-- Translation updates are *batched per language* — all translated fields for
+- Translation updates are *batched per language* - all translated fields for
   one parent + one language are merged into a single update_or_create call
   instead of one call per field (13 fields x 3 languages = 3 queries, not 39).
   defined by multiple FK columns (e.g. EventPrice(event, price_rank)).
@@ -86,7 +86,7 @@ USER_AGENT_POOL = [
 ]
 
 # String values treated as empty *only* in URL fields.
-# Not used for regular CharField / TextField — "0" is valid text.
+# Not used for regular CharField / TextField - "0" is valid text.
 _EMPTY_URL_VALUES: Set[str] = {"", "0", "none", "null", "undefined", "-", "n/a", "nvt"}
 
 
@@ -122,7 +122,7 @@ class TranslationConfig:
 
     Each TranslationConfig handles one such field. Multiple configs that share
     the same translation model are *merged per language* by _sync_all_translations
-    so only one update_or_create per language is needed — not one per field.
+    so only one update_or_create per language is needed - not one per field.
 
     Args:
         api_key:          Key in the parent API item (e.g. "title").
@@ -174,17 +174,17 @@ class ModelSyncConfig:
     """Complete sync configuration for one Django model.
 
     Args:
-        field_map:        API key → model field name. Set value to None to
+        field_map:        API key -> model field name. Set value to None to
                           explicitly skip an API field.
         value_transforms: Callables applied after type coercion, keyed by model
                           field name. E.g. {"is_own_location": nee_ja_to_bool}.
         fk_resolvers:     Custom FK resolvers when the default external_id lookup
-                          does not apply. Callable(raw_value) → pk | None.
+                          does not apply. Callable(raw_value) -> pk | None.
         translations:     TranslationConfig list for flat-dict translated fields.
         m2m:              M2MConfig list for M2M relations via through tables.
         lookup_field:     Single field for update_or_create lookup (default: "external_id").
         api_id_key:       Primary identifier key in the API object (default: "@id").
-        item_filter:      Optional predicate — return False to skip an item.
+        item_filter:      Optional predicate - return False to skip an item.
     """
 
     field_map: Dict[str, Optional[str]] = field(default_factory=dict)
@@ -256,11 +256,11 @@ def _fetch_with_retry(
     """Fetch one URL with retry + exponential backoff + jitter.
 
     Handles:
-    - HTTP 304 Not Modified  → returns (None, cached_etag)
-    - HTTP 429 Too Many Requests → respects Retry-After header
-    - HTTP 5xx server errors → retries with backoff
-    - ConnectionError / Timeout → retries with backoff
-    - Other transport errors → raises immediately (not retryable)
+    - HTTP 304 Not Modified  -> returns (None, cached_etag)
+    - HTTP 429 Too Many Requests -> respects Retry-After header
+    - HTTP 5xx server errors -> retries with backoff
+    - ConnectionError / Timeout -> retries with backoff
+    - Other transport errors -> raises immediately (not retryable)
 
     Returns:
         (data, new_etag). data is None when the server returns 304.
@@ -276,22 +276,22 @@ def _fetch_with_retry(
             if attempt == MAX_RETRIES:
                 raise ScraperError(f"Connection failed after {MAX_RETRIES} attempts: {url}") from exc
             wait = _backoff_seconds(attempt)
-            logger.warning("ConnectionError — retry %d in %.1fs: %s", attempt + 1, wait, url)
+            logger.warning("ConnectionError - retry %d in %.1fs: %s", attempt + 1, wait, url)
             time.sleep(wait)
             continue
         except requests.Timeout as exc:
             if attempt == MAX_RETRIES:
                 raise ScraperError(f"Request timed out after {MAX_RETRIES} attempts: {url}") from exc
             wait = _backoff_seconds(attempt)
-            logger.warning("Timeout — retry %d in %.1fs: %s", attempt + 1, wait, url)
+            logger.warning("Timeout - retry %d in %.1fs: %s", attempt + 1, wait, url)
             time.sleep(wait)
             continue
         except requests.RequestException as exc:
-            # SSL errors, invalid URL, etc. — not worth retrying
+            # SSL errors, invalid URL, etc. - not worth retrying
             raise ScraperError(f"Request failed: {url}") from exc
 
         if response.status_code == 304:
-            logger.debug("304 Not Modified — page unchanged: %s", url)
+            logger.debug("304 Not Modified - page unchanged: %s", url)
             return None, etag
 
         if response.status_code == 429:
@@ -299,7 +299,7 @@ def _fetch_with_retry(
             if attempt == MAX_RETRIES:
                 raise RateLimitError(retry_after)
             wait = float(retry_after) if retry_after else _backoff_seconds(attempt)
-            logger.warning("HTTP 429 — waiting %.1fs before retry %d: %s", wait, attempt + 1, url)
+            logger.warning("HTTP 429 - waiting %.1fs before retry %d: %s", wait, attempt + 1, url)
             time.sleep(wait)
             continue
 
@@ -308,7 +308,7 @@ def _fetch_with_retry(
                 raise ScraperError(f"HTTP {response.status_code} after {MAX_RETRIES} attempts: {url}")
             wait = _backoff_seconds(attempt)
             logger.warning(
-                "HTTP %d — retry %d in %.1fs: %s",
+                "HTTP %d - retry %d in %.1fs: %s",
                 response.status_code,
                 attempt + 1,
                 wait,
@@ -318,7 +318,7 @@ def _fetch_with_retry(
             continue
 
         if not response.ok:
-            raise ScraperError(f"API error: {response.status_code} — {url}")
+            raise ScraperError(f"API error: {response.status_code} - {url}")
 
         try:
             data = response.json()
@@ -394,7 +394,7 @@ def fetch_viernulvier(
     Args:
         endpoint:    Relative API path (e.g. "/productions").
         params:      Optional query parameters, applied only to page 1.
-        etag_cache:  Optional dict of url → ETag. Pass the same instance across
+        etag_cache:  Optional dict of url -> ETag. Pass the same instance across
                      calls to benefit from 304 Not Modified responses.
 
     Returns:
@@ -414,7 +414,7 @@ def fetch_viernulvier(
         etag_cache[url] = new_etag
 
     if data is None:
-        logger.info("304 Not Modified for %s — nothing to sync.", url)
+        logger.info("304 Not Modified for %s - nothing to sync.", url)
         return []
 
     if isinstance(data, list):
@@ -433,7 +433,7 @@ def fetch_viernulvier(
 
     if total_items:
         logger.info(
-            "API reports %d total items — %d additional pages to fetch",
+            "API reports %d total items - %d additional pages to fetch",
             total_items,
             len(extra_pages),
         )
@@ -578,15 +578,15 @@ def _parse_field_value(model_field: models.Field, value: Any) -> Any:
     """Coerce an API value to the correct Python type for the given model field.
 
     Supported field types:
-    - CharField, TextField   → clean_string, respect max_length
-    - URLField               → normalize_url
-    - BooleanField           → nee_ja_to_bool
-    - DecimalField           → Decimal (avoids float rounding errors for prices)
-    - IntegerField           → int
-    - FloatField             → float
-    - DateTimeField          → parse_datetime (with broken-date repair)
-    - DateField              → parse_date
-    - All other types        → pass through unchanged
+    - CharField, TextField   -> clean_string, respect max_length
+    - URLField               -> normalize_url
+    - BooleanField           -> nee_ja_to_bool
+    - DecimalField           -> Decimal (avoids float rounding errors for prices)
+    - IntegerField           -> int
+    - FloatField             -> float
+    - DateTimeField          -> parse_datetime (with broken-date repair)
+    - DateField              -> parse_date
+    - All other types        -> pass through unchanged
     """
     if value is None:
         return None
@@ -596,7 +596,7 @@ def _parse_field_value(model_field: models.Field, value: Any) -> Any:
         max_len = getattr(model_field, "max_length", None)
         if max_len and len(cleaned) > max_len:
             logger.debug(
-                "Field '%s' truncated: %d → %d chars",
+                "Field '%s' truncated: %d -> %d chars",
                 model_field.name,
                 len(cleaned),
                 max_len,
@@ -611,7 +611,7 @@ def _parse_field_value(model_field: models.Field, value: Any) -> Any:
         return nee_ja_to_bool(value)
 
     if isinstance(model_field, models.DecimalField):
-        # Use Decimal — never float — for monetary values to avoid rounding errors.
+        # Use Decimal - never float - for monetary values to avoid rounding errors.
         try:
             return Decimal(str(value))
         except (InvalidOperation, ValueError, TypeError):
@@ -651,14 +651,14 @@ def _parse_field_value(model_field: models.Field, value: Any) -> Any:
 
 
 # ---------------------------------------------------------------------------
-# FK cache — eliminates N+1 queries
+# FK cache - eliminates N+1 queries
 # ---------------------------------------------------------------------------
 
 
 class FKCache:
-    """In-memory cache of (model, external_id) → pk.
+    """In-memory cache of (model, external_id) -> pk.
 
-    On first use of a model, loads all known external_id → pk pairs with a
+    On first use of a model, loads all known external_id -> pk pairs with a
     single bulk queryset (warmup). Subsequent FK resolutions are O(1) dict
     lookups with a single DB query only on a true cache miss.
 
@@ -675,7 +675,7 @@ class FKCache:
         self._loaded: Dict[Type[models.Model], bool] = {}
 
     def warmup(self, model: Type[models.Model]) -> None:
-        """Pre-load all external_id → pk mappings for a model in one query."""
+        """Pre-load all external_id -> pk mappings for a model in one query."""
         if model in self._loaded:
             return
         try:
@@ -712,9 +712,9 @@ def _extract_external_id_from_url(raw: Any) -> Optional[str]:
     """Extract an external ID string from a URL, embedded dict, or integer.
 
     Examples:
-    - "https://www.viernulvier.gent/api/v1/halls/42" → full URL string
-    - {"@id": "/api/v1/productions/5", ...}          → "/api/v1/productions/5"
-    - 42                                              → "42"
+    - "https://www.viernulvier.gent/api/v1/halls/42" -> full URL string
+    - {"@id": "/api/v1/productions/5", ...}          -> "/api/v1/productions/5"
+    - 42                                              -> "42"
     """
     if raw is None:
         return None
@@ -754,7 +754,7 @@ def _resolve_fk(
         return pk
     except related_model.DoesNotExist:
         logger.warning(
-            "FK not found: %s.external_id=%r — sync related models first.",
+            "FK not found: %s.external_id=%r - sync related models first.",
             related_model.__name__,
             ext_id,
         )
@@ -778,7 +778,7 @@ def _extract_lookup_value(
 
 
 # ---------------------------------------------------------------------------
-# Build defaults dict: API item → Django model kwargs
+# Build defaults dict: API item -> Django model kwargs
 # ---------------------------------------------------------------------------
 
 
@@ -791,7 +791,7 @@ def _build_defaults(
     """Convert an API item to a defaults dict for update_or_create.
 
     Pass 1: process explicit field_map entries (highest priority).
-    Pass 2: auto-map remaining keys via camelCase → snake_case conversion.
+    Pass 2: auto-map remaining keys via camelCase -> snake_case conversion.
 
     Flat dicts (translations) and lists (M2M) are skipped here.
     """
@@ -827,7 +827,7 @@ def _build_defaults(
         if not isinstance(model_field, models.Field) or model_field.primary_key:
             continue
         if isinstance(raw_value, dict) and not model_field.is_relation:
-            continue  # flat dict → handled by translation sync
+            continue  # flat dict -> handled by translation sync
         _apply(model_field, raw_value, model_field_name)
 
     # Pass 2: auto-map unmapped keys
@@ -856,7 +856,7 @@ def _build_defaults(
 
 
 # ---------------------------------------------------------------------------
-# Translation sync — batched per language to minimise query count
+# Translation sync - batched per language to minimise query count
 # ---------------------------------------------------------------------------
 
 
@@ -986,7 +986,7 @@ def _sync_m2m(
                 pk = obj.pk
             except related_model.DoesNotExist:
                 logger.warning(
-                    "%s with %s=%r not found — sync related models first.",
+                    "%s with %s=%r not found - sync related models first.",
                     related_model.__name__,
                     m2m_config.related_lookup_field,
                     ext_id,
@@ -1013,7 +1013,7 @@ def _sync_m2m(
         through_model.objects.bulk_create(to_create, ignore_conflicts=True)
     except Exception:
         logger.warning(
-            "bulk_create failed for %s — falling back to individual saves",
+            "bulk_create failed for %s - falling back to individual saves",
             through_model.__name__,
         )
         for obj in to_create:

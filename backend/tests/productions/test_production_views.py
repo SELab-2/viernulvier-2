@@ -1,17 +1,17 @@
 """
-Tests for apps/productions/views.py — ProductionViewSet
+Tests for apps/productions/views.py - ProductionViewSet
 
 Covers:
 - ViewSet inherits from ApiModelViewSet
 - Queryset model is Production
 - Serializer class is ProductionSerializer
 - Queryset has prefetch_related for translations, tags, uit_database_theme, uit_database_type
-- GET  /api/productions/        — public key ✓, internal key ✓
-- GET  /api/productions/<id>/   — public key ✓, internal key ✓
-- POST /api/productions/        — internal key ✓, public key ✗
-- PUT  /api/productions/<id>/   — internal key ✓, public key ✗
-- PATCH /api/productions/<id>/  — internal key ✓, public key ✗
-- DELETE /api/productions/<id>/ — internal key ✓, public key ✗
+- GET  /api/productions/        - public key ✓, internal key ✓
+- GET  /api/productions/<id>/   - public key ✓, internal key ✓
+- POST /api/productions/        - internal key ✓, public key ✗
+- PUT  /api/productions/<id>/   - internal key ✓, public key ✗
+- PATCH /api/productions/<id>/  - internal key ✓, public key ✗
+- DELETE /api/productions/<id>/ - internal key ✓, public key ✗
 - All methods rejected without auth header
 - All methods rejected with a completely wrong key
 - Response structure / fields on list and detail
@@ -79,7 +79,7 @@ class TestProductionViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/productions/ — list
+# GET /api/productions/ - list
 # ---------------------------------------------------------------------------
 
 
@@ -139,7 +139,7 @@ class TestProductionViewSetList(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/productions/<id>/ — detail
+# GET /api/productions/<id>/ - detail
 # ---------------------------------------------------------------------------
 
 
@@ -183,7 +183,7 @@ class TestProductionViewSetDetail(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/productions/ — create
+# POST /api/productions/ - create
 # ---------------------------------------------------------------------------
 
 
@@ -221,7 +221,7 @@ class TestProductionViewSetCreate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# PUT /api/productions/<id>/ — full update
+# PUT /api/productions/<id>/ - full update
 # ---------------------------------------------------------------------------
 
 
@@ -251,7 +251,7 @@ class TestProductionViewSetUpdate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# PATCH /api/productions/<id>/ — partial update
+# PATCH /api/productions/<id>/ - partial update
 # ---------------------------------------------------------------------------
 
 
@@ -293,7 +293,7 @@ class TestProductionViewSetPartialUpdate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# DELETE /api/productions/<id>/ — destroy
+# DELETE /api/productions/<id>/ - destroy
 # ---------------------------------------------------------------------------
 
 
@@ -326,7 +326,7 @@ class TestProductionViewSetDelete(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Response structure — nested and translated fields
+# Response structure - nested and translated fields
 # ---------------------------------------------------------------------------
 
 
@@ -382,7 +382,7 @@ class TestProductionViewSetResponseStructure(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# N+1 guard — prefetch translations
+# N+1 guard - prefetch translations
 # ---------------------------------------------------------------------------
 
 
