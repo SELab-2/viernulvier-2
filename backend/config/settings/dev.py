@@ -1,5 +1,7 @@
 import os
 
+from corsheaders.defaults import default_headers
+
 from . import base as base_settings
 
 for setting_name in dir(base_settings):
@@ -39,3 +41,12 @@ REST_FRAMEWORK = {
 INSTALLED_APPS += ["debug_toolbar"]
 MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]  # noqa
 INTERNAL_IPS = ["127.0.0.1"]
+
+INSTALLED_APPS += ["corsheaders"]
+MIDDLEWARE = ["corsheaders.middleware.CorsMiddleware", *MIDDLEWARE]
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+    if origin.strip()
+]
+CORS_ALLOW_HEADERS = [*default_headers, "x-api-key"]
