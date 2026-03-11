@@ -134,7 +134,6 @@ class TestEventAdminGetQueryset(TestCase):
             hall=cls.hall,
             starts_at=now,
             ends_at=now + timedelta(hours=2),
-            ticketing_url="https://example.com/tickets",
         )
 
     def setUp(self):
@@ -176,7 +175,6 @@ class TestEventsAdminChangelists(TestCase):
             hall=self.hall,
             starts_at=now,
             ends_at=now + timedelta(hours=2),
-            ticketing_url="https://example.com/tickets",
         )
 
     def test_event_changelist_returns_200(self):

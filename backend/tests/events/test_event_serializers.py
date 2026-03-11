@@ -50,7 +50,6 @@ class TestEventSerializerFields(TestCase):
             hall=cls.hall,
             starts_at=now,
             ends_at=now + timedelta(hours=2),
-            ticketing_url="https://example.com/tickets",
         )
 
     def test_expected_fields_are_present(self):
@@ -66,7 +65,6 @@ class TestEventSerializerFields(TestCase):
             "hall_display",
             "starts_at",
             "ends_at",
-            "ticketing_url",
             "prices",
         }
         for f in expected:
@@ -85,7 +83,6 @@ class TestEventSerializerFields(TestCase):
                 "hall_display",
                 "starts_at",
                 "ends_at",
-                "ticketing_url",
                 "prices",
             },
         )
@@ -106,7 +103,6 @@ class TestEventSerializerSerialization(TestCase):
             hall=cls.hall,
             starts_at=now,
             ends_at=now + timedelta(hours=2),
-            ticketing_url="https://example.com/tickets",
         )
 
         cls.rank_1 = PriceRankFactory(position=1, sold_out_buffer=0)
@@ -132,7 +128,6 @@ class TestEventSerializerSerialization(TestCase):
 
         self.assertEqual(data["production"], self.production.id)
         self.assertEqual(data["hall"], self.hall.id)
-        self.assertIsInstance(data["ticketing_url"], str)
 
         self.assertIsInstance(data["starts_at"], str)
         self.assertIsInstance(data["ends_at"], str)
@@ -164,7 +159,6 @@ class TestEventSerializerSerialization(TestCase):
             hall=None,
             starts_at=timezone.now(),
             ends_at=timezone.now() + timedelta(hours=1),
-            ticketing_url="https://example.com/tickets",
         )
 
         data = EventSerializer(event, context={"request": _drf_request(self.factory, "/dummy")}).data
@@ -176,7 +170,6 @@ class TestEventSerializerSerialization(TestCase):
             hall=self.hall,
             starts_at=timezone.now(),
             ends_at=timezone.now() + timedelta(hours=1),
-            ticketing_url="https://example.com/tickets",
         )
         EventPriceFactory(
             event=event,
@@ -206,7 +199,6 @@ class TestEventSerializerDeserialization(TestCase):
             "hall": self.hall.id,
             "starts_at": self.now.isoformat(),
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
-            "ticketing_url": "https://example.com/tickets",
         }
         serializer = EventSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
         self.assertTrue(serializer.is_valid(), serializer.errors)
@@ -218,7 +210,6 @@ class TestEventSerializerDeserialization(TestCase):
             "hall": self.hall.id,
             "starts_at": self.now.isoformat(),
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
-            "ticketing_url": "https://example.com/tickets",
         }
         serializer = EventSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
         self.assertTrue(serializer.is_valid(), serializer.errors)
@@ -239,7 +230,6 @@ class TestEventSerializerDeserialization(TestCase):
             "hall": self.hall.id,
             "starts_at": self.now.isoformat(),
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
-            "ticketing_url": "https://example.com/tickets",
             "prices": [
                 {
                     "event": 999,
@@ -264,7 +254,6 @@ class TestEventSerializerDeserialization(TestCase):
             "hall": self.hall.id,
             "starts_at": self.now.isoformat(),
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
-            "ticketing_url": "https://example.com/tickets",
         }
         serializer = EventSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
         self.assertFalse(serializer.is_valid())
@@ -276,30 +265,28 @@ class TestEventSerializerDeserialization(TestCase):
             "production": self.production.id,
             "starts_at": self.now.isoformat(),
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
-            "ticketing_url": "https://example.com/tickets",
         }
         serializer = EventSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
-    def test_partial_update_ticketing_url_only(self):
+    def test_partial_update_starts_at(self):
         """Partial update updates only provided fields."""
         event = Event.objects.create(
             production=self.production,
             hall=self.hall,
             starts_at=self.now,
             ends_at=self.now + timedelta(hours=2),
-            ticketing_url="https://example.com/old",
         )
         serializer = EventSerializer(
             event,
-            data={"ticketing_url": "https://example.com/new"},
+            data={"starts_at": (self.now + timedelta(hours=1)).isoformat()},
             partial=True,
             context={"request": _drf_request(self.factory, "/dummy")},
         )
         self.assertTrue(serializer.is_valid(), serializer.errors)
         updated = serializer.save()
 
-        self.assertEqual(updated.ticketing_url, "https://example.com/new")
+        self.assertEqual(updated.starts_at, (self.now + timedelta(hours=1)))
         self.assertEqual(updated.production_id, self.production.id)
         self.assertEqual(updated.hall_id, self.hall.id)
 
@@ -387,7 +374,6 @@ class TestEventSerializerNestedPricesReadOnly(TestCase):
     def test_nested_prices_read_only_on_partial_update(self):
         # Attempt to update prices via EventSerializer (read-only)
         payload = {
-            "ticketing_url": "https://example.com/updated",
             "prices": [{"price_rank": self.rank.id, "amount": "20.00", "available": 1}],
         }
         serializer = EventSerializer(
@@ -399,8 +385,6 @@ class TestEventSerializerNestedPricesReadOnly(TestCase):
         self.assertTrue(serializer.is_valid(), serializer.errors)
         updated_event = serializer.save()
 
-        # ticketing_url is updated
-        self.assertEqual(updated_event.ticketing_url, payload["ticketing_url"])
         # prices are unchanged
         self.assertEqual(updated_event.prices.count(), 1)
         price_obj = updated_event.prices.first()
