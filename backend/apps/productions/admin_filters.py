@@ -32,7 +32,7 @@ class TagFilter(SearchableMultiSelectFilter):
             else:
                 tags = tags.filter(search_q)
         tags = tags.distinct().order_by("type", "id")
-        return [(str(tag.id), tag.type.strip() or str(tag)) for tag in tags]
+        return [(str(tag.pk), tag.type.strip() or str(tag)) for tag in tags]
 
     def filter_queryset(self, queryset):
         """Apply selected tags to queryset using cumulative AND filters."""
@@ -55,18 +55,29 @@ class GenreFilter(SearchableMultiSelectFilter):
     parameter_name = "genre"
     search_param = "genre_q"
 
+    @staticmethod
+    def _genre_label(genre):
+        """Return the label exactly as the model exposes it via ``__str__``."""
+        return str(genre)
+
+    @staticmethod
+    def _genre_search_text(genre):
+        """Return only the human-readable part used for searching."""
+        return genre.get_base_display_name(related_name="translations", fallback="") or ""
+
     def get_option_queryset(self):
         """Return genre options as ``(id, label)`` tuples."""
-        genres = Genre.objects.all()
+        genres = list(Genre.objects.prefetch_related("translations").order_by("type", "id"))
         if self.search_value:
-            search_q = Q(type__icontains=self.search_value) | Q(translations__name__icontains=self.search_value)
-            if self.selected_values:
-                genres = genres.filter(search_q | Q(id__in=self.selected_values))
-            else:
-                genres = genres.filter(search_q)
+            search_term = self.search_value.lower()
+            selected_ids = set(self.selected_values)
+            genres = [
+                genre
+                for genre in genres
+                if search_term in self._genre_search_text(genre).lower() or str(genre.pk) in selected_ids
+            ]
 
-        genres = genres.distinct().order_by("type")
-        return [(str(genre.id), genre.type) for genre in genres]
+        return [(str(genre.pk), self._genre_label(genre)) for genre in genres]
 
     def filter_queryset(self, queryset):
         """Apply selected genres with cumulative AND semantics."""
