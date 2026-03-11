@@ -35,6 +35,9 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
   const location = useLocation()
   // Anchor element for the hamburger dropdown menu on smaller breakpoints.
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null)
+  const currentLanguage: SupportedLanguage = i18n.language === 'en' ? 'en' : 'nl'
+  const nextLanguage: SupportedLanguage = currentLanguage === 'en' ? 'nl' : 'en'
+  const themeSwitchLabel = mode === 'dark' ? t('nav.switchToLightMode') : t('nav.switchToDarkMode')
 
   // Toggle between the two supported UI languages.
   const switchLanguage = (language: SupportedLanguage) => {
@@ -51,6 +54,16 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
 
   const activeLinkSx = {
     fontWeight: 700,
+  }
+
+  const baseListSx = { listStyle: 'none', m: 0, p: 0 }
+
+  const themeSquareBaseSx = {
+    width: 30,
+    height: 30,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   }
 
   return (
@@ -107,7 +120,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             alignItems="center"
             component="ul"
             aria-label={t('nav.mainNav', 'Main navigation')}
-            sx={{ listStyle: 'none', m: 0, p: 0, display: { xs: 'none', lg: 'flex' } }}
+            sx={{ ...baseListSx, display: { xs: 'none', lg: 'flex' } }}
           >
             {NAV_LINKS.map(({ labelKey, to }) => (
               <Box component="li" key={to}>
@@ -137,7 +150,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             spacing={0}
             alignItems="center"
             component="ul"
-            sx={{ listStyle: 'none', m: 0, p: 0, display: { xs: 'none', sm: 'flex' } }}
+            sx={{ ...baseListSx, display: { xs: 'none', sm: 'flex' } }}
           >
             {/* Theme toggle */}
             <Box
@@ -152,9 +165,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
               <IconButton
                 size="small"
                 data-testid="theme-toggle-inline"
-                aria-label={
-                  mode === 'dark' ? t('nav.switchToLightMode') : t('nav.switchToDarkMode')
-                }
+                aria-label={themeSwitchLabel}
                 disableRipple
                 onClick={onToggleMode}
                 sx={{
@@ -169,11 +180,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                 {/* Left square represents dark mode; active mode is rendered in white. */}
                 <Box
                   sx={{
-                    width: 30,
-                    height: 30,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    ...themeSquareBaseSx,
                     backgroundColor: mode === 'dark' ? '#fff' : '#d9d9d9',
                   }}
                 >
@@ -188,11 +195,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                 {/* Right square represents light mode; active mode is rendered in white. */}
                 <Box
                   sx={{
-                    width: 30,
-                    height: 30,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    ...themeSquareBaseSx,
                     backgroundColor: mode === 'light' ? '#fff' : '#d9d9d9',
                   }}
                 >
@@ -214,8 +217,8 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                 data-testid="language-toggle-inline"
                 color="inherit"
                 // Single toggle button: switch to the other available language.
-                onClick={() => switchLanguage(i18n.language === 'en' ? 'nl' : 'en')}
-                aria-label={`Switch language to ${i18n.language === 'en' ? 'Dutch' : 'English'}`}
+                onClick={() => switchLanguage(nextLanguage)}
+                aria-label={`Switch language to ${currentLanguage === 'en' ? 'Dutch' : 'English'}`}
                 sx={{
                   minWidth: 'auto',
                   textTransform: 'uppercase',
@@ -224,7 +227,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                   fontSize: '0.95rem',
                 }}
               >
-                {i18n.language === 'en' ? 'EN' : 'NL'}
+                {currentLanguage === 'en' ? 'EN' : 'NL'}
               </Button>
             </Box>
           </Stack>
@@ -260,7 +263,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             <MenuItem
               data-testid="theme-toggle-menu"
               sx={{ display: { xs: 'flex', sm: 'none' } }}
-              aria-label={mode === 'dark' ? t('nav.switchToLightMode') : t('nav.switchToDarkMode')}
+              aria-label={themeSwitchLabel}
               onClick={() => {
                 onToggleMode()
                 closeMobileMenu()
@@ -279,11 +282,11 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
               data-testid="language-toggle-menu"
               sx={{ display: { xs: 'flex', sm: 'none' } }}
               onClick={() => {
-                switchLanguage(i18n.language === 'en' ? 'nl' : 'en')
+                switchLanguage(nextLanguage)
                 closeMobileMenu()
               }}
             >
-              {i18n.language === 'en' ? 'EN' : 'NL'}
+              {currentLanguage === 'en' ? 'EN' : 'NL'}
             </MenuItem>
           </Menu>
         </Toolbar>
