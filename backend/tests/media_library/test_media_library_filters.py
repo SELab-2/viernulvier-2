@@ -108,16 +108,16 @@ class TestMediaItemFilter:
 
         assert self._qs({"type": "pdf"}).count() == 1
 
-    def test_format_icontains(self):
+    def test_file_format_icontains(self):
         MediaItemFactory(type="foto", format="jpg")
         MediaItemFactory(type="foto", format="png")
 
-        assert self._qs({"format": "jpg"}).count() == 1
+        assert self._qs({"file_format": "jpg"}).count() == 1
 
-    def test_format_case_insensitive(self):
+    def test_file_format_case_insensitive(self):
         MediaItemFactory(type="foto", format="JPG")
 
-        assert self._qs({"format": "jpg"}).count() == 1
+        assert self._qs({"file_format": "jpg"}).count() == 1
 
     def test_original_filename_icontains(self):
         MediaItemFactory(type="foto", original_filename="poster-hamlet.jpg")
@@ -268,7 +268,7 @@ class TestMediaItemViewSet(TestCase):
     def test_filter_by_format(self):
         MediaItemFactory(type="foto", format="jpg")
         MediaItemFactory(type="foto", format="png")
-        response = self.client.get(self.list_url(), {"format": "jpg"}, **pub_headers())
+        response = self.client.get(self.list_url(), {"file_format": "jpg"}, **pub_headers())
         results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 

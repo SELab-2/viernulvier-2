@@ -39,17 +39,20 @@ class MediaItemFilter(BaseModelFilter):
         Exact match on the media type
         (e.g. ``?type=foto``).
         Accepted values: ``foto``, ``video``, ``audio``, ``other``.
-    ``format``
+    ``file_format``
         Case-insensitive substring match on the file format / extension
-        (e.g. ``?format=jpg``).
+        (e.g. ``?file_format=jpg``).
     ``original_filename``
         Case-insensitive substring match on the original filename
         (e.g. ``?original_filename=poster``).
     """
 
-    format = django_filters.CharFilter(lookup_expr="icontains")
+    file_format = django_filters.CharFilter(
+        field_name="format",
+        lookup_expr="icontains"
+    )
     original_filename = django_filters.CharFilter(lookup_expr="icontains")
 
     class Meta:
         model = MediaItem
-        fields = ["gallery", "type", "format", "original_filename", "external_id"]
+        fields = ["gallery", "type", "file_format", "original_filename", "external_id"]
