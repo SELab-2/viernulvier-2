@@ -65,7 +65,7 @@ class ApiKeyAuthentication(BaseAuthentication):
         2. Return ``None`` (unauthenticated, not an error) if the header is
            absent.
         3. Reject non-UTF-8 byte values with ``AuthenticationFailed``
-           (→ HTTP 401).
+           (-> HTTP 401).
         4. Compare the extracted key against ``INTERNAL_API_KEY`` and then
            ``PUBLIC_API_KEY`` using :func:`secrets.compare_digest`.
         5. Raise ``AuthenticationFailed`` if neither key matches.
@@ -77,7 +77,7 @@ class ApiKeyAuthentication(BaseAuthentication):
 
         Raises:
             :exc:`~rest_framework.exceptions.AuthenticationFailed`:
-                On invalid header bytes or invalid keys (→ HTTP 401).
+                On invalid header bytes or invalid keys (-> HTTP 401).
         """
 
         # Django exposes request headers through request.META using the

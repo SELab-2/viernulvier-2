@@ -80,7 +80,7 @@ class HallFilter(BaseModelFilter):
     ``space``
         Exact match on the parent space ID (e.g. ``?space=2``).
     ``location``
-        Exact match on the grandparent location ID via the space → location
+        Exact match on the grandparent location ID via the space -> location
         chain (e.g. ``?location=1``).
     ``seat_selection``
         Boolean flag - ``?seat_selection=true`` returns halls that allow

@@ -26,8 +26,8 @@ class LanguageViewSet(ApiModelViewSet):
 
     Access rules
     ------------
-    - **Public key**   → read-only (``list``, ``retrieve``).
-    - **Internal key** → full CRUD.
+    - **Public key**   -> read-only (``list``, ``retrieve``).
+    - **Internal key** -> full CRUD.
 
     Filtering
     ---------
