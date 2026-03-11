@@ -28,7 +28,7 @@ class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixi
         help_text=(
             "Dictionary containing all available translations of the location name "
             '(e.g. {"en": "City Hall", "fr": "Hôtel de Ville"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -90,7 +90,7 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         help_text=(
             "Dictionary containing all available translations of the space name "
             '(e.g. {"en": "Stage A", "fr": "Scène A"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -127,7 +127,7 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         help_text=(
             "Dictionary containing all available translations of the hall name "
             '(e.g. {"en": "Main Hall", "fr": "Grande Salle"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -139,7 +139,7 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             '(e.g. {"en": "Wheelchair accessible", '
             '"fr": "Accessible en fauteuil roulant"}). '
             "`null` when no remark translations have been set. "
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 

@@ -21,7 +21,7 @@ class LocationViewSet(ApiModelViewSet):
     CRUD endpoints for Location objects.
 
     A location represents a physical venue or address. It is the top of
-    the three-level hierarchy: Location → Space → Hall.
+    the three-level hierarchy: Location -> Space -> Hall.
 
     Translated fields (e.g. `name`) return all available translations
     as a dictionary (e.g. {"en": "City Hall", "fr": "Hôtel de Ville"}).

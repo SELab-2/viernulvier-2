@@ -28,11 +28,11 @@ from apps.core.openapi import (
 from .serializers import ProductionSerializer
 
 # ===========================================================================
-# Production — examples
+# Production - examples
 # ===========================================================================
 
 _PRODUCTION_RESPONSE = OpenApiExample(
-    "Production — response",
+    "Production - response",
     summary="A production with localised fields and nested relations",
     value={
         "id": 1,
@@ -65,7 +65,7 @@ _PRODUCTION_RESPONSE = OpenApiExample(
 )
 
 _PRODUCTION_INPUT = OpenApiExample(
-    "Production — request body",
+    "Production - request body",
     summary="Payload for creating a new production",
     value={
         "attendance_mode": "offline",
@@ -78,7 +78,7 @@ _PRODUCTION_INPUT = OpenApiExample(
 )
 
 _PRODUCTION_PARTIAL_INPUT = OpenApiExample(
-    "Production — partial request body",
+    "Production - partial request body",
     summary="Only the fields you want to change",
     value={"attendance_mode": "online", "performer_type": "solo"},
     request_only=True,
@@ -86,7 +86,7 @@ _PRODUCTION_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# Production — per-action schemas
+# Production - per-action schemas
 # ===========================================================================
 
 _PRODUCTION_LIST = extend_schema(
@@ -200,7 +200,7 @@ _PRODUCTION_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# Assembled decorator — imported and applied in views.py
+# Assembled decorator - imported and applied in views.py
 # ===========================================================================
 
 production_schema = extend_schema_view(

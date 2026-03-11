@@ -25,7 +25,7 @@ class ImportLogSerializer(serializers.ModelSerializer):
     explicitly marked read-only.
 
     Write operations (:meth:`create` and :meth:`update`) raise a
-    ``ValidationError`` as an additional guard — import logs must only be
+    ``ValidationError`` as an additional guard - import logs must only be
     created and mutated by the import pipeline itself.
 
     Computed fields
@@ -106,7 +106,7 @@ class ImportLogSerializer(serializers.ModelSerializer):
         """
         if obj.started_at and obj.finished_at:
             delta = obj.finished_at - obj.started_at
-            return str(delta).split(".")[0]  # Strip microseconds → HH:MM:SS
+            return str(delta).split(".")[0]  # Strip microseconds -> HH:MM:SS
         return None
 
     # ---------------------------------------------------------------------------

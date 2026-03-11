@@ -1,15 +1,4 @@
-"""
-Admin configuration for the Events app.
-
-Events are scheduled occurrences of productions. The admin surfaces the
-core scheduling fields and allows managing ``EventPrice`` entries inline.
-
-Queryset optimisation
----------------------
-``EventAdmin.get_queryset`` joins the full hall–space–location chain with
-``select_related`` and prefetches production and hall translations, keeping
-the list and detail pages free of N+1 queries.
-"""
+"""Admin configuration for the events app."""
 
 from django.contrib import admin
 from django.urls import reverse
@@ -19,17 +8,13 @@ from apps.core.admin import BaseAdmin
 
 from .models import Event, EventPrice
 
-# ===========================================================================
-# Inline
-# ===========================================================================
-
 
 class EventPriceInline(admin.TabularInline):
     """
     Inline for managing price tiers directly inside the Event change page.
 
-    Editors can add, update, or remove ``EventPrice`` entries — specifying
-    the price rank, the ticket amount, and the number of available seats —
+    Editors can add, update, or remove ``EventPrice`` entries - specifying
+    the price rank, the price, the ticket amount, and the number of available seats -
     without leaving the event form.
     """
 
@@ -42,11 +27,6 @@ class EventPriceInline(admin.TabularInline):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("price_rank", "price")
-
-
-# ===========================================================================
-# Event admin
-# ===========================================================================
 
 
 @admin.register(Event)

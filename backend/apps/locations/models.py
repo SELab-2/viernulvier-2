@@ -3,7 +3,7 @@ Models for the Locations app.
 
 The location hierarchy is three levels deep:
 
-    Location  →  Space  →  Hall
+    Location  ->  Space  ->  Hall
 
 - A **Location** is a physical address (building / venue).
 - A **Space** is a distinct area within a location (e.g. a wing or building).

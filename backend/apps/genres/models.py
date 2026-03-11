@@ -45,6 +45,7 @@ class Genre(BaseModel):
     A genre represents a classification type such as Theater, Festival,
     or Book Presentation. Each genre has:
 
+    - A vendor-specific ``vendor_id`` (optional) provided by the upstream Viernulvier API
     - A technical ``type`` (internal snake_case identifier)
     - An optional ``vendor_id`` provided by the upstream Viernulvier API
     - A ``use_as`` relationship defining its role in the system

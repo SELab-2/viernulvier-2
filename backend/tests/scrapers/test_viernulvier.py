@@ -257,7 +257,7 @@ def test_make_progress_bar_signature(monkeypatch, tqdm_available):
 
 
 # ---------------------------------------------------------------------------
-# fetch_viernulvier — HTTP layer
+# fetch_viernulvier - HTTP layer
 # ---------------------------------------------------------------------------
 
 
@@ -421,7 +421,7 @@ def test_fetch_collects_single_item_dict_with_context(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# fetch_viernulvier — query parameter support
+# fetch_viernulvier - query parameter support
 # ---------------------------------------------------------------------------
 
 
@@ -847,7 +847,7 @@ class TestDiscoverExtraPages:
 
 
 # ---------------------------------------------------------------------------
-# Pagination — concurrent + sequential edge cases
+# Pagination - concurrent + sequential edge cases
 # ---------------------------------------------------------------------------
 
 
@@ -977,7 +977,7 @@ class TestSequentialFallback:
 
 
 # ---------------------------------------------------------------------------
-# sync_viernulvier — basic persistence
+# sync_viernulvier - basic persistence
 # ---------------------------------------------------------------------------
 
 
@@ -1273,7 +1273,7 @@ def test_sync_without_params_still_works(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# sync_viernulvier — dry_run / on_progress / item_filter / MAX_ERROR_MESSAGES
+# sync_viernulvier - dry_run / on_progress / item_filter / MAX_ERROR_MESSAGES
 # ---------------------------------------------------------------------------
 
 
@@ -1627,7 +1627,7 @@ def test_sync_import_log_different_endpoints_tracked_separately(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# sync_viernulvier — error branches & savepoints
+# sync_viernulvier - error branches & savepoints
 # ---------------------------------------------------------------------------
 
 
@@ -1899,7 +1899,7 @@ class TestFlexibleFieldMapping:
 
 
 # ---------------------------------------------------------------------------
-# _parse_field_value — comprehensive type coverage
+# _parse_field_value - comprehensive type coverage
 # ---------------------------------------------------------------------------
 
 
@@ -2046,7 +2046,7 @@ class TestCleanString:
         assert "hello" in result
 
     def test_keeps_tab_newline_cr(self):
-        # Use CR in the middle — str.strip() inside clean_string would eat a trailing \r
+        # Use CR in the middle - str.strip() inside clean_string would eat a trailing \r
         result = clean_string("a\tb\rc\nd")
         assert "\t" in result
         assert "\r" in result
@@ -2645,7 +2645,7 @@ def _fake_trans_model(call_log):
 
 class TestSyncAllTranslations:
     def test_multiple_configs_same_model_batched_per_language(self):
-        """Two TranslationConfigs for the same model → ONE update_or_create per language."""
+        """Two TranslationConfigs for the same model -> ONE update_or_create per language."""
         calls = []
         FT = _fake_trans_model(calls)
 

@@ -6,14 +6,14 @@ Covers:
 - ImportLogViewSet does NOT inherit from ApiModelViewSet
 - Queryset model is ImportLog
 - Serializer class is ImportLogSerializer
-- GET  /api/import-logs/       — public key ✓, internal key ✓
-- GET  /api/import-logs/<id>/  — public key ✓, internal key ✓
+- GET  /api/import-logs/       - public key ✓, internal key ✓
+- GET  /api/import-logs/<id>/  - public key ✓, internal key ✓
 - All GET requests rejected without auth header
 - All GET requests rejected with a wrong key
-- POST /api/import-logs/       — 405 Method Not Allowed (both keys)
-- PUT  /api/import-logs/<id>/  — 405 Method Not Allowed (both keys)
-- PATCH /api/import-logs/<id>/ — 405 Method Not Allowed (both keys)
-- DELETE /api/import-logs/<id>/— 405 Method Not Allowed (both keys)
+- POST /api/import-logs/       - 405 Method Not Allowed (both keys)
+- PUT  /api/import-logs/<id>/  - 405 Method Not Allowed (both keys)
+- PATCH /api/import-logs/<id>/ - 405 Method Not Allowed (both keys)
+- DELETE /api/import-logs/<id>/- 405 Method Not Allowed (both keys)
 - Response structure / fields on list and detail
 - duration field is present in list and detail responses
 - Results are ordered by -started_at (most recent first)
@@ -92,7 +92,7 @@ class TestImportLogViewSetClass(TestCase):
         self.assertTrue(issubclass(ImportLogViewSet, ApiReadOnlyViewSet))
 
     def test_does_not_inherit_from_api_model_viewset(self):
-        """ImportLogViewSet must be read-only — not a full CRUD viewset."""
+        """ImportLogViewSet must be read-only - not a full CRUD viewset."""
         self.assertFalse(issubclass(ImportLogViewSet, ApiModelViewSet))
 
     def test_queryset_model_is_import_log(self):
@@ -103,7 +103,7 @@ class TestImportLogViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/import-logs/ — list
+# GET /api/import-logs/ - list
 # ---------------------------------------------------------------------------
 
 
@@ -171,7 +171,7 @@ class TestImportLogViewSetList(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/import-logs/<id>/ — detail
+# GET /api/import-logs/<id>/ - detail
 # ---------------------------------------------------------------------------
 
 

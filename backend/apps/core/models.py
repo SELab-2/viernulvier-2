@@ -18,7 +18,7 @@ class BaseModel(models.Model):
     Every app-level model should inherit from ``BaseModel`` instead of
     ``django.db.models.Model`` directly. This ensures ``full_clean()``
     is always called before ``save()``, so any ``ValidationError`` raised
-    in a model's ``clean()`` method is surfaced consistently — whether the
+    in a model's ``clean()`` method is surfaced consistently - whether the
     save originates from the Django admin, the API, a management command,
     or a test.
 
@@ -32,11 +32,11 @@ class BaseModel(models.Model):
     ----------------------------------
     Django's ``full_clean()`` runs three steps in order:
 
-    1. ``validate_unique()``  — checks ``unique`` and ``unique_together``
+    1. ``validate_unique()``  - checks ``unique`` and ``unique_together``
        constraints at the application level.
-    2. ``clean_fields()``     — validates individual field constraints
+    2. ``clean_fields()``     - validates individual field constraints
        (e.g. ``max_length``, ``blank=False``).
-    3. ``clean()``            — custom cross-field validation defined on the
+    3. ``clean()``            - custom cross-field validation defined on the
        model itself.
 
     Subclasses should override ``clean()`` for cross-field business rules
@@ -45,7 +45,7 @@ class BaseModel(models.Model):
     Notes
     -----
     - ``full_clean()`` is **not** called automatically by Django's ORM on
-      ``save()`` by default — this base class adds that behaviour explicitly.
+      ``save()`` by default - this base class adds that behaviour explicitly.
     - ``CheckConstraint`` rules are enforced at the database level and are
       **not** caught by ``full_clean()``. Mirror critical constraints in
       ``clean()`` so they surface as friendly ``ValidationError`` messages
@@ -93,7 +93,7 @@ class BaseModel(models.Model):
     @classmethod
     def base_language_code(cls) -> str:
         """
-        Returns the project's base language code.
+        Returns the project's base language code. (defaults to "en" if not set)
         """
         code = getattr(settings, "LANGUAGE_CODE", "en")
         return code.split("-")[0].lower()
@@ -117,6 +117,10 @@ class BaseModel(models.Model):
         name_field="name",
         fallback=None,
     ):
+        """
+        Returns the display name for the base language, falling
+        back to the first available translation or a provided default.
+        """
         tr = self.get_base_translation(related_name=related_name)
         if not tr:
             return fallback

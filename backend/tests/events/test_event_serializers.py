@@ -92,7 +92,7 @@ class TestEventSerializerFields(TestCase):
 
 
 class TestEventSerializerSerialization(TestCase):
-    """Model → dict serialization, including nested prices."""
+    """Model -> dict serialization, including nested prices."""
 
     @classmethod
     def setUpTestData(cls):
@@ -191,7 +191,7 @@ class TestEventSerializerSerialization(TestCase):
 
 
 class TestEventSerializerDeserialization(TestCase):
-    """dict → model (create / update)."""
+    """dict -> model (create / update)."""
 
     def setUp(self):
         self.factory = APIRequestFactory()

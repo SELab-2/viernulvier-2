@@ -1,5 +1,5 @@
 """
-Tests for apps/locations/views.py — Location, Space, Hall viewsets
+Tests for apps/locations/views.py - Location, Space, Hall viewsets
 
 Covers:
 - Class-level inheritance and queryset models
@@ -98,7 +98,7 @@ class TestHallViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# N+1 guards — queryset prefetches
+# N+1 guards - queryset prefetches
 # ---------------------------------------------------------------------------
 
 

@@ -27,6 +27,9 @@ class BaseAdmin(admin.ModelAdmin):
     Delegates entirely to Django's default ``ModelAdmin``. Subclasses
     override ``get_queryset`` to add ``select_related`` / ``prefetch_related``
     optimisations specific to their model.
+
+    List per page and result count settings are set here to apply globally, but can
+    be overridden on a per-admin basis if needed.
     """
 
     # Default pagination and performance settings for all admin changelists.
@@ -45,7 +48,8 @@ class BaseAdmin(admin.ModelAdmin):
 
 
 class TwoStepBulkActionMixin:
-    """Reusable two-step admin action flow for bulk updates.
+    """
+    Reusable two-step admin action flow for bulk updates.
 
     The first step is the normal changelist selection. The second step renders
     an intermediate form where additional input can be provided before applying

@@ -2,11 +2,11 @@
 Tests for TranslatableSerializerMixin (apps/core/serializers.py)
 
 Covers:
-- get_translated_field() — happy path with multiple languages
-- get_translated_field() — missing/blank field values are excluded
-- get_translated_field() — empty translations queryset
-- get_translated_field() — single translation
-- get_translated_field() — field does not exist on translation raises AttributeError
+- get_translated_field() - happy path with multiple languages
+- get_translated_field() - missing/blank field values are excluded
+- get_translated_field() - empty translations queryset
+- get_translated_field() - single translation
+- get_translated_field() - field does not exist on translation raises AttributeError
 """
 
 from unittest.mock import MagicMock
@@ -71,7 +71,7 @@ class TestTranslatableSerializerMixin(TestCase):
     def test_excludes_empty_string_values(self):
         translations = [
             make_translation("nl", title="Titel"),
-            make_translation("en", title=""),  # blank → excluded
+            make_translation("en", title=""),  # blank -> excluded
         ]
         obj = make_obj(translations)
         result = self.mixin.get_translated_field(obj, "title")

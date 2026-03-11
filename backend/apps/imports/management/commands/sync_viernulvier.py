@@ -50,7 +50,7 @@ from apps.productions.models import (
 )
 from apps.tags.models import Tag, TagTranslation
 
-# tqdm is optional — degrade gracefully to a simple counter if not installed
+# tqdm is optional - degrade gracefully to a simple counter if not installed
 try:
     from tqdm import tqdm as _tqdm
 
@@ -95,7 +95,7 @@ GENRE_CONFIG = ModelSyncConfig(
         "type": "type",
         "use_as": "use_as",
         "vendor_id": "vendor_id",
-        "name": None,  # flat dict → TranslationConfig
+        "name": None,  # flat dict -> TranslationConfig
         "slug": None,  # no field in GenreTranslation
         "description": None,  # no field in GenreTranslation
     },
@@ -110,8 +110,8 @@ TAG_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
         "source": "source",
-        "sourceType": "source_type",  # camelCase → snake_case
-        "enable": "is_enabled",  # API: "enable" string → model: bool
+        "sourceType": "source_type",  # camelCase -> snake_case
+        "enable": "is_enabled",  # API: "enable" string -> model: bool
         "external": "is_external",
         "url": "url",
         "type": "type",
@@ -147,7 +147,7 @@ LOCATION_CONFIG = ModelSyncConfig(
         "country": "country",
         "phone_1": "phone_1",
         "phone_2": "phone_2",
-        "own_location": "is_own_location",  # API: string → model: bool
+        "own_location": "is_own_location",  # API: string -> model: bool
         "name": None,
         "code": None,
         "uitdatabank_id": None,
@@ -162,7 +162,7 @@ LOCATION_CONFIG = ModelSyncConfig(
 SPACE_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
-        "location": "location",  # FK → Location
+        "location": "location",  # FK -> Location
         "vendor_id": None,
         "name": None,
         "halls": None,  # reverse relation
@@ -175,7 +175,7 @@ SPACE_CONFIG = ModelSyncConfig(
 HALL_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
-        "space": "space",  # FK → Space
+        "space": "space",  # FK -> Space
         "seat_selection": "seat_selection",
         "open_seating": "open_seating",
         "vendor_id": None,
@@ -206,7 +206,7 @@ MEDIA_ITEM_CONFIG = ModelSyncConfig(
         "width": "width",
         "height": "height",
         "format": "format",
-        "gallery": "gallery",  # FK → MediaGallery
+        "gallery": "gallery",  # FK -> MediaGallery
         "title": None,
         "description": None,
         "credits": None,
@@ -235,7 +235,7 @@ PRICE_CONFIG = ModelSyncConfig(
         "minimum": "minimum",
         "maximum": "maximum",
         "step": "step",
-        "order": "sort_order",  # API: "order" → model: "sort_order"
+        "order": "sort_order",  # API: "order" -> model: "sort_order"
         "cineville_box": "cineville_box",
         "code": None,
         "description": None,
@@ -271,9 +271,9 @@ PRODUCTION_CONFIG = ModelSyncConfig(
         "@id": "external_id",
         "attendance_mode": "attendance_mode",
         "performer_type": "performer_type",
-        "uitdatabank_theme": "uit_database_theme",  # FK → UitDatabaseTheme
-        "uitdatabank_type": "uit_database_type",  # FK → UitDatabaseType
-        "media_gallery": "media_gallery",  # FK → MediaGallery
+        "uitdatabank_theme": "uit_database_theme",  # FK -> UitDatabaseTheme
+        "uitdatabank_type": "uit_database_type",  # FK -> UitDatabaseType
+        "media_gallery": "media_gallery",  # FK -> MediaGallery
         # Not in our model
         "vendor_id": None,
         "box_office_id": None,
@@ -282,8 +282,8 @@ PRODUCTION_CONFIG = ModelSyncConfig(
         "poster_gallery": None,
         "uitdatabank_keywords": None,
         "events": None,  # reverse relation
-        "genres": None,  # M2M → handled via M2MConfig below
-        # Flat dicts → TranslationConfigs below
+        "genres": None,  # M2M -> handled via M2MConfig below
+        # Flat dicts -> TranslationConfigs below
         "supertitle": None,
         "title": None,
         "artist": None,
@@ -402,8 +402,8 @@ EVENT_CONFIG = ModelSyncConfig(
     item_filter=_is_not_longterm,
     field_map={
         "@id": "external_id",
-        "production": "production",  # FK → Production (embedded object with @id)
-        "hall": "hall",  # FK → Hall (nullable)
+        "production": "production",  # FK -> Production (embedded object with @id)
+        "hall": "hall",  # FK -> Hall (nullable)
         "starts_at": "starts_at",
         "ends_at": "ends_at",
         # Not in our model
@@ -426,9 +426,9 @@ EVENT_CONFIG = ModelSyncConfig(
 EVENT_PRICE_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
-        "event": "event",  # FK → Event
-        "price": "price",  # FK → Price
-        "rank": "price_rank",  # FK → PriceRank (API: "rank" → model: "price_rank")
+        "event": "event",  # FK -> Event
+        "price": "price",  # FK -> Price
+        "rank": "price_rank",  # FK -> PriceRank (API: "rank" -> model: "price_rank")
         "amount": "amount",
         "available": "available",
         "expires_at": None,
@@ -440,7 +440,7 @@ EVENT_PRICE_CONFIG = ModelSyncConfig(
 )
 
 # ---------------------------------------------------------------------------
-# Sync steps — order matters: leaf models (no FKs) must come first
+# Sync steps - order matters: leaf models (no FKs) must come first
 # ---------------------------------------------------------------------------
 
 SYNC_STEPS = [
@@ -549,7 +549,7 @@ class Command(BaseCommand):
             return
 
         if dry_run:
-            self.stdout.write(self.style.WARNING("DRY RUN — nothing will be written\n"))
+            self.stdout.write(self.style.WARNING("DRY RUN - nothing will be written\n"))
 
         # Share one ETag cache across all steps so unchanged endpoints return 304
         etag_cache: dict = {}
@@ -557,7 +557,7 @@ class Command(BaseCommand):
         wall_start = time.monotonic()
 
         for name, model, config, endpoint in steps_to_run:
-            self.stdout.write(f"→ {name} ", ending="")
+            self.stdout.write(f"-> {name} ", ending="")
             self.stdout.flush()
 
             step_start = time.monotonic()
@@ -589,7 +589,7 @@ class Command(BaseCommand):
 
         def on_progress(saved: int, total: int) -> None:
             if _tqdm is None:
-                # tqdm not installed — emit a simple line every 500 records
+                # tqdm not installed - emit a simple line every 500 records
                 if saved % 500 == 0 or saved == total:
                     self.stdout.write(f"  {name}: {saved}/{total}\r", ending="")
                     self.stdout.flush()

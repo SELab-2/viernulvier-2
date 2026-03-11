@@ -38,7 +38,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         help_text=(
             "Dictionary of all available translations for the tag name "
             '(e.g. {"en": "Contemporary", "fr": "Contemporain"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -46,7 +46,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         help_text=(
             "Dictionary of all available translations for the tag's short description "
             '(e.g. {"en": "Contemporary performing arts", "fr": "Arts du spectacle contemporain"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -54,7 +54,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         help_text=(
             "Dictionary of all available translations for the URL-safe title "
             '(e.g. {"en": "contemporary", "fr": "contemporain"}). '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 

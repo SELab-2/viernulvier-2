@@ -8,7 +8,7 @@ pipeline:
 
 - An **ImportLog** is created by the import pipeline at the start of each
   run and updated as records are processed. It is never created or mutated
-  via the API or the Django admin — both surfaces are intentionally
+  via the API or the Django admin - both surfaces are intentionally
   read-only.
 
 A database-level check constraint guarantees that ``finished_at`` is never
@@ -19,10 +19,6 @@ from django.db import models
 from django.db.models import F, Q
 
 from apps.core.models import BaseModel
-
-# ===========================================================================
-# ImportLog
-# ===========================================================================
 
 
 class ImportLog(BaseModel):

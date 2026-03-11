@@ -23,11 +23,11 @@ from apps.core.openapi import (
 from .serializers import PriceRankSerializer, PriceSerializer
 
 # ===========================================================================
-# Price — examples
+# Price - examples
 # ===========================================================================
 
 _PRICE_RESPONSE = OpenApiExample(
-    "Price — response",
+    "Price - response",
     summary="A price category with a localised description",
     value={
         "id": 1,
@@ -49,7 +49,7 @@ _PRICE_RESPONSE = OpenApiExample(
 )
 
 _PRICE_VARIABLE_RESPONSE = OpenApiExample(
-    "Price — variable pricing response",
+    "Price - variable pricing response",
     summary="A price category with variable pricing bounds",
     value={
         "id": 2,
@@ -71,7 +71,7 @@ _PRICE_VARIABLE_RESPONSE = OpenApiExample(
 )
 
 _PRICE_INPUT = OpenApiExample(
-    "Price — request body",
+    "Price - request body",
     summary="Payload for creating a new price",
     value={
         "type": "student",
@@ -87,7 +87,7 @@ _PRICE_INPUT = OpenApiExample(
 )
 
 _PRICE_PARTIAL_INPUT = OpenApiExample(
-    "Price — partial request body",
+    "Price - partial request body",
     summary="Only the fields you want to change",
     value={"sort_order": 5, "cineville_box": True},
     request_only=True,
@@ -95,7 +95,7 @@ _PRICE_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# Price — per-action schemas
+# Price - per-action schemas
 # ===========================================================================
 
 _PRICE_LIST = extend_schema(
@@ -134,7 +134,7 @@ _PRICE_CREATE = extend_schema(
     description=(
         "Creates a new **Price** category.\n\n"
         "- `type` and `visibility` are required.\n"
-        "- For variable pricing, set `minimum`, `maximum`, and `step` together — "
+        "- For variable pricing, set `minimum`, `maximum`, and `step` together - "
         "  or leave all three as `null` for a fixed price.\n"
         "- Localised descriptions must be added via the **Price Translation** "
         "  endpoints after creation.\n\n"
@@ -203,11 +203,11 @@ _PRICE_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# PriceRank — examples
+# PriceRank - examples
 # ===========================================================================
 
 _PRICE_RANK_RESPONSE = OpenApiExample(
-    "PriceRank — response",
+    "PriceRank - response",
     summary="A price rank availability tier",
     value={
         "id": 1,
@@ -219,14 +219,14 @@ _PRICE_RANK_RESPONSE = OpenApiExample(
 )
 
 _PRICE_RANK_INPUT = OpenApiExample(
-    "PriceRank — request body",
+    "PriceRank - request body",
     summary="Payload for creating a new price rank",
     value={"position": 2, "sold_out_buffer": 10},
     request_only=True,
 )
 
 _PRICE_RANK_PARTIAL_INPUT = OpenApiExample(
-    "PriceRank — partial request body",
+    "PriceRank - partial request body",
     summary="Only the fields you want to change",
     value={"sold_out_buffer": 5},
     request_only=True,
@@ -234,7 +234,7 @@ _PRICE_RANK_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# PriceRank — per-action schemas
+# PriceRank - per-action schemas
 # ===========================================================================
 
 _PRICE_RANK_LIST = extend_schema(
@@ -342,7 +342,7 @@ _PRICE_RANK_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# Assembled decorators — imported and applied in views.py
+# Assembled decorators - imported and applied in views.py
 # ===========================================================================
 
 price_schema = extend_schema_view(
