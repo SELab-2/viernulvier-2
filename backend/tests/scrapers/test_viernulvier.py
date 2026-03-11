@@ -6,8 +6,6 @@ from __future__ import annotations
 
 import datetime
 import logging
-import sys
-import types
 from contextlib import contextmanager
 from decimal import Decimal
 from types import SimpleNamespace
@@ -154,106 +152,6 @@ class _PassThroughConfig(ModelSyncConfig):
 
     def __init__(self):
         super().__init__(lookup_field="id")
-
-
-def _reload_module(monkeypatch, tqdm_available: bool):
-    """
-    Reload your module with tqdm either present or absent in sys.modules.
-    """
-    # Remove cached version so the try/except runs again
-    monkeypatch.delitem(sys.modules, "apps.imports.management.commands.sync_viernulvier", raising=False)
-
-    if tqdm_available:
-        # Make sure a real or stub tqdm exists
-        if "tqdm" not in sys.modules:
-            stub = types.ModuleType("tqdm")
-            stub.tqdm = _StubTqdm
-            monkeypatch.setitem(sys.modules, "tqdm", stub)
-    else:
-        # Force ImportError by removing tqdm from sys.modules
-        monkeypatch.delitem(sys.modules, "tqdm", raising=False)
-        # Inject a broken finder so 'import tqdm' raises ImportError
-        monkeypatch.setitem(sys.modules, "tqdm", None)  # None -> ImportError
-
-    import apps.imports.management.commands.sync_viernulvier
-
-    return apps.imports.management.commands.sync_viernulvier
-
-
-class _StubTqdm:
-    """Minimal tqdm stand-in that records calls."""
-
-    instances: list = []
-
-    def __init__(self, *, total, desc, unit, leave):
-        self.total = total
-        self.desc = desc
-        self.unit = unit
-        self.leave = leave
-        _StubTqdm.instances.append(self)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *_):
-        pass
-
-    def update(self, n=1):
-        pass
-
-    def close(self):
-        pass
-
-
-# ---------------------------------------------------------------------------
-# Tqdm presence handling
-# ---------------------------------------------------------------------------
-
-
-class TestWithTqdm:
-    def test_tqdm_is_not_none(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=True)
-        assert mod._tqdm is not None
-
-    def test_make_progress_bar_returns_object(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=True)
-        bar = mod._make_progress_bar("test", 10)
-        assert bar is not None
-
-    def test_make_progress_bar_is_context_manager(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=True)
-        bar = mod._make_progress_bar("ctx", 5)
-        # Must not raise when used as a context manager
-        with bar:
-            pass
-
-
-class TestWithoutTqdm:
-    def test_tqdm_is_none_when_missing(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=False)
-        assert mod._tqdm is None
-
-    def test_make_progress_bar_returns_none(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=False)
-        result = mod._make_progress_bar("fallback", 99)
-        assert result is None
-
-    def test_make_progress_bar_accepts_any_args_without_crash(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=False)
-        # Should never raise regardless of inputs
-        mod._make_progress_bar("", 0)
-        mod._make_progress_bar("x" * 100, 10_000_000)
-
-
-@pytest.mark.parametrize("tqdm_available", [True, False])
-def test_make_progress_bar_signature(monkeypatch, tqdm_available):
-    """_make_progress_bar(name, total) must always accept exactly these two args."""
-    mod = _reload_module(monkeypatch, tqdm_available=tqdm_available)
-    import inspect
-
-    sig = inspect.signature(mod._make_progress_bar)
-    params = list(sig.parameters)
-    assert params == ["name", "total"]
 
 
 # ---------------------------------------------------------------------------

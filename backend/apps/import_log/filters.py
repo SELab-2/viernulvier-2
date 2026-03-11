@@ -3,6 +3,7 @@ Filters for the Imports app.
 """
 
 import django_filters
+from django.db.models import Q
 
 from apps.core.filters import BaseModelFilter
 
@@ -38,6 +39,8 @@ class ImportLogFilter(BaseModelFilter):
 
     source = django_filters.CharFilter(lookup_expr="icontains")
 
+    status = django_filters.ChoiceFilter(choices=ImportLog.Status.choices)
+
     started_at_after = django_filters.IsoDateTimeFilter(field_name="started_at", lookup_expr="gte")
     started_at_before = django_filters.IsoDateTimeFilter(field_name="started_at", lookup_expr="lte")
     finished_at_after = django_filters.IsoDateTimeFilter(field_name="finished_at", lookup_expr="gte")
@@ -53,7 +56,8 @@ class ImportLogFilter(BaseModelFilter):
         """Filter by presence of an error message."""
         if value:
             return queryset.exclude(error_message="").exclude(error_message__isnull=True)
-        return queryset.filter(error_message="") | queryset.filter(error_message__isnull=True)
+
+        return queryset.filter(Q(error_message="") | Q(error_message__isnull=True))
 
     class Meta:
         model = ImportLog

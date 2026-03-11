@@ -3,7 +3,9 @@ Tests for apps/tags/filters.py and apps/tags/views.py.
 """
 
 import pytest
+from django.test import TestCase, override_settings
 from django.urls import reverse
+from rest_framework.test import APIClient
 
 from apps.tags.filters import TagFilter
 from apps.tags.models import Tag
@@ -11,6 +13,17 @@ from tests.factories.language import LanguageFactory
 from tests.factories.tag import TagFactory, TagTranslationFactory
 
 pytestmark = pytest.mark.django_db
+
+PUB_KEY = "pub-tag-filter-test-key"
+INT_KEY = "int-tag-filter-test-key"
+
+
+def pub_headers():
+    return {"HTTP_X_API_KEY": PUB_KEY}
+
+
+def int_headers():
+    return {"HTTP_X_API_KEY": INT_KEY}
 
 
 # =====================================================
@@ -137,113 +150,126 @@ class TestTagFilter:
 # =====================================================
 
 
-class TestTagViewSet:
-    list_url = reverse("tag-list")
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestTagViewSet(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        Tag.objects.all().delete()
+
+    def list_url(self):
+        return reverse("tag-list")
 
     def detail_url(self, pk):
         return reverse("tag-detail", kwargs={"pk": pk})
 
-    def test_anon_is_rejected(self, anon_client):
-        assert anon_client.get(self.list_url).status_code in (401, 403)
+    def test_anon_is_rejected(self):
+        response = self.client.get(self.list_url())
+        self.assertIn(response.status_code, (401, 403))
 
-    def test_public_can_list(self, public_client):
+    def test_public_can_list(self):
         TagFactory.create_batch(3)
+        response = self.client.get(self.list_url(), **pub_headers())
+        self.assertEqual(response.status_code, 200)
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 3)
 
-        response = public_client.get(self.list_url)
-
-        assert response.status_code == 200
-        assert len(response.data["results"]) == 3
-
-    def test_public_can_retrieve(self, public_client):
-        assert public_client.get(self.detail_url(TagFactory().pk)).status_code == 200
-
-    def test_public_cannot_delete(self, public_client):
-        assert public_client.delete(self.detail_url(TagFactory().pk)).status_code == 403
-
-    def test_public_cannot_create(self, public_client):
-        assert public_client.post(self.list_url, {"type": "theme"}).status_code == 403
-
-    def test_internal_can_delete(self, internal_client):
+    def test_public_can_retrieve(self):
         tag = TagFactory()
+        response = self.client.get(self.detail_url(tag.pk), **pub_headers())
+        self.assertEqual(response.status_code, 200)
 
-        assert internal_client.delete(self.detail_url(tag.pk)).status_code == 204
-        assert not Tag.objects.filter(pk=tag.pk).exists()
+    def test_public_cannot_delete(self):
+        tag = TagFactory()
+        response = self.client.delete(self.detail_url(tag.pk), **pub_headers())
+        self.assertEqual(response.status_code, 403)
 
-    def test_filter_by_type(self, public_client):
+    def test_public_cannot_create(self):
+        response = self.client.post(self.list_url(), {"type": "theme"}, **pub_headers())
+        self.assertEqual(response.status_code, 403)
+
+    def test_internal_can_delete(self):
+        tag = TagFactory()
+        response = self.client.delete(self.detail_url(tag.pk), **int_headers())
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(Tag.objects.filter(pk=tag.pk).exists())
+
+    def test_filter_by_type(self):
         TagFactory(type="theme")
         TagFactory(type="audience")
+        response = self.client.get(self.list_url(), {"type": "theme"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)
 
-        assert len(public_client.get(self.list_url, {"type": "theme"}).data["results"]) == 1
-
-    def test_filter_by_is_enabled(self, public_client):
+    def test_filter_by_is_enabled(self):
         TagFactory(is_enabled=True)
         TagFactory(is_enabled=False)
+        response = self.client.get(self.list_url(), {"is_enabled": "true"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)
 
-        assert len(public_client.get(self.list_url, {"is_enabled": "true"}).data["results"]) == 1
-
-    def test_filter_by_is_external(self, public_client):
+    def test_filter_by_is_external(self):
         TagFactory(is_external=True)
         TagFactory(is_external=False)
+        response = self.client.get(self.list_url(), {"is_external": "true"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)
 
-        assert len(public_client.get(self.list_url, {"is_external": "true"}).data["results"]) == 1
-
-    def test_filter_by_translated_name(self, public_client):
+    def test_filter_by_translated_name(self):
         lang = LanguageFactory(code="en")
         tag_a = TagFactory()
         tag_b = TagFactory()
         TagTranslationFactory(tag=tag_a, language=lang, name="Contemporary")
         TagTranslationFactory(tag=tag_b, language=lang, name="Family")
+        response = self.client.get(self.list_url(), {"name": "Contemporary"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)
 
-        assert len(public_client.get(self.list_url, {"name": "Contemporary"}).data["results"]) == 1
-
-    def test_filter_by_source(self, public_client):
+    def test_filter_by_source(self):
         TagFactory(source="uitdatabank")
         TagFactory(source="system")
+        response = self.client.get(self.list_url(), {"source": "uitdatabank"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)
 
-        assert len(public_client.get(self.list_url, {"source": "uitdatabank"}).data["results"]) == 1
-
-    def test_ordering_by_type_ascending(self, public_client):
+    def test_ordering_by_type_ascending(self):
         TagFactory(type="theme")
         TagFactory(type="audience")
+        response = self.client.get(self.list_url(), {"ordering": "type"}, **pub_headers())
+        types = [r["type"] for r in response.data.get("results", response.data)]
+        self.assertEqual(types, sorted(types))
 
-        response = public_client.get(self.list_url, {"ordering": "type"})
-        types = [r["type"] for r in response.data["results"]]
-
-        assert types == sorted(types)
-
-    def test_ordering_by_type_descending(self, public_client):
+    def test_ordering_by_type_descending(self):
         TagFactory(type="theme")
         TagFactory(type="audience")
+        response = self.client.get(self.list_url(), {"ordering": "-type"}, **pub_headers())
+        types = [r["type"] for r in response.data.get("results", response.data)]
+        self.assertEqual(types, sorted(types, reverse=True))
 
-        response = public_client.get(self.list_url, {"ordering": "-type"})
-        types = [r["type"] for r in response.data["results"]]
-
-        assert types == sorted(types, reverse=True)
-
-    def test_default_ordering_by_id(self, public_client):
+    def test_default_ordering_by_id(self):
         TagFactory.create_batch(3)
+        response = self.client.get(self.list_url(), **pub_headers())
+        ids = [r["id"] for r in response.data.get("results", response.data)]
+        self.assertEqual(ids, sorted(ids))
 
-        response = public_client.get(self.list_url)
-        ids = [r["id"] for r in response.data["results"]]
-
-        assert ids == sorted(ids)
-
-    def test_search_by_type(self, public_client):
+    def test_search_by_type(self):
         TagFactory(type="theme")
         TagFactory(type="audience")
+        response = self.client.get(self.list_url(), {"search": "theme"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)
 
-        assert len(public_client.get(self.list_url, {"search": "theme"}).data["results"]) == 1
-
-    def test_search_by_source(self, public_client):
+    def test_search_by_source(self):
         TagFactory(source="uitdatabank")
         TagFactory(source="system")
+        response = self.client.get(self.list_url(), {"search": "uitdatabank"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)
 
-        assert len(public_client.get(self.list_url, {"search": "uitdatabank"}).data["results"]) == 1
-
-    def test_search_by_translated_name(self, public_client):
+    def test_search_by_translated_name(self):
         lang = LanguageFactory(code="en")
         tag = TagFactory(type="theme")
         TagTranslationFactory(tag=tag, language=lang, name="Contemporary")
         TagFactory(type="audience")
-
-        assert len(public_client.get(self.list_url, {"search": "Contemporary"}).data["results"]) == 1
+        response = self.client.get(self.list_url(), {"search": "Contemporary"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)

@@ -3,7 +3,9 @@ Tests for apps/languages/filters.py and apps/languages/views.py.
 """
 
 import pytest
+from django.test import TestCase, override_settings
 from django.urls import reverse
+from rest_framework.test import APIClient
 
 from apps.languages.filters import LanguageFilter
 from apps.languages.models import Language
@@ -101,107 +103,122 @@ class TestLanguageFilter:
 # LanguageViewSet
 # =====================================================
 
+PUB_KEY = "pub-filter-test-key"
+INT_KEY = "int-filter-test-key"
 
-class TestLanguageViewSet:
-    list_url = reverse("language-list")
+
+def int_headers():
+    return {"HTTP_X_API_KEY": INT_KEY}
+
+
+def pub_headers():
+    return {"HTTP_X_API_KEY": PUB_KEY}
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestLanguageViewSet(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        Language.objects.all().delete()
 
     def detail_url(self, code):
         return reverse("language-detail", kwargs={"code": code})
 
-    def test_anon_returns_401_or_403(self, anon_client):
-        assert anon_client.get(self.list_url).status_code in (401, 403)
+    list_url = reverse("language-list")
 
-    def test_public_can_list(self, public_client):
+    def test_anon_returns_401_or_403(self):
+        response = self.client.get(self.list_url)
+        self.assertIn(response.status_code, (401, 403))
+
+    def test_public_can_list(self):
         LanguageFactory.create_batch(2)
+        response = self.client.get(self.list_url, **pub_headers())
+        self.assertEqual(response.status_code, 200)
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 2)
 
-        response = public_client.get(self.list_url)
-
-        assert response.status_code == 200
-        assert len(response.data["results"]) == 2
-
-    def test_public_can_retrieve(self, public_client):
+    def test_public_can_retrieve(self):
         LanguageFactory(code="nl")
+        response = self.client.get(self.detail_url("nl"), **pub_headers())
+        self.assertEqual(response.status_code, 200)
 
-        assert public_client.get(self.detail_url("nl")).status_code == 200
+    def test_public_cannot_create(self):
+        response = self.client.post(self.list_url, {"code": "de", "name": "German"}, format="json", **pub_headers())
+        self.assertEqual(response.status_code, 403)
 
-    def test_public_cannot_create(self, public_client):
-        assert public_client.post(self.list_url, {"code": "de", "name": "German"}).status_code == 403
-
-    def test_public_cannot_update(self, public_client):
+    def test_public_cannot_update(self):
         LanguageFactory(code="nl")
+        response = self.client.patch(self.detail_url("nl"), {"name": "Nederlands"}, format="json", **pub_headers())
+        self.assertEqual(response.status_code, 403)
 
-        assert public_client.patch(self.detail_url("nl"), {"name": "Nederlands"}).status_code == 403
-
-    def test_public_cannot_delete(self, public_client):
+    def test_public_cannot_delete(self):
         LanguageFactory(code="nl")
+        response = self.client.delete(self.detail_url("nl"), **pub_headers())
+        self.assertEqual(response.status_code, 403)
 
-        assert public_client.delete(self.detail_url("nl")).status_code == 403
+    def test_internal_can_create(self):
+        response = self.client.post(
+            self.list_url, {"code": "de", "name": "German", "is_active": False}, format="json", **int_headers()
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(Language.objects.filter(code="de").exists())
 
-    def test_internal_can_create(self, internal_client):
-        response = internal_client.post(self.list_url, {"code": "de", "name": "German", "is_active": False})
-
-        assert response.status_code == 201
-        assert Language.objects.filter(code="de").exists()
-
-    def test_internal_can_delete(self, internal_client):
+    def test_internal_can_delete(self):
         LanguageFactory(code="nl")
+        response = self.client.delete(self.detail_url("nl"), **int_headers())
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(Language.objects.filter(code="nl").exists())
 
-        assert internal_client.delete(self.detail_url("nl")).status_code == 204
-        assert not Language.objects.filter(code="nl").exists()
-
-    def test_filter_by_code(self, public_client):
+    def test_filter_by_code(self):
         LanguageFactory(code="nl")
         LanguageFactory(code="en")
+        response = self.client.get(self.list_url, {"code": "nl"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["code"], "nl")
 
-        response = public_client.get(self.list_url, {"code": "nl"})
-
-        assert len(response.data["results"]) == 1
-        assert response.data["results"][0]["code"] == "nl"
-
-    def test_filter_by_is_active(self, public_client):
+    def test_filter_by_is_active(self):
         LanguageFactory(code="nl", is_active=True)
         LanguageFactory(code="en", is_active=False)
+        response = self.client.get(self.list_url, {"is_active": "true"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)
 
-        assert len(public_client.get(self.list_url, {"is_active": "true"}).data["results"]) == 1
-
-    def test_ordering_by_name_ascending(self, public_client):
+    def test_ordering_by_name_ascending(self):
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
         LanguageFactory(code="fr", name="French")
+        response = self.client.get(self.list_url, {"ordering": "name"}, **pub_headers())
+        names = [r["name"] for r in response.data.get("results", response.data)]
+        self.assertEqual(names, sorted(names))
 
-        response = public_client.get(self.list_url, {"ordering": "name"})
-        names = [r["name"] for r in response.data["results"]]
-
-        assert names == sorted(names)
-
-    def test_ordering_by_name_descending(self, public_client):
+    def test_ordering_by_name_descending(self):
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
+        response = self.client.get(self.list_url, {"ordering": "-name"}, **pub_headers())
+        names = [r["name"] for r in response.data.get("results", response.data)]
+        self.assertEqual(names, sorted(names, reverse=True))
 
-        response = public_client.get(self.list_url, {"ordering": "-name"})
-        names = [r["name"] for r in response.data["results"]]
-
-        assert names == sorted(names, reverse=True)
-
-    def test_search_by_code(self, public_client):
+    def test_search_by_code(self):
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
+        response = self.client.get(self.list_url, {"search": "nl"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)
 
-        assert len(public_client.get(self.list_url, {"search": "nl"}).data["results"]) == 1
-
-    def test_search_by_name(self, public_client):
+    def test_search_by_name(self):
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
+        response = self.client.get(self.list_url, {"search": "English"}, **pub_headers())
+        results = response.data.get("results", response.data)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["code"], "en")
 
-        response = public_client.get(self.list_url, {"search": "English"})
-
-        assert len(response.data["results"]) == 1
-        assert response.data["results"][0]["code"] == "en"
-
-    def test_lookup_by_code_not_pk(self, public_client):
+    def test_lookup_by_code_not_pk(self):
         LanguageFactory(code="nl")
+        response = self.client.get(self.detail_url("nl"), **pub_headers())
+        self.assertEqual(response.status_code, 200)
 
-        assert public_client.get(self.detail_url("nl")).status_code == 200
-
-    def test_unknown_code_returns_404(self, public_client):
-        assert public_client.get(self.detail_url("xx")).status_code == 404
+    def test_unknown_code_returns_404(self):
+        response = self.client.get(self.detail_url("xx"), **pub_headers())
+        self.assertEqual(response.status_code, 404)
