@@ -1,15 +1,14 @@
 {
   "title": "Archive workspace",
   "subtitle": "Catalog and preserve items.",
-  "english": "English",
-  "dutch": "Dutch",
   "nav": {
     "home": "Archive",
     "events": "Series",
     "productions": "Artists",
     "mainNav": "Main navigation",
-    "languageSwitcher": "Language",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "switchToLightMode": "Dark mode",
+    "switchToDarkMode": "Light mode"
   },
   "events": {
     "title": "Events",

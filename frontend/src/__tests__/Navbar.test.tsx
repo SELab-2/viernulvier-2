@@ -1,14 +1,21 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Navbar from '../components/Navbar'
-import '../i18n'
+import i18n from '../i18n'
 
-const renderNavbar = (initialPath = '/') =>
+const renderNavbar = (
+  initialPath = '/',
+  options: { mode?: 'light' | 'dark'; onToggleMode?: jest.Mock } = {},
+) =>
   render(
     <MemoryRouter initialEntries={[initialPath]}>
-      <Navbar mode="light" onToggleMode={jest.fn()} />
+      <Navbar mode={options.mode ?? 'light'} onToggleMode={options.onToggleMode ?? jest.fn()} />
     </MemoryRouter>,
   )
+
+beforeEach(() => {
+  i18n.changeLanguage('nl')
+})
 
 describe('Navbar', () => {
   it('renders the brand logo and Archive label', () => {
@@ -30,14 +37,27 @@ describe('Navbar', () => {
     expect(screen.getByRole('link', { name: 'Archief' })).not.toHaveAttribute('aria-current')
   })
 
-  it('renders language switcher button', () => {
+  it('toggles language when clicking the language button', () => {
     renderNavbar()
-    const langButton = screen.getByRole('button', { name: /switch language/i })
-    expect(langButton).toBeInTheDocument()
+    const langButton = screen.getByTestId('language-toggle-inline')
+    fireEvent.click(langButton)
+    expect(screen.getByTestId('language-toggle-inline')).toHaveTextContent('EN')
   })
 
-  it('renders theme toggle button', () => {
-    renderNavbar()
-    expect(screen.getByRole('button', { name: /switch to dark mode/i })).toBeInTheDocument()
+  it('calls toggle callback when clicking inline theme switch', () => {
+    const onToggleMode = jest.fn()
+    renderNavbar('/', { onToggleMode })
+    fireEvent.click(screen.getByTestId('theme-toggle-inline'))
+    expect(onToggleMode).toHaveBeenCalledTimes(1)
+  })
+
+  it('calls toggle callback from dropdown theme action', () => {
+    const onToggleMode = jest.fn()
+    renderNavbar('/', { onToggleMode })
+
+    fireEvent.click(screen.getByTestId('mobile-menu-trigger'))
+    fireEvent.click(screen.getByTestId('theme-toggle-menu'))
+
+    expect(onToggleMode).toHaveBeenCalledTimes(1)
   })
 })

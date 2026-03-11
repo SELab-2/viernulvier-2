@@ -1,15 +1,14 @@
 {
   "title": "Archiefomgeving",
   "subtitle": "Catalogiseer en bewaar items.",
-  "english": "Engels",
-  "dutch": "Nederlands",
   "nav": {
     "home": "Archief",
     "events": "Reeksen",
     "productions": "Artiesten",
     "mainNav": "Hoofdnavigatie",
-    "languageSwitcher": "Taal",
-    "openMenu": "Menu openen"
+    "openMenu": "Menu openen",
+    "switchToLightMode": "Donkere modus",
+    "switchToDarkMode": "Lichte modus"
   },
   "events": {
     "title": "Evenementen",
