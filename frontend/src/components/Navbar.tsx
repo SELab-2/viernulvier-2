@@ -7,12 +7,12 @@ import {
   Typography,
   IconButton,
   Container,
-  Menu,
-  MenuItem,
+  Collapse,
 } from '@mui/material'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
 import MenuIcon from '@mui/icons-material/Menu'
+import CloseIcon from '@mui/icons-material/Close'
 import { useState } from 'react'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -33,8 +33,7 @@ type NavbarProps = {
 const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
   const { t, i18n } = useTranslation()
   const location = useLocation()
-  // Anchor element for the hamburger dropdown menu on smaller breakpoints.
-  const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const currentLanguage: SupportedLanguage = i18n.language === 'en' ? 'en' : 'nl'
   const nextLanguage: SupportedLanguage = currentLanguage === 'en' ? 'nl' : 'en'
   const themeSwitchLabel = mode === 'dark' ? t('nav.switchToLightMode') : t('nav.switchToDarkMode')
@@ -49,7 +48,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
     to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
 
   const closeMobileMenu = () => {
-    setMobileMenuAnchor(null)
+    setMobileMenuOpen(false)
   }
 
   const activeLinkSx = {
@@ -101,6 +100,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             <Typography
               variant="subtitle1"
               sx={{
+                display: { xs: 'none', sm: 'block' },
                 color: '#fff',
                 fontWeight: 400,
                 letterSpacing: '0.03em',
@@ -150,7 +150,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             spacing={0}
             alignItems="center"
             component="ul"
-            sx={{ ...baseListSx, display: { xs: 'none', sm: 'flex' } }}
+            sx={{ ...baseListSx, display: 'flex' }}
           >
             {/* Theme toggle */}
             <Box
@@ -232,64 +232,59 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             </Box>
           </Stack>
 
-          {/* Burger dropdown menu is shown whenever inline nav links are hidden (< lg). */}
+          {/* Burger button is shown whenever inline nav links are hidden (< lg). */}
           <IconButton
             color="inherit"
             data-testid="mobile-menu-trigger"
-            aria-label={t('nav.openMenu')}
-            onClick={(event) => setMobileMenuAnchor(event.currentTarget)}
+            aria-label={mobileMenuOpen ? t('nav.closeMenu') : t('nav.openMenu')}
+            onClick={() => setMobileMenuOpen((previousOpen) => !previousOpen)}
             sx={{ display: { xs: 'inline-flex', lg: 'none' }, ml: 2 }}
           >
-            <MenuIcon />
+            {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
           </IconButton>
-          <Menu
-            anchorEl={mobileMenuAnchor}
-            open={Boolean(mobileMenuAnchor)}
-            onClose={closeMobileMenu}
-            sx={{ display: { xs: 'block', lg: 'none' } }}
+        </Toolbar>
+
+        {/* Mobile nav panel slides down below navbar and matches container width. */}
+        <Collapse
+          in={mobileMenuOpen}
+          timeout="auto"
+          unmountOnExit
+          data-testid="mobile-nav-panel"
+          sx={{ display: { xs: 'block', lg: 'none' } }}
+        >
+          <Stack
+            component="ul"
+            spacing={0.5}
+            sx={{
+              ...baseListSx,
+              py: 1,
+            }}
           >
             {NAV_LINKS.map(({ labelKey, to }) => (
-              <MenuItem
-                key={to}
-                component={RouterLink}
-                to={to}
-                selected={isActive(to)}
-                onClick={closeMobileMenu}
-              >
-                {t(labelKey)}
-              </MenuItem>
-            ))}
-            {/* Theme option is only shown in dropdown on xs (hidden on sm+ where inline switch exists). */}
-            <MenuItem
-              data-testid="theme-toggle-menu"
-              sx={{ display: { xs: 'flex', sm: 'none' } }}
-              aria-label={themeSwitchLabel}
-              onClick={() => {
-                onToggleMode()
-                closeMobileMenu()
-              }}
-            >
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', lineHeight: 0 }}>
-                {mode === 'dark' ? (
-                  <DarkModeOutlinedIcon fontSize="small" sx={{ color: '#fff' }} />
-                ) : (
-                  <LightModeOutlinedIcon fontSize="small" sx={{ color: '#111' }} />
-                )}
+              <Box component="li" key={`mobile-${to}`}>
+                <Button
+                  fullWidth
+                  color="inherit"
+                  component={RouterLink}
+                  to={to}
+                  aria-current={isActive(to) ? 'page' : undefined}
+                  onClick={closeMobileMenu}
+                  disableRipple
+                  sx={{
+                    justifyContent: 'flex-start',
+                    textTransform: 'none',
+                    fontSize: '1.05rem',
+                    letterSpacing: '0.02em',
+                    ...(isActive(to) ? activeLinkSx : {}),
+                    '&:hover': { bgcolor: 'transparent' },
+                  }}
+                >
+                  {t(labelKey)}
+                </Button>
               </Box>
-            </MenuItem>
-            {/* Language option is only shown in dropdown on xs (hidden on sm+ where inline switch exists). */}
-            <MenuItem
-              data-testid="language-toggle-menu"
-              sx={{ display: { xs: 'flex', sm: 'none' } }}
-              onClick={() => {
-                switchLanguage(nextLanguage)
-                closeMobileMenu()
-              }}
-            >
-              {currentLanguage === 'en' ? 'EN' : 'NL'}
-            </MenuItem>
-          </Menu>
-        </Toolbar>
+            ))}
+          </Stack>
+        </Collapse>
       </Container>
     </AppBar>
   )

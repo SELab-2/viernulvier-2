@@ -51,13 +51,11 @@ describe('Navbar', () => {
     expect(onToggleMode).toHaveBeenCalledTimes(1)
   })
 
-  it('calls toggle callback from dropdown theme action', () => {
-    const onToggleMode = jest.fn()
-    renderNavbar('/', { onToggleMode })
-
+  it('opens the slide-down menu from the mobile trigger', () => {
+    renderNavbar()
+    expect(screen.queryByTestId('mobile-nav-panel')).not.toBeInTheDocument()
     fireEvent.click(screen.getByTestId('mobile-menu-trigger'))
-    fireEvent.click(screen.getByTestId('theme-toggle-menu'))
-
-    expect(onToggleMode).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('mobile-nav-panel')).toBeInTheDocument()
+    expect(screen.getByTestId('mobile-menu-trigger')).toHaveAttribute('aria-label', 'Menu sluiten')
   })
 })

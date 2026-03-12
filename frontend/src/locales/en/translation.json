@@ -7,6 +7,7 @@
     "productions": "Artists",
     "mainNav": "Main navigation",
     "openMenu": "Open menu",
+    "closeMenu": "Close menu",
     "switchToLightMode": "Dark mode",
     "switchToDarkMode": "Light mode"
   },
