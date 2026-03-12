@@ -1,6 +1,5 @@
 import axios from 'axios'
 
-const API_URL: string = import.meta.env.VITE_API_URL
 const API_KEY: string = import.meta.env.VITE_PUBLIC_API_KEY
 
 /** Export an axios instance to easily contact our backend API with the correct base URL and headers
