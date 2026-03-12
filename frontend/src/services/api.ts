@@ -16,7 +16,7 @@ const API_KEY: string = import.meta.env.VITE_PUBLIC_API_KEY
  *
  **/
 export const api = axios.create({
-  baseURL: API_URL,
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
     'X-API-Key': API_KEY,
