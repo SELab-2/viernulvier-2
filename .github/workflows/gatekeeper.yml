@@ -1,0 +1,62 @@
+name: CI Gatekeeper
+
+on:
+    pull_request:
+        branches: [main, dev, backend, frontend]
+
+jobs:
+    backend-gate:
+        name: Django check (gate)
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - name: Check for backend changes
+              id: filter
+              uses: dorny/paths-filter@v3
+              with:
+                  filters: |
+                      backend:
+                        - 'backend/**'
+
+            - name: No-op Success
+              if: steps.filter.outputs.backend == 'false'
+              run: echo "No backend changes, bypassing required check."
+
+            - name: Wait for Backend CI
+              if: steps.filter.outputs.backend == 'true'
+              uses: lewagon/wait-on-check-action@v1.5.0
+              with:
+                  ref: ${{ github.sha }}
+                  check-name: "Django check + Pytest"
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  wait-interval: 10
+                  ignore-checks: "CI Gatekeeper"
+                  fail-on-no-checks: false
+
+    frontend-gate:
+        name: Lint / Test / Build (gate)
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - name: Check for frontend changes
+              id: filter
+              uses: dorny/paths-filter@v3
+              with:
+                  filters: |
+                      frontend:
+                        - 'frontend/**'
+
+            - name: No-op Success
+              if: steps.filter.outputs.frontend == 'false'
+              run: echo "No frontend changes, bypassing required check."
+
+            - name: Wait for Frontend CI
+              if: steps.filter.outputs.frontend == 'true'
+              uses: lewagon/wait-on-check-action@v1.5.0
+              with:
+                  ref: ${{ github.sha }}
+                  check-name: "Lint / Test / Build"
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  wait-interval: 10
+                  ignore-checks: "CI Gatekeeper"
+                  fail-on-no-checks: false
