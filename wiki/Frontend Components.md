@@ -9,7 +9,7 @@ The focus is on reusable UI parts in `frontend/src/components` and how they inte
 
 | Component | File | Responsibility |
 |---|---|---|
-| Navbar | `frontend/src/components/Navbar.tsx` | Main navigation, branding, theme toggle, and language switch |
+| Navbar | `frontend/src/components/Navbar.tsx` | Main navigation with responsive slide-down mobile panel, branding, theme toggle, and language switch |
 
 ## Guidelines for New Components
 

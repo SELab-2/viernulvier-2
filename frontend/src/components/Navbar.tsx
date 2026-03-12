@@ -57,14 +57,6 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
 
   const baseListSx = { listStyle: 'none', m: 0, p: 0 }
 
-  const themeSquareBaseSx = {
-    width: 30,
-    height: 30,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }
-
   return (
     <AppBar
       position="sticky"
@@ -169,44 +161,27 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                 disableRipple
                 onClick={onToggleMode}
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  p: '4px',
-                  borderRadius: '4px',
+                  p: '4px 6px',
                   backgroundColor: 'transparent',
-                  gap: 0,
                 }}
               >
-                {/* Left square represents dark mode; active mode is rendered in white. */}
-                <Box
-                  sx={{
-                    ...themeSquareBaseSx,
-                    backgroundColor: mode === 'dark' ? '#fff' : '#d9d9d9',
-                  }}
-                >
+                {mode === 'dark' ? (
                   <DarkModeOutlinedIcon
                     fontSize="medium"
                     sx={{
-                      color: '#111',
-                      transition: 'color 0.2s, background-color 0.2s',
+                      color: '#fff',
+                      transition: 'color 0.2s',
                     }}
                   />
-                </Box>
-                {/* Right square represents light mode; active mode is rendered in white. */}
-                <Box
-                  sx={{
-                    ...themeSquareBaseSx,
-                    backgroundColor: mode === 'light' ? '#fff' : '#d9d9d9',
-                  }}
-                >
+                ) : (
                   <LightModeOutlinedIcon
                     fontSize="medium"
                     sx={{
-                      color: '#111',
-                      transition: 'color 0.2s, background-color 0.2s',
+                      color: '#fff',
+                      transition: 'color 0.2s',
                     }}
                   />
-                </Box>
+                )}
               </IconButton>
             </Box>
 
@@ -223,7 +198,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                   minWidth: 'auto',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
-                  fontWeight: 700,
+                  fontWeight: 400,
                   fontSize: '0.95rem',
                 }}
               >
