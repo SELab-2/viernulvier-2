@@ -30,10 +30,9 @@ class Event(BaseModel):
     """
     A scheduled occurrence of a production inside a hall.
 
-    An event has a start and end time, an optional ticketing URL, and a
-    set of :class:`EventPrice` entries that define capacity and pricing
-    per price rank. The ``hall`` FK is nullable to support online or
-    location-independent events.
+    An event has a start and end time, and a set of :class:`EventPrice`
+    entries that define capacity and pricing per price rank. The ``hall``
+    FK is nullable to support online or location-independent events.
 
     The constraint ``ends_at >= starts_at`` is enforced both at the
     database level (``CheckConstraint``) and at the application level
@@ -46,7 +45,6 @@ class Event(BaseModel):
         starts_at:     Date and time at which the event begins (UTC).
         ends_at:       Date and time at which the event ends (UTC).
                        Must be later or equal to ``starts_at``.
-        ticketing_url: Public URL where tickets can be purchased.
     """
 
     production = models.ForeignKey(
@@ -79,12 +77,6 @@ class Event(BaseModel):
         blank=True,
         help_text="ISO 8601 UTC datetime at which the event ends. Must be later or equal to `starts_at`.",
         db_comment="The time at which the event ends.",
-    )
-
-    ticketing_url = models.URLField(
-        blank=True,
-        help_text="Public URL where tickets for this event can be purchased. Empty string when not applicable.",
-        db_comment="The URL leading to the ticket reservations.",
     )
 
     class Meta(BaseModel.Meta):
