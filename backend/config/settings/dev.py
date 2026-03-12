@@ -1,7 +1,8 @@
 import os
 
-from . import base as base_settings
 from corsheaders.defaults import default_headers
+
+from . import base as base_settings
 
 for setting_name in dir(base_settings):
     if setting_name.isupper():
