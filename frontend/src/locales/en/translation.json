@@ -1,6 +1,8 @@
 {
   "title": "Archive workspace",
   "subtitle": "Catalog and preserve items.",
+  "english": "English",
+  "dutch": "Dutch",
   "nav": {
     "home": "Archive",
     "events": "Series",

@@ -1,6 +1,8 @@
 {
   "title": "Archiefomgeving",
   "subtitle": "Catalogiseer en bewaar items.",
+  "english": "Engels",
+  "dutch": "Nederlands",
   "nav": {
     "home": "Archief",
     "events": "Reeksen",
