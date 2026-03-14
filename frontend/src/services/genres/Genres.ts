@@ -65,6 +65,6 @@ export const getGenre = async (id: number) => {
  * @throws Rethrows the original request error after logging it.
  */
 export const getGenres = async (options?: GetGenresOptions) => {
-  const res = await api.get('/genres/', { params: buildListParams(options) }) 
+  const res = await api.get('/genres/', { params: buildListParams(options) })
   return res.data
 }
