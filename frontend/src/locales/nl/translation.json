@@ -4,9 +4,14 @@
   "english": "Engels",
   "dutch": "Nederlands",
   "nav": {
-    "home": "Home",
-    "events": "Evenementen",
-    "productions": "Producties"
+    "home": "Archief",
+    "events": "Reeksen",
+    "productions": "Artiesten",
+    "mainNav": "Hoofdnavigatie",
+    "openMenu": "Menu openen",
+    "closeMenu": "Menu sluiten",
+    "switchToLightMode": "Donkere modus",
+    "switchToDarkMode": "Lichte modus"
   },
   "events": {
     "title": "Evenementen",
