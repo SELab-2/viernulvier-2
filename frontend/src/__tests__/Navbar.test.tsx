@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import i18n from '../i18n'
@@ -57,5 +57,19 @@ describe('Navbar', () => {
     fireEvent.click(screen.getByTestId('mobile-menu-trigger'))
     expect(screen.getByTestId('mobile-nav-panel')).toBeInTheDocument()
     expect(screen.getByTestId('mobile-menu-trigger')).toHaveAttribute('aria-label', 'Menu sluiten')
+  })
+
+  it('closes the mobile panel after navigating to another route', async () => {
+    renderNavbar()
+    fireEvent.click(screen.getByTestId('mobile-menu-trigger'))
+    const mobilePanel = screen.getByTestId('mobile-nav-panel')
+    fireEvent.click(within(mobilePanel).getByRole('link', { name: 'Reeksen' }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mobile-menu-trigger')).toHaveAttribute('aria-label', 'Menu openen')
+    })
+    expect(
+      screen.getAllByRole('link', { name: 'Reeksen', current: 'page' }).length,
+    ).toBeGreaterThan(0)
   })
 })
