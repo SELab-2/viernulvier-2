@@ -17,13 +17,6 @@ describe('genres service', () => {
   beforeEach(() => {
     // Reset mock state between tests so each assertion only sees its own calls.
     mockedGet.mockReset()
-
-    // Silence expected error logs when testing rejected requests.
-    jest.spyOn(console, 'error').mockImplementation(() => undefined)
-  })
-
-  afterEach(() => {
-    jest.restoreAllMocks()
   })
 
   describe('getGenre', () => {
@@ -42,15 +35,15 @@ describe('genres service', () => {
     })
 
     /**
-     * Ensure request failures are logged and then rethrown so calling code can
-     * still handle the error.
+     * Ensure failures from the API client propagate to the caller unchanged.
+     * Error transformation is handled by the response interceptor in Api.ts,
+     * not by the service itself.
      */
-    it('logs and rethrows when fetching one genre fails', async () => {
+    it('propagates errors to the caller', async () => {
       const error = new Error('request failed')
       mockedGet.mockRejectedValue(error)
 
       await expect(getGenre(7)).rejects.toThrow('request failed')
-      expect(console.error).toHaveBeenCalledWith('Error fetching genre:', error)
     })
   })
 
@@ -150,15 +143,15 @@ describe('genres service', () => {
     })
 
     /**
-     * Ensure list request failures follow the same contract as detail requests:
-     * log the error and rethrow it unchanged.
+     * Ensure list request failures propagate to the caller unchanged.
+     * Error transformation is handled by the response interceptor in Api.ts,
+     * not by the service itself.
      */
-    it('logs and rethrows when fetching genres fails', async () => {
+    it('propagates errors to the caller', async () => {
       const error = new Error('request failed')
       mockedGet.mockRejectedValue(error)
 
       await expect(getGenres({ filters: { type: 'theater' } })).rejects.toThrow('request failed')
-      expect(console.error).toHaveBeenCalledWith('Error fetching genres:', error)
     })
   })
 })

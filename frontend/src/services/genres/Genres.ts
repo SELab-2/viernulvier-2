@@ -17,13 +17,8 @@ import type { GetGenresOptions } from './GenreTypes'
  */
 
 export const getGenre = async (id: number) => {
-  try {
-    const res = await api.get(`/genres/${id}/`)
-    return res.data
-  } catch (error) {
-    console.error('Error fetching genre:', error)
-    throw error
-  }
+  const res = await api.get(`/genres/${id}/`)
+  return res.data
 }
 
 /**
@@ -71,18 +66,13 @@ export const getGenre = async (id: number) => {
 export const getGenres = async (options?: GetGenresOptions) => {
   const { page, pageSize, filters } = options ?? {}
 
-  try {
-    const res = await api.get('/genres/', {
-      params: {
-        ...(page !== undefined ? { page } : {}),
-        ...(pageSize !== undefined ? { page_size: pageSize } : {}),
-        ...filters,
-      },
-    })
+  const res = await api.get('/genres/', {
+    params: {
+      ...(page !== undefined ? { page } : {}),
+      ...(pageSize !== undefined ? { page_size: pageSize } : {}),
+      ...filters,
+    },
+  })
 
-    return res.data
-  } catch (error) {
-    console.error('Error fetching genres:', error)
-    throw error
-  }
+  return res.data
 }
