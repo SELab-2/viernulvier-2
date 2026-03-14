@@ -5,11 +5,16 @@ import { getGenre, getGenres } from '../../services/genres/Genres'
  * Mock the shared API client so these tests verify request construction and
  * error handling without performing real HTTP calls.
  */
-jest.mock('../../services/Api', () => ({
-  api: {
-    get: jest.fn(),
-  },
-}))
+jest.mock('../../services/Api', () => {
+  const { buildListParams } = jest.requireActual('../../services/ApiParams')
+
+  return {
+    buildListParams,
+    api: {
+      get: jest.fn(),
+    },
+  }
+})
 
 describe('genres service', () => {
   const mockedGet = api.get as jest.Mock

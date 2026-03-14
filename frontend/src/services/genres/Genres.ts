@@ -1,4 +1,5 @@
 import { api } from '../Api'
+import { buildListParams } from '../ApiParams'
 import type { GetGenresOptions } from './GenreTypes'
 
 /**
@@ -64,15 +65,6 @@ export const getGenre = async (id: number) => {
  * @throws Rethrows the original request error after logging it.
  */
 export const getGenres = async (options?: GetGenresOptions) => {
-  const { page, pageSize, filters } = options ?? {}
-
-  const res = await api.get('/genres/', {
-    params: {
-      ...(page !== undefined ? { page } : {}),
-      ...(pageSize !== undefined ? { page_size: pageSize } : {}),
-      ...filters,
-    },
-  })
-
+  const res = await api.get('/genres/', { params: buildListParams(options) }) 
   return res.data
 }

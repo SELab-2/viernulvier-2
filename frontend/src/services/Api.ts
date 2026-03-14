@@ -56,7 +56,7 @@ api.interceptors.response.use(
       return Promise.reject(new ApiError(status, message))
     }
 
-    // Not an Axios error — propagate unchanged.
+    // Not an Axios error - propagate unchanged.
     return Promise.reject(error)
   },
 )
