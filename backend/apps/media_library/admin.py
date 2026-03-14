@@ -1,9 +1,10 @@
 """Admin configuration for the Media app."""
 
 from django.contrib import admin
+from django.utils.html import format_html
 
 from apps.core.admin import BaseAdmin
-from django.utils.html import format_html
+
 from .models import (
     MediaGallery,
     MediaItem,

@@ -304,11 +304,19 @@ PRODUCTION_CONFIG = ModelSyncConfig(
         TranslationConfig("meta_title", ProductionTranslation, "production", "meta_title", "language_id"),
         TranslationConfig("meta_description", ProductionTranslation, "production", "meta_description", "language_id"),
         TranslationConfig(
-            "video_1", ProductionTranslation, "production", "video_1", "language_id",
+            "video_1",
+            ProductionTranslation,
+            "production",
+            "video_1",
+            "language_id",
             value_transforms={"video_1": normalize_url},
         ),
         TranslationConfig(
-            "video_2", ProductionTranslation, "production", "video_2", "language_id",
+            "video_2",
+            ProductionTranslation,
+            "production",
+            "video_2",
+            "language_id",
             value_transforms={"video_2": normalize_url},
         ),
     ],
@@ -458,9 +466,7 @@ class Command(BaseCommand):
         dry_run: bool = options.get("dry_run", False)
 
         if only and only not in ALL_STEP_NAMES:
-            self.stderr.write(
-                self.style.ERROR(f"Unknown step '{only}'. Choices: {', '.join(ALL_STEP_NAMES)}")
-            )
+            self.stderr.write(self.style.ERROR(f"Unknown step '{only}'. Choices: {', '.join(ALL_STEP_NAMES)}"))
             return
 
         params = {}
@@ -474,9 +480,7 @@ class Command(BaseCommand):
                     params[f"{api_field}[strictly_{bound}]"] = strict
 
         steps_to_run = [
-            (name, model, config, endpoint)
-            for name, model, config, endpoint in SYNC_STEPS
-            if only is None or name == only
+            (name, model, config, endpoint) for name, model, config, endpoint in SYNC_STEPS if only is None or name == only
         ]
         run_crops = only is None or only == "media_item_crops"
 

@@ -13,7 +13,7 @@ Covers:
 from __future__ import annotations
 
 import logging
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import MagicMock, Mock
 
 import pytest
 import requests
@@ -124,16 +124,12 @@ class TestDeriveCropFilename:
 
     def test_long_extension_falls_back_to_jpg(self):
         """Extensions longer than 5 chars (e.g. '.toolong') fall back to .jpg."""
-        result = _derive_crop_filename(
-            "hd_ready", "/api/v1/media/items/1", "https://cdn.example.com/file.toolong"
-        )
+        result = _derive_crop_filename("hd_ready", "/api/v1/media/items/1", "https://cdn.example.com/file.toolong")
         assert result.endswith(".jpg")
 
     def test_extension_with_non_alpha_falls_back_to_jpg(self):
         """Extensions containing digits (e.g. '.m4v2') fall back to .jpg."""
-        result = _derive_crop_filename(
-            "hd_ready", "/api/v1/media/items/1", "https://cdn.example.com/file.m4v2"
-        )
+        result = _derive_crop_filename("hd_ready", "/api/v1/media/items/1", "https://cdn.example.com/file.m4v2")
         assert result.endswith(".jpg")
 
     def test_leading_slash_stripped_from_external_id(self):
@@ -203,10 +199,12 @@ class TestDownloadImage:
 
     def test_connection_error_retries_then_succeeds(self, monkeypatch):
         monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
-        session = self._session([
-            requests.ConnectionError("down"),
-            _make_response(200, content=b"ok"),
-        ])
+        session = self._session(
+            [
+                requests.ConnectionError("down"),
+                _make_response(200, content=b"ok"),
+            ]
+        )
         result = _download_image(session, "https://cdn.example.com/img.jpg")
         assert result == b"ok"
 
@@ -218,10 +216,12 @@ class TestDownloadImage:
 
     def test_timeout_retries_then_succeeds(self, monkeypatch):
         monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
-        session = self._session([
-            requests.Timeout(),
-            _make_response(200, content=b"data"),
-        ])
+        session = self._session(
+            [
+                requests.Timeout(),
+                _make_response(200, content=b"data"),
+            ]
+        )
         result = _download_image(session, "https://cdn.example.com/img.jpg")
         assert result == b"data"
 
@@ -426,7 +426,6 @@ class TestSyncCropsSuccess:
         _patch_session(monkeypatch)
         _patch_fetch(monkeypatch, {"crops": _crop_payload(["hd_ready"])})
         _patch_download(monkeypatch)
-        storage = _patch_storage(monkeypatch, "new/path.jpg")
 
         # Run twice
         sync_media_item_crops()
@@ -481,8 +480,6 @@ class TestSyncCropsSuccess:
         assert str(crop.image) == "media_crops/2024/01/test_hd_ready.jpg"
 
     def test_storage_save_called_with_image_bytes(self, monkeypatch):
-        from apps.media_library.models import MediaItemCrop
-
         _foto_item("/api/v1/media/items/50")
         _patch_session(monkeypatch)
         _patch_fetch(monkeypatch, {"crops": _crop_payload(["hd_ready"])})
@@ -862,8 +859,6 @@ class TestSyncCropsSaveErrors:
     def test_save_error_does_not_stop_next_item(self, monkeypatch):
         from apps.media_library.models import MediaItemCrop
 
-        fail_item = _foto_item("/api/v1/media/items/602")
-        ok_item = _foto_item("/api/v1/media/items/603")
         _patch_session(monkeypatch)
         _patch_fetch(monkeypatch, {"crops": _crop_payload(["hd_ready"])})
         _patch_download(monkeypatch)
@@ -926,9 +921,7 @@ class TestSyncCropsOnProgress:
     def test_on_progress_called_even_on_304(self, monkeypatch):
         _foto_item("/api/v1/media/items/1")
         _patch_session(monkeypatch)
-        monkeypatch.setattr(
-            viernulvier, "_fetch_with_retry", lambda *a, **k: (None, None)
-        )
+        monkeypatch.setattr(viernulvier, "_fetch_with_retry", lambda *a, **k: (None, None))
 
         calls = []
         sync_media_item_crops(on_progress=lambda s, t: calls.append((s, t)))

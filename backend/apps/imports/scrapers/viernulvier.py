@@ -1230,6 +1230,7 @@ def sync_viernulvier(
 # Media item crop sync
 # ---------------------------------------------------------------------------
 
+
 def _derive_crop_filename(crop_name: str, item_external_id: str, image_url: str) -> str:
     """Build a deterministic local filename for a crop image.
 
@@ -1326,9 +1327,7 @@ def sync_media_item_crops(
     )
 
     # Load all foto items: need pk (FK on MediaItemCrop) and external_id (API URL).
-    foto_items = list(
-        MediaItem.objects.filter(type=MediaItem.MediaItemType.IMAGE).values("pk", "external_id")
-    )
+    foto_items = list(MediaItem.objects.filter(type=MediaItem.MediaItemType.IMAGE).values("pk", "external_id"))
 
     if not foto_items:
         import_log.status = ImportLog.Status.SUCCESS
@@ -1418,9 +1417,7 @@ def sync_media_item_crops(
             if image_bytes is None:
                 errors += 1
                 if len(error_messages) < MAX_ERROR_MESSAGES:
-                    error_messages.append(
-                        f"Download failed for crop '{crop_name}' on {external_id}"
-                    )
+                    error_messages.append(f"Download failed for crop '{crop_name}' on {external_id}")
                 continue
 
             filename = _derive_crop_filename(crop_name, external_id, image_url)
@@ -1456,9 +1453,7 @@ def sync_media_item_crops(
                 )
                 errors += 1
                 if len(error_messages) < MAX_ERROR_MESSAGES:
-                    error_messages.append(
-                        f"Save failed for crop '{crop_name}' on {external_id}: {exc}"
-                    )
+                    error_messages.append(f"Save failed for crop '{crop_name}' on {external_id}: {exc}")
 
         if on_progress:
             on_progress(idx, total)

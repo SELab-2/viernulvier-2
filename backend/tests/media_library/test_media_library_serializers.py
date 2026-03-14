@@ -20,8 +20,6 @@ Covers:
 - MediaGallerySerializer media_items are ordered by position
 """
 
-from unittest.mock import Mock
-
 from django.test import RequestFactory, TestCase, override_settings
 
 from apps.core.serializers import TranslatableSerializerMixin
@@ -42,7 +40,6 @@ from tests.factories.media_library import (
     MediaItemFactory,
     MediaItemTranslationFactory,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -74,6 +71,7 @@ def _make_request(url="http://testserver/"):
     request = factory.get(url)
     # Wrap in DRF request so build_absolute_uri works
     from rest_framework.request import Request
+
     return Request(request)
 
 

@@ -399,9 +399,7 @@ class TestMediaItemViewSetList(TestCase):
         MediaItemCropFactory.create(media_item=self.item_a, name="hd_ready")
         response = self.client.get("/api/media-items/", **pub_headers())
         # Find the item that has the crop
-        item_with_crop = next(
-            i for i in response.data["results"] if i["crops"]
-        )
+        item_with_crop = next(i for i in response.data["results"] if i["crops"])
         crop = item_with_crop["crops"][0]
         self.assertIn("image_url", crop)
         self.assertNotIn("url", crop)

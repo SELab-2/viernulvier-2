@@ -340,9 +340,7 @@ class TestMediaItemCropInline(TestCase):
 
     def test_get_url_in_fields_or_readonly(self):
         """get_url must be reachable as either a field or a readonly_field."""
-        all_fields = list(MediaItemCropInline.fields or []) + list(
-            getattr(MediaItemCropInline, "readonly_fields", [])
-        )
+        all_fields = list(MediaItemCropInline.fields or []) + list(getattr(MediaItemCropInline, "readonly_fields", []))
         self.assertIn("get_url", all_fields)
 
     def test_get_url_is_readonly(self):
