@@ -14,6 +14,9 @@ Key design decisions
 - Per-item savepoints so one bad record never aborts the whole batch.
 - ETag / 304 support to skip completely unchanged endpoints.
 - Dry-run mode for safe inspection before writing.
+- Media item crop sync: fetches each foto MediaItem individually to retrieve
+  its embedded crops list, downloads the wanted variants (hd_ready, FE3_header)
+  and stores them locally via Django's ImageField / storage backend.
 """
 
 from __future__ import annotations
@@ -33,6 +36,7 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 from django.core.exceptions import FieldDoesNotExist, FieldError, ValidationError
+from django.core.files.base import ContentFile
 from django.core.validators import URLValidator
 from django.db import DatabaseError, IntegrityError, models, transaction
 from django.utils import timezone
@@ -49,6 +53,7 @@ __all__ = [
     "RateLimitError",
     "fetch_viernulvier",
     "sync_viernulvier",
+    "sync_media_item_crops",
     "normalize_url",
     "normalize_performer_type",
     "nee_ja_to_bool",
@@ -1214,6 +1219,268 @@ def sync_viernulvier(
     import_log.save()
     logger.info(
         "Sync complete: saved=%d, errors=%d%s",
+        saved,
+        errors,
+        " [DRY RUN]" if dry_run else "",
+    )
+    return saved
+
+
+# ---------------------------------------------------------------------------
+# Media item crop sync
+# ---------------------------------------------------------------------------
+
+def _derive_crop_filename(crop_name: str, item_external_id: str, image_url: str) -> str:
+    """Build a deterministic local filename for a crop image.
+
+    Pattern: ``<item_id_slug>_<crop_name>.<ext>``
+    Example: ``api_v1_media_items_310_hd_ready.jpg``
+    """
+    slug = item_external_id.strip("/").replace("/", "_")
+    # Extract extension from the CDN URL path (before any query string)
+    path_part = image_url.split("?")[0]
+    last_segment = path_part.split("/")[-1]
+    if "." in last_segment:
+        ext = "." + last_segment.rsplit(".", 1)[-1].lower()
+        # CDN URLs often end in a hash with no real extension; fall back to .jpg
+        if len(ext) > 5 or not ext[1:].isalpha():
+            ext = ".jpg"
+    else:
+        ext = ".jpg"
+    return f"{slug}_{crop_name}{ext}"
+
+
+def _download_image(session: requests.Session, url: str) -> Optional[bytes]:
+    """Download image bytes from a CDN URL with retry + backoff.
+
+    Returns None on permanent failure so the caller can skip this crop
+    without aborting the whole sync.
+    """
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            response = session.get(url, timeout=30, stream=True)
+        except (requests.ConnectionError, requests.Timeout) as exc:
+            if attempt == MAX_RETRIES:
+                logger.error("Image download failed after %d retries: %s (%s)", MAX_RETRIES, url, exc)
+                return None
+            wait = _backoff_seconds(attempt)
+            logger.warning("Image download error - retry %d in %.1fs: %s", attempt + 1, wait, url)
+            time.sleep(wait)
+            continue
+        except requests.RequestException as exc:
+            logger.error("Image download request error: %s (%s)", url, exc)
+            return None
+
+        if response.status_code == 429:
+            wait = float(response.headers.get("Retry-After", _backoff_seconds(attempt)))
+            if attempt == MAX_RETRIES:
+                logger.error("Rate limited downloading image (gave up): %s", url)
+                return None
+            logger.warning("Rate limited downloading image - waiting %.1fs: %s", wait, url)
+            time.sleep(wait)
+            continue
+
+        if not response.ok:
+            logger.error("HTTP %d downloading image: %s", response.status_code, url)
+            return None
+
+        return response.content
+
+    return None
+
+
+def sync_media_item_crops(
+    dry_run: bool = False,
+    on_progress: Optional[Callable[[int, int], None]] = None,
+) -> int:
+    """Fetch individual foto MediaItems to obtain crop data, download images.
+
+    Strategy:
+    1. Query the DB for all MediaItems with type="foto" and their external_id.
+    2. For each item, fetch its full API representation (which includes crops).
+    3. For each wanted crop variant (hd_ready, FE3_header):
+       a. Download the image bytes.
+       b. Upsert the MediaItemCrop row, saving the image via Django's storage
+          backend. The file is written to storage before the DB row is touched
+          so the ImageField is never blank on INSERT.
+
+    Only foto items are processed because the API only embeds crops for
+    image-type assets, and fetching every item individually is expensive.
+
+    Args:
+        dry_run:     When True, log what would be saved but write nothing.
+        on_progress: Callback(processed_items, total_items) invoked after each
+                     media item is handled (regardless of crop count).
+
+    Returns:
+        Number of crops saved (created + updated). Always 0 in dry_run mode.
+    """
+    from apps.import_log.models import ImportLog
+    from apps.media_library.models import MediaItem, MediaItemCrop
+
+    source = "viernulvier:media_item_crops"
+    import_log = ImportLog.objects.create(
+        source=source,
+        status=ImportLog.Status.IN_PROGRESS,
+        started_at=timezone.now(),
+    )
+
+    # Load all foto items: need pk (FK on MediaItemCrop) and external_id (API URL).
+    foto_items = list(
+        MediaItem.objects.filter(type=MediaItem.MediaItemType.IMAGE).values("pk", "external_id")
+    )
+
+    if not foto_items:
+        import_log.status = ImportLog.Status.SUCCESS
+        import_log.records_total = 0
+        import_log.records_imported = 0
+        import_log.records_failed = 0
+        import_log.finished_at = timezone.now()
+        import_log.save()
+        logger.info("No foto MediaItems found - skipping crop sync.")
+        return 0
+
+    wanted_crops: Set[str] = MediaItemCrop.SYNCED_CROP_NAMES
+    total = len(foto_items)
+    saved = 0
+    errors = 0
+    error_messages: List[str] = []
+    session = _build_session()
+
+    logger.info(
+        "Syncing crops for %d foto MediaItems (variants: %s)",
+        total,
+        ", ".join(sorted(wanted_crops)),
+    )
+
+    for idx, row in enumerate(foto_items, start=1):
+        item_pk: int = row["pk"]
+        external_id: str = row["external_id"] or ""
+
+        if not external_id:
+            logger.warning("MediaItem pk=%d has no external_id - skipping", item_pk)
+            errors += 1
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        # external_id is already a path like "/api/v1/media/items/310"
+        item_url = external_id if external_id.startswith("http") else urljoin(BASE_DOMAIN, external_id)
+
+        try:
+            item_data, _ = _fetch_with_retry(session, item_url)
+        except ScraperError as exc:
+            logger.error("Failed to fetch media item %s: %s", item_url, exc)
+            errors += 1
+            if len(error_messages) < MAX_ERROR_MESSAGES:
+                error_messages.append(f"Fetch failed for {external_id}: {exc}")
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        if item_data is None:
+            # 304 Not Modified - crops unchanged, nothing to do
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        crops_raw = item_data.get("crops", [])
+        if not isinstance(crops_raw, list):
+            logger.debug("Unexpected crops format for %s: %r", external_id, crops_raw)
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        for crop_data in crops_raw:
+            if not isinstance(crop_data, dict):
+                continue
+
+            crop_name: str = crop_data.get("name", "")
+            if crop_name not in wanted_crops:
+                continue
+
+            image_url: str = crop_data.get("url", "")
+            if not image_url:
+                logger.warning("Crop '%s' for %s has no URL - skipping", crop_name, external_id)
+                continue
+
+            if dry_run:
+                logger.info(
+                    "[DRY RUN] Would save crop '%s' for MediaItem pk=%d from %s",
+                    crop_name,
+                    item_pk,
+                    image_url,
+                )
+                saved += 1
+                continue
+
+            image_bytes = _download_image(session, image_url)
+            if image_bytes is None:
+                errors += 1
+                if len(error_messages) < MAX_ERROR_MESSAGES:
+                    error_messages.append(
+                        f"Download failed for crop '{crop_name}' on {external_id}"
+                    )
+                continue
+
+            filename = _derive_crop_filename(crop_name, external_id, image_url)
+
+            try:
+                # Write the file to storage *before* touching the DB so the
+                # ImageField is never blank on INSERT (blank=False constraint).
+                image_field = MediaItemCrop._meta.get_field("image")
+                upload_name = image_field.generate_filename(None, filename)
+                saved_path = image_field.storage.save(upload_name, ContentFile(image_bytes))
+
+                with transaction.atomic():
+                    _, created = MediaItemCrop.objects.update_or_create(
+                        media_item_id=item_pk,
+                        name=crop_name,
+                        defaults={"image": saved_path},
+                    )
+
+                saved += 1
+                logger.debug(
+                    "%s crop '%s' for MediaItem pk=%d -> %s",
+                    "Created" if created else "Updated",
+                    crop_name,
+                    item_pk,
+                    saved_path,
+                )
+            except Exception as exc:
+                logger.exception(
+                    "Error saving crop '%s' for MediaItem pk=%d: %s",
+                    crop_name,
+                    item_pk,
+                    exc,
+                )
+                errors += 1
+                if len(error_messages) < MAX_ERROR_MESSAGES:
+                    error_messages.append(
+                        f"Save failed for crop '{crop_name}' on {external_id}: {exc}"
+                    )
+
+        if on_progress:
+            on_progress(idx, total)
+
+    # Finalise import log
+    import_log.records_total = total
+    import_log.records_imported = saved
+    import_log.records_failed = errors
+    import_log.finished_at = timezone.now()
+
+    if errors == 0:
+        import_log.status = ImportLog.Status.SUCCESS
+    elif saved > 0:
+        import_log.status = ImportLog.Status.PARTIAL_SUCCESS
+        import_log.error_message = f"{errors} crops failed: {', '.join(error_messages)}"
+    else:
+        import_log.status = ImportLog.Status.FAILED
+        import_log.error_message = f"All {errors} crops failed: {', '.join(error_messages)}"
+
+    import_log.save()
+    logger.info(
+        "Crop sync complete: saved=%d, errors=%d%s",
         saved,
         errors,
         " [DRY RUN]" if dry_run else "",

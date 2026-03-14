@@ -277,8 +277,14 @@ class TestMediaItemCropAdminConfiguration(TestCase):
     def test_list_display_contains_name(self):
         self.assertIn("name", self.admin.list_display)
 
-    def test_list_display_contains_url(self):
-        self.assertIn("url", self.admin.list_display)
+    def test_list_display_contains_get_url(self):
+        """The crop admin uses get_url (a computed method) instead of a raw url field,
+        because url was replaced by an ImageField named image."""
+        self.assertIn("get_url", self.admin.list_display)
+
+    def test_list_display_does_not_contain_raw_url_field(self):
+        """MediaItemCrop no longer has a url field — it uses an ImageField."""
+        self.assertNotIn("url", self.admin.list_display)
 
     def test_search_fields_contains_name(self):
         self.assertIn("name", self.admin.search_fields)
@@ -289,9 +295,63 @@ class TestMediaItemCropAdminConfiguration(TestCase):
     def test_autocomplete_fields_contains_media_item(self):
         self.assertIn("media_item", self.admin.autocomplete_fields)
 
+    def test_get_url_is_callable_method(self):
+        """get_url must be a method on the admin class, not a string field name."""
+        self.assertTrue(callable(getattr(self.admin.__class__, "get_url", None)))
+
+    def test_get_url_returns_link_when_image_present(self):
+        """get_url renders a clickable anchor when the crop has an image."""
+        item = MediaItemFactory()
+        crop = MediaItemCropFactory(media_item=item, name="hd_ready")
+        result = self.admin.get_url(crop)
+        # Should contain an <a> tag pointing to the image
+        self.assertIn("<a", str(result))
+
+    def test_get_url_returns_dash_when_no_image(self):
+        """get_url returns '-' for a crop instance with no image set."""
+        crop = MediaItemCrop(name="hd_ready")  # unsaved, no image
+        result = self.admin.get_url(crop)
+        self.assertEqual(str(result), "-")
+
 
 # ---------------------------------------------------------------------------
-# Inline configuration
+# MediaItemCropInline configuration
+# ---------------------------------------------------------------------------
+
+
+class TestMediaItemCropInline(TestCase):
+    """Tests for MediaItemCropInline configuration."""
+
+    def test_model_is_media_item_crop(self):
+        self.assertEqual(MediaItemCropInline.model, MediaItemCrop)
+
+    def test_extra_is_one(self):
+        self.assertEqual(MediaItemCropInline.extra, 1)
+
+    def test_is_tabular_inline(self):
+        self.assertTrue(issubclass(MediaItemCropInline, admin.TabularInline))
+
+    def test_fields_contains_name(self):
+        self.assertIn("name", MediaItemCropInline.fields)
+
+    def test_fields_contains_image(self):
+        """Inline must expose the image field, not the old url field."""
+        self.assertIn("image", MediaItemCropInline.fields)
+
+    def test_get_url_in_fields_or_readonly(self):
+        """get_url must be reachable as either a field or a readonly_field."""
+        all_fields = list(MediaItemCropInline.fields or []) + list(
+            getattr(MediaItemCropInline, "readonly_fields", [])
+        )
+        self.assertIn("get_url", all_fields)
+
+    def test_get_url_is_readonly(self):
+        """get_url is a computed display column and must be readonly."""
+        self.assertIn("get_url", MediaItemCropInline.readonly_fields)
+
+
+# ---------------------------------------------------------------------------
+# Inline configuration (existing)
 # ---------------------------------------------------------------------------
 
 
@@ -333,19 +393,6 @@ class TestMediaItemTranslationInline(TestCase):
         self.assertTrue(issubclass(MediaItemTranslationInline, admin.TabularInline))
 
 
-class TestMediaItemCropInline(TestCase):
-    """Tests for MediaItemCropInline configuration."""
-
-    def test_model_is_media_item_crop(self):
-        self.assertEqual(MediaItemCropInline.model, MediaItemCrop)
-
-    def test_extra_is_one(self):
-        self.assertEqual(MediaItemCropInline.extra, 1)
-
-    def test_is_tabular_inline(self):
-        self.assertTrue(issubclass(MediaItemCropInline, admin.TabularInline))
-
-
 # ---------------------------------------------------------------------------
 # get_queryset optimisation
 # ---------------------------------------------------------------------------
@@ -369,15 +416,15 @@ class TestMediaItemAdminGetQueryset(TestCase):
         self.assertEqual(qs.model, MediaItem)
 
     def test_queryset_has_select_related_for_gallery(self):
-        admin = self.model_admin
+        admin_instance = self.model_admin
         request = self._make_request()
 
-        self.assertEqual(admin.list_select_related, ("gallery",))
+        self.assertEqual(admin_instance.list_select_related, ("gallery",))
 
-        qs = admin.get_queryset(request)
+        qs = admin_instance.get_queryset(request)
 
-        if admin.list_select_related:
-            qs = qs.select_related(*admin.list_select_related)
+        if admin_instance.list_select_related:
+            qs = qs.select_related(*admin_instance.list_select_related)
 
         self.assertIn("gallery", qs.query.select_related)
 
@@ -525,3 +572,13 @@ class TestMediaItemCropAdminChangelist(TestCase):
     def test_changelist_search(self):
         url = reverse("admin:media_library_mediaitemcrop_changelist")
         self.assertEqual(self.client.get(url, {"q": "thumb"}).status_code, 200)
+
+    def test_changelist_renders_get_url_link_for_crops_with_image(self):
+        """The changelist must render the clickable image link from get_url."""
+        item = MediaItemFactory.create(gallery=self.gallery)
+        MediaItemCropFactory.create(media_item=item, name="hd_ready")
+        url = reverse("admin:media_library_mediaitemcrop_changelist")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        # The rendered page must contain an anchor pointing to the stored file
+        self.assertContains(response, "<a")

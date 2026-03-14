@@ -21,25 +21,41 @@ class MediaItemCropSerializer(serializers.ModelSerializer):
     """
     Represents a named crop variant of a MediaItem.
 
-    Read-only - crops are managed via the Media Item Crop endpoints.
+    ``image_url`` is a read-only computed field that returns the publicly
+    accessible URL of the stored image file. It is derived from the
+    ``image`` ImageField via Django's storage backend so the URL stays
+    correct regardless of which storage backend is configured (local,
+    S3, etc.).
+
+    Read-only - crops are managed via the scraper sync pipeline.
     """
+
+    image_url = serializers.SerializerMethodField(
+        help_text="Publicly accessible URL of the cropped asset.",
+    )
 
     class Meta:
         model = MediaItemCrop
         fields = [
             "id",
             "name",
-            "url",
+            "image_url",
         ]
-        read_only_fields = ["id"]
+        read_only_fields = ["id", "image_url"]
         extra_kwargs = {
             "name": {
-                "help_text": "Crop variant identifier (e.g. `thumbnail`, `banner`, `square`).",
-            },
-            "url": {
-                "help_text": "Publicly accessible URL of the cropped asset.",
+                "help_text": "Crop variant identifier (e.g. `hd_ready`, `FE3_header`).",
             },
         }
+
+    def get_image_url(self, obj: MediaItemCrop) -> str | None:
+        """Return the storage URL of the crop image, or None if no image is stored."""
+        if obj.image:
+            request = self.context.get("request")
+            if request is not None:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
 
 
 class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
@@ -128,7 +144,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
                 "help_text": "Primary key of the parent **MediaGallery** this item belongs to.",
             },
             "type": {
-                "help_text": "Media type: `image`, `video`, or `audio`.",
+                "help_text": "Media type: `foto`, `video`, `audio`, or `other`.",
             },
             "format": {
                 "help_text": "File format / extension (e.g. `jpg`, `mp4`, `mp3`).",

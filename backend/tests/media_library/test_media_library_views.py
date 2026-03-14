@@ -21,6 +21,7 @@ Covers:
 - Response structure / fields on list and detail for both endpoints
 - media_items nested in gallery response
 - items ordered by position in list response
+- Crops expose image_url, not url or image directly
 """
 
 from django.test import TestCase, override_settings
@@ -222,6 +223,17 @@ class TestMediaGalleryViewSetDetail(TestCase):
         response = self.client.get(f"/api/media-galleries/{self.gallery.pk}/", **pub_headers())
         self.assertEqual(len(response.data["media_items"]), 2)
 
+    def test_detail_nested_crops_expose_image_url(self):
+        """Crops nested inside gallery detail must use image_url, not url."""
+        item = MediaItemFactory.create(gallery=self.gallery)
+        MediaItemCropFactory.create(media_item=item, name="hd_ready")
+        response = self.client.get(f"/api/media-galleries/{self.gallery.pk}/", **pub_headers())
+        crops = response.data["media_items"][0]["crops"]
+        self.assertEqual(len(crops), 1)
+        self.assertIn("image_url", crops[0])
+        self.assertNotIn("url", crops[0])
+        self.assertNotIn("image", crops[0])
+
 
 # ---------------------------------------------------------------------------
 # Write methods - /api/media-galleries/
@@ -382,6 +394,19 @@ class TestMediaItemViewSetList(TestCase):
         positions = [item["position"] for item in response.data["results"]]
         self.assertEqual(positions, sorted(positions))
 
+    def test_list_crops_expose_image_url_not_url(self):
+        """Crops in the item list must use image_url, not url or image."""
+        MediaItemCropFactory.create(media_item=self.item_a, name="hd_ready")
+        response = self.client.get("/api/media-items/", **pub_headers())
+        # Find the item that has the crop
+        item_with_crop = next(
+            i for i in response.data["results"] if i["crops"]
+        )
+        crop = item_with_crop["crops"][0]
+        self.assertIn("image_url", crop)
+        self.assertNotIn("url", crop)
+        self.assertNotIn("image", crop)
+
 
 # ---------------------------------------------------------------------------
 # GET /api/media-items/<id>/ - detail
@@ -421,6 +446,16 @@ class TestMediaItemViewSetDetail(TestCase):
     def test_detail_crops_is_list(self):
         response = self.client.get(f"/api/media-items/{self.item.pk}/", **pub_headers())
         self.assertIsInstance(response.data["crops"], list)
+
+    def test_detail_crop_fields_use_image_url(self):
+        """Crop in item detail must expose image_url, not url or image."""
+        MediaItemCropFactory.create(media_item=self.item, name="hd_ready")
+        response = self.client.get(f"/api/media-items/{self.item.pk}/", **pub_headers())
+        self.assertEqual(len(response.data["crops"]), 1)
+        crop = response.data["crops"][0]
+        self.assertIn("image_url", crop)
+        self.assertNotIn("url", crop)
+        self.assertNotIn("image", crop)
 
     def test_detail_translated_title_is_dict(self):
         language = LanguageFactory.create(code="nl")
@@ -464,7 +499,7 @@ class TestMediaItemViewSetWrite(TestCase):
     def test_post_with_public_key_returns_403(self):
         response = self.client.post(
             "/api/media-items/",
-            {"gallery": self.gallery.pk, "type": "image"},
+            {"gallery": self.gallery.pk, "type": "foto"},
             format="json",
             **pub_headers(),
         )
@@ -473,7 +508,7 @@ class TestMediaItemViewSetWrite(TestCase):
     def test_post_without_auth_returns_401_or_403(self):
         response = self.client.post(
             "/api/media-items/",
-            {"gallery": self.gallery.pk, "type": "image"},
+            {"gallery": self.gallery.pk, "type": "foto"},
             format="json",
         )
         self.assertIn(response.status_code, (401, 403))
