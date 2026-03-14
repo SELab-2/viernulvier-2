@@ -112,4 +112,110 @@ coverage report -m
 
 ### Frontend
 
-TODO
+#### 1) Running Tests
+
+Commands below assume you are in `frontend/`.
+
+```bash
+# Install dependencies (first time or after package changes)
+npm ci
+
+# Full test suite
+npm test
+
+# Focused run (single file or pattern)
+npm test -- --testPathPatterns "Navbar.test.tsx"
+
+# Run sequentially (useful for debugging)
+npm test -- --runInBand
+```
+
+#### 2) Linting and Formatting
+
+```bash
+# Lint (must pass in CI)
+npm run lint
+
+# Check formatting without writing
+npx prettier --check src
+
+# Auto-fix formatting
+npx prettier --write src
+```
+
+#### 3) Test Folder Structure
+
+Tests live in `frontend/src/__tests__/` and mirror the component/page structure.
+
+```text
+src/
+  __tests__/
+    App.test.tsx
+    Navbar.test.tsx
+    ...
+```
+
+#### 4) What to Test Per Layer
+
+- **Components** — render output, interaction behavior, aria attributes, and i18n label correctness.
+- **Pages** — route rendering and basic content presence.
+- **State/callbacks** — that passed-in callbacks are called on user interaction.
+
+Use `data-testid` attributes for stable element selection; prefer them over CSS class names or positional queries.
+
+#### 5) Testing Guidelines
+
+- Use `MemoryRouter` when testing components that use `useLocation` or `Link`.
+- Use `fireEvent` for simple interactions; use `userEvent` when pointer/keyboard fidelity matters.
+- Avoid asserting on CSS class names or MUI internals — assert on accessible attributes (`aria-label`, `aria-current`) and visible text.
+- Set the i18n language in `beforeEach` so translation assertions are deterministic.
+- Do not add tests for browser APIs (e.g. `ClickAwayListener` pointer events) that JSDOM cannot reliably simulate.
+
+---
+
+## Linting and Formatting
+
+We use [Ruff](https://docs.astral.sh/ruff/) for linting, formatting and import sorting the backend Python codebase. It replaces tools like Flake8, isort and Black with a single, significantly faster alternative.
+
+### Running Locally
+
+Commands below assume you are in `backend/` and your virtual environment is active.
+
+```bash
+# Check for lint errors
+ruff check .
+
+# Auto-fix lint errors where possible
+ruff check . --fix
+
+# Check formatting
+ruff format --check .
+
+# Apply formatting
+ruff format .
+```
+
+Run both `ruff check` and `ruff format` before pushing to avoid CI failures on pull requests.
+
+### CI Behaviour
+
+Ruff is integrated into the CI pipeline with two distinct jobs that run under different conditions.
+
+#### Auto-fix (on push)
+
+When code is pushed directly to `main`, `dev`, or `backend`, CI automatically runs Ruff with `--fix` and commits any resulting changes back to the branch. This means minor fixable issues are resolved without any manual intervention.
+
+This job is skipped if the push was already made by `github-actions[bot]`, preventing commit loops.
+
+#### Lint check (on pull request)
+
+When a pull request is opened against `main`, `dev`, or `backend`, CI runs Ruff in check-only mode — no fixes are applied and no commits are made. If any lint or formatting issues are found, the job fails and the PR cannot be merged until they are resolved locally.
+
+This ensures that all code merged via PRs is clean before it lands.
+
+#### Summary
+
+| Event | Job | Behaviour |
+|---|---|---|
+| Push to `main` / `dev` / `backend` | `autofix` | Runs `ruff check --fix` + `ruff format`, commits changes if any |
+| Pull request to `main` / `dev` / `backend` | `lint` | Runs `ruff check` + `ruff format --check`, fails on any issue |
