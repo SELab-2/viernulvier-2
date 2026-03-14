@@ -98,14 +98,14 @@ describe('genres service', () => {
      * parameter in the `params` object.
      */
     it.each([
-      [{ use_as: 1 }, 'use_as'],
-      [{ type: 'theater' }, 'type'],
-      [{ vendor_id: 'vendor-42' }, 'vendor_id'],
-      [{ name: 'festival' }, 'name'],
-      [{ search: 'performance' }, 'search'],
-      [{ ordering: '-name' }, 'ordering'],
-      [{ external_id: 'ext-001' }, 'external_id'],
-    ])('applies %s filter', async (filters, _filterName) => {
+      { use_as: 1 },
+      { type: 'theater' },
+      { vendor_id: 'vendor-42' },
+      { name: 'festival' },
+      { search: 'performance' },
+      { ordering: '-name' },
+      { external_id: 'ext-001' },
+    ])('applies %s filter', async (filters) => {
       mockedGet.mockResolvedValue({ data: { results: [] } })
 
       await getGenres({ filters })

@@ -5,8 +5,8 @@
  * results and should accept a page number and page size.
  */
 export interface PaginationOptions {
-    page?: number;
-    pageSize?: number;
+  page?: number
+  pageSize?: number
 }
 
 /**
@@ -16,20 +16,20 @@ export interface PaginationOptions {
  * query parameters by the service layer.
  */
 export interface CommonListFilters {
-    /**
-     * Free-text search term used by the backend search integration.
-     */
-    search?: string;
+  /**
+   * Free-text search term used by the backend search integration.
+   */
+  search?: string
 
-    /**
-     * Ordering expression, for example `name` or `-created_at`.
-     */
-    ordering?: string;
+  /**
+   * Ordering expression, for example `name` or `-created_at`.
+   */
+  ordering?: string
 
-    /**
-     * External resource identifier, for example `/genres/123`.
-     */
-    external_id?: string;
+  /**
+   * External resource identifier, for example `/genres/123`.
+   */
+  external_id?: string
 }
 
 /**
@@ -39,5 +39,5 @@ export interface CommonListFilters {
  * @typeParam TFilters The filter shape for a specific endpoint.
  */
 export interface FilteredListOptions<TFilters = Record<string, never>> extends PaginationOptions {
-    filters?: TFilters & CommonListFilters;
+  filters?: TFilters & CommonListFilters
 }

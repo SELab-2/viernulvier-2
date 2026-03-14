@@ -1,6 +1,5 @@
-import { api } from "../Api";
-import type { GetGenresOptions } from "./GenreTypes";
-
+import { api } from '../Api'
+import type { GetGenresOptions } from './GenreTypes'
 
 /**
  * Retrieve a single genre by its numeric ID.
@@ -18,16 +17,14 @@ import type { GetGenresOptions } from "./GenreTypes";
  * @throws Rethrows the original request error after logging it.
  */
 
-
 export const getGenre = async (id: number) => {
-    try {
-        const res = await api.get(`/genres/${id}/`);
-        return res.data;
-    }
-    catch (error) {
-        console.error("Error fetching genre:", error);
-        throw error;
-    }
+  try {
+    const res = await api.get(`/genres/${id}/`)
+    return res.data
+  } catch (error) {
+    console.error('Error fetching genre:', error)
+    throw error
+  }
 }
 
 /**
@@ -73,21 +70,20 @@ export const getGenre = async (id: number) => {
  * @throws Rethrows the original request error after logging it.
  */
 export const getGenres = async (options?: GetGenresOptions) => {
-    const { page, pageSize, filters } = options ?? {};
+  const { page, pageSize, filters } = options ?? {}
 
-    try {
-        const res = await api.get("/genres/", {
-            params: {
-                ...(page !== undefined ? { page } : {}),
-                ...(pageSize !== undefined ? { page_size: pageSize } : {}),
-                ...filters,
-            },
-        });
-        
-        return res.data;
-    }
-    catch (error) {
-        console.error("Error fetching genres:", error);
-        throw error;
-    }
+  try {
+    const res = await api.get('/genres/', {
+      params: {
+        ...(page !== undefined ? { page } : {}),
+        ...(pageSize !== undefined ? { page_size: pageSize } : {}),
+        ...filters,
+      },
+    })
+
+    return res.data
+  } catch (error) {
+    console.error('Error fetching genres:', error)
+    throw error
+  }
 }
