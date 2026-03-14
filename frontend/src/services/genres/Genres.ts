@@ -12,7 +12,6 @@ import type { GetGenresOptions } from './GenreTypes'
  *
  * @example
  * const genre = await getGenre(12);
- * console.log(genre);
  *
  * @throws Rethrows the original request error after logging it.
  */
