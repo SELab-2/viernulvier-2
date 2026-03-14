@@ -2,7 +2,7 @@ import { Container, Typography, Paper, Stack, Link as MuiLink } from '@mui/mater
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
-const EventsPage = () => {
+const SeriesPage = () => {
   const { t } = useTranslation()
 
   return (
@@ -17,8 +17,8 @@ const EventsPage = () => {
           </Typography>
           <Typography variant="body2" sx={{ mt: 2 }}>
             Example:{' '}
-            <MuiLink component={Link} to="/events/123" underline="hover">
-              View Event #123
+            <MuiLink component={Link} to="/series/123" underline="hover">
+              View Series #123
             </MuiLink>
           </Typography>
         </Paper>
@@ -27,4 +27,4 @@ const EventsPage = () => {
   )
 }
 
-export default EventsPage
+export default SeriesPage

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 
-const ProductionDetailPage = () => {
+const ArtistDetailPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -11,7 +11,7 @@ const ProductionDetailPage = () => {
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Stack spacing={3}>
-        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/productions')}>
+        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/artists')}>
           {t('productions.backToProductions')}
         </Button>
         <Typography variant="h4" component="h1">
@@ -25,4 +25,4 @@ const ProductionDetailPage = () => {
   )
 }
 
-export default ProductionDetailPage
+export default ArtistDetailPage
