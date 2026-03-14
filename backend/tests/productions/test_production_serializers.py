@@ -92,7 +92,7 @@ class TestUitDatabaseTypeSerializerFields(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# ProductionSerializer — field presence
+# ProductionSerializer - field presence
 # ---------------------------------------------------------------------------
 
 
@@ -142,12 +142,12 @@ class TestProductionSerializerFields(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# ProductionSerializer — scalar fields
+# ProductionSerializer - scalar fields
 # ---------------------------------------------------------------------------
 
 
 class TestProductionSerializerScalarFields(TestCase):
-    """Model → dict for non-translated, non-nested fields."""
+    """Model -> dict for non-translated, non-nested fields."""
 
     def test_serializes_attendance_mode_correctly(self):
         production = ProductionFactory.create(attendance_mode="offline")
@@ -176,7 +176,7 @@ class TestProductionSerializerScalarFields(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# ProductionSerializer — nested fields
+# ProductionSerializer - nested fields
 # ---------------------------------------------------------------------------
 
 
@@ -238,7 +238,7 @@ class TestProductionSerializerNestedTags(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# ProductionSerializer — translated fields (empty state)
+# ProductionSerializer - translated fields (empty state)
 # ---------------------------------------------------------------------------
 
 
@@ -270,7 +270,7 @@ class TestProductionSerializerTranslatedFieldsEmpty(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# ProductionSerializer — translated fields (populated state)
+# ProductionSerializer - translated fields (populated state)
 # ---------------------------------------------------------------------------
 
 
@@ -316,7 +316,7 @@ class TestProductionSerializerTranslatedFieldsPopulated(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# ProductionSerializer — translated fields (multiple languages)
+# ProductionSerializer - translated fields (multiple languages)
 # ---------------------------------------------------------------------------
 
 
@@ -349,7 +349,7 @@ class TestProductionSerializerMultipleTranslations(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# ProductionSerializer — translated fields (blank values are omitted)
+# ProductionSerializer - translated fields (blank values are omitted)
 # ---------------------------------------------------------------------------
 
 

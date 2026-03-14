@@ -42,7 +42,7 @@ class TestGenreUseAsSerializerFields(TestCase):
 
 
 class TestGenreUseAsSerializerSerialization(TestCase):
-    """Model → dict serialization for GenreUseAsSerializer."""
+    """Model -> dict serialization for GenreUseAsSerializer."""
 
     def test_serializes_instance(self):
         use_as = GenreUseAsFactory(name="tag")
@@ -63,7 +63,7 @@ class TestGenreUseAsSerializerSerialization(TestCase):
 
 
 class TestGenreUseAsSerializerDeserialization(TestCase):
-    """dict → model validation for GenreUseAsSerializer."""
+    """dict -> model validation for GenreUseAsSerializer."""
 
     def test_valid_data_creates(self):
         serializer = GenreUseAsSerializer(data={"name": "genre"})
@@ -94,11 +94,11 @@ class TestGenreSerializerFields(TestCase):
 
     def test_expected_fields_are_present(self):
         data = GenreSerializer(self.genre).data
-        self.assertEqual(set(data.keys()), {"id", "type", "use_as", "name", "display_name"})
+        self.assertEqual(set(data.keys()), {"id", "type", "use_as", "name", "display_name", "vendor_id"})
 
 
 class TestGenreSerializerSerialization(TestCase):
-    """Model → dict serialization for GenreSerializer."""
+    """Model -> dict serialization for GenreSerializer."""
 
     def setUp(self):
         self.use_as = GenreUseAsFactory(name="genre")
@@ -135,7 +135,7 @@ class TestGenreSerializerSerialization(TestCase):
 
 
 class TestGenreSerializerDeserialization(TestCase):
-    """dict → model validation for GenreSerializer."""
+    """dict -> model validation for GenreSerializer."""
 
     def setUp(self):
         self.use_as = GenreUseAsFactory(name="genre")

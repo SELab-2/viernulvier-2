@@ -23,11 +23,11 @@ from apps.core.openapi import (
 from .serializers import HallSerializer, LocationSerializer, SpaceSerializer
 
 # ===========================================================================
-# Location — examples
+# Location - examples
 # ===========================================================================
 
 _LOCATION_RESPONSE = OpenApiExample(
-    "Location — response",
+    "Location - response",
     summary="A location with a translated name",
     value={
         "id": 1,
@@ -49,7 +49,7 @@ _LOCATION_RESPONSE = OpenApiExample(
 )
 
 _LOCATION_INPUT = OpenApiExample(
-    "Location — request body",
+    "Location - request body",
     summary="Payload for creating a new location",
     value={
         "street": "Kiekenmarkt",
@@ -65,7 +65,7 @@ _LOCATION_INPUT = OpenApiExample(
 )
 
 _LOCATION_PARTIAL_INPUT = OpenApiExample(
-    "Location — partial request body",
+    "Location - partial request body",
     summary="Only the fields you want to change",
     value={"phone_1": "+32 2 555 99 99", "is_own_location": False},
     request_only=True,
@@ -73,7 +73,7 @@ _LOCATION_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# Location — per-action schemas
+# Location - per-action schemas
 # ===========================================================================
 
 _LOCATION_LIST = extend_schema(
@@ -181,11 +181,11 @@ _LOCATION_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# Space — examples
+# Space - examples
 # ===========================================================================
 
 _SPACE_RESPONSE = OpenApiExample(
-    "Space — response",
+    "Space - response",
     summary="A space with a translated name",
     value={
         "id": 3,
@@ -200,14 +200,14 @@ _SPACE_RESPONSE = OpenApiExample(
 )
 
 _SPACE_INPUT = OpenApiExample(
-    "Space — request body",
+    "Space - request body",
     summary="Payload for creating a new space",
     value={"location": 1},
     request_only=True,
 )
 
 _SPACE_PARTIAL_INPUT = OpenApiExample(
-    "Space — partial request body",
+    "Space - partial request body",
     summary="Only the fields you want to change",
     value={"location": 2},
     request_only=True,
@@ -215,7 +215,7 @@ _SPACE_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# Space — per-action schemas
+# Space - per-action schemas
 # ===========================================================================
 
 _SPACE_LIST = extend_schema(
@@ -319,11 +319,11 @@ _SPACE_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# Hall — examples
+# Hall - examples
 # ===========================================================================
 
 _HALL_RESPONSE = OpenApiExample(
-    "Hall — response",
+    "Hall - response",
     summary="A hall with seating flags and translated fields",
     value={
         "id": 7,
@@ -345,14 +345,14 @@ _HALL_RESPONSE = OpenApiExample(
 )
 
 _HALL_INPUT = OpenApiExample(
-    "Hall — request body",
+    "Hall - request body",
     summary="Payload for creating a new hall",
     value={"space": 3, "seat_selection": True, "open_seating": False},
     request_only=True,
 )
 
 _HALL_PARTIAL_INPUT = OpenApiExample(
-    "Hall — partial request body",
+    "Hall - partial request body",
     summary="Only the fields you want to change",
     value={"open_seating": True},
     request_only=True,
@@ -360,7 +360,7 @@ _HALL_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# Hall — per-action schemas
+# Hall - per-action schemas
 # ===========================================================================
 
 _HALL_LIST = extend_schema(
@@ -468,7 +468,7 @@ _HALL_DESTROY = extend_schema(
 
 
 # ===========================================================================
-# Assembled decorators — imported and applied in views.py
+# Assembled decorators - imported and applied in views.py
 # ===========================================================================
 
 location_schema = extend_schema_view(

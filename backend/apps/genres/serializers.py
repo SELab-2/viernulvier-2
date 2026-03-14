@@ -15,7 +15,7 @@ from .models import Genre, GenreUseAs
 
 class GenreUseAsSerializer(serializers.ModelSerializer):
     """
-    Represents a GenreUseAs object — the role a genre plays in the system.
+    Represents a GenreUseAs object - the role a genre plays in the system.
     """
 
     class Meta:
@@ -41,7 +41,7 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         help_text=(
             "Dictionary containing all available translations of the genre name, "
             'e.g. {"en": "Theatre", "fr": "Théâtre"}. '
-            "Read-only — use the translation endpoints to manage translations."
+            "Read-only - use the translation endpoints to manage translations."
         ),
     )
 
@@ -53,9 +53,18 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         )
     )
 
+    vendor_id = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text=(
+            "Vendor-specific identifier from the upstream API. Optional, but "
+            "can be used to link back to the original source."
+        ),
+    )
+
     class Meta:
         model = Genre
-        fields = ["id", "type", "use_as", "name", "display_name"]
+        fields = ["id", "type", "use_as", "name", "display_name", "vendor_id"]
         read_only_fields = ["id", "name", "display_name"]
         extra_kwargs = {
             "type": {
@@ -67,6 +76,12 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
                 "help_text": (
                     "Primary key of the **GenreUseAs** that defines how this "
                     "genre is applied (taxonomy classification or tag)."
+                ),
+            },
+            "vendor_id": {
+                "help_text": (
+                    "Vendor-specific identifier from the upstream API. Optional, but "
+                    "can be used to link back to the original source."
                 ),
             },
         }

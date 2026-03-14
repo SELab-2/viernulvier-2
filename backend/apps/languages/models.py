@@ -31,7 +31,7 @@ class Language(BaseModel):
         primary_key=True,
         max_length=2,
         help_text="ISO 639-1 two-letter code (e.g. `en`, `nl`, `fr`).",
-        db_comment="ISO 639-1 code — primary key.",
+        db_comment="ISO 639-1 code - primary key.",
     )
 
     name = models.CharField(

@@ -117,7 +117,7 @@ class TestImportLogSerializerFields(TestCase):
 
 
 class TestImportLogSerializerReadOnly(TestCase):
-    """All declared fields must be read-only — the serializer is for monitoring only."""
+    """All declared fields must be read-only - the serializer is for monitoring only."""
 
     def setUp(self):
         self.meta_read_only = set(getattr(ImportLogSerializer.Meta, "read_only_fields", []))
@@ -267,7 +267,7 @@ class TestImportLogSerializerDurationNone(TestCase):
         self.assertIsNone(ImportLogSerializer(log).data["duration"])
 
     def test_duration_is_none_when_only_finished_at_is_set(self):
-        # finished_at without started_at — edge case
+        # finished_at without started_at - edge case
         log = make_import_log(finished_at=timezone.now())
         self.assertIsNone(ImportLogSerializer(log).data["duration"])
 

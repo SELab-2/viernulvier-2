@@ -17,11 +17,12 @@ from apps.locations.models import HallTranslation
 from apps.pricing.models import PriceRankTranslation
 from apps.productions.models import ProductionTranslation
 
+from .filters import EventFilter
 from .models import Event, EventPrice
 from .schemas import event_schema
 from .serializers import EventSerializer
 
-_TAG = "Events"  # Reusable tag for all event-related endpoints in the OpenAPI docs
+_TAG = "Events"
 
 
 @extend_schema(tags=[_TAG])
@@ -32,25 +33,56 @@ class EventViewSet(ApiModelViewSet):
 
     An event is a scheduled performance of a production inside a hall.
     It carries a ``starts_at`` / ``ends_at`` window (both enforced by a
-    DB-level check constraint) and an optional ``ticketing_url``.
+    DB-level check constraint).
 
     Prices are nested read-only via the ``prices`` relation; they must be
     managed through the dedicated **Event Price** endpoints.
 
+    Access rules
+    ------------
+    - **Public key**   -> read-only (``list``, ``retrieve``).
+    - **Internal key** -> full CRUD.
+
+    Filtering
+    ---------
+    ``?production=12``
+        Events belonging to a specific production.
+    ``?hall=3``
+        Events scheduled in a specific hall.
+    ``?location=1``
+        Events in any hall belonging to a specific location.
+    ``?starts_at_after=2024-06-01T00:00:00Z``
+        Events starting on or after the given datetime (ISO 8601).
+    ``?starts_at_before=2024-12-31T23:59:59Z``
+        Events starting on or before the given datetime (ISO 8601).
+    ``?ends_at_after=2024-06-01T00:00:00Z``
+        Events ending on or after the given datetime (ISO 8601).
+    ``?ends_at_before=2024-12-31T23:59:59Z``
+        Events ending on or before the given datetime (ISO 8601).
+    ``?external_id=abc``
+        Exact match on the external identifier.
+
+    Ordering
+    --------
+    ``?ordering=starts_at`` / ``?ordering=-starts_at``
+        Chronological by start time (default ascending).
+    ``?ordering=ends_at`` / ``?ordering=-ends_at``
+        Chronological by end time.
+    ``?ordering=production`` / ``?ordering=hall``
+        Group by related FK ID.
+
+    Search
+    ------
+    ``?search=hamlet``
+        Full-text search across the production's translated titles and
+        the hall's translated names.
+
     Queryset strategy
     -----------------
-    - ``select_related`` covers the single-row FK chain from event to hall
-      and further up to space and location.
-    - ``prefetch_related`` with explicit ``Prefetch`` objects is used for
-      all one-to-many relations to avoid N+1 queries:
-
-        * ``prices`` — ``EventPrice`` rows with their ``price_rank`` joined
-          in a single query.
-        * ``production__translations`` — needed by the serialiser to resolve
-          localised production metadata.
-        * ``hall__translations`` — needed to resolve localised hall names.
-        * ``prices__price_rank__translations`` — needed to resolve localised
-          price rank descriptions when the API consumer expands that data.
+    - ``select_related`` covers the single-row FK chain from event -> hall
+      -> space -> location.
+    - ``prefetch_related`` with explicit ``Prefetch`` objects covers all
+      one-to-many relations to avoid N+1 queries on list responses.
     """
 
     serializer_class = EventSerializer
@@ -82,3 +114,11 @@ class EventViewSet(ApiModelViewSet):
         )
         .order_by("starts_at", "id")
     )
+
+    filterset_class = EventFilter
+    ordering_fields = ["starts_at", "ends_at", "production", "hall"]
+    ordering = ["starts_at", "id"]
+    search_fields = [
+        "production__translations__title",
+        "hall__translations__name",
+    ]

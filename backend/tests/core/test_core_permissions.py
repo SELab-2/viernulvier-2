@@ -1,5 +1,5 @@
 """
-Tests for apps/core/permissions.py — ApiKeyPermission
+Tests for apps/core/permissions.py - ApiKeyPermission
 
 The permission class reads request.auth (set by ApiKeyAuthentication) and
 decides access based on the following rules:
@@ -37,7 +37,7 @@ def make_request(method="GET", auth=None):
 
 
 # ---------------------------------------------------------------------------
-# Internal auth — full access
+# Internal auth - full access
 # ---------------------------------------------------------------------------
 
 
@@ -74,7 +74,7 @@ class TestApiKeyPermissionInternal(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Public auth — read-only
+# Public auth - read-only
 # ---------------------------------------------------------------------------
 
 
@@ -120,7 +120,7 @@ class TestApiKeyPermissionPublic(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# No auth (unauthenticated) — all denied
+# No auth (unauthenticated) - all denied
 # ---------------------------------------------------------------------------
 
 
@@ -142,7 +142,7 @@ class TestApiKeyPermissionNoAuth(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Unknown auth value — all denied
+# Unknown auth value - all denied
 # ---------------------------------------------------------------------------
 
 

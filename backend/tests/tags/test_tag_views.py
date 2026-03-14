@@ -1,14 +1,14 @@
 """
-Tests for apps/tags/views.py — TagViewSet
+Tests for apps/tags/views.py - TagViewSet
 
 Covers:
 - ViewSet inherits from ApiModelViewSet
-- GET  /api/tags/        — public key ✓, internal key ✓ (OR logic)
-- GET  /api/tags/<id>/   — public key ✓, internal key ✓ (OR logic)
-- POST /api/tags/        — internal key ✓, public key ✗
-- PUT  /api/tags/<id>/   — internal key ✓, public key ✗
-- PATCH /api/tags/<id>/  — internal key ✓, public key ✗
-- DELETE /api/tags/<id>/ — internal key ✓, public key ✗
+- GET  /api/tags/        - public key ✓, internal key ✓ (OR logic)
+- GET  /api/tags/<id>/   - public key ✓, internal key ✓ (OR logic)
+- POST /api/tags/        - internal key ✓, public key ✗
+- PUT  /api/tags/<id>/   - internal key ✓, public key ✗
+- PATCH /api/tags/<id>/  - internal key ✓, public key ✗
+- DELETE /api/tags/<id>/ - internal key ✓, public key ✗
 - All methods rejected without auth header
 - All methods rejected with a completely wrong key
 - Response structure / fields
@@ -77,7 +77,7 @@ class TestTagViewSetClass(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# N+1 guard — translations
+# N+1 guard - translations
 # ---------------------------------------------------------------------------
 
 
@@ -105,7 +105,7 @@ class TestTagViewSetPrefetch(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/tags/  — list
+# GET /api/tags/  - list
 # ---------------------------------------------------------------------------
 
 
@@ -167,7 +167,7 @@ class TestTagViewSetList(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/tags/<id>/  — retrieve
+# GET /api/tags/<id>/  - retrieve
 # ---------------------------------------------------------------------------
 
 
@@ -215,7 +215,7 @@ class TestTagViewSetRetrieve(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/tags/  — create
+# POST /api/tags/  - create
 # ---------------------------------------------------------------------------
 
 
@@ -253,7 +253,7 @@ class TestTagViewSetCreate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# PUT /api/tags/<id>/  — full update
+# PUT /api/tags/<id>/  - full update
 # ---------------------------------------------------------------------------
 
 
@@ -289,7 +289,7 @@ class TestTagViewSetUpdate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# PATCH /api/tags/<id>/  — partial update
+# PATCH /api/tags/<id>/  - partial update
 # ---------------------------------------------------------------------------
 
 
@@ -333,7 +333,7 @@ class TestTagViewSetPartialUpdate(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# DELETE /api/tags/<id>/  — destroy
+# DELETE /api/tags/<id>/  - destroy
 # ---------------------------------------------------------------------------
 
 

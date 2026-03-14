@@ -94,7 +94,7 @@ class TestMediaItemCropSerializerFields(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# MediaItemSerializer — field presence
+# MediaItemSerializer - field presence
 # ---------------------------------------------------------------------------
 
 
@@ -148,7 +148,7 @@ class TestMediaItemSerializerFields(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# MediaItemSerializer — scalar fields
+# MediaItemSerializer - scalar fields
 # ---------------------------------------------------------------------------
 
 
@@ -208,7 +208,7 @@ class TestMediaItemSerializerScalarFields(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# MediaItemSerializer — crops
+# MediaItemSerializer - crops
 # ---------------------------------------------------------------------------
 
 
@@ -261,7 +261,7 @@ class TestMediaItemSerializerCrops(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# MediaItemSerializer — translated fields
+# MediaItemSerializer - translated fields
 # ---------------------------------------------------------------------------
 
 
@@ -393,7 +393,7 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# MediaItemSerializer — inheritance
+# MediaItemSerializer - inheritance
 # ---------------------------------------------------------------------------
 
 
@@ -405,7 +405,7 @@ class TestMediaItemSerializerInheritance(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# MediaGallerySerializer — field presence
+# MediaGallerySerializer - field presence
 # ---------------------------------------------------------------------------
 
 
@@ -431,7 +431,7 @@ class TestMediaGallerySerializerFields(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# MediaGallerySerializer — nested media_items
+# MediaGallerySerializer - nested media_items
 # ---------------------------------------------------------------------------
 
 

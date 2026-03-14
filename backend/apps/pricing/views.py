@@ -9,11 +9,12 @@ from django.db.models import Prefetch
 
 from apps.core.views import ApiModelViewSet
 
+from .filters import PriceFilter, PriceRankFilter
 from .models import Price, PriceRank, PriceRankTranslation, PriceTranslation
 from .schemas import extend_schema, price_rank_schema, price_schema
 from .serializers import PriceRankSerializer, PriceSerializer
 
-_TAG = "Pricing"  # Reusable tag for all pricing-related endpoints in the OpenAPI docs
+_TAG = "Pricing"
 
 
 @extend_schema(tags=[_TAG])
@@ -23,14 +24,34 @@ class PriceViewSet(ApiModelViewSet):
     CRUD endpoints for Price objects.
 
     A price defines a ticket category (e.g. full price, student, Cineville).
-    Variable pricing is supported via the `minimum`, `maximum`, and `step`
-    fields.
 
-    The `description` field returns all available translations as a
-    language-code dictionary.
+    Filtering
+    ---------
+    ``?type=student``
+        Substring match on the internal type identifier.
+    ``?visibility=public``
+        Exact match on the visibility value.
+    ``?membership=cineville``
+        Substring match on the membership requirement.
+    ``?cineville_box=true``
+        Only Cineville box prices.
+    ``?description=student``
+        Substring match across all translated descriptions.
+    ``?external_id=abc``
+        Exact match on the external identifier.
 
-    Uses an explicit `Prefetch` to eagerly load translations with their related
-    language in a single query.
+    Ordering
+    --------
+    ``?ordering=sort_order`` / ``?ordering=-sort_order``
+        By display order (default ascending).
+    ``?ordering=type`` / ``?ordering=-type``
+        Alphabetical by type identifier.
+
+    Search
+    ------
+    ``?search=student``
+        Full-text search across ``type``, ``visibility``, and
+        translated descriptions.
     """
 
     serializer_class = PriceSerializer
@@ -40,6 +61,11 @@ class PriceViewSet(ApiModelViewSet):
             queryset=PriceTranslation.objects.select_related("language"),
         )
     ).order_by("sort_order", "id")
+
+    filterset_class = PriceFilter
+    ordering_fields = ["id", "sort_order", "type", "visibility"]
+    ordering = ["sort_order", "id"]
+    search_fields = ["type", "visibility", "translations__description"]
 
 
 @extend_schema(tags=[_TAG])
@@ -51,11 +77,28 @@ class PriceRankViewSet(ApiModelViewSet):
     A price rank defines an ordered availability tier that controls when a
     price level is considered sold out.
 
-    The `description` field returns all available translations as a
-    language-code dictionary.
+    Filtering
+    ---------
+    ``?position=1``
+        Exact match on the rank position.
+    ``?position_gte=2``
+        Ranks at or above the given position.
+    ``?position_lte=5``
+        Ranks at or below the given position.
+    ``?description=student``
+        Substring match across all translated descriptions.
+    ``?external_id=abc``
+        Exact match on the external identifier.
 
-    Uses an explicit `Prefetch` to eagerly load translations with their related
-    language in a single query.
+    Ordering
+    --------
+    ``?ordering=position`` / ``?ordering=-position``
+        By rank position (default ascending).
+
+    Search
+    ------
+    ``?search=student``
+        Full-text search across translated descriptions.
     """
 
     serializer_class = PriceRankSerializer
@@ -65,3 +108,8 @@ class PriceRankViewSet(ApiModelViewSet):
             queryset=PriceRankTranslation.objects.select_related("language"),
         )
     ).order_by("position", "id")
+
+    filterset_class = PriceRankFilter
+    ordering_fields = ["id", "position"]
+    ordering = ["position", "id"]
+    search_fields = ["translations__description"]

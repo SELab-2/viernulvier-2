@@ -29,7 +29,7 @@ class ImportLogAdmin(BaseAdmin):
     record counts, status, timestamps, and any error messages. All fields
     are rendered as read-only to prevent accidental edits.
 
-    Manual creation of import logs via the admin is disabled — logs are
+    Manual creation of import logs via the admin is disabled - logs are
     created exclusively by the import pipeline.
 
     The list view is ordered from most recent to oldest via the model's

@@ -36,7 +36,7 @@ pytestmark = pytest.mark.django_db
 
 class TestMediaGallery:
     def test_name_is_optional(self):
-        """Gallery name is nullable/blank — a gallery without a name must pass full_clean."""
+        """Gallery name is nullable/blank - a gallery without a name must pass full_clean."""
         gallery = MediaGalleryFactory.build(name="")
         gallery.full_clean()  # must not raise
 
@@ -73,7 +73,7 @@ class TestMediaGallery:
 
 class TestMediaItem:
     def test_gallery_is_optional(self):
-        """gallery FK is nullable — a MediaItem without a gallery must pass full_clean."""
+        """gallery FK is nullable - a MediaItem without a gallery must pass full_clean."""
         item = MediaItemFactory.build(gallery=None)
         item.full_clean()  # must not raise
 

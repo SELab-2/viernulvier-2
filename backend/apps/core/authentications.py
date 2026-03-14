@@ -14,8 +14,8 @@ Every request must include the following header:
 
 Two keys are supported, each granting a different level of access:
 
-- ``INTERNAL_API_KEY`` — full CRUD access (``request.auth == "internal"``).
-- ``PUBLIC_API_KEY``   — read-only access (``request.auth == "public"``).
+- ``INTERNAL_API_KEY`` - full CRUD access (``request.auth == "internal"``).
+- ``PUBLIC_API_KEY``   - read-only access (``request.auth == "public"``).
 
 The resulting ``request.auth`` value is consumed by
 :class:`~apps.core.permissions.ApiKeyPermission` to enforce per-action
@@ -65,7 +65,7 @@ class ApiKeyAuthentication(BaseAuthentication):
         2. Return ``None`` (unauthenticated, not an error) if the header is
            absent.
         3. Reject non-UTF-8 byte values with ``AuthenticationFailed``
-           (→ HTTP 401).
+           (-> HTTP 401).
         4. Compare the extracted key against ``INTERNAL_API_KEY`` and then
            ``PUBLIC_API_KEY`` using :func:`secrets.compare_digest`.
         5. Raise ``AuthenticationFailed`` if neither key matches.
@@ -77,14 +77,14 @@ class ApiKeyAuthentication(BaseAuthentication):
 
         Raises:
             :exc:`~rest_framework.exceptions.AuthenticationFailed`:
-                On invalid header bytes or invalid keys (→ HTTP 401).
+                On invalid header bytes or invalid keys (-> HTTP 401).
         """
 
         # Django exposes request headers through request.META using the
         # HTTP_<HEADER_NAME> convention.
         raw_key = request.META.get(self.header_name)
 
-        # No API key header at all — let other authenticators run.
+        # No API key header at all - let other authenticators run.
         if not raw_key:
             return None
 
@@ -109,7 +109,7 @@ class ApiKeyAuthentication(BaseAuthentication):
         if public_key and secrets.compare_digest(key_bytes, public_key.encode("utf-8")):
             return (None, "public")
 
-        # No match — reject the request.
+        # No match - reject the request.
         raise AuthenticationFailed("Invalid API key.")
 
     def authenticate_header(self, request) -> str:

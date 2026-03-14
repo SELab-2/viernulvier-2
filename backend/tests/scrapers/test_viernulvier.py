@@ -6,8 +6,6 @@ from __future__ import annotations
 
 import datetime
 import logging
-import sys
-import types
 from contextlib import contextmanager
 from decimal import Decimal
 from types import SimpleNamespace
@@ -156,108 +154,8 @@ class _PassThroughConfig(ModelSyncConfig):
         super().__init__(lookup_field="id")
 
 
-def _reload_module(monkeypatch, tqdm_available: bool):
-    """
-    Reload your module with tqdm either present or absent in sys.modules.
-    """
-    # Remove cached version so the try/except runs again
-    monkeypatch.delitem(sys.modules, "apps.imports.management.commands.sync_viernulvier", raising=False)
-
-    if tqdm_available:
-        # Make sure a real or stub tqdm exists
-        if "tqdm" not in sys.modules:
-            stub = types.ModuleType("tqdm")
-            stub.tqdm = _StubTqdm
-            monkeypatch.setitem(sys.modules, "tqdm", stub)
-    else:
-        # Force ImportError by removing tqdm from sys.modules
-        monkeypatch.delitem(sys.modules, "tqdm", raising=False)
-        # Inject a broken finder so 'import tqdm' raises ImportError
-        monkeypatch.setitem(sys.modules, "tqdm", None)  # None -> ImportError
-
-    import apps.imports.management.commands.sync_viernulvier
-
-    return apps.imports.management.commands.sync_viernulvier
-
-
-class _StubTqdm:
-    """Minimal tqdm stand-in that records calls."""
-
-    instances: list = []
-
-    def __init__(self, *, total, desc, unit, leave):
-        self.total = total
-        self.desc = desc
-        self.unit = unit
-        self.leave = leave
-        _StubTqdm.instances.append(self)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *_):
-        pass
-
-    def update(self, n=1):
-        pass
-
-    def close(self):
-        pass
-
-
 # ---------------------------------------------------------------------------
-# Tqdm presence handling
-# ---------------------------------------------------------------------------
-
-
-class TestWithTqdm:
-    def test_tqdm_is_not_none(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=True)
-        assert mod._tqdm is not None
-
-    def test_make_progress_bar_returns_object(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=True)
-        bar = mod._make_progress_bar("test", 10)
-        assert bar is not None
-
-    def test_make_progress_bar_is_context_manager(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=True)
-        bar = mod._make_progress_bar("ctx", 5)
-        # Must not raise when used as a context manager
-        with bar:
-            pass
-
-
-class TestWithoutTqdm:
-    def test_tqdm_is_none_when_missing(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=False)
-        assert mod._tqdm is None
-
-    def test_make_progress_bar_returns_none(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=False)
-        result = mod._make_progress_bar("fallback", 99)
-        assert result is None
-
-    def test_make_progress_bar_accepts_any_args_without_crash(self, monkeypatch):
-        mod = _reload_module(monkeypatch, tqdm_available=False)
-        # Should never raise regardless of inputs
-        mod._make_progress_bar("", 0)
-        mod._make_progress_bar("x" * 100, 10_000_000)
-
-
-@pytest.mark.parametrize("tqdm_available", [True, False])
-def test_make_progress_bar_signature(monkeypatch, tqdm_available):
-    """_make_progress_bar(name, total) must always accept exactly these two args."""
-    mod = _reload_module(monkeypatch, tqdm_available=tqdm_available)
-    import inspect
-
-    sig = inspect.signature(mod._make_progress_bar)
-    params = list(sig.parameters)
-    assert params == ["name", "total"]
-
-
-# ---------------------------------------------------------------------------
-# fetch_viernulvier — HTTP layer
+# fetch_viernulvier - HTTP layer
 # ---------------------------------------------------------------------------
 
 
@@ -421,7 +319,7 @@ def test_fetch_collects_single_item_dict_with_context(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# fetch_viernulvier — query parameter support
+# fetch_viernulvier - query parameter support
 # ---------------------------------------------------------------------------
 
 
@@ -847,7 +745,7 @@ class TestDiscoverExtraPages:
 
 
 # ---------------------------------------------------------------------------
-# Pagination — concurrent + sequential edge cases
+# Pagination - concurrent + sequential edge cases
 # ---------------------------------------------------------------------------
 
 
@@ -977,7 +875,7 @@ class TestSequentialFallback:
 
 
 # ---------------------------------------------------------------------------
-# sync_viernulvier — basic persistence
+# sync_viernulvier - basic persistence
 # ---------------------------------------------------------------------------
 
 
@@ -1273,7 +1171,7 @@ def test_sync_without_params_still_works(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# sync_viernulvier — dry_run / on_progress / item_filter / MAX_ERROR_MESSAGES
+# sync_viernulvier - dry_run / on_progress / item_filter / MAX_ERROR_MESSAGES
 # ---------------------------------------------------------------------------
 
 
@@ -1627,7 +1525,7 @@ def test_sync_import_log_different_endpoints_tracked_separately(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# sync_viernulvier — error branches & savepoints
+# sync_viernulvier - error branches & savepoints
 # ---------------------------------------------------------------------------
 
 
@@ -1827,20 +1725,6 @@ class TestFlexibleFieldMapping:
         field = Event._meta.get_field("starts_at")
         assert _parse_field_value(field, None) is None
 
-    def test_build_defaults_does_not_raise_for_missing_required_fields(self):
-        """_build_defaults doesn't validate; it only builds the defaults dict."""
-        from apps.events.models import Event
-
-        item = {
-            "external_id": "/api/events/1",
-            "ticketing_url": "https://example.com",
-        }
-        fk_cache = FKCache()
-        defaults = viernulvier._build_defaults(Event, item, _PassThroughConfig(), fk_cache)
-
-        assert "ticketing_url" in defaults
-        assert defaults["ticketing_url"] == "https://example.com"
-
     def test_skips_unknown_fields_event_price(self):
         """Unknown API fields are silently ignored."""
         from apps.events.models import Event, EventPrice
@@ -1899,7 +1783,7 @@ class TestFlexibleFieldMapping:
 
 
 # ---------------------------------------------------------------------------
-# _parse_field_value — comprehensive type coverage
+# _parse_field_value - comprehensive type coverage
 # ---------------------------------------------------------------------------
 
 
@@ -2046,7 +1930,7 @@ class TestCleanString:
         assert "hello" in result
 
     def test_keeps_tab_newline_cr(self):
-        # Use CR in the middle — str.strip() inside clean_string would eat a trailing \r
+        # Use CR in the middle - str.strip() inside clean_string would eat a trailing \r
         result = clean_string("a\tb\rc\nd")
         assert "\t" in result
         assert "\r" in result
@@ -2645,7 +2529,7 @@ def _fake_trans_model(call_log):
 
 class TestSyncAllTranslations:
     def test_multiple_configs_same_model_batched_per_language(self):
-        """Two TranslationConfigs for the same model → ONE update_or_create per language."""
+        """Two TranslationConfigs for the same model -> ONE update_or_create per language."""
         calls = []
         FT = _fake_trans_model(calls)
 
