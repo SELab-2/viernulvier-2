@@ -859,6 +859,8 @@ class TestSyncCropsSaveErrors:
     def test_save_error_does_not_stop_next_item(self, monkeypatch):
         from apps.media_library.models import MediaItemCrop
 
+        _fail_item = _foto_item("/api/v1/media/items/602")
+        _ok_item = _foto_item("/api/v1/media/items/603")
         _patch_session(monkeypatch)
         _patch_fetch(monkeypatch, {"crops": _crop_payload(["hd_ready"])})
         _patch_download(monkeypatch)
