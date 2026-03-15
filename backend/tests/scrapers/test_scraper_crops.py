@@ -343,6 +343,7 @@ class TestDownloadImage:
 # sync_media_item_crops
 # ============================================================================
 
+
 def _patch_crop_dependencies(
     monkeypatch,
     *,
@@ -556,6 +557,7 @@ def test_sync_crops_crop_not_in_wanted_set_skipped(monkeypatch):
     mock_qs2.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
 
     from apps.media_library import models as mm
+
     monkeypatch.setattr(mm, "MediaItemCrop", mock_crop_cls)
 
     result = sync_media_item_crops()
@@ -582,6 +584,7 @@ def test_sync_crops_crop_missing_url_warns_and_skips(monkeypatch, caplog):
     mock_crop_cls = Mock()
     mock_crop_cls.SYNCED_CROP_NAMES = {"hd_ready"}
     from apps.media_library import models as mm
+
     monkeypatch.setattr(mm, "MediaItemCrop", mock_crop_cls)
 
     caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
@@ -832,9 +835,7 @@ def test_sync_crops_external_id_as_absolute_url_used_directly(monkeypatch):
 
     captured_urls = []
     mock_qs = Mock()
-    mock_qs.values.return_value = [
-        {"pk": 1, "external_id": "https://www.viernulvier.gent/api/v1/media/items/99"}
-    ]
+    mock_qs.values.return_value = [{"pk": 1, "external_id": "https://www.viernulvier.gent/api/v1/media/items/99"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
     monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
 
@@ -984,6 +985,7 @@ def test_sync_crops_import_log_source_is_correct(monkeypatch):
         foto_items=[],
     )
     from apps.media_library import models as media_models
+
     mock_qs = Mock()
     mock_qs.values.return_value = []
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
@@ -1080,7 +1082,6 @@ def test_sync_crops_download_error_message_captured(monkeypatch):
 @pytest.mark.django_db
 def test_sync_crops_storage_save_called_with_image_bytes(monkeypatch):
     """The storage backend's save() is called with a ContentFile wrapping the downloaded bytes."""
-    from django.core.files.base import ContentFile
     from apps.media_library import models as media_models
 
     mock_qs = Mock()
@@ -1206,10 +1207,10 @@ def test_on_progress_covers_all_four_early_exit_branches_in_one_run(monkeypatch)
 
     mock_qs = Mock()
     mock_qs.values.return_value = [
-        {"pk": 1, "external_id": ""},                         # branch: no external_id
-        {"pk": 2, "external_id": "/api/v1/media/items/2"},    # branch: ScraperError
-        {"pk": 3, "external_id": "/api/v1/media/items/3"},    # branch: 304 (None)
-        {"pk": 4, "external_id": "/api/v1/media/items/4"},    # branch: non-list crops
+        {"pk": 1, "external_id": ""},  # branch: no external_id
+        {"pk": 2, "external_id": "/api/v1/media/items/2"},  # branch: ScraperError
+        {"pk": 3, "external_id": "/api/v1/media/items/3"},  # branch: 304 (None)
+        {"pk": 4, "external_id": "/api/v1/media/items/4"},  # branch: non-list crops
     ]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
     monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
@@ -1218,6 +1219,7 @@ def test_on_progress_covers_all_four_early_exit_branches_in_one_run(monkeypatch)
     sync_media_item_crops(on_progress=lambda idx, total: calls.append((idx, total)))
 
     assert calls == [(1, 4), (2, 4), (3, 4), (4, 4)]
+
 
 @pytest.mark.django_db
 def test_sync_crops_update_or_create_receives_correct_kwargs(monkeypatch):
