@@ -217,18 +217,22 @@ class MediaItemTranslation(BaseModel):
 
 class MediaItemCrop(BaseModel):
     """
-    A named, pre-rendered crop of a MediaItem.
+    A named, pre-rendered crop of a MediaItem, stored as a local image file.
 
-    Crops are generated server-side and stored as external URLs.
-    Common crop names include ``thumbnail``, ``banner``, and ``square``.
+    Crops are downloaded from the Viernulvier CDN and saved locally via
+    Django's ImageField. Only a curated set of crop variants is stored
+    (currently ``hd_ready`` and ``FE3_header``).
 
     Each media item can have at most one crop per name.
 
     Attributes:
         media_item: The media item this crop belongs to.
-        name:       Identifier for the crop variant (e.g. ``thumbnail``).
-        url:        Publicly accessible URL of the cropped asset.
+        name:       Identifier for the crop variant (e.g. ``hd_ready``).
+        image:      Locally stored image file downloaded from the CDN.
     """
+
+    # Crop variants that are fetched and stored during sync.
+    SYNCED_CROP_NAMES = {"hd_ready", "FE3_header"}
 
     media_item = models.ForeignKey(
         MediaItem,
@@ -242,15 +246,16 @@ class MediaItemCrop(BaseModel):
         max_length=100,
         null=False,
         blank=False,
-        help_text="Crop variant identifier (e.g. `thumbnail`, `banner`, `square`).",
+        help_text="Crop variant identifier (e.g. `hd_ready`, `FE3_header`).",
         db_comment="Name / variant of the crop.",
     )
 
-    url = models.URLField(
+    image = models.ImageField(
+        upload_to="media_crops/",
         null=False,
         blank=False,
-        help_text="Publicly accessible URL of the cropped asset.",
-        db_comment="URL of the cropped media item.",
+        help_text="Downloaded crop image stored locally.",
+        db_comment="Local path to the downloaded crop image.",
     )
 
     class Meta(BaseModel.Meta):

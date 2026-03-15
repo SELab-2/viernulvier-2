@@ -28,15 +28,15 @@ from .serializers import MediaGallerySerializer, MediaItemSerializer
 
 _CROP_EXAMPLE = {
     "id": 1,
-    "name": "thumbnail",
-    "url": "https://cdn.example.com/media/1/thumbnail.jpg",
+    "name": "hd_ready",
+    "image_url": "https://cdn.example.com/media/crops/2024/01/hd_ready.jpg",
 }
 
 _MEDIA_ITEM_EXAMPLE = {
     "id": 1,
     "gallery": 1,
-    "type": "image",
-    "format": "jpg",
+    "type": "foto",
+    "format": "image/jpeg",
     "original_filename": "poster_nl.jpg",
     "position": 0,
     "width": 1920,
@@ -212,8 +212,8 @@ _ITEM_INPUT = OpenApiExample(
     ),
     value={
         "gallery": 1,
-        "type": "image",
-        "format": "jpg",
+        "type": "foto",
+        "format": "image/jpeg",
         "original_filename": "poster_nl.jpg",
         "position": 0,
         "width": 1920,
@@ -271,7 +271,7 @@ _ITEM_CREATE = extend_schema(
         "- `gallery` (FK) and `type` are required.\n"
         "- Localised metadata (`title`, `description`, `credits`, `link`) must be "
         "  added via the **Media Item Translation** endpoints after creation.\n"
-        "- Crop variants are managed via the **Media Item Crop** endpoints.\n\n"
+        "- Crop variants are populated automatically by the scraper sync pipeline.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=MediaItemSerializer,

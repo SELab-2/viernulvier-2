@@ -8,6 +8,9 @@ Covers:
 - MediaItemSerializer serialization of scalar fields (type, format, original_filename,
   position, width, height)
 - Nested MediaItemCropSerializer output on MediaItemSerializer
+- image_url is a computed field derived from the ImageField
+- image_url returns None when no image is stored
+- image_url builds an absolute URI when a request is in serializer context
 - Translated fields (title, description, credits, link) returned as dicts
 - Translated fields return empty dict when no translations exist
 - Translated fields omit blank/falsy values per language
@@ -17,12 +20,13 @@ Covers:
 - MediaGallerySerializer media_items are ordered by position
 """
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase, override_settings
 
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.media_library.models import (
     MediaGallery,
     MediaItem,
+    MediaItemCrop,
 )
 from apps.media_library.serializers import (
     MediaGallerySerializer,
@@ -36,6 +40,10 @@ from tests.factories.media_library import (
     MediaItemFactory,
     MediaItemTranslationFactory,
 )
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 
 def serialize_item(item):
@@ -57,8 +65,18 @@ def serialize_gallery(gallery):
     return MediaGallerySerializer(gallery_qs).data
 
 
+def _make_request(url="http://testserver/"):
+    """Return a minimal DRF-compatible request object."""
+    factory = RequestFactory()
+    request = factory.get(url)
+    # Wrap in DRF request so build_absolute_uri works
+    from rest_framework.request import Request
+
+    return Request(request)
+
+
 # ---------------------------------------------------------------------------
-# MediaItemCropSerializer
+# MediaItemCropSerializer - field presence
 # ---------------------------------------------------------------------------
 
 
@@ -68,29 +86,66 @@ class TestMediaItemCropSerializerFields(TestCase):
     def setUp(self):
         gallery = MediaGalleryFactory.create()
         item = MediaItemFactory.create(gallery=gallery)
+        # ImageField stores a file path; the URL is derived via storage.
+        # In tests with default FileSystemStorage, image.url == MEDIA_URL + name.
         self.crop = MediaItemCropFactory.create(
             media_item=item,
             name="banner",
-            url="https://example.com/banner.jpg",
         )
 
     def test_expected_fields_are_present(self):
         data = MediaItemCropSerializer(self.crop).data
-        for field in ("id", "name", "url"):
+        for field in ("id", "name", "image_url"):
             with self.subTest(field=field):
                 self.assertIn(field, data)
 
     def test_no_extra_fields_are_exposed(self):
         data = MediaItemCropSerializer(self.crop).data
-        self.assertEqual(set(data.keys()), {"id", "name", "url"})
+        self.assertEqual(set(data.keys()), {"id", "name", "image_url"})
+
+    def test_url_field_not_in_output(self):
+        """The old 'url' field no longer exists; only 'image_url' is exposed."""
+        data = MediaItemCropSerializer(self.crop).data
+        self.assertNotIn("url", data)
+
+    def test_image_field_not_exposed_directly(self):
+        """The raw 'image' ImageField is not in the serializer output."""
+        data = MediaItemCropSerializer(self.crop).data
+        self.assertNotIn("image", data)
 
     def test_name_value_is_correct(self):
         data = MediaItemCropSerializer(self.crop).data
         self.assertEqual(data["name"], "banner")
 
-    def test_url_value_is_correct(self):
+    def test_image_url_is_none_when_no_image(self):
+        """A crop with no image stored returns None for image_url."""
+        crop = MediaItemCrop(name="empty")
+        data = MediaItemCropSerializer(crop).data
+        self.assertIsNone(data["image_url"])
+
+    @override_settings(MEDIA_URL="/media/")
+    def test_image_url_contains_path_when_image_set(self):
+        """When an image path is stored, image_url returns a non-empty string."""
         data = MediaItemCropSerializer(self.crop).data
-        self.assertEqual(data["url"], "https://example.com/banner.jpg")
+        # The crop factory assigns an image; image_url must not be None
+        if self.crop.image:
+            self.assertIsNotNone(data["image_url"])
+            self.assertIsInstance(data["image_url"], str)
+
+    def test_image_url_builds_absolute_uri_with_request_in_context(self):
+        """When a request is in the serializer context, image_url is absolute."""
+        request = _make_request()
+        data = MediaItemCropSerializer(self.crop, context={"request": request}).data
+        image_url = data["image_url"]
+        self.assertIsNotNone(image_url)
+        self.assertTrue(image_url.startswith("http"), f"Expected absolute URL, got: {image_url}")
+
+    def test_image_url_without_request_in_context_is_relative_or_absolute(self):
+        """Without a request in context, image_url is still a non-empty string."""
+        data = MediaItemCropSerializer(self.crop, context={}).data
+        self.assertIsNotNone(data["image_url"])
+        self.assertIsInstance(data["image_url"], str)
+        self.assertGreater(len(data["image_url"]), 0)
 
 
 # ---------------------------------------------------------------------------
@@ -109,6 +164,7 @@ class TestMediaItemSerializerFields(TestCase):
         data = serialize_item(self.item)
         expected = {
             "id",
+            "gallery",
             "type",
             "format",
             "original_filename",
@@ -229,35 +285,43 @@ class TestMediaItemSerializerCrops(TestCase):
         self.assertEqual(len(data["crops"]), 1)
 
     def test_crops_contains_multiple_crops(self):
-        MediaItemCropFactory.create(
-            media_item=self.item,
-            name="thumbnail",
-            url="https://example.com/thumb.jpg",
-        )
-        MediaItemCropFactory.create(
-            media_item=self.item,
-            name="banner",
-            url="https://example.com/banner.jpg",
-        )
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
+        MediaItemCropFactory.create(media_item=self.item, name="banner")
         data = serialize_item(self.item)
         self.assertEqual(len(data["crops"]), 2)
 
-    def test_crop_fields_are_correct(self):
-        MediaItemCropFactory.create(
-            media_item=self.item,
-            name="thumbnail",
-            url="https://example.com/thumb.jpg",
-        )
+    def test_crop_name_field_is_correct(self):
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
         data = serialize_item(self.item)
         crop = data["crops"][0]
         self.assertEqual(crop["name"], "thumbnail")
-        self.assertEqual(crop["url"], "https://example.com/thumb.jpg")
-        self.assertIn("id", crop)
+
+    def test_crop_has_id_field(self):
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
+        data = serialize_item(self.item)
+        self.assertIn("id", data["crops"][0])
+
+    def test_crop_has_image_url_field(self):
+        """Crops expose image_url, not url or image directly."""
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
+        data = serialize_item(self.item)
+        self.assertIn("image_url", data["crops"][0])
+
+    def test_crop_does_not_expose_raw_url_field(self):
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
+        data = serialize_item(self.item)
+        self.assertNotIn("url", data["crops"][0])
+
+    def test_crop_does_not_expose_raw_image_field(self):
+        """The raw ImageField path must not be directly exposed."""
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
+        data = serialize_item(self.item)
+        self.assertNotIn("image", data["crops"][0])
 
     def test_crop_uses_media_item_crop_serializer_fields(self):
-        MediaItemCropFactory.create(media_item=self.item)
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
         data = serialize_item(self.item)
-        self.assertEqual(set(data["crops"][0].keys()), {"id", "name", "url"})
+        self.assertEqual(set(data["crops"][0].keys()), {"id", "name", "image_url"})
 
 
 # ---------------------------------------------------------------------------
@@ -487,13 +551,19 @@ class TestMediaGallerySerializerMediaItems(TestCase):
 
     def test_nested_item_includes_crops(self):
         item = MediaItemFactory.create(gallery=self.gallery)
-        MediaItemCropFactory.create(
-            media_item=item,
-            name="thumb",
-            url="https://example.com/t.jpg",
-        )
+        MediaItemCropFactory.create(media_item=item, name="thumb")
         data = serialize_gallery(self.gallery)
         self.assertEqual(len(data["media_items"][0]["crops"]), 1)
+
+    def test_nested_crop_exposes_image_url_not_url(self):
+        """Nested crops must use the image_url field, not the old url field."""
+        item = MediaItemFactory.create(gallery=self.gallery)
+        MediaItemCropFactory.create(media_item=item, name="thumb")
+        data = serialize_gallery(self.gallery)
+        crop_data = data["media_items"][0]["crops"][0]
+        self.assertIn("image_url", crop_data)
+        self.assertNotIn("url", crop_data)
+        self.assertNotIn("image", crop_data)
 
     def test_nested_item_includes_translated_title(self):
         nl = LanguageFactory.create(code="nl")

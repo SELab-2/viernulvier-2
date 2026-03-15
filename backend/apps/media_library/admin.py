@@ -1,6 +1,7 @@
 """Admin configuration for the Media app."""
 
 from django.contrib import admin
+from django.utils.html import format_html
 
 from apps.core.admin import BaseAdmin
 
@@ -43,7 +44,14 @@ class MediaItemCropInline(admin.TabularInline):
 
     model = MediaItemCrop
     extra = 1
-    fields = ("name", "url")
+    fields = ("name", "image", "get_url")
+    readonly_fields = ("get_url",)
+
+    @admin.display(description="URL")
+    def get_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return "-"
 
 
 @admin.register(MediaGallery)
@@ -102,11 +110,18 @@ class MediaItemTranslationAdmin(BaseAdmin):
 class MediaItemCropAdmin(BaseAdmin):
     """Admin configuration for MediaItem crop variants."""
 
-    list_display = ("id", "media_item", "name", "url")
+    list_display = ("id", "media_item", "name", "get_url")
     list_filter = ("name",)
     search_fields = ("name", "media_item__original_filename")
     ordering = ("id",)
     autocomplete_fields = ("media_item",)
+
+    @admin.display(description="Asset URL")
+    def get_url(self, obj):
+        if obj.image:
+            # Maakt de URL klikbaar in het overzicht
+            return format_html('<a href="{0}" target="_blank">Bekijk bestand</a>', obj.image.url)
+        return "-"
 
     def get_queryset(self, request):
         """Select related media_item to avoid N+1 queries."""

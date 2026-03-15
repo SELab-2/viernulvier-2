@@ -776,3 +776,159 @@ class TestManagementCommandCoverage:
 
         output = cmd.stdout.getvalue()
         assert "500/2000" in output or "1000/2000" in output or "2000/2000" in output
+
+
+def test_run_crops_writes_media_item_crops_prefix():
+    """'-> media_item_crops' is written to stdout when run_crops is True."""
+    cmd = Command()
+    cmd.stdout = OutputWrapper(StringIO())
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0),
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_crops", return_value=7),
+    ):
+        cmd.handle()
+
+    assert "-> media_item_crops" in cmd.stdout.getvalue()
+
+
+def test_run_crops_success_line_uses_crops_label():
+    """Normal (non-dry-run) success line says 'crops', not 'would save'."""
+    cmd = Command()
+    cmd.stdout = OutputWrapper(StringIO())
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0),
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_crops", return_value=3),
+    ):
+        cmd.handle()
+
+    out = cmd.stdout.getvalue()
+    assert "3 crops" in out
+    assert "would save" not in out
+
+
+def test_run_crops_dry_run_uses_would_save_label():
+    """Dry-run success line says 'would save', not 'crops'."""
+    cmd = Command()
+    cmd.stdout = OutputWrapper(StringIO())
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0),
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_crops", return_value=5),
+    ):
+        cmd.handle(dry_run=True)
+
+    out = cmd.stdout.getvalue()
+    assert "5 would save" in out
+    assert " crops" not in out.split("5 would save")[1][:10]
+
+
+def test_run_crops_saved_count_added_to_total():
+    """Crops saved by sync_media_item_crops are included in the Done total."""
+    cmd = Command()
+    cmd.stdout = OutputWrapper(StringIO())
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0),
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_crops", return_value=9),
+    ):
+        cmd.handle()
+
+    # The summary line should contain 9 (only crops contribute since all steps return 0)
+    assert "9" in cmd.stdout.getvalue()
+
+
+def test_run_crops_elapsed_time_appears_in_output():
+    """A timing value in seconds (e.g. '0.0s') appears in the crops success line."""
+    cmd = Command()
+    cmd.stdout = OutputWrapper(StringIO())
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0),
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_crops", return_value=2),
+    ):
+        cmd.handle()
+
+    # elapsed is formatted as f"({elapsed:.1f}s)" - always contains 's)'
+    assert "s)" in cmd.stdout.getvalue()
+
+
+def test_run_crops_exception_logged_as_failed():
+    """An exception from sync_media_item_crops is caught and printed as FAILED."""
+    cmd = Command()
+    cmd.stdout = OutputWrapper(StringIO())
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0),
+        patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_media_item_crops",
+            side_effect=RuntimeError("crops boom"),
+        ),
+    ):
+        cmd.handle()
+
+    out = cmd.stdout.getvalue()
+    assert "FAILED" in out
+    assert "crops boom" in out
+
+
+def test_run_crops_dry_run_passes_dry_run_true_to_sync():
+    """sync_media_item_crops receives dry_run=True when the command is called with --dry-run."""
+    cmd = Command()
+    cmd.stdout = OutputWrapper(StringIO())
+    calls = []
+
+    def capture(**kwargs):
+        calls.append(kwargs)
+        return 0
+
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0),
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_crops", side_effect=capture),
+    ):
+        cmd.handle(dry_run=True)
+
+    assert calls and calls[0]["dry_run"] is True
+
+
+def test_run_crops_passes_on_progress_callback():
+    """sync_media_item_crops receives a non-None on_progress callable."""
+    cmd = Command()
+    cmd.stdout = OutputWrapper(StringIO())
+    calls = []
+
+    def capture(**kwargs):
+        calls.append(kwargs)
+        return 0
+
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0),
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_crops", side_effect=capture),
+    ):
+        cmd.handle()
+
+    assert calls and callable(calls[0]["on_progress"])
+
+
+def test_run_crops_skipped_when_only_is_non_crop_step():
+    """sync_media_item_crops is NOT called when --only targets a different step."""
+    cmd = Command()
+    cmd.stdout = OutputWrapper(StringIO())
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0),
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_crops") as mock_crops,
+    ):
+        cmd.handle(only="events")
+
+    mock_crops.assert_not_called()
+    assert "media_item_crops" not in cmd.stdout.getvalue()
+
+
+def test_run_crops_when_only_is_media_item_crops():
+    """--only media_item_crops skips all SYNC_STEPS but does run the crops block."""
+    cmd = Command()
+    cmd.stdout = OutputWrapper(StringIO())
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier") as mock_sync,
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_crops", return_value=4),
+    ):
+        cmd.handle(only="media_item_crops")
+
+    mock_sync.assert_not_called()
+    assert "-> media_item_crops" in cmd.stdout.getvalue()
+    assert "4 crops" in cmd.stdout.getvalue()
