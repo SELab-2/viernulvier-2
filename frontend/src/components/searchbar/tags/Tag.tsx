@@ -24,9 +24,11 @@ const Tag: React.FC<TagProps> = ({ name, displayName, selected, onTagToggle }) =
           ? {
               backgroundColor: '#8224E3FF !important',
               color: 'white',
+              border: `1px solid transparent`,
             }
           : {
               backgroundColor: theme.palette.background.default,
+              border: `1px solid ${theme.palette.divider}`,
             }
       }
     />
