@@ -210,7 +210,7 @@ class TestImportLogFilter(TestCase):
     # finished_at range
     #
     # Rules:
-    # - Use _make_finished(started_days, finished_days) — always status=SUCCESS
+    # - Use _make_finished(started_days, finished_days) - always status=SUCCESS
     #   so adjust_status_logic never clears finished_at.
     # - finished_days must be >= started_days (DB constraint).
     # -------------------------------------------------------------------------
