@@ -134,8 +134,6 @@ class TestMediaItemCropSerializerFields(TestCase):
 
     def test_image_url_builds_absolute_uri_with_request_in_context(self):
         """When a request is in the serializer context, image_url is absolute."""
-        if not self.crop.image:
-            self.skipTest("crop has no image")
         request = _make_request()
         data = MediaItemCropSerializer(self.crop, context={"request": request}).data
         image_url = data["image_url"]
@@ -144,8 +142,6 @@ class TestMediaItemCropSerializerFields(TestCase):
 
     def test_image_url_without_request_in_context_is_relative_or_absolute(self):
         """Without a request in context, image_url is still a non-empty string."""
-        if not self.crop.image:
-            self.skipTest("crop has no image")
         data = MediaItemCropSerializer(self.crop, context={}).data
         self.assertIsNotNone(data["image_url"])
         self.assertIsInstance(data["image_url"], str)

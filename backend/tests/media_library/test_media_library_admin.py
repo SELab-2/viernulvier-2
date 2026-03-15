@@ -13,13 +13,18 @@ Covers:
 - Inline classes are present on MediaItemAdmin (translation, crop)
 - Inline model, extra, autocomplete_fields and classes attributes
 - get_queryset uses select_related on MediaItemAdmin
+- MediaItemCropInline.get_url returns raw URL string or '-'
+- MediaItemCropAdmin.get_url returns a safe clickable anchor or '-'
 - Functional admin changelist and changeform (with superuser)
 """
+
+from unittest.mock import MagicMock, PropertyMock
 
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from django.utils.safestring import SafeData
 
 from apps.core.admin import BaseAdmin
 from apps.media_library.admin import (
@@ -283,7 +288,7 @@ class TestMediaItemCropAdminConfiguration(TestCase):
         self.assertIn("get_url", self.admin.list_display)
 
     def test_list_display_does_not_contain_raw_url_field(self):
-        """MediaItemCrop no longer has a url field — it uses an ImageField."""
+        """MediaItemCrop no longer has a url field - it uses an ImageField."""
         self.assertNotIn("url", self.admin.list_display)
 
     def test_search_fields_contains_name(self):
@@ -304,7 +309,6 @@ class TestMediaItemCropAdminConfiguration(TestCase):
         item = MediaItemFactory()
         crop = MediaItemCropFactory(media_item=item, name="hd_ready")
         result = self.admin.get_url(crop)
-        # Should contain an <a> tag pointing to the image
         self.assertIn("<a", str(result))
 
     def test_get_url_returns_dash_when_no_image(self):
@@ -312,6 +316,81 @@ class TestMediaItemCropAdminConfiguration(TestCase):
         crop = MediaItemCrop(name="hd_ready")  # unsaved, no image
         result = self.admin.get_url(crop)
         self.assertEqual(str(result), "-")
+
+    def test_get_url_display_description(self):
+        """The column header label must be 'Asset URL' as set by @admin.display."""
+        self.assertEqual(self.admin.get_url.short_description, "Asset URL")
+
+    def test_get_url_result_is_mark_safe(self):
+        """format_html output must be SafeData so Django does not double-escape it."""
+        item = MediaItemFactory()
+        crop = MediaItemCropFactory(media_item=item, name="hd_ready")
+        result = self.admin.get_url(crop)
+        self.assertIsInstance(result, SafeData)
+
+    def test_get_url_anchor_has_target_blank(self):
+        """The rendered anchor must open in a new tab."""
+        item = MediaItemFactory()
+        crop = MediaItemCropFactory(media_item=item, name="hd_ready")
+        result = str(self.admin.get_url(crop))
+        self.assertIn('target="_blank"', result)
+
+    def test_get_url_anchor_contains_bekijk_bestand(self):
+        """The link label must read 'Bekijk bestand'."""
+        item = MediaItemFactory()
+        crop = MediaItemCropFactory(media_item=item, name="hd_ready")
+        result = str(self.admin.get_url(crop))
+        self.assertIn("Bekijk bestand", result)
+
+
+# ---------------------------------------------------------------------------
+# MediaItemCropInline - get_url
+# ---------------------------------------------------------------------------
+
+
+class TestMediaItemCropInlineGetUrl(TestCase):
+    """
+    Unit tests for MediaItemCropInline.get_url.
+
+    The inline renders a plain URL string (not an anchor), or '-' when the
+    crop has no image.  MagicMock is used so no database or file storage is
+    required.
+    """
+
+    def setUp(self):
+        self.inline = MediaItemCropInline(parent_model=MagicMock(), admin_site=MagicMock())
+
+    def test_get_url_returns_url_string_when_image_present(self):
+        """Should return the raw URL string when the crop has an image."""
+        obj = MagicMock()
+        type(obj.image).url = PropertyMock(return_value="https://cdn.example.com/crops/hero.jpg")
+        result = self.inline.get_url(obj)
+        self.assertEqual(result, "https://cdn.example.com/crops/hero.jpg")
+
+    def test_get_url_returns_dash_when_image_is_none(self):
+        """Should return '-' when obj.image is None."""
+        obj = MagicMock()
+        obj.image = None
+        result = self.inline.get_url(obj)
+        self.assertEqual(result, "-")
+
+    def test_get_url_returns_dash_for_falsy_image(self):
+        """Should return '-' for any other falsy image value (e.g. empty string)."""
+        obj = MagicMock()
+        obj.image = ""
+        result = self.inline.get_url(obj)
+        self.assertEqual(result, "-")
+
+    def test_get_url_display_description(self):
+        """Column header must be labelled 'URL' as set by @admin.display."""
+        self.assertEqual(self.inline.get_url.short_description, "URL")
+
+    def test_get_url_result_is_plain_string_not_anchor(self):
+        """Inline get_url returns a plain URL - no HTML anchor tag."""
+        obj = MagicMock()
+        type(obj.image).url = PropertyMock(return_value="https://cdn.example.com/crops/hero.jpg")
+        result = self.inline.get_url(obj)
+        self.assertNotIn("<a", str(result))
 
 
 # ---------------------------------------------------------------------------
@@ -578,5 +657,4 @@ class TestMediaItemCropAdminChangelist(TestCase):
         url = reverse("admin:media_library_mediaitemcrop_changelist")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        # The rendered page must contain an anchor pointing to the stored file
         self.assertContains(response, "<a")
