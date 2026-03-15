@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import SearchBar, { SearchBarProps } from '../../components/searchbar/FilteredSearchBar'
+import SearchBar, { FilteredSearchBarProps } from '../../components/searchbar/FilteredSearchBar'
 
-const renderSearchBar = (props: SearchBarProps) => {
+const renderSearchBar = (props: FilteredSearchBarProps) => {
   const theme = createTheme() // You can customize the theme as needed
   return render(
     <ThemeProvider theme={theme}>

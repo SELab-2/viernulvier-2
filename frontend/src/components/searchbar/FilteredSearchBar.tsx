@@ -1,11 +1,12 @@
 import React from 'react'
-import { Box, TextField, useTheme } from '@mui/material'
+import { Box } from '@mui/material'
 import DropDownFilter, { DropDownFilterProps } from './filters/DropDownFilter'
 import TagList from './tags/TagList'
 import LayoutOptionList from './layout_options/LayoutOptionList'
+import SearchBar from './SearchBar'
 
 // This represents the entire search bar component, which includes the search input, filter dropdowns, tag list, and layout options.
-export interface SearchBarProps {
+export interface FilteredSearchBarProps {
   placeholder: string
   searchValue: string
   onSearchChange: (value: string) => void
@@ -19,7 +20,7 @@ export interface SearchBarProps {
 }
 
 // This component renders the search bar with all its functionalities based on the provided props.
-const SearchBar: React.FC<SearchBarProps> = ({
+const FilteredSearchBar: React.FC<FilteredSearchBarProps> = ({
   placeholder,
   searchValue,
   onSearchChange,
@@ -31,24 +32,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
   currentLayout: currentLayout,
   onLayoutChange: onLayoutChange,
 }) => {
-  const theme = useTheme()
   return (
     <Box>
       <Box display="flex" gap={2} alignItems="center">
-        <TextField
-          fullWidth
-          variant="outlined"
+        <SearchBar
           placeholder={placeholder}
-          value={searchValue}
-          onChange={(e) => onSearchChange(e.target.value)}
-          sx={{
-            flex: 1,
-            '& .MuiInputBase-root': {
-              height: 40,
-              backgroundColor: theme.palette.background.default,
-            },
-          }}
-          className="search-bar-textfield"
+          searchValue={searchValue}
+          onSearchChange={onSearchChange}
         />
         {filters.map((filter) => (
           <DropDownFilter key={filter.name} {...filter} />
@@ -66,4 +56,4 @@ const SearchBar: React.FC<SearchBarProps> = ({
   )
 }
 
-export default SearchBar
+export default FilteredSearchBar
