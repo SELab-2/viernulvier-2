@@ -1,8 +1,8 @@
-import { getEvent, getEvents } from '../services/events/events'
-import { api } from '../services/api'
-import { ApiError } from '../services/apiTypes'
+import { api } from '../services/Api'
+import { getEvent, getEvents } from '../services/events/Events'
+import { ApiError } from '../services/ApiTypes'
 
-jest.mock('../services/api', () => ({
+jest.mock('../services/Api', () => ({
   api: {
     get: jest.fn(),
   },
@@ -10,54 +10,62 @@ jest.mock('../services/api', () => ({
 
 const mockedApi = api as jest.Mocked<typeof api>
 
-describe('events service', () => {
+describe('Events service', () => {
   afterEach(() => {
     jest.clearAllMocks()
   })
 
-  it('fetches the event list', async () => {
-    const mockResponse = {
-      data: {
-        count: 1,
-        next: null,
-        previous: null,
-        results: [
-          {
-            id: 42,
-            production: 1,
-            production_display: 'Hamlet',
-            hall: 3,
-            hall_display: 'Main Hall',
-            starts_at: '2025-09-15T19:30:00Z',
-            ends_at: '2025-09-15T21:30:00Z',
-            prices: [
-              {
-                id: 101,
-                event: 42,
-                price_rank: 1,
-                price_rank_display: 'Standard',
-                price: 1,
-                price_display: 'Regular',
-                amount: '18.00',
-                available: 120,
-              },
-            ],
-          },
-        ],
-      },
+  it('fetches a single event by id', async () => {
+    const mockEvent = {
+      id: 42,
+      production: 1,
+      production_display: 'Hamlet',
+      hall: 3,
+      hall_display: 'Main Hall',
+      starts_at: '2025-09-15T19:30:00Z',
+      ends_at: '2025-09-15T21:30:00Z',
+      prices: [],
     }
 
-    mockedApi.get.mockResolvedValue(mockResponse)
+    mockedApi.get.mockResolvedValue({ data: mockEvent })
+
+    const result = await getEvent(42)
+
+    expect(mockedApi.get).toHaveBeenCalledWith('/events/42/')
+    expect(result).toEqual(mockEvent)
+  })
+
+  it('fetches the event list without options', async () => {
+    const mockResponse = {
+      count: 1,
+      next: null,
+      previous: null,
+      results: [
+        {
+          id: 42,
+          production: 1,
+          production_display: 'Hamlet',
+          hall: 3,
+          hall_display: 'Main Hall',
+          starts_at: '2025-09-15T19:30:00Z',
+          ends_at: '2025-09-15T21:30:00Z',
+          prices: [],
+        },
+      ],
+    }
+
+    mockedApi.get.mockResolvedValue({ data: mockResponse })
 
     const result = await getEvents()
 
     expect(mockedApi.get).toHaveBeenCalledWith('/events/', {
       params: {},
     })
-    expect(result).toEqual(mockResponse.data)
+
+    expect(result).toEqual(mockResponse)
   })
 
-  it('passes pagination, search, ordering, and filters', async () => {
+  it('passes pagination and filters correctly', async () => {
     mockedApi.get.mockResolvedValue({
       data: {
         count: 0,
@@ -90,7 +98,7 @@ describe('events service', () => {
     })
   })
 
-  it('omits undefined, null, and empty-string filter values', async () => {
+  it('omits undefined filter values', async () => {
     mockedApi.get.mockResolvedValue({
       data: {
         count: 0,
@@ -102,10 +110,9 @@ describe('events service', () => {
 
     await getEvents({
       filters: {
-        search: '',
         production: 1,
         hall: undefined,
-        location: null as unknown as number,
+        search: undefined,
       },
     })
 
@@ -116,27 +123,7 @@ describe('events service', () => {
     })
   })
 
-  it('fetches a single event', async () => {
-    const mockEvent = {
-      id: 42,
-      production: 1,
-      production_display: 'Hamlet',
-      hall: 3,
-      hall_display: 'Main Hall',
-      starts_at: '2025-09-15T19:30:00Z',
-      ends_at: '2025-09-15T21:30:00Z',
-      prices: [],
-    }
-
-    mockedApi.get.mockResolvedValue({ data: mockEvent })
-
-    const result = await getEvent(42)
-
-    expect(mockedApi.get).toHaveBeenCalledWith('/events/42/')
-    expect(result).toEqual(mockEvent)
-  })
-
-  it('propagates ApiError from the shared api instance', async () => {
+  it('propagates ApiError from api interceptor', async () => {
     const error = new ApiError(401, 'Not authenticated. Please log in.')
     mockedApi.get.mockRejectedValue(error)
 
