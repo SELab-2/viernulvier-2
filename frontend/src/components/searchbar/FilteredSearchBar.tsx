@@ -4,6 +4,7 @@ import DropDownFilter, { DropDownFilterProps } from './filters/DropDownFilter'
 import TagList from './tags/TagList'
 import LayoutOptionList from './layout_options/LayoutOptionList'
 
+// This represents the entire search bar component, which includes the search input, filter dropdowns, tag list, and layout options.
 export interface SearchBarProps {
   placeholder: string
   searchValue: string
@@ -17,6 +18,7 @@ export interface SearchBarProps {
   onLayoutChange: (layout: string) => void
 }
 
+// This component renders the search bar with all its functionalities based on the provided props.
 const SearchBar: React.FC<SearchBarProps> = ({
   placeholder,
   searchValue,
