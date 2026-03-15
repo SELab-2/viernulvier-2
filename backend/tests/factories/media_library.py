@@ -48,4 +48,4 @@ class MediaItemCropFactory(factory.django.DjangoModelFactory):
 
     media_item = factory.SubFactory(MediaItemFactory)
     name = factory.Sequence(lambda n: f"crop_{n}")
-    url = factory.LazyAttribute(lambda _: faker.url())
+    image = factory.LazyAttribute(lambda _: faker.url())
