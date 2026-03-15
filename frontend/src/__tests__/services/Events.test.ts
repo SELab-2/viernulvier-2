@@ -1,8 +1,8 @@
-import { api } from '../services/Api'
-import { getEvent, getEvents } from '../services/events/Events'
-import { ApiError } from '../services/ApiTypes'
+import { api } from '../../services/Api'
+import { getEvent, getEvents } from '../../services/events/Events'
+import { ApiError } from '../../services/ApiTypes'
 
-jest.mock('../services/Api', () => ({
+jest.mock('../../services/Api', () => ({
   api: {
     get: jest.fn(),
   },
@@ -49,7 +49,18 @@ describe('Events service', () => {
           hall_display: 'Main Hall',
           starts_at: '2025-09-15T19:30:00Z',
           ends_at: '2025-09-15T21:30:00Z',
-          prices: [],
+          prices: [
+            {
+              id: 101,
+              event: 42,
+              price_rank: 1,
+              price_rank_display: 'Standard',
+              price: 1,
+              price_display: 'Regular',
+              amount: '18.00',
+              available: 120,
+            },
+          ],
         },
       ],
     }
@@ -61,11 +72,10 @@ describe('Events service', () => {
     expect(mockedApi.get).toHaveBeenCalledWith('/events/', {
       params: {},
     })
-
     expect(result).toEqual(mockResponse)
   })
 
-  it('passes pagination and filters correctly', async () => {
+  it('passes pagination and standard filters correctly', async () => {
     mockedApi.get.mockResolvedValue({
       data: {
         count: 0,
@@ -83,6 +93,7 @@ describe('Events service', () => {
         ordering: '-starts_at',
         production: 1,
         hall: 3,
+        location: 7,
       },
     })
 
@@ -94,11 +105,12 @@ describe('Events service', () => {
         ordering: '-starts_at',
         production: 1,
         hall: 3,
+        location: 7,
       },
     })
   })
 
-  it('omits undefined filter values', async () => {
+  it('passes datetime filters correctly', async () => {
     mockedApi.get.mockResolvedValue({
       data: {
         count: 0,
@@ -110,23 +122,34 @@ describe('Events service', () => {
 
     await getEvents({
       filters: {
-        production: 1,
-        hall: undefined,
-        search: undefined,
+        starts_at_after: '2025-01-01T00:00:00Z',
+        starts_at_before: '2025-12-31T23:59:59Z',
+        ends_at_after: '2025-01-01T00:00:00Z',
+        ends_at_before: '2025-12-31T23:59:59Z',
       },
     })
 
     expect(mockedApi.get).toHaveBeenCalledWith('/events/', {
       params: {
-        production: 1,
+        starts_at_after: '2025-01-01T00:00:00Z',
+        starts_at_before: '2025-12-31T23:59:59Z',
+        ends_at_after: '2025-01-01T00:00:00Z',
+        ends_at_before: '2025-12-31T23:59:59Z',
       },
     })
   })
 
-  it('propagates ApiError from api interceptor', async () => {
+  it('propagates ApiError from api interceptor on getEvents', async () => {
     const error = new ApiError(401, 'Not authenticated. Please log in.')
     mockedApi.get.mockRejectedValue(error)
 
     await expect(getEvents()).rejects.toBe(error)
+  })
+
+  it('propagates ApiError from api interceptor on getEvent', async () => {
+    const error = new ApiError(404, 'The requested resource was not found.')
+    mockedApi.get.mockRejectedValue(error)
+
+    await expect(getEvent(42)).rejects.toBe(error)
   })
 })
