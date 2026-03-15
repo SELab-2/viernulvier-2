@@ -62,9 +62,7 @@ export const getEvent = async (id: number): Promise<Event> => {
  *   },
  * });
  */
-export const getEvents = async (
-  options?: GetEventsOptions,
-): Promise<EventListResponse> => {
+export const getEvents = async (options?: GetEventsOptions): Promise<EventListResponse> => {
   const res = await api.get<EventListResponse>('/events/', {
     params: buildListParams(options),
   })
