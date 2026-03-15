@@ -19,6 +19,31 @@ jest.mock('../../services/Api', () => {
 describe('genres service', () => {
   const mockedGet = api.get as jest.Mock
 
+  const expectGenreShape = (genre: {
+    id: unknown
+    type: unknown
+    use_as: unknown
+    name: unknown
+    display_name: unknown
+    vendor_id: unknown
+  }) => {
+    expect(typeof genre.id).toBe('number')
+    expect(typeof genre.type).toBe('string')
+    expect(typeof genre.use_as).toBe('number')
+
+    if (genre.name !== null) {
+      expect(typeof genre.name).toBe('object')
+    }
+
+    if (genre.display_name !== null) {
+      expect(typeof genre.display_name).toBe('string')
+    }
+
+    if (genre.vendor_id !== null) {
+      expect(typeof genre.vendor_id).toBe('string')
+    }
+  }
+
   beforeEach(() => {
     // Reset mock state between tests so each assertion only sees its own calls.
     mockedGet.mockReset()
@@ -30,13 +55,21 @@ describe('genres service', () => {
      * and returns the backend payload unchanged.
      */
     it('fetches one genre by id', async () => {
-      const data = { id: 7, type: 'theater' }
+      const data = {
+        id: 7,
+        type: 'theater',
+        use_as: 2,
+        name: { en: 'Theatre', nl: 'Theater' },
+        display_name: 'Theater',
+        vendor_id: 'vendor-42',
+      }
       mockedGet.mockResolvedValue({ data })
 
       const result = await getGenre(7)
 
       expect(mockedGet).toHaveBeenCalledWith('/genres/7/')
       expect(result).toEqual(data)
+      expectGenreShape(result)
     })
 
     /**
@@ -58,13 +91,28 @@ describe('genres service', () => {
      * empty `params` object by default.
      */
     it('fetches genres without options', async () => {
-      const data = { results: [] }
+      const data = {
+        count: 1,
+        next: null,
+        previous: null,
+        results: [
+          {
+            id: 7,
+            type: 'theater',
+            use_as: 2,
+            name: { en: 'Theatre', nl: 'Theater' },
+            display_name: 'Theater',
+            vendor_id: 'vendor-42',
+          },
+        ],
+      }
       mockedGet.mockResolvedValue({ data })
 
       const result = await getGenres()
 
       expect(mockedGet).toHaveBeenCalledWith('/genres/', { params: {} })
       expect(result).toEqual(data)
+      expectGenreShape(result.results[0])
     })
 
     /**
