@@ -15,7 +15,7 @@ export const getEvent = async (id: number): Promise<Event> => {
  * Retrieve a list of events with optional pagination and filtering.
  */
 export const getEvents = async (
-  options?: GetEventsOptions,
+  options?: GetEventsOptions
 ): Promise<EventListResponse> => {
   const res = await api.get<EventListResponse>('/events/', {
     params: buildListParams(options),
