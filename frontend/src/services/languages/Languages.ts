@@ -1,6 +1,7 @@
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
-import type { Language, LanguageListResponse, GetLanguagesOptions } from '../../types/Languages'
+import type { Language, LanguageListResponse } from '../../types/Languages'
+import type { GetLanguagesOptions } from './LanguageOptions'
 
 /**
  * Retrieve a single language by its ISO code.
