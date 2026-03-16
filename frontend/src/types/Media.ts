@@ -34,6 +34,11 @@ export interface MediaGallery {
   media_items: MediaItem[]
 }
 
+/**
+ * Paginated response shape for `GET /media-galleries/`.
+ *
+ * The backend always returns DRF pagination metadata fields.
+ */
 export interface MediaGalleryListResponse {
   count: number
   next: string | null
@@ -41,6 +46,11 @@ export interface MediaGalleryListResponse {
   results: MediaGallery[]
 }
 
+/**
+ * Paginated response shape for `GET /media-items/`.
+ *
+ * The backend always returns DRF pagination metadata fields.
+ */
 export interface MediaItemListResponse {
   count: number
   next: string | null

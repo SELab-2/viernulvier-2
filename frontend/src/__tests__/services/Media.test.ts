@@ -100,6 +100,12 @@ describe('Media service', () => {
       expect(result).toEqual(mockResponse)
     })
 
+    it('propagates errors to the caller', async () => {
+      mockedApi.get.mockRejectedValue(new ApiError(500, 'Internal server error'))
+
+      await expect(getMediaItems()).rejects.toBeInstanceOf(ApiError)
+    })
+
     it('passes filters and pagination as query params', async () => {
       const mockResponse = { count: 1, next: null, previous: null, results: [mockItem] }
       mockedApi.get.mockResolvedValue({ data: mockResponse })
@@ -120,6 +126,12 @@ describe('Media service', () => {
 
       expect(mockedApi.get).toHaveBeenCalledWith('/media-items/10/')
       expect(result).toEqual(mockItem)
+    })
+
+    it('propagates errors to the caller', async () => {
+      mockedApi.get.mockRejectedValue(new ApiError(404, 'Not found'))
+
+      await expect(getMediaItem(999)).rejects.toBeInstanceOf(ApiError)
     })
   })
 })
