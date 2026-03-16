@@ -83,7 +83,9 @@ class TestSpaceSerializerFields(TestCase):
 
     def test_expected_fields_present(self):
         data = SpaceSerializer(self.space).data
-        self.assertEqual(set(data.keys()), {"id", "location", "name", "display_name"})
+        self.assertEqual(set(data.keys()), {"id", "location", "name", "display_name", "halls"})
+        self.assertIsInstance(data["location"], dict)
+        self.assertIsInstance(data["halls"], list)
 
 
 class TestSpaceSerializerTranslations(TestCase):
@@ -97,6 +99,22 @@ class TestSpaceSerializerTranslations(TestCase):
     def test_translated_name_dict(self):
         data = SpaceSerializer(self.space).data
         self.assertEqual(data["name"], {"en": "Room A"})
+
+    def test_nested_halls_include_translated_fields(self):
+        hall = HallFactory(space=self.space)
+        HallTranslationFactory(
+            hall=hall,
+            language=self.lang,
+            name="Blue Hall",
+            remark="Front stage",
+        )
+
+        data = SpaceSerializer(self.space).data
+
+        self.assertEqual(len(data["halls"]), 1)
+        self.assertEqual(data["halls"][0]["name"], {"en": "Blue Hall"})
+        self.assertEqual(data["halls"][0]["display_name"], "Blue Hall")
+        self.assertEqual(data["halls"][0]["remark"], {"en": "Front stage"})
 
 
 class TestHallSerializerFields(TestCase):
@@ -119,6 +137,7 @@ class TestHallSerializerFields(TestCase):
                 "remark",
             },
         )
+        self.assertIsInstance(data["space"], dict)
 
 
 class TestHallSerializerTranslations(TestCase):

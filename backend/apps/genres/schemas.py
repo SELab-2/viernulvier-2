@@ -162,7 +162,7 @@ _GENRE_RESPONSE_MULTILINGUAL = OpenApiExample(
         "id": 10,
         "vendor_id": "theater-123",
         "type": "theater",
-        "use_as": 1,
+        "use_as": {"id": 1, "name": "genre"},
         "name": {"nl": "Theater", "en": "Theatre", "fr": "Théâtre"},
     },
     response_only=True,

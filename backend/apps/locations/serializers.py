@@ -11,7 +11,7 @@ as a dictionary (e.g. {"en": "Main Hall", "fr": "Grande Salle"}).
 
 from rest_framework import serializers
 
-from apps.core.serializers import TranslatableSerializerMixin
+from apps.core.serializers import NestedRepresentationPKField, TranslatableSerializerMixin
 
 from .models import Hall, Location, Space
 
@@ -95,16 +95,81 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     )
 
     display_name = serializers.SerializerMethodField(help_text="Human-readable space name in the project's base language.")
+    location = NestedRepresentationPKField(
+        queryset=Location.objects.all(),
+        serializer_class=LocationSerializer,
+        help_text="Primary key of the parent **Location** this space belongs to.",
+    )
+    halls = serializers.SerializerMethodField(
+        help_text="Halls that belong to this space, each including translated fields.",
+    )
+
+    class Meta:
+        model = Space
+        fields = ["id", "location", "name", "display_name", "halls"]
+        read_only_fields = ["id", "name", "display_name", "halls"]
+        extra_kwargs = {
+            "location": {},
+        }
+
+    def get_name(self, obj: Space) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
+        return self.get_translated_field(obj, "name")
+
+    def get_display_name(self, obj: Space) -> str | None:
+        """Return the space name in the project's base language."""
+        return self.get_base_translated_value(obj, "name")
+
+    def get_halls(self, obj: Space) -> list[dict]:
+        """Return nested hall representations belonging to this space."""
+        halls = list(obj.halls.all())
+        halls.sort(key=lambda hall: hall.id)
+        return HallInSpaceSerializer(halls, many=True, context=self.context).data
+
+
+class HallInSpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
+    """Nested hall representation used inside SpaceSerializer to avoid recursion."""
+
+    name = serializers.SerializerMethodField()
+    display_name = serializers.SerializerMethodField()
+    remark = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Hall
+        fields = ["id", "seat_selection", "open_seating", "name", "display_name", "remark"]
+
+    def get_name(self, obj: Hall) -> dict[str, str] | None:
+        return self.get_translated_field(obj, "name")
+
+    def get_display_name(self, obj: Hall) -> str | None:
+        return self.get_base_translated_value(obj, "name")
+
+    def get_remark(self, obj: Hall) -> dict[str, str] | None:
+        return self.get_translated_field(obj, "remark")
+
+
+class SpaceInHallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
+    """Nested space representation used inside HallSerializer (without halls)."""
+
+    name = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary containing all available translations of the space name "
+            '(e.g. {"en": "Stage A", "fr": "Scène A"}). '
+            "Read-only - use the translation endpoints to manage translations."
+        ),
+    )
+
+    display_name = serializers.SerializerMethodField(help_text="Human-readable space name in the project's base language.")
+    location = NestedRepresentationPKField(
+        queryset=Location.objects.all(),
+        serializer_class=LocationSerializer,
+        help_text="Primary key of the parent **Location** this space belongs to.",
+    )
 
     class Meta:
         model = Space
         fields = ["id", "location", "name", "display_name"]
         read_only_fields = ["id", "name", "display_name"]
-        extra_kwargs = {
-            "location": {
-                "help_text": "Primary key of the parent **Location** this space belongs to.",
-            },
-        }
 
     def get_name(self, obj: Space) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
@@ -142,6 +207,13 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             "Read-only - use the translation endpoints to manage translations."
         ),
     )
+    space = NestedRepresentationPKField(
+        queryset=Space.objects.all(),
+        serializer_class=SpaceInHallSerializer,
+        allow_null=True,
+        required=False,
+        help_text="Primary key of the parent **Space** this hall belongs to.",
+    )
 
     class Meta:
         model = Hall
@@ -156,9 +228,7 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         ]
         read_only_fields = ["id", "name", "display_remark", "remark"]
         extra_kwargs = {
-            "space": {
-                "help_text": "Primary key of the parent **Space** this hall belongs to.",
-            },
+            "space": {},
             "seat_selection": {
                 "help_text": "`true` when visitors can choose a specific seat during purchase.",
             },

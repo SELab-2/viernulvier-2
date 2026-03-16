@@ -254,7 +254,7 @@ class TestSpaceViewSet(TestCase):
     def test_retrieve_public(self):
         response = self.client.get(f"/api/spaces/{self.space.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["location"], self.space.location.id)
+        self.assertEqual(response.data["location"]["id"], self.space.location.id)
 
     def test_create_internal(self):
         location = LocationFactory()
@@ -306,7 +306,7 @@ class TestHallViewSet(TestCase):
     def test_retrieve_public(self):
         response = self.client.get(f"/api/halls/{self.hall.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["space"], self.hall.space.id)
+        self.assertEqual(response.data["space"]["id"], self.hall.space.id)
 
     def test_create_internal(self):
         space = SpaceFactory()

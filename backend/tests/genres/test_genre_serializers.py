@@ -94,7 +94,10 @@ class TestGenreSerializerFields(TestCase):
 
     def test_expected_fields_are_present(self):
         data = GenreSerializer(self.genre).data
-        self.assertEqual(set(data.keys()), {"id", "type", "use_as", "name", "display_name", "vendor_id"})
+        self.assertEqual(
+            set(data.keys()),
+            {"id", "type", "use_as", "name", "display_name", "vendor_id"},
+        )
 
 
 class TestGenreSerializerSerialization(TestCase):
@@ -113,7 +116,7 @@ class TestGenreSerializerSerialization(TestCase):
         data = GenreSerializer(genre).data
 
         self.assertEqual(data["type"], "Theater")
-        self.assertEqual(data["use_as"], self.use_as.id)
+        self.assertEqual(data["use_as"]["id"], self.use_as.id)
         self.assertIsInstance(data["id"], int)
         self.assertEqual(data["name"], {"en": "Theatre", "nl": "Theater"})
 

@@ -126,8 +126,8 @@ class TestEventSerializerSerialization(TestCase):
         serializer = EventSerializer(self.event, context={"request": _drf_request(self.factory, "/dummy")})
         data = serializer.data
 
-        self.assertEqual(data["production"], self.production.id)
-        self.assertEqual(data["hall"], self.hall.id)
+        self.assertEqual(data["production"]["id"], self.production.id)
+        self.assertEqual(data["hall"]["id"], self.hall.id)
 
         self.assertIsInstance(data["starts_at"], str)
         self.assertIsInstance(data["ends_at"], str)
@@ -142,13 +142,15 @@ class TestEventSerializerSerialization(TestCase):
         serializer = EventSerializer(self.event, context={"request": _drf_request(self.factory, "/dummy")})
         prices = serializer.data["prices"]
 
-        by_rank = {p["price_rank"]: p for p in prices}
+        by_rank = {p["price_rank"]["id"]: p for p in prices if p["price_rank"] is not None}
         self.assertIn(self.rank_1.id, by_rank)
         self.assertIn(self.rank_2.id, by_rank)
 
         item = by_rank[self.rank_1.id]
         self.assertEqual(item["event"], self.event.id)
-        self.assertEqual(item["price_rank"], self.rank_1.id)
+        self.assertEqual(item["price_rank"]["id"], self.rank_1.id)
+        self.assertIn("price_rank", item)
+        self.assertIn("price", item)
         self.assertEqual(item["available"], 100)
 
         self.assertIn(str(item["amount"]), {"12.50", "12.5"})

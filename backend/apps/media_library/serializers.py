@@ -12,7 +12,7 @@ all available translations as language-code dictionaries
 
 from rest_framework import serializers
 
-from apps.core.serializers import TranslatableSerializerMixin
+from apps.core.serializers import NestedRepresentationPKField, TranslatableSerializerMixin
 
 from .models import MediaGallery, MediaItem, MediaItemCrop
 
@@ -56,6 +56,14 @@ class MediaItemCropSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.image.url)
             return obj.image.url
         return None
+
+
+class MediaGalleryReferenceSerializer(serializers.ModelSerializer):
+    """Lightweight nested representation used for FK expansion."""
+
+    class Meta:
+        model = MediaGallery
+        fields = ["id", "name"]
 
 
 class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
@@ -111,6 +119,13 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
     )
 
     crops = MediaItemCropSerializer(many=True, read_only=True)
+    gallery = NestedRepresentationPKField(
+        queryset=MediaGallery.objects.all(),
+        serializer_class=MediaGalleryReferenceSerializer,
+        allow_null=True,
+        required=False,
+        help_text="Primary key of the parent **MediaGallery** this item belongs to.",
+    )
 
     class Meta:
         model = MediaItem
@@ -140,9 +155,6 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
             "crops",
         ]
         extra_kwargs = {
-            "gallery": {
-                "help_text": "Primary key of the parent **MediaGallery** this item belongs to.",
-            },
             "type": {
                 "help_text": "Media type: `foto`, `video`, `audio`, or `other`.",
             },

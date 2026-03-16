@@ -34,7 +34,10 @@ _CROP_EXAMPLE = {
 
 _MEDIA_ITEM_EXAMPLE = {
     "id": 1,
-    "gallery": 1,
+    "gallery": {
+        "id": 1,
+        "name": "Production Images 2024",
+    },
     "type": "foto",
     "format": "image/jpeg",
     "original_filename": "poster_nl.jpg",

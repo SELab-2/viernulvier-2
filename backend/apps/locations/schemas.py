@@ -189,12 +189,47 @@ _SPACE_RESPONSE = OpenApiExample(
     summary="A space with a translated name",
     value={
         "id": 3,
-        "location": 1,
+        "location": {
+            "id": 1,
+            "street": "Kiekenmarkt",
+            "number": "48",
+            "postal_code": "1000",
+            "city": "Brussels",
+            "country": "Belgium",
+            "phone_1": "+32 2 555 12 34",
+            "phone_2": None,
+            "is_own_location": True,
+            "name": {
+                "nl": "Koninklijke Muntschouwburg",
+                "en": "Royal Theatre of the Mint",
+                "fr": "Théâtre Royal de la Monnaie",
+            },
+            "display_name": "Royal Theatre of the Mint",
+        },
         "name": {
             "nl": "Grote Zaal",
             "en": "Main Hall",
             "fr": "Grande Salle",
         },
+        "display_name": "Main Hall",
+        "halls": [
+            {
+                "id": 7,
+                "seat_selection": True,
+                "open_seating": False,
+                "name": {
+                    "nl": "Rode Zaal",
+                    "en": "Red Hall",
+                    "fr": "Salle Rouge",
+                },
+                "display_name": "Red Hall",
+                "remark": {
+                    "nl": "Rolstoelplaatsen beschikbaar op rij A.",
+                    "en": "Wheelchair spaces available in row A.",
+                    "fr": "Places pour fauteuils roulants disponibles en rangée A.",
+                },
+            }
+        ],
     },
     response_only=True,
 )
@@ -327,7 +362,32 @@ _HALL_RESPONSE = OpenApiExample(
     summary="A hall with seating flags and translated fields",
     value={
         "id": 7,
-        "space": 3,
+        "space": {
+            "id": 3,
+            "location": {
+                "id": 1,
+                "street": "Kiekenmarkt",
+                "number": "48",
+                "postal_code": "1000",
+                "city": "Brussels",
+                "country": "Belgium",
+                "phone_1": "+32 2 555 12 34",
+                "phone_2": None,
+                "is_own_location": True,
+                "name": {
+                    "nl": "Koninklijke Muntschouwburg",
+                    "en": "Royal Theatre of the Mint",
+                    "fr": "Théâtre Royal de la Monnaie",
+                },
+                "display_name": "Royal Theatre of the Mint",
+            },
+            "name": {
+                "nl": "Grote Zaal",
+                "en": "Main Hall",
+                "fr": "Grande Salle",
+            },
+            "display_name": "Main Hall",
+        },
         "seat_selection": True,
         "open_seating": False,
         "name": {

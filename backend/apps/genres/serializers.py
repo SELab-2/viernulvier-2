@@ -8,7 +8,7 @@ not need to be repeated inside the schema decorators.
 
 from rest_framework import serializers
 
-from apps.core.serializers import TranslatableSerializerMixin
+from apps.core.serializers import NestedRepresentationPKField, TranslatableSerializerMixin
 
 from .models import Genre, GenreUseAs
 
@@ -62,6 +62,15 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
+    use_as = NestedRepresentationPKField(
+        queryset=GenreUseAs.objects.all(),
+        serializer_class=GenreUseAsSerializer,
+        help_text=(
+            "Primary key of the **GenreUseAs** that defines how this "
+            "genre is applied (taxonomy classification or tag)."
+        ),
+    )
+
     class Meta:
         model = Genre
         fields = ["id", "type", "use_as", "name", "display_name", "vendor_id"]
@@ -70,12 +79,6 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "type": {
                 "help_text": (
                     "Internal technical identifier in `snake_case` (e.g. `theater`, `contemporary_dance`, `festival`)."
-                ),
-            },
-            "use_as": {
-                "help_text": (
-                    "Primary key of the **GenreUseAs** that defines how this "
-                    "genre is applied (taxonomy classification or tag)."
                 ),
             },
             "vendor_id": {

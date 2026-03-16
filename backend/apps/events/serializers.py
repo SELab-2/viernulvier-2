@@ -13,7 +13,13 @@ through-table. It is nested read-only inside ``EventSerializer`` via the
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.core.serializers import TranslatableSerializerMixin
+from apps.core.serializers import NestedRepresentationPKField, TranslatableSerializerMixin
+from apps.locations.serializers import HallSerializer
+from apps.pricing.serializers import PriceRankSerializer, PriceSerializer
+from apps.productions.serializers import ProductionSerializer
+from apps.locations.models import Hall
+from apps.pricing.models import Price, PriceRank
+from apps.productions.models import Production
 
 from .models import Event, EventPrice
 
@@ -32,6 +38,20 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
     price_rank_display = serializers.SerializerMethodField()
     price_display = serializers.SerializerMethodField()
+    price = NestedRepresentationPKField(
+        queryset=Price.objects.all(),
+        serializer_class=PriceSerializer,
+        allow_null=True,
+        required=False,
+        help_text="PK of the associated ``Price`` category. `null` when the price has been deleted.",
+    )
+    price_rank = NestedRepresentationPKField(
+        queryset=PriceRank.objects.all(),
+        serializer_class=PriceRankSerializer,
+        allow_null=True,
+        required=False,
+        help_text="PK of the associated ``PriceRank`` availability tier. `null` when the rank has been deleted.",
+    )
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_price_rank_display(self, obj):
@@ -71,15 +91,7 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         read_only_fields = ["id"]
         extra_kwargs = {
             "event": {"help_text": "PK of the event this price entry belongs to."},
-            "price_rank": {
-                "help_text": (
-                    "PK of the associated ``PriceRank`` availability tier. `null` when the rank has been deleted."
-                ),
-            },
             "price_rank_display": {"help_text": "String for the price rank in the display representation."},
-            "price": {
-                "help_text": ("PK of the associated ``Price`` category. `null` when the price has been deleted."),
-            },
             "price_display": {"help_text": "String for the price category in the display representation."},
             "amount": {"help_text": "Ticket price in euro (e.g. `18.00`)."},
             "available": {"help_text": "Number of tickets available at this price rank for the event."},
@@ -118,6 +130,18 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
 
     production_display = serializers.SerializerMethodField()
     hall_display = serializers.SerializerMethodField()
+    production = NestedRepresentationPKField(
+        queryset=Production.objects.all(),
+        serializer_class=ProductionSerializer,
+        help_text="PK of the production this event is a performance of.",
+    )
+    hall = NestedRepresentationPKField(
+        queryset=Hall.objects.all(),
+        serializer_class=HallSerializer,
+        allow_null=True,
+        required=False,
+        help_text="PK of the hall in which the event takes place. `null` for online or location-independent events.",
+    )
 
     @extend_schema_field(serializers.CharField())
     def get_production_display(self, obj):
@@ -155,15 +179,7 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "prices"]
         extra_kwargs = {
-            "production": {
-                "help_text": "PK of the production this event is a performance of.",
-            },
             "production_display": {"help_text": "String for the production in the display representation."},
-            "hall": {
-                "help_text": (
-                    "PK of the hall in which the event takes place. `null` for online or location-independent events."
-                ),
-            },
             "hall_display": {"help_text": "String for the hall in the display representation."},
             "starts_at": {
                 "help_text": "ISO 8601 UTC datetime at which the event begins.",
