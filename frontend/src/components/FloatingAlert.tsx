@@ -1,6 +1,5 @@
 import { Snackbar, Box, IconButton } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
-import { useState, useEffect } from 'react'
 import { useTheme } from '@mui/material/styles'
 
 type FloatingAlertSeverity = 'error' | 'warning' | 'info' | 'success'
@@ -32,11 +31,6 @@ const FloatingAlert = ({
   position = { vertical: 'top', horizontal: 'right' },
 }: FloatingAlertProps) => {
   const theme = useTheme()
-  const [isOpen, setIsOpen] = useState(open)
-
-  useEffect(() => {
-    setIsOpen(open)
-  }, [open])
 
   const severityConfig: Record<
     FloatingAlertSeverity,
@@ -67,13 +61,12 @@ const FloatingAlert = ({
   const config = severityConfig[severity]
 
   const handleClose = () => {
-    setIsOpen(false)
     onClose()
   }
 
   return (
     <Snackbar
-      open={isOpen}
+      open={open}
       autoHideDuration={autoCloseDuration}
       onClose={handleClose}
       anchorOrigin={position}
@@ -95,6 +88,9 @@ const FloatingAlert = ({
       data-testid="floating-alert"
     >
       <Box
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
         sx={{
           display: 'flex',
           alignItems: 'flex-start',

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import FloatingAlert from '../components/FloatingAlert'
 
 describe('FloatingAlert', () => {
@@ -31,16 +31,18 @@ describe('FloatingAlert', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('auto-closes after specified duration', async () => {
+  it('auto-closes after specified duration', () => {
     const onClose = jest.fn()
+    jest.useFakeTimers()
+
     render(<FloatingAlert open message="Auto-dismiss" onClose={onClose} autoCloseDuration={100} />)
 
-    await waitFor(
-      () => {
-        expect(onClose).toHaveBeenCalled()
-      },
-      { timeout: 500 },
-    )
+    act(() => {
+      jest.advanceTimersByTime(150)
+    })
+
+    expect(onClose).toHaveBeenCalled()
+    jest.useRealTimers()
   })
 
   it('renders all severity levels', () => {

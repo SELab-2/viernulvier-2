@@ -23,6 +23,7 @@ const NAV_LINKS = [
   { labelKey: 'nav.events', to: '/series' },
   { labelKey: 'nav.productions', to: '/artists' },
 ] as const
+const NAVBAR_MIN_HEIGHT_PX = 64
 
 type SupportedLanguage = 'en' | 'nl'
 
@@ -84,8 +85,15 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
     }
 
     const updateNavbarHeightVar = () => {
-      const height = toolbar.getBoundingClientRect().height
-      document.documentElement.style.setProperty('--navbar-height', `${Math.ceil(height)}px`)
+      const measuredHeight = Math.ceil(toolbar.getBoundingClientRect().height)
+
+      // Avoid writing unusable values (e.g., 0 in jsdom/hidden states) so CSS fallback remains valid.
+      if (measuredHeight <= 0) {
+        return
+      }
+
+      const safeHeight = Math.max(measuredHeight, NAVBAR_MIN_HEIGHT_PX)
+      document.documentElement.style.setProperty('--navbar-height', `${safeHeight}px`)
     }
 
     updateNavbarHeightVar()
@@ -103,6 +111,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
         resizeObserver.disconnect()
       }
       window.removeEventListener('resize', updateNavbarHeightVar)
+      document.documentElement.style.removeProperty('--navbar-height')
     }
   }, [])
 
@@ -114,7 +123,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
     >
       <ClickAwayListener onClickAway={closeMobileMenu}>
         <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3, md: 20 } }}>
-          <Toolbar ref={toolbarRef} disableGutters sx={{ minHeight: 64 }}>
+          <Toolbar ref={toolbarRef} disableGutters sx={{ minHeight: NAVBAR_MIN_HEIGHT_PX }}>
             {/* Brand: logo + "/ Archive" */}
             <Box
               component={RouterLink}
