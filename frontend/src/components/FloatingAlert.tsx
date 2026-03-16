@@ -1,0 +1,153 @@
+import { Snackbar, Box, IconButton } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import { useState, useEffect } from 'react'
+import { useTheme } from '@mui/material/styles'
+
+type FloatingAlertSeverity = 'error' | 'warning' | 'info' | 'success'
+
+type FloatingAlertProps = {
+    open: boolean
+    onClose: () => void
+    message: string
+    title?: string
+    severity?: FloatingAlertSeverity
+    autoCloseDuration?: number
+    position?: {
+        vertical: 'top' | 'bottom'
+        horizontal: 'left' | 'center' | 'right'
+    }
+}
+
+/**
+ * FloatingAlert combines Alert styling with Toast floating behavior.
+ * Displays severity-themed notifications that auto-dismiss.
+ */
+const FloatingAlert = ({
+    open,
+    onClose,
+    message,
+    title,
+    severity = 'info',
+    autoCloseDuration = 4000,
+    position = { vertical: 'top', horizontal: 'right' },
+}: FloatingAlertProps) => {
+    const theme = useTheme()
+    const [isOpen, setIsOpen] = useState(open)
+
+    useEffect(() => {
+        setIsOpen(open)
+    }, [open])
+
+    const severityConfig: Record<
+        FloatingAlertSeverity,
+        { bgColor: string; textColor: string; borderColor: string }
+    > = {
+        error: {
+            bgColor: theme.palette.mode === 'dark' ? '#5f2c2c' : '#ffebee',
+            textColor: theme.palette.mode === 'dark' ? '#ff8a80' : '#c62828',
+            borderColor: theme.palette.mode === 'dark' ? '#ff8a80' : '#d32f2f',
+        },
+        warning: {
+            bgColor: theme.palette.mode === 'dark' ? '#5f4c2c' : '#fff8e1',
+            textColor: theme.palette.mode === 'dark' ? '#ffb74d' : '#e65100',
+            borderColor: theme.palette.mode === 'dark' ? '#ffb74d' : '#f57f17',
+        },
+        info: {
+            bgColor: theme.palette.mode === 'dark' ? '#2c4a5f' : '#e3f2fd',
+            textColor: theme.palette.mode === 'dark' ? '#64b5f6' : '#0d47a1',
+            borderColor: theme.palette.mode === 'dark' ? '#64b5f6' : '#1976d2',
+        },
+        success: {
+            bgColor: theme.palette.mode === 'dark' ? '#2c5f3c' : '#e8f5e9',
+            textColor: theme.palette.mode === 'dark' ? '#81c784' : '#1b5e20',
+            borderColor: theme.palette.mode === 'dark' ? '#81c784' : '#388e3c',
+        },
+    }
+
+    const config = severityConfig[severity]
+
+    const handleClose = () => {
+        setIsOpen(false)
+        onClose()
+    }
+
+    return (
+        <Snackbar
+            open={isOpen}
+            autoHideDuration={autoCloseDuration}
+            onClose={handleClose}
+            anchorOrigin={position}
+            sx={
+                position.vertical === 'top'
+                    ? {
+                          '&.MuiSnackbar-anchorOriginTopLeft': {
+                              top: 'calc(var(--navbar-height, 64px) + env(safe-area-inset-top, 0px))',
+                          },
+                          '&.MuiSnackbar-anchorOriginTopCenter': {
+                              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+                          },
+                          '&.MuiSnackbar-anchorOriginTopRight': {
+                              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+                          },
+                      }
+                    : undefined
+            }
+            data-testid="floating-alert"
+        >
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 1,
+                    px: 2,
+                    py: 1.5,
+                    borderRadius: 1,
+                    border: `1px solid ${config.borderColor}`,
+                    bgcolor: config.bgColor,
+                    color: config.textColor,
+                    maxWidth: 400,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                }}
+            >
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                    {title && (
+                        <Box
+                            sx={{
+                                fontWeight: 600,
+                                fontSize: '0.95rem',
+                                mb: 0.25,
+                            }}
+                        >
+                            {title}
+                        </Box>
+                    )}
+                    <Box
+                        sx={{
+                            fontSize: '0.875rem',
+                            lineHeight: 1.4,
+                            wordBreak: 'break-word',
+                        }}
+                    >
+                        {message}
+                    </Box>
+                </Box>
+                <IconButton
+                    size="small"
+                    onClick={handleClose}
+                    sx={{
+                        color: config.textColor,
+                        flexShrink: 0,
+                        p: 0,
+                        '&:hover': {
+                            bgcolor: 'rgba(0,0,0,0.05)',
+                        },
+                    }}
+                >
+                    <CloseIcon fontSize="small" />
+                </IconButton>
+            </Box>
+        </Snackbar>
+    )
+}
+
+export default FloatingAlert
