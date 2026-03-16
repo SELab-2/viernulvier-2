@@ -23,14 +23,27 @@ const LoadingSpinner = ({
       aria-live="polite"
       aria-label={label}
       data-testid="loading-spinner"
-      sx={{
-        width: fullScreen ? '100vw' : 'auto',
-        minHeight: fullScreen ? '100vh' : 'auto',
-        display: 'grid',
-        placeItems: 'center',
-        textAlign: 'center',
-        gap: 1,
-      }}
+      sx={
+        fullScreen
+          ? {
+              position: 'fixed',
+              inset: 0,
+              zIndex: theme.zIndex.modal,
+              bgcolor: theme.palette.background.default,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+            }
+          : {
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+            }
+      }
     >
       <CircularProgress size={size} sx={{ color: resolvedColor }} />
       <Typography

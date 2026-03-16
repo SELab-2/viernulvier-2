@@ -1,8 +1,9 @@
+import type { ReactNode } from 'react'
 import { render, screen } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import LoadingSpinner from '../components/LoadingSpinner'
 
-const renderWithTheme = (mode: 'light' | 'dark') => {
+const renderWithTheme = (mode: 'light' | 'dark', ui: ReactNode = <LoadingSpinner />) => {
   const theme = createTheme({
     palette: {
       mode,
@@ -11,11 +12,7 @@ const renderWithTheme = (mode: 'light' | 'dark') => {
 
   return {
     theme,
-    ...render(
-      <ThemeProvider theme={theme}>
-        <LoadingSpinner />
-      </ThemeProvider>,
-    ),
+    ...render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>),
   }
 }
 
@@ -42,12 +39,15 @@ describe('LoadingSpinner', () => {
     const spinner = screen.getByTestId('loading-spinner')
     expect(spinner).toHaveAttribute('aria-label', 'Fetching events')
     expect(screen.getByText('Fetching events')).toBeInTheDocument()
-    expect(spinner).toHaveStyle({ width: '100vw', minHeight: '100vh' })
+    expect(spinner).toHaveStyle({ position: 'fixed', inset: '0' })
+
+    // Verify size={48} is forwarded to the CircularProgress element.
+    const progress = screen.getByRole('progressbar')
+    expect(progress).toHaveStyle({ width: '48px', height: '48px' })
   })
 
   it('prefers an explicit color over the theme default', () => {
-    renderWithTheme('light')
-    render(<LoadingSpinner color="#ff5500" label="Custom color" />)
+    renderWithTheme('light', <LoadingSpinner color="#ff5500" label="Custom color" />)
 
     expect(screen.getByText('Custom color')).toHaveStyle({ color: '#ff5500' })
   })
