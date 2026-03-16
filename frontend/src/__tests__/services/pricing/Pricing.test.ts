@@ -1,5 +1,5 @@
 import { api } from '../../../services/Api'
-import { getPrice, getPrices, getPriceRank, getPriceRanks} from '../../../services/pricing/Pricing'
+import { getPrice, getPrices, getPriceRank, getPriceRanks } from '../../../services/pricing/Pricing'
 import { ApiError } from '../../../services/ApiTypes'
 
 jest.mock('../../../services/Api', () => ({

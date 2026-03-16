@@ -1,7 +1,12 @@
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
-import type { Price, PriceListResponse, PriceRank, PriceRankListResponse } from '../../types/Pricing'
-import type { GetPricesOptions, GetPriceRanksOptions} from './PricingOptions'
+import type {
+  Price,
+  PriceListResponse,
+  PriceRank,
+  PriceRankListResponse,
+} from '../../types/Pricing'
+import type { GetPricesOptions, GetPriceRanksOptions } from './PricingOptions'
 
 /**
  * Retrieve a single price by its numeric ID.
@@ -32,7 +37,9 @@ export const getPriceRank = async (id: number): Promise<PriceRank> => {
 /**
  * Retrieve a paginated list of price ranks with optional pagination and filtering.
  */
-export const getPriceRanks = async (options?: GetPriceRanksOptions): Promise<PriceRankListResponse> => {
+export const getPriceRanks = async (
+  options?: GetPriceRanksOptions,
+): Promise<PriceRankListResponse> => {
   const res = await api.get<PriceRankListResponse>('/price-ranks/', {
     params: buildListParams(options),
   })
