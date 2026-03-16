@@ -1,8 +1,8 @@
-import { api } from '../../services/Api'
-import { getEvent, getEvents } from '../../services/events/Events'
-import { ApiError } from '../../services/ApiTypes'
+import { api } from '../../../src/services/Api'
+import { getEvent, getEvents } from '../../../src/services/events/Events'
+import { ApiError } from '../../../src/services/ApiTypes'
 
-jest.mock('../../services/Api', () => ({
+jest.mock('../../../src/services/Api', () => ({
   api: {
     get: jest.fn(),
   },
