@@ -7,8 +7,8 @@ import type { FilteredListOptions } from '../ApiTypes'
  * `external_id`) that every list endpoint supports.
  */
 export interface MediaGalleryFilters {
-    /** Case-insensitive substring match on the gallery name. */
-    name?: string
+  /** Case-insensitive substring match on the gallery name. */
+  name?: string
 }
 
 /**
@@ -18,14 +18,14 @@ export interface MediaGalleryFilters {
  * `external_id`) that every list endpoint supports.
  */
 export interface MediaItemFilters {
-    /** Exact match on the parent gallery ID. */
-    gallery?: number
-    /** Exact match on media type: `foto`, `video`, `audio`, or `other`. */
-    type?: 'foto' | 'video' | 'audio' | 'other'
-    /** Case-insensitive substring match on the file format / extension. */
-    file_format?: string
-    /** Case-insensitive substring match on the original filename. */
-    original_filename?: string
+  /** Exact match on the parent gallery ID. */
+  gallery?: number
+  /** Exact match on media type: `foto`, `video`, `audio`, or `other`. */
+  type?: 'foto' | 'video' | 'audio' | 'other'
+  /** Case-insensitive substring match on the file format / extension. */
+  file_format?: string
+  /** Case-insensitive substring match on the original filename. */
+  original_filename?: string
 }
 
 /** Options accepted by {@link getMediaGalleries}. */
