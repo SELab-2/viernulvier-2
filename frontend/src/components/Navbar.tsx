@@ -89,12 +89,19 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
     }
 
     updateNavbarHeightVar()
-    const resizeObserver = new ResizeObserver(updateNavbarHeightVar)
-    resizeObserver.observe(toolbar)
+    const supportsResizeObserver = typeof ResizeObserver !== 'undefined'
+    const resizeObserver = supportsResizeObserver ? new ResizeObserver(updateNavbarHeightVar) : null
+
+    if (resizeObserver) {
+      resizeObserver.observe(toolbar)
+    }
+
     window.addEventListener('resize', updateNavbarHeightVar)
 
     return () => {
-      resizeObserver.disconnect()
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
       window.removeEventListener('resize', updateNavbarHeightVar)
     }
   }, [])
