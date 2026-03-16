@@ -14,12 +14,12 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.core.serializers import NestedRepresentationPKField, TranslatableSerializerMixin
-from apps.locations.serializers import HallSerializer
-from apps.pricing.serializers import PriceRankSerializer, PriceSerializer
-from apps.productions.serializers import ProductionSerializer
 from apps.locations.models import Hall
+from apps.locations.serializers import HallSerializer
 from apps.pricing.models import Price, PriceRank
+from apps.pricing.serializers import PriceRankSerializer, PriceSerializer
 from apps.productions.models import Production
+from apps.productions.serializers import ProductionSerializer
 
 from .models import Event, EventPrice
 

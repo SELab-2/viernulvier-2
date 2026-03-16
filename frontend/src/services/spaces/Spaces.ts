@@ -55,9 +55,12 @@ export const getSpace = async (id: number): Promise<Space> => {
  * @returns A promise that resolves to the API response data, usually a paginated list.
  */
 export const getSpaces = async (options?: GetSpacesOptions): Promise<SpaceListResponse> => {
-  const res = await api.get<Omit<SpaceListResponse, 'results'> & { results: SpaceResponse[] }>('/spaces/', {
-    params: buildListParams(options),
-  })
+  const res = await api.get<Omit<SpaceListResponse, 'results'> & { results: SpaceResponse[] }>(
+    '/spaces/',
+    {
+      params: buildListParams(options),
+    },
+  )
 
   return {
     ...res.data,

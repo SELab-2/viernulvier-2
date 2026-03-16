@@ -1,8 +1,8 @@
 from datetime import timedelta
 
 from django.db import connection
-from django.test.utils import CaptureQueriesContext
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from rest_framework.test import APIClient
 
