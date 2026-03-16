@@ -1,7 +1,32 @@
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
 import type { GetSpacesOptions } from './SpaceOptions'
+import type { Hall } from '../../types/Halls'
 import type { Space, SpaceListResponse } from '../../types/Spaces'
+import type { HallInSpaceResponse, SpaceResponse } from './SpaceOptions'
+
+/**
+ * Normalize a hall nested under `/spaces/` responses.
+ *
+ * The backend omits `hall.space` in this nested context to avoid recursive
+ * payloads. The frontend uses one uniform `Hall` type, so we fill `space`
+ * with `null` here.
+ */
+const mapHallInSpace = (hall: HallInSpaceResponse): Hall => ({
+  ...hall,
+  space: null,
+})
+
+/**
+ * Normalize a single space response to the frontend domain shape.
+ *
+ * This keeps consumers simple: they can always rely on `Space.halls` being a
+ * `Hall[]` with a defined `space` field (`null` for nested hall rows).
+ */
+const mapSpaceResponse = (space: SpaceResponse): Space => ({
+  ...space,
+  halls: space.halls.map(mapHallInSpace),
+})
 
 /**
  * Retrieve a single space by its numeric ID.
@@ -13,8 +38,8 @@ import type { Space, SpaceListResponse } from '../../types/Spaces'
  * @returns A promise that resolves to the space data returned by the API.
  */
 export const getSpace = async (id: number): Promise<Space> => {
-  const res = await api.get<Space>(`/spaces/${id}/`)
-  return res.data
+  const res = await api.get<SpaceResponse>(`/spaces/${id}/`)
+  return mapSpaceResponse(res.data)
 }
 
 /**
@@ -30,6 +55,12 @@ export const getSpace = async (id: number): Promise<Space> => {
  * @returns A promise that resolves to the API response data, usually a paginated list.
  */
 export const getSpaces = async (options?: GetSpacesOptions): Promise<SpaceListResponse> => {
-  const res = await api.get<SpaceListResponse>('/spaces/', { params: buildListParams(options) })
-  return res.data
+  const res = await api.get<Omit<SpaceListResponse, 'results'> & { results: SpaceResponse[] }>('/spaces/', {
+    params: buildListParams(options),
+  })
+
+  return {
+    ...res.data,
+    results: res.data.results.map(mapSpaceResponse),
+  }
 }

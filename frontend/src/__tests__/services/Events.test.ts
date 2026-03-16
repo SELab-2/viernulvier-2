@@ -2,6 +2,63 @@ import { api } from '../../../src/services/Api'
 import { getEvent, getEvents } from '../../../src/services/events/Events'
 import { ApiError } from '../../../src/services/ApiTypes'
 
+const nestedGenreUseAs = { id: 2, name: 'genre' }
+
+const nestedProduction = {
+  id: 1,
+  attendance_mode: 'offline',
+  performer_type: 'group',
+  uit_database_theme: { id: 2, name: 'Theater' },
+  uit_database_type: { id: 6, name: 'Voorstelling' },
+  display_title: 'Hamlet',
+  display_artist_name: 'Toneelhuis',
+  title: { en: 'Hamlet', nl: 'Hamlet' },
+  artist_name: { en: 'Toneelhuis', nl: 'Toneelhuis' },
+  tagline: { en: 'A classic', nl: 'Een klassieker' },
+  teaser: { en: 'Short teaser', nl: 'Korte teaser' },
+  description: { en: 'Long description', nl: 'Lange beschrijving' },
+  tags: [],
+  genres: [
+    {
+      id: 10,
+      type: 'theater',
+      use_as: nestedGenreUseAs,
+      name: { en: 'Theatre', nl: 'Theater' },
+      display_name: 'Theater',
+      vendor_id: 'vendor-42',
+    },
+  ],
+}
+
+const nestedLocation = {
+  id: 7,
+  street: 'Veldstraat',
+  number: '12',
+  postal_code: '9000',
+  city: 'Ghent',
+  country: 'BE',
+  phone_1: '+3290000001',
+  phone_2: null,
+  is_own_location: true,
+  name: { en: 'City Hall', nl: 'Stadshal' },
+  display_name: 'Stadshal',
+}
+
+const nestedHall = {
+  id: 3,
+  space: {
+    id: 9,
+    location: nestedLocation,
+    name: { en: 'Main Building', nl: 'Hoofdgebouw' },
+    display_name: 'Hoofdgebouw',
+  },
+  seat_selection: true,
+  open_seating: false,
+  name: { en: 'Main Hall', nl: 'Grote Zaal' },
+  display_name: 'Main Hall',
+  remark: { en: 'Accessible', nl: 'Toegankelijk' },
+}
+
 jest.mock('../../../src/services/Api', () => ({
   api: {
     get: jest.fn(),
@@ -18,9 +75,9 @@ describe('Events service', () => {
   it('fetches a single event by id', async () => {
     const mockEvent = {
       id: 42,
-      production: 1,
+      production: nestedProduction,
       production_display: 'Hamlet',
-      hall: 3,
+      hall: nestedHall,
       hall_display: 'Main Hall',
       starts_at: '2025-09-15T19:30:00Z',
       ends_at: '2025-09-15T21:30:00Z',
@@ -43,9 +100,9 @@ describe('Events service', () => {
       results: [
         {
           id: 42,
-          production: 1,
+          production: nestedProduction,
           production_display: 'Hamlet',
-          hall: 3,
+          hall: nestedHall,
           hall_display: 'Main Hall',
           starts_at: '2025-09-15T19:30:00Z',
           ends_at: '2025-09-15T21:30:00Z',
@@ -53,9 +110,27 @@ describe('Events service', () => {
             {
               id: 101,
               event: 42,
-              price_rank: 1,
+              price_rank: {
+                id: 1,
+                position: 1,
+                sold_out_buffer: 0,
+                description: { en: 'Standard', nl: 'Standaard' },
+                display_description: 'Standard',
+              },
               price_rank_display: 'Standard',
-              price: 1,
+              price: {
+                id: 1,
+                type: 'standard',
+                visibility: 'public',
+                membership: '',
+                minimum: null,
+                maximum: null,
+                step: null,
+                sort_order: 1,
+                cineville_box: false,
+                description: { en: 'Regular', nl: 'Normaal' },
+                display_description: 'Regular',
+              },
               price_display: 'Regular',
               amount: '18.00',
               available: 120,

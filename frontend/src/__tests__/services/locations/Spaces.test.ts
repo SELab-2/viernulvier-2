@@ -1,6 +1,20 @@
 import { api } from '../../../services/Api'
 import { getSpace, getSpaces } from '../../../services/spaces/Spaces'
 
+const nestedLocation = {
+  id: 7,
+  street: 'Veldstraat',
+  number: '12',
+  postal_code: '9000',
+  city: 'Ghent',
+  country: 'BE',
+  phone_1: '+3290000001',
+  phone_2: null,
+  is_own_location: true,
+  name: { en: 'City Hall', nl: 'Stadshal' },
+  display_name: 'Stadshal',
+}
+
 jest.mock('../../../services/Api', () => {
   const { buildListParams } = jest.requireActual('../../../services/ApiParams')
 
@@ -23,16 +37,32 @@ describe('locations service - spaces', () => {
     it('fetches one space by id', async () => {
       const data = {
         id: 3,
-        location: 7,
+        location: nestedLocation,
         name: { en: 'Main Building', nl: 'Hoofdgebouw' },
         display_name: 'Hoofdgebouw',
+        halls: [
+          {
+            id: 5,
+            seat_selection: true,
+            open_seating: false,
+            name: { en: 'Main Hall', nl: 'Grote Zaal' },
+            display_name: 'Grote Zaal',
+            remark: { en: 'Accessible', nl: 'Toegankelijk' },
+          },
+        ],
       }
       mockedGet.mockResolvedValue({ data })
 
       const result = await getSpace(3)
 
+      const expected = {
+        ...data,
+        halls: data.halls.map((hall) => ({ ...hall, space: null })),
+      }
+
       expect(mockedGet).toHaveBeenCalledWith('/spaces/3/')
-      expect(result).toEqual(data)
+      expect(result).toEqual(expected)
+      expect(result.halls[0].space).toBeNull()
     })
 
     it('propagates errors to the caller', async () => {
@@ -52,9 +82,19 @@ describe('locations service - spaces', () => {
         results: [
           {
             id: 3,
-            location: 7,
+            location: nestedLocation,
             name: { en: 'Main Building', nl: 'Hoofdgebouw' },
             display_name: 'Hoofdgebouw',
+            halls: [
+              {
+                id: 5,
+                seat_selection: true,
+                open_seating: false,
+                name: { en: 'Main Hall', nl: 'Grote Zaal' },
+                display_name: 'Grote Zaal',
+                remark: { en: 'Accessible', nl: 'Toegankelijk' },
+              },
+            ],
           },
         ],
       }
@@ -62,8 +102,17 @@ describe('locations service - spaces', () => {
 
       const result = await getSpaces()
 
+      const expected = {
+        ...data,
+        results: data.results.map((space) => ({
+          ...space,
+          halls: space.halls.map((hall) => ({ ...hall, space: null })),
+        })),
+      }
+
       expect(mockedGet).toHaveBeenCalledWith('/spaces/', { params: {} })
-      expect(result).toEqual(data)
+      expect(result).toEqual(expected)
+      expect(result.results[0].halls[0].space).toBeNull()
     })
 
     it.each([

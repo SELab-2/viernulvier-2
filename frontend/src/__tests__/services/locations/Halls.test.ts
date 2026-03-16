@@ -1,6 +1,20 @@
 import { api } from '../../../services/Api'
 import { getHall, getHalls } from '../../../services/halls/Halls'
 
+const nestedLocation = {
+  id: 7,
+  street: 'Veldstraat',
+  number: '12',
+  postal_code: '9000',
+  city: 'Ghent',
+  country: 'BE',
+  phone_1: '+3290000001',
+  phone_2: null,
+  is_own_location: true,
+  name: { en: 'City Hall', nl: 'Stadshal' },
+  display_name: 'Stadshal',
+}
+
 jest.mock('../../../services/Api', () => {
   const { buildListParams } = jest.requireActual('../../../services/ApiParams')
 
@@ -23,7 +37,12 @@ describe('locations service - halls', () => {
     it('fetches one hall by id', async () => {
       const data = {
         id: 5,
-        space: 3,
+        space: {
+          id: 3,
+          location: nestedLocation,
+          name: { en: 'Main Building', nl: 'Hoofdgebouw' },
+          display_name: 'Hoofdgebouw',
+        },
         seat_selection: true,
         open_seating: false,
         name: { en: 'Main Hall', nl: 'Grote Zaal' },
@@ -55,7 +74,12 @@ describe('locations service - halls', () => {
         results: [
           {
             id: 5,
-            space: 3,
+            space: {
+              id: 3,
+              location: nestedLocation,
+              name: { en: 'Main Building', nl: 'Hoofdgebouw' },
+              display_name: 'Hoofdgebouw',
+            },
             seat_selection: true,
             open_seating: false,
             name: { en: 'Main Hall', nl: 'Grote Zaal' },
