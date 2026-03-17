@@ -66,8 +66,7 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         queryset=GenreUseAs.objects.all(),
         serializer_class=GenreUseAsSerializer,
         help_text=(
-            "Primary key of the **GenreUseAs** that defines how this "
-            "genre is applied (taxonomy classification or tag)."
+            "Primary key of the **GenreUseAs** that defines how this genre is applied (taxonomy classification or tag)."
         ),
     )
 
