@@ -60,29 +60,25 @@ const FloatingAlert = ({
 
   const config = severityConfig[severity]
 
-  const handleClose = () => {
-    onClose()
-  }
-
   return (
     <Snackbar
       open={open}
       autoHideDuration={autoCloseDuration}
-      onClose={handleClose}
+      onClose={onClose}
       anchorOrigin={position}
       sx={
         position.vertical === 'top'
           ? {
-              '&.MuiSnackbar-anchorOriginTopLeft': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-              '&.MuiSnackbar-anchorOriginTopCenter': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-              '&.MuiSnackbar-anchorOriginTopRight': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-            }
+            '&.MuiSnackbar-anchorOriginTopLeft': {
+              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+            },
+            '&.MuiSnackbar-anchorOriginTopCenter': {
+              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+            },
+            '&.MuiSnackbar-anchorOriginTopRight': {
+              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+            },
+          }
           : undefined
       }
       data-testid="floating-alert"
@@ -129,7 +125,7 @@ const FloatingAlert = ({
         </Box>
         <IconButton
           size="small"
-          onClick={handleClose}
+          onClick={onClose}
           aria-label="Close notification"
           sx={{
             color: config.textColor,
