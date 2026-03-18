@@ -1,5 +1,6 @@
 import type { Genre } from './Genres'
 import type { Tag } from './Tag'
+import type { Event } from './Events'
 
 /**
  * Minimal taxonomy entry used for production classification.
@@ -27,4 +28,5 @@ export interface Production {
   description: Record<string, string> | null
   tags: Tag[]
   genres: Genre[]
+  events?: Event[]
 }
