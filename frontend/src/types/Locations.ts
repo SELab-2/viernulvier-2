@@ -23,8 +23,8 @@ export interface Location {
  * this interface so tests or mocks can provide only `results` when needed.
  */
 export interface LocationListResponse {
+  count: number
+  next: string | null
+  previous: string | null
   results: Location[]
-  count?: number
-  next?: string | null
-  previous?: string | null
 }

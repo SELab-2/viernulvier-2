@@ -15,8 +15,8 @@ export interface Hall {
  * Paginated response shape for `GET /halls/`.
  */
 export interface HallListResponse {
+  count: number
+  next: string | null
+  previous: string | null
   results: Hall[]
-  count?: number
-  next?: string | null
-  previous?: string | null
 }
