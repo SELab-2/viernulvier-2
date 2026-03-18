@@ -197,8 +197,8 @@ class TestEventSerializerDeserialization(TestCase):
     def test_valid_data_is_valid(self):
         """Valid payload validates."""
         data = {
-            "production": self.production.id,
-            "hall": self.hall.id,
+            "production_id": self.production.id,
+            "hall_id": self.hall.id,
             "starts_at": self.now.isoformat(),
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
         }
@@ -208,8 +208,8 @@ class TestEventSerializerDeserialization(TestCase):
     def test_valid_data_saves_to_db(self):
         """Valid payload saves an Event."""
         data = {
-            "production": self.production.id,
-            "hall": self.hall.id,
+            "production_id": self.production.id,
+            "hall_id": self.hall.id,
             "starts_at": self.now.isoformat(),
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
         }
@@ -228,8 +228,8 @@ class TestEventSerializerDeserialization(TestCase):
         rank = PriceRankFactory(position=1, sold_out_buffer=0)
 
         data = {
-            "production": self.production.id,
-            "hall": self.hall.id,
+            "production_id": self.production.id,
+            "hall_id": self.hall.id,
             "starts_at": self.now.isoformat(),
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
             "prices": [
@@ -253,18 +253,18 @@ class TestEventSerializerDeserialization(TestCase):
     def test_missing_production_is_invalid(self):
         """Missing required production should be invalid."""
         data = {
-            "hall": self.hall.id,
+            "hall_id": self.hall.id,
             "starts_at": self.now.isoformat(),
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
         }
         serializer = EventSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
         self.assertFalse(serializer.is_valid())
-        self.assertIn("production", serializer.errors)
+        self.assertIn("production_id", serializer.errors)
 
     def test_missing_hall_is_valid(self):
         """Missing hall is valid when the model/serializer allows hall to be null."""
         data = {
-            "production": self.production.id,
+            "production_id": self.production.id,
             "starts_at": self.now.isoformat(),
             "ends_at": (self.now + timedelta(hours=2)).isoformat(),
         }

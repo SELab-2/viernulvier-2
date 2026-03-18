@@ -145,7 +145,7 @@ class TestGenreSerializerDeserialization(TestCase):
         self.lang_en = LanguageFactory(code="en", name="English")
 
     def test_valid_data_creates(self):
-        serializer = GenreSerializer(data={"type": "Theater", "use_as": self.use_as.id})
+        serializer = GenreSerializer(data={"type": "Theater", "use_as_id": self.use_as.id})
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
         instance = serializer.save()
@@ -154,19 +154,19 @@ class TestGenreSerializerDeserialization(TestCase):
         # name is read-only (computed), so not required in input
 
     def test_missing_type_is_invalid(self):
-        serializer = GenreSerializer(data={"use_as": self.use_as.id})
+        serializer = GenreSerializer(data={"use_as_id": self.use_as.id})
 
         self.assertFalse(serializer.is_valid())
         self.assertIn("type", serializer.errors)
 
-    def test_missing_use_as_is_invalid(self):
+    def test_missing_use_as_id_is_invalid(self):
         serializer = GenreSerializer(data={"type": "Concert"})
 
         self.assertFalse(serializer.is_valid())
-        self.assertIn("use_as", serializer.errors)
+        self.assertIn("use_as_id", serializer.errors)
 
     def test_empty_type_is_invalid(self):
-        serializer = GenreSerializer(data={"type": "", "use_as": self.use_as.id})
+        serializer = GenreSerializer(data={"type": "", "use_as_id": self.use_as.id})
 
         self.assertFalse(serializer.is_valid())
         self.assertIn("type", serializer.errors)

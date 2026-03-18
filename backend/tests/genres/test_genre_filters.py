@@ -226,7 +226,7 @@ class TestGenreViewSet(TestCase):
 
     def test_internal_can_create(self):
         use_as = GenreUseAsFactory()
-        response = self.client.post(self.list_url(), {"type": "theater", "use_as": use_as.pk}, **int_headers())
+        response = self.client.post(self.list_url(), {"type": "theater", "use_as_id": use_as.pk}, **int_headers())
         self.assertEqual(response.status_code, 201)
 
     def test_filter_by_use_as(self):

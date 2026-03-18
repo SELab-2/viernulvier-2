@@ -185,10 +185,10 @@ _EVENT_NO_HALL_RESPONSE = OpenApiExample(
 
 _EVENT_INPUT = OpenApiExample(
     "Event - request body",
-    summary="Payload for creating a new event",
+    summary="Payload for creating a new event (use *_id fields for input)",
     value={
-        "production": 1,
-        "hall": 3,
+        "production_id": 1,
+        "hall_id": 3,
         "starts_at": "2025-09-15T19:30:00Z",
         "ends_at": "2025-09-15T21:30:00Z",
     },
@@ -197,7 +197,7 @@ _EVENT_INPUT = OpenApiExample(
 
 _EVENT_PARTIAL_INPUT = OpenApiExample(
     "Event - partial request body",
-    summary="Only the fields you want to change",
+    summary="Only the fields you want to change (use *_id fields for input)",
     value={"starts_at": "2025-09-15T20:00:00Z"},
     request_only=True,
 )
@@ -302,12 +302,13 @@ _EVENT_CREATE = extend_schema(
     summary="Create an event",
     description=(
         "Creates a new **Event** for an existing production.\n\n"
-        "- `production` is required.\n"
-        "- `hall` is optional; omit or set to `null` for online events.\n"
+        "- `production_id` is required (integer FK).\n"
+        "- `hall_id` is optional (integer FK); omit or set to `null` for online events.\n"
         "- `ends_at` must be strictly later than `starts_at` - the API enforces "
         "  this with a database-level check constraint.\n"
         "- Prices must be added separately via the **Event Price** endpoints "
         "  after creation.\n\n"
+        "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=EventSerializer,
@@ -323,7 +324,8 @@ _EVENT_CREATE = extend_schema(
 _EVENT_UPDATE = extend_schema(
     summary="Replace an event",
     description=(
-        "Fully replaces an existing **Event**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
+        "Fully replaces an existing **Event**. All writable fields must be supplied.\n\n"
+        "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n> **Requires an internal API key.**"
     ),
     request=EventSerializer,
     responses={
@@ -341,6 +343,7 @@ _EVENT_PARTIAL_UPDATE = extend_schema(
     description=(
         "Updates one or more fields of an existing **Event** without "
         "requiring a full payload.\n\n"
+        "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=EventSerializer,

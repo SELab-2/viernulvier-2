@@ -211,10 +211,10 @@ _ITEM_INPUT = OpenApiExample(
     "MediaItem - request body",
     summary="Payload for creating a new media item",
     description=(
-        "`gallery` and `type` are required. Localised metadata is added via the translation endpoints after creation."
+        "`gallery_id` and `type` are required. Localised metadata is added via the translation endpoints after creation."
     ),
     value={
-        "gallery": 1,
+        "gallery_id": 1,
         "type": "foto",
         "format": "image/jpeg",
         "original_filename": "poster_nl.jpg",
@@ -271,7 +271,7 @@ _ITEM_CREATE = extend_schema(
     summary="Create a media item",
     description=(
         "Creates a new **MediaItem** within an existing gallery.\n\n"
-        "- `gallery` (FK) and `type` are required.\n"
+        "- `gallery_id` (FK) and `type` are required.\n"
         "- Localised metadata (`title`, `description`, `credits`, `link`) must be "
         "  added via the **Media Item Translation** endpoints after creation.\n"
         "- Crop variants are populated automatically by the scraper sync pipeline.\n\n"

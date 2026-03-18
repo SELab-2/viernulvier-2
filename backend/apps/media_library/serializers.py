@@ -12,7 +12,7 @@ all available translations as language-code dictionaries
 
 from rest_framework import serializers
 
-from apps.core.serializers import NestedRepresentationPKField, TranslatableSerializerMixin
+from apps.core.serializers import TranslatableSerializerMixin
 
 from .models import MediaGallery, MediaItem, MediaItemCrop
 
@@ -118,20 +118,23 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
         ),
     )
 
-    crops = MediaItemCropSerializer(many=True, read_only=True)
-    gallery = NestedRepresentationPKField(
+
+    gallery_id = serializers.PrimaryKeyRelatedField(
         queryset=MediaGallery.objects.all(),
-        serializer_class=MediaGalleryReferenceSerializer,
-        allow_null=True,
-        required=False,
-        help_text="Primary key of the parent **MediaGallery** this item belongs to.",
+        source="gallery",
+        write_only=True,
+        required=True,
+        help_text="ID of the parent MediaGallery (write-only)."
     )
+    gallery = MediaGalleryReferenceSerializer(read_only=True)
+    crops = MediaItemCropSerializer(many=True, read_only=True)
 
     class Meta:
         model = MediaItem
         fields = [
             "id",
             "gallery",
+            "gallery_id",
             "type",
             "format",
             "original_filename",
@@ -153,6 +156,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
             "credits",
             "link",
             "crops",
+            "gallery",
         ]
         extra_kwargs = {
             "type": {

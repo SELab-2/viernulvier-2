@@ -189,7 +189,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
         response = self.client.post(
             "/api/events/",
             {
-                "production": self.production.id,
+                "production_id": self.production.id,
                 "hall": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
@@ -205,8 +205,8 @@ class TestEventViewSetCreate(_EventSetupMixin):
         self.client.post(
             "/api/events/",
             {
-                "production": self.production.id,
-                "hall": self.hall.id,
+                "production_id": self.production.id,
+                "hall_id": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
             },
@@ -221,8 +221,8 @@ class TestEventViewSetCreate(_EventSetupMixin):
         response = self.client.post(
             "/api/events/",
             {
-                "production": self.production.id,
-                "hall": self.hall.id,
+                "production_id": self.production.id,
+                "hall_id": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
             },
@@ -290,8 +290,8 @@ class TestEventViewSetUpdate(_EventSetupMixin):
         response = self.client.put(
             f"/api/events/{self.e1.id}/",
             {
-                "production": self.production.id,
-                "hall": self.hall.id,
+                "production_id": self.production.id,
+                "hall_id": self.hall.id,
                 "starts_at": now.isoformat(),
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
             },

@@ -32,29 +32,6 @@ queryset. See the individual app viewsets for examples.
 from django.conf import settings
 from rest_framework import serializers
 
-
-class NestedRepresentationPKField(serializers.PrimaryKeyRelatedField):
-    """
-    Related field that accepts a primary key on input and returns a nested
-    serializer representation on output.
-
-    This keeps write payloads simple (FK ids) while providing richer read
-    responses for clients.
-    """
-
-    def __init__(self, *args, serializer_class: type[serializers.Serializer], **kwargs):
-        self.serializer_class = serializer_class
-        super().__init__(*args, **kwargs)
-
-    def use_pk_only_optimization(self):
-        """Ensure DRF passes the full related object to ``to_representation``."""
-        return False
-
-    def to_representation(self, value):
-        serializer = self.serializer_class(value, context=self.context)
-        return serializer.data
-
-
 class TranslatableSerializerMixin:
     """
     Mixin that adds :meth:`get_translated_field` to any DRF serializer.

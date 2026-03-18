@@ -237,14 +237,14 @@ _SPACE_RESPONSE = OpenApiExample(
 _SPACE_INPUT = OpenApiExample(
     "Space - request body",
     summary="Payload for creating a new space",
-    value={"location": 1},
+    value={"location_id": 1},
     request_only=True,
 )
 
 _SPACE_PARTIAL_INPUT = OpenApiExample(
     "Space - partial request body",
     summary="Only the fields you want to change",
-    value={"location": 2},
+    value={"location_id": 2},
     request_only=True,
 )
 
@@ -287,7 +287,7 @@ _SPACE_CREATE = extend_schema(
     summary="Create a space",
     description=(
         "Creates a new **Space** under an existing location.\n\n"
-        "- `location` (FK) is the only required field.\n"
+        "- `location_id` (FK) is the only required field.\n"
         "- Localised names must be added via the **Space Translation** "
         "  endpoints after the space has been created.\n\n"
         "> **Requires an internal API key.**"
@@ -407,7 +407,7 @@ _HALL_RESPONSE = OpenApiExample(
 _HALL_INPUT = OpenApiExample(
     "Hall - request body",
     summary="Payload for creating a new hall",
-    value={"space": 3, "seat_selection": True, "open_seating": False},
+    value={"space_id": 3, "seat_selection": True, "open_seating": False},
     request_only=True,
 )
 
@@ -459,7 +459,7 @@ _HALL_CREATE = extend_schema(
     summary="Create a hall",
     description=(
         "Creates a new **Hall** within an existing space.\n\n"
-        "- `space` (FK) is required.\n"
+        "- `space_id` (FK) is required.\n"
         "- `seat_selection` and `open_seating` default to `false`.\n"
         "- Localised `name` and `remark` must be added via the **Hall Translation** "
         "  endpoints after the hall has been created.\n\n"

@@ -483,7 +483,7 @@ class TestMediaItemViewSetWrite(TestCase):
         response = self.client.post(
             "/api/media-items/",
             {
-                "gallery": self.gallery.pk,
+                "gallery_id": self.gallery.pk,
                 "type": MediaItem.MediaItemType.IMAGE,
                 "format": "png",
                 "original_filename": "new.png",

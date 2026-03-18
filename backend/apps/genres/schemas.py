@@ -172,16 +172,16 @@ _GENRE_INPUT = OpenApiExample(
     "Genre - request body",
     summary="Payload for creating a new genre",
     description=(
-        "Only `type` and `use_as` are required. Localised names are added via the translation endpoints after creation."
+        "Only `type` and `use_as_id` are required. Localised names are added via the translation endpoints after creation."
     ),
-    value={"type": "contemporary_dance", "use_as": 1, "vendor_id": "theater-123"},
+    value={"type": "contemporary_dance", "use_as_id": 1, "vendor_id": "theater-123"},
     request_only=True,
 )
 
 _GENRE_PARTIAL_INPUT = OpenApiExample(
     "Genre - partial request body",
     summary="Only the fields you want to change",
-    value={"use_as": 2, "vendor_id": "theater-123"},
+    value={"use_as_id": 2, "vendor_id": "theater-123"},
     request_only=True,
 )
 

@@ -13,7 +13,7 @@ through-table. It is nested read-only inside ``EventSerializer`` via the
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.core.serializers import NestedRepresentationPKField, TranslatableSerializerMixin
+from apps.core.serializers import TranslatableSerializerMixin
 from apps.locations.models import Hall
 from apps.locations.serializers import HallSerializer
 from apps.pricing.models import Price, PriceRank
@@ -38,16 +38,12 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
     price_rank_display = serializers.SerializerMethodField()
     price_display = serializers.SerializerMethodField()
-    price = NestedRepresentationPKField(
-        queryset=Price.objects.all(),
-        serializer_class=PriceSerializer,
+    price = PriceSerializer(
         allow_null=True,
         required=False,
         help_text="PK of the associated ``Price`` category. `null` when the price has been deleted.",
     )
-    price_rank = NestedRepresentationPKField(
-        queryset=PriceRank.objects.all(),
-        serializer_class=PriceRankSerializer,
+    price_rank = PriceRankSerializer(
         allow_null=True,
         required=False,
         help_text="PK of the associated ``PriceRank`` availability tier. `null` when the rank has been deleted.",
@@ -128,19 +124,28 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
+
     production_display = serializers.SerializerMethodField()
     hall_display = serializers.SerializerMethodField()
-    production = NestedRepresentationPKField(
+
+    production = ProductionSerializer(read_only=True, help_text="Full production object (read-only)")
+    hall = HallSerializer(read_only=True, help_text="Full hall object (read-only)")
+
+    production_id = serializers.PrimaryKeyRelatedField(
         queryset=Production.objects.all(),
-        serializer_class=ProductionSerializer,
-        help_text="PK of the production this event is a performance of.",
+        write_only=True,
+        required=True,
+        help_text="ID of the production this event is a performance of. Use this field for create/update.",
+        source="production",
     )
-    hall = NestedRepresentationPKField(
+    
+    hall_id = serializers.PrimaryKeyRelatedField(
         queryset=Hall.objects.all(),
-        serializer_class=HallSerializer,
-        allow_null=True,
+        write_only=True,
         required=False,
-        help_text="PK of the hall in which the event takes place. `null` for online or location-independent events.",
+        allow_null=True,
+        help_text="ID of the hall in which the event takes place. Use null for online/location-independent events. Use this field for create/update.",
+        source="hall",
     )
 
     @extend_schema_field(serializers.CharField())
@@ -170,14 +175,16 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         fields = [
             "id",
             "production",
+            "production_id",
             "production_display",
             "hall",
+            "hall_id",
             "hall_display",
             "starts_at",
             "ends_at",
             "prices",
         ]
-        read_only_fields = ["id", "prices"]
+        read_only_fields = ["id", "prices", "production", "hall"]
         extra_kwargs = {
             "production_display": {"help_text": "String for the production in the display representation."},
             "hall_display": {"help_text": "String for the hall in the display representation."},

@@ -260,7 +260,7 @@ class TestSpaceViewSet(TestCase):
         location = LocationFactory()
         response = self.client.post(
             "/api/spaces/",
-            {"location": location.id},
+            {"location_id": location.id},
             format="json",
             **int_headers(),
         )
@@ -271,7 +271,7 @@ class TestSpaceViewSet(TestCase):
         other_location = LocationFactory()
         response = self.client.patch(
             f"/api/spaces/{self.space.id}/",
-            {"location": other_location.id},
+            {"location_id": other_location.id},
             format="json",
             **int_headers(),
         )
@@ -312,7 +312,7 @@ class TestHallViewSet(TestCase):
         space = SpaceFactory()
         response = self.client.post(
             "/api/halls/",
-            {"space": space.id, "seat_selection": True, "open_seating": False},
+            {"space_id": space.id, "seat_selection": True, "open_seating": False},
             format="json",
             **int_headers(),
         )
