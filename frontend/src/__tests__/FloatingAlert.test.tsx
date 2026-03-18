@@ -37,12 +37,7 @@ describe('FloatingAlert', () => {
 
     try {
       render(
-        <FloatingAlert
-          open
-          message="Auto-dismiss"
-          onClose={onClose}
-          autoCloseDuration={100}
-        />,
+        <FloatingAlert open message="Auto-dismiss" onClose={onClose} autoCloseDuration={100} />,
       )
 
       act(() => {
