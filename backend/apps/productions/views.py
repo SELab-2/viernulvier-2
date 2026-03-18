@@ -90,6 +90,7 @@ class ProductionViewSet(ApiModelViewSet):
     queryset = Production.objects.select_related(
         "uit_database_theme",
         "uit_database_type",
+        "media_gallery",
     ).prefetch_related(
         "translations__language",
         "tags",
