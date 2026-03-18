@@ -60,15 +60,11 @@ const FloatingAlert = ({
 
   const config = severityConfig[severity]
 
-  const handleClose = () => {
-    onClose()
-  }
-
   return (
     <Snackbar
       open={open}
       autoHideDuration={autoCloseDuration}
-      onClose={handleClose}
+      onClose={onClose}
       anchorOrigin={position}
       sx={
         position.vertical === 'top'
@@ -129,7 +125,7 @@ const FloatingAlert = ({
         </Box>
         <IconButton
           size="small"
-          onClick={handleClose}
+          onClick={onClose}
           aria-label="Close notification"
           sx={{
             color: config.textColor,
