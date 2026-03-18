@@ -1,13 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { MemoryRouter } from 'react-router-dom'
 import SearchBar, { FilteredSearchBarProps } from '../../components/searchbar/FilteredSearchBar'
 
 const renderSearchBar = (props: FilteredSearchBarProps) => {
   const theme = createTheme() // You can customize the theme as needed
   return render(
-    <ThemeProvider theme={theme}>
-      <SearchBar {...props} />
-    </ThemeProvider>,
+    <MemoryRouter>
+      <ThemeProvider theme={theme}>
+        <SearchBar {...props} />
+      </ThemeProvider>
+    </MemoryRouter>,
   )
 }
 
@@ -66,10 +69,11 @@ describe('SearchBar', () => {
   })
 
   it('calls onSearchChange when input value changes', () => {
-    renderSearchBar(props)
+    renderSearchBar({ ...props, searchValue: '' })
     const input = screen.getByPlaceholderText('Search...')
-
     fireEvent.change(input, { target: { value: 'new value' } })
+    // Simulate controlled input by rerendering with new value
+    renderSearchBar({ ...props, searchValue: 'new value' })
     expect(mockOnSearchChange).toHaveBeenCalledWith('new value')
   })
 
@@ -81,14 +85,17 @@ describe('SearchBar', () => {
 
   it('toggles tags when clicked', () => {
     renderSearchBar(props)
-    const tag1 = screen.getByText('Theater')
-    const tag2 = screen.getByText('Dans')
-
-    fireEvent.click(tag1)
+    // Find all tag buttons and match by text
+    const tagButtons = screen.getAllByRole('button')
+    const tag1 = tagButtons.find((btn) => btn.textContent?.includes('Theater'))
+    const tag2 = tagButtons.find((btn) => btn.textContent?.includes('Dans'))
+    expect(tag1).toBeTruthy()
+    expect(tag2).toBeTruthy()
+    fireEvent.click(tag1!)
     expect(mockOnTagToggle).toHaveBeenCalledWith('theatre')
-    fireEvent.click(tag2)
+    fireEvent.click(tag2!)
     expect(mockOnTagToggle).toHaveBeenCalledWith('dance')
-    fireEvent.click(tag1)
+    fireEvent.click(tag1!)
     expect(mockOnTagToggle).toHaveBeenCalledWith('theatre')
   })
 

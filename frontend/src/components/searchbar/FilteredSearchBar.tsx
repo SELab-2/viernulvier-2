@@ -39,6 +39,9 @@ const FilteredSearchBar: React.FC<FilteredSearchBarProps> = ({
           placeholder={placeholder}
           searchValue={searchValue}
           onSearchChange={onSearchChange}
+          tags={tags}
+          selectedTags={selectedTags}
+          onTagToggle={onTagToggle}
         />
         {filters.map((filter) => (
           <DropDownFilter key={filter.name} {...filter} />
