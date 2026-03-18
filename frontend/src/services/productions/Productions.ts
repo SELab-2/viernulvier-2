@@ -11,6 +11,11 @@ import type { GetProductionsOptions } from './ProductionOptions'
  *
  * @param id The unique ID of the production that should be fetched.
  * @returns A promise that resolves to the production data returned by the API.
+ *
+ * @example
+ * const production = await getProduction(12);
+ *
+ * @throws Rethrows the original request error after logging it.
  */
 export const getProduction = async (id: number): Promise<Production> => {
   const res = await api.get<Production>(`/productions/${id}/`)
@@ -61,6 +66,8 @@ export const getProduction = async (id: number): Promise<Production> => {
  *     ordering: "-id",
  *   },
  * });
+ *
+ * @throws Rethrows the original request error after logging it.
  */
 export const getProductions = async (
   options?: GetProductionsOptions,
