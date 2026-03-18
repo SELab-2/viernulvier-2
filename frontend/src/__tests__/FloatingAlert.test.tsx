@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import FloatingAlert from '../components/FloatingAlert'
 
 describe('FloatingAlert', () => {
@@ -27,7 +27,7 @@ describe('FloatingAlert', () => {
       <FloatingAlert open message="Message" onClose={onClose} severity="info" />,
     )
     const closeButton = getByRole('button', { name: /close notification/i })
-    closeButton.click()
+    fireEvent.click(closeButton)
     expect(onClose).toHaveBeenCalled()
   })
 
