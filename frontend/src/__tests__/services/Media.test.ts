@@ -1,11 +1,11 @@
 import { api } from '../../services/Api'
+import { ApiError } from '../../services/ApiTypes'
 import {
   getMediaGalleries,
   getMediaGallery,
-  getMediaItems,
   getMediaItem,
+  getMediaItems,
 } from '../../services/media/Media'
-import { ApiError } from '../../services/ApiTypes'
 
 jest.mock('../../services/Api', () => ({
   api: {
@@ -55,9 +55,10 @@ describe('Media service', () => {
     })
 
     it('propagates errors to the caller', async () => {
-      mockedApi.get.mockRejectedValue(new ApiError(500, 'Internal server error'))
+      const error = new ApiError(500, 'Internal server error')
+      mockedApi.get.mockRejectedValue(error)
 
-      await expect(getMediaGalleries()).rejects.toBeInstanceOf(ApiError)
+      await expect(getMediaGalleries()).rejects.toBe(error)
     })
 
     it('passes filters and pagination as query params', async () => {
@@ -83,9 +84,10 @@ describe('Media service', () => {
     })
 
     it('propagates errors to the caller', async () => {
-      mockedApi.get.mockRejectedValue(new ApiError(404, 'Not found'))
+      const error = new ApiError(404, 'Not found')
+      mockedApi.get.mockRejectedValue(error)
 
-      await expect(getMediaGallery(999)).rejects.toBeInstanceOf(ApiError)
+      await expect(getMediaGallery(999)).rejects.toBe(error)
     })
   })
 
@@ -101,9 +103,10 @@ describe('Media service', () => {
     })
 
     it('propagates errors to the caller', async () => {
-      mockedApi.get.mockRejectedValue(new ApiError(500, 'Internal server error'))
+      const error = new ApiError(500, 'Internal server error')
+      mockedApi.get.mockRejectedValue(error)
 
-      await expect(getMediaItems()).rejects.toBeInstanceOf(ApiError)
+      await expect(getMediaItems()).rejects.toBe(error)
     })
 
     it('passes filters and pagination as query params', async () => {
@@ -129,9 +132,10 @@ describe('Media service', () => {
     })
 
     it('propagates errors to the caller', async () => {
-      mockedApi.get.mockRejectedValue(new ApiError(404, 'Not found'))
+      const error = new ApiError(404, 'Not found')
+      mockedApi.get.mockRejectedValue(error)
 
-      await expect(getMediaItem(999)).rejects.toBeInstanceOf(ApiError)
+      await expect(getMediaItem(999)).rejects.toBe(error)
     })
   })
 })
