@@ -10,6 +10,7 @@ capacity and amount per price rank.
 """
 
 from django.db.models import Prefetch
+from apps.media_library.models import MediaItem
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
@@ -128,6 +129,14 @@ class EventViewSet(ApiModelViewSet):
                 "hall__space__location__translations",
                 queryset=LocationTranslation.objects.select_related("language"),
             ),
+            Prefetch(
+                "production__media_gallery__media_items",
+                queryset=MediaItem.objects.prefetch_related(
+                    "translations__language",
+                    "crops",
+                ).order_by("position"),
+            ),
+
             Prefetch(
                 "prices__price_rank__translations",
                 queryset=PriceRankTranslation.objects.select_related("language"),

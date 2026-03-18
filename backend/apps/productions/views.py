@@ -16,6 +16,7 @@ allowing consumers to access all languages in a single request.
 """
 
 from django.db.models import Prefetch
+from apps.media_library.models import MediaItem
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
@@ -103,6 +104,14 @@ class ProductionViewSet(ApiModelViewSet):
             queryset=ProductionGenre.objects.select_related("genre").order_by("position"),
             to_attr="prefetched_production_genres",
         ),
+        Prefetch(
+            "media_gallery__media_items",
+            queryset=MediaItem.objects.prefetch_related(
+                "translations__language",
+                "crops",
+        ).order_by("position"),
+    ),
+
     )
 
     filterset_class = ProductionFilter

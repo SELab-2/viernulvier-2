@@ -22,6 +22,7 @@ from rest_framework import serializers
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.genres.serializers import GenreSerializer
 from apps.tags.serializers import TagSerializer
+from apps.media_library.serializers import MediaGallerySerializer
 
 from .models import Production, UitDatabaseTheme, UitDatabaseType
 
@@ -167,6 +168,12 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "and the `events` field is included in the request."
         ),
         read_only=True,
+    )
+
+    media_gallery = MediaGallerySerializer(
+        read_only=True,
+        allow_null=True,
+        help_text="Nested MediaGallery with all media items and crops. `null` when no gallery is assigned.",
     )
 
     class Meta:

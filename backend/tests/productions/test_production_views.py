@@ -474,6 +474,6 @@ class TestProductionViewSetPrefetch(TestCase):
             )
 
     def test_list_with_translations_executes_bounded_queries(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get("/api/productions/", **pub_headers())
         self.assertEqual(response.status_code, 200)

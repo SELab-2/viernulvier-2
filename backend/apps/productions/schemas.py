@@ -40,7 +40,11 @@ _PRODUCTION_RESPONSE = OpenApiExample(
         "id": 1,
         "attendance_mode": "offline",
         "performer_type": "group",
-        "media_gallery": 4,
+        "media_gallery": {
+            "id": 706,
+            "name": "home",
+            "media_items": []
+        },
         "uit_database_theme": {"id": 3, "name": "Theater"},
         "uit_database_type": {"id": 7, "name": "Voorstelling"},
         "title": "De Laatste Avond",
@@ -74,7 +78,11 @@ _PRODUCTION_RESPONSE_WITH_EVENTS = OpenApiExample(
         "id": 1,
         "attendance_mode": "offline",
         "performer_type": "group",
-        "media_gallery": 4,
+        "media_gallery": {
+            "id": 706,
+            "name": "home",
+            "media_items": []
+        },
         "uit_database_theme": {"id": 3, "name": "Theater"},
         "uit_database_type": {"id": 7, "name": "Voorstelling"},
         "title": "De Laatste Avond",
