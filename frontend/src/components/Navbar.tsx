@@ -14,7 +14,7 @@ import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
 import MenuIcon from '@mui/icons-material/Menu'
 import CloseIcon from '@mui/icons-material/Close'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
@@ -23,6 +23,7 @@ const NAV_LINKS = [
   { labelKey: 'nav.events', to: '/series' },
   { labelKey: 'nav.productions', to: '/artists' },
 ] as const
+const NAVBAR_MIN_HEIGHT_PX = 64
 
 type SupportedLanguage = 'en' | 'nl'
 
@@ -36,6 +37,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
   const { t, i18n } = useTranslation()
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const toolbarRef = useRef<HTMLDivElement | null>(null)
   // Route where the menu was opened; keeps mobile panel route-aware.
   const [menuOpenedAtPath, setMenuOpenedAtPath] = useState<string | null>(null)
   // Menu is open only on the route where it was triggered.
@@ -76,6 +78,43 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
 
   const baseListSx = { listStyle: 'none', m: 0, p: 0 }
 
+  useEffect(() => {
+    const toolbar = toolbarRef.current
+    if (!toolbar) {
+      return
+    }
+
+    const updateNavbarHeightVar = () => {
+      const measuredHeight = Math.ceil(toolbar.getBoundingClientRect().height)
+
+      // Avoid writing unusable values (e.g., 0 in jsdom/hidden states) so CSS fallback remains valid.
+      if (measuredHeight <= 0) {
+        return
+      }
+
+      const safeHeight = Math.max(measuredHeight, NAVBAR_MIN_HEIGHT_PX)
+      document.documentElement.style.setProperty('--navbar-height', `${safeHeight}px`)
+    }
+
+    updateNavbarHeightVar()
+    const supportsResizeObserver = typeof ResizeObserver !== 'undefined'
+    const resizeObserver = supportsResizeObserver ? new ResizeObserver(updateNavbarHeightVar) : null
+
+    if (resizeObserver) {
+      resizeObserver.observe(toolbar)
+    }
+
+    window.addEventListener('resize', updateNavbarHeightVar)
+
+    return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+      window.removeEventListener('resize', updateNavbarHeightVar)
+      document.documentElement.style.removeProperty('--navbar-height')
+    }
+  }, [])
+
   return (
     <AppBar
       position="sticky"
@@ -84,7 +123,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
     >
       <ClickAwayListener onClickAway={closeMobileMenu}>
         <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3, md: 20 } }}>
-          <Toolbar disableGutters sx={{ minHeight: 64 }}>
+          <Toolbar ref={toolbarRef} disableGutters sx={{ minHeight: NAVBAR_MIN_HEIGHT_PX }}>
             {/* Brand: logo + "/ Archive" */}
             <Box
               component={RouterLink}

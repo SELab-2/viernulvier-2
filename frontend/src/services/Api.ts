@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { ApiError } from './ApiTypes'
+import { normalizeApiError } from './ApiErrorMapper'
 
 const API_KEY: string = import.meta.env.VITE_PUBLIC_API_KEY
 
@@ -24,15 +24,6 @@ export const api = axios.create({
   },
 })
 
-/** Human-readable messages for the most common HTTP error statuses. */
-const STATUS_MESSAGES: Record<number, string> = {
-  400: 'Invalid request parameters.',
-  401: 'Not authenticated. Please log in.',
-  403: 'You do not have permission to perform this action.',
-  404: 'The requested resource was not found.',
-  500: 'An internal server error occurred. Please try again later.',
-}
-
 /**
  * Response interceptor that normalises every failed request into an `ApiError`.
  *
@@ -45,18 +36,6 @@ const STATUS_MESSAGES: Record<number, string> = {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status ?? 0
-      const message =
-        STATUS_MESSAGES[status] ??
-        (status > 0
-          ? `Request failed with status ${status}.`
-          : 'A network error occurred. Please check your connection.')
-
-      return Promise.reject(new ApiError(status, message))
-    }
-
-    // Not an Axios error - propagate unchanged.
-    return Promise.reject(error)
+    return Promise.reject(normalizeApiError(error, axios.isAxiosError))
   },
 )
