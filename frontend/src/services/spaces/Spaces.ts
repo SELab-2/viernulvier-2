@@ -1,4 +1,3 @@
-import type { Space, SpaceListResponse } from '../../types/Spaces'
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
 import type { GetSpacesOptions } from './SpaceOptions'
