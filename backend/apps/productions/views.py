@@ -16,12 +16,12 @@ allowing consumers to access all languages in a single request.
 """
 
 from django.db.models import Prefetch
-from apps.media_library.models import MediaItem
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
 from apps.events.models import Event, EventPrice
 from apps.locations.models import HallTranslation, LocationTranslation, SpaceTranslation
+from apps.media_library.models import MediaItem
 from apps.pricing.models import PriceRankTranslation, PriceTranslation
 
 from .filters import ProductionFilter

@@ -21,8 +21,8 @@ from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.genres.serializers import GenreSerializer
-from apps.tags.serializers import TagSerializer
 from apps.media_library.serializers import MediaGallerySerializer
+from apps.tags.serializers import TagSerializer
 
 from .models import Production, UitDatabaseTheme, UitDatabaseType
 
