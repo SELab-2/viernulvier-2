@@ -35,14 +35,24 @@ describe('FloatingAlert', () => {
     const onClose = jest.fn()
     jest.useFakeTimers()
 
-    render(<FloatingAlert open message="Auto-dismiss" onClose={onClose} autoCloseDuration={100} />)
+    try {
+      render(
+        <FloatingAlert
+          open
+          message="Auto-dismiss"
+          onClose={onClose}
+          autoCloseDuration={100}
+        />,
+      )
 
-    act(() => {
-      jest.advanceTimersByTime(150)
-    })
+      act(() => {
+        jest.advanceTimersByTime(150)
+      })
 
-    expect(onClose).toHaveBeenCalled()
-    jest.useRealTimers()
+      expect(onClose).toHaveBeenCalled()
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('renders all severity levels', () => {
