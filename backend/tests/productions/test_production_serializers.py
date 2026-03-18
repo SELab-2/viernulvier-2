@@ -24,6 +24,7 @@ from apps.productions.serializers import (
     UitDatabaseThemeSerializer,
     UitDatabaseTypeSerializer,
 )
+from tests.events.test_event_views import pub_headers
 from tests.factories.language import LanguageFactory
 from tests.factories.production import (
     ProductionFactory,
