@@ -175,6 +175,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "id",
             "attendance_mode",
             "performer_type",
+            "media_gallery",
             "uit_database_theme",
             "uit_database_type",
             "display_title",
@@ -209,6 +210,9 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             },
             "performer_type": {
                 "help_text": ("Whether the performance is by a group or a solo artist. Accepted values: `group`, `solo`."),
+            },
+            "media_gallery": {
+                "help_text": "PK of the associated MediaGallery. `null` when no gallery is assigned.",
             },
         }
 

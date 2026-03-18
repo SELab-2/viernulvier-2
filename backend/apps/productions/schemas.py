@@ -40,6 +40,7 @@ _PRODUCTION_RESPONSE = OpenApiExample(
         "id": 1,
         "attendance_mode": "offline",
         "performer_type": "group",
+        "media_gallery": 4,
         "uit_database_theme": {"id": 3, "name": "Theater"},
         "uit_database_type": {"id": 7, "name": "Voorstelling"},
         "title": "De Laatste Avond",
