@@ -44,7 +44,7 @@ import type { GetMediaGalleriesOptions, GetMediaItemsOptions } from './MediaOpti
  *   },
  * });
  *
- * @throws Rethrows the original request error after logging it.
+ * @throws Propagates the original request error.
  */
 export const getMediaGalleries = async (
   options?: GetMediaGalleriesOptions,
@@ -67,7 +67,7 @@ export const getMediaGalleries = async (
  * @example
  * const gallery = await getMediaGallery(12);
  *
- * @throws Rethrows the original request error after logging it.
+ * @throws Propagates the original request error.
  */
 export const getMediaGallery = async (id: number): Promise<MediaGallery> => {
   const response = await api.get<MediaGallery>(`/media-galleries/${id}/`)
@@ -114,7 +114,7 @@ export const getMediaGallery = async (id: number): Promise<MediaGallery> => {
  *   },
  * });
  *
- * @throws Rethrows the original request error after logging it.
+ * @throws Propagates the original request error.
  */
 export const getMediaItems = async (
   options?: GetMediaItemsOptions,
@@ -137,7 +137,7 @@ export const getMediaItems = async (
  * @example
  * const item = await getMediaItem(12);
  *
- * @throws Rethrows the original request error after logging it.
+ * @throws Propagates the original request error.
  */
 export const getMediaItem = async (id: number): Promise<MediaItem> => {
   const response = await api.get<MediaItem>(`/media-items/${id}/`)
