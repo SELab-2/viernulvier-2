@@ -69,16 +69,16 @@ const FloatingAlert = ({
       sx={
         position.vertical === 'top'
           ? {
-            '&.MuiSnackbar-anchorOriginTopLeft': {
-              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-            },
-            '&.MuiSnackbar-anchorOriginTopCenter': {
-              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-            },
-            '&.MuiSnackbar-anchorOriginTopRight': {
-              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-            },
-          }
+              '&.MuiSnackbar-anchorOriginTopLeft': {
+                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+              },
+              '&.MuiSnackbar-anchorOriginTopCenter': {
+                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+              },
+              '&.MuiSnackbar-anchorOriginTopRight': {
+                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+              },
+            }
           : undefined
       }
       data-testid="floating-alert"
