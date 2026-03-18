@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import FloatingAlert from '../components/FloatingAlert'
 
 describe('FloatingAlert', () => {
@@ -27,7 +27,7 @@ describe('FloatingAlert', () => {
       <FloatingAlert open message="Message" onClose={onClose} severity="info" />,
     )
     const closeButton = getByRole('button', { name: /close notification/i })
-    closeButton.click()
+    fireEvent.click(closeButton)
     expect(onClose).toHaveBeenCalled()
   })
 
@@ -35,14 +35,19 @@ describe('FloatingAlert', () => {
     const onClose = jest.fn()
     jest.useFakeTimers()
 
-    render(<FloatingAlert open message="Auto-dismiss" onClose={onClose} autoCloseDuration={100} />)
+    try {
+      render(
+        <FloatingAlert open message="Auto-dismiss" onClose={onClose} autoCloseDuration={100} />,
+      )
 
-    act(() => {
-      jest.advanceTimersByTime(150)
-    })
+      act(() => {
+        jest.advanceTimersByTime(150)
+      })
 
-    expect(onClose).toHaveBeenCalled()
-    jest.useRealTimers()
+      expect(onClose).toHaveBeenCalled()
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('renders all severity levels', () => {

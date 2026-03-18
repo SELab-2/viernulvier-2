@@ -1,10 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import HomePage from './pages/HomePage'
-import SeriesPage from './pages/SeriesPage'
-import SeriesDetailPage from './pages/SeriesDetailPage'
-import ArtistsPage from './pages/ArtistsPage'
-import ArtistDetailPage from './pages/ArtistDetailPage'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import ArtistDetailPage from './pages/ArtistDetailPage'
+import ArtistsPage from './pages/ArtistsPage'
+import HomePage from './pages/HomePage'
+import NotFoundPage from './pages/NotFoundPage'
+import SeriesDetailPage from './pages/SeriesDetailPage'
+import SeriesPage from './pages/SeriesPage'
 
 type RouterProps = {
   mode: 'light' | 'dark'
@@ -25,6 +26,7 @@ const Router = ({ mode, onToggleMode }: RouterProps) => {
         <Route path="/events/:id" element={<Navigate to="/series" replace />} />
         <Route path="/productions" element={<Navigate to="/artists" replace />} />
         <Route path="/productions/:id" element={<Navigate to="/artists" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   )
