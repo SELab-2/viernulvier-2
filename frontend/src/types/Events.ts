@@ -34,8 +34,8 @@ export interface Event {
  * Paginated response shape for `GET /events/`.
  */
 export interface EventListResponse {
+  count: number
+  next: string | null
+  previous: string | null
   results: Event[]
-  count?: number
-  next?: string | null
-  previous?: string | null
 }

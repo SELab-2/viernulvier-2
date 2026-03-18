@@ -1,7 +1,7 @@
+import type { Genre, GenreListResponse } from '../../types/Genres'
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
 import type { GetGenresOptions } from './GenreOptions'
-import type { Genre, GenreListResponse } from '../../types/Genres'
 
 /**
  * Retrieve a single genre by its numeric ID.
@@ -15,7 +15,7 @@ import type { Genre, GenreListResponse } from '../../types/Genres'
  * @example
  * const genre = await getGenre(12);
  *
- * @throws Rethrows the original request error after logging it.
+ * @throws {ApiError} When the request fails.
  */
 
 export const getGenre = async (id: number): Promise<Genre> => {
@@ -63,7 +63,7 @@ export const getGenre = async (id: number): Promise<Genre> => {
  *   },
  * });
  *
- * @throws Rethrows the original request error after logging it.
+ * @throws {ApiError} When the request fails.
  */
 export const getGenres = async (options?: GetGenresOptions): Promise<GenreListResponse> => {
   const res = await api.get<GenreListResponse>('/genres/', { params: buildListParams(options) })
