@@ -1,6 +1,7 @@
 import { api } from '../../services/Api'
 import { ApiError } from '../../services/ApiTypes'
 import { getProduction, getProductions } from '../../services/productions/Productions'
+import { AttendanceMode, PerformerType } from '../../types/Productions'
 
 jest.mock('../../services/Api', () => ({
   api: {
@@ -127,8 +128,8 @@ describe('productions service', () => {
     })
 
     it.each([
-      { attendance_mode: 'offline' },
-      { performer_type: 'solo' },
+      { attendance_mode: 'offline' as AttendanceMode },
+      { performer_type: 'solo' as PerformerType },
       { uit_database_theme: 4 },
       { uit_database_type: 7 },
       { genre: 3 },
@@ -154,8 +155,8 @@ describe('productions service', () => {
         page: 1,
         pageSize: 10,
         filters: {
-          attendance_mode: 'online',
-          performer_type: 'group',
+          attendance_mode: 'online' as AttendanceMode,
+          performer_type: 'group' as PerformerType,
           uit_database_theme: 2,
           uit_database_type: 5,
           genre: 3,
