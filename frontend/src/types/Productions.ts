@@ -1,5 +1,11 @@
 import type { Genre } from './Genres'
 
+/** Valid attendance mode values. */
+export type AttendanceMode = 'offline' | 'online'
+
+/** Valid performer type values. */
+export type PerformerType = 'group' | 'solo'
+
 /**
  * Nested UIT Database classification object returned on productions.
  */
@@ -32,8 +38,8 @@ export interface ProductionTag {
  */
 export interface Production {
   id: number
-  attendance_mode: string
-  performer_type: string
+  attendance_mode: AttendanceMode | ''
+  performer_type: PerformerType | ''
   uit_database_theme: ProductionClassification | null
   uit_database_type: ProductionClassification | null
   display_title: string | null

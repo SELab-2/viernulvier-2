@@ -1,3 +1,4 @@
+import type { AttendanceMode, PerformerType } from '../../types/Productions'
 import type { FilteredListOptions } from '../ApiTypes'
 
 /**
@@ -7,8 +8,8 @@ import type { FilteredListOptions } from '../ApiTypes'
  * `ordering`, `external_id`) that every list endpoint supports.
  */
 export interface ProductionFilters {
-  attendance_mode?: string
-  performer_type?: string
+  attendance_mode?: AttendanceMode
+  performer_type?: PerformerType
   uit_database_theme?: number
   uit_database_type?: number
   genre?: number
