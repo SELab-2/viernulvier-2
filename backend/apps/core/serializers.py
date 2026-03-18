@@ -30,7 +30,7 @@ queryset. See the individual app viewsets for examples.
 """
 
 from django.conf import settings
-from rest_framework import serializers
+
 
 class TranslatableSerializerMixin:
     """

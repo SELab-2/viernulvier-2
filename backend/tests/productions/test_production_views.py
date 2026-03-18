@@ -19,13 +19,13 @@ Covers:
 """
 
 from django.test import TestCase, override_settings
-from tests.factories.event import EventFactory
 from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
 from apps.productions.models import Production
 from apps.productions.serializers import ProductionSerializer
 from apps.productions.views import ProductionViewSet
+from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.production import (
     ProductionFactory,

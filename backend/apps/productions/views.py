@@ -19,15 +19,14 @@ from django.db.models import Prefetch
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
+from apps.events.models import Event, EventPrice
+from apps.locations.models import HallTranslation, LocationTranslation, SpaceTranslation
+from apps.pricing.models import PriceRankTranslation, PriceTranslation
 
 from .filters import ProductionFilter
 from .models import Production, ProductionGenre
 from .schemas import production_schema
 from .serializers import ProductionSerializer
-from apps.locations.models import HallTranslation, LocationTranslation, SpaceTranslation
-from apps.pricing.models import PriceRankTranslation, PriceTranslation
-from apps.events.models import Event, EventPrice
-
 
 _TAG = "Productions"
 
@@ -135,12 +134,30 @@ class ProductionViewSet(ApiModelViewSet):
                 Prefetch(
                     "events",
                     queryset=Event.objects.prefetch_related(
-                        Prefetch("prices", queryset=EventPrice.objects.select_related("price_rank", "price")),
-                        Prefetch("prices__price_rank__translations", queryset=PriceRankTranslation.objects.select_related("language")),
-                        Prefetch("prices__price__translations", queryset=PriceTranslation.objects.select_related("language")),
-                        Prefetch("hall__translations", queryset=HallTranslation.objects.select_related("language")),
-                        Prefetch("hall__space__translations", queryset=SpaceTranslation.objects.select_related("language")),
-                        Prefetch("hall__space__location__translations", queryset=LocationTranslation.objects.select_related("language")),
+                        Prefetch(
+                            "prices", 
+                            queryset=EventPrice.objects.select_related("price_rank", "price")
+                        ),
+                        Prefetch(
+                            "prices__price_rank__translations", 
+                            queryset=PriceRankTranslation.objects.select_related("language")
+                        ),
+                        Prefetch(
+                            "prices__price__translations", 
+                            queryset=PriceTranslation.objects.select_related("language")
+                        ),
+                        Prefetch(
+                            "hall__translations", 
+                            queryset=HallTranslation.objects.select_related("language")
+                        ),
+                        Prefetch(
+                            "hall__space__translations", 
+                            queryset=SpaceTranslation.objects.select_related("language")
+                        ),
+                        Prefetch(
+                            "hall__space__location__translations", 
+                            queryset=LocationTranslation.objects.select_related("language")
+                        ),
                     ).select_related("hall__space__location"),
                 ),
             )

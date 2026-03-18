@@ -77,50 +77,90 @@ class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixi
         """Return the location name in the project's base language."""
         return self.get_base_translated_value(obj, "name")
 
-
-class SpaceNestedSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
+class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """
-    Nested serializer for Space objects, used within other serializers (e.g. Hall).
-    Does not include the `halls` field to avoid circular nesting.
+    Represents a Hall.
+
+    Both `name` and `remark` contain all available translations
+    as dictionaries (e.g. {"en": "Main Hall", "fr": "Grande Salle"}).
     """
-    name = serializers.SerializerMethodField()
-    display_name = serializers.SerializerMethodField()
-    location = LocationSerializer(read_only=True)
 
-    class Meta:
-        model = Space
-        fields = ["id", "name", "display_name", "location"]
+    name = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary containing all available translations of the hall name "
+            '(e.g. {"en": "Main Hall", "fr": "Grande Salle"}). '
+            "Read-only - use the translation endpoints to manage translations."
+        ),
+    )
 
-    def get_name(self, obj) -> dict[str, str] | None:
-        return self.get_translated_field(obj, "name")
+    display_name = serializers.SerializerMethodField(help_text="Human-readable hall name in the project's base language.")
 
-    def get_display_name(self, obj) -> str | None:
-        return self.get_base_translated_value(obj, "name")
+    remark = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary containing all available translations of the optional remark "
+            '(e.g. {"en": "Wheelchair accessible", '
+            '"fr": "Accessible en fauteuil roulant"}). '
+            "`null` when no remark translations have been set. "
+            "Read-only - use the translation endpoints to manage translations."
+        ),
+    )
 
+    space_id = serializers.PrimaryKeyRelatedField(
+        queryset=Space.objects.all(),
+        source="space",
+        write_only=True,
+        required=True,
+        help_text="ID of the parent Space (write-only)."
+    )
 
-
-class HallNestedSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
-    """
-    Nested serializer for Hall objects, used within other serializers (e.g. Space).
-    Does not include the `space` field to avoid circular nesting.
-    """
-    name = serializers.SerializerMethodField()
-    display_name = serializers.SerializerMethodField()
-    remark = serializers.SerializerMethodField()
+    # Using SerializerMethodField here prevents an issue with SpaceNestedSerializer not being defined yet.
+    space = serializers.SerializerMethodField(help_text="NestedSpace (read-only).")
 
     class Meta:
         model = Hall
-        fields = ["id", "name", "display_name", "remark"]
+        fields = [
+            "id",
+            "space",
+            "space_id",
+            "seat_selection",
+            "open_seating",
+            "name",
+            "display_name",
+            "remark",
+        ]
+        read_only_fields = ["id", "name", "display_remark", "remark", "space"]
+        extra_kwargs = {
+            "space": {},
+            "seat_selection": {
+                "help_text": "`true` when visitors can choose a specific seat during purchase.",
+            },
+            "open_seating": {
+                "help_text": "`true` when seating is general-admission (no fixed seat assignment).",
+            },
+        }
 
-    def get_name(self, obj) -> dict[str, str] | None:
+    def get_name(self, obj: Hall) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
 
-    def get_display_name(self, obj) -> str | None:
+    def get_display_name(self, obj: Hall) -> str | None:
+        """Return the hall name in the project's base language."""
         return self.get_base_translated_value(obj, "name")
 
     def get_remark(self, obj: Hall) -> dict[str, str] | None:
+        """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "remark")
-
+    
+    def get_space(self, obj):
+        return SpaceNestedSerializer(obj.space, context=self.context).data
+    
+class HallNestedSerializer(HallSerializer):
+    """
+    Nested representation of a Hall. Excludes `space` and `space_id` to avoid circular nesting.
+    """
+    class Meta(HallSerializer.Meta):
+        fields = [f for f in HallSerializer.Meta.fields if f not in ("space", "space_id")]
+        read_only_fields = [f for f in HallSerializer.Meta.read_only_fields if f != "space"]
 
 class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """
@@ -166,76 +206,10 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         """Return the space name in the project's base language."""
         return self.get_base_translated_value(obj, "name")
 
-
-
-class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
+class SpaceNestedSerializer(SpaceSerializer):
     """
-    Represents a Hall.
-
-    Both `name` and `remark` contain all available translations
-    as dictionaries (e.g. {"en": "Main Hall", "fr": "Grande Salle"}).
+    Nested representation of a Space. Excludes `halls` and `location_id` to avoid circular nesting.
     """
-
-    name = serializers.SerializerMethodField(
-        help_text=(
-            "Dictionary containing all available translations of the hall name "
-            '(e.g. {"en": "Main Hall", "fr": "Grande Salle"}). '
-            "Read-only - use the translation endpoints to manage translations."
-        ),
-    )
-
-    display_name = serializers.SerializerMethodField(help_text="Human-readable hall name in the project's base language.")
-
-    remark = serializers.SerializerMethodField(
-        help_text=(
-            "Dictionary containing all available translations of the optional remark "
-            '(e.g. {"en": "Wheelchair accessible", '
-            '"fr": "Accessible en fauteuil roulant"}). '
-            "`null` when no remark translations have been set. "
-            "Read-only - use the translation endpoints to manage translations."
-        ),
-    )
-
-    space_id = serializers.PrimaryKeyRelatedField(
-        queryset=Space.objects.all(),
-        source="space",
-        write_only=True,
-        required=True,
-        help_text="ID of the parent Space (write-only)."
-    )
-    space = SpaceNestedSerializer(read_only=True)
-
-    class Meta:
-        model = Hall
-        fields = [
-            "id",
-            "space",
-            "space_id",
-            "seat_selection",
-            "open_seating",
-            "name",
-            "display_name",
-            "remark",
-        ]
-        read_only_fields = ["id", "name", "display_remark", "remark", "space"]
-        extra_kwargs = {
-            "space": {},
-            "seat_selection": {
-                "help_text": "`true` when visitors can choose a specific seat during purchase.",
-            },
-            "open_seating": {
-                "help_text": "`true` when seating is general-admission (no fixed seat assignment).",
-            },
-        }
-
-    def get_name(self, obj: Hall) -> dict[str, str] | None:
-        """Return all available translations as a language-code dictionary."""
-        return self.get_translated_field(obj, "name")
-
-    def get_display_name(self, obj: Hall) -> str | None:
-        """Return the hall name in the project's base language."""
-        return self.get_base_translated_value(obj, "name")
-
-    def get_remark(self, obj: Hall) -> dict[str, str] | None:
-        """Return all available translations as a language-code dictionary."""
-        return self.get_translated_field(obj, "remark")
+    class Meta(SpaceSerializer.Meta):
+        fields = [f for f in SpaceSerializer.Meta.fields if f not in ("halls", "location_id")]
+        read_only_fields = [f for f in SpaceSerializer.Meta.read_only_fields if f != "halls"]

@@ -16,7 +16,6 @@ from rest_framework import serializers
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.locations.models import Hall
 from apps.locations.serializers import HallSerializer
-from apps.pricing.models import Price, PriceRank
 from apps.pricing.serializers import PriceRankSerializer, PriceSerializer
 from apps.productions.models import Production
 from apps.productions.serializers import ProductionSerializer
@@ -144,7 +143,8 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         write_only=True,
         required=False,
         allow_null=True,
-        help_text="ID of the hall in which the event takes place. Use null for online/location-independent events. Use this field for create/update.",
+        help_text="ID of the hall in which the event takes place. " \
+        "Use null for online/location-independent events. Use this field for create/update.",
         source="hall",
     )
 

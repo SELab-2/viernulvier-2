@@ -162,7 +162,9 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
     events = serializers.SerializerMethodField(
         help_text=(
-            "List of events that are performances of this production. This is only shown if the request is to a specific production, and the `events` field is included in the request."
+            "List of events that are performances of this production."
+            "This is only shown if the request is to a specific production, "
+            "and the `events` field is included in the request."
         ),
         read_only=True,
     )

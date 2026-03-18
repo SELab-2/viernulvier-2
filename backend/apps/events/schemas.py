@@ -325,7 +325,8 @@ _EVENT_UPDATE = extend_schema(
     summary="Replace an event",
     description=(
         "Fully replaces an existing **Event**. All writable fields must be supplied.\n\n"
-        "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n> **Requires an internal API key.**"
+        "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n> "
+        "**Requires an internal API key.**"
     ),
     request=EventSerializer,
     responses={
