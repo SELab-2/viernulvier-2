@@ -15,7 +15,7 @@ import type { GetProductionsOptions } from './ProductionOptions'
  * @example
  * const production = await getProduction(12);
  *
- * @throws Rethrows the original request error after logging it.
+ * @throws {ApiError} When the request fails.
  */
 export const getProduction = async (id: number): Promise<Production> => {
   const res = await api.get<Production>(`/productions/${id}/`)
@@ -67,7 +67,7 @@ export const getProduction = async (id: number): Promise<Production> => {
  *   },
  * });
  *
- * @throws Rethrows the original request error after logging it.
+ * @throws {ApiError} When the request fails.
  */
 export const getProductions = async (
   options?: GetProductionsOptions,
