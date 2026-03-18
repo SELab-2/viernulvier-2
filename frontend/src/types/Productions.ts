@@ -57,8 +57,8 @@ export interface Production {
  * Paginated response shape for `GET /productions/`.
  */
 export interface ProductionListResponse {
+  count: number
+  next: string | null
+  previous: string | null
   results: Production[]
-  count?: number
-  next?: string | null
-  previous?: string | null
 }
