@@ -1,6 +1,6 @@
 import React from 'react'
 import { Box } from '@mui/material'
-import Tag from './Tag'
+import Tag from '../../Tag'
 
 // This represents the list of tags in the search bar, e.g. "Theater", "Concert", etc.
 interface TagListProps {

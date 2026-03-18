@@ -3,24 +3,39 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CloseIcon from '@mui/icons-material/Close'
 
-// Tag context determines click/navigation behavior
+/**
+ * Tag context determines click/navigation behavior.
+ * - 'search': toggles tag selection
+ * - 'description': navigates to homepage with tag in URL
+ * - 'series': navigates to series detail page
+ */
 export type TagContext = 'search' | 'description' | 'series'
 
-// Props for the Tag component
+/**
+ * Props for the Tag component.
+ * - name: tag identifier (used for logic and navigation)
+ * - displayName: human-readable label
+ * - selected: whether the tag is currently selected
+ * - onTagToggle: callback for toggling tag selection
+ * - context: determines click/navigation behavior
+ * - className: optional custom className
+ */
 interface TagProps {
-  name: string // Tag identifier (used for logic and navigation)
-  displayName: string // Human-readable label
-  selected?: boolean // Whether the tag is currently selected
-  onTagToggle?: (tag: string) => void // Callback for toggling tag selection
-  context?: TagContext // Determines click/navigation behavior
-  className?: string // Optional custom className
+  name: string
+  displayName: string
+  selected?: boolean
+  onTagToggle?: (tag: string) => void
+  context?: TagContext
+  className?: string
 }
 
 // TODO: Tag displayNames must come from the API so they are correctly translated and all tags are included.
 
-// Context-aware Tag chip component using MUI Chip.
-// - Pill-shaped, accessible, consistent color scheme.
-// - Handles context-aware click: search (toggle), description (to homepage), series (to series detail).
+/**
+ * Context-aware Tag chip component using MUI Chip.
+ * - Pill-shaped, accessible, consistent color scheme.
+ * - Handles context-aware click: search (toggle), description (to homepage), series (to series detail).
+ */
 const Tag: React.FC<TagProps> = ({
   name,
   displayName,
@@ -41,7 +56,12 @@ const Tag: React.FC<TagProps> = ({
   // Track hover state for cross icon highlight
   const [hovered, setHovered] = useState(false)
 
-  // Handle tag click based on context
+  /**
+   * Handle tag click based on context.
+   * - 'series': navigate to series detail page
+   * - 'search': toggle tag selection
+   * - 'description': navigate to homepage with tag selected in URL
+   */
   const handleClick = () => {
     if (context === 'series') {
       // Navigate to series detail page
