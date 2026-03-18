@@ -91,10 +91,10 @@ class SpaceNestedSerializer(serializers.ModelSerializer, TranslatableSerializerM
         model = Space
         fields = ["id", "name", "display_name", "location"]
 
-    def get_name(self, obj):
+    def get_name(self, obj) -> dict[str, str] | None:
         return self.get_translated_field(obj, "name")
 
-    def get_display_name(self, obj):
+    def get_display_name(self, obj) -> str | None:
         return self.get_base_translated_value(obj, "name")
 
 
@@ -112,10 +112,10 @@ class HallNestedSerializer(serializers.ModelSerializer, TranslatableSerializerMi
         model = Hall
         fields = ["id", "name", "display_name", "remark"]
 
-    def get_name(self, obj):
+    def get_name(self, obj) -> dict[str, str] | None:
         return self.get_translated_field(obj, "name")
 
-    def get_display_name(self, obj):
+    def get_display_name(self, obj) -> str | None:
         return self.get_base_translated_value(obj, "name")
 
     def get_remark(self, obj: Hall) -> dict[str, str] | None:

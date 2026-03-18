@@ -13,6 +13,8 @@ etc.) as well as genre and tag classifications.
 
 from drf_spectacular.utils import (
     OpenApiExample,
+    OpenApiParameter,
+    OpenApiTypes,
     extend_schema,
     extend_schema_view,
 )
@@ -114,7 +116,22 @@ _PRODUCTION_RETRIEVE = extend_schema(
         "by its primary key.\n\n"
         "All translated fields are returned as language-code dictionaries. "
         "Genres are ordered by their `position` value."
+        "Use `?include=events` to include all related events in the response."
     ),
+    parameters=[
+        OpenApiParameter(
+            name="include",
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            required=False,
+            description="Comma-separated list of relations to include. Accepted values: `events`.",
+            examples=[
+                OpenApiExample("No includes", value=""),
+                OpenApiExample("Include events", value="events"),
+            ],
+        )
+    ],
+
     responses={
         200: ProductionSerializer,
         401: RESPONSE_401,

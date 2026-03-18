@@ -195,3 +195,13 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
                 "help_text": ("ISO 8601 UTC datetime at which the event ends. Must be strictly later than `starts_at`."),
             },
         }
+
+class NestedEventSerializer(EventSerializer):
+    """
+    Compact event representation for use when nested inside a Production response.
+    Production fields are excluded to avoid redundant/circular data.
+    """
+
+    class Meta(EventSerializer.Meta):
+        fields = [f for f in EventSerializer.Meta.fields if not f.startswith("production")]
+        read_only_fields = [f for f in EventSerializer.Meta.read_only_fields if not f.startswith("production")]
