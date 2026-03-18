@@ -25,6 +25,7 @@ from apps.productions.serializers import (
     UitDatabaseTypeSerializer,
 )
 from tests.factories.language import LanguageFactory
+from tests.factories.media_library import MediaGalleryFactory
 from tests.factories.production import (
     ProductionFactory,
     ProductionTranslationFactory,
@@ -108,6 +109,7 @@ class TestProductionSerializerFields(TestCase):
             "id",
             "attendance_mode",
             "performer_type",
+            "media_gallery",
             "uit_database_theme",
             "uit_database_type",
             "title",
@@ -126,6 +128,7 @@ class TestProductionSerializerFields(TestCase):
             "id",
             "attendance_mode",
             "performer_type",
+            "media_gallery",
             "uit_database_theme",
             "uit_database_type",
             "title",
@@ -148,6 +151,17 @@ class TestProductionSerializerFields(TestCase):
 
 class TestProductionSerializerScalarFields(TestCase):
     """Model -> dict for non-translated, non-nested fields."""
+
+    def test_serializes_media_gallery_correctly(self):
+        gallery = MediaGalleryFactory.create()
+        production = ProductionFactory.create(media_gallery=gallery)
+        data = ProductionSerializer(production).data
+        self.assertEqual(data["media_gallery"], gallery.id)
+
+    def test_serializes_null_media_gallery_correctly(self):
+        production = ProductionFactory.create(media_gallery=None)
+        data = ProductionSerializer(production).data
+        self.assertIsNone(data["media_gallery"])
 
     def test_serializes_attendance_mode_correctly(self):
         production = ProductionFactory.create(attendance_mode="offline")
