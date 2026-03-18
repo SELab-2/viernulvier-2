@@ -475,10 +475,9 @@ class TestEventViewSetPrefetch(TestCase):
         # Ensure query count stays bounded when related data grows
         with CaptureQueriesContext(connection) as captured:
             response = self.client.get("/api/events/?ordering=id", **pub_headers())
-        
-        for i, query in enumerate(captured.captured_queries):
-            print(f"{i+1}: {query['sql'][:200]}")
 
+        for i, query in enumerate(captured.captured_queries):
+            print(f"{i + 1}: {query['sql'][:200]}")
 
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(results_list(response)), 5)

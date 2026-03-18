@@ -67,7 +67,7 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         source="use_as",
         write_only=True,
         required=True,
-        help_text="ID of the parent GenreUseAs (write-only)."
+        help_text="ID of the parent GenreUseAs (write-only).",
     )
 
     use_as = GenreUseAsSerializer(

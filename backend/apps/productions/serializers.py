@@ -272,7 +272,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     def get_display_artist_name(self, obj: Production) -> str | None:
         """Return the base-language artist/company name (with fallback)."""
         return self.get_base_translated_value(obj, field_name="artist_name")
-    
+
     def get_events(self, obj: Production) -> list:
         """Return a list of events for this production, if included in the serializer context."""
         if "events" not in self.context.get("include", set()):
@@ -280,6 +280,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
         # Lazy import, since importing at the top level would cause a circular import between the serializers.
         from apps.events.serializers import NestedEventSerializer
+
         events = obj.events.all()
         return NestedEventSerializer(events, many=True).data
 

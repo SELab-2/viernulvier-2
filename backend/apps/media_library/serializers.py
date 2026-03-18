@@ -118,13 +118,12 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
         ),
     )
 
-
     gallery_id = serializers.PrimaryKeyRelatedField(
         queryset=MediaGallery.objects.all(),
         source="gallery",
         write_only=True,
         required=True,
-        help_text="ID of the parent MediaGallery (write-only)."
+        help_text="ID of the parent MediaGallery (write-only).",
     )
     gallery = MediaGalleryReferenceSerializer(read_only=True)
     crops = MediaItemCropSerializer(many=True, read_only=True)

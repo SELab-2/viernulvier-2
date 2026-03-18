@@ -77,6 +77,7 @@ class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixi
         """Return the location name in the project's base language."""
         return self.get_base_translated_value(obj, "name")
 
+
 class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """
     Represents a Hall.
@@ -110,7 +111,7 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         source="space",
         write_only=True,
         required=True,
-        help_text="ID of the parent Space (write-only)."
+        help_text="ID of the parent Space (write-only).",
     )
 
     # Using SerializerMethodField here prevents an issue with SpaceNestedSerializer not being defined yet.
@@ -150,17 +151,20 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     def get_remark(self, obj: Hall) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "remark")
-    
+
     def get_space(self, obj):
         return SpaceNestedSerializer(obj.space, context=self.context).data
-    
+
+
 class HallNestedSerializer(HallSerializer):
     """
     Nested representation of a Hall. Excludes `space` and `space_id` to avoid circular nesting.
     """
+
     class Meta(HallSerializer.Meta):
         fields = [f for f in HallSerializer.Meta.fields if f not in ("space", "space_id")]
         read_only_fields = [f for f in HallSerializer.Meta.read_only_fields if f != "space"]
+
 
 class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """
@@ -185,7 +189,7 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         source="location",
         write_only=True,
         required=True,
-        help_text="ID of the parent Location (write-only)."
+        help_text="ID of the parent Location (write-only).",
     )
     location = LocationSerializer(read_only=True)
     halls = HallNestedSerializer(many=True, read_only=True)
@@ -206,10 +210,12 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         """Return the space name in the project's base language."""
         return self.get_base_translated_value(obj, "name")
 
+
 class SpaceNestedSerializer(SpaceSerializer):
     """
     Nested representation of a Space. Excludes `halls` and `location_id` to avoid circular nesting.
     """
+
     class Meta(SpaceSerializer.Meta):
         fields = [f for f in SpaceSerializer.Meta.fields if f not in ("halls", "location_id")]
         read_only_fields = [f for f in SpaceSerializer.Meta.read_only_fields if f != "halls"]

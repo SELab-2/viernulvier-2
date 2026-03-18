@@ -136,7 +136,6 @@ class EventViewSet(ApiModelViewSet):
                     "crops",
                 ).order_by("position"),
             ),
-
             Prefetch(
                 "prices__price_rank__translations",
                 queryset=PriceRankTranslation.objects.select_related("language"),

@@ -123,7 +123,6 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
-
     production_display = serializers.SerializerMethodField()
     hall_display = serializers.SerializerMethodField()
 
@@ -137,13 +136,13 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         help_text="ID of the production this event is a performance of. Use this field for create/update.",
         source="production",
     )
-    
+
     hall_id = serializers.PrimaryKeyRelatedField(
         queryset=Hall.objects.all(),
         write_only=True,
         required=False,
         allow_null=True,
-        help_text="ID of the hall in which the event takes place. " \
+        help_text="ID of the hall in which the event takes place. "
         "Use null for online/location-independent events. Use this field for create/update.",
         source="hall",
     )
@@ -195,6 +194,7 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
                 "help_text": ("ISO 8601 UTC datetime at which the event ends. Must be strictly later than `starts_at`."),
             },
         }
+
 
 class NestedEventSerializer(EventSerializer):
     """

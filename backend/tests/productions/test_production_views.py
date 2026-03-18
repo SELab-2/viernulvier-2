@@ -411,7 +411,7 @@ class TestProductionViewSetResponseStructure(TestCase):
             **pub_headers(),
         )
         self.assertIn("events", response.data)
-    
+
     def test_retrieve_without_include_excludes_events_field(self):
         """events field is absent from response when ?include=events is not set."""
         response = self.client.get(f"/api/productions/{self.production.id}/", **pub_headers())
@@ -436,7 +436,6 @@ class TestProductionViewSetResponseStructure(TestCase):
         self.assertNotIn("production", nested_event)
         self.assertNotIn("production_id", nested_event)
         self.assertNotIn("production_display", nested_event)
-
 
 
 # ---------------------------------------------------------------------------

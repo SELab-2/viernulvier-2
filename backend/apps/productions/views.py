@@ -109,9 +109,8 @@ class ProductionViewSet(ApiModelViewSet):
             queryset=MediaItem.objects.prefetch_related(
                 "translations__language",
                 "crops",
-        ).order_by("position"),
-    ),
-
+            ).order_by("position"),
+        ),
     )
 
     filterset_class = ProductionFilter
@@ -132,41 +131,29 @@ class ProductionViewSet(ApiModelViewSet):
         kwargs["context"]["include"] = self.includes
         return super().get_serializer(*args, **kwargs)
 
-
     def retrieve(self, request, *args, **kwargs):
         """
         Retrieve a production by its ID, with optional inclusion of related events.
         When events are included, the queryset is optimized with additional prefetches to avoid N+1 queries.
         """
         if "events" in self.includes:
-
             self.queryset = self.queryset.prefetch_related(
                 Prefetch(
                     "events",
                     queryset=Event.objects.prefetch_related(
+                        Prefetch("prices", queryset=EventPrice.objects.select_related("price_rank", "price")),
                         Prefetch(
-                            "prices", 
-                            queryset=EventPrice.objects.select_related("price_rank", "price")
+                            "prices__price_rank__translations",
+                            queryset=PriceRankTranslation.objects.select_related("language"),
                         ),
                         Prefetch(
-                            "prices__price_rank__translations", 
-                            queryset=PriceRankTranslation.objects.select_related("language")
+                            "prices__price__translations", queryset=PriceTranslation.objects.select_related("language")
                         ),
+                        Prefetch("hall__translations", queryset=HallTranslation.objects.select_related("language")),
+                        Prefetch("hall__space__translations", queryset=SpaceTranslation.objects.select_related("language")),
                         Prefetch(
-                            "prices__price__translations", 
-                            queryset=PriceTranslation.objects.select_related("language")
-                        ),
-                        Prefetch(
-                            "hall__translations", 
-                            queryset=HallTranslation.objects.select_related("language")
-                        ),
-                        Prefetch(
-                            "hall__space__translations", 
-                            queryset=SpaceTranslation.objects.select_related("language")
-                        ),
-                        Prefetch(
-                            "hall__space__location__translations", 
-                            queryset=LocationTranslation.objects.select_related("language")
+                            "hall__space__location__translations",
+                            queryset=LocationTranslation.objects.select_related("language"),
                         ),
                     ).select_related("hall__space__location"),
                 ),
