@@ -129,10 +129,6 @@ class EventViewSet(ApiModelViewSet):
                 queryset=LocationTranslation.objects.select_related("language"),
             ),
             Prefetch(
-                "hall__space__halls__translations",
-                queryset=HallTranslation.objects.select_related("language"),
-            ),
-            Prefetch(
                 "prices__price_rank__translations",
                 queryset=PriceRankTranslation.objects.select_related("language"),
             ),

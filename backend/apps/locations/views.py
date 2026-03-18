@@ -160,7 +160,6 @@ class HallViewSet(ApiModelViewSet):
             "translations__language",
             "space__translations__language",
             "space__location__translations__language",
-            "space__halls__translations__language",
         )
         .order_by("id")
     )
