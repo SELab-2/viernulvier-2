@@ -1,7 +1,7 @@
+import type { Location, LocationListResponse } from '../../types/Locations'
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
 import type { GetLocationsOptions } from './LocationOptions'
-import type { Location, LocationListResponse } from '../../types/Locations'
 
 /**
  * Retrieve a single location by its numeric ID.
@@ -15,7 +15,7 @@ import type { Location, LocationListResponse } from '../../types/Locations'
  * @example
  * const location = await getLocation(12);
  *
- * @throws Rethrows the original request error after logging it.
+ * @throws {ApiError} When the request fails.
  */
 export const getLocation = async (id: number): Promise<Location> => {
   const res = await api.get<Location>(`/locations/${id}/`)
@@ -63,7 +63,7 @@ export const getLocation = async (id: number): Promise<Location> => {
  *   },
  * });
  *
- * @throws Rethrows the original request error after logging it.
+ * @throws {ApiError} When the request fails.
  */
 export const getLocations = async (
   options?: GetLocationsOptions,

@@ -12,8 +12,8 @@ export interface Space {
  * Paginated response shape for `GET /spaces/`.
  */
 export interface SpaceListResponse {
+  count: number
+  next: string | null
+  previous: string | null
   results: Space[]
-  count?: number
-  next?: string | null
-  previous?: string | null
 }

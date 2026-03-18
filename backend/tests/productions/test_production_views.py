@@ -118,6 +118,7 @@ class TestProductionViewSetList(TestCase):
             "id",
             "attendance_mode",
             "performer_type",
+            "media_gallery",
             "uit_database_theme",
             "uit_database_type",
             "title",
