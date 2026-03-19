@@ -58,6 +58,14 @@ class MediaItemCropSerializer(serializers.ModelSerializer):
         return None
 
 
+class MediaGalleryReferenceSerializer(serializers.ModelSerializer):
+    """Lightweight nested representation used for FK expansion."""
+
+    class Meta:
+        model = MediaGallery
+        fields = ["id", "name"]
+
+
 class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """
     Represents a MediaItem with its translated metadata and nested crops.
@@ -110,6 +118,14 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
         ),
     )
 
+    gallery_id = serializers.PrimaryKeyRelatedField(
+        queryset=MediaGallery.objects.all(),
+        source="gallery",
+        write_only=True,
+        required=True,
+        help_text="ID of the parent MediaGallery (write-only).",
+    )
+    gallery = MediaGalleryReferenceSerializer(read_only=True)
     crops = MediaItemCropSerializer(many=True, read_only=True)
 
     class Meta:
@@ -117,6 +133,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
         fields = [
             "id",
             "gallery",
+            "gallery_id",
             "type",
             "format",
             "original_filename",
@@ -140,9 +157,6 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
             "crops",
         ]
         extra_kwargs = {
-            "gallery": {
-                "help_text": "Primary key of the parent **MediaGallery** this item belongs to.",
-            },
             "type": {
                 "help_text": "Media type: `foto`, `video`, `audio`, or `other`.",
             },

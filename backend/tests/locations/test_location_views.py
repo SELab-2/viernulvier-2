@@ -254,13 +254,13 @@ class TestSpaceViewSet(TestCase):
     def test_retrieve_public(self):
         response = self.client.get(f"/api/spaces/{self.space.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["location"], self.space.location.id)
+        self.assertEqual(response.data["location"]["id"], self.space.location.id)
 
     def test_create_internal(self):
         location = LocationFactory()
         response = self.client.post(
             "/api/spaces/",
-            {"location": location.id},
+            {"location_id": location.id},
             format="json",
             **int_headers(),
         )
@@ -271,7 +271,7 @@ class TestSpaceViewSet(TestCase):
         other_location = LocationFactory()
         response = self.client.patch(
             f"/api/spaces/{self.space.id}/",
-            {"location": other_location.id},
+            {"location_id": other_location.id},
             format="json",
             **int_headers(),
         )
@@ -306,13 +306,13 @@ class TestHallViewSet(TestCase):
     def test_retrieve_public(self):
         response = self.client.get(f"/api/halls/{self.hall.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["space"], self.hall.space.id)
+        self.assertEqual(response.data["space"]["id"], self.hall.space.id)
 
     def test_create_internal(self):
         space = SpaceFactory()
         response = self.client.post(
             "/api/halls/",
-            {"space": space.id, "seat_selection": True, "open_seating": False},
+            {"space_id": space.id, "seat_selection": True, "open_seating": False},
             format="json",
             **int_headers(),
         )

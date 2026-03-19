@@ -269,7 +269,7 @@ class TestGenreViewSet(TestCase):
     def test_create_internal_key(self):
         response = self.client.post(
             "/api/genres/",
-            {"type": "Festival", "use_as": self.use_as.id},
+            {"type": "Festival", "use_as_id": self.use_as.id},
             format="json",
             **int_headers(),
         )
@@ -279,7 +279,7 @@ class TestGenreViewSet(TestCase):
     def test_create_public_key_denied(self):
         response = self.client.post(
             "/api/genres/",
-            {"type": "Festival", "use_as": self.use_as.id},
+            {"type": "Festival", "use_as_id": self.use_as.id},
             format="json",
             **pub_headers(),
         )
@@ -297,7 +297,7 @@ class TestGenreViewSet(TestCase):
     def test_put_internal_key(self):
         response = self.client.put(
             f"/api/genres/{self.genre.id}/",
-            {"type": "Concert", "use_as": self.use_as.id},
+            {"type": "Concert", "use_as_id": self.use_as.id},
             format="json",
             **int_headers(),
         )

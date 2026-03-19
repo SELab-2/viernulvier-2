@@ -13,6 +13,8 @@ etc.) as well as genre and tag classifications.
 
 from drf_spectacular.utils import (
     OpenApiExample,
+    OpenApiParameter,
+    OpenApiTypes,
     extend_schema,
     extend_schema_view,
 )
@@ -33,12 +35,12 @@ from .serializers import ProductionSerializer
 
 _PRODUCTION_RESPONSE = OpenApiExample(
     "Production - response",
-    summary="A production with localised fields and nested relations",
+    summary="A production with localised fields and nested relations, without events",
     value={
         "id": 1,
         "attendance_mode": "offline",
         "performer_type": "group",
-        "media_gallery": 4,
+        "media_gallery": {"id": 706, "name": "home", "media_items": []},
         "uit_database_theme": {"id": 3, "name": "Theater"},
         "uit_database_type": {"id": 7, "name": "Voorstelling"},
         "title": "De Laatste Avond",
@@ -61,6 +63,112 @@ _PRODUCTION_RESPONSE = OpenApiExample(
             }
         ],
         "genres": [{"id": 2, "type": "theater", "name": "Theater"}],
+    },
+    response_only=True,
+)
+
+_PRODUCTION_RESPONSE_WITH_EVENTS = OpenApiExample(
+    "Production - response - events",
+    summary="A production with localised fields and nested relations, including events",
+    value={
+        "id": 1,
+        "attendance_mode": "offline",
+        "performer_type": "group",
+        "media_gallery": {"id": 706, "name": "home", "media_items": []},
+        "uit_database_theme": {"id": 3, "name": "Theater"},
+        "uit_database_type": {"id": 7, "name": "Voorstelling"},
+        "title": "De Laatste Avond",
+        "artist_name": "Collectief Morgen",
+        "tagline": "Een ode aan vergankelijkheid",
+        "teaser": "Een indringende voorstelling over verlies en hoop.",
+        "description": "Volledige beschrijving van de productie...",
+        "tags": [
+            {
+                "id": 12,
+                "type": "theme",
+                "name": "Hedendaags",
+                "url": "",
+                "source": "",
+                "source_type": "",
+                "is_external": False,
+                "is_enabled": True,
+                "short_description": None,
+                "url_title": "",
+            }
+        ],
+        "genres": [{"id": 2, "type": "theater", "name": "Theater"}],
+        "events": [
+            {
+                "id": 42,
+                "hall": {
+                    "id": 3,
+                    "space": {
+                        "id": 9,
+                        "location": {
+                            "id": 1,
+                            "street": "Kiekenmarkt",
+                            "number": "48",
+                            "postal_code": "1000",
+                            "city": "Brussels",
+                            "country": "Belgium",
+                            "phone_1": "+32 2 555 12 34",
+                            "phone_2": None,
+                            "is_own_location": True,
+                            "name": {
+                                "nl": "Koninklijke Muntschouwburg",
+                                "en": "Royal Theatre of the Mint",
+                                "fr": "Théâtre Royal de la Monnaie",
+                            },
+                            "display_name": "Royal Theatre of the Mint",
+                        },
+                        "name": {"nl": "Grote Zaal", "en": "Main Hall", "fr": "Grande Salle"},
+                        "display_name": "Main Hall",
+                    },
+                    "seat_selection": True,
+                    "open_seating": False,
+                    "name": {"nl": "Rode Zaal", "en": "Red Hall", "fr": "Salle Rouge"},
+                    "display_name": "Red Hall",
+                    "remark": {
+                        "nl": "Rolstoelplaatsen beschikbaar op rij A.",
+                        "en": "Wheelchair spaces available in row A.",
+                        "fr": "Places pour fauteuils roulants disponibles en rangée A.",
+                    },
+                },
+                "hall_display": "Red Hall",
+                "starts_at": "2025-09-15T19:30:00Z",
+                "ends_at": "2025-09-15T21:30:00Z",
+                "prices": [
+                    {
+                        "id": 101,
+                        "event": 42,
+                        "price": {
+                            "id": 1,
+                            "type": "standard",
+                            "visibility": "public",
+                            "membership": "",
+                            "minimum": None,
+                            "maximum": None,
+                            "step": None,
+                            "sort_order": 1,
+                            "cineville_box": False,
+                            "description": {"nl": "Standaard", "en": "Standard", "fr": "Standard"},
+                            "display_description": "Standard",
+                        },
+                        "price_rank": {
+                            "id": 1,
+                            "position": 1,
+                            "sold_out_buffer": 0,
+                            "description": {"nl": "Normaal", "en": "Regular", "fr": "Normal"},
+                            "display_description": "Regular",
+                        },
+                        "price_rank_display": "Regular",
+                        "price_display": "Standard",
+                        "amount": "18.00",
+                        "available": 120,
+                    },
+                ],
+            },
+        ],
     },
     response_only=True,
 )
@@ -115,14 +223,28 @@ _PRODUCTION_RETRIEVE = extend_schema(
         "by its primary key.\n\n"
         "All translated fields are returned as language-code dictionaries. "
         "Genres are ordered by their `position` value."
+        "Use `?include=events` to include all related events in the response."
     ),
+    parameters=[
+        OpenApiParameter(
+            name="include",
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            required=False,
+            description="Comma-separated list of relations to include. Accepted values: `events`.",
+            examples=[
+                OpenApiExample("No includes", value=""),
+                OpenApiExample("Include events", value="events"),
+            ],
+        )
+    ],
     responses={
         200: ProductionSerializer,
         401: RESPONSE_401,
         403: RESPONSE_403,
         404: RESPONSE_404,
     },
-    examples=[_PRODUCTION_RESPONSE],
+    examples=[_PRODUCTION_RESPONSE, _PRODUCTION_RESPONSE_WITH_EVENTS],
 )
 
 _PRODUCTION_CREATE = extend_schema(

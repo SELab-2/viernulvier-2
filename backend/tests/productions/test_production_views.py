@@ -25,6 +25,7 @@ from apps.core.views import ApiModelViewSet
 from apps.productions.models import Production
 from apps.productions.serializers import ProductionSerializer
 from apps.productions.views import ProductionViewSet
+from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.production import (
     ProductionFactory,
@@ -345,6 +346,8 @@ class TestProductionViewSetResponseStructure(TestCase):
             uit_database_type=self.db_type,
             attendance_mode="offline",
         )
+        self.event1 = EventFactory.create(production=self.production)
+        self.event2 = EventFactory.create(production=self.production)
         ProductionTranslationFactory.create(
             production=self.production,
             language=self.nl,
@@ -380,6 +383,59 @@ class TestProductionViewSetResponseStructure(TestCase):
         production_no_trans = ProductionFactory.create()
         response = self.client.get(f"/api/productions/{production_no_trans.pk}/", **pub_headers())
         self.assertEqual(response.data["title"], {})
+
+    def test_retrieve_with_include_events_production_has_no_events(self):
+        """events is an empty list when the production has no events."""
+        empty_production = ProductionFactory()
+        response = self.client.get(
+            f"/api/productions/{empty_production.id}/?include=events",
+            **pub_headers(),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["events"], [])
+
+    def test_retrieve_with_include_events_lists_related_events(self):
+        """events list contains the event that belongs to the production."""
+        response = self.client.get(
+            f"/api/productions/{self.production.id}/?include=events",
+            **pub_headers(),
+        )
+        event_ids = [e["id"] for e in response.data["events"]]
+        self.assertIn(self.event1.id, event_ids)
+        self.assertIn(self.event2.id, event_ids)
+
+    def test_retrieve_with_include_events_contains_events_field(self):
+        """events field is present in response when ?include=events is set."""
+        response = self.client.get(
+            f"/api/productions/{self.production.id}/?include=events",
+            **pub_headers(),
+        )
+        self.assertIn("events", response.data)
+
+    def test_retrieve_without_include_excludes_events_field(self):
+        """events field is absent from response when ?include=events is not set."""
+        response = self.client.get(f"/api/productions/{self.production.id}/", **pub_headers())
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("events", response.data)
+
+    def test_retrieve_with_include_events_returns_200(self):
+        """?include=events on retrieve returns a 200."""
+        response = self.client.get(
+            f"/api/productions/{self.production.id}/?include=events",
+            **pub_headers(),
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_retrieve_with_include_events_excludes_production_from_nested_event(self):
+        """NestedEventSerializer omits production fields to avoid circular data."""
+        response = self.client.get(
+            f"/api/productions/{self.production.id}/?include=events",
+            **pub_headers(),
+        )
+        nested_event = response.data["events"][0]
+        self.assertNotIn("production", nested_event)
+        self.assertNotIn("production_id", nested_event)
+        self.assertNotIn("production_display", nested_event)
 
 
 # ---------------------------------------------------------------------------
@@ -417,6 +473,6 @@ class TestProductionViewSetPrefetch(TestCase):
             )
 
     def test_list_with_translations_executes_bounded_queries(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get("/api/productions/", **pub_headers())
         self.assertEqual(response.status_code, 200)
