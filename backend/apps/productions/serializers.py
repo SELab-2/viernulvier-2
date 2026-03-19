@@ -21,6 +21,7 @@ from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.genres.serializers import GenreSerializer
+from apps.media_library.serializers import MediaGallerySerializer
 from apps.tags.serializers import TagSerializer
 
 from .models import Production, UitDatabaseTheme, UitDatabaseType
@@ -160,6 +161,21 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         ),
     )
 
+    events = serializers.SerializerMethodField(
+        help_text=(
+            "List of events that are performances of this production."
+            "This is only shown if the request is to a specific production, "
+            "and the `events` field is included in the request."
+        ),
+        read_only=True,
+    )
+
+    media_gallery = MediaGallerySerializer(
+        read_only=True,
+        allow_null=True,
+        help_text="Nested MediaGallery with all media items and crops. `null` when no gallery is assigned.",
+    )
+
     class Meta:
         model = Production
         fields = [
@@ -178,6 +194,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "description",
             "tags",
             "genres",
+            "events",
         ]
         read_only_fields = [
             "id",
@@ -192,6 +209,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "description",
             "tags",
             "genres",
+            "events",
         ]
         extra_kwargs = {
             "attendance_mode": {
@@ -254,3 +272,24 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     def get_display_artist_name(self, obj: Production) -> str | None:
         """Return the base-language artist/company name (with fallback)."""
         return self.get_base_translated_value(obj, field_name="artist_name")
+
+    def get_events(self, obj: Production) -> list:
+        """Return a list of events for this production, if included in the serializer context."""
+        if "events" not in self.context.get("include", set()):
+            return None
+
+        # Lazy import, since importing at the top level would cause a circular import between the serializers.
+        from apps.events.serializers import NestedEventSerializer
+
+        events = obj.events.all()
+        return NestedEventSerializer(events, many=True).data
+
+    def to_representation(self, instance):
+        """
+        Override to conditionally include the `events` field based on the serializer context.
+        If the events are not included, the events field is removed from the output instead of being returned as `null`.
+        """
+        rep = super().to_representation(instance)
+        if "events" not in self.context.get("include", set()):
+            rep.pop("events", None)
+        return rep

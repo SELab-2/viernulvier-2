@@ -29,7 +29,13 @@ describe('genres service', () => {
   }) => {
     expect(typeof genre.id).toBe('number')
     expect(typeof genre.type).toBe('string')
-    expect(typeof genre.use_as).toBe('number')
+    expect(typeof genre.use_as).toBe('object')
+
+    if (genre.use_as !== null && typeof genre.use_as === 'object') {
+      const useAs = genre.use_as as { id?: unknown; name?: unknown }
+      expect(typeof useAs.id).toBe('number')
+      expect(typeof useAs.name).toBe('string')
+    }
 
     if (genre.name !== null) {
       expect(typeof genre.name).toBe('object')
@@ -58,7 +64,7 @@ describe('genres service', () => {
       const data = {
         id: 7,
         type: 'theater',
-        use_as: 2,
+        use_as: { id: 2, name: 'genre' },
         name: { en: 'Theatre', nl: 'Theater' },
         display_name: 'Theater',
         vendor_id: 'vendor-42',
@@ -99,7 +105,7 @@ describe('genres service', () => {
           {
             id: 7,
             type: 'theater',
-            use_as: 2,
+            use_as: { id: 2, name: 'genre' },
             name: { en: 'Theatre', nl: 'Theater' },
             display_name: 'Theater',
             vendor_id: 'vendor-42',

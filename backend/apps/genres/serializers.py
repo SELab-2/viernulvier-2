@@ -62,20 +62,29 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
+    use_as_id = serializers.PrimaryKeyRelatedField(
+        queryset=GenreUseAs.objects.all(),
+        source="use_as",
+        write_only=True,
+        required=True,
+        help_text="ID of the parent GenreUseAs (write-only).",
+    )
+
+    use_as = GenreUseAsSerializer(
+        help_text=(
+            "Primary key of the **GenreUseAs** that defines how this genre is applied (taxonomy classification or tag)."
+        ),
+        read_only=True,
+    )
+
     class Meta:
         model = Genre
-        fields = ["id", "type", "use_as", "name", "display_name", "vendor_id"]
-        read_only_fields = ["id", "name", "display_name"]
+        fields = ["id", "type", "use_as", "name", "display_name", "vendor_id", "use_as_id"]
+        read_only_fields = ["id", "name", "display_name", "use_as"]
         extra_kwargs = {
             "type": {
                 "help_text": (
                     "Internal technical identifier in `snake_case` (e.g. `theater`, `contemporary_dance`, `festival`)."
-                ),
-            },
-            "use_as": {
-                "help_text": (
-                    "Primary key of the **GenreUseAs** that defines how this "
-                    "genre is applied (taxonomy classification or tag)."
                 ),
             },
             "vendor_id": {

@@ -14,6 +14,11 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
+from apps.locations.models import Hall
+from apps.locations.serializers import HallSerializer
+from apps.pricing.serializers import PriceRankSerializer, PriceSerializer
+from apps.productions.models import Production
+from apps.productions.serializers import ProductionSerializer
 
 from .models import Event, EventPrice
 
@@ -32,6 +37,16 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
     price_rank_display = serializers.SerializerMethodField()
     price_display = serializers.SerializerMethodField()
+    price = PriceSerializer(
+        allow_null=True,
+        required=False,
+        help_text="PK of the associated ``Price`` category. `null` when the price has been deleted.",
+    )
+    price_rank = PriceRankSerializer(
+        allow_null=True,
+        required=False,
+        help_text="PK of the associated ``PriceRank`` availability tier. `null` when the rank has been deleted.",
+    )
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_price_rank_display(self, obj):
@@ -71,15 +86,7 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         read_only_fields = ["id"]
         extra_kwargs = {
             "event": {"help_text": "PK of the event this price entry belongs to."},
-            "price_rank": {
-                "help_text": (
-                    "PK of the associated ``PriceRank`` availability tier. `null` when the rank has been deleted."
-                ),
-            },
             "price_rank_display": {"help_text": "String for the price rank in the display representation."},
-            "price": {
-                "help_text": ("PK of the associated ``Price`` category. `null` when the price has been deleted."),
-            },
             "price_display": {"help_text": "String for the price category in the display representation."},
             "amount": {"help_text": "Ticket price in euro (e.g. `18.00`)."},
             "available": {"help_text": "Number of tickets available at this price rank for the event."},
@@ -119,6 +126,27 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     production_display = serializers.SerializerMethodField()
     hall_display = serializers.SerializerMethodField()
 
+    production = ProductionSerializer(read_only=True, help_text="Full production object (read-only)")
+    hall = HallSerializer(read_only=True, help_text="Full hall object (read-only)")
+
+    production_id = serializers.PrimaryKeyRelatedField(
+        queryset=Production.objects.all(),
+        write_only=True,
+        required=True,
+        help_text="ID of the production this event is a performance of. Use this field for create/update.",
+        source="production",
+    )
+
+    hall_id = serializers.PrimaryKeyRelatedField(
+        queryset=Hall.objects.all(),
+        write_only=True,
+        required=False,
+        allow_null=True,
+        help_text="ID of the hall in which the event takes place. "
+        "Use null for online/location-independent events. Use this field for create/update.",
+        source="hall",
+    )
+
     @extend_schema_field(serializers.CharField())
     def get_production_display(self, obj):
         """Return the production name in the project's base language."""
@@ -146,24 +174,18 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         fields = [
             "id",
             "production",
+            "production_id",
             "production_display",
             "hall",
+            "hall_id",
             "hall_display",
             "starts_at",
             "ends_at",
             "prices",
         ]
-        read_only_fields = ["id", "prices"]
+        read_only_fields = ["id", "prices", "production", "hall"]
         extra_kwargs = {
-            "production": {
-                "help_text": "PK of the production this event is a performance of.",
-            },
             "production_display": {"help_text": "String for the production in the display representation."},
-            "hall": {
-                "help_text": (
-                    "PK of the hall in which the event takes place. `null` for online or location-independent events."
-                ),
-            },
             "hall_display": {"help_text": "String for the hall in the display representation."},
             "starts_at": {
                 "help_text": "ISO 8601 UTC datetime at which the event begins.",
@@ -172,3 +194,14 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
                 "help_text": ("ISO 8601 UTC datetime at which the event ends. Must be strictly later than `starts_at`."),
             },
         }
+
+
+class NestedEventSerializer(EventSerializer):
+    """
+    Compact event representation for use when nested inside a Production response.
+    Production fields are excluded to avoid redundant/circular data.
+    """
+
+    class Meta(EventSerializer.Meta):
+        fields = [f for f in EventSerializer.Meta.fields if not f.startswith("production")]
+        read_only_fields = [f for f in EventSerializer.Meta.read_only_fields if not f.startswith("production")]

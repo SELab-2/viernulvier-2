@@ -36,24 +36,114 @@ _EVENT_RESPONSE = OpenApiExample(
     summary="An event with nested prices",
     value={
         "id": 42,
-        "production": 1,
-        "hall": 3,
+        "production": {
+            "id": 1,
+            "attendance_mode": "offline",
+            "performer_type": "group",
+            "uit_database_theme": {"id": 2, "name": "Theater"},
+            "uit_database_type": {"id": 6, "name": "Voorstelling"},
+            "display_title": "Hamlet",
+            "display_artist_name": "Toneelhuis",
+            "title": {"nl": "Hamlet", "en": "Hamlet", "fr": "Hamlet"},
+            "artist_name": {"nl": "Toneelhuis", "en": "Toneelhuis", "fr": "Toneelhuis"},
+            "tagline": {"nl": "Een klassieker", "en": "A classic", "fr": "Un classique"},
+            "teaser": {"nl": "Korte teaser", "en": "Short teaser", "fr": "Court teaser"},
+            "description": {"nl": "Lange beschrijving", "en": "Long description", "fr": "Description longue"},
+            "tags": [],
+            "genres": [],
+        },
+        "hall": {
+            "id": 3,
+            "space": {
+                "id": 9,
+                "location": {
+                    "id": 1,
+                    "street": "Kiekenmarkt",
+                    "number": "48",
+                    "postal_code": "1000",
+                    "city": "Brussels",
+                    "country": "Belgium",
+                    "phone_1": "+32 2 555 12 34",
+                    "phone_2": None,
+                    "is_own_location": True,
+                    "name": {
+                        "nl": "Koninklijke Muntschouwburg",
+                        "en": "Royal Theatre of the Mint",
+                        "fr": "Théâtre Royal de la Monnaie",
+                    },
+                    "display_name": "Royal Theatre of the Mint",
+                },
+                "name": {"nl": "Grote Zaal", "en": "Main Hall", "fr": "Grande Salle"},
+                "display_name": "Main Hall",
+            },
+            "seat_selection": True,
+            "open_seating": False,
+            "name": {"nl": "Rode Zaal", "en": "Red Hall", "fr": "Salle Rouge"},
+            "display_name": "Red Hall",
+            "remark": {
+                "nl": "Rolstoelplaatsen beschikbaar op rij A.",
+                "en": "Wheelchair spaces available in row A.",
+                "fr": "Places pour fauteuils roulants disponibles en rangée A.",
+            },
+        },
+        "production_display": "Hamlet",
+        "hall_display": "Red Hall",
         "starts_at": "2025-09-15T19:30:00Z",
         "ends_at": "2025-09-15T21:30:00Z",
         "prices": [
             {
                 "id": 101,
                 "event": 42,
-                "price": 1,
-                "price_rank": 1,
+                "price": {
+                    "id": 1,
+                    "type": "standard",
+                    "visibility": "public",
+                    "membership": "",
+                    "minimum": None,
+                    "maximum": None,
+                    "step": None,
+                    "sort_order": 1,
+                    "cineville_box": False,
+                    "description": {"nl": "Standaard", "en": "Standard", "fr": "Standard"},
+                    "display_description": "Standard",
+                },
+                "price_rank": {
+                    "id": 1,
+                    "position": 1,
+                    "sold_out_buffer": 0,
+                    "description": {"nl": "Normaal", "en": "Regular", "fr": "Normal"},
+                    "display_description": "Regular",
+                },
+                "price_rank_display": "Regular",
+                "price_display": "Standard",
                 "amount": "18.00",
                 "available": 120,
             },
             {
                 "id": 102,
                 "event": 42,
-                "price": 2,
-                "price_rank": 2,
+                "price": {
+                    "id": 2,
+                    "type": "student",
+                    "visibility": "public",
+                    "membership": "",
+                    "minimum": None,
+                    "maximum": None,
+                    "step": None,
+                    "sort_order": 2,
+                    "cineville_box": False,
+                    "description": {"nl": "Student", "en": "Student", "fr": "Étudiant"},
+                    "display_description": "Student",
+                },
+                "price_rank": {
+                    "id": 2,
+                    "position": 2,
+                    "sold_out_buffer": 0,
+                    "description": {"nl": "Laat", "en": "Late", "fr": "Tardif"},
+                    "display_description": "Late",
+                },
+                "price_rank_display": "Late",
+                "price_display": "Student",
                 "amount": "12.00",
                 "available": 40,
             },
@@ -67,8 +157,25 @@ _EVENT_NO_HALL_RESPONSE = OpenApiExample(
     summary="An online event without a hall assignment",
     value={
         "id": 55,
-        "production": 7,
+        "production": {
+            "id": 7,
+            "attendance_mode": "online",
+            "performer_type": "solo",
+            "uit_database_theme": None,
+            "uit_database_type": None,
+            "display_title": "Livestream Concert",
+            "display_artist_name": "Artist X",
+            "title": {"nl": "Livestream Concert", "en": "Livestream Concert", "fr": "Concert en direct"},
+            "artist_name": {"nl": "Artist X", "en": "Artist X", "fr": "Artist X"},
+            "tagline": {},
+            "teaser": {},
+            "description": {},
+            "tags": [],
+            "genres": [],
+        },
         "hall": None,
+        "production_display": "Livestream Concert",
+        "hall_display": None,
         "starts_at": "2025-10-01T20:00:00Z",
         "ends_at": "2025-10-01T21:00:00Z",
         "prices": [],
@@ -78,10 +185,10 @@ _EVENT_NO_HALL_RESPONSE = OpenApiExample(
 
 _EVENT_INPUT = OpenApiExample(
     "Event - request body",
-    summary="Payload for creating a new event",
+    summary="Payload for creating a new event (use *_id fields for input)",
     value={
-        "production": 1,
-        "hall": 3,
+        "production_id": 1,
+        "hall_id": 3,
         "starts_at": "2025-09-15T19:30:00Z",
         "ends_at": "2025-09-15T21:30:00Z",
     },
@@ -90,7 +197,7 @@ _EVENT_INPUT = OpenApiExample(
 
 _EVENT_PARTIAL_INPUT = OpenApiExample(
     "Event - partial request body",
-    summary="Only the fields you want to change",
+    summary="Only the fields you want to change (use *_id fields for input)",
     value={"starts_at": "2025-09-15T20:00:00Z"},
     request_only=True,
 )
@@ -106,8 +213,28 @@ _EVENT_PRICE_RESPONSE = OpenApiExample(
     value={
         "id": 101,
         "event": 42,
-        "price": 1,
-        "price_rank": 1,
+        "price": {
+            "id": 1,
+            "type": "standard",
+            "visibility": "public",
+            "membership": "",
+            "minimum": None,
+            "maximum": None,
+            "step": None,
+            "sort_order": 1,
+            "cineville_box": False,
+            "description": {"nl": "Standaard", "en": "Standard", "fr": "Standard"},
+            "display_description": "Standard",
+        },
+        "price_rank": {
+            "id": 1,
+            "position": 1,
+            "sold_out_buffer": 0,
+            "description": {"nl": "Normaal", "en": "Regular", "fr": "Normal"},
+            "display_description": "Regular",
+        },
+        "price_rank_display": "Regular",
+        "price_display": "Standard",
         "amount": "18.00",
         "available": 120,
     },
@@ -175,12 +302,13 @@ _EVENT_CREATE = extend_schema(
     summary="Create an event",
     description=(
         "Creates a new **Event** for an existing production.\n\n"
-        "- `production` is required.\n"
-        "- `hall` is optional; omit or set to `null` for online events.\n"
+        "- `production_id` is required (integer FK).\n"
+        "- `hall_id` is optional (integer FK); omit or set to `null` for online events.\n"
         "- `ends_at` must be strictly later than `starts_at` - the API enforces "
         "  this with a database-level check constraint.\n"
         "- Prices must be added separately via the **Event Price** endpoints "
         "  after creation.\n\n"
+        "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=EventSerializer,
@@ -196,7 +324,9 @@ _EVENT_CREATE = extend_schema(
 _EVENT_UPDATE = extend_schema(
     summary="Replace an event",
     description=(
-        "Fully replaces an existing **Event**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
+        "Fully replaces an existing **Event**. All writable fields must be supplied.\n\n"
+        "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n> "
+        "**Requires an internal API key.**"
     ),
     request=EventSerializer,
     responses={
@@ -214,6 +344,7 @@ _EVENT_PARTIAL_UPDATE = extend_schema(
     description=(
         "Updates one or more fields of an existing **Event** without "
         "requiring a full payload.\n\n"
+        "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=EventSerializer,
