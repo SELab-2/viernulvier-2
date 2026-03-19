@@ -41,7 +41,7 @@ const DropDownFilter: React.FC<DropDownFilterProps> = ({
       >
         <Select
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(String(e.target.value))}
           displayEmpty={false}
           sx={{ minWidth: 120 }}
         >

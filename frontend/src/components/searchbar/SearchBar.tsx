@@ -1,6 +1,5 @@
 import React from 'react'
-import { TextField, useTheme, Box } from '@mui/material'
-import Tag from '../Tag'
+import { TextField, useTheme } from '@mui/material'
 
 /**
  * Props for the SearchBar component.
@@ -15,9 +14,6 @@ interface SearchBarProps {
   placeholder?: string
   searchValue: string
   onSearchChange: (value: string) => void
-  tags: { name: string; displayName: string }[]
-  selectedTags: string[]
-  onTagToggle: (tag: string) => void
 }
 
 /**
@@ -29,42 +25,26 @@ const SearchBar: React.FC<SearchBarProps> = ({
   placeholder = 'Search...',
   searchValue,
   onSearchChange,
-  tags,
-  selectedTags,
-  onTagToggle,
 }) => {
   const theme = useTheme()
   return (
     <>
-      {/* Search input field */}
-      <TextField
-        fullWidth
-        variant="outlined"
-        placeholder={placeholder}
-        value={searchValue}
-        onChange={(e) => onSearchChange(e.target.value)}
-        sx={{
-          flex: 1,
-          '& .MuiInputBase-root': {
-            height: 40,
-            backgroundColor: theme.palette.background.default,
-          },
-        }}
-        className="search-bar-textfield"
-      />
-      {/* Tag filter chips: each chip is clickable and shows selection state */}
-      <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-        {tags.map((tag) => (
-          <Tag
-            key={tag.name}
-            name={tag.name}
-            displayName={tag.displayName}
-            selected={selectedTags.includes(tag.name)}
-            onTagToggle={onTagToggle}
-            context="search"
-          />
-        ))}
-      </Box>
+    {/* Search input field */}
+    <TextField
+      fullWidth
+      variant="outlined"
+      placeholder={placeholder}
+      value={searchValue}
+      onChange={(e) => onSearchChange(e.target.value)}
+      sx={{
+        flex: 1,
+        '& .MuiInputBase-root': {
+          height: 40,
+          backgroundColor: theme.palette.background.default,
+        },
+      }}
+      className="search-bar-textfield"
+    />
     </>
   )
 }

@@ -1,9 +1,9 @@
 import { Container, Paper, Stack, Typography, Box } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import SearchBar from '../components/searchbar/SearchBar'
+import FilteredSearchBar from '../components/searchbar/FilteredSearchBar'
 import Tag from '../components/Tag'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 const TAGS = [
   { name: 'theater', displayName: 'Theater' },
@@ -28,11 +28,18 @@ function parseTagsFromQuery(search: string): string[] {
   return tags ? tags.split(',').filter(Boolean) : []
 }
 
+
 const HomePage = () => {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const selectedTags = parseTagsFromQuery(location.search)
+  // Local state for search input
+  const [searchValue, setSearchValue] = useState('')
+  // Demo: no filters or layout options
+  const filters: import('../components/searchbar/filters/DropDownFilter').DropDownFilterProps[] = []
+  const layoutOptions: { name: string; displayName: string }[] = []
+  const currentLayout = ''
 
   /**
    * Toggle a tag's selection and update the URL.
@@ -70,12 +77,17 @@ const HomePage = () => {
           <Typography variant="subtitle1">{t('subtitle')}</Typography>
         </Stack>
         <Box sx={{ mt: 4 }}>
-          <SearchBar
-            searchValue=""
-            onSearchChange={() => {}}
+          <FilteredSearchBar
+            placeholder="Search..."
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
             tags={TAGS}
             selectedTags={selectedTags}
             onTagToggle={handleTagToggle}
+            filters={filters}
+            layoutOptions={layoutOptions}
+            currentLayout={currentLayout}
+            onLayoutChange={() => { }}
           />
         </Box>
 

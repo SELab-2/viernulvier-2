@@ -4,26 +4,26 @@ import LayoutOption from './LayoutOption'
 
 // This represents a layout option in the search bar, e.g. "Grid" or "List".
 interface LayoutOptionListProps {
-  layout_options: { name: string; displayName: string }[]
-  selected_layout: string
+  layoutOptions: { name: string; displayName: string }[]
+  selectedLayout: string
   onLayoutChange: (tag: string) => void
 }
 
 // This component renders the list of layout options as clickable chips.
 // It receives the list of all layout options, the currently selected layout, and a callback function to toggle a layout's selection state.
 const LayoutOptionList: React.FC<LayoutOptionListProps> = ({
-  layout_options,
-  selected_layout,
-  onLayoutChange: onLayoutChange,
+  layoutOptions,
+  selectedLayout,
+  onLayoutChange,
 }) => {
   return (
     <Box display="flex" gap={1} flexWrap="wrap">
-      {layout_options.map((layout) => (
+      {layoutOptions.map((layout) => (
         <LayoutOption
           key={layout.name}
           name={layout.name}
           displayName={layout.displayName}
-          selected={selected_layout === layout.name}
+          selected={selectedLayout === layout.name}
           onSelected={onLayoutChange}
         />
       ))}
