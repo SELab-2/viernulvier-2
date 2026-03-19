@@ -123,18 +123,6 @@ const Tag: React.FC<TagProps> = ({
         // Color and border logic for selected/unselected, series and theme
         ...(context === 'series'
           ? {
-            backgroundColor: `${purple} !important`,
-            color: white,
-            borderColor: purple,
-            boxShadow: 'none',
-            '&:hover': {
-              backgroundColor: `${purpleHover} !important`,
-              color: white,
-              borderColor: purple,
-            },
-          }
-          : selected
-            ? {
               backgroundColor: `${purple} !important`,
               color: white,
               borderColor: purple,
@@ -145,27 +133,39 @@ const Tag: React.FC<TagProps> = ({
                 borderColor: purple,
               },
             }
-            : theme.palette.mode === 'light'
-              ? {
-                backgroundColor: white,
-                color: black,
-                borderColor: black,
+          : selected
+            ? {
+                backgroundColor: `${purple} !important`,
+                color: white,
+                borderColor: purple,
+                boxShadow: 'none',
                 '&:hover': {
-                  backgroundColor: purple,
+                  backgroundColor: `${purpleHover} !important`,
                   color: white,
                   borderColor: purple,
                 },
               }
+            : theme.palette.mode === 'light'
+              ? {
+                  backgroundColor: white,
+                  color: black,
+                  borderColor: black,
+                  '&:hover': {
+                    backgroundColor: purple,
+                    color: white,
+                    borderColor: purple,
+                  },
+                }
               : {
-                backgroundColor: theme.palette.background.paper,
-                color: white,
-                borderColor: white,
-                '&:hover': {
-                  backgroundColor: purple,
+                  backgroundColor: theme.palette.background.paper,
                   color: white,
-                  borderColor: purple,
-                },
-              }),
+                  borderColor: white,
+                  '&:hover': {
+                    backgroundColor: purple,
+                    color: white,
+                    borderColor: purple,
+                  },
+                }),
         '&:focus': {
           boxShadow: 'none',
         },

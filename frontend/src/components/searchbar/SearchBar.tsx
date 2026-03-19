@@ -29,22 +29,22 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const theme = useTheme()
   return (
     <>
-    {/* Search input field */}
-    <TextField
-      fullWidth
-      variant="outlined"
-      placeholder={placeholder}
-      value={searchValue}
-      onChange={(e) => onSearchChange(e.target.value)}
-      sx={{
-        flex: 1,
-        '& .MuiInputBase-root': {
-          height: 40,
-          backgroundColor: theme.palette.background.default,
-        },
-      }}
-      className="search-bar-textfield"
-    />
+      {/* Search input field */}
+      <TextField
+        fullWidth
+        variant="outlined"
+        placeholder={placeholder}
+        value={searchValue}
+        onChange={(e) => onSearchChange(e.target.value)}
+        sx={{
+          flex: 1,
+          '& .MuiInputBase-root': {
+            height: 40,
+            backgroundColor: theme.palette.background.default,
+          },
+        }}
+        className="search-bar-textfield"
+      />
     </>
   )
 }

@@ -28,7 +28,6 @@ function parseTagsFromQuery(search: string): string[] {
   return tags ? tags.split(',').filter(Boolean) : []
 }
 
-
 const HomePage = () => {
   const { t } = useTranslation()
   const location = useLocation()
@@ -87,7 +86,7 @@ const HomePage = () => {
             filters={filters}
             layoutOptions={layoutOptions}
             currentLayout={currentLayout}
-            onLayoutChange={() => { }}
+            onLayoutChange={() => {}}
           />
         </Box>
 
