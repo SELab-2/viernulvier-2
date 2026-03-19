@@ -155,7 +155,6 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
             "credits",
             "link",
             "crops",
-            "gallery",
         ]
         extra_kwargs = {
             "type": {
