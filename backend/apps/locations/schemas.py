@@ -189,12 +189,47 @@ _SPACE_RESPONSE = OpenApiExample(
     summary="A space with a translated name",
     value={
         "id": 3,
-        "location": 1,
+        "location": {
+            "id": 1,
+            "street": "Kiekenmarkt",
+            "number": "48",
+            "postal_code": "1000",
+            "city": "Brussels",
+            "country": "Belgium",
+            "phone_1": "+32 2 555 12 34",
+            "phone_2": None,
+            "is_own_location": True,
+            "name": {
+                "nl": "Koninklijke Muntschouwburg",
+                "en": "Royal Theatre of the Mint",
+                "fr": "Théâtre Royal de la Monnaie",
+            },
+            "display_name": "Royal Theatre of the Mint",
+        },
         "name": {
             "nl": "Grote Zaal",
             "en": "Main Hall",
             "fr": "Grande Salle",
         },
+        "display_name": "Main Hall",
+        "halls": [
+            {
+                "id": 7,
+                "seat_selection": True,
+                "open_seating": False,
+                "name": {
+                    "nl": "Rode Zaal",
+                    "en": "Red Hall",
+                    "fr": "Salle Rouge",
+                },
+                "display_name": "Red Hall",
+                "remark": {
+                    "nl": "Rolstoelplaatsen beschikbaar op rij A.",
+                    "en": "Wheelchair spaces available in row A.",
+                    "fr": "Places pour fauteuils roulants disponibles en rangée A.",
+                },
+            }
+        ],
     },
     response_only=True,
 )
@@ -202,14 +237,14 @@ _SPACE_RESPONSE = OpenApiExample(
 _SPACE_INPUT = OpenApiExample(
     "Space - request body",
     summary="Payload for creating a new space",
-    value={"location": 1},
+    value={"location_id": 1},
     request_only=True,
 )
 
 _SPACE_PARTIAL_INPUT = OpenApiExample(
     "Space - partial request body",
     summary="Only the fields you want to change",
-    value={"location": 2},
+    value={"location_id": 2},
     request_only=True,
 )
 
@@ -252,7 +287,7 @@ _SPACE_CREATE = extend_schema(
     summary="Create a space",
     description=(
         "Creates a new **Space** under an existing location.\n\n"
-        "- `location` (FK) is the only required field.\n"
+        "- `location_id` (FK) is the only required field.\n"
         "- Localised names must be added via the **Space Translation** "
         "  endpoints after the space has been created.\n\n"
         "> **Requires an internal API key.**"
@@ -327,7 +362,32 @@ _HALL_RESPONSE = OpenApiExample(
     summary="A hall with seating flags and translated fields",
     value={
         "id": 7,
-        "space": 3,
+        "space": {
+            "id": 3,
+            "location": {
+                "id": 1,
+                "street": "Kiekenmarkt",
+                "number": "48",
+                "postal_code": "1000",
+                "city": "Brussels",
+                "country": "Belgium",
+                "phone_1": "+32 2 555 12 34",
+                "phone_2": None,
+                "is_own_location": True,
+                "name": {
+                    "nl": "Koninklijke Muntschouwburg",
+                    "en": "Royal Theatre of the Mint",
+                    "fr": "Théâtre Royal de la Monnaie",
+                },
+                "display_name": "Royal Theatre of the Mint",
+            },
+            "name": {
+                "nl": "Grote Zaal",
+                "en": "Main Hall",
+                "fr": "Grande Salle",
+            },
+            "display_name": "Main Hall",
+        },
         "seat_selection": True,
         "open_seating": False,
         "name": {
@@ -347,7 +407,7 @@ _HALL_RESPONSE = OpenApiExample(
 _HALL_INPUT = OpenApiExample(
     "Hall - request body",
     summary="Payload for creating a new hall",
-    value={"space": 3, "seat_selection": True, "open_seating": False},
+    value={"space_id": 3, "seat_selection": True, "open_seating": False},
     request_only=True,
 )
 
@@ -399,7 +459,7 @@ _HALL_CREATE = extend_schema(
     summary="Create a hall",
     description=(
         "Creates a new **Hall** within an existing space.\n\n"
-        "- `space` (FK) is required.\n"
+        "- `space_id` (FK) is required.\n"
         "- `seat_selection` and `open_seating` default to `false`.\n"
         "- Localised `name` and `remark` must be added via the **Hall Translation** "
         "  endpoints after the hall has been created.\n\n"

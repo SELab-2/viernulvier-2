@@ -13,9 +13,10 @@ from django.db.models import Prefetch
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
-from apps.locations.models import HallTranslation
-from apps.pricing.models import PriceRankTranslation
-from apps.productions.models import ProductionTranslation
+from apps.locations.models import HallTranslation, LocationTranslation, SpaceTranslation
+from apps.media_library.models import MediaItem
+from apps.pricing.models import PriceRankTranslation, PriceTranslation
+from apps.productions.models import ProductionGenre, ProductionTranslation
 
 from .filters import EventFilter
 from .models import Event, EventPrice
@@ -90,6 +91,8 @@ class EventViewSet(ApiModelViewSet):
     queryset = (
         Event.objects.select_related(
             "production",
+            "production__uit_database_theme",
+            "production__uit_database_type",
             "hall",
             "hall__space",
             "hall__space__location",
@@ -97,19 +100,49 @@ class EventViewSet(ApiModelViewSet):
         .prefetch_related(
             Prefetch(
                 "prices",
-                queryset=EventPrice.objects.select_related("price_rank"),
+                queryset=EventPrice.objects.select_related("price_rank", "price"),
             ),
             Prefetch(
                 "production__translations",
                 queryset=ProductionTranslation.objects.select_related("language"),
+            ),
+            "production__tags",
+            "production__tags__translations__language",
+            Prefetch(
+                "production__productiongenre_set",
+                queryset=(
+                    ProductionGenre.objects.select_related("genre", "genre__use_as")
+                    .prefetch_related("genre__translations__language")
+                    .order_by("position")
+                ),
+                to_attr="prefetched_production_genres",
             ),
             Prefetch(
                 "hall__translations",
                 queryset=HallTranslation.objects.select_related("language"),
             ),
             Prefetch(
+                "hall__space__translations",
+                queryset=SpaceTranslation.objects.select_related("language"),
+            ),
+            Prefetch(
+                "hall__space__location__translations",
+                queryset=LocationTranslation.objects.select_related("language"),
+            ),
+            Prefetch(
+                "production__media_gallery__media_items",
+                queryset=MediaItem.objects.prefetch_related(
+                    "translations__language",
+                    "crops",
+                ).order_by("position"),
+            ),
+            Prefetch(
                 "prices__price_rank__translations",
                 queryset=PriceRankTranslation.objects.select_related("language"),
+            ),
+            Prefetch(
+                "prices__price__translations",
+                queryset=PriceTranslation.objects.select_related("language"),
             ),
         )
         .order_by("starts_at", "id")
