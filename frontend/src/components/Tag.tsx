@@ -46,7 +46,7 @@ const Tag: React.FC<TagProps> = ({
   const theme = useTheme()
   const navigate = useNavigate()
   const { i18n } = useTranslation()
-  
+
   // Determine label to display based on current language, fallback to tagName
   let label = tagName
   if (labels && i18n.language && labels[i18n.language]) {

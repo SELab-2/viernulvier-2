@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 // Mock useTranslation to avoid i18n warning in tests
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'nl' } })
+  useTranslation: () => ({ i18n: { language: 'nl' } }),
 }))
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { MemoryRouter } from 'react-router-dom'

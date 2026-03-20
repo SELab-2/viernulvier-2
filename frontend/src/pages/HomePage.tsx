@@ -6,13 +6,13 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useCallback, useState } from 'react'
 
 const TAGS = [
-  { display_name: 'theater', name: {'nl': 'Theater', 'en': 'THEATER'} },
-  { display_name: 'concert', name: {'nl': 'Concert', 'en': 'CONCERT'} },
-  { display_name: 'expo', name: {'nl': 'Expo', 'en': 'EXPO'} },
-  { display_name: 'film', name: {'nl': 'Film', 'en': 'FILM'} },
-  { display_name: 'workshop', name: {'nl': 'Workshop', 'en': 'WORKSHOP'} },
-  { display_name: 'music', name: {'nl': 'Muziek', 'en': 'MUSIC'} },
-  { display_name: 'Festival', name: {'nl': 'Festival', 'en': 'FESTIVAL'} },
+  { display_name: 'theater', name: { nl: 'Theater', en: 'THEATER' } },
+  { display_name: 'concert', name: { nl: 'Concert', en: 'CONCERT' } },
+  { display_name: 'expo', name: { nl: 'Expo', en: 'EXPO' } },
+  { display_name: 'film', name: { nl: 'Film', en: 'FILM' } },
+  { display_name: 'workshop', name: { nl: 'Workshop', en: 'WORKSHOP' } },
+  { display_name: 'music', name: { nl: 'Muziek', en: 'MUSIC' } },
+  { display_name: 'Festival', name: { nl: 'Festival', en: 'FESTIVAL' } },
 ]
 
 // TODO: Fetch tags from API in the future

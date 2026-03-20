@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import Tag from '../../components/Tag'
 // Mock useTranslation globally to avoid i18n warning and allow language switching
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'nl' } })
+  useTranslation: () => ({ i18n: { language: 'nl' } }),
 }))
 import { MemoryRouter } from 'react-router-dom'
 

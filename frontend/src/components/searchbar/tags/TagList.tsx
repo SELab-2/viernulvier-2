@@ -4,7 +4,7 @@ import Tag from '../../Tag'
 
 // This represents the list of tags in the search bar, e.g. "Theater", "Concert", etc.
 interface TagListProps {
-  tags: { display_name: string, name: Record<string, string> }[]
+  tags: { display_name: string; name: Record<string, string> }[]
   selectedTags: string[]
   onTagToggle: (tag: string) => void
 }
