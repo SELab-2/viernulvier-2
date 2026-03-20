@@ -13,6 +13,9 @@
     "switchToLightMode": "Donkere modus",
     "switchToDarkMode": "Lichte modus"
   },
+  "searchbar": {
+    "search": "Zoeken"
+  },
   "events": {
     "title": "Evenementen",
     "listPlaceholder": "Lijst met evenementen wordt hier weergegeven.",
