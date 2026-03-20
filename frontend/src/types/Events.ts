@@ -1,6 +1,6 @@
 import type { Hall } from './Halls'
-import type { Price, PriceRank } from './Price'
-import type { Production } from './Production'
+import type { Price, PriceRank } from './Pricing'
+import type { Production } from './Productions'
 
 /**
  * Single price row nested inside an event response.
