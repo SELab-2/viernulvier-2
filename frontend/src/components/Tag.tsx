@@ -2,6 +2,7 @@ import { Chip, useTheme } from '@mui/material'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CloseIcon from '@mui/icons-material/Close'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Tag context determines click/navigation behavior.
@@ -13,23 +14,21 @@ export type TagContext = 'search' | 'description' | 'series'
 
 /**
  * Props for the Tag component.
- * - name: tag identifier (used for logic and navigation)
- * - displayName: human-readable label
+ * - tagName: Default api label for the tag (used for logic and navigation)
+ * - labels: optional map of language codes to translated labels
  * - selected: whether the tag is currently selected
  * - onTagToggle: callback for toggling tag selection
  * - context: determines click/navigation behavior
  * - className: optional custom className
  */
 interface TagProps {
-  name: string
-  displayName: string
+  tagName: string
+  labels?: Record<string, string>
   selected?: boolean
   onTagToggle?: (tag: string) => void
   context?: TagContext
   className?: string
 }
-
-// TODO: Tag displayNames must come from the API so they are correctly translated and all tags are included.
 
 /**
  * Context-aware Tag chip component using MUI Chip.
@@ -37,8 +36,8 @@ interface TagProps {
  * - Handles context-aware click: search (toggle), description (to homepage), series (to series detail).
  */
 const Tag: React.FC<TagProps> = ({
-  name,
-  displayName,
+  tagName,
+  labels,
   selected = false,
   onTagToggle,
   context = 'search',
@@ -46,6 +45,13 @@ const Tag: React.FC<TagProps> = ({
 }) => {
   const theme = useTheme()
   const navigate = useNavigate()
+  const { i18n } = useTranslation()
+  
+  // Determine label to display based on current language, fallback to tagName
+  let label = tagName
+  if (labels && i18n.language && labels[i18n.language]) {
+    label = labels[i18n.language]
+  }
 
   // Color palette for tag states
   const purple = '#9333ea'
@@ -66,25 +72,25 @@ const Tag: React.FC<TagProps> = ({
     if (context === 'series') {
       // Navigate to series detail page
       // TODO: adjust route as needed
-      navigate(`/series/${name}`)
+      navigate(`/series/${tagName}`)
       return
     }
     if (context === 'search') {
       // Toggle tag selection in search context
-      if (onTagToggle) onTagToggle(name)
+      if (onTagToggle) onTagToggle(tagName)
     } else if (context === 'description') {
       // Navigate to homepage with tag selected in URL
-      navigate(`/?tags=${encodeURIComponent(name)}`)
+      navigate(`/?tags=${encodeURIComponent(tagName)}`)
     }
   }
 
   return (
     <Chip
-      key={name}
-      // Tag label: show displayName and cross icon if selected
+      key={tagName}
+      // Tag label: show label/tagName and cross icon if selected
       label={
         <span style={{ display: 'flex', alignItems: 'center' }}>
-          {displayName}
+          {label}
           {selected && (
             <span
               // Cross icon hover highlight

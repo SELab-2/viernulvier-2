@@ -11,7 +11,7 @@ export interface FilteredSearchBarProps {
   searchValue: string
   onSearchChange: (value: string) => void
   filters: DropDownFilterProps[]
-  tags: { name: string; displayName: string }[]
+  tags: { display_name: string; name: Record<string, string> }[]
   selectedTags: string[]
   onTagToggle: (tag: string) => void
   layoutOptions: { name: string; displayName: string }[]

@@ -6,13 +6,13 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useCallback, useState } from 'react'
 
 const TAGS = [
-  { name: 'theater', displayName: 'Theater' },
-  { name: 'concert', displayName: 'Concert' },
-  { name: 'expo', displayName: 'Expo' },
-  { name: 'film', displayName: 'Film' },
-  { name: 'workshop', displayName: 'Workshop' },
-  { name: 'music', displayName: 'Music' },
-  { name: 'Festival', displayName: 'Festival' },
+  { display_name: 'theater', name: {'nl': 'Theater', 'en': 'THEATER'} },
+  { display_name: 'concert', name: {'nl': 'Concert', 'en': 'CONCERT'} },
+  { display_name: 'expo', name: {'nl': 'Expo', 'en': 'EXPO'} },
+  { display_name: 'film', name: {'nl': 'Film', 'en': 'FILM'} },
+  { display_name: 'workshop', name: {'nl': 'Workshop', 'en': 'WORKSHOP'} },
+  { display_name: 'music', name: {'nl': 'Muziek', 'en': 'MUSIC'} },
+  { display_name: 'Festival', name: {'nl': 'Festival', 'en': 'FESTIVAL'} },
 ]
 
 // TODO: Fetch tags from API in the future
@@ -93,9 +93,9 @@ const HomePage = () => {
         {/* Test tags for description and reeks context */}
         <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
           {/* Description tag example */}
-          <Tag name="Festival" displayName="Festival" context="description" />
+          <Tag tagName="Festival" context="description" />
           {/* Reeks tag example */}
-          <Tag name="VIDEODROOM" displayName="Reeks: VIDEODROOM" context="series" />
+          <Tag tagName="VIDEODROOM" context="series" />
         </Box>
       </Paper>
     </Container>

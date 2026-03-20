@@ -1,4 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+// Mock useTranslation to avoid i18n warning in tests
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ i18n: { language: 'nl' } })
+}))
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { MemoryRouter } from 'react-router-dom'
 import SearchBar, { FilteredSearchBarProps } from '../../components/searchbar/FilteredSearchBar'
@@ -50,8 +54,8 @@ describe('SearchBar', () => {
       },
     ],
     tags: [
-      { name: 'theatre', displayName: 'Theater' },
-      { name: 'dance', displayName: 'Dans' },
+      { display_name: 'Theater', name: { nl: 'Theater', en: 'Theatre' } },
+      { display_name: 'Dans', name: { nl: 'Dans', en: 'Dance' } },
     ],
     selectedTags: [],
     onTagToggle: mockOnTagToggle,
@@ -92,11 +96,11 @@ describe('SearchBar', () => {
     expect(tag1).toBeTruthy()
     expect(tag2).toBeTruthy()
     fireEvent.click(tag1!)
-    expect(mockOnTagToggle).toHaveBeenCalledWith('theatre')
+    expect(mockOnTagToggle).toHaveBeenCalledWith('Theater')
     fireEvent.click(tag2!)
-    expect(mockOnTagToggle).toHaveBeenCalledWith('dance')
+    expect(mockOnTagToggle).toHaveBeenCalledWith('Dans')
     fireEvent.click(tag1!)
-    expect(mockOnTagToggle).toHaveBeenCalledWith('theatre')
+    expect(mockOnTagToggle).toHaveBeenCalledWith('Theater')
   })
 
   it('displays the current layout', () => {
