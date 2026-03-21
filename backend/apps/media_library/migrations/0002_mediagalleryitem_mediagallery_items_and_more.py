@@ -8,8 +8,10 @@ def backfill_gallery_item_links(apps, schema_editor):
     MediaItem = apps.get_model('media_library', 'MediaItem')
     MediaGalleryItem = apps.get_model('media_library', 'MediaGalleryItem')
 
+    batch_size = 1000
     rows = []
-    for item in MediaItem.objects.exclude(gallery_id__isnull=True).only('gallery_id', 'id', 'position'):
+    queryset = MediaItem.objects.exclude(gallery_id__isnull=True).only('gallery_id', 'id', 'position')
+    for item in queryset.iterator(chunk_size=batch_size):
         rows.append(
             MediaGalleryItem(
                 gallery_id=item.gallery_id,
@@ -18,8 +20,12 @@ def backfill_gallery_item_links(apps, schema_editor):
             )
         )
 
+        if len(rows) >= batch_size:
+            MediaGalleryItem.objects.bulk_create(rows, batch_size=batch_size, ignore_conflicts=True)
+            rows.clear()
+
     if rows:
-        MediaGalleryItem.objects.bulk_create(rows, ignore_conflicts=True)
+        MediaGalleryItem.objects.bulk_create(rows, batch_size=batch_size, ignore_conflicts=True)
 
 
 def noop_reverse(apps, schema_editor):

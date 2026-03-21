@@ -1269,12 +1269,8 @@ def sync_media_item_gallery_links(
         import_log.save()
         return 0
 
-    gallery_pk_by_external_id = {
-        str(ext_id): pk for ext_id, pk in MediaGallery.objects.values_list("external_id", "pk")
-    }
-    media_pk_by_external_id = {
-        str(ext_id): pk for ext_id, pk in MediaItem.objects.values_list("external_id", "pk")
-    }
+    gallery_pk_by_external_id = {str(ext_id): pk for ext_id, pk in MediaGallery.objects.values_list("external_id", "pk")}
+    media_pk_by_external_id = {str(ext_id): pk for ext_id, pk in MediaItem.objects.values_list("external_id", "pk")}
 
     total = len(galleries)
     errors = 0
