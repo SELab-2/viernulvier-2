@@ -11,3 +11,4 @@ tqdm==4.67.3
 Pillow==12.1.1
 django-cors-headers==4.9.0
 djangorestframework-xml==2.0.0
+djangorestframework-yaml==2.0.0
