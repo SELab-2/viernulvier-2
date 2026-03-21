@@ -34,7 +34,7 @@ class URLTests(TestCase):
 
     def test_api_urls_included(self):
         """API route exists (basic check)"""
-        response = self.client.get("/api/")
+        response = self.client.get("/api/v1/")
         self.assertNotEqual(response.status_code, 404)
 
     def test_debug_toolbar_urls_not_included_in_production(self):

@@ -35,7 +35,7 @@ router.register(r"price-ranks", PriceRankViewSet, basename="price-rank")
 
 urlpatterns = [
     # Include the router URLs
-    path("", include(router.urls)),
+    path("v1/", include(router.urls)),
     # API schema view
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     # OpenAPI documentation
