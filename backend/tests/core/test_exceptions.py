@@ -44,32 +44,31 @@ if not settings.configured:
     )
     django.setup()
 
-urlpatterns = []  # ROOT_URLCONF requirement
+urlpatterns: list = []  # ROOT_URLCONF requirement
 
 factory = APIRequestFactory()
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Shared helpers
 # ---------------------------------------------------------------------------
 
 
 def make_context(method: str = "GET", path: str = "/api/test/") -> dict:
     """Return a minimal handler context with a real DRF request."""
     django_request = getattr(factory, method.lower())(path)
-    request = Request(django_request)
-    return {"request": request, "view": MagicMock()}
+    return {"request": Request(django_request), "view": MagicMock()}
 
 
 def call_handler(exc: Exception, method: str = "GET", path: str = "/api/test/"):
     return custom_exception_handler(exc, make_context(method=method, path=path))
 
 
-def assert_rfc7807(body: dict, status_code: int):
-    """Assert the response body is a valid RFC 7807 Problem Details object."""
+def assert_rfc7807(body: dict, expected_status: int) -> None:
+    """Assert the four mandatory RFC 7807 fields are present and well-typed."""
     assert body["type"] == "about:blank"
     assert isinstance(body["title"], str) and body["title"]
-    assert body["status"] == status_code
+    assert body["status"] == expected_status
     assert isinstance(body["detail"], str) and body["detail"]
 
 
@@ -79,13 +78,16 @@ def assert_rfc7807(body: dict, status_code: int):
 
 
 class TestFlattenErrors:
-    def test_single_error_detail(self):
-        detail = ErrorDetail("This field is required.", code="required")
-        result = _flatten_errors(detail)
+    def test_single_error_detail_at_root(self):
+        result = _flatten_errors(ErrorDetail("This field is required.", code="required"))
         assert result == [{"pointer": "/", "detail": "This field is required.", "code": "required"}]
 
-    def test_flat_dict(self):
-        # DRF always wraps field errors in a list, so the list index /0 is included
+    def test_plain_string_at_root(self):
+        result = _flatten_errors("Something went wrong.")
+        assert result == [{"pointer": "/", "detail": "Something went wrong.", "code": "error"}]
+
+    def test_flat_dict_single_error_per_field(self):
+        # DRF always emits lists, but the pointer is the field name only - no index.
         detail = {
             "email": [ErrorDetail("Enter a valid email.", code="invalid")],
             "name": [ErrorDetail("This field is required.", code="required")],
@@ -93,48 +95,65 @@ class TestFlattenErrors:
         result = _flatten_errors(detail)
         pointers = {e["pointer"] for e in result}
         codes = {e["code"] for e in result}
-        assert "/email/0" in pointers
-        assert "/name/0" in pointers
+
+        assert pointers == {"/email", "/name"}
         assert "invalid" in codes
         assert "required" in codes
 
-    def test_nested_dict(self):
-        # List wrapper from DRF adds the /0 suffix
-        detail = {"address": {"city": [ErrorDetail("This field is required.", code="required")]}}
+    def test_flat_dict_multiple_errors_same_field(self):
+        # Two errors on "password" -> both get pointer "/password", no index.
+        detail = {
+            "password": [
+                ErrorDetail("Too short.", code="min_length"),
+                ErrorDetail("Must contain a digit.", code="no_digit"),
+            ]
+        }
         result = _flatten_errors(detail)
-        assert result[0]["pointer"] == "/address/city/0"
+        assert len(result) == 2
+        assert all(e["pointer"] == "/password" for e in result)
+        assert {e["code"] for e in result} == {"min_length", "no_digit"}
 
-    def test_list_of_errors(self):
+    def test_nested_dict(self):
+        detail = {"address": {"city": [ErrorDetail("Required.", code="required")]}}
+        result = _flatten_errors(detail)
+        assert result == [{"pointer": "/address/city", "detail": "Required.", "code": "required"}]
+
+    def test_deeply_nested_dict(self):
+        detail = {"user": {"profile": {"avatar": [ErrorDetail("Too large.", code="max_size")]}}}
+        result = _flatten_errors(detail)
+        assert result[0]["pointer"] == "/user/profile/avatar"
+        assert result[0]["code"] == "max_size"
+
+    def test_list_of_error_details_at_root(self):
+        # Non-field errors: list items are ErrorDetail,
+        # so they all get pointer "/" with no index.
         detail = [
             ErrorDetail("First error.", code="invalid"),
             ErrorDetail("Second error.", code="null"),
         ]
         result = _flatten_errors(detail)
         assert len(result) == 2
-        assert result[0]["pointer"] == "/0"
-        assert result[1]["pointer"] == "/1"
+        assert all(e["pointer"] == "/" for e in result)
+        assert {e["code"] for e in result} == {"invalid", "null"}
 
-    def test_nested_list_in_dict(self):
-        detail = {"items": [ErrorDetail("Invalid item.", code="invalid")]}
+    def test_list_of_plain_strings_at_root(self):
+        result = _flatten_errors(["Error A.", "Error B."])
+        assert len(result) == 2
+        assert all(e["pointer"] == "/" for e in result)
+        assert all(e["code"] == "error" for e in result)
+
+    def test_list_of_dicts_uses_numeric_index(self):
+        # A list of dicts (e.g. nested many-relation errors) gets indexed.
+        detail = [
+            {"name": [ErrorDetail("Required.", code="required")]},
+            {"name": [ErrorDetail("Required.", code="required")]},
+        ]
         result = _flatten_errors(detail)
-        assert result[0]["pointer"] == "/items/0"
+        pointers = [e["pointer"] for e in result]
+        assert "/0/name" in pointers
+        assert "/1/name" in pointers
 
-    def test_plain_string(self):
-        result = _flatten_errors("Something went wrong.")
-        assert result == [{"pointer": "/", "detail": "Something went wrong.", "code": "error"}]
-
-    def test_unknown_type_falls_through(self):
-        result = _flatten_errors(42)
-        assert result[0]["detail"] == "42"
-        assert result[0]["code"] == "error"
-
-    def test_deeply_nested(self):
-        detail = {"user": {"profile": {"avatar": [ErrorDetail("Too large.", code="max_size")]}}}
-        result = _flatten_errors(detail)
-        assert result[0]["pointer"] == "/user/profile/avatar/0"
-        assert result[0]["code"] == "max_size"
-
-    def test_preserves_all_codes(self):
+    def test_preserves_all_codes_across_fields(self):
         detail = {
             "a": [ErrorDetail("err", code="alpha")],
             "b": [ErrorDetail("err", code="beta")],
@@ -143,6 +162,20 @@ class TestFlattenErrors:
         codes = {e["code"] for e in _flatten_errors(detail)}
         assert codes == {"alpha", "beta", "gamma"}
 
+    def test_unknown_type_returns_empty_list(self):
+        # The implementation has no fallback branch for arbitrary types.
+        assert _flatten_errors(42) == []
+        assert _flatten_errors(3.14) == []
+        assert _flatten_errors(None) == []
+
+    def test_error_detail_code_preserved(self):
+        result = _flatten_errors(ErrorDetail("Too long.", code="max_length"))
+        assert result[0]["code"] == "max_length"
+
+    def test_plain_string_gets_error_code(self):
+        result = _flatten_errors("bare string")
+        assert result[0]["code"] == "error"
+
 
 # ===========================================================================
 # _build_problem
@@ -150,7 +183,7 @@ class TestFlattenErrors:
 
 
 class TestBuildProblem:
-    def test_minimal(self):
+    def test_minimal_required_fields(self):
         body = _build_problem(status_code=400, title="Bad Request", detail="Something is wrong.")
         assert body == {
             "type": "about:blank",
@@ -159,74 +192,73 @@ class TestBuildProblem:
             "detail": "Something is wrong.",
         }
 
-    def test_with_instance(self):
+    def test_instance_included_when_given(self):
         body = _build_problem(status_code=404, title="Not Found", detail="Gone.", instance="/api/foo/")
         assert body["instance"] == "/api/foo/"
 
-    def test_with_errors(self):
+    def test_instance_omitted_when_none(self):
+        body = _build_problem(status_code=400, title="T", detail="D", instance=None)
+        assert "instance" not in body
+
+    def test_errors_included_when_given(self):
         errors = [{"pointer": "/name", "detail": "Required.", "code": "required"}]
         body = _build_problem(status_code=422, title="Unprocessable", detail="Errors.", errors=errors)
         assert body["errors"] == errors
 
-    def test_none_errors_omitted(self):
+    def test_errors_omitted_when_none(self):
         body = _build_problem(status_code=400, title="T", detail="D", errors=None)
         assert "errors" not in body
 
-    def test_empty_errors_omitted(self):
+    def test_errors_omitted_when_empty_list(self):
         body = _build_problem(status_code=400, title="T", detail="D", errors=[])
         assert "errors" not in body
 
-    def test_with_extra(self):
+    def test_extra_fields_merged(self):
         body = _build_problem(status_code=429, title="T", detail="D", extra={"retry_after": 60})
         assert body["retry_after"] == 60
 
-    def test_none_instance_omitted(self):
-        body = _build_problem(status_code=400, title="T", detail="D", instance=None)
-        assert "instance" not in body
+    def test_extra_none_leaves_only_base_fields(self):
+        body = _build_problem(status_code=400, title="T", detail="D", extra=None)
+        assert set(body.keys()) == {"type", "title", "status", "detail"}
 
 
 # ===========================================================================
-# Validation errors (422)
+# ValidationError -> 422
 # ===========================================================================
 
 
 class TestValidationError:
     def test_status_is_422(self):
-        exc = ValidationError({"email": ["Enter a valid email."]})
-        response = call_handler(exc)
+        response = call_handler(ValidationError({"email": ["Enter a valid email."]}))
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_rfc7807_structure(self):
-        exc = ValidationError({"name": ["This field is required."]})
-        response = call_handler(exc)
-        assert_rfc7807(response.data, 422)
+        assert_rfc7807(call_handler(ValidationError({"name": ["Required."]})).data, 422)
+
+    def test_status_field_overridden_from_400_to_422(self):
+        # DRF natively sets ValidationError to 400; handler overrides to 422.
+        response = call_handler(ValidationError({"x": ["e"]}))
+        assert response.status_code == 422
+        assert response.data["status"] == 422
 
     def test_errors_list_present(self):
-        exc = ValidationError({"field": ["err1", "err2"]})
-        response = call_handler(exc)
+        response = call_handler(ValidationError({"field": ["err1", "err2"]}))
         assert "errors" in response.data
         assert isinstance(response.data["errors"], list)
 
-    def test_error_pointer_format(self):
-        # DRF wraps field errors in a list → pointer includes the /0 index
+    def test_field_pointer_has_no_list_index(self):
+        # ErrorDetail items inside a list get the field path without /0 suffix.
         exc = ValidationError({"username": [ErrorDetail("Too short.", code="min_length")]})
-        response = call_handler(exc)
-        pointers = [e["pointer"] for e in response.data["errors"]]
-        assert "/username/0" in pointers
+        pointers = [e["pointer"] for e in call_handler(exc).data["errors"]]
+        assert "/username" in pointers
+        assert "/username/0" not in pointers
 
     def test_nested_field_pointer(self):
         exc = ValidationError({"address": {"city": [ErrorDetail("Required.", code="required")]}})
-        response = call_handler(exc)
-        pointers = [e["pointer"] for e in response.data["errors"]]
-        assert "/address/city/0" in pointers
+        pointers = [e["pointer"] for e in call_handler(exc).data["errors"]]
+        assert "/address/city" in pointers
 
-    def test_non_field_error(self):
-        exc = ValidationError(["Non-field error."])
-        response = call_handler(exc)
-        assert response.status_code == 422
-        assert len(response.data["errors"]) >= 1
-
-    def test_multiple_errors_same_field(self):
+    def test_multiple_errors_same_field_share_pointer(self):
         exc = ValidationError(
             {
                 "password": [
@@ -235,21 +267,23 @@ class TestValidationError:
                 ]
             }
         )
-        response = call_handler(exc)
-        errors = response.data["errors"]
-        # Each error gets its own /password/0, /password/1 pointer
-        password_errors = [e for e in errors if e["pointer"].startswith("/password")]
+        errors = call_handler(exc).data["errors"]
+        password_errors = [e for e in errors if e["pointer"] == "/password"]
         assert len(password_errors) == 2
+        assert {e["code"] for e in password_errors} == {"min_length", "password_no_number"}
+
+    def test_non_field_errors_get_root_pointer(self):
+        exc = ValidationError(["Non-field error."])
+        errors = call_handler(exc).data["errors"]
+        assert len(errors) >= 1
+        assert all(e["pointer"] == "/" for e in errors)
 
     def test_instance_in_response(self):
-        exc = ValidationError({"x": ["err"]})
-        response = call_handler(exc, path="/api/users/")
+        response = call_handler(ValidationError({"x": ["err"]}), path="/api/users/")
         assert response.data["instance"] == "/api/users/"
 
-    def test_detail_message(self):
-        exc = ValidationError({"x": ["err"]})
-        response = call_handler(exc)
-        assert "validation" in response.data["detail"].lower()
+    def test_detail_mentions_validation(self):
+        assert "validation" in call_handler(ValidationError({"x": ["e"]})).data["detail"].lower()
 
 
 # ===========================================================================
@@ -258,225 +292,202 @@ class TestValidationError:
 
 
 class TestDjangoValidationError:
-    def test_message_dict_converted(self):
+    def test_message_dict_converted_to_422(self):
         exc = DjangoValidationError({"email": ["Enter a valid email address."]})
         response = call_handler(exc)
         assert response.status_code == 422
         assert "errors" in response.data
 
-    def test_messages_list_converted(self):
-        exc = DjangoValidationError(["Global error one.", "Global error two."])
-        response = call_handler(exc)
+    def test_messages_list_converted_to_422(self):
+        response = call_handler(DjangoValidationError(["Error one.", "Error two."]))
         assert response.status_code == 422
 
 
 # ===========================================================================
-# Http404 → 404
-# ===========================================================================
-
-
-class TestHttp404:
-    def test_returns_404(self):
-        response = call_handler(Http404())
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    def test_rfc7807_structure(self):
-        response = call_handler(Http404())
-        assert_rfc7807(response.data, 404)
-
-    def test_title_is_not_found(self):
-        response = call_handler(Http404())
-        assert "not found" in response.data["title"].lower()
-
-
-# ===========================================================================
-# DRF NotFound (404)
+# Http404 / NotFound -> 404
 # ===========================================================================
 
 
 class TestNotFound:
-    def test_returns_404(self):
-        response = call_handler(NotFound())
-        assert response.status_code == 404
+    def test_django_http404_returns_404(self):
+        assert call_handler(Http404()).status_code == 404
+
+    def test_drf_not_found_returns_404(self):
+        assert call_handler(NotFound()).status_code == 404
 
     def test_rfc7807_structure(self):
-        response = call_handler(NotFound())
-        assert_rfc7807(response.data, 404)
+        assert_rfc7807(call_handler(NotFound()).data, 404)
 
-    def test_custom_detail(self):
+    def test_title_is_not_found(self):
+        assert "not found" in call_handler(Http404()).data["title"].lower()
+
+    def test_custom_detail_preserved(self):
         response = call_handler(NotFound(detail="Article not found."))
         assert "Article not found." in response.data["detail"]
 
+    def test_no_errors_key(self):
+        assert "errors" not in call_handler(NotFound()).data
+
 
 # ===========================================================================
-# PermissionDenied (403)
+# PermissionDenied -> 403
 # ===========================================================================
 
 
 class TestPermissionDenied:
-    def test_drf_permission_denied_returns_403(self):
-        response = call_handler(PermissionDenied())
-        assert response.status_code == 403
+    def test_drf_exception_returns_403(self):
+        assert call_handler(PermissionDenied()).status_code == 403
 
-    def test_django_permission_denied_converted(self):
-        response = call_handler(DjangoPermissionDenied())
-        assert response.status_code == 403
+    def test_django_exception_converted_to_403(self):
+        assert call_handler(DjangoPermissionDenied()).status_code == 403
 
     def test_rfc7807_structure(self):
-        response = call_handler(PermissionDenied())
-        assert_rfc7807(response.data, 403)
+        assert_rfc7807(call_handler(PermissionDenied()).data, 403)
 
     def test_title_is_forbidden(self):
-        response = call_handler(PermissionDenied())
-        assert "forbidden" in response.data["title"].lower()
+        assert "forbidden" in call_handler(PermissionDenied()).data["title"].lower()
+
+    def test_no_errors_key(self):
+        assert "errors" not in call_handler(PermissionDenied()).data
 
 
 # ===========================================================================
-# Authentication (401)
+# Authentication -> 401
 # ===========================================================================
 
 
 class TestAuthErrors:
     def test_not_authenticated_returns_401(self):
-        response = call_handler(NotAuthenticated())
-        assert response.status_code == 401
+        assert call_handler(NotAuthenticated()).status_code == 401
 
     def test_authentication_failed_returns_401(self):
-        response = call_handler(AuthenticationFailed())
-        assert response.status_code == 401
+        assert call_handler(AuthenticationFailed()).status_code == 401
 
-    def test_www_authenticate_header_set(self):
+    def test_www_authenticate_header_on_not_authenticated(self):
         response = call_handler(NotAuthenticated())
         assert "WWW-Authenticate" in response
         assert "Bearer" in response["WWW-Authenticate"]
 
-    def test_auth_failed_www_authenticate_header(self):
-        response = call_handler(AuthenticationFailed())
-        assert "WWW-Authenticate" in response
+    def test_www_authenticate_header_on_auth_failed(self):
+        assert "WWW-Authenticate" in call_handler(AuthenticationFailed())
 
     def test_rfc7807_structure(self):
-        response = call_handler(NotAuthenticated())
-        assert_rfc7807(response.data, 401)
+        assert_rfc7807(call_handler(NotAuthenticated()).data, 401)
 
     def test_custom_detail_preserved(self):
         response = call_handler(AuthenticationFailed(detail="Token expired."))
         assert "Token expired." in response.data["detail"]
 
+    def test_no_errors_key(self):
+        assert "errors" not in call_handler(NotAuthenticated()).data
+
 
 # ===========================================================================
-# Throttled (429)
+# Throttled -> 429
 # ===========================================================================
 
 
 class TestThrottled:
     def test_returns_429(self):
-        response = call_handler(Throttled(wait=60))
-        assert response.status_code == 429
+        assert call_handler(Throttled(wait=60)).status_code == 429
 
     def test_retry_after_in_body(self):
-        response = call_handler(Throttled(wait=30))
-        assert response.data["retry_after"] == 30
+        assert call_handler(Throttled(wait=30)).data["retry_after"] == 30
 
     def test_retry_after_header_set(self):
-        response = call_handler(Throttled(wait=45))
-        assert response["Retry-After"] == "45"
+        assert call_handler(Throttled(wait=45))["Retry-After"] == "45"
 
-    def test_retry_after_rounded_to_integer(self):
-        # Throttled may normalize the wait value internally; the key guarantee
-        # is that retry_after is always an int, never a float.
-        response = call_handler(Throttled(wait=59.9))
+    def test_retry_after_is_int_never_float(self):
+        response = call_handler(Throttled(wait=12.7))
         assert isinstance(response.data["retry_after"], int)
+        assert isinstance(response["Retry-After"], str)
 
-    def test_no_wait(self):
+    def test_no_wait_omits_retry_after(self):
         response = call_handler(Throttled(wait=None))
         assert response.status_code == 429
-        assert "errors" not in response.data
         assert "retry_after" not in response.data
+        assert "errors" not in response.data
 
-    def test_detail_mentions_wait(self):
-        response = call_handler(Throttled(wait=10))
-        assert "10" in response.data["detail"]
+    def test_detail_includes_wait_seconds(self):
+        assert "10" in call_handler(Throttled(wait=10)).data["detail"]
 
     def test_rfc7807_structure(self):
-        response = call_handler(Throttled(wait=5))
-        assert_rfc7807(response.data, 429)
+        assert_rfc7807(call_handler(Throttled(wait=5)).data, 429)
 
 
 # ===========================================================================
-# MethodNotAllowed (405)
+# MethodNotAllowed -> 405
 # ===========================================================================
 
 
 class TestMethodNotAllowed:
     def test_returns_405(self):
-        response = call_handler(MethodNotAllowed("DELETE"))
-        assert response.status_code == 405
+        assert call_handler(MethodNotAllowed("DELETE")).status_code == 405
 
     def test_rfc7807_structure(self):
-        response = call_handler(MethodNotAllowed("PATCH"))
-        assert_rfc7807(response.data, 405)
+        assert_rfc7807(call_handler(MethodNotAllowed("PATCH")).data, 405)
 
-    def test_method_in_detail(self):
+    def test_request_method_in_detail(self):
         response = call_handler(MethodNotAllowed("DELETE"), method="DELETE")
-        # The handler uses request.method for the detail message
         assert "DELETE" in response.data["detail"]
 
-    def test_allowed_methods_when_header_present(self):
+    def test_allowed_methods_from_header(self):
         exc = MethodNotAllowed("POST")
         ctx = make_context(method="POST")
         with patch("apps.core.exceptions.drf_exception_handler") as mock_drf:
-            mock_response = MagicMock()
-            mock_response.status_code = 405
-            mock_response.data = {"detail": ErrorDetail("Method not allowed.", code="method_not_allowed")}
-            # The handler calls response.get("Allow", "") — mock that specifically
-            mock_response.get = lambda key, default="": "GET, POST" if key == "Allow" else default
-            mock_drf.return_value = mock_response
+            mock_resp = MagicMock()
+            mock_resp.status_code = 405
+            mock_resp.data = {"detail": ErrorDetail("Method not allowed.", code="method_not_allowed")}
+            mock_resp.get = lambda key, default="": "GET, POST" if key == "Allow" else default
+            mock_drf.return_value = mock_resp
             response = custom_exception_handler(exc, ctx)
         assert "allowed_methods" in response.data
         assert "GET" in response.data["allowed_methods"]
         assert "POST" in response.data["allowed_methods"]
 
+    def test_no_allowed_methods_when_header_absent(self):
+        assert "allowed_methods" not in call_handler(MethodNotAllowed("DELETE")).data
+
 
 # ===========================================================================
-# UnsupportedMediaType (415)
+# UnsupportedMediaType -> 415
 # ===========================================================================
 
 
 class TestUnsupportedMediaType:
     def test_returns_415(self):
-        response = call_handler(UnsupportedMediaType("text/xml"))
-        assert response.status_code == 415
+        assert call_handler(UnsupportedMediaType("text/xml")).status_code == 415
 
     def test_rfc7807_structure(self):
-        response = call_handler(UnsupportedMediaType("text/csv"))
-        assert_rfc7807(response.data, 415)
+        assert_rfc7807(call_handler(UnsupportedMediaType("text/csv")).data, 415)
 
-    def test_title(self):
-        response = call_handler(UnsupportedMediaType("image/gif"))
-        assert "unsupported" in response.data["title"].lower()
+    def test_title_mentions_unsupported(self):
+        assert "unsupported" in call_handler(UnsupportedMediaType("image/gif")).data["title"].lower()
+
+    def test_no_errors_key(self):
+        assert "errors" not in call_handler(UnsupportedMediaType("text/xml")).data
 
 
 # ===========================================================================
-# ParseError (400)
+# ParseError -> 400
 # ===========================================================================
 
 
 class TestParseError:
     def test_returns_400(self):
-        response = call_handler(ParseError())
-        assert response.status_code == 400
+        assert call_handler(ParseError()).status_code == 400
 
     def test_rfc7807_structure(self):
-        response = call_handler(ParseError())
-        assert_rfc7807(response.data, 400)
+        assert_rfc7807(call_handler(ParseError()).data, 400)
 
-    def test_detail_mentions_malformed(self):
-        response = call_handler(ParseError(detail="JSON parse error"))
-        assert "malformed" in response.data["detail"].lower() or "json" in response.data["detail"].lower()
+    def test_detail_prefixed_with_malformed(self):
+        assert "malformed" in call_handler(ParseError(detail="JSON parse error")).data["detail"].lower()
 
-    def test_parse_error_with_detail(self):
-        response = call_handler(ParseError(detail="Unexpected token"))
-        assert "Unexpected token" in response.data["detail"]
+    def test_original_detail_embedded(self):
+        assert "Unexpected token" in call_handler(ParseError(detail="Unexpected token")).data["detail"]
+
+    def test_no_errors_key(self):
+        assert "errors" not in call_handler(ParseError()).data
 
 
 # ===========================================================================
@@ -498,22 +509,18 @@ class ConflictError(APIException):
 
 class TestCustomAPIException:
     def test_custom_status_code_preserved(self):
-        response = call_handler(ServiceUnavailable())
-        assert response.status_code == 503
+        assert call_handler(ServiceUnavailable()).status_code == 503
 
     def test_rfc7807_structure(self):
-        response = call_handler(ServiceUnavailable())
-        assert_rfc7807(response.data, 503)
+        assert_rfc7807(call_handler(ServiceUnavailable()).data, 503)
 
     def test_detail_from_exception(self):
-        response = call_handler(ServiceUnavailable())
-        assert "unavailable" in response.data["detail"].lower()
+        assert "unavailable" in call_handler(ServiceUnavailable()).data["detail"].lower()
 
     def test_conflict_409(self):
-        response = call_handler(ConflictError())
-        assert response.status_code == 409
+        assert call_handler(ConflictError()).status_code == 409
 
-    def test_custom_exception_with_dict_detail(self):
+    def test_dict_detail_becomes_errors_list(self):
         class RichError(APIException):
             status_code = 422
             default_detail = {"code": "rich_error", "msg": "Complex error"}
@@ -523,7 +530,8 @@ class TestCustomAPIException:
         assert response.status_code == 422
         assert "errors" in response.data
 
-    def test_custom_exception_with_list_detail(self):
+    def test_list_detail_all_errors_share_root_pointer(self):
+        # A list of ErrorDetail items → all get pointer "/"
         class MultiError(APIException):
             status_code = 400
             default_code = "multi"
@@ -537,51 +545,50 @@ class TestCustomAPIException:
         response = call_handler(MultiError())
         assert "errors" in response.data
         assert len(response.data["errors"]) == 2
+        assert all(e["pointer"] == "/" for e in response.data["errors"])
 
 
 # ===========================================================================
-# Unhandled exceptions → 500
+# Unhandled exceptions -> 500
 # ===========================================================================
 
 
 class TestUnhandledException:
     def test_returns_500(self):
-        response = call_handler(RuntimeError("Unexpected crash"))
-        assert response.status_code == 500
+        assert call_handler(RuntimeError("Unexpected crash")).status_code == 500
 
     def test_rfc7807_structure(self):
-        response = call_handler(RuntimeError("boom"))
-        assert_rfc7807(response.data, 500)
+        assert_rfc7807(call_handler(RuntimeError("boom")).data, 500)
 
     def test_no_internal_detail_leaked(self):
         response = call_handler(RuntimeError("db password is secret123"))
         assert "secret123" not in response.data["detail"]
         assert "RuntimeError" not in response.data["detail"]
 
-    def test_exception_is_logged(self, caplog):
-        with caplog.at_level(logging.ERROR, logger="exceptions"):
-            call_handler(RuntimeError("test crash"))
-        assert len(caplog.records) > 0
-
     def test_zero_division_returns_500(self):
         try:
             _ = 1 / 0
         except ZeroDivisionError as exc:
-            response = call_handler(exc)
-        assert response.status_code == 500
+            assert call_handler(exc).status_code == 500
 
-    def test_instance_in_500(self):
+    def test_instance_path_in_500(self):
         response = call_handler(RuntimeError("x"), path="/api/broken/")
         assert response.data.get("instance") == "/api/broken/"
 
+    def test_exception_is_logged(self, caplog):
+        # Logger name matches __name__ inside apps/core/exceptions.py
+        with caplog.at_level(logging.ERROR, logger="apps.core.exceptions"):
+            call_handler(RuntimeError("test crash"))
+        assert len(caplog.records) > 0
+
 
 # ===========================================================================
-# RFC 7807 envelope: all responses share these fields
+# RFC 7807 envelope - parametrized across all exception types
 # ===========================================================================
 
 
 class TestRFC7807Envelope:
-    exceptions_to_test = [
+    _all_exceptions = [
         ValidationError({"f": ["err"]}),
         NotFound(),
         PermissionDenied(),
@@ -593,90 +600,82 @@ class TestRFC7807Envelope:
         RuntimeError("boom"),
     ]
 
-    @pytest.mark.parametrize("exc", exceptions_to_test)
+    @pytest.mark.parametrize("exc", _all_exceptions)
     def test_type_is_about_blank(self, exc):
-        response = call_handler(exc)
-        assert response.data["type"] == "about:blank"
+        assert call_handler(exc).data["type"] == "about:blank"
 
-    @pytest.mark.parametrize("exc", exceptions_to_test)
+    @pytest.mark.parametrize("exc", _all_exceptions)
     def test_status_field_matches_http_code(self, exc):
         response = call_handler(exc)
         assert response.data["status"] == response.status_code
 
-    @pytest.mark.parametrize("exc", exceptions_to_test)
+    @pytest.mark.parametrize("exc", _all_exceptions)
     def test_title_is_non_empty_string(self, exc):
-        response = call_handler(exc)
-        assert isinstance(response.data["title"], str)
-        assert len(response.data["title"]) > 0
+        title = call_handler(exc).data["title"]
+        assert isinstance(title, str) and title
 
-    @pytest.mark.parametrize("exc", exceptions_to_test)
+    @pytest.mark.parametrize("exc", _all_exceptions)
     def test_detail_is_non_empty_string(self, exc):
-        response = call_handler(exc)
-        assert isinstance(response.data["detail"], str)
-        assert len(response.data["detail"]) > 0
+        detail = call_handler(exc).data["detail"]
+        assert isinstance(detail, str) and detail
 
-    @pytest.mark.parametrize("exc", exceptions_to_test)
+    @pytest.mark.parametrize("exc", _all_exceptions)
     def test_instance_is_request_path(self, exc):
         response = call_handler(exc, path="/api/resource/42/")
         assert response.data.get("instance") == "/api/resource/42/"
 
 
 # ===========================================================================
-# No request in context (edge case)
+# errors key presence rules
+# ===========================================================================
+
+
+class TestErrorsKeyRules:
+    def test_present_on_422_validation_error(self):
+        assert "errors" in call_handler(ValidationError({"x": ["e"]})).data
+
+    def test_present_on_custom_exception_with_dict_detail(self):
+        class DictExc(APIException):
+            status_code = 400
+            default_detail = {"foo": [ErrorDetail("bad", code="invalid")]}
+
+        assert "errors" in call_handler(DictExc()).data
+
+    def test_absent_on_404(self):
+        assert "errors" not in call_handler(NotFound()).data
+
+    def test_absent_on_403(self):
+        assert "errors" not in call_handler(PermissionDenied()).data
+
+    def test_absent_on_401(self):
+        assert "errors" not in call_handler(NotAuthenticated()).data
+
+    def test_absent_on_400_parse_error(self):
+        assert "errors" not in call_handler(ParseError()).data
+
+    def test_absent_on_415(self):
+        assert "errors" not in call_handler(UnsupportedMediaType("text/xml")).data
+
+    def test_absent_on_500(self):
+        assert "errors" not in call_handler(RuntimeError("x")).data
+
+
+# ===========================================================================
+# No request in context
 # ===========================================================================
 
 
 class TestNoRequest:
-    def test_no_request_validation_error(self):
-        exc = ValidationError({"x": ["err"]})
-        response = custom_exception_handler(exc, context={})
+    def test_validation_error_without_request(self):
+        response = custom_exception_handler(ValidationError({"x": ["err"]}), context={})
         assert response.status_code == 422
         assert "instance" not in response.data
 
-    def test_no_request_unhandled(self):
-        response = custom_exception_handler(RuntimeError("x"), context={})
-        assert response.status_code == 500
+    def test_unhandled_exception_without_request(self):
+        assert custom_exception_handler(RuntimeError("x"), context={}).status_code == 500
 
-    def test_no_request_not_found(self):
-        response = custom_exception_handler(NotFound(), context={})
-        assert response.status_code == 404
+    def test_not_found_without_request(self):
+        assert custom_exception_handler(NotFound(), context={}).status_code == 404
 
-
-# ===========================================================================
-# Edge cases
-# ===========================================================================
-
-
-class TestEdgeCases:
-    def test_http404_as_django_exception(self):
-        """Django's Http404 must be handled like DRF's NotFound."""
-        response = call_handler(Http404("Page not found"))
-        assert response.status_code == 404
-        assert_rfc7807(response.data, 404)
-
-    def test_django_permission_denied_gives_403(self):
-        """Django's PermissionDenied must map to HTTP 403."""
-        response = call_handler(DjangoPermissionDenied("nope"))
-        assert response.status_code == 403
-
-    def test_validation_error_response_status_overridden_to_422(self):
-        """DRF sets ValidationError to 400; we override it to 422."""
-        exc = ValidationError({"x": ["e"]})
-        response = call_handler(exc)
-        assert response.status_code == 422
-        assert response.data["status"] == 422
-
-    def test_errors_key_absent_for_non_validation_errors(self):
-        """Non-validation errors must NOT have an `errors` key."""
-        for exc in [NotFound(), PermissionDenied(), ParseError()]:
-            response = call_handler(exc)
-            assert "errors" not in response.data, f"Unexpected errors key for {type(exc).__name__}"
-
-    def test_throttled_retry_after_is_integer(self):
-        """retry_after must be an int, not a float."""
-        response = call_handler(Throttled(wait=12.7))
-        assert isinstance(response.data["retry_after"], int)
-
-    def test_throttled_header_is_string(self):
-        response = call_handler(Throttled(wait=5))
-        assert isinstance(response["Retry-After"], str)
+    def test_no_instance_key_when_no_request(self):
+        assert "instance" not in custom_exception_handler(NotFound(), context={}).data

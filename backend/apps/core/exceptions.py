@@ -45,38 +45,29 @@ def _flatten_errors(detail: Any, field_prefix: str = "") -> list[dict]:
 
     if isinstance(detail, list):
         for index, item in enumerate(detail):
-            prefix = f"{field_prefix}/{index}" if field_prefix else f"/{index}"
-            errors.extend(_flatten_errors(item, field_prefix=prefix))
+            if isinstance(item, (ErrorDetail, str)):
+                errors.append(
+                    {
+                        "pointer": field_prefix or "/",
+                        "detail": str(item),
+                        "code": getattr(item, "code", "error"),
+                    }
+                )
+            else:
+                new_prefix = f"{field_prefix}/{index}" if field_prefix else f"/{index}"
+                errors.extend(_flatten_errors(item, field_prefix=new_prefix))
 
     elif isinstance(detail, dict):
         for key, value in detail.items():
-            prefix = f"{field_prefix}/{key}"
-            errors.extend(_flatten_errors(value, field_prefix=prefix))
+            new_prefix = f"{field_prefix}/{key}"
+            errors.extend(_flatten_errors(value, field_prefix=new_prefix))
 
-    elif isinstance(detail, ErrorDetail):
+    elif isinstance(detail, (ErrorDetail, str)):
         errors.append(
             {
                 "pointer": field_prefix or "/",
                 "detail": str(detail),
-                "code": detail.code,
-            }
-        )
-
-    elif isinstance(detail, str):
-        errors.append(
-            {
-                "pointer": field_prefix or "/",
-                "detail": detail,
-                "code": "error",
-            }
-        )
-
-    else:
-        errors.append(
-            {
-                "pointer": field_prefix or "/",
-                "detail": str(detail),
-                "code": "error",
+                "code": getattr(detail, "code", "error"),
             }
         )
 
