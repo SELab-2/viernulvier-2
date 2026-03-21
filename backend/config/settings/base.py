@@ -280,7 +280,7 @@ SPECTACULAR_SETTINGS = {
         "operationsSorter": "method",
         "tryItOutEnabled": True,
         "docExpansion": "none",
-        "defaultModelsExpandDepth": -1,
+        "defaultModelsExpandDepth": 0,
     },
     "TAGS": [
         {"name": "Productions", "description": "Production management and translations."},
