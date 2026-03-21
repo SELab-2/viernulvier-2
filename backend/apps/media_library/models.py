@@ -148,6 +148,8 @@ class MediaItem(BaseModel):
 class MediaGalleryItem(BaseModel):
     """Explicit gallery-item link table with stable ordering within a gallery."""
 
+    external_id = None
+
     gallery = models.ForeignKey(
         MediaGallery,
         on_delete=models.CASCADE,
