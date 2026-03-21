@@ -262,8 +262,8 @@ class TestEventViewSetCreate(_EventSetupMixin):
         )
         self.assertEqual(response.status_code, 401)
 
-    def test_create_missing_required_field_returns_400(self):
-        """Test case for test_create_missing_required_field_returns_400."""
+    def test_create_missing_required_field_returns_422(self):
+        """Test case for test_create_missing_required_field_returns_422."""
         now = timezone.now()
         response = self.client.post(
             "/api/v1/events/",
@@ -275,7 +275,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 422)
 
 
 # ---------------------------------------------------------------------------
