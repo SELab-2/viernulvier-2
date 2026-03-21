@@ -1239,7 +1239,9 @@ def sync_media_item_gallery_links(
     media item links. This sync resolves those links and updates
     `MediaItem.gallery` (and `position`) in bulk.
 
-    Returns the number of MediaItem rows changed (updated + unlinked).
+    Returns the total number of database rows affected during this sync,
+    including both MediaItem rows that were updated or unlinked and
+    MediaGalleryItem link rows that were (re)written.
     """
     from apps.import_log.models import ImportLog
     from apps.media_library.models import MediaGallery, MediaGalleryItem, MediaItem
@@ -1351,7 +1353,7 @@ def sync_media_item_gallery_links(
             import_log.error_message = f"{errors} link issues: {', '.join(error_messages)}"
         import_log.save()
         logger.info("Gallery-item link sync complete: changed=%d errors=%d [DRY RUN]", changed, errors)
-        return 0
+        return changed
 
     changed = 0
     with transaction.atomic():
