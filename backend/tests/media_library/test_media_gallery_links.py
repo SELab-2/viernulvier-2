@@ -22,6 +22,3 @@ def test_gallery_serializer_includes_items_from_through_links_when_fk_is_null():
 
     assert len(data["media_items"]) == 1
     assert data["media_items"][0]["original_filename"] == "linked.jpg"
-
-
-

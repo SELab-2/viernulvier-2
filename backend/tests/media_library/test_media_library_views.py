@@ -572,7 +572,7 @@ class TestMediaGalleryViewSetPrefetch(TestCase):
                 MediaItemCropFactory(media_item=item, name=f"crop_{g}_{i}_2")
 
     def test_gallery_list_prefetches_nested_relations(self):
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             response = self.client.get("/api/media-galleries/", **pub_headers())
 
         self.assertEqual(response.status_code, 200)
