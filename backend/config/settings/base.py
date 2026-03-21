@@ -185,8 +185,6 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
-        "rest_framework_xml.renderers.XMLRenderer",
-        "rest_framework_yaml.renderers.YAMLRenderer",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "apps.core.authentications.ApiKeyAuthentication",
@@ -217,6 +215,9 @@ SPECTACULAR_SETTINGS = {
         Access is determined by your API key:
         * **Public API key**: Read-only.
         * **Internal API key**: Full rights (CRUD).
+                                   
+        ### Alternative Views
+        * [**ReDoc**](/api/redoc/) - Documentation-focused interface.
     """).strip(),
     "VERSION": "1.0.0",
     "CONTACT": {
