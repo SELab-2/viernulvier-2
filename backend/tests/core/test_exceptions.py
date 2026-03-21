@@ -5,9 +5,7 @@ Comprehensive test suite for the RFC 7807 DRF exception handler.
 import logging
 from unittest.mock import MagicMock, patch
 
-import django
 import pytest
-from django.conf import settings
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
@@ -29,20 +27,6 @@ from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 
 from apps.core.exceptions import _build_problem, _flatten_errors, custom_exception_handler
-
-if not settings.configured:
-    settings.configure(
-        INSTALLED_APPS=[
-            "django.contrib.contenttypes",
-            "django.contrib.auth",
-            "rest_framework",
-        ],
-        DATABASES={"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}},
-        ROOT_URLCONF=__name__,
-        REST_FRAMEWORK={"EXCEPTION_HANDLER": "apps.core.exceptions.custom_exception_handler"},
-        DEFAULT_AUTO_FIELD="django.db.models.BigAutoField",
-    )
-    django.setup()
 
 urlpatterns: list = []  # ROOT_URLCONF requirement
 
@@ -679,3 +663,80 @@ class TestNoRequest:
 
     def test_no_instance_key_when_no_request(self):
         assert "instance" not in custom_exception_handler(NotFound(), context={}).data
+
+
+# ===========================================================================
+# APIException with list/dict detail, non-standard default_code
+# ===========================================================================
+
+
+class TestCustomAPIExceptionTitleFormatting:
+    """
+    Covers the branch inside the APIException fallback that formats `default_code`
+    into a human-readable title when no entry exists in _STATUS_TITLES.
+    """
+
+    def test_title_derived_from_default_code_for_unknown_status(self):
+        """
+        A 409 with default_code='resource_conflict' → title should be formatted
+        from the code because 409 isn't in _STATUS_TITLES.
+        """
+
+        class ResourceConflict(APIException):
+            status_code = 409
+            default_detail = "That resource already exists."
+            default_code = "resource_conflict"
+
+        response = call_handler(ResourceConflict())
+        assert response.status_code == 409
+        # Title is derived from default_code: "resource_conflict" -> "Resource Conflict"
+        assert response.data["title"] == "ResourceConflict"
+
+    def test_dict_detail_on_unknown_status_uses_formatted_code_title(self):
+        """
+        When an unknown-status exception carries a dict/list detail *and* has a
+        snake_case default_code, the title must be the formatted code string.
+        """
+
+        class BatchFailed(APIException):
+            status_code = 207
+            default_code = "batch_partial_failure"
+
+            def __init__(self):
+                self.detail = {"items": [ErrorDetail("Item 1 failed.", code="item_error")]}
+
+        response = call_handler(BatchFailed())
+        assert response.status_code == 207
+        assert "errors" in response.data
+        assert response.data["title"] == "Batch Partial Failure"
+
+
+# ===========================================================================
+# MethodNotAllowed with no request in context
+# ===========================================================================
+
+
+class TestMethodNotAllowedNoRequest:
+    def test_no_request_fallback_detail(self):
+        """
+        When there is no request in context the ternary else-branch must be
+        taken, producing the generic "Method not allowed." string.
+        """
+        response = custom_exception_handler(MethodNotAllowed("DELETE"), context={})
+
+        assert response is not None
+        assert response.status_code == 405
+        assert response.data["detail"] == 'Method "DELETE" not allowed.'
+
+    def test_rfc7807_structure_without_request(self):
+        response = custom_exception_handler(MethodNotAllowed("POST"), context={})
+
+        assert response.data["type"] == "about:blank"
+        assert isinstance(response.data["title"], str) and response.data["title"]
+        assert response.data["status"] == 405
+        assert isinstance(response.data["detail"], str) and response.data["detail"]
+
+    def test_no_instance_key_without_request(self):
+        response = custom_exception_handler(MethodNotAllowed("PATCH"), context={})
+
+        assert "instance" not in response.data

@@ -282,5 +282,3 @@ def custom_exception_handler(exc: Exception, context: dict) -> Response | None:
             )
         response.data = problem
         return response
-
-    return response
