@@ -146,7 +146,7 @@ def custom_exception_handler(exc: Exception, context: dict) -> Response | None:
 
     # Convert Django and DRF exceptions to a common base of DRF APIExceptions.
     if isinstance(exc, Http404):
-        exc = NotFound()
+        exc = NotFound(detail=str(exc))
     elif isinstance(exc, PermissionDenied):
         exc = DRFPermissionDenied()
     elif isinstance(exc, DjangoValidationError):
@@ -209,7 +209,8 @@ def custom_exception_handler(exc: Exception, context: dict) -> Response | None:
 
     # 401 Not authenticated
     if isinstance(exc, (NotAuthenticated, AuthenticationFailed)):
-        response["WWW-Authenticate"] = 'Bearer realm="api"'
+        if "WWW-Authenticate" not in response:
+            response["WWW-Authenticate"] = "X-API-Key"
         problem = _build_problem(
             status_code=status_code,
             title=_title_for(status_code, "Unauthorized"),
