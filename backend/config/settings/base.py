@@ -18,6 +18,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from api.versioning import VERSIONING_SETTINGS
+
 load_dotenv()
 
 # ---------------------------------------------------------------------------
@@ -175,6 +177,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ---------------------------------------------------------------------------
 
 REST_FRAMEWORK = {
+    **VERSIONING_SETTINGS,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "api.pagination.StandardResultsSetPagination",
     "PAGE_SIZE": 20,
@@ -228,7 +231,7 @@ SPECTACULAR_SETTINGS = {
     "LICENSE": {
         "name": "MIT License",
     },
-    "SCHEMA_PATH_PREFIX": r"/api/v1/",
+    "SCHEMA_PATH_PREFIX": r"/api/v[0-9]+/",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SECURITY": [{"ApiKey": []}],
