@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from apps.imports.scrapers.viernulvier import sync_media_item_gallery_links
+from apps.import_log.models import ImportLog
 from apps.media_library.models import MediaGalleryItem
 from tests.factories.media_library import MediaGalleryFactory, MediaItemFactory
 
@@ -86,3 +87,109 @@ def test_sync_media_item_gallery_links_dry_run_does_not_write(monkeypatch):
     assert item.position == 5
     assert MediaGalleryItem.objects.count() == 0
     assert gallery.pk is not None
+
+
+@pytest.mark.django_db
+def test_sync_media_item_gallery_links_fetch_failure_marks_log_failed(monkeypatch):
+    monkeypatch.setattr(
+        "apps.imports.scrapers.viernulvier.fetch_viernulvier",
+        lambda **_: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
+
+    with pytest.raises(RuntimeError, match="boom"):
+        sync_media_item_gallery_links()
+
+    log = ImportLog.objects.latest("started_at")
+    assert log.status == ImportLog.Status.FAILED
+    assert "boom" in (log.error_message or "")
+
+
+@pytest.mark.django_db
+def test_sync_media_item_gallery_links_empty_payload_creates_success_log(monkeypatch):
+    monkeypatch.setattr("apps.imports.scrapers.viernulvier.fetch_viernulvier", lambda **_: [])
+
+    changed = sync_media_item_gallery_links()
+
+    log = ImportLog.objects.latest("started_at")
+    assert changed == 0
+    assert log.status == ImportLog.Status.SUCCESS
+    assert log.records_total == 0
+    assert log.records_imported == 0
+    assert log.records_failed == 0
+
+
+@pytest.mark.django_db
+def test_sync_media_item_gallery_links_dry_run_records_link_errors(monkeypatch):
+    gallery = MediaGalleryFactory.create(external_id="/api/v1/media/galleries/1")
+    payload = [
+        "not-a-dict",
+        {"items": []},
+        {"@id": "/api/v1/media/galleries/999", "items": []},
+        {"@id": "/api/v1/media/galleries/1", "items": "not-a-list"},
+        {"@id": "/api/v1/media/galleries/1", "items": [None, "/api/v1/media/items/999"]},
+    ]
+    monkeypatch.setattr("apps.imports.scrapers.viernulvier.fetch_viernulvier", lambda **_: payload)
+
+    progress_calls = []
+    changed = sync_media_item_gallery_links(dry_run=True, on_progress=lambda idx, total: progress_calls.append((idx, total)))
+
+    log = ImportLog.objects.latest("started_at")
+    assert gallery.pk is not None
+    assert changed == 0
+    assert log.status == ImportLog.Status.PARTIAL_SUCCESS
+    assert log.records_failed >= 1
+    assert "link issues" in (log.error_message or "")
+    assert progress_calls[-1] == (len(payload), len(payload))
+
+
+@pytest.mark.django_db
+def test_sync_media_item_gallery_links_non_dry_failed_when_only_errors(monkeypatch):
+    MediaGalleryFactory.create(external_id="/api/v1/media/galleries/1")
+    payload = [{"@id": "/api/v1/media/galleries/1", "items": ["/api/v1/media/items/999"]}]
+    monkeypatch.setattr("apps.imports.scrapers.viernulvier.fetch_viernulvier", lambda **_: payload)
+
+    changed = sync_media_item_gallery_links()
+
+    log = ImportLog.objects.latest("started_at")
+    assert changed == 0
+    assert log.status == ImportLog.Status.FAILED
+    assert "link resolutions failed" in (log.error_message or "")
+
+
+@pytest.mark.django_db
+def test_sync_media_item_gallery_links_partial_success_with_changes_and_errors(monkeypatch):
+    gallery = MediaGalleryFactory.create(external_id="/api/v1/media/galleries/1")
+    item = MediaItemFactory.create(external_id="/api/v1/media/items/10", gallery=None, position=9)
+
+    payload = [{"@id": "/api/v1/media/galleries/1", "items": ["/api/v1/media/items/10", "/api/v1/media/items/999"]}]
+    monkeypatch.setattr("apps.imports.scrapers.viernulvier.fetch_viernulvier", lambda **_: payload)
+
+    changed = sync_media_item_gallery_links()
+
+    log = ImportLog.objects.latest("started_at")
+    item.refresh_from_db()
+    assert changed == 1
+    assert item.gallery_id == gallery.pk
+    assert item.position == 0
+    assert log.status == ImportLog.Status.PARTIAL_SUCCESS
+    assert "link issues" in (log.error_message or "")
+
+
+@pytest.mark.django_db
+def test_sync_media_item_gallery_links_atomic_exception_is_logged_and_reraised(monkeypatch):
+    MediaGalleryFactory.create(external_id="/api/v1/media/galleries/1")
+    MediaItemFactory.create(external_id="/api/v1/media/items/10")
+    payload = [{"@id": "/api/v1/media/galleries/1", "items": ["/api/v1/media/items/10"]}]
+    monkeypatch.setattr("apps.imports.scrapers.viernulvier.fetch_viernulvier", lambda **_: payload)
+    monkeypatch.setattr(
+        "apps.media_library.models.MediaGalleryItem.objects.bulk_create",
+        lambda *_a, **_kw: (_ for _ in ()).throw(RuntimeError("write failed")),
+    )
+
+    with pytest.raises(RuntimeError, match="write failed"):
+        sync_media_item_gallery_links()
+
+    log = ImportLog.objects.latest("started_at")
+    assert log.status == ImportLog.Status.FAILED
+    assert "Exception during gallery link sync" in (log.error_message or "")
+

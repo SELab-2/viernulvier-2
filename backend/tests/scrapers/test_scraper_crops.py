@@ -13,6 +13,7 @@ Run with:
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from unittest.mock import Mock
 
 import pytest
@@ -425,6 +426,53 @@ def test_sync_crops_no_foto_items_returns_zero(monkeypatch):
     result = sync_media_item_crops()
 
     assert result == 0
+
+
+@pytest.mark.django_db
+def test_sync_crops_params_apply_created_updated_filters_and_ignore_parse_errors(monkeypatch):
+    from apps.media_library import models as media_models
+
+    class FakeQuerySet:
+        def __init__(self):
+            self.filter_calls = []
+
+        def filter(self, **kwargs):
+            self.filter_calls.append(kwargs)
+            return self
+
+        def values(self, *_args, **_kwargs):
+            return []
+
+    fake_qs = FakeQuerySet()
+    monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: fake_qs)
+
+    def fake_parse_datetime(value):
+        if value == "raise-value":
+            raise ValueError("bad datetime")
+        if value == "raise-type":
+            raise TypeError("bad type")
+        return datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(viernulvier, "parse_datetime", fake_parse_datetime)
+
+    result = sync_media_item_crops(
+        params={
+            "created_at[after]": "ok",
+            "created_at[before]": "ok",
+            "created_at[strictly_after]": "ok",
+            "created_at[strictly_before]": "raise-value",
+            "updated_at[after]": "ok",
+            "updated_at[before]": "ok",
+            "updated_at[strictly_after]": "raise-type",
+            "updated_at[strictly_before]": "ok",
+        }
+    )
+
+    assert result == 0
+    assert {"created_at__gte": datetime(2024, 1, 1, tzinfo=timezone.utc)} in fake_qs.filter_calls
+    assert {"created_at__lte": datetime(2024, 1, 1, tzinfo=timezone.utc)} in fake_qs.filter_calls
+    assert {"updated_at__gte": datetime(2024, 1, 1, tzinfo=timezone.utc)} in fake_qs.filter_calls
+    assert {"updated_at__lte": datetime(2024, 1, 1, tzinfo=timezone.utc)} in fake_qs.filter_calls
 
 
 @pytest.mark.django_db
