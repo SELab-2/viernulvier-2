@@ -89,41 +89,55 @@ const Tag: React.FC<TagProps> = ({
       key={tagName}
       // Tag label: show label/tagName and cross icon if selected
       label={
-        <span style={{ display: 'flex', alignItems: 'center' }}>
-          {label}
-          {selected && (
+        <span
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            minWidth: 0,
+            gap: selected ? 6 : 0,
+            transition: 'gap 0.2s cubic-bezier(.4,1.3,.6,1), width 0.2s cubic-bezier(.4,1.3,.6,1)',
+          }}
+        >
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', transition: 'color 0.2s' }}>{label}</span>
+          {selected ? (
             <span
-              // Cross icon hover highlight
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                marginLeft: 6,
+                justifyContent: 'center',
+                width: 18,
+                height: 18,
                 borderRadius: '50%',
-                transition: 'background 0.15s, color 0.15s',
                 background: hovered ? white : 'transparent',
                 color: hovered ? purple : white,
-                padding: 0.1,
-                boxShadow: hovered ? '0 0 0 1px #fff' : undefined,
+                boxShadow: hovered ? '0 0 0 2px #fff' : undefined,
+                cursor: 'pointer',
+                transition: 'background 0.15s, color 0.15s',
+                flexShrink: 0,
+                opacity: selected ? 1 : 0,
+                transitionProperty: 'background, color, opacity',
+                transitionDuration: '0.15s, 0.15s, 0.2s',
+                transitionTimingFunction: 'ease, ease, cubic-bezier(.4,1.3,.6,1)',
               }}
             >
               <CloseIcon fontSize="small" />
             </span>
-          )}
+          ) : null}
         </span>
       }
       clickable
       onClick={handleClick}
       className={className}
       sx={{
-        borderRadius: '9999px', // pill shape
+        borderRadius: '9999px',
         fontWeight: 500,
         fontSize: '0.95rem',
         px: 0.1,
         py: 0.3,
         minWidth: 0,
-        transition: 'background 0.2s, color 0.2s, border 0.1s, padding 0.1s',
+        transition: 'background 0.2s, color 0.2s, border 0.1s, padding 0.2s cubic-bezier(.4,1.3,.6,1)',
         userSelect: 'none',
-        borderWidth: selected ? 2 : 1,
+        borderWidth: 1,
         borderStyle: 'solid',
         position: 'relative',
         // Color and border logic for selected/unselected, series and theme
