@@ -1239,9 +1239,9 @@ def sync_media_item_gallery_links(
     media item links. This sync resolves those links and updates
     `MediaItem.gallery` (and `position`) in bulk.
 
-    Returns the total number of database rows affected during this sync,
-    including both MediaItem rows that were updated or unlinked and
-    MediaGalleryItem link rows that were (re)written.
+    Returns the number of MediaItem rows changed for compatibility fields
+    (`gallery` / `position`). Through-table writes are tracked separately for
+    observability but are not part of the returned metric.
     """
     from apps.import_log.models import ImportLog
     from apps.media_library.models import MediaGallery, MediaGalleryItem, MediaItem
@@ -1342,29 +1342,53 @@ def sync_media_item_gallery_links(
         if on_progress:
             on_progress(idx, total)
 
+    linked_ids = set(primary_item_to_gallery.keys())
+
+    # Count MediaItem compatibility-field changes (clear + update).
+    media_items_to_clear = 0
+    media_items_to_update = 0
+    if touched_gallery_ids:
+        media_items_to_clear = (
+            MediaItem.objects.filter(gallery_id__in=touched_gallery_ids)
+            .exclude(pk__in=linked_ids)
+            .count()
+        )
+    if linked_ids:
+        for obj in MediaItem.objects.filter(pk__in=linked_ids).only("pk", "gallery_id", "position"):
+            new_gallery_id = primary_item_to_gallery[obj.pk]
+            new_position = primary_item_to_position[obj.pk]
+            if obj.gallery_id != new_gallery_id or obj.position != new_position:
+                media_items_to_update += 1
+
+    media_items_changed = media_items_to_clear + media_items_to_update
+    link_rows_written = len(gallery_item_links)
+
     if dry_run:
-        changed = len(gallery_item_links)
         import_log.status = ImportLog.Status.SUCCESS if errors == 0 else ImportLog.Status.PARTIAL_SUCCESS
         import_log.records_total = total
-        import_log.records_imported = changed
+        import_log.records_imported = media_items_changed
         import_log.records_failed = errors
         import_log.finished_at = timezone.now()
         if errors:
             import_log.error_message = f"{errors} link issues: {', '.join(error_messages)}"
         import_log.save()
-        logger.info("Gallery-item link sync complete: changed=%d errors=%d [DRY RUN]", changed, errors)
-        return changed
+        logger.info(
+            "Gallery-item link sync complete: media_items_changed=%d link_rows=%d errors=%d [DRY RUN]",
+            media_items_changed,
+            link_rows_written,
+            errors,
+        )
+        return media_items_changed
 
-    changed = 0
+    actual_link_rows_written = 0
+    actual_media_items_changed = 0
     with transaction.atomic():
-        linked_ids = set(primary_item_to_gallery.keys())
-
         if touched_gallery_ids:
             # Replace links for galleries that were part of this sync run.
             MediaGalleryItem.objects.filter(gallery_id__in=touched_gallery_ids).delete()
             if gallery_item_links:
                 MediaGalleryItem.objects.bulk_create(gallery_item_links)
-            changed += len(gallery_item_links)
+            actual_link_rows_written = len(gallery_item_links)
 
             # Keep MediaItem.gallery in sync as a best-effort compatibility field.
             cleared = (
@@ -1372,7 +1396,7 @@ def sync_media_item_gallery_links(
                 .exclude(pk__in=linked_ids)
                 .update(gallery_id=None)
             )
-            changed += cleared
+            actual_media_items_changed += cleared
 
         to_update = []
         for obj in MediaItem.objects.filter(pk__in=linked_ids).only("pk", "gallery_id", "position"):
@@ -1385,16 +1409,16 @@ def sync_media_item_gallery_links(
 
         if to_update:
             MediaItem.objects.bulk_update(to_update, ["gallery", "position"])
-            changed += len(to_update)
+            actual_media_items_changed += len(to_update)
 
     import_log.records_total = total
-    import_log.records_imported = changed
+    import_log.records_imported = actual_media_items_changed
     import_log.records_failed = errors
     import_log.finished_at = timezone.now()
 
     if errors == 0:
         import_log.status = ImportLog.Status.SUCCESS
-    elif changed > 0:
+    elif actual_media_items_changed > 0:
         import_log.status = ImportLog.Status.PARTIAL_SUCCESS
         import_log.error_message = f"{errors} link issues: {', '.join(error_messages)}"
     else:
@@ -1402,8 +1426,13 @@ def sync_media_item_gallery_links(
         import_log.error_message = f"All {errors} link resolutions failed: {', '.join(error_messages)}"
 
     import_log.save()
-    logger.info("Gallery-item link sync complete: changed=%d errors=%d", changed, errors)
-    return changed
+    logger.info(
+        "Gallery-item link sync complete: media_items_changed=%d link_rows=%d errors=%d",
+        actual_media_items_changed,
+        actual_link_rows_written,
+        errors,
+    )
+    return actual_media_items_changed
 
 
 # ---------------------------------------------------------------------------

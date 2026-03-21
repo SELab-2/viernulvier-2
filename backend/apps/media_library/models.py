@@ -145,7 +145,7 @@ class MediaItem(BaseModel):
         return f"{self.type} - {self.original_filename or 'Unnamed'}"
 
 
-class MediaGalleryItem(models.Model):
+class MediaGalleryItem(BaseModel):
     """Explicit gallery-item link table with stable ordering within a gallery."""
 
     gallery = models.ForeignKey(
@@ -170,7 +170,7 @@ class MediaGalleryItem(models.Model):
         db_comment="Position of the media item within the gallery.",
     )
 
-    class Meta:
+    class Meta(BaseModel.Meta):
         db_table = "media_gallery_item"
         verbose_name = "Media Gallery Item"
         verbose_name_plural = "Media Gallery Items"

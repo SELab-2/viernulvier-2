@@ -527,7 +527,7 @@ class Command(BaseCommand):
                 )
                 elapsed = time.monotonic() - step_start
                 total_saved += saved
-                label = "would save" if dry_run else "links"
+                label = "would change" if dry_run else "media items"
                 self.stdout.write(self.style.SUCCESS(f"✓ {saved} {label} ({elapsed:.1f}s)"))
             except Exception as exc:
                 elapsed = time.monotonic() - step_start
