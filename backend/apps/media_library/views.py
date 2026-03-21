@@ -5,10 +5,12 @@ Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
 """
 
+from django.db.models import Prefetch
+
 from apps.core.views import ApiModelViewSet
 
 from .filters import MediaGalleryFilter, MediaItemFilter
-from .models import MediaGallery, MediaItem
+from .models import MediaGallery, MediaGalleryItem, MediaItem
 from .schemas import extend_schema, media_gallery_schema, media_item_schema
 from .serializers import MediaGallerySerializer, MediaItemSerializer
 
@@ -47,6 +49,13 @@ class MediaGalleryViewSet(ApiModelViewSet):
 
     serializer_class = MediaGallerySerializer
     queryset = MediaGallery.objects.prefetch_related(
+        Prefetch(
+            "media_gallery_items",
+            queryset=MediaGalleryItem.objects.select_related("media_item")
+            .prefetch_related("media_item__translations__language", "media_item__crops")
+            .order_by("position", "id"),
+            to_attr="prefetched_media_gallery_items",
+        ),
         "media_items",
         "media_items__translations__language",
         "media_items__crops",

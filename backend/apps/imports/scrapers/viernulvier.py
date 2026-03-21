@@ -53,6 +53,7 @@ __all__ = [
     "RateLimitError",
     "fetch_viernulvier",
     "sync_viernulvier",
+    "sync_media_item_gallery_links",
     "sync_media_item_crops",
     "normalize_url",
     "normalize_performer_type",
@@ -1224,6 +1225,187 @@ def sync_viernulvier(
         " [DRY RUN]" if dry_run else "",
     )
     return saved
+
+
+def sync_media_item_gallery_links(
+    dry_run: bool = False,
+    etag_cache: Optional[Dict[str, str]] = None,
+    on_progress: Optional[Callable[[int, int], None]] = None,
+) -> int:
+    """Link MediaItems to MediaGalleries using gallery payload `items` links.
+
+    The Peppered `/media/items` payload often has `gallery: null`. The
+    `/media/galleries` payload is the authoritative source because it embeds the
+    media item links. This sync resolves those links and updates
+    `MediaItem.gallery` (and `position`) in bulk.
+
+    Returns the number of MediaItem rows changed (updated + unlinked).
+    """
+    from apps.import_log.models import ImportLog
+    from apps.media_library.models import MediaGallery, MediaGalleryItem, MediaItem
+
+    source = "viernulvier:media_item_gallery_links"
+    import_log = ImportLog.objects.create(
+        source=source,
+        status=ImportLog.Status.IN_PROGRESS,
+        started_at=timezone.now(),
+    )
+
+    try:
+        galleries = fetch_viernulvier(endpoint="/media/galleries", etag_cache=etag_cache)
+    except Exception as exc:
+        import_log.status = ImportLog.Status.FAILED
+        import_log.finished_at = timezone.now()
+        import_log.error_message = str(exc)
+        import_log.save()
+        raise
+
+    if not galleries:
+        import_log.status = ImportLog.Status.SUCCESS
+        import_log.records_total = 0
+        import_log.records_imported = 0
+        import_log.records_failed = 0
+        import_log.finished_at = timezone.now()
+        import_log.save()
+        return 0
+
+    gallery_pk_by_external_id = {
+        str(ext_id): pk for ext_id, pk in MediaGallery.objects.values_list("external_id", "pk")
+    }
+    media_pk_by_external_id = {
+        str(ext_id): pk for ext_id, pk in MediaItem.objects.values_list("external_id", "pk")
+    }
+
+    total = len(galleries)
+    errors = 0
+    error_messages: List[str] = []
+
+    gallery_item_links: List[MediaGalleryItem] = []
+    primary_item_to_gallery: Dict[int, int] = {}
+    primary_item_to_position: Dict[int, int] = {}
+    touched_gallery_ids: Set[int] = set()
+
+    def _record_error(msg: str) -> None:
+        nonlocal errors
+        errors += 1
+        if len(error_messages) < MAX_ERROR_MESSAGES:
+            error_messages.append(msg)
+
+    for idx, gallery_item in enumerate(galleries, start=1):
+        if not isinstance(gallery_item, dict):
+            _record_error(f"Gallery item is not a dict: {gallery_item!r}")
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        gallery_ext_id = _extract_external_id_from_url(gallery_item.get("@id"))
+        if not gallery_ext_id:
+            _record_error(f"Gallery missing @id: {str(gallery_item)[:200]}")
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        gallery_pk = gallery_pk_by_external_id.get(gallery_ext_id)
+        if gallery_pk is None:
+            _record_error(f"Gallery not found for external_id={gallery_ext_id}")
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        touched_gallery_ids.add(gallery_pk)
+        raw_items = gallery_item.get("items")
+        if not isinstance(raw_items, list):
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        for position, raw_media in enumerate(raw_items):
+            media_ext_id = _extract_external_id_from_url(raw_media)
+            if not media_ext_id:
+                continue
+            media_pk = media_pk_by_external_id.get(media_ext_id)
+            if media_pk is None:
+                _record_error(f"MediaItem not found for external_id={media_ext_id}")
+                continue
+
+            gallery_item_links.append(
+                MediaGalleryItem(
+                    gallery_id=gallery_pk,
+                    media_item_id=media_pk,
+                    position=position,
+                )
+            )
+
+            # Keep first occurrence as compatibility mirror for MediaItem.gallery.
+            if media_pk not in primary_item_to_gallery:
+                primary_item_to_gallery[media_pk] = gallery_pk
+                primary_item_to_position[media_pk] = position
+
+        if on_progress:
+            on_progress(idx, total)
+
+    if dry_run:
+        changed = len(gallery_item_links)
+        import_log.status = ImportLog.Status.SUCCESS if errors == 0 else ImportLog.Status.PARTIAL_SUCCESS
+        import_log.records_total = total
+        import_log.records_imported = changed
+        import_log.records_failed = errors
+        import_log.finished_at = timezone.now()
+        if errors:
+            import_log.error_message = f"{errors} link issues: {', '.join(error_messages)}"
+        import_log.save()
+        logger.info("Gallery-item link sync complete: changed=%d errors=%d [DRY RUN]", changed, errors)
+        return 0
+
+    changed = 0
+    with transaction.atomic():
+        linked_ids = set(primary_item_to_gallery.keys())
+
+        if touched_gallery_ids:
+            # Replace links for galleries that were part of this sync run.
+            MediaGalleryItem.objects.filter(gallery_id__in=touched_gallery_ids).delete()
+            if gallery_item_links:
+                MediaGalleryItem.objects.bulk_create(gallery_item_links)
+            changed += len(gallery_item_links)
+
+            # Keep MediaItem.gallery in sync as a best-effort compatibility field.
+            cleared = (
+                MediaItem.objects.filter(gallery_id__in=touched_gallery_ids)
+                .exclude(pk__in=linked_ids)
+                .update(gallery_id=None)
+            )
+            changed += cleared
+
+        to_update = []
+        for obj in MediaItem.objects.filter(pk__in=linked_ids).only("pk", "gallery_id", "position"):
+            new_gallery_id = primary_item_to_gallery[obj.pk]
+            new_position = primary_item_to_position[obj.pk]
+            if obj.gallery_id != new_gallery_id or obj.position != new_position:
+                obj.gallery_id = new_gallery_id
+                obj.position = new_position
+                to_update.append(obj)
+
+        if to_update:
+            MediaItem.objects.bulk_update(to_update, ["gallery", "position"])
+            changed += len(to_update)
+
+    import_log.records_total = total
+    import_log.records_imported = changed
+    import_log.records_failed = errors
+    import_log.finished_at = timezone.now()
+
+    if errors == 0:
+        import_log.status = ImportLog.Status.SUCCESS
+    elif changed > 0:
+        import_log.status = ImportLog.Status.PARTIAL_SUCCESS
+        import_log.error_message = f"{errors} link issues: {', '.join(error_messages)}"
+    else:
+        import_log.status = ImportLog.Status.FAILED
+        import_log.error_message = f"All {errors} link resolutions failed: {', '.join(error_messages)}"
+
+    import_log.save()
+    logger.info("Gallery-item link sync complete: changed=%d errors=%d", changed, errors)
+    return changed
 
 
 # ---------------------------------------------------------------------------

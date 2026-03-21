@@ -39,6 +39,14 @@ class MediaGallery(BaseModel):
         db_comment="Name of the media gallery.",
     )
 
+    items = models.ManyToManyField(
+        "MediaItem",
+        through="MediaGalleryItem",
+        related_name="galleries",
+        blank=True,
+        help_text="Media items linked to this gallery through MediaGalleryItem.",
+    )
+
     class Meta(BaseModel.Meta):
         db_table = "media_gallery"
         verbose_name = "Media Gallery"
@@ -135,6 +143,47 @@ class MediaItem(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.type} - {self.original_filename or 'Unnamed'}"
+
+
+class MediaGalleryItem(models.Model):
+    """Explicit gallery-item link table with stable ordering within a gallery."""
+
+    gallery = models.ForeignKey(
+        MediaGallery,
+        on_delete=models.CASCADE,
+        related_name="media_gallery_items",
+        help_text="Gallery this media item is linked to.",
+        db_comment="FK to MediaGallery.",
+    )
+
+    media_item = models.ForeignKey(
+        MediaItem,
+        on_delete=models.CASCADE,
+        related_name="media_gallery_links",
+        help_text="Media item linked to the gallery.",
+        db_comment="FK to MediaItem.",
+    )
+
+    position = models.PositiveIntegerField(
+        default=0,
+        help_text="Display order of the media item within the gallery.",
+        db_comment="Position of the media item within the gallery.",
+    )
+
+    class Meta:
+        db_table = "media_gallery_item"
+        verbose_name = "Media Gallery Item"
+        verbose_name_plural = "Media Gallery Items"
+        ordering = ["gallery_id", "position", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["gallery", "media_item"],
+                name="unique_media_item_per_gallery",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.gallery_id}:{self.media_item_id}@{self.position}"
 
 
 class MediaItemTranslation(BaseModel):

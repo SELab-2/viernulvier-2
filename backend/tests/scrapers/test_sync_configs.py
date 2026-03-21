@@ -57,6 +57,13 @@ from apps.tags.models import Tag
 # ===========================================================================
 
 
+@pytest.fixture(autouse=True)
+def _mock_media_item_gallery_link_step():
+    """Keep command tests deterministic by stubbing the custom link step."""
+    with patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_gallery_links", return_value=0):
+        yield
+
+
 def get_model_field_names(model):
     """Get all field names from a Django model, excluding auto-generated fields."""
     return {
