@@ -1380,24 +1380,7 @@ def sync_media_item_gallery_links(
 
     actual_link_rows_written = 0
     actual_media_items_changed = 0
-    with transaction.atomic():
-        if touched_gallery_ids:
-            # Replace links for galleries that were part of this sync run.
-            MediaGalleryItem.objects.filter(gallery_id__in=touched_gallery_ids).delete()
-            if gallery_item_links:
-                # De-duplicate on (gallery_id, media_item_id) to avoid violating
-                # the unique_media_item_per_gallery constraint when bulk-creating.
-                unique_gallery_item_links = []
-                seen_pairs: Set[Tuple[Any, Any]] = set()
-                duplicate_count = 0
-                for link in gallery_item_links:
-                    key = (link.gallery_id, link.media_item_id)
-                    if key in seen_pairs:
-                        duplicate_count += 1
-                        continue
-                    seen_pairs.add(key)
-                    unique_gallery_item_links.append(link)
-                if duplicate_count:
+
     exc: Optional[BaseException] = None
     try:
         with transaction.atomic():
