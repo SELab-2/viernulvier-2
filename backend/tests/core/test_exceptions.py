@@ -3,29 +3,11 @@ Comprehensive test suite for the RFC 7807 DRF exception handler.
 """
 
 import logging
+from unittest.mock import MagicMock, patch
 
 import django
 import pytest
 from django.conf import settings
-
-if not settings.configured:
-    settings.configure(
-        INSTALLED_APPS=[
-            "django.contrib.contenttypes",
-            "django.contrib.auth",
-            "rest_framework",
-        ],
-        DATABASES={"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}},
-        ROOT_URLCONF=__name__,
-        REST_FRAMEWORK={"EXCEPTION_HANDLER": "apps.core.exceptions.custom_exception_handler"},
-        DEFAULT_AUTO_FIELD="django.db.models.BigAutoField",
-    )
-    django.setup()
-
-urlpatterns = []  # ROOT_URLCONF requirement
-
-from unittest.mock import MagicMock, patch
-
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
@@ -47,6 +29,22 @@ from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 
 from apps.core.exceptions import _build_problem, _flatten_errors, custom_exception_handler
+
+if not settings.configured:
+    settings.configure(
+        INSTALLED_APPS=[
+            "django.contrib.contenttypes",
+            "django.contrib.auth",
+            "rest_framework",
+        ],
+        DATABASES={"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}},
+        ROOT_URLCONF=__name__,
+        REST_FRAMEWORK={"EXCEPTION_HANDLER": "apps.core.exceptions.custom_exception_handler"},
+        DEFAULT_AUTO_FIELD="django.db.models.BigAutoField",
+    )
+    django.setup()
+
+urlpatterns = []  # ROOT_URLCONF requirement
 
 factory = APIRequestFactory()
 
