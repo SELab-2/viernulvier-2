@@ -47,6 +47,7 @@ REST_FRAMEWORK = {
         "public": None,
         "public_min": None,
         "public_hour": None,
+        "anon": None,
         "internal": None,
     },
 }

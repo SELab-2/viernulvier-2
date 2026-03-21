@@ -63,6 +63,7 @@ CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host]
 # Two complementary limits prevent both burst abuse and sustained overuse:
 #   public_min  - no single client can exhaust the minute budget in one go
 #   public_hour - sustained usage cap across a rolling hour window
+#   anon        - fallback for unauthenticated requests, should be blocked by permissions but just in case
 #   internal    - no limit; internal callers are trusted
 #
 REST_FRAMEWORK = {
@@ -71,10 +72,14 @@ REST_FRAMEWORK = {
         "apps.core.throttles.PublicKeyMinuteThrottle",
         "apps.core.throttles.PublicKeyHourThrottle",
         "apps.core.throttles.InternalKeyThrottle",
+        # fallback for unauthenticated requests, should be blocked by permissions but just in case
+        "rest_framework.throttling.AnonRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
         "public_min": "40/minute",
         "public_hour": "800/hour",
+        # fallback for unauthenticated requests, should be blocked by permissions but just in case
+        "anon": "10/minute",
         "internal": None,
     },
 }

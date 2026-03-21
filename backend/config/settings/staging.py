@@ -49,10 +49,14 @@ REST_FRAMEWORK = {
         "apps.core.throttles.PublicKeyMinuteThrottle",
         "apps.core.throttles.PublicKeyHourThrottle",
         "apps.core.throttles.InternalKeyThrottle",
+        # fallback for unauthenticated requests, should be blocked by permissions but just in case
+        "rest_framework.throttling.AnonRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "public_min": "60/minute",
-        "public_hour": "1000/hour",
+        "public_min": "40/minute",
+        "public_hour": "800/hour",
+        # fallback for unauthenticated requests, should be blocked by permissions but just in case
+        "anon": "10/minute",
         "internal": None,
     },
 }
