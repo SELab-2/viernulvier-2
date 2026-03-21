@@ -1385,29 +1385,63 @@ def sync_media_item_gallery_links(
             # Replace links for galleries that were part of this sync run.
             MediaGalleryItem.objects.filter(gallery_id__in=touched_gallery_ids).delete()
             if gallery_item_links:
-                MediaGalleryItem.objects.bulk_create(gallery_item_links)
-            actual_link_rows_written = len(gallery_item_links)
+                # De-duplicate on (gallery_id, media_item_id) to avoid violating
+                # the unique_media_item_per_gallery constraint when bulk-creating.
+                unique_gallery_item_links = []
+                seen_pairs: Set[Tuple[Any, Any]] = set()
+                duplicate_count = 0
+                for link in gallery_item_links:
+                    key = (link.gallery_id, link.media_item_id)
+                    if key in seen_pairs:
+                        duplicate_count += 1
+                        continue
+                    seen_pairs.add(key)
+                    unique_gallery_item_links.append(link)
+                if duplicate_count:
+    exc: Optional[BaseException] = None
+    try:
+        with transaction.atomic():
+            if touched_gallery_ids:
+                # Replace links for galleries that were part of this sync run.
+                MediaGalleryItem.objects.filter(gallery_id__in=touched_gallery_ids).delete()
+                if gallery_item_links:
+                    MediaGalleryItem.objects.bulk_create(gallery_item_links)
+                actual_link_rows_written = len(gallery_item_links)
 
-            # Keep MediaItem.gallery in sync as a best-effort compatibility field.
-            cleared = (
-                MediaItem.objects.filter(gallery_id__in=touched_gallery_ids)
-                .exclude(pk__in=linked_ids)
-                .update(gallery_id=None)
-            )
-            actual_media_items_changed += cleared
+                # Keep MediaItem.gallery in sync as a best-effort compatibility field.
+                cleared = (
+                    MediaItem.objects.filter(gallery_id__in=touched_gallery_ids)
+                    .exclude(pk__in=linked_ids)
+                    .update(gallery_id=None)
+                )
+                actual_media_items_changed += cleared
 
-        to_update = []
-        for obj in MediaItem.objects.filter(pk__in=linked_ids).only("pk", "gallery_id", "position"):
-            new_gallery_id = primary_item_to_gallery[obj.pk]
-            new_position = primary_item_to_position[obj.pk]
-            if obj.gallery_id != new_gallery_id or obj.position != new_position:
-                obj.gallery_id = new_gallery_id
-                obj.position = new_position
-                to_update.append(obj)
+            to_update = []
+            for obj in MediaItem.objects.filter(pk__in=linked_ids).only("pk", "gallery_id", "position"):
+                new_gallery_id = primary_item_to_gallery[obj.pk]
+                new_position = primary_item_to_position[obj.pk]
+                if obj.gallery_id != new_gallery_id or obj.position != new_position:
+                    obj.gallery_id = new_gallery_id
+                    obj.position = new_position
+                    to_update.append(obj)
 
-        if to_update:
-            MediaItem.objects.bulk_update(to_update, ["gallery", "position"])
-            actual_media_items_changed += len(to_update)
+            if to_update:
+                MediaItem.objects.bulk_update(to_update, ["gallery", "position"])
+                actual_media_items_changed += len(to_update)
+    except Exception as e:
+        logger.exception("Error while syncing media gallery links")
+        exc = e
+    finally:
+        if exc is not None:
+            import_log.status = ImportLog.Status.FAILED
+            import_log.records_total = total
+            import_log.records_imported = actual_media_items_changed
+            import_log.records_failed = errors + 1
+            import_log.finished_at = timezone.now()
+            import_log.error_message = f"Exception during gallery link sync: {exc}"
+            import_log.save()
+    if exc is not None:
+        raise exc
 
     import_log.records_total = total
     import_log.records_imported = actual_media_items_changed
