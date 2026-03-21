@@ -168,6 +168,7 @@ REST_FRAMEWORK = {
         "public": "1000/day",
     },
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
+    'EXCEPTION_HANDLER': 'apps.core.exceptions.custom_exception_handler',
 }
 
 # drf-spectacular settings
@@ -195,6 +196,7 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SECURITY": [{"ApiKey": []}],
+    'ERRORS_USE_REASON_PHRASES': True,
     "APPEND_COMPONENTS": {
         "securitySchemes": {
             "ApiKey": {
@@ -202,6 +204,29 @@ SPECTACULAR_SETTINGS = {
                 "in": "header",
                 "name": "X-API-Key",
                 "description": "Use the `X-API-Key` header to authenticate.",
+            }
+        },
+        "schemas": {
+            "ProblemDetails": {
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string", "format": "uri", "default": "about:blank"},
+                    "title": {"type": "string"},
+                    "status": {"type": "integer"},
+                    "detail": {"type": "string"},
+                    "instance": {"type": "string"},
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "pointer": {"type": "string"},
+                                "detail": {"type": "string"},
+                                "code": {"type": "string"}
+                            }
+                        }
+                    }
+                }
             }
         }
     },
