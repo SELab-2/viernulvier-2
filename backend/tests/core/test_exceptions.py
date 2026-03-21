@@ -366,7 +366,7 @@ class TestAuthErrors:
     def test_www_authenticate_header_on_not_authenticated(self):
         response = call_handler(NotAuthenticated())
         assert "WWW-Authenticate" in response
-        assert "Bearer" in response["WWW-Authenticate"]
+        assert "X-API-Key" in response["WWW-Authenticate"]
 
     def test_www_authenticate_header_on_auth_failed(self):
         assert "WWW-Authenticate" in call_handler(AuthenticationFailed())
