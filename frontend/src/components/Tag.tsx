@@ -98,7 +98,16 @@ const Tag: React.FC<TagProps> = ({
             transition: 'gap 0.2s cubic-bezier(.4,1.3,.6,1), width 0.2s cubic-bezier(.4,1.3,.6,1)',
           }}
         >
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', transition: 'color 0.2s' }}>{label}</span>
+          <span
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              transition: 'color 0.2s',
+            }}
+          >
+            {label}
+          </span>
           {selected ? (
             <span
               style={{
@@ -135,7 +144,8 @@ const Tag: React.FC<TagProps> = ({
         px: 0.1,
         py: 0.3,
         minWidth: 0,
-        transition: 'background 0.2s, color 0.2s, border 0.1s, padding 0.2s cubic-bezier(.4,1.3,.6,1)',
+        transition:
+          'background 0.2s, color 0.2s, border 0.1s, padding 0.2s cubic-bezier(.4,1.3,.6,1)',
         userSelect: 'none',
         borderWidth: 1,
         borderStyle: 'solid',
