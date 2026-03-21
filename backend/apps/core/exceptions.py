@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _flatten_errors(detail: Any, field_prefix: str = "") -> list[dict]:
     """
     Recursively walk DRF's nested error structure and return a flat list of
@@ -53,25 +54,31 @@ def _flatten_errors(detail: Any, field_prefix: str = "") -> list[dict]:
             errors.extend(_flatten_errors(value, field_prefix=prefix))
 
     elif isinstance(detail, ErrorDetail):
-        errors.append({
-            "pointer": field_prefix or "/",
-            "detail": str(detail),
-            "code": detail.code,
-        })
+        errors.append(
+            {
+                "pointer": field_prefix or "/",
+                "detail": str(detail),
+                "code": detail.code,
+            }
+        )
 
     elif isinstance(detail, str):
-        errors.append({
-            "pointer": field_prefix or "/",
-            "detail": detail,
-            "code": "error",
-        })
+        errors.append(
+            {
+                "pointer": field_prefix or "/",
+                "detail": detail,
+                "code": "error",
+            }
+        )
 
     else:
-        errors.append({
-            "pointer": field_prefix or "/",
-            "detail": str(detail),
-            "code": "error",
-        })
+        errors.append(
+            {
+                "pointer": field_prefix or "/",
+                "detail": str(detail),
+                "code": "error",
+            }
+        )
 
     return errors
 
@@ -125,6 +132,7 @@ def _title_for(status_code: int, fallback: str) -> str:
 # ---------------------------------------------------------------------------
 # Main handler
 # ---------------------------------------------------------------------------
+
 
 def custom_exception_handler(exc: Exception, context: dict) -> Response | None:
     """
@@ -200,7 +208,8 @@ def custom_exception_handler(exc: Exception, context: dict) -> Response | None:
             status_code=status_code,
             title="Too Many Requests",
             detail=f"Request was throttled. Expected available in {exc.wait:.0f} second(s)."
-                   if exc.wait else "Request was throttled.",
+            if exc.wait
+            else "Request was throttled.",
             instance=instance,
             extra=extra or None,
         )
@@ -224,7 +233,7 @@ def custom_exception_handler(exc: Exception, context: dict) -> Response | None:
         if hasattr(exc, "detail") and isinstance(exc.detail, ErrorDetail):
             detail_str = str(exc.detail)
         else:
-            detail_str = f"Method \"{request.method}\" not allowed." if request else "Method not allowed."
+            detail_str = f'Method "{request.method}" not allowed.' if request else "Method not allowed."
         allowed = response.get("Allow", "")
         extra = {"allowed_methods": [m.strip() for m in allowed.split(",")]} if allowed else None
         problem = _build_problem(

@@ -350,8 +350,8 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
         )
         self.assertEqual(response.status_code, 401)
 
-    def test_create_missing_required_field_returns_400(self):
-        """Test case for test_create_missing_required_field_returns_400."""
+    def test_create_missing_required_field_returns_422(self):
+        """Test case for test_create_missing_required_field_returns_422."""
         response = self.client.post(
             "/api/v1/prices/",
             {
@@ -362,7 +362,7 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 422)
 
 
 # ---------------------------------------------------------------------------
@@ -620,12 +620,12 @@ class TestPriceRankViewSetCreate(_PriceRankSetupMixin):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_create_duplicate_position_returns_400(self):
-        """Test case for test_create_duplicate_position_returns_400."""
+    def test_create_duplicate_position_returns_422(self):
+        """Test case for test_create_duplicate_position_returns_422."""
         response = self.client.post(
             "/api/v1/price-ranks/",
             {"position": 1, "sold_out_buffer": 0},
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 422)

@@ -227,7 +227,7 @@ class TestLanguageViewSetCreate(TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-    def test_create_duplicate_code_returns_400(self):
+    def test_create_duplicate_code_returns_422(self):
         LanguageFactory(code="nl", name="Dutch", is_active=True)
         response = self.client.post(
             "/api/v1/languages/",
@@ -235,16 +235,16 @@ class TestLanguageViewSetCreate(TestCase):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 422)
 
-    def test_create_missing_required_field_returns_400(self):
+    def test_create_missing_required_field_returns_422(self):
         response = self.client.post(
             "/api/v1/languages/",
             {"code": "de"},  # missing name
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 422)
 
 
 # ---------------------------------------------------------------------------

@@ -167,8 +167,8 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "public": "1000/day",
     },
-    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
-    'EXCEPTION_HANDLER': 'apps.core.exceptions.custom_exception_handler',
+    "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S.%fZ",
+    "EXCEPTION_HANDLER": "apps.core.exceptions.custom_exception_handler",
 }
 
 # drf-spectacular settings
@@ -196,8 +196,8 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SECURITY": [{"ApiKey": []}],
-    'ERRORS_USE_REASON_PHRASES': True,
-    'ERROR_SCHEMA_SYMBOLIC_NAME': 'ProblemDetails',
+    "ERRORS_USE_REASON_PHRASES": True,
+    "ERROR_SCHEMA_SYMBOLIC_NAME": "ProblemDetails",
     "APPEND_COMPONENTS": {
         "securitySchemes": {
             "ApiKey": {
@@ -223,13 +223,13 @@ SPECTACULAR_SETTINGS = {
                             "properties": {
                                 "pointer": {"type": "string"},
                                 "detail": {"type": "string"},
-                                "code": {"type": "string"}
-                            }
-                        }
-                    }
-                }
+                                "code": {"type": "string"},
+                            },
+                        },
+                    },
+                },
             }
-        }
+        },
     },
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,

@@ -53,6 +53,7 @@ factory = APIRequestFactory()
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_context(method: str = "GET", path: str = "/api/test/") -> dict:
     """Return a minimal handler context with a real DRF request."""
     django_request = getattr(factory, method.lower())(path)
@@ -76,6 +77,7 @@ def assert_rfc7807(body: dict, status_code: int):
 # _flatten_errors
 # ===========================================================================
 
+
 class TestFlattenErrors:
     def test_single_error_detail(self):
         detail = ErrorDetail("This field is required.", code="required")
@@ -98,11 +100,7 @@ class TestFlattenErrors:
 
     def test_nested_dict(self):
         # List wrapper from DRF adds the /0 suffix
-        detail = {
-            "address": {
-                "city": [ErrorDetail("This field is required.", code="required")]
-            }
-        }
+        detail = {"address": {"city": [ErrorDetail("This field is required.", code="required")]}}
         result = _flatten_errors(detail)
         assert result[0]["pointer"] == "/address/city/0"
 
@@ -150,6 +148,7 @@ class TestFlattenErrors:
 # _build_problem
 # ===========================================================================
 
+
 class TestBuildProblem:
     def test_minimal(self):
         body = _build_problem(status_code=400, title="Bad Request", detail="Something is wrong.")
@@ -190,6 +189,7 @@ class TestBuildProblem:
 # Validation errors (422)
 # ===========================================================================
 
+
 class TestValidationError:
     def test_status_is_422(self):
         exc = ValidationError({"email": ["Enter a valid email."]})
@@ -227,12 +227,14 @@ class TestValidationError:
         assert len(response.data["errors"]) >= 1
 
     def test_multiple_errors_same_field(self):
-        exc = ValidationError({
-            "password": [
-                ErrorDetail("Too short.", code="min_length"),
-                ErrorDetail("Must contain a number.", code="password_no_number"),
-            ]
-        })
+        exc = ValidationError(
+            {
+                "password": [
+                    ErrorDetail("Too short.", code="min_length"),
+                    ErrorDetail("Must contain a number.", code="password_no_number"),
+                ]
+            }
+        )
         response = call_handler(exc)
         errors = response.data["errors"]
         # Each error gets its own /password/0, /password/1 pointer
@@ -254,6 +256,7 @@ class TestValidationError:
 # Django ValidationError conversion
 # ===========================================================================
 
+
 class TestDjangoValidationError:
     def test_message_dict_converted(self):
         exc = DjangoValidationError({"email": ["Enter a valid email address."]})
@@ -270,6 +273,7 @@ class TestDjangoValidationError:
 # ===========================================================================
 # Http404 → 404
 # ===========================================================================
+
 
 class TestHttp404:
     def test_returns_404(self):
@@ -289,6 +293,7 @@ class TestHttp404:
 # DRF NotFound (404)
 # ===========================================================================
 
+
 class TestNotFound:
     def test_returns_404(self):
         response = call_handler(NotFound())
@@ -306,6 +311,7 @@ class TestNotFound:
 # ===========================================================================
 # PermissionDenied (403)
 # ===========================================================================
+
 
 class TestPermissionDenied:
     def test_drf_permission_denied_returns_403(self):
@@ -328,6 +334,7 @@ class TestPermissionDenied:
 # ===========================================================================
 # Authentication (401)
 # ===========================================================================
+
 
 class TestAuthErrors:
     def test_not_authenticated_returns_401(self):
@@ -359,6 +366,7 @@ class TestAuthErrors:
 # ===========================================================================
 # Throttled (429)
 # ===========================================================================
+
 
 class TestThrottled:
     def test_returns_429(self):
@@ -398,6 +406,7 @@ class TestThrottled:
 # MethodNotAllowed (405)
 # ===========================================================================
 
+
 class TestMethodNotAllowed:
     def test_returns_405(self):
         response = call_handler(MethodNotAllowed("DELETE"))
@@ -432,6 +441,7 @@ class TestMethodNotAllowed:
 # UnsupportedMediaType (415)
 # ===========================================================================
 
+
 class TestUnsupportedMediaType:
     def test_returns_415(self):
         response = call_handler(UnsupportedMediaType("text/xml"))
@@ -449,6 +459,7 @@ class TestUnsupportedMediaType:
 # ===========================================================================
 # ParseError (400)
 # ===========================================================================
+
 
 class TestParseError:
     def test_returns_400(self):
@@ -471,6 +482,7 @@ class TestParseError:
 # ===========================================================================
 # Custom APIException subclasses
 # ===========================================================================
+
 
 class ServiceUnavailable(APIException):
     status_code = 503
@@ -531,6 +543,7 @@ class TestCustomAPIException:
 # Unhandled exceptions → 500
 # ===========================================================================
 
+
 class TestUnhandledException:
     def test_returns_500(self):
         response = call_handler(RuntimeError("Unexpected crash"))
@@ -565,6 +578,7 @@ class TestUnhandledException:
 # ===========================================================================
 # RFC 7807 envelope: all responses share these fields
 # ===========================================================================
+
 
 class TestRFC7807Envelope:
     exceptions_to_test = [
@@ -611,6 +625,7 @@ class TestRFC7807Envelope:
 # No request in context (edge case)
 # ===========================================================================
 
+
 class TestNoRequest:
     def test_no_request_validation_error(self):
         exc = ValidationError({"x": ["err"]})
@@ -630,6 +645,7 @@ class TestNoRequest:
 # ===========================================================================
 # Edge cases
 # ===========================================================================
+
 
 class TestEdgeCases:
     def test_http404_as_django_exception(self):
