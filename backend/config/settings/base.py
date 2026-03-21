@@ -197,6 +197,7 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     "SECURITY": [{"ApiKey": []}],
     'ERRORS_USE_REASON_PHRASES': True,
+    'ERROR_SCHEMA_SYMBOLIC_NAME': 'ProblemDetails',
     "APPEND_COMPONENTS": {
         "securitySchemes": {
             "ApiKey": {
