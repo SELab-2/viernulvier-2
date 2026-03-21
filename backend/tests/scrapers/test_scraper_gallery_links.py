@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from apps.imports.scrapers.viernulvier import sync_media_item_gallery_links
 from apps.import_log.models import ImportLog
+from apps.imports.scrapers.viernulvier import sync_media_item_gallery_links
 from apps.media_library.models import MediaGalleryItem
 from tests.factories.media_library import MediaGalleryFactory, MediaItemFactory
 
@@ -192,4 +192,3 @@ def test_sync_media_item_gallery_links_atomic_exception_is_logged_and_reraised(m
     log = ImportLog.objects.latest("started_at")
     assert log.status == ImportLog.Status.FAILED
     assert "Exception during gallery link sync" in (log.error_message or "")
-
