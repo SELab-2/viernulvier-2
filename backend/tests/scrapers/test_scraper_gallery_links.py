@@ -35,7 +35,9 @@ def test_sync_media_item_gallery_links_updates_gallery_and_position(monkeypatch)
     item_1.refresh_from_db()
     item_2.refresh_from_db()
     item_3.refresh_from_db()
-    links = list(MediaGalleryItem.objects.order_by("gallery_id", "position").values_list("gallery_id", "media_item_id", "position"))
+    links = list(
+        MediaGalleryItem.objects.order_by("gallery_id", "position").values_list("gallery_id", "media_item_id", "position")
+    )
 
     assert changed == 6
     assert item_1.gallery_id == gallery_a.pk and item_1.position == 0
@@ -84,6 +86,3 @@ def test_sync_media_item_gallery_links_dry_run_does_not_write(monkeypatch):
     assert item.position == 5
     assert MediaGalleryItem.objects.count() == 0
     assert gallery.pk is not None
-
-
-
