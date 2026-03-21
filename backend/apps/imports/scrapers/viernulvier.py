@@ -1231,6 +1231,7 @@ def sync_media_item_gallery_links(
     dry_run: bool = False,
     etag_cache: Optional[Dict[str, str]] = None,
     on_progress: Optional[Callable[[int, int], None]] = None,
+    params: Optional[Dict[str, str]] = None,
 ) -> int:
     """Link MediaItems to MediaGalleries using gallery payload `items` links.
 
@@ -1254,7 +1255,7 @@ def sync_media_item_gallery_links(
     )
 
     try:
-        galleries = fetch_viernulvier(endpoint="/media/galleries", etag_cache=etag_cache)
+        galleries = fetch_viernulvier(endpoint="/media/galleries", params=params, etag_cache=etag_cache)
     except Exception as exc:
         import_log.status = ImportLog.Status.FAILED
         import_log.finished_at = timezone.now()
@@ -1517,6 +1518,7 @@ def _download_image(session: requests.Session, url: str) -> Optional[bytes]:
 def sync_media_item_crops(
     dry_run: bool = False,
     on_progress: Optional[Callable[[int, int], None]] = None,
+    params: Optional[Dict[str, str]] = None,
 ) -> int:
     """Fetch individual foto MediaItems to obtain crop data, download images.
 
@@ -1536,6 +1538,8 @@ def sync_media_item_crops(
         dry_run:     When True, log what would be saved but write nothing.
         on_progress: Callback(processed_items, total_items) invoked after each
                      media item is handled (regardless of crop count).
+        params:      Optional API query parameters for timestamp filtering
+                     (e.g. created_at[after], updated_at[after]).
 
     Returns:
         Number of crops saved (created + updated). Always 0 in dry_run mode.
@@ -1551,7 +1555,34 @@ def sync_media_item_crops(
     )
 
     # Load all foto items: need pk (FK on MediaItemCrop) and external_id (API URL).
-    foto_items = list(MediaItem.objects.filter(type=MediaItem.MediaItemType.IMAGE).values("pk", "external_id"))
+    foto_items_query = MediaItem.objects.filter(type=MediaItem.MediaItemType.IMAGE)
+
+    if params:
+        # Parse timestamp params to filter MediaItems in the database
+        # Params like: "created_at[after]": "2024-01-01T00:00:00Z"
+        for param_key, param_value in params.items():
+            if "created_at" in param_key:
+                try:
+                    dt = parse_datetime(param_value)
+                    if dt:
+                        if "[after]" in param_key or "[strictly_after]" in param_key:
+                            foto_items_query = foto_items_query.filter(created_at__gte=dt)
+                        elif "[before]" in param_key or "[strictly_before]" in param_key:
+                            foto_items_query = foto_items_query.filter(created_at__lte=dt)
+                except (ValueError, TypeError):
+                    pass
+            elif "updated_at" in param_key:
+                try:
+                    dt = parse_datetime(param_value)
+                    if dt:
+                        if "[after]" in param_key or "[strictly_after]" in param_key:
+                            foto_items_query = foto_items_query.filter(updated_at__gte=dt)
+                        elif "[before]" in param_key or "[strictly_before]" in param_key:
+                            foto_items_query = foto_items_query.filter(updated_at__lte=dt)
+                except (ValueError, TypeError):
+                    pass
+
+    foto_items = list(foto_items_query.values("pk", "external_id"))
 
     if not foto_items:
         import_log.status = ImportLog.Status.SUCCESS

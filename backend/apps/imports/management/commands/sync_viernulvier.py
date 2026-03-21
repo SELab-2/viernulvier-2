@@ -524,6 +524,7 @@ class Command(BaseCommand):
                     dry_run=dry_run,
                     etag_cache=etag_cache,
                     on_progress=self._make_progress_callback("media_item_gallery_links"),
+                    params=params,
                 )
                 elapsed = time.monotonic() - step_start
                 total_saved += saved
@@ -541,6 +542,7 @@ class Command(BaseCommand):
                 saved = sync_media_item_crops(
                     dry_run=dry_run,
                     on_progress=self._make_progress_callback("media_item_crops"),
+                    params=params,
                 )
                 elapsed = time.monotonic() - step_start
                 total_saved += saved
