@@ -1,54 +1,70 @@
+"""
+Development settings for the viernulvier_archive project.
+
+Extends base.py with:
+- DEBUG mode and relaxed security
+- BrowsableAPIRenderer for the DRF UI
+- Throttling fully disabled
+- django-debug-toolbar for query inspection
+- django-cors-headers for local frontend dev (e.g. Vite on :5173)
+
+Usage:
+
+    DJANGO_SETTINGS_MODULE=config.settings.dev python manage.py runserver
+"""
+
 import os
 
 from corsheaders.defaults import default_headers
 
-from . import base as base_settings
+from .base import *  # noqa: F401, F403
+from .base import INSTALLED_APPS, MIDDLEWARE, REST_FRAMEWORK
 
-for setting_name in dir(base_settings):
-    if setting_name.isupper():
-        globals()[setting_name] = getattr(base_settings, setting_name)
-
-REST_FRAMEWORK = globals().get("REST_FRAMEWORK", {})
-INSTALLED_APPS = list(globals().get("INSTALLED_APPS", []))
-MIDDLEWARE = list(globals().get("MIDDLEWARE", []))
+# ---------------------------------------------------------------------------
+# Core
+# ---------------------------------------------------------------------------
 
 DEBUG = True
-ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "").split(",") if host.strip()]
 
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
+
+# ---------------------------------------------------------------------------
+# REST Framework - add BrowsableAPIRenderer and disable all throttling
+# ---------------------------------------------------------------------------
 
 REST_FRAMEWORK = {
-    **REST_FRAMEWORK,  # noqa: F405
+    **REST_FRAMEWORK,
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework_xml.renderers.XMLRenderer",
         "rest_framework_yaml.renderers.YAMLRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {},
 }
 
-REST_FRAMEWORK = {
-    **REST_FRAMEWORK,
-    "DEFAULT_THROTTLE_CLASSES": [
-        "apps.core.throttles.PublicKeyMinuteThrottle",
-        "apps.core.throttles.PublicKeyHourThrottle",
-        "apps.core.throttles.InternalKeyThrottle",
-    ],
-    "DEFAULT_THROTTLE_RATES": {
-        "internal": None,
-        "public_min": None,
-        "public_hour": None,
-    },
-}
+# ---------------------------------------------------------------------------
+# django-debug-toolbar
+# ---------------------------------------------------------------------------
 
-INSTALLED_APPS += ["debug_toolbar"]
-MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]  # noqa
+INSTALLED_APPS = [*INSTALLED_APPS, "debug_toolbar"]
+MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware", *MIDDLEWARE]
 INTERNAL_IPS = ["127.0.0.1"]
 
-INSTALLED_APPS += ["corsheaders"]
+# ---------------------------------------------------------------------------
+# django-cors-headers
+# ---------------------------------------------------------------------------
+
+INSTALLED_APPS = [*INSTALLED_APPS, "corsheaders"]
 MIDDLEWARE = ["corsheaders.middleware.CorsMiddleware", *MIDDLEWARE]
+
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
-    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
     if origin.strip()
 ]
 CORS_ALLOW_HEADERS = [*default_headers, "x-api-key"]
