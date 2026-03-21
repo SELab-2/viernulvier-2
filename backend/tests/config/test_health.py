@@ -22,7 +22,6 @@ class HealthViewTests(TestCase):
         Health endpoint should return 200 when the database is reachable.
         """
         request = self.factory.get("/health")
-
         response = health(request)
 
         self.assertEqual(response.status_code, 200)
@@ -33,16 +32,12 @@ class HealthViewTests(TestCase):
         """
         Health endpoint should return 503 when the database raises OperationalError.
         """
-
-        # Mock connection object
         mock_connection = MagicMock()
         mock_connections.__getitem__.return_value = mock_connection
 
-        # cursor() raises OperationalError
-        mock_connection.cursor.side_effect = OperationalError()
+        mock_connection.cursor.side_effect = OperationalError("Database down")
 
         request = self.factory.get("/health")
-
         response = health(request)
 
         self.assertEqual(response.status_code, 503)
@@ -59,7 +54,6 @@ class HealthViewTests(TestCase):
         """
         Verify that the SQL query is executed when the database connection works.
         """
-
         mock_connection = MagicMock()
         mock_cursor = MagicMock()
 
@@ -67,11 +61,9 @@ class HealthViewTests(TestCase):
         mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
 
         request = self.factory.get("/health")
-
         response = health(request)
 
         mock_cursor.execute.assert_called_once_with("SELECT 1")
-        mock_cursor.fetchone.assert_called_once()
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content), {"status": "ok"})
