@@ -19,12 +19,12 @@ class URLTests(TestCase):
 
     def test_health_url_resolves(self):
         """Health endpoint resolves to the correct view"""
-        resolver = resolve("/health")
+        resolver = resolve("/health/")
         self.assertEqual(resolver.func, health)
 
     def test_health_endpoint_returns_response(self):
         """Health endpoint returns 200"""
-        response = self.client.get("/health")
+        response = self.client.get("/health/")
         self.assertEqual(response.status_code, 200)
 
     def test_admin_url_exists(self):
