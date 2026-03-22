@@ -1556,10 +1556,11 @@ def sync_media_item_crops(
 
     # Load all foto items: need pk (FK on MediaItemCrop) and external_id (API URL).
     foto_items_query = MediaItem.objects.filter(type=MediaItem.MediaItemType.IMAGE)
+    supported_filter_params: Dict[str, str] = {}
 
     if params:
-        # Parse timestamp params to filter MediaItems in the database.
-        # Skip filters for fields that are not available on MediaItem.
+        # Parse timestamp params to filter local candidates. Keep only params
+        # backed by real MediaItem fields so unsupported filters are ignored.
         for param_key, param_value in params.items():
             match = re.fullmatch(r"(created_at|updated_at)\[(after|before|strictly_after|strictly_before)\]", param_key)
             if not match:
@@ -1577,6 +1578,8 @@ def sync_media_item_crops(
                 )
                 continue
 
+            supported_filter_params[param_key] = param_value
+
             try:
                 dt = parse_datetime(param_value)
             except (ValueError, TypeError):
@@ -1589,6 +1592,41 @@ def sync_media_item_crops(
             foto_items_query = foto_items_query.filter(**{f"{field_name}__{lookup}": dt})
 
     foto_items = list(foto_items_query.values("pk", "external_id"))
+
+    if supported_filter_params and foto_items:
+        # Also filter via API so we only fetch detail pages for matching items.
+        try:
+            api_items = fetch_viernulvier(endpoint="/media/items", params=supported_filter_params)
+        except Exception as exc:
+            import_log.status = ImportLog.Status.FAILED
+            import_log.finished_at = timezone.now()
+            import_log.error_message = str(exc)
+            import_log.save()
+            raise
+
+        filtered_external_ids: Set[str] = set()
+        for api_item in api_items:
+            if not isinstance(api_item, dict):
+                continue
+            ext_id = _extract_external_id_from_url(api_item.get("@id") or api_item.get("external_id") or api_item.get("id"))
+            if ext_id:
+                filtered_external_ids.add(str(ext_id).strip())
+
+        before_count = len(foto_items)
+        if filtered_external_ids:
+            foto_items = [
+                row
+                for row in foto_items
+                if row.get("external_id") and str(row["external_id"]).strip() in filtered_external_ids
+            ]
+        else:
+            foto_items = []
+
+        logger.info(
+            "Applied API filters to media_item_crops candidates: %d -> %d",
+            before_count,
+            len(foto_items),
+        )
 
     if not foto_items:
         import_log.status = ImportLog.Status.SUCCESS

@@ -481,6 +481,62 @@ def test_sync_crops_params_skip_missing_fields_and_apply_supported_ones(monkeypa
 
 
 @pytest.mark.django_db
+def test_sync_crops_params_are_forwarded_to_api_and_limit_item_fetches(monkeypatch):
+    from apps.media_library import models as media_models
+
+    class FakeQuerySet:
+        def filter(self, **_kwargs):
+            return self
+
+        def values(self, *_args, **_kwargs):
+            return [
+                {"pk": 1, "external_id": "/api/v1/media/items/1"},
+                {"pk": 2, "external_id": "/api/v1/media/items/2"},
+            ]
+
+    fake_qs = FakeQuerySet()
+    monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: fake_qs)
+
+    def fake_get_field(name):
+        if name == "updated_at":
+            return Mock()
+        raise FieldDoesNotExist(name)
+
+    monkeypatch.setattr(media_models.MediaItem._meta, "get_field", fake_get_field)
+    monkeypatch.setattr(viernulvier, "parse_datetime", Mock(return_value=None))
+    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+
+    captured = {}
+
+    def fake_fetch_viernulvier(endpoint, params=None, etag_cache=None):
+        captured["endpoint"] = endpoint
+        captured["params"] = params
+        return [{"@id": "/api/v1/media/items/1"}]
+
+    monkeypatch.setattr(viernulvier, "fetch_viernulvier", fake_fetch_viernulvier)
+
+    fetched_urls = []
+
+    def fake_fetch_with_retry(session, url, params=None, etag=None):
+        fetched_urls.append(url)
+        return ({"crops": []}, None)
+
+    monkeypatch.setattr(viernulvier, "_fetch_with_retry", fake_fetch_with_retry)
+
+    result = sync_media_item_crops(
+        params={
+            "created_at[after]": "2024-01-01T00:00:00+00:00",
+            "updated_at[after]": "2024-01-01T00:00:00+00:00",
+        }
+    )
+
+    assert result == 0
+    assert captured["endpoint"] == "/media/items"
+    assert captured["params"] == {"updated_at[after]": "2024-01-01T00:00:00+00:00"}
+    assert fetched_urls == ["https://www.viernulvier.gent/api/v1/media/items/1"]
+
+
+@pytest.mark.django_db
 def test_sync_crops_params_skip_filter_when_fake_parse_datetime_raises_valueerror(monkeypatch):
     from apps.media_library import models as media_models
 

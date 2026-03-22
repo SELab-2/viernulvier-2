@@ -218,7 +218,7 @@ SPECTACULAR_SETTINGS = {
         Access is determined by your API key:
         * **Public API key**: Read-only.
         * **Internal API key**: Full rights (CRUD).
-                                   
+
         ### Alternative Views
         * [**ReDoc**](/api/redoc/) - Documentation-focused interface.
     """).strip(),
