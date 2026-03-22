@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import importlib
 
-
-migration_module = importlib.import_module(
-    "apps.media_library.migrations.0002_mediagalleryitem_mediagallery_items_and_more"
-)
+migration_module = importlib.import_module("apps.media_library.migrations.0002_mediagalleryitem_mediagallery_items_and_more")
 
 
 class FakeMediaItem:
@@ -86,10 +83,7 @@ class FakeApps:
 
 
 def test_backfill_gallery_item_links_flushes_at_batch_size_threshold():
-    items = [
-        FakeMediaItem(item_id=i, gallery_id=10, position=2)
-        for i in range(1, 1001)
-    ]
+    items = [FakeMediaItem(item_id=i, gallery_id=10, position=2) for i in range(1, 1001)]
     media_item_model = FakeMediaItemModel(items)
     media_gallery_item_model = FakeMediaGalleryItemModel()
 
@@ -144,5 +138,3 @@ def test_noop_reverse_returns_none_and_does_nothing():
     result = migration_module.noop_reverse(apps=object(), schema_editor=object())
 
     assert result is None
-
-
