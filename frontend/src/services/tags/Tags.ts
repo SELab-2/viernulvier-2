@@ -67,9 +67,7 @@ export const getTag = async (id: number): Promise<Tag> => {
  *
  * @throws {ApiError} When the request fails.
  */
-export const getTags = async (
-  options?: GetTagsOptions,
-): Promise<TagListResponse> => {
+export const getTags = async (options?: GetTagsOptions): Promise<TagListResponse> => {
   const res = await api.get<TagListResponse>('/tags/', {
     params: buildListParams(options),
   })
