@@ -1,4 +1,5 @@
 import type { Genre } from './Genres'
+import type { Event } from './Events'
 
 /** Valid attendance mode values. */
 export type AttendanceMode = 'offline' | 'online'
@@ -51,6 +52,7 @@ export interface Production {
   description: Record<string, string>
   tags: ProductionTag[]
   genres: Genre[]
+  events?: Event[]
 }
 
 /**
