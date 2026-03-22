@@ -1610,9 +1610,7 @@ def sync_media_item_crops(
             raise
 
         existing_pk_by_external_id = {
-            str(row["external_id"]).strip(): row["pk"]
-            for row in foto_items
-            if row.get("external_id")
+            str(row["external_id"]).strip(): row["pk"] for row in foto_items if row.get("external_id")
         }
         api_candidates: List[Dict[str, Any]] = []
         for api_item in api_items:
