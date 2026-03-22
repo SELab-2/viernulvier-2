@@ -408,6 +408,13 @@ class TestMethodNotAllowed:
     def test_returns_405(self):
         assert call_handler(MethodNotAllowed("DELETE")).status_code == 405
 
+    def test_no_detail_str(self):
+        ctx = make_context(method="PATCH")
+        exc = MethodNotAllowed("PATCH")
+        exc.detail = "custom string"
+        response = custom_exception_handler(exc, ctx)
+        assert response.data["detail"] == 'Method "PATCH" not allowed.'
+
     def test_rfc7807_structure(self):
         assert_rfc7807(call_handler(MethodNotAllowed("PATCH")).data, 405)
 
