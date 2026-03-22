@@ -455,8 +455,6 @@ def test_sync_crops_params_skip_missing_fields_and_apply_supported_ones(monkeypa
     monkeypatch.setattr(media_models.MediaItem._meta, "get_field", fake_get_field)
 
     def fake_parse_datetime(value):
-        if value == "raise-value":
-            raise ValueError("bad datetime")
         if value == "raise-type":
             raise TypeError("bad type")
         return datetime(2024, 1, 1, tzinfo=timezone.utc)
@@ -490,10 +488,6 @@ def test_sync_crops_params_skip_filter_when_fake_parse_datetime_raises_valueerro
         def __init__(self):
             self.filter_calls = []
 
-        def filter(self, **kwargs):
-            self.filter_calls.append(kwargs)
-            return self
-
         def values(self, *_args, **_kwargs):
             return []
 
@@ -504,7 +498,6 @@ def test_sync_crops_params_skip_filter_when_fake_parse_datetime_raises_valueerro
     def fake_parse_datetime(value):
         if value == "raise-value":
             raise ValueError("bad datetime")
-        return datetime(2024, 1, 1, tzinfo=timezone.utc)
 
     monkeypatch.setattr(viernulvier, "parse_datetime", fake_parse_datetime)
 
@@ -522,8 +515,9 @@ def test_sync_crops_params_skip_filter_when_fake_get_field_raises_fielddoesnotex
         def __init__(self):
             self.filter_calls = []
 
-        def values(self, *_args, **_kwargs):
-            return []
+        def filter(self, **kwargs):
+            self.filter_calls.append(kwargs)
+            return self
 
     fake_qs = FakeQuerySet()
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: fake_qs)
@@ -617,10 +611,8 @@ def test_sync_crops_params_skips_filter_when_datetime_raises_valueerror(monkeypa
     fake_qs = FakeQuerySet()
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: fake_qs)
 
-    def fake_get_field(name):
-        if name == "updated_at":
-            return Mock()
-        raise FieldDoesNotExist(name)
+    def fake_get_field(_name):
+        return Mock()
 
     monkeypatch.setattr(media_models.MediaItem._meta, "get_field", fake_get_field)
 
