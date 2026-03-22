@@ -483,6 +483,102 @@ def test_sync_crops_params_skip_missing_fields_and_apply_supported_ones(monkeypa
 
 
 @pytest.mark.django_db
+def test_sync_crops_params_ignores_non_matching_param_key(monkeypatch):
+    from apps.media_library import models as media_models
+
+    class FakeQuerySet:
+        def __init__(self):
+            self.filter_calls = []
+
+        def filter(self, **kwargs):
+            self.filter_calls.append(kwargs)
+            return self
+
+        def values(self, *_args, **_kwargs):
+            return []
+
+    fake_qs = FakeQuerySet()
+    monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: fake_qs)
+
+    meta_get_field = Mock(side_effect=AssertionError("get_field should not be called for invalid param keys"))
+    monkeypatch.setattr(media_models.MediaItem._meta, "get_field", meta_get_field)
+
+    parse_dt = Mock(side_effect=AssertionError("parse_datetime should not be called for invalid param keys"))
+    monkeypatch.setattr(viernulvier, "parse_datetime", parse_dt)
+
+    result = sync_media_item_crops(params={"invalid[param]": "2024-01-01T00:00:00+00:00"})
+
+    assert result == 0
+    assert fake_qs.filter_calls == []
+    meta_get_field.assert_not_called()
+    parse_dt.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_sync_crops_params_skips_filter_when_datetime_is_none(monkeypatch):
+    from apps.media_library import models as media_models
+
+    class FakeQuerySet:
+        def __init__(self):
+            self.filter_calls = []
+
+        def filter(self, **kwargs):
+            self.filter_calls.append(kwargs)
+            return self
+
+        def values(self, *_args, **_kwargs):
+            return []
+
+    fake_qs = FakeQuerySet()
+    monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: fake_qs)
+    monkeypatch.setattr(media_models.MediaItem._meta, "get_field", lambda name: Mock() if name == "updated_at" else None)
+
+    parse_dt = Mock(return_value=None)
+    monkeypatch.setattr(viernulvier, "parse_datetime", parse_dt)
+
+    result = sync_media_item_crops(params={"updated_at[after]": "not-a-datetime"})
+
+    assert result == 0
+    assert fake_qs.filter_calls == []
+    parse_dt.assert_called_once_with("not-a-datetime")
+
+
+@pytest.mark.django_db
+def test_sync_crops_params_skips_filter_when_datetime_raises_valueerror(monkeypatch):
+    from apps.media_library import models as media_models
+
+    class FakeQuerySet:
+        def __init__(self):
+            self.filter_calls = []
+
+        def filter(self, **kwargs):
+            self.filter_calls.append(kwargs)
+            return self
+
+        def values(self, *_args, **_kwargs):
+            return []
+
+    fake_qs = FakeQuerySet()
+    monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: fake_qs)
+
+    def fake_get_field(name):
+        if name == "updated_at":
+            return Mock()
+        raise FieldDoesNotExist(name)
+
+    monkeypatch.setattr(media_models.MediaItem._meta, "get_field", fake_get_field)
+
+    parse_dt = Mock(side_effect=ValueError("bad datetime"))
+    monkeypatch.setattr(viernulvier, "parse_datetime", parse_dt)
+
+    result = sync_media_item_crops(params={"updated_at[before]": "raise-value"})
+
+    assert result == 0
+    assert fake_qs.filter_calls == []
+    parse_dt.assert_called_once_with("raise-value")
+
+
+@pytest.mark.django_db
 def test_sync_crops_no_foto_items_creates_success_import_log(monkeypatch):
     """Empty foto list creates a SUCCESS ImportLog with all-zero counters."""
     from apps.import_log.models import ImportLog
