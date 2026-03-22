@@ -1558,29 +1558,35 @@ def sync_media_item_crops(
     foto_items_query = MediaItem.objects.filter(type=MediaItem.MediaItemType.IMAGE)
 
     if params:
-        # Parse timestamp params to filter MediaItems in the database
-        # Params like: "created_at[after]": "2024-01-01T00:00:00Z"
+        # Parse timestamp params to filter MediaItems in the database.
+        # Skip filters for fields that are not available on MediaItem.
         for param_key, param_value in params.items():
-            if "created_at" in param_key:
-                try:
-                    dt = parse_datetime(param_value)
-                    if dt:
-                        if "[after]" in param_key or "[strictly_after]" in param_key:
-                            foto_items_query = foto_items_query.filter(created_at__gte=dt)
-                        elif "[before]" in param_key or "[strictly_before]" in param_key:
-                            foto_items_query = foto_items_query.filter(created_at__lte=dt)
-                except (ValueError, TypeError):
-                    pass
-            elif "updated_at" in param_key:
-                try:
-                    dt = parse_datetime(param_value)
-                    if dt:
-                        if "[after]" in param_key or "[strictly_after]" in param_key:
-                            foto_items_query = foto_items_query.filter(updated_at__gte=dt)
-                        elif "[before]" in param_key or "[strictly_before]" in param_key:
-                            foto_items_query = foto_items_query.filter(updated_at__lte=dt)
-                except (ValueError, TypeError):
-                    pass
+            match = re.fullmatch(r"(created_at|updated_at)\[(after|before|strictly_after|strictly_before)\]", param_key)
+            if not match:
+                continue
+
+            field_name, bound = match.groups()
+
+            try:
+                MediaItem._meta.get_field(field_name)
+            except FieldDoesNotExist:
+                logger.debug(
+                    "Skipping unsupported local filter '%s' for media_item_crops (field '%s' not on MediaItem)",
+                    param_key,
+                    field_name,
+                )
+                continue
+
+            try:
+                dt = parse_datetime(param_value)
+            except (ValueError, TypeError):
+                continue
+
+            if not dt:
+                continue
+
+            lookup = "gte" if bound in {"after", "strictly_after"} else "lte"
+            foto_items_query = foto_items_query.filter(**{f"{field_name}__{lookup}": dt})
 
     foto_items = list(foto_items_query.values("pk", "external_id"))
 

@@ -18,6 +18,7 @@ from unittest.mock import Mock
 
 import pytest
 import requests
+from django.core.exceptions import FieldDoesNotExist
 
 from apps.imports.scrapers import viernulvier
 from apps.imports.scrapers.viernulvier import (
@@ -429,7 +430,7 @@ def test_sync_crops_no_foto_items_returns_zero(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_apply_created_updated_filters_and_ignore_parse_errors(monkeypatch):
+def test_sync_crops_params_skip_missing_fields_and_apply_supported_ones(monkeypatch):
     from apps.media_library import models as media_models
 
     class FakeQuerySet:
@@ -446,6 +447,13 @@ def test_sync_crops_params_apply_created_updated_filters_and_ignore_parse_errors
     fake_qs = FakeQuerySet()
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: fake_qs)
 
+    def fake_get_field(name):
+        if name == "updated_at":
+            return Mock()
+        raise FieldDoesNotExist(name)
+
+    monkeypatch.setattr(media_models.MediaItem._meta, "get_field", fake_get_field)
+
     def fake_parse_datetime(value):
         if value == "raise-value":
             raise ValueError("bad datetime")
@@ -459,20 +467,19 @@ def test_sync_crops_params_apply_created_updated_filters_and_ignore_parse_errors
         params={
             "created_at[after]": "ok",
             "created_at[before]": "ok",
-            "created_at[strictly_after]": "ok",
-            "created_at[strictly_before]": "raise-value",
             "updated_at[after]": "ok",
             "updated_at[before]": "ok",
             "updated_at[strictly_after]": "raise-type",
             "updated_at[strictly_before]": "ok",
+            "created_at[strictly_after]": "ok",
+            "created_at[strictly_before]": "raise-value",
         }
     )
 
     assert result == 0
-    assert {"created_at__gte": datetime(2024, 1, 1, tzinfo=timezone.utc)} in fake_qs.filter_calls
-    assert {"created_at__lte": datetime(2024, 1, 1, tzinfo=timezone.utc)} in fake_qs.filter_calls
     assert {"updated_at__gte": datetime(2024, 1, 1, tzinfo=timezone.utc)} in fake_qs.filter_calls
     assert {"updated_at__lte": datetime(2024, 1, 1, tzinfo=timezone.utc)} in fake_qs.filter_calls
+    assert all("created_at" not in next(iter(call)) for call in fake_qs.filter_calls)
 
 
 @pytest.mark.django_db
