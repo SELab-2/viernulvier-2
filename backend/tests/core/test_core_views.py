@@ -110,20 +110,20 @@ class TestApiModelViewSetList(TestCase):
         Language.objects.create(code="nl", name="Dutch", is_active=True)
 
     def test_list_internal_key_returns_200(self):
-        response = self.client.get("/api/languages/", **int_headers())
+        response = self.client.get("/api/v1/languages/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_public_key_returns_200(self):
-        response = self.client.get("/api/languages/", **pub_headers())
+        response = self.client.get("/api/v1/languages/", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_wrong_key_returns_401(self):
-        response = self.client.get("/api/languages/", **wrong_headers())
+        response = self.client.get("/api/v1/languages/", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     def test_list_no_auth_returns_401(self):
         """No header -> authentication returns None -> DRF sends 401."""
-        response = self.client.get("/api/languages/")
+        response = self.client.get("/api/v1/languages/")
         self.assertEqual(response.status_code, 401)
 
 
@@ -142,27 +142,27 @@ class TestApiModelViewSetRetrieve(TestCase):
         Language.objects.create(code="nl", name="Dutch", is_active=True)
 
     def test_retrieve_internal_key_returns_200(self):
-        response = self.client.get("/api/languages/nl/", **int_headers())
+        response = self.client.get("/api/v1/languages/nl/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_public_key_returns_200(self):
-        response = self.client.get("/api/languages/nl/", **pub_headers())
+        response = self.client.get("/api/v1/languages/nl/", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_wrong_key_returns_401(self):
-        response = self.client.get("/api/languages/nl/", **wrong_headers())
+        response = self.client.get("/api/v1/languages/nl/", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     def test_retrieve_no_auth_returns_401(self):
-        response = self.client.get("/api/languages/nl/")
+        response = self.client.get("/api/v1/languages/nl/")
         self.assertEqual(response.status_code, 401)
 
     def test_retrieve_nonexistent_with_internal_key_returns_404(self):
-        response = self.client.get("/api/languages/xx/", **int_headers())
+        response = self.client.get("/api/v1/languages/xx/", **int_headers())
         self.assertEqual(response.status_code, 404)
 
     def test_retrieve_nonexistent_with_public_key_returns_404(self):
-        response = self.client.get("/api/languages/xx/", **pub_headers())
+        response = self.client.get("/api/v1/languages/xx/", **pub_headers())
         self.assertEqual(response.status_code, 404)
 
 
@@ -183,19 +183,19 @@ class TestApiModelViewSetCreate(TestCase):
         return {"code": "de", "name": "German", "is_active": True}
 
     def test_create_internal_key_returns_201(self):
-        response = self.client.post("/api/languages/", self._payload(), format="json", **int_headers())
+        response = self.client.post("/api/v1/languages/", self._payload(), format="json", **int_headers())
         self.assertEqual(response.status_code, 201)
 
     def test_create_public_key_returns_403(self):
-        response = self.client.post("/api/languages/", self._payload(), format="json", **pub_headers())
+        response = self.client.post("/api/v1/languages/", self._payload(), format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_create_wrong_key_returns_401(self):
-        response = self.client.post("/api/languages/", self._payload(), format="json", **wrong_headers())
+        response = self.client.post("/api/v1/languages/", self._payload(), format="json", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     def test_create_no_auth_returns_401(self):
-        response = self.client.post("/api/languages/", self._payload(), format="json")
+        response = self.client.post("/api/v1/languages/", self._payload(), format="json")
         self.assertEqual(response.status_code, 401)
 
 
@@ -217,24 +217,24 @@ class TestApiModelViewSetUpdate(TestCase):
         return {"code": "nl", "name": "Nederlands", "is_active": False}
 
     def test_put_internal_key_returns_200(self):
-        response = self.client.put("/api/languages/nl/", self._payload(), format="json", **int_headers())
+        response = self.client.put("/api/v1/languages/nl/", self._payload(), format="json", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_put_public_key_returns_403(self):
-        response = self.client.put("/api/languages/nl/", self._payload(), format="json", **pub_headers())
+        response = self.client.put("/api/v1/languages/nl/", self._payload(), format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_put_wrong_key_returns_401(self):
-        response = self.client.put("/api/languages/nl/", self._payload(), format="json", **wrong_headers())
+        response = self.client.put("/api/v1/languages/nl/", self._payload(), format="json", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     def test_put_no_auth_returns_401(self):
-        response = self.client.put("/api/languages/nl/", self._payload(), format="json")
+        response = self.client.put("/api/v1/languages/nl/", self._payload(), format="json")
         self.assertEqual(response.status_code, 401)
 
     def test_put_nonexistent_returns_404(self):
         response = self.client.put(
-            "/api/languages/xx/",
+            "/api/v1/languages/xx/",
             {"code": "xx", "name": "X", "is_active": True},
             format="json",
             **int_headers(),
@@ -257,19 +257,19 @@ class TestApiModelViewSetPartialUpdate(TestCase):
         Language.objects.create(code="nl", name="Dutch", is_active=True)
 
     def test_patch_internal_key_returns_200(self):
-        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json", **int_headers())
+        response = self.client.patch("/api/v1/languages/nl/", {"is_active": False}, format="json", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_patch_public_key_returns_403(self):
-        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json", **pub_headers())
+        response = self.client.patch("/api/v1/languages/nl/", {"is_active": False}, format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_patch_wrong_key_returns_401(self):
-        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json", **wrong_headers())
+        response = self.client.patch("/api/v1/languages/nl/", {"is_active": False}, format="json", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     def test_patch_no_auth_returns_401(self):
-        response = self.client.patch("/api/languages/nl/", {"is_active": False}, format="json")
+        response = self.client.patch("/api/v1/languages/nl/", {"is_active": False}, format="json")
         self.assertEqual(response.status_code, 401)
 
 
@@ -288,21 +288,21 @@ class TestApiModelViewSetDelete(TestCase):
         Language.objects.create(code="nl", name="Dutch", is_active=True)
 
     def test_delete_internal_key_returns_204(self):
-        response = self.client.delete("/api/languages/nl/", **int_headers())
+        response = self.client.delete("/api/v1/languages/nl/", **int_headers())
         self.assertEqual(response.status_code, 204)
 
     def test_delete_public_key_returns_403(self):
-        response = self.client.delete("/api/languages/nl/", **pub_headers())
+        response = self.client.delete("/api/v1/languages/nl/", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_delete_wrong_key_returns_401(self):
-        response = self.client.delete("/api/languages/nl/", **wrong_headers())
+        response = self.client.delete("/api/v1/languages/nl/", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     def test_delete_no_auth_returns_401(self):
-        response = self.client.delete("/api/languages/nl/")
+        response = self.client.delete("/api/v1/languages/nl/")
         self.assertEqual(response.status_code, 401)
 
     def test_delete_nonexistent_returns_404(self):
-        response = self.client.delete("/api/languages/xx/", **int_headers())
+        response = self.client.delete("/api/v1/languages/xx/", **int_headers())
         self.assertEqual(response.status_code, 404)
