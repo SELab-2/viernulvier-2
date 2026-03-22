@@ -8,7 +8,7 @@ import type { GetProductionsOptions } from './ProductionOptions'
  *
  * This sends a `GET /productions/:id/` request to the backend and returns the
  * response payload exactly as received.
- * 
+ *
  * @param id The unique ID of the production that should be fetched.
  * @param include Optional includes, e.g. `['events']` to include related events in the response.
  * @returns A promise that resolves to the production data returned by the API.
@@ -19,10 +19,7 @@ import type { GetProductionsOptions } from './ProductionOptions'
  *
  * @throws {ApiError} When the request fails.
  */
-export const getProduction = async (
-  id: number,
-  include?: string[],
-): Promise<Production> => {
+export const getProduction = async (id: number, include?: string[]): Promise<Production> => {
   const params: Record<string, string> = {}
 
   if (include) {

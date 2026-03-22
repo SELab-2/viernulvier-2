@@ -89,7 +89,7 @@ describe('productions service', () => {
 
       const result = await getProduction(42)
 
-      expect(mockedGet).toHaveBeenCalledWith('/productions/42/', { params: {}})
+      expect(mockedGet).toHaveBeenCalledWith('/productions/42/', { params: {} })
       expect(result).toEqual(mockProduction)
     })
 
@@ -120,7 +120,7 @@ describe('productions service', () => {
 
       const result = await getProduction(42, ['events'])
 
-      expect(mockedGet).toHaveBeenCalledWith('/productions/42/', { params: {include: 'events'} })
+      expect(mockedGet).toHaveBeenCalledWith('/productions/42/', { params: { include: 'events' } })
       expect(result).toEqual(productionWithEvents)
     })
   })
