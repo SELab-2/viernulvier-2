@@ -460,6 +460,7 @@ def test_sync_crops_params_skip_missing_fields_and_apply_supported_ones(monkeypa
         return datetime(2024, 1, 1, tzinfo=timezone.utc)
 
     monkeypatch.setattr(viernulvier, "parse_datetime", fake_parse_datetime)
+    monkeypatch.setattr(viernulvier, "fetch_viernulvier", lambda **_kw: [])
 
     result = sync_media_item_crops(
         params={
@@ -532,8 +533,62 @@ def test_sync_crops_params_are_forwarded_to_api_and_limit_item_fetches(monkeypat
 
     assert result == 0
     assert captured["endpoint"] == "/media/items"
-    assert captured["params"] == {"updated_at[after]": "2024-01-01T00:00:00+00:00"}
+    assert captured["params"] == {
+        "created_at[after]": "2024-01-01T00:00:00+00:00",
+        "updated_at[after]": "2024-01-01T00:00:00+00:00",
+    }
     assert fetched_urls == ["https://www.viernulvier.gent/api/v1/media/items/1"]
+
+
+@pytest.mark.django_db
+def test_sync_crops_params_upserts_missing_media_item_dependency(monkeypatch):
+    from apps.media_library import models as media_models
+
+    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(
+        viernulvier,
+        "fetch_viernulvier",
+        lambda **_kw: [{"@id": "/api/v1/media/items/42", "type": "foto"}],
+    )
+    monkeypatch.setattr(
+        viernulvier,
+        "_fetch_with_retry",
+        lambda *_a, **_kw: (
+            {
+                "type": "foto",
+                "original_filename": "missing.jpg",
+                "position": 0,
+                "format": "jpg",
+                "crops": [{"name": "hd_ready", "url": "https://cdn.example.com/img.jpg"}],
+            },
+            None,
+        ),
+    )
+    monkeypatch.setattr(viernulvier, "_download_image", lambda *_a: b"img")
+
+    media_upsert = Mock(return_value=(Mock(pk=4242), True))
+    monkeypatch.setattr(media_models.MediaItem.objects, "update_or_create", media_upsert)
+
+    mock_crop_cls = Mock()
+    mock_crop_cls.SYNCED_CROP_NAMES = {"hd_ready"}
+    mock_image_field = Mock()
+    mock_image_field.generate_filename.return_value = "crops/img.jpg"
+    mock_image_field.storage = Mock()
+    mock_image_field.storage.save.return_value = "crops/img.jpg"
+    mock_crop_cls._meta = Mock()
+    mock_crop_cls._meta.get_field.return_value = mock_image_field
+    mock_crop_cls.objects.update_or_create.return_value = (Mock(), True)
+    monkeypatch.setattr(media_models, "MediaItemCrop", mock_crop_cls)
+
+    result = sync_media_item_crops(params={"updated_at[after]": "2024-01-01T00:00:00+00:00"})
+
+    assert result == 1
+    media_upsert.assert_called_once()
+    mock_crop_cls.objects.update_or_create.assert_called_once_with(
+        media_item_id=4242,
+        name="hd_ready",
+        defaults={"image": "crops/img.jpg"},
+    )
 
 
 @pytest.mark.django_db
@@ -556,6 +611,7 @@ def test_sync_crops_params_skip_filter_when_fake_parse_datetime_raises_valueerro
             raise ValueError("bad datetime")
 
     monkeypatch.setattr(viernulvier, "parse_datetime", fake_parse_datetime)
+    monkeypatch.setattr(viernulvier, "fetch_viernulvier", lambda **_kw: [])
 
     result = sync_media_item_crops(params={"updated_at[strictly_before]": "raise-value"})
 
@@ -590,6 +646,7 @@ def test_sync_crops_params_skip_filter_when_fake_get_field_raises_fielddoesnotex
 
     parse_dt = Mock(return_value=datetime(2024, 1, 1, tzinfo=timezone.utc))
     monkeypatch.setattr(viernulvier, "parse_datetime", parse_dt)
+    monkeypatch.setattr(viernulvier, "fetch_viernulvier", lambda **_kw: [])
 
     result = sync_media_item_crops(
         params={
@@ -648,6 +705,7 @@ def test_sync_crops_params_skips_filter_when_datetime_is_none(monkeypatch):
 
     parse_dt = Mock(return_value=None)
     monkeypatch.setattr(viernulvier, "parse_datetime", parse_dt)
+    monkeypatch.setattr(viernulvier, "fetch_viernulvier", lambda **_kw: [])
 
     result = sync_media_item_crops(params={"updated_at[after]": "not-a-datetime"})
 
@@ -677,6 +735,7 @@ def test_sync_crops_params_skips_filter_when_datetime_raises_valueerror(monkeypa
 
     parse_dt = Mock(side_effect=ValueError("bad datetime"))
     monkeypatch.setattr(viernulvier, "parse_datetime", parse_dt)
+    monkeypatch.setattr(viernulvier, "fetch_viernulvier", lambda **_kw: [])
 
     result = sync_media_item_crops(params={"updated_at[before]": "raise-value"})
 

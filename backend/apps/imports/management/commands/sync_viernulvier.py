@@ -384,7 +384,9 @@ EVENT_PRICE_CONFIG = ModelSyncConfig(
 
 # ---------------------------------------------------------------------------
 # Sync steps - order matters: leaf models (no FKs) must come first.
-# media_item_crops runs after media_items (depends on them existing in the DB).
+# media_item_crops depends on media_items via FK. In full runs this naturally
+# follows media_items; in crops-only filtered runs, missing media_items are
+# upserted on demand by crop-sync dependency handling.
 # ---------------------------------------------------------------------------
 
 SYNC_STEPS = [
