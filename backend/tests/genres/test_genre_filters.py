@@ -141,10 +141,10 @@ class TestGenreUseAsViewSet(TestCase):
         GenreUseAs.objects.all().delete()
 
     def list_url(self):
-        return reverse("genre-use-as-list")
+        return reverse("v1:genre-use-as-list")
 
     def detail_url(self, pk):
-        return reverse("genre-use-as-detail", kwargs={"pk": pk})
+        return reverse("v1:genre-use-as-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -203,10 +203,10 @@ class TestGenreViewSet(TestCase):
         Genre.objects.all().delete()
 
     def list_url(self):
-        return reverse("genre-list")
+        return reverse("v1:genre-list")
 
     def detail_url(self, pk):
-        return reverse("genre-detail", kwargs={"pk": pk})
+        return reverse("v1:genre-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())

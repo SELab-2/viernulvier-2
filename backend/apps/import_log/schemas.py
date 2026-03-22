@@ -1,29 +1,13 @@
 """
 OpenAPI schema decorators for the Imports app.
 
-Keeping all drf-spectacular annotations here means views.py stays focused
-on routing logic only. Each action is defined as a private variable and
-assembled into a single ``extend_schema_view`` decorator at the bottom of
-the file.
-
 The imports app exposes a read-only endpoint. Only ``list`` and ``retrieve``
 actions are available - write operations are not supported by design.
-
-Import logs are created and updated exclusively by the internal import
-pipeline and are exposed here purely for monitoring purposes.
 """
 
-from drf_spectacular.utils import (
-    OpenApiExample,
-    extend_schema,
-    extend_schema_view,
-)
+from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 
-from apps.core.openapi import (
-    RESPONSE_401,
-    RESPONSE_403,
-    RESPONSE_404,
-)
+from apps.core.openapi import ITEM_ERRORS, READ_ERRORS
 
 from .serializers import ImportLogSerializer
 
@@ -120,11 +104,7 @@ _IMPORT_LOG_LIST = extend_schema(
         "> **Read-only.** Import logs are managed exclusively by the import "
         "pipeline and cannot be created or modified via this endpoint."
     ),
-    responses={
-        200: ImportLogSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={200: ImportLogSerializer, **READ_ERRORS},
     examples=[
         _IMPORT_LOG_SUCCESS_RESPONSE,
         _IMPORT_LOG_PARTIAL_RESPONSE,
@@ -143,16 +123,8 @@ _IMPORT_LOG_RETRIEVE = extend_schema(
         "> **Read-only.** Import logs are managed exclusively by the import "
         "pipeline and cannot be modified via this endpoint."
     ),
-    responses={
-        200: ImportLogSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
-    examples=[
-        _IMPORT_LOG_SUCCESS_RESPONSE,
-        _IMPORT_LOG_FAILED_RESPONSE,
-    ],
+    responses={200: ImportLogSerializer, **ITEM_ERRORS},
+    examples=[_IMPORT_LOG_SUCCESS_RESPONSE, _IMPORT_LOG_FAILED_RESPONSE],
 )
 
 

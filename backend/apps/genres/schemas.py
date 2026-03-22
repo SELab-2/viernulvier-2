@@ -1,23 +1,16 @@
 """
 OpenAPI schema decorators for the Genre app.
-
-Keeping all drf-spectacular annotations here means views.py stays focused
-on routing logic only. Each action is defined as a private variable and
-assembled into two `extend_schema_view` decorators at the bottom of the file.
 """
 
-from drf_spectacular.utils import (
-    OpenApiExample,
-    extend_schema,
-    extend_schema_view,
-)
+from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 
 from apps.core.openapi import (
+    DELETE_ERRORS,
+    ITEM_ERRORS,
+    MUTATE_ERRORS,
+    READ_ERRORS,
     RESPONSE_204_DELETED,
-    RESPONSE_400,
-    RESPONSE_401,
-    RESPONSE_403,
-    RESPONSE_404,
+    WRITE_ERRORS,
 )
 
 from .serializers import GenreSerializer, GenreUseAsSerializer
@@ -60,23 +53,14 @@ _USE_AS_LIST = extend_schema(
         "for example as a production classification (`genre`) or as a "
         "lightweight label (`tag`)."
     ),
-    responses={
-        200: GenreUseAsSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={200: GenreUseAsSerializer, **READ_ERRORS},
     examples=[_USE_AS_RESPONSE],
 )
 
 _USE_AS_RETRIEVE = extend_schema(
     summary="Retrieve a genre usage context",
-    description=("Returns the full representation of a single **GenreUseAs** object identified by its primary key."),
-    responses={
-        200: GenreUseAsSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    description="Returns the full representation of a single **GenreUseAs** object identified by its primary key.",
+    responses={200: GenreUseAsSerializer, **ITEM_ERRORS},
     examples=[_USE_AS_RESPONSE],
 )
 
@@ -89,12 +73,7 @@ _USE_AS_CREATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=GenreUseAsSerializer,
-    responses={
-        201: GenreUseAsSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={201: GenreUseAsSerializer, **WRITE_ERRORS},
     examples=[_USE_AS_INPUT, _USE_AS_RESPONSE],
 )
 
@@ -106,13 +85,7 @@ _USE_AS_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=GenreUseAsSerializer,
-    responses={
-        200: GenreUseAsSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: GenreUseAsSerializer, **MUTATE_ERRORS},
     examples=[_USE_AS_INPUT, _USE_AS_RESPONSE],
 )
 
@@ -124,13 +97,7 @@ _USE_AS_PARTIAL_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=GenreUseAsSerializer,
-    responses={
-        200: GenreUseAsSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: GenreUseAsSerializer, **MUTATE_ERRORS},
     examples=[_USE_AS_PARTIAL_INPUT, _USE_AS_RESPONSE],
 )
 
@@ -142,12 +109,7 @@ _USE_AS_DESTROY = extend_schema(
         "that reference it. This action is irreversible.\n\n"
         "> **Requires an internal API key.**"
     ),
-    responses={
-        204: RESPONSE_204_DELETED,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={204: RESPONSE_204_DELETED, **DELETE_ERRORS},
 )
 
 
@@ -192,12 +154,8 @@ _GENRE_PARTIAL_INPUT = OpenApiExample(
 
 _GENRE_LIST = extend_schema(
     summary="List all genres",
-    description=("Returns a paginated list of all **Genre** objects.\n\n"),
-    responses={
-        200: GenreSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    description="Returns a paginated list of all **Genre** objects.",
+    responses={200: GenreSerializer, **READ_ERRORS},
     examples=[_GENRE_RESPONSE_MULTILINGUAL],
 )
 
@@ -206,14 +164,9 @@ _GENRE_RETRIEVE = extend_schema(
     description=(
         "Returns the full representation of a single **Genre** identified "
         "by its primary key, including its technical type, usage context, "
-        "and localised display name.\n\n"
+        "and localised display name."
     ),
-    responses={
-        200: GenreSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: GenreSerializer, **ITEM_ERRORS},
     examples=[_GENRE_RESPONSE_MULTILINGUAL],
 )
 
@@ -222,18 +175,13 @@ _GENRE_CREATE = extend_schema(
     description=(
         "Creates a new **Genre** in the archive.\n\n"
         "- The `type` field is an internal technical identifier and must "
-        "  use `snake_case` (e.g. `contemporary_dance`, `festival`).\n"
+        "use `snake_case` (e.g. `contemporary_dance`, `festival`).\n"
         "- Localised display names must be added via the **Genre Translation** "
-        "  endpoints after the genre has been created.\n\n"
+        "endpoints after the genre has been created.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=GenreSerializer,
-    responses={
-        201: GenreSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={201: GenreSerializer, **WRITE_ERRORS},
     examples=[_GENRE_INPUT, _GENRE_RESPONSE_MULTILINGUAL],
 )
 
@@ -243,13 +191,7 @@ _GENRE_UPDATE = extend_schema(
         "Fully replaces an existing **Genre**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
     ),
     request=GenreSerializer,
-    responses={
-        200: GenreSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: GenreSerializer, **MUTATE_ERRORS},
     examples=[_GENRE_INPUT, _GENRE_RESPONSE_MULTILINGUAL],
 )
 
@@ -261,13 +203,7 @@ _GENRE_PARTIAL_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=GenreSerializer,
-    responses={
-        200: GenreSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: GenreSerializer, **MUTATE_ERRORS},
     examples=[_GENRE_PARTIAL_INPUT, _GENRE_RESPONSE_MULTILINGUAL],
 )
 
@@ -279,12 +215,7 @@ _GENRE_DESTROY = extend_schema(
         "and linked productions may be affected. This action is irreversible.\n\n"
         "> **Requires an internal API key.**"
     ),
-    responses={
-        204: RESPONSE_204_DELETED,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={204: RESPONSE_204_DELETED, **DELETE_ERRORS},
 )
 
 
