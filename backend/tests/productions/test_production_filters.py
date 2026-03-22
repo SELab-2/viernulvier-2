@@ -190,10 +190,10 @@ class TestProductionViewSet(TestCase):
         Production.objects.all().delete()
 
     def list_url(self):
-        return reverse("production-list")
+        return reverse("v1:production-list")
 
     def detail_url(self, pk):
-        return reverse("production-detail", kwargs={"pk": pk})
+        return reverse("v1:production-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())

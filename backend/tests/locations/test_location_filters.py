@@ -217,10 +217,10 @@ class TestLocationViewSet(TestCase):
         Location.objects.all().delete()
 
     def list_url(self):
-        return reverse("location-list")
+        return reverse("v1:location-list")
 
     def detail_url(self, pk):
-        return reverse("location-detail", kwargs={"pk": pk})
+        return reverse("v1:location-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -292,10 +292,10 @@ class TestSpaceViewSet(TestCase):
         Space.objects.all().delete()
 
     def list_url(self):
-        return reverse("space-list")
+        return reverse("v1:space-list")
 
     def detail_url(self, pk):
-        return reverse("space-detail", kwargs={"pk": pk})
+        return reverse("v1:space-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -341,7 +341,7 @@ class TestHallViewSet(TestCase):
         Hall.objects.all().delete()
 
     def list_url(self):
-        return reverse("hall-list")
+        return reverse("v1:hall-list")
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())

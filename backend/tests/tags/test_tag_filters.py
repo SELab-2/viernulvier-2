@@ -157,10 +157,10 @@ class TestTagViewSet(TestCase):
         Tag.objects.all().delete()
 
     def list_url(self):
-        return reverse("tag-list")
+        return reverse("v1:tag-list")
 
     def detail_url(self, pk):
-        return reverse("tag-detail", kwargs={"pk": pk})
+        return reverse("v1:tag-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
