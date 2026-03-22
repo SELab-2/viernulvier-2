@@ -18,3 +18,13 @@ export interface Tag {
   short_description: Record<string, string> | null
   url_title: Record<string, string> | null
 }
+
+/**
+ * Paginated list response for tags.
+ */
+export interface TagListResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: Tag[]
+}
