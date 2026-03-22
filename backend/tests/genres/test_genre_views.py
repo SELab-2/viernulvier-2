@@ -96,7 +96,7 @@ class TestGenreViewSetPrefetch(TestCase):
 
     def test_list_prefetches_translations_bounded_queries(self):
         with CaptureQueriesContext(connection) as ctx:
-            response = self.client.get("/api/genres/?ordering=id", **pub_headers())
+            response = self.client.get("/api/v1/genres/?ordering=id", **pub_headers())
 
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(results_list(response)), 5)
@@ -119,35 +119,35 @@ class TestGenreUseAsViewSet(TestCase):
 
     # list
     def test_list_public_key(self):
-        response = self.client.get("/api/genre-use-as/?ordering=id", **pub_headers())
+        response = self.client.get("/api/v1/genre-use-as/?ordering=id", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_internal_key(self):
-        response = self.client.get("/api/genre-use-as/?ordering=id", **int_headers())
+        response = self.client.get("/api/v1/genre-use-as/?ordering=id", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_without_auth(self):
-        response = self.client.get("/api/genre-use-as/")
+        response = self.client.get("/api/v1/genre-use-as/")
         self.assertEqual(response.status_code, 401)
 
     # retrieve
     def test_retrieve_public_key(self):
-        response = self.client.get(f"/api/genre-use-as/{self.use_as.id}/", **pub_headers())
+        response = self.client.get(f"/api/v1/genre-use-as/{self.use_as.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["name"], "genre")
 
     def test_retrieve_internal_key(self):
-        response = self.client.get(f"/api/genre-use-as/{self.use_as.id}/", **int_headers())
+        response = self.client.get(f"/api/v1/genre-use-as/{self.use_as.id}/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_wrong_key(self):
-        response = self.client.get(f"/api/genre-use-as/{self.use_as.id}/", **wrong_headers())
+        response = self.client.get(f"/api/v1/genre-use-as/{self.use_as.id}/", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     # create
     def test_create_internal_key(self):
         response = self.client.post(
-            "/api/genre-use-as/",
+            "/api/v1/genre-use-as/",
             {"name": "tag"},
             format="json",
             **int_headers(),
@@ -157,7 +157,7 @@ class TestGenreUseAsViewSet(TestCase):
 
     def test_create_public_key_denied(self):
         response = self.client.post(
-            "/api/genre-use-as/",
+            "/api/v1/genre-use-as/",
             {"name": "tag"},
             format="json",
             **pub_headers(),
@@ -166,7 +166,7 @@ class TestGenreUseAsViewSet(TestCase):
 
     def test_create_without_auth_denied(self):
         response = self.client.post(
-            "/api/genre-use-as/",
+            "/api/v1/genre-use-as/",
             {"name": "tag"},
             format="json",
         )
@@ -175,7 +175,7 @@ class TestGenreUseAsViewSet(TestCase):
     # update
     def test_put_internal_key(self):
         response = self.client.put(
-            f"/api/genre-use-as/{self.use_as.id}/",
+            f"/api/v1/genre-use-as/{self.use_as.id}/",
             {"name": "genre-updated"},
             format="json",
             **int_headers(),
@@ -186,7 +186,7 @@ class TestGenreUseAsViewSet(TestCase):
 
     def test_patch_internal_key(self):
         response = self.client.patch(
-            f"/api/genre-use-as/{self.use_as.id}/",
+            f"/api/v1/genre-use-as/{self.use_as.id}/",
             {"name": "genre-patched"},
             format="json",
             **int_headers(),
@@ -197,7 +197,7 @@ class TestGenreUseAsViewSet(TestCase):
 
     def test_put_public_key_denied(self):
         response = self.client.put(
-            f"/api/genre-use-as/{self.use_as.id}/",
+            f"/api/v1/genre-use-as/{self.use_as.id}/",
             {"name": "genre-updated"},
             format="json",
             **pub_headers(),
@@ -205,12 +205,12 @@ class TestGenreUseAsViewSet(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_delete_internal_key(self):
-        response = self.client.delete(f"/api/genre-use-as/{self.use_as.id}/", **int_headers())
+        response = self.client.delete(f"/api/v1/genre-use-as/{self.use_as.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
         self.assertFalse(GenreUseAs.objects.filter(id=self.use_as.id).exists())
 
     def test_delete_public_key_denied(self):
-        response = self.client.delete(f"/api/genre-use-as/{self.use_as.id}/", **pub_headers())
+        response = self.client.delete(f"/api/v1/genre-use-as/{self.use_as.id}/", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
 
@@ -232,15 +232,15 @@ class TestGenreViewSet(TestCase):
 
     # list
     def test_list_public_key(self):
-        response = self.client.get("/api/genres/?ordering=id", **pub_headers())
+        response = self.client.get("/api/v1/genres/?ordering=id", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_internal_key(self):
-        response = self.client.get("/api/genres/?ordering=id", **int_headers())
+        response = self.client.get("/api/v1/genres/?ordering=id", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_response_fields(self):
-        response = self.client.get("/api/genres/?ordering=id", **pub_headers())
+        response = self.client.get("/api/v1/genres/?ordering=id", **pub_headers())
         results = response.data.get("results", response.data)
         item = results[0]
         self.assertIn("id", item)
@@ -248,27 +248,27 @@ class TestGenreViewSet(TestCase):
         self.assertIn("use_as", item)
 
     def test_list_without_auth(self):
-        response = self.client.get("/api/genres/")
+        response = self.client.get("/api/v1/genres/")
         self.assertEqual(response.status_code, 401)
 
     # retrieve
     def test_retrieve_public_key(self):
-        response = self.client.get(f"/api/genres/{self.genre.id}/", **pub_headers())
+        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["type"], "Theater")
 
     def test_retrieve_internal_key(self):
-        response = self.client.get(f"/api/genres/{self.genre.id}/", **int_headers())
+        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_with_wrong_key(self):
-        response = self.client.get(f"/api/genres/{self.genre.id}/", **wrong_headers())
+        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     # create
     def test_create_internal_key(self):
         response = self.client.post(
-            "/api/genres/",
+            "/api/v1/genres/",
             {"type": "Festival", "use_as_id": self.use_as.id},
             format="json",
             **int_headers(),
@@ -278,7 +278,7 @@ class TestGenreViewSet(TestCase):
 
     def test_create_public_key_denied(self):
         response = self.client.post(
-            "/api/genres/",
+            "/api/v1/genres/",
             {"type": "Festival", "use_as_id": self.use_as.id},
             format="json",
             **pub_headers(),
@@ -287,7 +287,7 @@ class TestGenreViewSet(TestCase):
 
     def test_create_without_auth_denied(self):
         response = self.client.post(
-            "/api/genres/",
+            "/api/v1/genres/",
             {"type": "Festival", "use_as": self.use_as.id},
             format="json",
         )
@@ -296,7 +296,7 @@ class TestGenreViewSet(TestCase):
     # update
     def test_put_internal_key(self):
         response = self.client.put(
-            f"/api/genres/{self.genre.id}/",
+            f"/api/v1/genres/{self.genre.id}/",
             {"type": "Concert", "use_as_id": self.use_as.id},
             format="json",
             **int_headers(),
@@ -307,7 +307,7 @@ class TestGenreViewSet(TestCase):
 
     def test_patch_internal_key(self):
         response = self.client.patch(
-            f"/api/genres/{self.genre.id}/",
+            f"/api/v1/genres/{self.genre.id}/",
             {"type": "Opera"},
             format="json",
             **int_headers(),
@@ -318,7 +318,7 @@ class TestGenreViewSet(TestCase):
 
     def test_put_public_key_denied(self):
         response = self.client.put(
-            f"/api/genres/{self.genre.id}/",
+            f"/api/v1/genres/{self.genre.id}/",
             {"type": "Opera", "use_as": self.use_as.id},
             format="json",
             **pub_headers(),
@@ -327,7 +327,7 @@ class TestGenreViewSet(TestCase):
 
     def test_put_without_auth_denied(self):
         response = self.client.put(
-            f"/api/genres/{self.genre.id}/",
+            f"/api/v1/genres/{self.genre.id}/",
             {"type": "Opera", "use_as": self.use_as.id},
             format="json",
         )
@@ -335,14 +335,14 @@ class TestGenreViewSet(TestCase):
 
     # delete
     def test_delete_internal_key(self):
-        response = self.client.delete(f"/api/genres/{self.genre.id}/", **int_headers())
+        response = self.client.delete(f"/api/v1/genres/{self.genre.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
         self.assertFalse(Genre.objects.filter(id=self.genre.id).exists())
 
     def test_delete_public_key_denied(self):
-        response = self.client.delete(f"/api/genres/{self.genre.id}/", **pub_headers())
+        response = self.client.delete(f"/api/v1/genres/{self.genre.id}/", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_delete_without_auth_denied(self):
-        response = self.client.delete(f"/api/genres/{self.genre.id}/")
+        response = self.client.delete(f"/api/v1/genres/{self.genre.id}/")
         self.assertEqual(response.status_code, 401)

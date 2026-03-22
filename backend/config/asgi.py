@@ -1,16 +1,18 @@
 """
-ASGI config for config project.
+ASGI config for the viernulvier_archive project.
 
-It exposes the ASGI callable as a module-level variable named ``application``.
+Exposes the ASGI callable as ``application``. Used by ASGI servers such
+as Uvicorn or Daphne.
 
-For more information on this file, see
-https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
+The settings module defaults to ``config.settings.prod``. Override with
+the ``DJANGO_SETTINGS_MODULE`` environment variable when running locally
+or in tests.
 """
 
 import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.prod")
 
 application = get_asgi_application()

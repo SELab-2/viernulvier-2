@@ -1,23 +1,16 @@
 """
 OpenAPI schema decorators for the Locations app.
-
-Keeping all drf-spectacular annotations here means views.py stays focused
-on routing logic only. Each action is defined as a private variable and
-assembled into three `extend_schema_view` decorators at the bottom of the file.
 """
 
-from drf_spectacular.utils import (
-    OpenApiExample,
-    extend_schema,
-    extend_schema_view,
-)
+from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 
 from apps.core.openapi import (
+    DELETE_ERRORS,
+    ITEM_ERRORS,
+    MUTATE_ERRORS,
+    READ_ERRORS,
     RESPONSE_204_DELETED,
-    RESPONSE_400,
-    RESPONSE_401,
-    RESPONSE_403,
-    RESPONSE_404,
+    WRITE_ERRORS,
 )
 
 from .serializers import HallSerializer, LocationSerializer, SpaceSerializer
@@ -82,14 +75,9 @@ _LOCATION_LIST = extend_schema(
         "Returns a paginated list of all **Location** objects.\n\n"
         "Each location includes its full address, optional phone numbers, "
         "an ownership flag, and a `name` field containing all available "
-        'translations as a dictionary (e.g. {"en": "City Hall", '
-        '"fr": "Hôtel de Ville"}).'
+        'translations as a dictionary (e.g. {"en": "City Hall", "fr": "Hôtel de Ville"}).'
     ),
-    responses={
-        200: LocationSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={200: LocationSerializer, **READ_ERRORS},
     examples=[_LOCATION_RESPONSE],
 )
 
@@ -99,12 +87,7 @@ _LOCATION_RETRIEVE = extend_schema(
         "Returns the full representation of a single **Location** identified "
         "by its primary key, including address details and the localised name."
     ),
-    responses={
-        200: LocationSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: LocationSerializer, **ITEM_ERRORS},
     examples=[_LOCATION_RESPONSE],
 )
 
@@ -114,16 +97,11 @@ _LOCATION_CREATE = extend_schema(
         "Creates a new **Location**.\n\n"
         "- `street`, `number`, `postal_code`, `city`, and `country` are required.\n"
         "- Localised names must be added via the **Location Translation** "
-        "  endpoints after the location has been created.\n\n"
+        "endpoints after the location has been created.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=LocationSerializer,
-    responses={
-        201: LocationSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={201: LocationSerializer, **WRITE_ERRORS},
     examples=[_LOCATION_INPUT, _LOCATION_RESPONSE],
 )
 
@@ -135,13 +113,7 @@ _LOCATION_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=LocationSerializer,
-    responses={
-        200: LocationSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: LocationSerializer, **MUTATE_ERRORS},
     examples=[_LOCATION_INPUT, _LOCATION_RESPONSE],
 )
 
@@ -153,13 +125,7 @@ _LOCATION_PARTIAL_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=LocationSerializer,
-    responses={
-        200: LocationSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: LocationSerializer, **MUTATE_ERRORS},
     examples=[_LOCATION_PARTIAL_INPUT, _LOCATION_RESPONSE],
 )
 
@@ -171,12 +137,7 @@ _LOCATION_DESTROY = extend_schema(
         "deleted. This action is irreversible.\n\n"
         "> **Requires an internal API key.**"
     ),
-    responses={
-        204: RESPONSE_204_DELETED,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={204: RESPONSE_204_DELETED, **DELETE_ERRORS},
 )
 
 
@@ -206,22 +167,14 @@ _SPACE_RESPONSE = OpenApiExample(
             },
             "display_name": "Royal Theatre of the Mint",
         },
-        "name": {
-            "nl": "Grote Zaal",
-            "en": "Main Hall",
-            "fr": "Grande Salle",
-        },
+        "name": {"nl": "Grote Zaal", "en": "Main Hall", "fr": "Grande Salle"},
         "display_name": "Main Hall",
         "halls": [
             {
                 "id": 7,
                 "seat_selection": True,
                 "open_seating": False,
-                "name": {
-                    "nl": "Rode Zaal",
-                    "en": "Red Hall",
-                    "fr": "Salle Rouge",
-                },
+                "name": {"nl": "Rode Zaal", "en": "Red Hall", "fr": "Salle Rouge"},
                 "display_name": "Red Hall",
                 "remark": {
                     "nl": "Rolstoelplaatsen beschikbaar op rij A.",
@@ -260,11 +213,7 @@ _SPACE_LIST = extend_schema(
         "A space is a distinct physical area within a location (e.g. a building "
         "or wing). It groups one or more halls under a single location."
     ),
-    responses={
-        200: SpaceSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={200: SpaceSerializer, **READ_ERRORS},
     examples=[_SPACE_RESPONSE],
 )
 
@@ -274,12 +223,7 @@ _SPACE_RETRIEVE = extend_schema(
         "Returns the full representation of a single **Space** identified "
         "by its primary key, including its parent location and localised name."
     ),
-    responses={
-        200: SpaceSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: SpaceSerializer, **ITEM_ERRORS},
     examples=[_SPACE_RESPONSE],
 )
 
@@ -289,16 +233,11 @@ _SPACE_CREATE = extend_schema(
         "Creates a new **Space** under an existing location.\n\n"
         "- `location_id` (FK) is the only required field.\n"
         "- Localised names must be added via the **Space Translation** "
-        "  endpoints after the space has been created.\n\n"
+        "endpoints after the space has been created.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=SpaceSerializer,
-    responses={
-        201: SpaceSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={201: SpaceSerializer, **WRITE_ERRORS},
     examples=[_SPACE_INPUT, _SPACE_RESPONSE],
 )
 
@@ -308,13 +247,7 @@ _SPACE_UPDATE = extend_schema(
         "Fully replaces an existing **Space**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
     ),
     request=SpaceSerializer,
-    responses={
-        200: SpaceSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: SpaceSerializer, **MUTATE_ERRORS},
     examples=[_SPACE_INPUT, _SPACE_RESPONSE],
 )
 
@@ -326,13 +259,7 @@ _SPACE_PARTIAL_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=SpaceSerializer,
-    responses={
-        200: SpaceSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: SpaceSerializer, **MUTATE_ERRORS},
     examples=[_SPACE_PARTIAL_INPUT, _SPACE_RESPONSE],
 )
 
@@ -344,12 +271,7 @@ _SPACE_DESTROY = extend_schema(
         "This action is irreversible.\n\n"
         "> **Requires an internal API key.**"
     ),
-    responses={
-        204: RESPONSE_204_DELETED,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={204: RESPONSE_204_DELETED, **DELETE_ERRORS},
 )
 
 
@@ -381,20 +303,12 @@ _HALL_RESPONSE = OpenApiExample(
                 },
                 "display_name": "Royal Theatre of the Mint",
             },
-            "name": {
-                "nl": "Grote Zaal",
-                "en": "Main Hall",
-                "fr": "Grande Salle",
-            },
+            "name": {"nl": "Grote Zaal", "en": "Main Hall", "fr": "Grande Salle"},
             "display_name": "Main Hall",
         },
         "seat_selection": True,
         "open_seating": False,
-        "name": {
-            "nl": "Rode Zaal",
-            "en": "Red Hall",
-            "fr": "Salle Rouge",
-        },
+        "name": {"nl": "Rode Zaal", "en": "Red Hall", "fr": "Salle Rouge"},
         "remark": {
             "nl": "Rolstoelplaatsen beschikbaar op rij A.",
             "en": "Wheelchair spaces available in row A.",
@@ -431,11 +345,7 @@ _HALL_LIST = extend_schema(
         "It carries seating configuration flags and supports localised "
         "`name` and `remark` fields."
     ),
-    responses={
-        200: HallSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={200: HallSerializer, **READ_ERRORS},
     examples=[_HALL_RESPONSE],
 )
 
@@ -446,12 +356,7 @@ _HALL_RETRIEVE = extend_schema(
         "by its primary key, including its parent space, seating flags, "
         "and localised name and remark."
     ),
-    responses={
-        200: HallSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: HallSerializer, **ITEM_ERRORS},
     examples=[_HALL_RESPONSE],
 )
 
@@ -462,16 +367,11 @@ _HALL_CREATE = extend_schema(
         "- `space_id` (FK) is required.\n"
         "- `seat_selection` and `open_seating` default to `false`.\n"
         "- Localised `name` and `remark` must be added via the **Hall Translation** "
-        "  endpoints after the hall has been created.\n\n"
+        "endpoints after the hall has been created.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=HallSerializer,
-    responses={
-        201: HallSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={201: HallSerializer, **WRITE_ERRORS},
     examples=[_HALL_INPUT, _HALL_RESPONSE],
 )
 
@@ -481,13 +381,7 @@ _HALL_UPDATE = extend_schema(
         "Fully replaces an existing **Hall**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
     ),
     request=HallSerializer,
-    responses={
-        200: HallSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: HallSerializer, **MUTATE_ERRORS},
     examples=[_HALL_INPUT, _HALL_RESPONSE],
 )
 
@@ -499,13 +393,7 @@ _HALL_PARTIAL_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=HallSerializer,
-    responses={
-        200: HallSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: HallSerializer, **MUTATE_ERRORS},
     examples=[_HALL_PARTIAL_INPUT, _HALL_RESPONSE],
 )
 
@@ -518,12 +406,7 @@ _HALL_DESTROY = extend_schema(
         "This action is irreversible.\n\n"
         "> **Requires an internal API key.**"
     ),
-    responses={
-        204: RESPONSE_204_DELETED,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={204: RESPONSE_204_DELETED, **DELETE_ERRORS},
 )
 
 

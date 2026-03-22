@@ -1,14 +1,5 @@
 """
 OpenAPI schema decorators for the Productions app.
-
-Keeping all drf-spectacular annotations here means views.py stays focused
-on routing logic only. Each action is defined as a private variable and
-assembled into a single ``extend_schema_view`` decorator at the bottom of
-the file.
-
-Productions are the core catalogue entity. A production groups one or more
-events and carries translatable metadata (title, description, artist name,
-etc.) as well as genre and tag classifications.
 """
 
 from drf_spectacular.utils import (
@@ -20,11 +11,12 @@ from drf_spectacular.utils import (
 )
 
 from apps.core.openapi import (
+    DELETE_ERRORS,
+    ITEM_ERRORS,
+    MUTATE_ERRORS,
+    READ_ERRORS,
     RESPONSE_204_DELETED,
-    RESPONSE_400,
-    RESPONSE_401,
-    RESPONSE_403,
-    RESPONSE_404,
+    WRITE_ERRORS,
 )
 
 from .serializers import ProductionSerializer
@@ -82,20 +74,7 @@ _PRODUCTION_RESPONSE_WITH_EVENTS = OpenApiExample(
         "tagline": "Een ode aan vergankelijkheid",
         "teaser": "Een indringende voorstelling over verlies en hoop.",
         "description": "Volledige beschrijving van de productie...",
-        "tags": [
-            {
-                "id": 12,
-                "type": "theme",
-                "name": "Hedendaags",
-                "url": "",
-                "source": "",
-                "source_type": "",
-                "is_external": False,
-                "is_enabled": True,
-                "short_description": None,
-                "url_title": "",
-            }
-        ],
+        "tags": [],
         "genres": [{"id": 2, "type": "theater", "name": "Theater"}],
         "events": [
             {
@@ -137,36 +116,7 @@ _PRODUCTION_RESPONSE_WITH_EVENTS = OpenApiExample(
                 "hall_display": "Red Hall",
                 "starts_at": "2025-09-15T19:30:00Z",
                 "ends_at": "2025-09-15T21:30:00Z",
-                "prices": [
-                    {
-                        "id": 101,
-                        "event": 42,
-                        "price": {
-                            "id": 1,
-                            "type": "standard",
-                            "visibility": "public",
-                            "membership": "",
-                            "minimum": None,
-                            "maximum": None,
-                            "step": None,
-                            "sort_order": 1,
-                            "cineville_box": False,
-                            "description": {"nl": "Standaard", "en": "Standard", "fr": "Standard"},
-                            "display_description": "Standard",
-                        },
-                        "price_rank": {
-                            "id": 1,
-                            "position": 1,
-                            "sold_out_buffer": 0,
-                            "description": {"nl": "Normaal", "en": "Regular", "fr": "Normal"},
-                            "display_description": "Regular",
-                        },
-                        "price_rank_display": "Regular",
-                        "price_display": "Standard",
-                        "amount": "18.00",
-                        "available": 120,
-                    },
-                ],
+                "prices": [],
             },
         ],
     },
@@ -208,11 +158,7 @@ _PRODUCTION_LIST = extend_schema(
         "Nested `genres` are returned in their configured `position` order. "
         "Nested `tags` and `genres` carry their own translated fields as dictionaries."
     ),
-    responses={
-        200: ProductionSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={200: ProductionSerializer, **READ_ERRORS},
     examples=[_PRODUCTION_RESPONSE],
 )
 
@@ -222,7 +168,7 @@ _PRODUCTION_RETRIEVE = extend_schema(
         "Returns the full representation of a single **Production** identified "
         "by its primary key.\n\n"
         "All translated fields are returned as language-code dictionaries. "
-        "Genres are ordered by their `position` value."
+        "Genres are ordered by their `position` value. "
         "Use `?include=events` to include all related events in the response."
     ),
     parameters=[
@@ -238,12 +184,7 @@ _PRODUCTION_RETRIEVE = extend_schema(
             ],
         )
     ],
-    responses={
-        200: ProductionSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: ProductionSerializer, **ITEM_ERRORS},
     examples=[_PRODUCTION_RESPONSE, _PRODUCTION_RESPONSE_WITH_EVENTS],
 )
 
@@ -255,17 +196,12 @@ _PRODUCTION_CREATE = extend_schema(
         "- `performer_type` accepts `group` or `solo`.\n"
         "- `uit_database_theme` and `uit_database_type` are optional FK references.\n"
         "- Translated fields (title, description, etc.) are managed via the "
-        "  **Production Translation** endpoints.\n"
+        "**Production Translation** endpoints.\n"
         "- Tags and genres are managed via their dedicated through-table endpoints.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=ProductionSerializer,
-    responses={
-        201: ProductionSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={201: ProductionSerializer, **WRITE_ERRORS},
     examples=[_PRODUCTION_INPUT, _PRODUCTION_RESPONSE],
 )
 
@@ -277,13 +213,7 @@ _PRODUCTION_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=ProductionSerializer,
-    responses={
-        200: ProductionSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: ProductionSerializer, **MUTATE_ERRORS},
     examples=[_PRODUCTION_INPUT, _PRODUCTION_RESPONSE],
 )
 
@@ -295,13 +225,7 @@ _PRODUCTION_PARTIAL_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=ProductionSerializer,
-    responses={
-        200: ProductionSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: ProductionSerializer, **MUTATE_ERRORS},
     examples=[_PRODUCTION_PARTIAL_INPUT, _PRODUCTION_RESPONSE],
 )
 
@@ -313,12 +237,7 @@ _PRODUCTION_DESTROY = extend_schema(
         "events are also deleted (cascade). This action is irreversible.\n\n"
         "> **Requires an internal API key.**"
     ),
-    responses={
-        204: RESPONSE_204_DELETED,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={204: RESPONSE_204_DELETED, **DELETE_ERRORS},
 )
 
 
