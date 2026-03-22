@@ -519,6 +519,9 @@ def test_sync_crops_params_skip_filter_when_fake_get_field_raises_fielddoesnotex
             self.filter_calls.append(kwargs)
             return self
 
+        def values(self, *_args, **_kwargs):
+            return []
+
     fake_qs = FakeQuerySet()
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: fake_qs)
 
