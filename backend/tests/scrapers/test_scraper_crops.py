@@ -776,6 +776,31 @@ def test_sync_crops_dry_run_logs_missing_media_item_upsert(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
+def test_sync_crops_unresolved_dependency_calls_on_progress(monkeypatch):
+    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(
+        viernulvier,
+        "fetch_viernulvier",
+        lambda **_kw: [{"@id": "/api/v1/media/items/124", "type": "foto"}],
+    )
+    monkeypatch.setattr(
+        viernulvier,
+        "_fetch_with_retry",
+        lambda *_a, **_kw: ({"type": "foto", "crops": []}, None),
+    )
+
+    calls = []
+    result = sync_media_item_crops(
+        dry_run=True,
+        params={"updated_at[after]": "2024-01-01T00:00:00+00:00"},
+        on_progress=lambda idx, total: calls.append((idx, total)),
+    )
+
+    assert result == 0
+    assert calls == [(1, 1)]
+
+
+@pytest.mark.django_db
 def test_sync_crops_unresolved_media_item_dependency_after_upsert(monkeypatch, caplog):
     from apps.media_library import models as media_models
 
