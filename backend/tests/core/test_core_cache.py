@@ -168,7 +168,7 @@ class TestCacheInvalidationHandler(TestCase):
     """Tests that the signal handler clears the cache after model changes."""
 
     def test_post_save_clears_cache(self):
-        mock_cache = MagicMock(spec=["clear"])
+        mock_cache = MagicMock(spec=["delete_pattern"])
 
         with patch("apps.core.signals.cache", mock_cache):
             connect_cache_invalidation(Language, "/api/v1/languages/")
@@ -177,11 +177,10 @@ class TestCacheInvalidationHandler(TestCase):
         mock_cache.clear.assert_called_once()
 
     def test_post_delete_clears_cache(self):
-        mock_cache = MagicMock(spec=["clear"])
+        mock_cache = MagicMock(spec=["delete_pattern"])
 
         with patch("apps.core.signals.cache", mock_cache):
             connect_cache_invalidation(Language, "/api/v1/languages/")
-            from django.db.models.signals import post_delete
 
             post_delete.send(sender=Language, instance=MagicMock())
 

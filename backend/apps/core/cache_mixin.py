@@ -4,7 +4,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
 
-CACHE_TTL = 60 * 5  # 5 minutes (how long to cache responses for)
+CACHE_TTL = getattr(settings, "CACHE_TTL", 60 * 5)  # default: 5 minutes
 
 
 def cache_read_actions(ttl=CACHE_TTL):
@@ -15,7 +15,7 @@ def cache_read_actions(ttl=CACHE_TTL):
     """
     decorators = [
         method_decorator(cache_page(ttl)),
-        method_decorator(vary_on_headers("Authorization", "Accept-Language")),
+        method_decorator(vary_on_headers("X-Api-Key", "Accept-Language")),
     ]
 
     def decorator(cls):
