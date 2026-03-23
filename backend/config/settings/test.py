@@ -81,3 +81,13 @@ LOGGING = {
         "level": "ERROR",
     },
 }
+
+# ---------------------------------------------------------------------------
+# Caches - use in-memory cache for tests to avoid external dependencies
+# ---------------------------------------------------------------------------
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}
