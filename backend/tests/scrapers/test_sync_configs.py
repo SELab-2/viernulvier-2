@@ -57,6 +57,13 @@ from apps.tags.models import Tag
 # ===========================================================================
 
 
+@pytest.fixture(autouse=True)
+def _mock_media_item_gallery_link_step():
+    """Keep command tests deterministic by stubbing the custom link step."""
+    with patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_gallery_links", return_value=0):
+        yield
+
+
 def get_model_field_names(model):
     """Get all field names from a Django model, excluding auto-generated fields."""
     return {
@@ -932,3 +939,79 @@ def test_run_crops_when_only_is_media_item_crops():
     mock_sync.assert_not_called()
     assert "-> media_item_crops" in cmd.stdout.getvalue()
     assert "4 crops" in cmd.stdout.getvalue()
+
+
+def test_command_exception_handlers_catch_and_log_all_failures():
+    """
+    Comprehensive test for exception handling across all sync command steps.
+
+    Tests the exception handlers at lines 533-535 and similar patterns:
+        except Exception as exc:
+            elapsed = time.monotonic() - step_start
+            self.stdout.write(self.style.ERROR(f"✗ FAILED after {elapsed:.1f}s: {exc}"))
+
+    Verifies that:
+    1. Exceptions in sync_viernulvier() are caught and logged with proper format
+    2. Exceptions in sync_media_item_gallery_links() are caught and logged
+    3. Exceptions in sync_media_item_crops() are caught and logged
+    4. Error messages include timing, failure indicator (✗), and exception text
+    5. Exceptions don't stop execution; command completes normally
+    """
+    import re
+
+    # Test Case 1: sync_viernulvier exception handling
+    cmd1 = Command()
+    cmd1.stdout = OutputWrapper(StringIO())
+    test_exc1 = ValueError("Network error during sync")
+
+    with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier") as mock_sync:
+        mock_sync.side_effect = test_exc1
+        cmd1.handle(only="genres", dry_run=False)
+
+    output1 = cmd1.stdout.getvalue()
+    assert "✗ FAILED after" in output1, "Exception not caught in sync_viernulvier step"
+    assert "Network error during sync" in output1
+    assert "genres" in output1
+    assert "Done" in output1, "Command should complete despite exception"
+    pattern = r"✗ FAILED after \d+\.\ds: "
+    assert re.search(pattern, output1), f"Error message doesn't match expected format. Got: {output1}"
+
+    # Test Case 2: sync_media_item_gallery_links exception handling
+    cmd2 = Command()
+    cmd2.stdout = OutputWrapper(StringIO())
+    test_exc2 = RuntimeError("API rate limit exceeded")
+
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier") as mock_sync,
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_gallery_links") as mock_gallery,
+    ):
+        mock_sync.return_value = 0
+        mock_gallery.side_effect = test_exc2
+        cmd2.handle(only="media_item_gallery_links", dry_run=False)
+
+    output2 = cmd2.stdout.getvalue()
+    assert "✗ FAILED after" in output2, "Exception not caught in gallery_links step"
+    assert "API rate limit exceeded" in output2
+    assert "media_item_gallery_links" in output2
+    assert "Done" in output2
+
+    # Test Case 3: sync_media_item_crops exception handling
+    cmd3 = Command()
+    cmd3.stdout = OutputWrapper(StringIO())
+    test_exc3 = IOError("Database connection lost")
+
+    with (
+        patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier") as mock_sync,
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_gallery_links") as mock_gallery,
+        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_crops") as mock_crops,
+    ):
+        mock_sync.return_value = 0
+        mock_gallery.return_value = 0
+        mock_crops.side_effect = test_exc3
+        cmd3.handle(only="media_item_crops", dry_run=False)
+
+    output3 = cmd3.stdout.getvalue()
+    assert "✗ FAILED after" in output3, "Exception not caught in crops step"
+    assert "Database connection lost" in output3
+    assert "media_item_crops" in output3
+    assert "Done" in output3
