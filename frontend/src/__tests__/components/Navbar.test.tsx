@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import Navbar from '../components/Navbar'
-import i18n from '../i18n'
+import Navbar from '../../components/Navbar'
+import i18n from '../../i18n'
 
 const renderNavbar = (
   initialPath = '/',
