@@ -5,6 +5,7 @@ Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
 """
 
+from apps.core.cache_mixin import cache_read_actions
 from apps.core.views import ApiModelViewSet
 
 from .filters import HallFilter, LocationFilter, SpaceFilter
@@ -15,6 +16,7 @@ from .serializers import HallSerializer, LocationSerializer, SpaceSerializer
 _TAG = "Locations"
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @location_schema
 class LocationViewSet(ApiModelViewSet):
@@ -68,6 +70,7 @@ class LocationViewSet(ApiModelViewSet):
     search_fields = ["city", "country", "street", "translations__name"]
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @space_schema
 class SpaceViewSet(ApiModelViewSet):
@@ -116,6 +119,7 @@ class SpaceViewSet(ApiModelViewSet):
     search_fields = ["translations__name"]
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @hall_schema
 class HallViewSet(ApiModelViewSet):

@@ -7,6 +7,7 @@ on routing and queryset configuration only.
 
 from django.db.models import Prefetch
 
+from apps.core.cache_mixin import cache_read_actions
 from apps.core.views import ApiModelViewSet
 
 from .filters import PriceFilter, PriceRankFilter
@@ -17,6 +18,7 @@ from .serializers import PriceRankSerializer, PriceSerializer
 _TAG = "Pricing"
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @price_schema
 class PriceViewSet(ApiModelViewSet):
@@ -68,6 +70,7 @@ class PriceViewSet(ApiModelViewSet):
     search_fields = ["type", "visibility", "translations__description"]
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @price_rank_schema
 class PriceRankViewSet(ApiModelViewSet):

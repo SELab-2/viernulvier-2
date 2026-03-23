@@ -5,6 +5,7 @@ Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
 """
 
+from apps.core.cache_mixin import cache_read_actions
 from apps.core.views import ApiModelViewSet
 
 from .filters import MediaGalleryFilter, MediaItemFilter
@@ -15,6 +16,7 @@ from .serializers import MediaGallerySerializer, MediaItemSerializer
 _TAG = "Media"
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @media_gallery_schema
 class MediaGalleryViewSet(ApiModelViewSet):
@@ -58,6 +60,7 @@ class MediaGalleryViewSet(ApiModelViewSet):
     search_fields = ["name"]
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @media_item_schema
 class MediaItemViewSet(ApiModelViewSet):

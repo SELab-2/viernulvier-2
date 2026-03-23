@@ -5,6 +5,7 @@ Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
 """
 
+from apps.core.cache_mixin import cache_read_actions
 from apps.core.views import ApiModelViewSet
 
 from .filters import GenreFilter, GenreUseAsFilter
@@ -15,6 +16,7 @@ from .serializers import GenreSerializer, GenreUseAsSerializer
 _TAG = "Genres"
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @genre_use_as_schema
 class GenreUseAsViewSet(ApiModelViewSet):
@@ -53,6 +55,7 @@ class GenreUseAsViewSet(ApiModelViewSet):
     search_fields = ["name"]
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @genre_schema
 class GenreViewSet(ApiModelViewSet):

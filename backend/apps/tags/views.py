@@ -16,6 +16,7 @@ to their values (e.g., {"nl": "...", "en": "..."}).
 from django.db.models import Prefetch
 from drf_spectacular.utils import extend_schema
 
+from apps.core.cache_mixin import cache_read_actions
 from apps.core.views import ApiModelViewSet
 
 from .filters import TagFilter
@@ -26,6 +27,7 @@ from .serializers import TagSerializer
 _TAG = "Tags"
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @tag_schema
 class TagViewSet(ApiModelViewSet):

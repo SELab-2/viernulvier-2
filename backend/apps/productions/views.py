@@ -18,6 +18,7 @@ allowing consumers to access all languages in a single request.
 from django.db.models import Prefetch
 from drf_spectacular.utils import extend_schema
 
+from apps.core.cache_mixin import cache_read_actions
 from apps.core.views import ApiModelViewSet
 from apps.events.models import Event, EventPrice
 from apps.locations.models import HallTranslation, LocationTranslation, SpaceTranslation
@@ -32,6 +33,7 @@ from .serializers import ProductionSerializer
 _TAG = "Productions"
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @production_schema
 class ProductionViewSet(ApiModelViewSet):

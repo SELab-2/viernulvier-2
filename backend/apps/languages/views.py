@@ -5,6 +5,7 @@ Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
 """
 
+from apps.core.cache_mixin import cache_read_actions
 from apps.core.views import ApiModelViewSet
 
 from .filters import LanguageFilter
@@ -15,6 +16,7 @@ from .serializers import LanguageSerializer
 _TAG = "Languages"
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @language_schema
 class LanguageViewSet(ApiModelViewSet):

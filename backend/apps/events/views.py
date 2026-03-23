@@ -12,6 +12,7 @@ capacity and amount per price rank.
 from django.db.models import Prefetch
 from drf_spectacular.utils import extend_schema
 
+from apps.core.cache_mixin import cache_read_actions
 from apps.core.views import ApiModelViewSet
 from apps.locations.models import HallTranslation, LocationTranslation, SpaceTranslation
 from apps.media_library.models import MediaItem
@@ -26,6 +27,7 @@ from .serializers import EventSerializer
 _TAG = "Events"
 
 
+@cache_read_actions()
 @extend_schema(tags=[_TAG])
 @event_schema
 class EventViewSet(ApiModelViewSet):
