@@ -182,6 +182,7 @@ class TestCacheInvalidationHandler(TestCase):
         with patch("apps.core.signals.cache", mock_cache):
             connect_cache_invalidation(Language, "/api/v1/languages/")
             from django.db.models.signals import post_delete
+
             post_delete.send(sender=Language, instance=MagicMock())
 
         mock_cache.clear.assert_called_once()

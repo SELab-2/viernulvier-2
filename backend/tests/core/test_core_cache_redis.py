@@ -103,4 +103,3 @@ def test_cache_is_invalidated_after_model_change_with_redis():
     results_2 = response_2.data.get("results", response_2.data)
     codes_2 = [item["code"] for item in results_2]
     assert "de" in codes_2
-    

@@ -37,4 +37,3 @@ def connect_cache_invalidation(model, url_prefix):
         weak=False,
         dispatch_uid=f"{uid_base}:post_delete",
     )
-    
