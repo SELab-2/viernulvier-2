@@ -9,7 +9,7 @@ underlying data changes.
 """
 
 from django.core.cache import cache
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 
 
 def connect_cache_invalidation(model, url_prefix):

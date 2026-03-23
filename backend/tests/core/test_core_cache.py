@@ -13,7 +13,6 @@ Covers three areas:
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from django.core.cache import cache
 from django.db.models.signals import post_save
 from django.test import TestCase, override_settings
