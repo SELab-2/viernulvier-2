@@ -122,9 +122,9 @@ class TestLanguageViewSet(TestCase):
         Language.objects.all().delete()
 
     def detail_url(self, code):
-        return reverse("language-detail", kwargs={"code": code})
+        return reverse("v1:language-detail", kwargs={"code": code})
 
-    list_url = reverse("language-list")
+    list_url = reverse("v1:language-list")
 
     def test_anon_returns_401_or_403(self):
         response = self.client.get(self.list_url)

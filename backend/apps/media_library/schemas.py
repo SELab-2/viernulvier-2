@@ -1,23 +1,16 @@
 """
 OpenAPI schema decorators for the Media app.
-
-Keeping all drf-spectacular annotations here means views.py stays focused
-on routing logic only. Each action is defined as a private variable and
-assembled into two `extend_schema_view` decorators at the bottom of the file.
 """
 
-from drf_spectacular.utils import (
-    OpenApiExample,
-    extend_schema,
-    extend_schema_view,
-)
+from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 
 from apps.core.openapi import (
+    DELETE_ERRORS,
+    ITEM_ERRORS,
+    MUTATE_ERRORS,
+    READ_ERRORS,
     RESPONSE_204_DELETED,
-    RESPONSE_400,
-    RESPONSE_401,
-    RESPONSE_403,
-    RESPONSE_404,
+    WRITE_ERRORS,
 )
 
 from .serializers import MediaGallerySerializer, MediaItemSerializer
@@ -34,10 +27,7 @@ _CROP_EXAMPLE = {
 
 _MEDIA_ITEM_EXAMPLE = {
     "id": 1,
-    "gallery": {
-        "id": 1,
-        "name": "Production Images 2024",
-    },
+    "gallery": {"id": 1, "name": "Production Images 2024"},
     "type": "foto",
     "format": "image/jpeg",
     "original_filename": "poster_nl.jpg",
@@ -67,11 +57,7 @@ _MEDIA_ITEM_EXAMPLE = {
 _GALLERY_RESPONSE = OpenApiExample(
     "MediaGallery - response",
     summary="A gallery with nested media items",
-    value={
-        "id": 1,
-        "name": "Production Images 2024",
-        "media_items": [_MEDIA_ITEM_EXAMPLE],
-    },
+    value={"id": 1, "name": "Production Images 2024", "media_items": [_MEDIA_ITEM_EXAMPLE]},
     response_only=True,
 )
 
@@ -102,11 +88,7 @@ _GALLERY_LIST = extend_schema(
         "translated metadata represented as language-code dictionaries "
         '(e.g. {"en": "Poster", "fr": "Affiche"}) and crop variants.'
     ),
-    responses={
-        200: MediaGallerySerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={200: MediaGallerySerializer, **READ_ERRORS},
     examples=[_GALLERY_RESPONSE],
 )
 
@@ -117,12 +99,7 @@ _GALLERY_RETRIEVE = extend_schema(
         "identified by its primary key, including all nested media items "
         "with localised metadata and crop variants."
     ),
-    responses={
-        200: MediaGallerySerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: MediaGallerySerializer, **ITEM_ERRORS},
     examples=[_GALLERY_RESPONSE],
 )
 
@@ -134,12 +111,7 @@ _GALLERY_CREATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=MediaGallerySerializer,
-    responses={
-        201: MediaGallerySerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={201: MediaGallerySerializer, **WRITE_ERRORS},
     examples=[_GALLERY_INPUT, _GALLERY_RESPONSE],
 )
 
@@ -151,13 +123,7 @@ _GALLERY_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=MediaGallerySerializer,
-    responses={
-        200: MediaGallerySerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: MediaGallerySerializer, **MUTATE_ERRORS},
     examples=[_GALLERY_INPUT, _GALLERY_RESPONSE],
 )
 
@@ -169,13 +135,7 @@ _GALLERY_PARTIAL_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=MediaGallerySerializer,
-    responses={
-        200: MediaGallerySerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: MediaGallerySerializer, **MUTATE_ERRORS},
     examples=[_GALLERY_PARTIAL_INPUT, _GALLERY_RESPONSE],
 )
 
@@ -187,12 +147,7 @@ _GALLERY_DESTROY = extend_schema(
         "their crop variants are also deleted. This action is irreversible.\n\n"
         "> **Requires an internal API key.**"
     ),
-    responses={
-        204: RESPONSE_204_DELETED,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={204: RESPONSE_204_DELETED, **DELETE_ERRORS},
 )
 
 
@@ -244,11 +199,7 @@ _ITEM_LIST = extend_schema(
         "Each item includes its translated metadata as language-code dictionaries "
         '(e.g. {"en": "Poster", "fr": "Affiche"}) and all pre-rendered crop variants.'
     ),
-    responses={
-        200: MediaItemSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={200: MediaItemSerializer, **READ_ERRORS},
     examples=[_ITEM_RESPONSE],
 )
 
@@ -258,12 +209,7 @@ _ITEM_RETRIEVE = extend_schema(
         "Returns the full representation of a single **MediaItem** identified "
         "by its primary key, including localised metadata and all crop variants."
     ),
-    responses={
-        200: MediaItemSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: MediaItemSerializer, **ITEM_ERRORS},
     examples=[_ITEM_RESPONSE],
 )
 
@@ -273,17 +219,12 @@ _ITEM_CREATE = extend_schema(
         "Creates a new **MediaItem** within an existing gallery.\n\n"
         "- `gallery_id` (FK) and `type` are required.\n"
         "- Localised metadata (`title`, `description`, `credits`, `link`) must be "
-        "  added via the **Media Item Translation** endpoints after creation.\n"
+        "added via the **Media Item Translation** endpoints after creation.\n"
         "- Crop variants are populated automatically by the scraper sync pipeline.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=MediaItemSerializer,
-    responses={
-        201: MediaItemSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={201: MediaItemSerializer, **WRITE_ERRORS},
     examples=[_ITEM_INPUT, _ITEM_RESPONSE],
 )
 
@@ -295,13 +236,7 @@ _ITEM_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=MediaItemSerializer,
-    responses={
-        200: MediaItemSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: MediaItemSerializer, **MUTATE_ERRORS},
     examples=[_ITEM_INPUT, _ITEM_RESPONSE],
 )
 
@@ -313,13 +248,7 @@ _ITEM_PARTIAL_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=MediaItemSerializer,
-    responses={
-        200: MediaItemSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: MediaItemSerializer, **MUTATE_ERRORS},
     examples=[_ITEM_PARTIAL_INPUT, _ITEM_RESPONSE],
 )
 
@@ -331,12 +260,7 @@ _ITEM_DESTROY = extend_schema(
         "deleted. This action is irreversible.\n\n"
         "> **Requires an internal API key.**"
     ),
-    responses={
-        204: RESPONSE_204_DELETED,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={204: RESPONSE_204_DELETED, **DELETE_ERRORS},
 )
 
 
