@@ -251,4 +251,3 @@ class TestDeletePatternFallback(TestCase):
                 "Signal handler raised AttributeError against LocMemCache — "
                 "delete_pattern fallback is not working correctly."
             )
-            

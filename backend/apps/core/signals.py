@@ -17,6 +17,7 @@ def connect_cache_invalidation(model, url_prefix):
     Connects post_save and post_delete signals for the given model to a
     handler that clears all cache entries matching the given URL prefix.
     """
+
     def handler(sender, **kwargs):
         if hasattr(cache, "delete_pattern"):
             cache.delete_pattern(f"*{url_prefix}*")
