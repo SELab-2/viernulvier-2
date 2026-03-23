@@ -1,4 +1,5 @@
 import type { Genre } from './Genres'
+import type { Event } from './Events'
 import type { Tag } from './Tags'
 
 /** Valid attendance mode values. */
@@ -33,6 +34,7 @@ export interface Production {
   description: Record<string, string>
   tags: Tag[]
   genres: Genre[]
+  events?: Event[]
 }
 
 /**

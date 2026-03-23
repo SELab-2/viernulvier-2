@@ -4,21 +4,29 @@ import { buildListParams } from '../ApiParams'
 import type { GetProductionsOptions } from './ProductionOptions'
 
 /**
- * Retrieve a single production by its numeric ID.
+ * Retrieve a single production by its numeric ID, optionally including events.
  *
  * This sends a `GET /productions/:id/` request to the backend and returns the
  * response payload exactly as received.
  *
  * @param id The unique ID of the production that should be fetched.
+ * @param include Optional includes, e.g. `['events']` to include related events in the response.
  * @returns A promise that resolves to the production data returned by the API.
  *
  * @example
  * const production = await getProduction(12);
+ * const productionWithEvents = await getProduction(12, ['events']);
  *
  * @throws {ApiError} When the request fails.
  */
-export const getProduction = async (id: number): Promise<Production> => {
-  const res = await api.get<Production>(`/productions/${id}/`)
+export const getProduction = async (id: number, include?: string[]): Promise<Production> => {
+  const params: Record<string, string> = {}
+
+  if (include) {
+    params.include = include.join(',')
+  }
+
+  const res = await api.get<Production>(`/productions/${id}/`, { params })
   return res.data
 }
 
