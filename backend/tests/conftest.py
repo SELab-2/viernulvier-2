@@ -11,5 +11,12 @@ from django.core.cache import cache
 
 
 @pytest.fixture(autouse=True)
-def clear_cache():
+def clear_cache(request):
+    if "redis" in request.keywords:
+        try:
+            cache.set("pytest-redis-check", "ok", timeout=5)
+            assert cache.get("pytest-redis-check") == "ok"
+        except Exception:
+            pytest.skip("Redis is not running for redis-marked tests.")
+
     cache.clear()
