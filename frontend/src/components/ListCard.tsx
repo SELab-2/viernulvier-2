@@ -31,8 +31,7 @@ const ListCard = ({
   const { t, i18n } = useTranslation()
   const language = i18n.language
 
-  // TODO: Add image src
-  const imageSrc = null
+  const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url || null
   const title = getTranslatedRecord(production.title, language, production.display_title)
   const artistName = getTranslatedRecord(
     production.artist_name,
