@@ -13,6 +13,10 @@
     "switchToLightMode": "Dark mode",
     "switchToDarkMode": "Light mode"
   },
+  "listCard": {
+    "view": "View",
+    "imageAlt": "Image for {{title}}"
+  },
   "events": {
     "title": "Events",
     "listPlaceholder": "Events list will be displayed here.",

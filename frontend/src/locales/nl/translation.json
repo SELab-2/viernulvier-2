@@ -13,6 +13,10 @@
     "switchToLightMode": "Donkere modus",
     "switchToDarkMode": "Lichte modus"
   },
+  "listCard": {
+    "view": "Bekijk",
+    "imageAlt": "Afbeelding voor {{title}}"
+  },
   "events": {
     "title": "Evenementen",
     "listPlaceholder": "Lijst met evenementen wordt hier weergegeven.",
