@@ -14,6 +14,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from apps.media_library.models import (
+    MediaGalleryItem,
     MediaItem,
     MediaItemCrop,
     MediaItemTranslation,
@@ -127,6 +128,20 @@ class TestMediaItem:
         MediaItemCropFactory.create_batch(2, media_item=item)
         item.delete()
         assert MediaItemCrop.objects.count() == 0
+
+
+# =====================================================
+# MediaGalleryItem
+# =====================================================
+
+
+class TestMediaGalleryItem:
+    def test_str_representation(self):
+        gallery = MediaGalleryFactory()
+        item = MediaItemFactory(gallery=gallery)
+        link = MediaGalleryItem.objects.create(gallery=gallery, media_item=item, position=7)
+
+        assert str(link) == f"{gallery.id}:{item.id}@7"
 
 
 # =====================================================
