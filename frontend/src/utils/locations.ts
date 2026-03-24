@@ -12,17 +12,25 @@ import { getTranslatedRecord } from './translations'
  * @returns The first non-empty translated label, or `''` if none apply.
  */
 function getLocationName(hall: Hall | null | undefined, language: string): string {
-  const locationTranslation = getTranslatedRecord(hall?.space?.location?.name, language)
+  const locationTranslation = getTranslatedRecord(
+    hall?.space?.location?.name,
+    language,
+    hall?.space?.location?.display_name,
+  )
   if (locationTranslation) {
     return locationTranslation
   }
 
-  const spaceTranslation = getTranslatedRecord(hall?.space?.name, language)
+  const spaceTranslation = getTranslatedRecord(
+    hall?.space?.name,
+    language,
+    hall?.space?.display_name,
+  )
   if (spaceTranslation) {
     return spaceTranslation
   }
 
-  const hallTranslation = getTranslatedRecord(hall?.name, language)
+  const hallTranslation = getTranslatedRecord(hall?.name, language, hall?.display_name)
   if (hallTranslation) {
     return hallTranslation
   }
