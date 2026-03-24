@@ -1,6 +1,6 @@
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined'
-import { Box, Button, Paper, Stack, Typography } from '@mui/material'
+import { Button, Paper, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import type { Hall } from '../types/Halls'
@@ -40,15 +40,17 @@ const ListCard = ({
   )
 
   return (
-    <Paper
+    <Stack
+      component={Paper}
       elevation={0}
+      direction="row"
+      alignItems="stretch"
       sx={(theme) => ({
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'stretch',
         height: 175,
         gap: 3,
         p: 3,
+        minWidth: 0,
+        overflow: 'hidden',
         border: `1px solid ${theme.palette.divider}`,
         borderRadius: '4px',
         backgroundColor: theme.palette.background.paper,
@@ -60,44 +62,25 @@ const ListCard = ({
         sx={{
           aspectRatio: 5 / 3,
           borderRadius: '4px',
+          flexShrink: 0,
+          alignSelf: 'stretch',
+          height: '100%',
+          objectFit: 'cover',
         }}
       />
 
-      <Box
-        sx={{
-          flex: 1,
-          minWidth: 0,
-          alignSelf: 'stretch',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-        }}
+      <Stack
+        direction="column"
+        justifyContent="space-between"
+        sx={{ flex: 1, minWidth: 0, overflow: 'hidden', alignSelf: 'stretch' }}
       >
-        <Stack spacing={0.75} sx={{ minWidth: 0 }}>
-          <Typography
-            component="h2"
-            variant="h5"
-            noWrap
-            sx={(theme) => ({
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              color: theme.palette.text.primary,
-              fontWeight: 'bold',
-            })}
-          >
+        <Stack spacing={0.75}>
+          <Typography component="h2" variant="h5" color="textPrimary" fontWeight="bold" noWrap>
             {title}
           </Typography>
 
           {artistName ? (
-            <Typography
-              component="p"
-              noWrap
-              sx={(theme) => ({
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                color: theme.palette.text.secondary,
-              })}
-            >
+            <Typography component="p" color="textSecondary" noWrap>
               {artistName}
             </Typography>
           ) : null}
@@ -107,29 +90,31 @@ const ListCard = ({
           <Stack
             direction="row"
             spacing={1.5}
-            sx={(theme) => ({ color: theme.palette.text.secondary })}
+            sx={{ color: 'text.secondary', justifyContent: 'flex-start', alignItems: 'center' }}
           >
             {starts_at ? (
-              <Stack direction="row" spacing={0.75} alignItems="center">
-                <DateRangeOutlinedIcon sx={{ fontSize: '1rem' }} />
-                <Typography
-                  variant="body2"
-                  noWrap
-                  sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-                >
+              <Stack
+                direction="row"
+                spacing={0.75}
+                alignItems="center"
+                sx={{ minWidth: 0, flex: '0 1 auto' }}
+              >
+                <DateRangeOutlinedIcon sx={{ fontSize: '1rem', flexShrink: 0 }} />
+                <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
                   {formatDate(starts_at, language)}
                 </Typography>
               </Stack>
             ) : null}
 
             {hall ? (
-              <Stack direction="row" spacing={0.75} alignItems="center">
-                <RoomOutlinedIcon sx={{ fontSize: '1rem' }} />
-                <Typography
-                  variant="body2"
-                  noWrap
-                  sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-                >
+              <Stack
+                direction="row"
+                spacing={0.75}
+                alignItems="center"
+                sx={{ minWidth: 0, flex: '0 1 auto' }}
+              >
+                <RoomOutlinedIcon sx={{ fontSize: '1rem', flexShrink: 0 }} />
+                <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
                   {getLocationName(hall, language)}
                 </Typography>
               </Stack>
@@ -141,7 +126,16 @@ const ListCard = ({
               direction="row"
               spacing={0.75}
               sx={{
-                overflow: 'hidden',
+                borderRadius: '4px',
+                flexWrap: 'nowrap',
+                minWidth: 0,
+                maxWidth: '100%',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                '&::-webkit-scrollbar': { display: 'none' },
               }}
             >
               {production.genres.map((genre) => (
@@ -155,7 +149,7 @@ const ListCard = ({
             </Stack>
           ) : null}
         </Stack>
-      </Box>
+      </Stack>
 
       <Button
         component={RouterLink}
@@ -163,6 +157,7 @@ const ListCard = ({
         variant="outlined"
         sx={(theme) => ({
           alignSelf: 'center',
+          flexShrink: 0,
           px: 3,
           borderColor: theme.palette.divider,
           borderRadius: '4px',
@@ -173,7 +168,7 @@ const ListCard = ({
       >
         {t('listCard.view')} →
       </Button>
-    </Paper>
+    </Stack>
   )
 }
 

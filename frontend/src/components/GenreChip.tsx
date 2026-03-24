@@ -22,6 +22,7 @@ const GenreChip = ({ genre, selectedIds, onClick }: GenreChipProps) => {
       aria-pressed={isActive}
       aria-label={`Filter by ${name}`}
       sx={(theme) => ({
+        flexShrink: 0,
         px: 2,
         minWidth: 'max-content',
         border: 'none',
