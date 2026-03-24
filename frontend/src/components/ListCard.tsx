@@ -13,7 +13,7 @@ import ImageWithFallback from './ImageWithFallback'
 
 export interface ListCardProps {
   production: Production
-  eventId?: number | null
+  pathname: string
   hall?: Hall | null
   starts_at?: string | null
   selectedGenreIds: number[]
@@ -22,7 +22,7 @@ export interface ListCardProps {
 
 const ListCard = ({
   production,
-  eventId,
+  pathname,
   hall,
   starts_at,
   selectedGenreIds,
@@ -31,7 +31,7 @@ const ListCard = ({
   const { t, i18n } = useTranslation()
   const language = i18n.language
 
-  const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url || null
+  const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url
   const title = getTranslatedRecord(production.title, language, production.display_title)
   const artistName = getTranslatedRecord(
     production.artist_name,
@@ -159,7 +159,7 @@ const ListCard = ({
 
       <Button
         component={RouterLink}
-        to={eventId ? `/events/${eventId}` : `/productions/${production.id}`}
+        to={pathname}
         variant="outlined"
         sx={(theme) => ({
           alignSelf: 'center',
