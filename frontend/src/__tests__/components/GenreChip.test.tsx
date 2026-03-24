@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactElement } from 'react'
 import { I18nextProvider } from 'react-i18next'
@@ -48,7 +48,7 @@ describe('GenreChip', () => {
     renderChip(<GenreChip genre={baseGenre()} selectedIds={[]} onClick={onClick} />)
 
     expect(screen.getByText('Theater')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Filter by Theater' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filter op Theater' })).toBeInTheDocument()
   })
 
   it('uses English copy when the active language is en', async () => {
@@ -97,7 +97,7 @@ describe('GenreChip', () => {
     )
 
     expect(screen.getByText('Weergavenaam')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Filter by Weergavenaam' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filter op Weergavenaam' })).toBeInTheDocument()
   })
 
   it('uses display_name when name is null', () => {
@@ -111,7 +111,7 @@ describe('GenreChip', () => {
     )
 
     expect(screen.getByText('Alleen display')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Filter by Alleen display' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filter op Alleen display' })).toBeInTheDocument()
   })
 
   it('fires onClick when activated with the keyboard', async () => {
@@ -120,7 +120,9 @@ describe('GenreChip', () => {
     renderChip(<GenreChip genre={baseGenre({ id: 99 })} selectedIds={[]} onClick={onClick} />)
 
     const button = screen.getByRole('button')
-    button.focus()
+    await act(async () => {
+      button.focus()
+    })
     await user.keyboard('{Enter}')
     expect(onClick).toHaveBeenCalledWith(99)
 

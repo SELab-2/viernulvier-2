@@ -288,16 +288,16 @@ describe('ListCard', () => {
 
     renderListCard({ production, onGenreClick, selectedGenreIds: [1] })
 
-    expect(screen.getByRole('button', { name: 'Filter by Dans' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Filter op Dans' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
-    expect(screen.getByRole('button', { name: 'Filter by Muziek' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Filter op Muziek' })).toHaveAttribute(
       'aria-pressed',
       'false',
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Filter by Muziek' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Filter op Muziek' }))
     expect(onGenreClick).toHaveBeenCalledWith(2)
   })
 
@@ -305,7 +305,7 @@ describe('ListCard', () => {
     const production = baseProduction({ genres: [] })
     renderListCard({ production })
 
-    expect(screen.queryByRole('button', { name: /^Filter by/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
   })
 
   it('uses the custom pathname on the view link', () => {
@@ -420,8 +420,8 @@ describe('ListCard', () => {
     })
     renderListCard({ production, onGenreClick })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Filter by A' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Filter by B' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Filter op A' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Filter op B' }))
     expect(onGenreClick).toHaveBeenCalledTimes(2)
     expect(onGenreClick).toHaveBeenNthCalledWith(1, 1)
     expect(onGenreClick).toHaveBeenNthCalledWith(2, 2)
@@ -435,7 +435,7 @@ describe('ListCard', () => {
     })
     renderListCard({ production, onGenreClick, pathname: '/events/1' })
 
-    await user.click(screen.getByRole('button', { name: 'Filter by Chip' }))
+    await user.click(screen.getByRole('button', { name: 'Filter op Chip' }))
     expect(onGenreClick).toHaveBeenCalledWith(5)
 
     const viewLink = screen.getByRole('link', { name: /Bekijk/ })
