@@ -1,6 +1,6 @@
 import type { Event } from './Events'
 import type { Genre } from './Genres'
-import { MediaGallery } from './Media'
+import type { MediaGallery } from './Media'
 import type { Tag } from './Tags'
 
 /** Valid attendance mode values. */
