@@ -14,7 +14,7 @@ const ImageWithFallback = ({ src, alt, sx, onError, ...props }: ImageWithFallbac
     return (
       <Box
         component="img"
-        src={src ?? undefined}
+        src={src!}
         alt={alt}
         onError={(event) => {
           setHasError(true)
