@@ -20,6 +20,22 @@ export interface ListCardProps {
   onGenreClick: (genreId: number) => void
 }
 
+/**
+ * Horizontal card for a {@link Production} or {@link Event}: image, title, artist, optional date and venue,
+ * genre filters, and a link to the detail route.
+ *
+ * Text is resolved with the active i18n locale via {@link getTranslatedRecord}. The image uses the
+ * first crop of the first gallery image when present; otherwise {@link ImageWithFallback} shows the
+ * branded placeholder.
+ *
+ * @param props.production Full API payload (title, artist, media gallery, genres, etc.).
+ * @param props.pathname Client route for the view button (e.g. production or event detail path).
+ * @param props.hall Optional {@link Hall}; when set, shows a venue line via {@link getLocationName}.
+ * @param props.starts_at Optional ISO start time for the listing; falsy values hide the date row.
+ * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
+ * @param props.onGenreClick Called with a genre id when that chip is pressed.
+ * @returns The list row element.
+ */
 const ListCard = ({
   production,
   pathname,

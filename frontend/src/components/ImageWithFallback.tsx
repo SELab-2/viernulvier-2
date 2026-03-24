@@ -1,11 +1,19 @@
 import { Box, type BoxProps } from '@mui/material'
 import { useState } from 'react'
 
-type ImageWithFallbackProps = Omit<BoxProps<'img'>, 'component' | 'src' | 'alt'> & {
+export type ImageWithFallbackProps = Omit<BoxProps<'img'>, 'component' | 'src' | 'alt'> & {
   src?: string | null
   alt: string
 }
 
+/**
+ * Image with a remote `src`, or a centered branded logo on a neutral background when the URL is
+ * missing or the request fails.
+ *
+ * @param props {@link ImageWithFallbackProps}: optional `src` (falsy shows fallback), required
+ *   `alt`, optional `sx`, `onError`, and remaining Box-as-`img` props for the loaded image only.
+ * @returns The image or fallback subtree.
+ */
 const ImageWithFallback = ({ src, alt, sx, onError, ...props }: ImageWithFallbackProps) => {
   const [hasError, setHasError] = useState(false)
   const showImage = Boolean(src) && !hasError

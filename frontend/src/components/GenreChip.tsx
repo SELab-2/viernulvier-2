@@ -1,6 +1,6 @@
 import { Button, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Genre } from '../types/Genres'
+import type { Genre } from '../types/Genres'
 import { getTranslatedRecord } from '../utils/translations'
 
 export interface GenreChipProps {
@@ -9,6 +9,15 @@ export interface GenreChipProps {
   onClick: (genreId: number) => void
 }
 
+/**
+ * Genre toggle chip. Uses the theme `accent` palette when this genre’s
+ * id is in `selectedIds`.
+ *
+ * @param props.genre Backend {@link Genre}.
+ * @param props.selectedIds Genre ids treated as active for styling.
+ * @param props.onClick Called with the genre id when the chip is activated.
+ * @returns The chip element.
+ */
 const GenreChip = ({ genre, selectedIds, onClick }: GenreChipProps) => {
   const { i18n } = useTranslation()
   const language = i18n.language

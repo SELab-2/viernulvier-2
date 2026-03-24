@@ -1,6 +1,16 @@
-import { Hall } from '../types/Halls'
+import type { Hall } from '../types/Halls'
 import { getTranslatedRecord } from './translations'
 
+/**
+ * Resolves a short venue label for a {@link Hall} for map/list UI.
+ *
+ * Order of precedence: translated **location** name → **space** name → **hall** name. Empty strings
+ * at each step fall through to the next source (see {@link getTranslatedRecord}).
+ *
+ * @param hall The hall (may include nested `space` / `location`); `null` / `undefined` yields `''`.
+ * @param language The active UI language key matching keys in translation records.
+ * @returns The first non-empty translated label, or `''` if none apply.
+ */
 function getLocationName(hall: Hall | null | undefined, language: string): string {
   const locationTranslation = getTranslatedRecord(hall?.space?.location?.name, language)
   if (locationTranslation) {
