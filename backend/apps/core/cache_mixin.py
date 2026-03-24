@@ -1,5 +1,6 @@
 """Provides a mixin to apply HTTP response caching to list and retrieve actions of Django REST Framework viewsets."""
 
+from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
