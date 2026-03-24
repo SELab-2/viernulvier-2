@@ -14,7 +14,7 @@ export function getTranslatedRecord(
   language: string,
   fallback: string | null = null,
 ): string {
-  if (!fallback) {
+  if (fallback === null) {
     fallback = ''
   }
 
