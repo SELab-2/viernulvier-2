@@ -27,7 +27,7 @@ from .serializers import EventSerializer
 _TAG = "Events"
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:events")
 @extend_schema(tags=[_TAG])
 @event_schema
 class EventViewSet(ApiModelViewSet):

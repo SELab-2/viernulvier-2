@@ -33,7 +33,7 @@ from .serializers import ProductionSerializer
 _TAG = "Productions"
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:productions")
 @extend_schema(tags=[_TAG])
 @production_schema
 class ProductionViewSet(ApiModelViewSet):

@@ -18,7 +18,7 @@ from .serializers import PriceRankSerializer, PriceSerializer
 _TAG = "Pricing"
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:prices")
 @extend_schema(tags=[_TAG])
 @price_schema
 class PriceViewSet(ApiModelViewSet):
@@ -70,7 +70,7 @@ class PriceViewSet(ApiModelViewSet):
     search_fields = ["type", "visibility", "translations__description"]
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:price-ranks")
 @extend_schema(tags=[_TAG])
 @price_rank_schema
 class PriceRankViewSet(ApiModelViewSet):

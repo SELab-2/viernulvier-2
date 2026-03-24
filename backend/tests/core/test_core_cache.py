@@ -6,7 +6,7 @@ Covers three areas:
   cached, that write actions bypass the cache, and that cache entries are
   keyed per X-Api-Key and Accept-Language header.
 - ``connect_cache_invalidation``: verifies that post_save and post_delete
-  signals clear the cache for the affected resource.
+  signals invalidate cached responses for the affected resource.
 - ``delete_pattern`` fallback: verifies that the signal handler works
   correctly with both django-redis (delete_pattern) and LocMemCache (clear).
 """
@@ -14,7 +14,7 @@ Covers three areas:
 from unittest.mock import MagicMock, patch
 
 from django.core.cache import cache
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
@@ -24,6 +24,7 @@ from tests.factories.language import LanguageFactory
 
 PUB_KEY = "pub-cache-test-key"
 INT_KEY = "int-cache-test-key"
+LANGUAGES_CACHE_PREFIX = "api:languages"
 
 
 def pub_headers():
@@ -114,6 +115,7 @@ class TestConnectCacheInvalidation(TestCase):
         self.client = APIClient()
         Language.objects.all().delete()
         cache.clear()
+        connect_cache_invalidation(Language, LANGUAGES_CACHE_PREFIX)
 
     def test_post_save_invalidates_cached_list_response(self):
         LanguageFactory(code="nl", name="Dutch", is_active=True)
@@ -165,29 +167,46 @@ class TestConnectCacheInvalidation(TestCase):
 
 
 class TestCacheInvalidationHandler(TestCase):
-    """Tests that the signal handler clears the cache after model changes."""
+    """Tests the signal handler for both Redis and non-Redis cache backends."""
 
-    def test_post_save_clears_cache(self):
+    def test_post_save_uses_delete_pattern_when_available(self):
         mock_cache = MagicMock(spec=["delete_pattern"])
 
         with patch("apps.core.signals.cache", mock_cache):
-            connect_cache_invalidation(Language, "/api/v1/languages/")
+            connect_cache_invalidation(Language, LANGUAGES_CACHE_PREFIX)
+            post_save.send(sender=Language, instance=MagicMock(), created=True)
+
+        mock_cache.delete_pattern.assert_called_once_with(f"{LANGUAGES_CACHE_PREFIX}:*")
+
+    def test_post_delete_uses_delete_pattern_when_available(self):
+        mock_cache = MagicMock(spec=["delete_pattern"])
+
+        with patch("apps.core.signals.cache", mock_cache):
+            connect_cache_invalidation(Language, LANGUAGES_CACHE_PREFIX)
+            post_delete.send(sender=Language, instance=MagicMock())
+
+        mock_cache.delete_pattern.assert_called_once_with(f"{LANGUAGES_CACHE_PREFIX}:*")
+
+    def test_post_save_falls_back_to_clear_without_delete_pattern(self):
+        mock_cache = MagicMock(spec=["clear"])
+
+        with patch("apps.core.signals.cache", mock_cache):
+            connect_cache_invalidation(Language, LANGUAGES_CACHE_PREFIX)
             post_save.send(sender=Language, instance=MagicMock(), created=True)
 
         mock_cache.clear.assert_called_once()
 
-    def test_post_delete_clears_cache(self):
-        mock_cache = MagicMock(spec=["delete_pattern"])
+    def test_post_delete_falls_back_to_clear_without_delete_pattern(self):
+        mock_cache = MagicMock(spec=["clear"])
 
         with patch("apps.core.signals.cache", mock_cache):
-            connect_cache_invalidation(Language, "/api/v1/languages/")
-
+            connect_cache_invalidation(Language, LANGUAGES_CACHE_PREFIX)
             post_delete.send(sender=Language, instance=MagicMock())
 
         mock_cache.clear.assert_called_once()
 
     def test_handler_does_not_raise_on_current_backend(self):
-        connect_cache_invalidation(Language, "/api/v1/languages/")
+        connect_cache_invalidation(Language, LANGUAGES_CACHE_PREFIX)
 
         try:
             post_save.send(sender=Language, instance=MagicMock(), created=True)

@@ -16,7 +16,7 @@ from .serializers import GenreSerializer, GenreUseAsSerializer
 _TAG = "Genres"
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:genre_use_as")
 @extend_schema(tags=[_TAG])
 @genre_use_as_schema
 class GenreUseAsViewSet(ApiModelViewSet):
@@ -55,7 +55,7 @@ class GenreUseAsViewSet(ApiModelViewSet):
     search_fields = ["name"]
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:genres")
 @extend_schema(tags=[_TAG])
 @genre_schema
 class GenreViewSet(ApiModelViewSet):

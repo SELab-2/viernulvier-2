@@ -16,7 +16,7 @@ from .serializers import HallSerializer, LocationSerializer, SpaceSerializer
 _TAG = "Locations"
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:locations")
 @extend_schema(tags=[_TAG])
 @location_schema
 class LocationViewSet(ApiModelViewSet):
@@ -70,7 +70,7 @@ class LocationViewSet(ApiModelViewSet):
     search_fields = ["city", "country", "street", "translations__name"]
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:spaces")
 @extend_schema(tags=[_TAG])
 @space_schema
 class SpaceViewSet(ApiModelViewSet):
@@ -119,7 +119,7 @@ class SpaceViewSet(ApiModelViewSet):
     search_fields = ["translations__name"]
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:halls")
 @extend_schema(tags=[_TAG])
 @hall_schema
 class HallViewSet(ApiModelViewSet):

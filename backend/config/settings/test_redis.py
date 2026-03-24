@@ -1,5 +1,7 @@
 """Gives you a separate Redis-backed test mode for integration checks."""
 
+import os
+
 from .test import *  # noqa: F401, F403
 
 CACHES = {

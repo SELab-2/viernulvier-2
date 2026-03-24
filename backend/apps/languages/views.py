@@ -16,7 +16,7 @@ from .serializers import LanguageSerializer
 _TAG = "Languages"
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:languages")
 @extend_schema(tags=[_TAG])
 @language_schema
 class LanguageViewSet(ApiModelViewSet):

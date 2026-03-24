@@ -27,7 +27,7 @@ from .serializers import TagSerializer
 _TAG = "Tags"
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:tags")
 @extend_schema(tags=[_TAG])
 @tag_schema
 class TagViewSet(ApiModelViewSet):

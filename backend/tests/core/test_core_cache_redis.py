@@ -22,6 +22,7 @@ from django.core.cache import cache
 from django.test import override_settings
 from rest_framework.test import APIClient
 
+from apps.core.signals import connect_cache_invalidation
 from apps.languages.models import Language
 from tests.factories.language import LanguageFactory
 
@@ -29,6 +30,7 @@ pytestmark = [pytest.mark.redis, pytest.mark.django_db]
 
 PUB_KEY = "pub-cache-test-key"
 INT_KEY = "int-cache-test-key"
+LANGUAGES_CACHE_PREFIX = "api:languages"
 
 
 def pub_headers():
@@ -87,6 +89,8 @@ def test_cache_varies_on_accept_language_with_redis():
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 def test_cache_is_invalidated_after_model_change_with_redis():
     client = APIClient()
+
+    connect_cache_invalidation(Language, LANGUAGES_CACHE_PREFIX)
     Language.objects.all().delete()
     cache.clear()
 

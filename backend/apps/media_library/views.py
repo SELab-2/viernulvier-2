@@ -16,7 +16,7 @@ from .serializers import MediaGallerySerializer, MediaItemSerializer
 _TAG = "Media"
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:media-galleries")
 @extend_schema(tags=[_TAG])
 @media_gallery_schema
 class MediaGalleryViewSet(ApiModelViewSet):
@@ -60,7 +60,7 @@ class MediaGalleryViewSet(ApiModelViewSet):
     search_fields = ["name"]
 
 
-@cache_read_actions()
+@cache_read_actions(prefix="api:media-items")
 @extend_schema(tags=[_TAG])
 @media_item_schema
 class MediaItemViewSet(ApiModelViewSet):
