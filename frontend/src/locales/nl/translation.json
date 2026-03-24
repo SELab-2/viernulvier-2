@@ -17,6 +17,9 @@
     "view": "Bekijk",
     "imageAlt": "Afbeelding voor {{title}}"
   },
+  "genreChip": {
+    "filterByGenre": "Filter op {{genre}}"
+  },
   "events": {
     "title": "Evenementen",
     "listPlaceholder": "Lijst met evenementen wordt hier weergegeven.",

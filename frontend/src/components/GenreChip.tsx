@@ -19,7 +19,7 @@ export interface GenreChipProps {
  * @returns The chip element.
  */
 const GenreChip = ({ genre, selectedIds, onClick }: GenreChipProps) => {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const language = i18n.language
 
   const name = getTranslatedRecord(genre.name, language, genre.display_name)
@@ -29,7 +29,7 @@ const GenreChip = ({ genre, selectedIds, onClick }: GenreChipProps) => {
     <Button
       onClick={() => onClick(genre.id)}
       aria-pressed={isActive}
-      aria-label={`Filter by ${name}`}
+      aria-label={t('genreChip.filterByGenre', { genre: name })}
       sx={(theme) => ({
         flexShrink: 0,
         px: 2,

@@ -17,6 +17,9 @@
     "view": "View",
     "imageAlt": "Image for {{title}}"
   },
+  "genreChip": {
+    "filterByGenre": "Filter by {{genre}}"
+  },
   "events": {
     "title": "Events",
     "listPlaceholder": "Events list will be displayed here.",
