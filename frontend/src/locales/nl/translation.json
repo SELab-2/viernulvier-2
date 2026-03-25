@@ -25,7 +25,28 @@
     "listPlaceholder": "Lijst met producties wordt hier weergegeven.",
     "detailTitle": "Productie Detail",
     "detailPlaceholder": "Details van productie met ID {{id}} worden hier weergegeven.",
-    "backToProductions": "Terug naar Producties"
+    "backToProductions": "Terug naar Producties",
+    "detail": {
+      "meta": {
+        "period": "Periode",
+        "venues": "Locaties",
+        "genre": "Genre",
+        "type": "Type",
+        "performerType": "Uitvoering",
+        "group": "Groep",
+        "solo": "Solo",
+        "attendance": "Aanwezigheid",
+        "offline": "Fysiek",
+        "online": "Online"
+      },
+      "notFound": "Productie niet gevonden.",
+      "unknownProduction": "Onbekende productie",
+      "noDescription": "Geen beschrijving beschikbaar.",
+      "error": {
+        "invalidId": "Ongeldige productie-id",
+        "loadFailed": "Kon productie niet laden"
+      }
+    }
   },
   "notFound": {
     "code": "404",

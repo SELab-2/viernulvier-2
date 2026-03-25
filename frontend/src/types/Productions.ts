@@ -1,6 +1,7 @@
 import type { Genre } from './Genres'
 import type { Event } from './Events'
 import type { Tag } from './Tags'
+import { MediaGallery } from './Media'
 
 /** Valid attendance mode values. */
 export type AttendanceMode = 'offline' | 'online'
@@ -34,6 +35,7 @@ export interface Production {
   description: Record<string, string>
   tags: Tag[]
   genres: Genre[]
+  media_gallery: MediaGallery
   events?: Event[]
 }
 
