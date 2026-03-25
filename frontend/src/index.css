@@ -22,3 +22,105 @@ body {
   background: #f4f5f7;
   color: #1f1f1f;
 }
+
+.production-details-page {
+  font-family: 'ABC Monument Grotesk', 'Helvetica', 'Arial', sans-serif;
+  background-color: #fff;
+  color: #111;
+  min-height: 100vh;
+}
+
+.production-details-container {
+  display: grid;
+  grid-template-columns: 1.3fr minmax(320px, 460px);
+  gap: 0;
+  max-width: 1250px;
+  margin: 0 auto;
+  padding: 0 40px 60px;
+}
+
+.production-details-right {
+  max-width: 460px;
+}
+
+.production-details-left {
+  padding-right: 48px;
+  padding-top: 32px;
+}
+
+.production-details-right {
+  padding-top: 32px;
+  padding-left: 40px;
+}
+
+.meta-panel {
+  padding-top: 32px;
+  border-left: 1px solid #ebebeb;
+  padding-left: 40px;
+}
+
+.breadcrumbs {
+  padding-bottom: 12px;
+  font-size: 0.9rem;
+  color: #999;
+  border-bottom: 1px solid #ebebeb;
+  font-family: 'ABC Monument Grotesk', 'Helvetica', 'Arial', sans-serif;
+}
+
+.hero-image {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  background-color: #1a1a1a;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.production-description {
+  margin-top: 0;
+}
+
+.meta-panel {
+  padding-top: 32px;
+}
+@media (max-width: 900px) {
+  .production-details-container {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .production-details-left,
+  .production-details-right {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .production-details-right {
+    border-left: none;
+    border-top: 1px solid #ebebeb;
+    margin-top: 24px;
+    padding-top: 24px;
+  }
+
+  .production-details-page {
+    min-height: auto;
+  }
+
+  .meta-panel h1 {
+    font-size: 1.65rem;
+  }
+
+  .meta-panel {
+    padding-left: 0;
+  }
+
+  .production-details-left {
+    padding-top: 20px;
+    padding-right: 0;
+  }
+
+  .breadcrumbs button {
+    font-size: 0.85rem;
+  }
+}
+

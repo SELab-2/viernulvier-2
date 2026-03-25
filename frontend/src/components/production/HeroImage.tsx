@@ -6,6 +6,7 @@ interface HeroImageProps {
 export default function HeroImage({ title, imageUrl }: HeroImageProps) {
   return (
     <div
+      className="hero-image"
       style={{
         width: '100%',
         aspectRatio: '16/7',

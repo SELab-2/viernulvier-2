@@ -49,10 +49,9 @@ export default function MetaPanel({
 
   return (
     <div
+      className="meta-panel"
       style={{
         paddingTop: '32px',
-        borderLeft: '1px solid #ebebeb',
-        paddingLeft: '40px',
       }}
     >
       <h1

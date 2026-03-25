@@ -10,7 +10,7 @@ export default function Description({ teaser, description }: DescriptionProps) {
   const { t } = useTranslation()
 
   return (
-    <div>
+    <div className="production-description">
       {teaser && (
         <div
           style={{

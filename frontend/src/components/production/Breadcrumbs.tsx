@@ -25,6 +25,7 @@ export default function Breadcrumbs({ items, separator = ' / ' }: BreadcrumbsPro
 
   return (
     <div
+      className="breadcrumbs"
       style={{
         paddingBottom: '12px',
         fontSize: '0.90rem',

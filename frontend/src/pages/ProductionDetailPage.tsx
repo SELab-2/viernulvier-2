@@ -238,27 +238,10 @@ export default function ProductionDetailsPage({
   const allTags = [...tagLabels, ...(typeName ? [typeName] : []), ...genreLabels]
 
   return (
-    <div
-      style={{
-        fontFamily: "'Georgia', 'Times New Roman', serif",
-        backgroundColor: '#fff',
-        color: '#111',
-        minHeight: '100vh',
-      }}
-    >
-      {/* ── Main layout ── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1.3fr 360px',
-          gap: '0',
-          maxWidth: '1250px',
-          margin: '0 auto',
-          padding: '0 40px 60px',
-        }}
-      >
+    <div className="production-details-page">
+      <div className="production-details-container">
         {/* LEFT: Breadcrumb + Hero + Description */}
-        <div style={{ paddingRight: '48px', paddingTop: '32px' }}>
+        <div className="production-details-left">
           <Breadcrumbs
             items={[
               { label: 'Home', translationKey: 'nav.home', to: '/' },
@@ -271,18 +254,20 @@ export default function ProductionDetailsPage({
         </div>
 
         {/* RIGHT: Metadata panel */}
-        <MetaPanel
-          title={title}
-          tagline={tagline}
-          artistName={artistName}
-          dateRange={dateRange}
-          venues={venues}
-          genres={genres}
-          typeName={typeName}
-          performerType={production.performer_type}
-          attendanceMode={production.attendance_mode}
-          allTags={allTags}
-        />
+        <div className="production-details-right">
+          <MetaPanel
+            title={title}
+            tagline={tagline}
+            artistName={artistName}
+            dateRange={dateRange}
+            venues={venues}
+            genres={genres}
+            typeName={typeName}
+            performerType={production.performer_type}
+            attendanceMode={production.attendance_mode}
+            allTags={allTags}
+          />
+        </div>
       </div>
     </div>
   )
