@@ -1,5 +1,8 @@
+import { useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import Tag from '../Tag'
+
+import type { CSSProperties } from 'react'
 
 interface MetaPanelProps {
   title: string
@@ -12,9 +15,11 @@ interface MetaPanelProps {
   performerType: 'group' | 'solo' | ''
   attendanceMode: 'offline' | 'online' | ''
   allTags: string[]
+  style?: CSSProperties
 }
 
 function MetaRow({ label, value }: { label: string; value: string }) {
+  const theme = useTheme()
   if (!value) return null
   return (
     <div
@@ -23,12 +28,16 @@ function MetaRow({ label, value }: { label: string; value: string }) {
         gridTemplateColumns: '140px 1fr',
         gap: '8px',
         padding: '14px 0',
-        borderBottom: '1px solid #ebebeb',
+        borderBottom: `1px solid ${theme.palette.divider}`,
         alignItems: 'start',
       }}
     >
-      <span style={{ color: '#999', fontSize: '0.82rem', paddingTop: '2px' }}>{label}</span>
-      <span style={{ fontSize: '0.92rem', color: '#111', fontWeight: 500 }}>{value}</span>
+      <span style={{ color: theme.palette.text.secondary, fontSize: '0.82rem', paddingTop: '2px' }}>
+        {label}
+      </span>
+      <span style={{ fontSize: '0.92rem', color: theme.palette.text.primary, fontWeight: 500 }}>
+        {value}
+      </span>
     </div>
   )
 }
@@ -44,7 +53,9 @@ export default function MetaPanel({
   performerType,
   attendanceMode,
   allTags,
+  style,
 }: MetaPanelProps) {
+  const theme = useTheme()
   const { t } = useTranslation()
 
   return (
@@ -52,6 +63,9 @@ export default function MetaPanel({
       className="meta-panel"
       style={{
         paddingTop: '32px',
+        background: theme.palette.background.paper,
+        color: theme.palette.text.primary,
+        ...style,
       }}
     >
       <h1
@@ -70,7 +84,7 @@ export default function MetaPanel({
         <p
           style={{
             fontSize: '0.95rem',
-            color: '#666',
+            color: theme.palette.text.secondary,
             margin: '0 0 24px',
             fontStyle: 'italic',
           }}

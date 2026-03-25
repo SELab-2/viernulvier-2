@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import type { Production } from '../types/Productions'
 import type { Event } from '../types/Events'
@@ -139,6 +140,7 @@ export default function ProductionDetailsPage({
 }: ProductionDetailsPageProps) {
   const { id } = useParams()
   const navigate = useNavigate()
+  const theme = useTheme()
   const { i18n, t } = useTranslation()
   const lang = i18n.language
 
@@ -238,10 +240,22 @@ export default function ProductionDetailsPage({
   const allTags = [...tagLabels, ...(typeName ? [typeName] : []), ...genreLabels]
 
   return (
-    <div className="production-details-page">
-      <div className="production-details-container">
+    <div
+      className="production-details-page"
+      style={{
+        backgroundColor: theme.palette.background.default,
+        color: theme.palette.text.primary,
+      }}
+    >
+      <div
+        className="production-details-container"
+        style={{ backgroundColor: theme.palette.background.default }}
+      >
         {/* LEFT: Breadcrumb + Hero + Description */}
-        <div className="production-details-left">
+        <div
+          className="production-details-left"
+          style={{ backgroundColor: theme.palette.background.paper }}
+        >
           <Breadcrumbs
             items={[
               { label: 'Home', translationKey: 'nav.home', to: '/' },
@@ -252,9 +266,14 @@ export default function ProductionDetailsPage({
           <HeroImage title={title} imageUrl={heroImage ?? null} />
           <Description teaser={teaser} description={description} />
         </div>
-
         {/* RIGHT: Metadata panel */}
-        <div className="production-details-right">
+        <div
+          className="production-details-right"
+          style={{
+            backgroundColor: theme.palette.background.paper,
+            borderLeft: `1px solid ${theme.palette.divider}`,
+          }}
+        >
           <MetaPanel
             title={title}
             tagline={tagline}
@@ -266,6 +285,7 @@ export default function ProductionDetailsPage({
             performerType={production.performer_type}
             attendanceMode={production.attendance_mode}
             allTags={allTags}
+            style={{ borderLeft: 'none' }}
           />
         </div>
       </div>
