@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Footer from '../components/Footer'
 import i18n from '../i18n'
@@ -11,6 +11,13 @@ const renderFooter = () =>
   )
 
 describe('Footer', () => {
+  const initialLanguage = i18n.resolvedLanguage ?? i18n.language ?? 'nl'
+
+  afterEach(async () => {
+    cleanup()
+    await i18n.changeLanguage(initialLanguage)
+  })
+
   it('renders Dutch footer fields and navigation labels', async () => {
     await i18n.changeLanguage('nl')
     renderFooter()

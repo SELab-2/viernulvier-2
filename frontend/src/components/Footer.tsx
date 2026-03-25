@@ -1,5 +1,5 @@
 import { Box, Container, Link as MuiLink, Stack, Typography } from '@mui/material'
-import * as simpleIcons from 'simple-icons'
+import { siFacebook, siInstagram, siTiktok, siYoutube } from 'simple-icons'
 import { Link as RouterLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
@@ -13,17 +13,16 @@ type SocialIcon = {
   path: string
 }
 
-const SIMPLE_ICON_REGISTRY = simpleIcons as Record<string, SocialIcon>
-
-const getSimpleIcon = (iconName: string): SocialIcon | null =>
-  SIMPLE_ICON_REGISTRY[iconName] ?? null
-
 const SOCIAL_LINKS = [
-  { label: 'Facebook', href: '#', iconName: 'siFacebook' },
-  { label: 'Instagram', href: '#', iconName: 'siInstagram' },
-  { label: 'TikTok', href: '#', iconName: 'siTiktok' },
-  { label: 'YouTube', href: '#', iconName: 'siYoutube' },
-  { label: 'LinkedIn', href: '#', iconName: 'siLinkedin' },
+  { label: 'Facebook', href: 'https://www.facebook.com/VIERNULVIER.gent/', icon: siFacebook },
+  { label: 'Instagram', href: 'https://www.instagram.com/viernulvier.gent/', icon: siInstagram },
+  { label: 'TikTok', href: 'https://www.tiktok.com/@viernulvier.gent', icon: siTiktok },
+  {
+    label: 'YouTube',
+    href: 'https://www.youtube.com/channel/UCdRYlqUQcIm6pbLgHHobQcQ',
+    icon: siYoutube,
+  },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/viernulviergent', icon: null },
 ] as const
 
 const BrandIcon = ({ icon, size = 18 }: { icon: SocialIcon | null; size?: number }) =>
@@ -66,7 +65,7 @@ const Footer = () => {
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              sm: 'repeat(2, minmax(0, 1fr))',
+              sm: '1fr',
               md: 'repeat(3, minmax(0, 1fr))',
             },
             gap: { xs: 4, sm: 3, md: 4 },
@@ -77,24 +76,38 @@ const Footer = () => {
             sx={{
               width: '100%',
               display: 'flex',
-              justifyContent: { xs: 'flex-start', md: 'center' },
+              justifyContent: 'center',
             }}
           >
-            <Stack spacing={0.25} component="address" sx={{ fontStyle: 'normal' }}>
-              <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+            <Stack
+              spacing={0.25}
+              component="address"
+              sx={{
+                fontStyle: 'normal',
+                width: 'fit-content',
+                textAlign: { xs: 'center', md: 'left' },
+                alignItems: { xs: 'center', md: 'flex-start' },
+              }}
+            >
+              <Typography variant="body1" sx={{ lineHeight: 1.7, whiteSpace: 'nowrap' }}>
                 {t('footer.address.org')}
               </Typography>
-              <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              <Typography variant="body1" sx={{ lineHeight: 1.7, whiteSpace: 'nowrap' }}>
                 {t('footer.address.street')}
               </Typography>
-              <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              <Typography variant="body1" sx={{ lineHeight: 1.7, whiteSpace: 'nowrap' }}>
                 {t('footer.address.city')}
               </Typography>
               <MuiLink
                 href={`tel:${phone.replace(/[^+\d]/g, '')}`}
                 color="inherit"
                 underline="none"
-                sx={{ width: 'fit-content', lineHeight: 1.7, '&:hover': { opacity: 0.7 } }}
+                sx={{
+                  width: 'fit-content',
+                  lineHeight: 1.7,
+                  whiteSpace: 'nowrap',
+                  '&:hover': { opacity: 0.7 },
+                }}
               >
                 {phone}
               </MuiLink>
@@ -102,11 +115,16 @@ const Footer = () => {
                 href={`mailto:${email}`}
                 color="inherit"
                 underline="none"
-                sx={{ width: 'fit-content', lineHeight: 1.7, '&:hover': { opacity: 0.7 } }}
+                sx={{
+                  width: 'fit-content',
+                  lineHeight: 1.7,
+                  whiteSpace: 'nowrap',
+                  '&:hover': { opacity: 0.7 },
+                }}
               >
                 {email}
               </MuiLink>
-              <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              <Typography variant="body1" sx={{ lineHeight: 1.7, whiteSpace: 'nowrap' }}>
                 {t('footer.address.vat')}
               </Typography>
             </Stack>
@@ -115,23 +133,37 @@ const Footer = () => {
           <Box
             sx={{
               width: '100%',
-              display: 'flex',
-              justifyContent: { xs: 'flex-start', md: 'center' },
+              display: { xs: 'none', md: 'flex' },
+              justifyContent: 'center',
             }}
             component="nav"
             aria-label={t('footer.nav.ariaLabel')}
           >
-            <Stack component="ul" spacing={0.6} sx={{ m: 0, p: 0, listStyle: 'none' }}>
+            <Stack
+              component="ul"
+              spacing={0.6}
+              sx={{
+                m: 0,
+                p: 0,
+                listStyle: 'none',
+                width: '100%',
+                maxWidth: '12rem',
+                textAlign: { xs: 'center', md: 'left' },
+                alignItems: { xs: 'center', md: 'flex-start' },
+              }}
+            >
               {FOOTER_NAV_LINKS.map(({ labelKey, to }) => (
-                <Box component="li" key={to}>
+                <Box component="li" key={to} sx={{ display: 'flex', justifyContent: 'center' }}>
                   <MuiLink
                     component={RouterLink}
                     to={to}
                     color="inherit"
                     underline="none"
                     sx={{
-                      width: 'fit-content',
+                      width: '100%',
                       lineHeight: 1.7,
+                      whiteSpace: 'nowrap',
+                      textAlign: 'center',
                       transition: 'opacity 0.15s ease',
                       '&:hover': { opacity: 0.65 },
                     }}
@@ -147,15 +179,17 @@ const Footer = () => {
             sx={{
               width: '100%',
               display: 'flex',
-              justifyContent: { xs: 'flex-start', md: 'center' },
+              justifyContent: 'center',
             }}
           >
             <Stack spacing={2} sx={{ alignItems: 'center' }}>
-              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-                {SOCIAL_LINKS.map(({ label, href, iconName }) => (
+              <Stack direction="row" spacing={1} sx={{ flexWrap: 'nowrap' }}>
+                {SOCIAL_LINKS.map(({ label, href, icon }) => (
                   <MuiLink
                     key={label}
                     href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     aria-label={label}
                     underline="none"
                     sx={{
@@ -171,13 +205,15 @@ const Footer = () => {
                       '&:hover': { bgcolor: '#333333' },
                     }}
                   >
-                    <BrandIcon icon={getSimpleIcon(iconName)} size={18} />
+                    <BrandIcon icon={icon} size={18} />
                   </MuiLink>
                 ))}
               </Stack>
 
               <MuiLink
-                href="#"
+                href="https://www.viernulvier.gent/nl/newsletter-inschrijven-q1lr"
+                target="_blank"
+                rel="noopener noreferrer"
                 underline="none"
                 sx={{
                   display: 'inline-block',
