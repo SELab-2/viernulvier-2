@@ -5,15 +5,17 @@ import type { Production } from '../types/Productions'
 import type { Event } from '../types/Events'
 import type { Genre } from '../types/Genres'
 import type { Tag as TagType } from '../types/Tags'
-import Tag from '../components/Tag'
 import LoadingSpinner from '../components/LoadingSpinner'
+import Breadcrumbs from '../components/production/Breadcrumbs'
+import HeroImage from '../components/production/HeroImage'
+import Description from '../components/production/Description'
+import MetaPanel from '../components/production/MetaPanel'
 import { getProduction } from '../services/productions/Productions'
-import sanitizeHtml from '../utils/SanitizeHtml'
 
-// TODO: evenementen tonen
-// TODO: media tonen
+// TODO: evenementen tonen (aparte component ?)
+// TODO: media tonen (aparte component ?)
 // TODO: check tags
-// TODO: andere producties in reeks tonen
+// TODO: andere producties in reeks tonen (aparte component ?)
 // TODO: gsm view
 
 // ---- Helpers ----
@@ -59,12 +61,20 @@ function formatDate(dateStr?: string | null): string {
  */
 function getDateRange(events?: Event[] | null): string {
   const list = (events || []).filter((e) => !!e.starts_at) as Event[]
-  if (!list.length) return ''
+
+  if (!list.length) {
+    return ''
+  }
+
   const dates = list.map((e) => new Date(e.starts_at as string).getTime()).sort((a, b) => a - b)
   const first = new Date(dates[0])
   const last = new Date(dates[dates.length - 1])
-  if (first.toDateString() === last.toDateString()) return formatDate(list[0].starts_at)
-  return `${formatDate(first.toString())} – ${formatDate(last.toString())}`
+
+  if (first.toDateString() === last.toDateString()) {
+    return formatDate(list[0].starts_at)
+  }
+
+  return `${formatDate(first.toString())} - ${formatDate(last.toString())}`
 }
 
 /**
@@ -114,27 +124,6 @@ function getProductionHeroImageUrl(production: Production): string | null {
   }
 
   return null
-}
-
-// Sub-components
-
-function MetaRow({ label, value }: { label: string; value: string }) {
-  if (!value) return null
-  return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '140px 1fr',
-        gap: '8px',
-        padding: '14px 0',
-        borderBottom: '1px solid #ebebeb',
-        alignItems: 'start',
-      }}
-    >
-      <span style={{ color: '#999', fontSize: '0.82rem', paddingTop: '2px' }}>{label}</span>
-      <span style={{ fontSize: '0.92rem', color: '#111', fontWeight: 500 }}>{value}</span>
-    </div>
-  )
 }
 
 // Main Component
@@ -270,204 +259,30 @@ export default function ProductionDetailsPage({
       >
         {/* LEFT: Breadcrumb + Hero + Description */}
         <div style={{ paddingRight: '48px', paddingTop: '32px' }}>
-          {/* Breadcrumb */}
-          <div
-            style={{
-              paddingBottom: '12px',
-              fontSize: '0.90rem',
-              color: '#999',
-              borderBottom: '1px solid #ebebeb',
-              fontFamily: "'Helvetica Neue', Arial, sans-serif",
-            }}
-          >
-            <button
-              onClick={() => navigate('/')}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                margin: 0,
-                color: '#999',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                font: 'inherit',
-              }}
-            >
-              {t('nav.home')}
-            </button>
-            {' / '}
-            <button
-              onClick={() => navigate('/productions')}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                margin: 0,
-                color: '#999',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                font: 'inherit',
-              }}
-            >
-              {t('productions.title')}
-            </button>
-            {' / '}
-            <span style={{ color: '#111' }}>{title}</span>
-          </div>
-
-          {/* Hero image */}
-          <div
-            style={{
-              width: '100%',
-              aspectRatio: '16/7',
-              backgroundColor: '#1a1a1a',
-              borderRadius: '4px',
-              overflow: 'hidden',
-              marginBottom: '32px',
-            }}
-          >
-            {heroImage ? (
-              <img
-                src={heroImage}
-                alt={title}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  background: 'linear-gradient(135deg, #1a1a1a 0%, #333 100%)',
-                }}
-              />
-            )}
-          </div>
-
-          <div>
-            {teaser && (
-              <div
-                style={{
-                  fontSize: '1.05rem',
-                  lineHeight: 1.7,
-                  color: '#333',
-                  fontStyle: 'italic',
-                  marginBottom: '20px',
-                }}
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(teaser) }}
-              />
-            )}
-            {description ? (
-              <div
-                style={{
-                  fontSize: '0.95rem',
-                  lineHeight: 1.8,
-                  color: '#444',
-                }}
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(description) }}
-              />
-            ) : (
-              <p
-                style={{
-                  fontSize: '0.9rem',
-                  color: '#bbb',
-                  fontStyle: 'italic',
-                  fontFamily: 'sans-serif',
-                }}
-              >
-                {t('productions.detail.noDescription', 'No description available.')}
-              </p>
-            )}
-          </div>
+          <Breadcrumbs
+            items={[
+              { label: 'Home', translationKey: 'nav.home', to: '/' },
+              { label: 'Producties', translationKey: 'productions.title', to: '/productions' },
+              { label: title },
+            ]}
+          />
+          <HeroImage title={title} imageUrl={heroImage ?? null} />
+          <Description teaser={teaser} description={description} />
         </div>
 
         {/* RIGHT: Metadata panel */}
-        <div
-          style={{
-            paddingTop: '32px',
-            borderLeft: '1px solid #ebebeb',
-            paddingLeft: '40px',
-          }}
-        >
-          {/* Title block */}
-          <h1
-            style={{
-              fontSize: '2rem',
-              fontWeight: 700,
-              lineHeight: 1.15,
-              margin: '0 0 8px',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            {title}
-          </h1>
-
-          {(tagline || artistName) && (
-            <p
-              style={{
-                fontSize: '0.95rem',
-                color: '#666',
-                margin: '0 0 24px',
-                fontStyle: 'italic',
-              }}
-            >
-              {tagline || artistName}
-            </p>
-          )}
-
-          <div style={{ borderTop: '1px solid #ebebeb', marginBottom: '4px' }} />
-
-          {/* Meta rows */}
-          <div style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
-            {dateRange && (
-              <MetaRow label={t('productions.detail.meta.period', 'Periode')} value={dateRange} />
-            )}
-            {venues && (
-              <MetaRow label={t('productions.detail.meta.venues', 'Locaties')} value={venues} />
-            )}
-            {genres && (
-              <MetaRow label={t('productions.detail.meta.genre', 'Genre')} value={genres} />
-            )}
-            {typeName && (
-              <MetaRow label={t('productions.detail.meta.type', 'Type')} value={typeName} />
-            )}
-            <MetaRow
-              label={t('productions.detail.meta.performerType', 'Uitvoering')}
-              value={
-                production.performer_type === 'group'
-                  ? t('productions.detail.meta.group', 'Groep')
-                  : production.performer_type === 'solo'
-                    ? t('productions.detail.meta.solo', 'Solo')
-                    : ''
-              }
-            />
-            <MetaRow
-              label={t('productions.detail.meta.attendance', 'Aanwezigheid')}
-              value={
-                production.attendance_mode === 'offline'
-                  ? t('productions.detail.meta.offline', 'Fysiek')
-                  : production.attendance_mode === 'online'
-                    ? t('productions.detail.meta.online', 'Online')
-                    : ''
-              }
-            />
-          </div>
-
-          {/* Tags */}
-          {allTags.length > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '8px',
-                marginTop: '28px',
-              }}
-            >
-              {allTags.map((tag, i) => (
-                <Tag key={i} tagName={tag} context="description" />
-              ))}
-            </div>
-          )}
-        </div>
+        <MetaPanel
+          title={title}
+          tagline={tagline}
+          artistName={artistName}
+          dateRange={dateRange}
+          venues={venues}
+          genres={genres}
+          typeName={typeName}
+          performerType={production.performer_type}
+          attendanceMode={production.attendance_mode}
+          allTags={allTags}
+        />
       </div>
     </div>
   )
