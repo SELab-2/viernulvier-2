@@ -80,7 +80,7 @@ const renderListCard = (props: {
   production: Production
   pathname?: string
   hall?: Hall | null
-  starts_at?: string | null
+  startsAt?: string | null
   selectedGenreIds?: number[]
   onGenreClick?: (id: number) => void
 }) => {
@@ -88,7 +88,7 @@ const renderListCard = (props: {
     production,
     pathname = '/production/1',
     hall,
-    starts_at,
+    startsAt,
     selectedGenreIds = [],
     onGenreClick = jest.fn(),
   } = props
@@ -98,7 +98,7 @@ const renderListCard = (props: {
       production={production}
       pathname={pathname}
       hall={hall}
-      starts_at={starts_at}
+      startsAt={startsAt}
       selectedGenreIds={selectedGenreIds}
       onGenreClick={onGenreClick}
     />
@@ -224,22 +224,22 @@ describe('ListCard', () => {
     expect(screen.getByAltText('Fallback image')).toBeInTheDocument()
   })
 
-  it('shows formatted start date when starts_at is set', () => {
+  it('shows formatted start date when startsAt is set', () => {
     const production = baseProduction()
-    renderListCard({ production, starts_at: '2026-03-20T18:30:00.000Z' })
+    renderListCard({ production, startsAt: '2026-03-20T18:30:00.000Z' })
 
     expect(screen.getByText(/maart|March/)).toBeInTheDocument()
     expect(screen.getByText(/2026/)).toBeInTheDocument()
   })
 
-  it('does not show the date row when starts_at is null', () => {
+  it('does not show the date row when startsAt is null', () => {
     const production = baseProduction()
-    renderListCard({ production, starts_at: null })
+    renderListCard({ production, startsAt: null })
 
     expect(screen.queryByText(/2026/)).not.toBeInTheDocument()
   })
 
-  it('does not show the date row when starts_at is omitted', () => {
+  it('does not show the date row when startsAt is omitted', () => {
     const production = baseProduction()
     renderListCard({ production })
 
@@ -271,7 +271,7 @@ describe('ListCard', () => {
     const production = baseProduction()
     renderListCard({
       production,
-      starts_at: '2026-06-01T20:00:00.000Z',
+      startsAt: '2026-06-01T20:00:00.000Z',
       hall: hallWithLocation('Campus 404'),
     })
 
@@ -329,7 +329,7 @@ describe('ListCard', () => {
   it('formats the date for the active locale (en)', async () => {
     await i18n.changeLanguage('en')
     const production = baseProduction()
-    renderListCard({ production, starts_at: '2026-03-20T18:30:00.000Z' })
+    renderListCard({ production, startsAt: '2026-03-20T18:30:00.000Z' })
 
     expect(screen.getByText(/March/)).toBeInTheDocument()
     expect(screen.getByText(/2026/)).toBeInTheDocument()
@@ -337,7 +337,7 @@ describe('ListCard', () => {
 
   it('shows only the date row when there is a start time but no hall', () => {
     const production = baseProduction()
-    renderListCard({ production, starts_at: '2026-01-10T12:00:00.000Z', hall: undefined })
+    renderListCard({ production, startsAt: '2026-01-10T12:00:00.000Z', hall: undefined })
 
     expect(screen.getByText(/2026/)).toBeInTheDocument()
     expect(screen.queryByText('Campus 404')).not.toBeInTheDocument()
@@ -351,9 +351,9 @@ describe('ListCard', () => {
     expect(screen.queryByText(/2026/)).not.toBeInTheDocument()
   })
 
-  it('does not show the date row when starts_at is an empty string', () => {
+  it('does not show the date row when startsAt is an empty string', () => {
     const production = baseProduction()
-    renderListCard({ production, starts_at: '' })
+    renderListCard({ production, startsAt: '' })
 
     expect(screen.queryByText(/2026/)).not.toBeInTheDocument()
   })

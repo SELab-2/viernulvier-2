@@ -15,7 +15,7 @@ export interface ListCardProps {
   production: Production
   pathname: string
   hall?: Hall | null
-  starts_at?: string | null
+  startsAt?: string | null
   selectedGenreIds: number[]
   onGenreClick: (genreId: number) => void
 }
@@ -31,7 +31,7 @@ export interface ListCardProps {
  * @param props.production Full API payload (title, artist, media gallery, genres, etc.).
  * @param props.pathname Client route for the view button (e.g. production or event detail path).
  * @param props.hall Optional {@link Hall}; when set, shows a venue line via {@link getLocationName}.
- * @param props.starts_at Optional ISO start time for the listing; falsy values hide the date row.
+ * @param props.startsAt Optional ISO start time for the listing; falsy values hide the date row.
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
  * @param props.onGenreClick Called with a genre id when that chip is pressed.
  * @returns The list row element.
@@ -40,7 +40,7 @@ const ListCard = ({
   production,
   pathname,
   hall,
-  starts_at,
+  startsAt,
   selectedGenreIds,
   onGenreClick,
 }: ListCardProps) => {
@@ -108,7 +108,7 @@ const ListCard = ({
             spacing={1.5}
             sx={{ color: 'text.secondary', justifyContent: 'flex-start', alignItems: 'center' }}
           >
-            {starts_at ? (
+            {startsAt ? (
               <Stack
                 direction="row"
                 spacing={0.75}
@@ -117,7 +117,7 @@ const ListCard = ({
               >
                 <DateRangeOutlinedIcon sx={{ fontSize: '1rem', flexShrink: 0 }} />
                 <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
-                  {formatDate(starts_at, language)}
+                  {formatDate(startsAt, language)}
                 </Typography>
               </Stack>
             ) : null}
