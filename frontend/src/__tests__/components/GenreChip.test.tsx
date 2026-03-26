@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactElement } from 'react'
 import { I18nextProvider } from 'react-i18next'
@@ -120,9 +120,9 @@ describe('GenreChip', () => {
     renderChip(<GenreChip genre={baseGenre({ id: 99 })} selectedIds={[]} onClick={onClick} />)
 
     const button = screen.getByRole('button')
-    await act(async () => {
-      button.focus()
-    })
+    await user.tab()
+    expect(button).toHaveFocus()
+
     await user.keyboard('{Enter}')
     expect(onClick).toHaveBeenCalledWith(99)
 
