@@ -1,5 +1,6 @@
-import type { Genre } from './Genres'
 import type { Event } from './Events'
+import type { Genre } from './Genres'
+import type { MediaGallery } from './Media'
 import type { Tag } from './Tags'
 import { MediaGallery } from './Media'
 
@@ -24,6 +25,7 @@ export interface Production {
   id: number
   attendance_mode: AttendanceMode | ''
   performer_type: PerformerType | ''
+  media_gallery: MediaGallery | null
   uit_database_theme: ProductionClassification | null
   uit_database_type: ProductionClassification | null
   display_title: string | null
