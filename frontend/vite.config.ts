@@ -3,6 +3,9 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'process.env.VITE_PUBLIC_API_KEY': JSON.stringify(process.env.VITE_PUBLIC_API_KEY ?? ''),
+  },
   server: {
     proxy: {
       '/api': {
