@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import App from '../App'
 import '../i18n'
 
@@ -9,10 +9,12 @@ describe('App', () => {
 
   it('renders navigation', () => {
     render(<App />)
+    const mainNav = screen.getByRole('list', { name: 'Hoofdnavigatie' })
+
     expect(screen.getByAltText('Viernulvier logo')).toBeInTheDocument()
-    expect(screen.getByText('Archief')).toBeInTheDocument()
-    expect(screen.getByText('Reeksen')).toBeInTheDocument()
-    expect(screen.getByText('Artiesten')).toBeInTheDocument()
+    expect(within(mainNav).getByRole('link', { name: 'Archief' })).toBeInTheDocument()
+    expect(within(mainNav).getByRole('link', { name: 'Reeksen' })).toBeInTheDocument()
+    expect(within(mainNav).getByRole('link', { name: 'Artiesten' })).toBeInTheDocument()
   })
 
   it('renders not found page on unknown route', () => {
