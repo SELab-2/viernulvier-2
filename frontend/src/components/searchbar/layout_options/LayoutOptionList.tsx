@@ -4,7 +4,7 @@ import LayoutOption from './LayoutOption'
 
 // This represents a layout option in the search bar, e.g. "Grid" or "List".
 interface LayoutOptionListProps {
-  layout_options: { name: string; displayName: string }[]
+  layout_options: { name: string }[]
   selected_layout: string
   onLayoutChange: (tag: string) => void
 }
@@ -22,7 +22,6 @@ const LayoutOptionList: React.FC<LayoutOptionListProps> = ({
         <LayoutOption
           key={layout.name}
           name={layout.name}
-          displayName={layout.displayName}
           selected={selected_layout === layout.name}
           onSelected={onLayoutChange}
         />

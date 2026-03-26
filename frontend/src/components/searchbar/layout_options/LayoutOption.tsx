@@ -1,22 +1,23 @@
 import { Chip, useTheme } from '@mui/material'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 // This represents a single tag chip in the search bar, e.g. "Theater", "Concert", etc.
 interface LayoutOptionProps {
   name: string
-  displayName: string
   selected: boolean
   onSelected: (tag: string) => void
 }
 
 // This component renders a single tag chip based on the provided props.
-const LayoutOption: React.FC<LayoutOptionProps> = ({ name, displayName, selected, onSelected }) => {
+const LayoutOption: React.FC<LayoutOptionProps> = ({ name, selected, onSelected }) => {
   const theme = useTheme()
+  const t = useTranslation().t
 
   return (
     <Chip
       key={name}
-      label={displayName}
+      label={t(`searchbar.layout.${name}`)}
       clickable
       onClick={() => onSelected(name)}
       sx={

@@ -14,7 +14,19 @@
     "switchToDarkMode": "Light mode"
   },
   "searchbar": {
-    "search": "Search"
+    "search": "Search",
+    "period": {
+      "label": "Period",
+      "from_x": "From {{date}} on",
+      "to_x": "Up to {{date}}",
+      "from_label": "From",
+      "to_label": "To",
+      "all": "All"
+    },
+    "layout": {
+      "list": "List",
+      "grid": "Grid"
+    }
   },
   "events": {
     "title": "Events",

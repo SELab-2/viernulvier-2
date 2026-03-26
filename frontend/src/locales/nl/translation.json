@@ -14,7 +14,19 @@
     "switchToDarkMode": "Lichte modus"
   },
   "searchbar": {
-    "search": "Zoeken"
+    "search": "Zoeken",
+    "period": {
+      "label": "Periode",
+      "from_x": "Vanaf {{date}}",
+      "to_x": "Tot en met {{date}}",
+      "from_label": "Van",
+      "to_label": "Tot",
+      "all": "Alles"
+    },
+    "layout": {
+      "list": "Lijst",
+      "grid": "Raster"
+    }
   },
   "events": {
     "title": "Evenementen",

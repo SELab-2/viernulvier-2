@@ -1,13 +1,30 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import SearchBar, { FilteredSearchBarProps } from '../../components/searchbar/FilteredSearchBar'
+import i18n from '../../i18n'
+import { I18nextProvider, initReactI18next } from 'react-i18next'
+
+i18n.use(initReactI18next).init({
+  lng: 'nl',
+  resources: {
+    nl: {
+      translation: {
+        'searchbar.layout.grid': 'Raster',
+        'searchbar.layout.list': 'Lijst',
+        'searchbar.period.label': 'Periode',
+      },
+    },
+  },
+})
 
 const renderSearchBar = (props: FilteredSearchBarProps) => {
   const theme = createTheme() // You can customize the theme as needed
   return render(
-    <ThemeProvider theme={theme}>
-      <SearchBar {...props} />
-    </ThemeProvider>,
+    <I18nextProvider i18n={i18n}>
+      <ThemeProvider theme={theme}>
+        <SearchBar {...props} />
+      </ThemeProvider>
+    </I18nextProvider>,
   )
 }
 
@@ -15,25 +32,14 @@ describe('SearchBar', () => {
   const mockOnSearchChange = jest.fn()
   const mockOnTagToggle = jest.fn()
   const mockOnLayoutChange = jest.fn()
-  const mockOnPeriodChange = jest.fn()
   const mockOnHallChange = jest.fn()
+  const mockSetPeriod = jest.fn()
 
   const props = {
     placeholder: 'Search...',
     searchValue: '',
     onSearchChange: mockOnSearchChange,
     filters: [
-      {
-        name: 'period',
-        displayName: 'Periode',
-        options: [
-          { name: 'all', displayName: 'Alle' },
-          { name: '2025', displayName: '2025' },
-          { name: '2026', displayName: '2026' },
-        ],
-        value: 'all',
-        onChange: mockOnPeriodChange,
-      },
       {
         name: 'hall',
         displayName: 'Zalen',
@@ -46,17 +52,16 @@ describe('SearchBar', () => {
         onChange: mockOnHallChange,
       },
     ],
+    period: { fromDate: null, toDate: null },
+    setPeriod: mockSetPeriod,
     tags: [
       { name: 'theatre', displayName: 'Theater' },
       { name: 'dance', displayName: 'Dans' },
     ],
     selectedTags: [],
     onTagToggle: mockOnTagToggle,
-    layoutOptions: [
-      { name: 'grid', displayName: 'Raster' },
-      { name: 'list', displayName: 'Lijst' },
-    ],
-    currentLayout: 'grid',
+    layoutOptions: [{ name: 'grid' }, { name: 'list' }],
+    currentLayout: 'list',
     onLayoutChange: mockOnLayoutChange,
   }
 
@@ -75,8 +80,8 @@ describe('SearchBar', () => {
 
   it('renders all filters', () => {
     renderSearchBar(props)
-    expect(screen.getByText('Periode:')).toBeInTheDocument()
-    expect(screen.getByText('Zalen:')).toBeInTheDocument()
+    expect(screen.getByLabelText('Periode')).toBeInTheDocument()
+    expect(screen.getByLabelText('Zalen')).toBeInTheDocument()
   })
 
   it('toggles tags when clicked', () => {

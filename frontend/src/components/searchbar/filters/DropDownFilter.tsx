@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, FormControl, Select, MenuItem, useTheme } from '@mui/material'
+import { Box, FormControl, Select, MenuItem, useTheme, InputLabel } from '@mui/material'
 
 // This represents a single option in a filter dropdown, e.g. "2020" in the "Period" filter.
 interface FilterOption {
@@ -29,17 +29,16 @@ const DropDownFilter: React.FC<DropDownFilterProps> = ({
 
   return (
     <Box key={name} sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 160 }}>
-      <Box component="span" sx={{ whiteSpace: 'nowrap', fontSize: '0.85rem', fontWeight: 500 }}>
-        {`${displayName}:`}
-      </Box>
       <FormControl
         sx={{
           flex: 1,
           '& .MuiInputBase-root': { height: 40, backgroundColor: theme.palette.background.default },
         }}
-        className="search-bar-select"
       >
+        <InputLabel id={`${name}-label`}>{displayName}</InputLabel>
         <Select
+          labelId={`${name}-label`}
+          label={displayName}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           displayEmpty={false}
