@@ -11,6 +11,7 @@ import Breadcrumbs from '../components/production/Breadcrumbs'
 import HeroImage from '../components/production/HeroImage'
 import Description from '../components/production/Description'
 import MetaPanel from '../components/production/MetaPanel'
+import MediaList from '../components/production/MediaList'
 import { getProduction } from '../services/productions/Productions'
 
 // TODO: evenementen tonen (aparte component ?)
@@ -289,6 +290,12 @@ export default function ProductionDetailsPage({
           />
         </div>
       </div>
+
+      {production.media_gallery?.media_items?.length > 0 && (
+        <div style={{ padding: '0 16px 32px' }}>
+          <MediaList mediaItems={production.media_gallery.media_items} />
+        </div>
+      )}
     </div>
   )
 }
