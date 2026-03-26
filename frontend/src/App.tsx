@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
+import { useMemo, useState } from 'react'
 import Router from './router'
 
 const STORAGE_KEY = 'vnv-theme-mode'
@@ -19,6 +19,10 @@ const App = () => {
       createTheme({
         palette: {
           mode,
+          accent: {
+            main: '#8224E3',
+            contrastText: '#ffffff',
+          },
         },
         typography: {
           fontFamily: ['ABC Monument Grotesk', 'Helvetica', 'Arial', 'sans-serif'].join(','),
