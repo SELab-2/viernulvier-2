@@ -20,6 +20,7 @@
     "@mui/system": "^7.3.9",
     "@mui/x-date-pickers": "^8.27.2",
     "axios": "^1.13.6",
+    "dayjs": "^1.11.20",
     "i18next": "^25.10.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
