@@ -119,9 +119,29 @@ export default function EventsList({ events }: EventsListProps) {
               </Stack>
 
               {/* Prices summary chips + expand toggle */}
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0, ml: 2 }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                sx={{ flexShrink: 0, ml: 2, minWidth: 0, maxWidth: { xs: '140px', sm: '220px', md: '280px' } }}
+              >
                 {hasPrices && (
-                  <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    flexWrap="nowrap"
+                    sx={{
+                      display: { xs: 'none', sm: 'flex' },
+                      width: '100%',
+                      overflowX: 'auto',
+                      pr: 0.5,
+                      '&::-webkit-scrollbar': { height: 4 },
+                      '&::-webkit-scrollbar-thumb': {
+                        backgroundColor: 'rgba(0,0,0,0.2)',
+                        borderRadius: '2px',
+                      },
+                    }}
+                  >
                     {event.prices.map((p) => (
                       <Chip
                         key={p.id}
@@ -129,7 +149,7 @@ export default function EventsList({ events }: EventsListProps) {
                         label={`${Number(p.amount).toFixed(2)}`}
                         size="small"
                         variant="outlined"
-                        sx={{ fontSize: '0.75rem', height: 24 }}
+                        sx={{ fontSize: '0.75rem', height: 24, whiteSpace: 'nowrap' }}
                       />
                     ))}
                   </Stack>

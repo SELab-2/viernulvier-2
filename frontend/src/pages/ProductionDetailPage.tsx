@@ -278,17 +278,6 @@ export default function ProductionDetailsPage({
           />
           <HeroImage title={title} imageUrl={heroImage ?? null} />
           <Description teaser={teaser} description={description} />
-
-          <Box sx={(theme) => ({ mt: 3, p: 2, border: `1px solid ${theme.palette.divider}`, borderRadius: '4px' })}>
-            <Typography
-              variant="subtitle1"
-              fontWeight={600}
-              sx={{ mb: 1, color: theme.palette.text.primary }}
-            >
-              {t('productions.detail.events', 'Events')}
-            </Typography>
-            <EventsList events={events} />
-          </Box>
         </div>
         {/* RIGHT: Metadata panel */}
         <div
@@ -311,6 +300,16 @@ export default function ProductionDetailsPage({
             allTags={allTags}
             style={{ borderLeft: 'none' }}
           />
+          <Box sx={(theme) => ({ mt: 3, p: 2, border: `1px solid ${theme.palette.divider}`, borderRadius: '4px' })}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={600}
+              sx={{ mb: 1, color: theme.palette.text.primary }}
+            >
+              {t('productions.detail.events', 'Events')}
+            </Typography>
+            <EventsList events={events} />
+          </Box>
         </div>
       </div>
 
