@@ -40,7 +40,7 @@ const DropDownFilter: React.FC<DropDownFilterProps> = ({
           labelId={`${name}-label`}
           label={displayName}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(String(e.target.value))}
           displayEmpty={false}
           sx={{ minWidth: 120 }}
         >

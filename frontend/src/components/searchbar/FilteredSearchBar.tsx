@@ -15,7 +15,7 @@ export interface FilteredSearchBarProps {
   filters: DropDownFilterProps[]
   period?: DateRange
   setPeriod?: (period: DateRange) => void
-  tags: { name: string; displayName: string }[]
+  tags: { display_name: string; name: Record<string, string> }[]
   selectedTags: string[]
   onTagToggle: (tag: string) => void
   layoutOptions: { name: string }[]
@@ -90,28 +90,13 @@ const FilteredSearchBar: React.FC<FilteredSearchBarProps> = ({
           </Button>
         </Box>
       </Box>
-
-      <Box
-        display="flex"
-        flexWrap="wrap"
-        justifyContent="space-between"
-        alignItems="center"
-        mt={2}
-        gap={1}
-      >
-        <Box sx={{ flex: '1 1 200px', minWidth: 120 }}>
-          <TagList tags={tags} selectedTags={selectedTags} onTagToggle={onTagToggle} />
-        </Box>
-
-        {layoutOptions.length > 1 && (
-          <Box sx={{ flex: '0 0 auto', mt: { xs: 1, sm: 0 } }}>
-            <LayoutOptionList
-              layout_options={layoutOptions}
-              selected_layout={currentLayout}
-              onLayoutChange={onLayoutChange}
-            />
-          </Box>
-        )}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+        <TagList tags={tags} selectedTags={selectedTags} onTagToggle={onTagToggle} />
+        <LayoutOptionList
+          layoutOptions={layoutOptions}
+          selectedLayout={currentLayout}
+          onLayoutChange={onLayoutChange}
+        />
       </Box>
     </Box>
   )

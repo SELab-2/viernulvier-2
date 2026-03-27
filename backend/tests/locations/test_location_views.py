@@ -118,7 +118,7 @@ class TestLocationViewSetPrefetch(TestCase):
 
     def test_location_list_bounded_queries(self):
         with CaptureQueriesContext(connection) as ctx:
-            response = self.client.get("/api/locations/?ordering=id", **pub_headers())
+            response = self.client.get("/api/v1/locations/?ordering=id", **pub_headers())
 
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(results_list(response)), 5)
@@ -141,7 +141,7 @@ class TestHallViewSetPrefetch(TestCase):
 
     def test_hall_list_bounded_queries(self):
         with CaptureQueriesContext(connection) as ctx:
-            response = self.client.get("/api/halls/?ordering=id", **pub_headers())
+            response = self.client.get("/api/v1/halls/?ordering=id", **pub_headers())
 
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(results_list(response)), 4)
@@ -163,24 +163,24 @@ class TestLocationViewSet(TestCase):
         self.location = LocationFactory()
 
     def test_list_public(self):
-        response = self.client.get("/api/locations/?ordering=id", **pub_headers())
+        response = self.client.get("/api/v1/locations/?ordering=id", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_internal(self):
-        response = self.client.get("/api/locations/?ordering=id", **int_headers())
+        response = self.client.get("/api/v1/locations/?ordering=id", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_without_auth(self):
-        response = self.client.get("/api/locations/")
+        response = self.client.get("/api/v1/locations/")
         self.assertEqual(response.status_code, 401)
 
     def test_retrieve_public(self):
-        response = self.client.get(f"/api/locations/{self.location.id}/", **pub_headers())
+        response = self.client.get(f"/api/v1/locations/{self.location.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.location.id)
 
     def test_retrieve_wrong_key(self):
-        response = self.client.get(f"/api/locations/{self.location.id}/", **wrong_headers())
+        response = self.client.get(f"/api/v1/locations/{self.location.id}/", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     def test_create_internal(self):
@@ -194,7 +194,7 @@ class TestLocationViewSet(TestCase):
             "phone_2": "",
             "is_own_location": True,
         }
-        response = self.client.post("/api/locations/", payload, format="json", **int_headers())
+        response = self.client.post("/api/v1/locations/", payload, format="json", **int_headers())
         self.assertEqual(response.status_code, 201)
         self.assertTrue(Location.objects.filter(city="Gent", street="Main").exists())
 
@@ -206,7 +206,7 @@ class TestLocationViewSet(TestCase):
             "city": "Gent",
             "country": "Belgium",
         }
-        response = self.client.post("/api/locations/", payload, format="json", **pub_headers())
+        response = self.client.post("/api/v1/locations/", payload, format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_update_internal(self):
@@ -218,7 +218,7 @@ class TestLocationViewSet(TestCase):
             "country": "Belgium",
         }
         response = self.client.put(
-            f"/api/locations/{self.location.id}/",
+            f"/api/v1/locations/{self.location.id}/",
             payload,
             format="json",
             **int_headers(),
@@ -228,7 +228,7 @@ class TestLocationViewSet(TestCase):
         self.assertEqual(self.location.street, "Updated")
 
     def test_delete_internal(self):
-        response = self.client.delete(f"/api/locations/{self.location.id}/", **int_headers())
+        response = self.client.delete(f"/api/v1/locations/{self.location.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
         self.assertFalse(Location.objects.filter(id=self.location.id).exists())
 
@@ -248,18 +248,18 @@ class TestSpaceViewSet(TestCase):
         self.space = SpaceFactory()
 
     def test_list_public(self):
-        response = self.client.get("/api/spaces/?ordering=id", **pub_headers())
+        response = self.client.get("/api/v1/spaces/?ordering=id", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_public(self):
-        response = self.client.get(f"/api/spaces/{self.space.id}/", **pub_headers())
+        response = self.client.get(f"/api/v1/spaces/{self.space.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["location"]["id"], self.space.location.id)
 
     def test_create_internal(self):
         location = LocationFactory()
         response = self.client.post(
-            "/api/spaces/",
+            "/api/v1/spaces/",
             {"location_id": location.id},
             format="json",
             **int_headers(),
@@ -270,7 +270,7 @@ class TestSpaceViewSet(TestCase):
     def test_update_internal(self):
         other_location = LocationFactory()
         response = self.client.patch(
-            f"/api/spaces/{self.space.id}/",
+            f"/api/v1/spaces/{self.space.id}/",
             {"location_id": other_location.id},
             format="json",
             **int_headers(),
@@ -280,7 +280,7 @@ class TestSpaceViewSet(TestCase):
         self.assertEqual(self.space.location, other_location)
 
     def test_delete_internal(self):
-        response = self.client.delete(f"/api/spaces/{self.space.id}/", **int_headers())
+        response = self.client.delete(f"/api/v1/spaces/{self.space.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
         self.assertFalse(Space.objects.filter(id=self.space.id).exists())
 
@@ -300,18 +300,18 @@ class TestHallViewSet(TestCase):
         self.hall = HallFactory()
 
     def test_list_public(self):
-        response = self.client.get("/api/halls/?ordering=id", **pub_headers())
+        response = self.client.get("/api/v1/halls/?ordering=id", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_public(self):
-        response = self.client.get(f"/api/halls/{self.hall.id}/", **pub_headers())
+        response = self.client.get(f"/api/v1/halls/{self.hall.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["space"]["id"], self.hall.space.id)
 
     def test_create_internal(self):
         space = SpaceFactory()
         response = self.client.post(
-            "/api/halls/",
+            "/api/v1/halls/",
             {"space_id": space.id, "seat_selection": True, "open_seating": False},
             format="json",
             **int_headers(),
@@ -321,7 +321,7 @@ class TestHallViewSet(TestCase):
 
     def test_update_internal(self):
         response = self.client.patch(
-            f"/api/halls/{self.hall.id}/",
+            f"/api/v1/halls/{self.hall.id}/",
             {"seat_selection": True},
             format="json",
             **int_headers(),
@@ -331,6 +331,6 @@ class TestHallViewSet(TestCase):
         self.assertTrue(self.hall.seat_selection)
 
     def test_delete_internal(self):
-        response = self.client.delete(f"/api/halls/{self.hall.id}/", **int_headers())
+        response = self.client.delete(f"/api/v1/halls/{self.hall.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
         self.assertFalse(Hall.objects.filter(id=self.hall.id).exists())

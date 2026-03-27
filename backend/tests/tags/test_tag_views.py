@@ -3,12 +3,12 @@ Tests for apps/tags/views.py - TagViewSet
 
 Covers:
 - ViewSet inherits from ApiModelViewSet
-- GET  /api/tags/        - public key ✓, internal key ✓ (OR logic)
-- GET  /api/tags/<id>/   - public key ✓, internal key ✓ (OR logic)
-- POST /api/tags/        - internal key ✓, public key ✗
-- PUT  /api/tags/<id>/   - internal key ✓, public key ✗
-- PATCH /api/tags/<id>/  - internal key ✓, public key ✗
-- DELETE /api/tags/<id>/ - internal key ✓, public key ✗
+- GET  /api/v1/tags/        - public key ✓, internal key ✓ (OR logic)
+- GET  /api/v1/tags/<id>/   - public key ✓, internal key ✓ (OR logic)
+- POST /api/v1/tags/        - internal key ✓, public key ✗
+- PUT  /api/v1/tags/<id>/   - internal key ✓, public key ✗
+- PATCH /api/v1/tags/<id>/  - internal key ✓, public key ✗
+- DELETE /api/v1/tags/<id>/ - internal key ✓, public key ✗
 - All methods rejected without auth header
 - All methods rejected with a completely wrong key
 - Response structure / fields
@@ -97,7 +97,7 @@ class TestTagViewSetPrefetch(TestCase):
 
     def test_list_prefetches_translations_bounded_queries(self):
         with CaptureQueriesContext(connection) as ctx:
-            response = self.client.get("/api/tags/?ordering=id", **pub_headers())
+            response = self.client.get("/api/v1/tags/?ordering=id", **pub_headers())
 
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(results_list(response)), 6)
@@ -105,7 +105,7 @@ class TestTagViewSetPrefetch(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/tags/  - list
+# GET /api/v1/tags/  - list
 # ---------------------------------------------------------------------------
 
 
@@ -118,29 +118,29 @@ class TestTagViewSetList(TestCase):
         self.tag_b = TagFactory.create(type="theme")
 
     def test_list_with_public_key_returns_200(self):
-        response = self.client.get("/api/tags/", **pub_headers())
+        response = self.client.get("/api/v1/tags/", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_with_internal_key_also_returns_200(self):
-        response = self.client.get("/api/tags/", **int_headers())
+        response = self.client.get("/api/v1/tags/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_returns_all_tags_with_public_key(self):
-        response = self.client.get("/api/tags/", **pub_headers())
+        response = self.client.get("/api/v1/tags/", **pub_headers())
         results = response.data.get("results", response.data)
         ids = [item["id"] for item in results]
         self.assertIn(self.tag_a.id, ids)
         self.assertIn(self.tag_b.id, ids)
 
     def test_list_returns_all_tags_with_internal_key(self):
-        response = self.client.get("/api/tags/", **int_headers())
+        response = self.client.get("/api/v1/tags/", **int_headers())
         results = response.data.get("results", response.data)
         ids = [item["id"] for item in results]
         self.assertIn(self.tag_a.id, ids)
         self.assertIn(self.tag_b.id, ids)
 
     def test_list_response_has_correct_fields(self):
-        response = self.client.get("/api/tags/", **pub_headers())
+        response = self.client.get("/api/v1/tags/", **pub_headers())
         results = response.data.get("results", response.data)
         item = results[0]
         for field in (
@@ -158,16 +158,16 @@ class TestTagViewSetList(TestCase):
             self.assertIn(field, item)
 
     def test_list_without_auth_returns_401(self):
-        response = self.client.get("/api/tags/")
+        response = self.client.get("/api/v1/tags/")
         self.assertEqual(response.status_code, 401)
 
     def test_list_with_wrong_key_returns_401(self):
-        response = self.client.get("/api/tags/", **wrong_headers())
+        response = self.client.get("/api/v1/tags/", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
 
 # ---------------------------------------------------------------------------
-# GET /api/tags/<id>/  - retrieve
+# GET /api/v1/tags/<id>/  - retrieve
 # ---------------------------------------------------------------------------
 
 
@@ -178,27 +178,27 @@ class TestTagViewSetRetrieve(TestCase):
         self.tag = TagFactory.create(type="genre")
 
     def test_retrieve_with_public_key_returns_200(self):
-        response = self.client.get(f"/api/tags/{self.tag.id}/", **pub_headers())
+        response = self.client.get(f"/api/v1/tags/{self.tag.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_with_internal_key_returns_200(self):
-        response = self.client.get(f"/api/tags/{self.tag.id}/", **int_headers())
+        response = self.client.get(f"/api/v1/tags/{self.tag.id}/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_returns_correct_tag(self):
-        response = self.client.get(f"/api/tags/{self.tag.id}/", **pub_headers())
+        response = self.client.get(f"/api/v1/tags/{self.tag.id}/", **pub_headers())
         self.assertEqual(str(response.data["id"]), str(self.tag.id))
 
     def test_retrieve_without_auth_returns_401(self):
-        response = self.client.get(f"/api/tags/{self.tag.id}/")
+        response = self.client.get(f"/api/v1/tags/{self.tag.id}/")
         self.assertEqual(response.status_code, 401)
 
     def test_retrieve_with_wrong_key_returns_401(self):
-        response = self.client.get(f"/api/tags/{self.tag.id}/", **wrong_headers())
+        response = self.client.get(f"/api/v1/tags/{self.tag.id}/", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
     def test_retrieve_nonexistent_returns_404(self):
-        response = self.client.get("/api/tags/00000000-0000-0000-0000-000000000000/", **int_headers())
+        response = self.client.get("/api/v1/tags/00000000-0000-0000-0000-000000000000/", **int_headers())
         self.assertEqual(response.status_code, 404)
 
     def test_retrieve_includes_translations(self):
@@ -209,13 +209,13 @@ class TestTagViewSetRetrieve(TestCase):
             name="Genre",
             url_title="genre",
         )
-        response = self.client.get(f"/api/tags/{self.tag.id}/", **pub_headers())
+        response = self.client.get(f"/api/v1/tags/{self.tag.id}/", **pub_headers())
         self.assertIsInstance(response.data["name"], dict)
         self.assertIn("nl", response.data["name"])
 
 
 # ---------------------------------------------------------------------------
-# POST /api/tags/  - create
+# POST /api/v1/tags/  - create
 # ---------------------------------------------------------------------------
 
 
@@ -232,28 +232,28 @@ class TestTagViewSetCreate(TestCase):
         }
 
     def test_create_with_internal_key_returns_201(self):
-        response = self.client.post("/api/tags/", self.payload, format="json", **int_headers())
+        response = self.client.post("/api/v1/tags/", self.payload, format="json", **int_headers())
         self.assertEqual(response.status_code, 201)
 
     def test_create_with_internal_key_persists_to_db(self):
-        self.client.post("/api/tags/", self.payload, format="json", **int_headers())
+        self.client.post("/api/v1/tags/", self.payload, format="json", **int_headers())
         self.assertTrue(Tag.objects.filter(type="mood").exists())
 
     def test_create_with_public_key_returns_403(self):
-        response = self.client.post("/api/tags/", self.payload, format="json", **pub_headers())
+        response = self.client.post("/api/v1/tags/", self.payload, format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_create_without_auth_returns_401(self):
-        response = self.client.post("/api/tags/", self.payload, format="json")
+        response = self.client.post("/api/v1/tags/", self.payload, format="json")
         self.assertEqual(response.status_code, 401)
 
     def test_create_with_wrong_key_returns_401(self):
-        response = self.client.post("/api/tags/", self.payload, format="json", **wrong_headers())
+        response = self.client.post("/api/v1/tags/", self.payload, format="json", **wrong_headers())
         self.assertEqual(response.status_code, 401)
 
 
 # ---------------------------------------------------------------------------
-# PUT /api/tags/<id>/  - full update
+# PUT /api/v1/tags/<id>/  - full update
 # ---------------------------------------------------------------------------
 
 
@@ -271,25 +271,25 @@ class TestTagViewSetUpdate(TestCase):
         }
 
     def test_put_with_internal_key_returns_200(self):
-        response = self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json", **int_headers())
+        response = self.client.put(f"/api/v1/tags/{self.tag.id}/", self.payload, format="json", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_put_with_internal_key_updates_db(self):
-        self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json", **int_headers())
+        self.client.put(f"/api/v1/tags/{self.tag.id}/", self.payload, format="json", **int_headers())
         self.tag.refresh_from_db()
         self.assertEqual(self.tag.type, "updated-genre")
 
     def test_put_with_public_key_returns_403(self):
-        response = self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json", **pub_headers())
+        response = self.client.put(f"/api/v1/tags/{self.tag.id}/", self.payload, format="json", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_put_without_auth_returns_401(self):
-        response = self.client.put(f"/api/tags/{self.tag.id}/", self.payload, format="json")
+        response = self.client.put(f"/api/v1/tags/{self.tag.id}/", self.payload, format="json")
         self.assertEqual(response.status_code, 401)
 
 
 # ---------------------------------------------------------------------------
-# PATCH /api/tags/<id>/  - partial update
+# PATCH /api/v1/tags/<id>/  - partial update
 # ---------------------------------------------------------------------------
 
 
@@ -301,7 +301,7 @@ class TestTagViewSetPartialUpdate(TestCase):
 
     def test_patch_with_internal_key_returns_200(self):
         response = self.client.patch(
-            f"/api/tags/{self.tag.id}/",
+            f"/api/v1/tags/{self.tag.id}/",
             {"is_enabled": False},
             format="json",
             **int_headers(),
@@ -310,7 +310,7 @@ class TestTagViewSetPartialUpdate(TestCase):
 
     def test_patch_with_internal_key_updates_field(self):
         self.client.patch(
-            f"/api/tags/{self.tag.id}/",
+            f"/api/v1/tags/{self.tag.id}/",
             {"is_enabled": False},
             format="json",
             **int_headers(),
@@ -320,7 +320,7 @@ class TestTagViewSetPartialUpdate(TestCase):
 
     def test_patch_with_public_key_returns_403(self):
         response = self.client.patch(
-            f"/api/tags/{self.tag.id}/",
+            f"/api/v1/tags/{self.tag.id}/",
             {"is_enabled": False},
             format="json",
             **pub_headers(),
@@ -328,12 +328,12 @@ class TestTagViewSetPartialUpdate(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_patch_without_auth_returns_401(self):
-        response = self.client.patch(f"/api/tags/{self.tag.id}/", {"is_enabled": False}, format="json")
+        response = self.client.patch(f"/api/v1/tags/{self.tag.id}/", {"is_enabled": False}, format="json")
         self.assertEqual(response.status_code, 401)
 
 
 # ---------------------------------------------------------------------------
-# DELETE /api/tags/<id>/  - destroy
+# DELETE /api/v1/tags/<id>/  - destroy
 # ---------------------------------------------------------------------------
 
 
@@ -344,25 +344,25 @@ class TestTagViewSetDelete(TestCase):
 
     def test_delete_with_internal_key_returns_204(self):
         tag = TagFactory.create(type="genre")
-        response = self.client.delete(f"/api/tags/{tag.id}/", **int_headers())
+        response = self.client.delete(f"/api/v1/tags/{tag.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
 
     def test_delete_with_internal_key_removes_from_db(self):
         tag = TagFactory.create(type="genre")
-        self.client.delete(f"/api/tags/{tag.id}/", **int_headers())
+        self.client.delete(f"/api/v1/tags/{tag.id}/", **int_headers())
         self.assertFalse(Tag.objects.filter(id=tag.id).exists())
 
     def test_delete_with_public_key_returns_403(self):
         tag = TagFactory.create(type="genre")
-        response = self.client.delete(f"/api/tags/{tag.id}/", **pub_headers())
+        response = self.client.delete(f"/api/v1/tags/{tag.id}/", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_delete_without_auth_returns_401(self):
         tag = TagFactory.create(type="genre")
-        response = self.client.delete(f"/api/tags/{tag.id}/")
+        response = self.client.delete(f"/api/v1/tags/{tag.id}/")
         self.assertEqual(response.status_code, 401)
 
     def test_delete_with_wrong_key_returns_401(self):
         tag = TagFactory.create(type="genre")
-        response = self.client.delete(f"/api/tags/{tag.id}/", **wrong_headers())
+        response = self.client.delete(f"/api/v1/tags/{tag.id}/", **wrong_headers())
         self.assertEqual(response.status_code, 401)

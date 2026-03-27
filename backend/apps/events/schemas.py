@@ -1,28 +1,16 @@
 """
 OpenAPI schema decorators for the Events app.
-
-Keeping all drf-spectacular annotations here means views.py stays focused
-on routing logic only. Each action is defined as a private variable and
-assembled into a single ``extend_schema_view`` decorator at the bottom of
-the file.
-
-An event is a scheduled occurrence of a production in a specific hall.
-Each event carries zero or more ``EventPrice`` entries that define capacity
-and pricing per price rank.
 """
 
-from drf_spectacular.utils import (
-    OpenApiExample,
-    extend_schema,
-    extend_schema_view,
-)
+from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 
 from apps.core.openapi import (
+    DELETE_ERRORS,
+    ITEM_ERRORS,
+    MUTATE_ERRORS,
+    READ_ERRORS,
     RESPONSE_204_DELETED,
-    RESPONSE_400,
-    RESPONSE_401,
-    RESPONSE_403,
-    RESPONSE_404,
+    WRITE_ERRORS,
 )
 
 from .serializers import EventSerializer
@@ -119,34 +107,6 @@ _EVENT_RESPONSE = OpenApiExample(
                 "amount": "18.00",
                 "available": 120,
             },
-            {
-                "id": 102,
-                "event": 42,
-                "price": {
-                    "id": 2,
-                    "type": "student",
-                    "visibility": "public",
-                    "membership": "",
-                    "minimum": None,
-                    "maximum": None,
-                    "step": None,
-                    "sort_order": 2,
-                    "cineville_box": False,
-                    "description": {"nl": "Student", "en": "Student", "fr": "Étudiant"},
-                    "display_description": "Student",
-                },
-                "price_rank": {
-                    "id": 2,
-                    "position": 2,
-                    "sold_out_buffer": 0,
-                    "description": {"nl": "Laat", "en": "Late", "fr": "Tardif"},
-                    "display_description": "Late",
-                },
-                "price_rank_display": "Late",
-                "price_display": "Student",
-                "amount": "12.00",
-                "available": 40,
-            },
         ],
     },
     response_only=True,
@@ -204,65 +164,6 @@ _EVENT_PARTIAL_INPUT = OpenApiExample(
 
 
 # ===========================================================================
-# EventPrice - examples
-# ===========================================================================
-
-_EVENT_PRICE_RESPONSE = OpenApiExample(
-    "EventPrice - response",
-    summary="A single price entry for an event",
-    value={
-        "id": 101,
-        "event": 42,
-        "price": {
-            "id": 1,
-            "type": "standard",
-            "visibility": "public",
-            "membership": "",
-            "minimum": None,
-            "maximum": None,
-            "step": None,
-            "sort_order": 1,
-            "cineville_box": False,
-            "description": {"nl": "Standaard", "en": "Standard", "fr": "Standard"},
-            "display_description": "Standard",
-        },
-        "price_rank": {
-            "id": 1,
-            "position": 1,
-            "sold_out_buffer": 0,
-            "description": {"nl": "Normaal", "en": "Regular", "fr": "Normal"},
-            "display_description": "Regular",
-        },
-        "price_rank_display": "Regular",
-        "price_display": "Standard",
-        "amount": "18.00",
-        "available": 120,
-    },
-    response_only=True,
-)
-
-_EVENT_PRICE_INPUT = OpenApiExample(
-    "EventPrice - request body",
-    summary="Payload for creating an event price",
-    value={
-        "event": 42,
-        "price": 1,
-        "price_rank": 1,
-        "amount": "18.00",
-        "available": 120,
-    },
-    request_only=True,
-)
-
-_EVENT_PRICE_PARTIAL_INPUT = OpenApiExample(
-    "EventPrice - partial request body",
-    summary="Only the fields you want to change",
-    value={"available": 80},
-    request_only=True,
-)
-
-
-# ===========================================================================
 # Event - per-action schemas
 # ===========================================================================
 
@@ -275,11 +176,7 @@ _EVENT_LIST = extend_schema(
         "Events without a hall assignment (`hall: null`) represent online or "
         "location-independent occurrences."
     ),
-    responses={
-        200: EventSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={200: EventSerializer, **READ_ERRORS},
     examples=[_EVENT_RESPONSE, _EVENT_NO_HALL_RESPONSE],
 )
 
@@ -289,12 +186,7 @@ _EVENT_RETRIEVE = extend_schema(
         "Returns the full representation of a single **Event** identified by its "
         "primary key, including all nested ``EventPrice`` entries."
     ),
-    responses={
-        200: EventSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: EventSerializer, **ITEM_ERRORS},
     examples=[_EVENT_RESPONSE],
 )
 
@@ -304,20 +196,14 @@ _EVENT_CREATE = extend_schema(
         "Creates a new **Event** for an existing production.\n\n"
         "- `production_id` is required (integer FK).\n"
         "- `hall_id` is optional (integer FK); omit or set to `null` for online events.\n"
-        "- `ends_at` must be strictly later than `starts_at` - the API enforces "
-        "  this with a database-level check constraint.\n"
+        "- `ends_at` must be strictly later than `starts_at`.\n"
         "- Prices must be added separately via the **Event Price** endpoints "
-        "  after creation.\n\n"
+        "after creation.\n\n"
         "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=EventSerializer,
-    responses={
-        201: EventSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={201: EventSerializer, **WRITE_ERRORS},
     examples=[_EVENT_INPUT, _EVENT_RESPONSE],
 )
 
@@ -325,17 +211,11 @@ _EVENT_UPDATE = extend_schema(
     summary="Replace an event",
     description=(
         "Fully replaces an existing **Event**. All writable fields must be supplied.\n\n"
-        "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n> "
-        "**Requires an internal API key.**"
+        "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n"
+        "> **Requires an internal API key.**"
     ),
     request=EventSerializer,
-    responses={
-        200: EventSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: EventSerializer, **MUTATE_ERRORS},
     examples=[_EVENT_INPUT, _EVENT_RESPONSE],
 )
 
@@ -348,13 +228,7 @@ _EVENT_PARTIAL_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=EventSerializer,
-    responses={
-        200: EventSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: EventSerializer, **MUTATE_ERRORS},
     examples=[_EVENT_PARTIAL_INPUT, _EVENT_RESPONSE],
 )
 
@@ -366,12 +240,7 @@ _EVENT_DESTROY = extend_schema(
         "(cascade). This action is irreversible.\n\n"
         "> **Requires an internal API key.**"
     ),
-    responses={
-        204: RESPONSE_204_DELETED,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={204: RESPONSE_204_DELETED, **DELETE_ERRORS},
 )
 
 

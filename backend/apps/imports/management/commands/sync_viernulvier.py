@@ -32,6 +32,7 @@ from apps.imports.scrapers.viernulvier import (
     normalize_performer_type,
     normalize_url,
     sync_media_item_crops,
+    sync_media_item_gallery_links,
     sync_viernulvier,
 )
 from apps.locations.models import (
@@ -383,7 +384,9 @@ EVENT_PRICE_CONFIG = ModelSyncConfig(
 
 # ---------------------------------------------------------------------------
 # Sync steps - order matters: leaf models (no FKs) must come first.
-# media_item_crops runs after media_items (depends on them existing in the DB).
+# media_item_crops depends on media_items via FK. In full runs this naturally
+# follows media_items; in crops-only filtered runs, missing media_items are
+# upserted on demand by crop-sync dependency handling.
 # ---------------------------------------------------------------------------
 
 SYNC_STEPS = [
@@ -405,7 +408,7 @@ SYNC_STEPS = [
 ]
 
 # Steps handled by custom functions rather than the generic sync_viernulvier()
-CUSTOM_STEPS = {"media_item_crops"}
+CUSTOM_STEPS = {"media_item_gallery_links", "media_item_crops"}
 
 ALL_STEP_NAMES = [name for name, *_ in SYNC_STEPS] + sorted(CUSTOM_STEPS)
 
@@ -483,6 +486,7 @@ class Command(BaseCommand):
             (name, model, config, endpoint) for name, model, config, endpoint in SYNC_STEPS if only is None or name == only
         ]
         run_crops = only is None or only == "media_item_crops"
+        run_gallery_links = only is None or only == "media_item_gallery_links"
 
         if dry_run:
             self.stdout.write(self.style.WARNING("DRY RUN - nothing will be written\n"))
@@ -513,6 +517,25 @@ class Command(BaseCommand):
                 elapsed = time.monotonic() - step_start
                 self.stdout.write(self.style.ERROR(f"✗ FAILED after {elapsed:.1f}s: {exc}"))
 
+        if run_gallery_links:
+            self.stdout.write("-> media_item_gallery_links ", ending="")
+            self.stdout.flush()
+            step_start = time.monotonic()
+            try:
+                saved = sync_media_item_gallery_links(
+                    dry_run=dry_run,
+                    etag_cache=etag_cache,
+                    on_progress=self._make_progress_callback("media_item_gallery_links"),
+                    params=params,
+                )
+                elapsed = time.monotonic() - step_start
+                total_saved += saved
+                label = "would change" if dry_run else "media items"
+                self.stdout.write(self.style.SUCCESS(f"✓ {saved} {label} ({elapsed:.1f}s)"))
+            except Exception as exc:
+                elapsed = time.monotonic() - step_start
+                self.stdout.write(self.style.ERROR(f"✗ FAILED after {elapsed:.1f}s: {exc}"))
+
         if run_crops:
             self.stdout.write("-> media_item_crops ", ending="")
             self.stdout.flush()
@@ -521,6 +544,7 @@ class Command(BaseCommand):
                 saved = sync_media_item_crops(
                     dry_run=dry_run,
                     on_progress=self._make_progress_callback("media_item_crops"),
+                    params=params,
                 )
                 elapsed = time.monotonic() - step_start
                 total_saved += saved

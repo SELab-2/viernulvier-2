@@ -1,5 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+// Mock useTranslation to avoid i18n warning in tests
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ i18n: { language: 'nl' } }),
+}))
 import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { MemoryRouter } from 'react-router-dom'
 import SearchBar, { FilteredSearchBarProps } from '../../components/searchbar/FilteredSearchBar'
 import i18n from '../../i18n'
 import { I18nextProvider, initReactI18next } from 'react-i18next'
@@ -20,11 +25,13 @@ i18n.use(initReactI18next).init({
 const renderSearchBar = (props: FilteredSearchBarProps) => {
   const theme = createTheme() // You can customize the theme as needed
   return render(
-    <I18nextProvider i18n={i18n}>
-      <ThemeProvider theme={theme}>
-        <SearchBar {...props} />
-      </ThemeProvider>
-    </I18nextProvider>,
+    <MemoryRouter>
+      <I18nextProvider i18n={i18n}>
+        <ThemeProvider theme={theme}>
+          <SearchBar {...props} />
+        </ThemeProvider>
+      </I18nextProvider>
+    </MemoryRouter>,
   )
 }
 
@@ -55,8 +62,8 @@ describe('SearchBar', () => {
     period: { fromDate: null, toDate: null },
     setPeriod: mockSetPeriod,
     tags: [
-      { name: 'theatre', displayName: 'Theater' },
-      { name: 'dance', displayName: 'Dans' },
+      { display_name: 'Theater', name: { nl: 'Theater', en: 'Theatre' } },
+      { display_name: 'Dans', name: { nl: 'Dans', en: 'Dance' } },
     ],
     selectedTags: [],
     onTagToggle: mockOnTagToggle,
@@ -71,10 +78,11 @@ describe('SearchBar', () => {
   })
 
   it('calls onSearchChange when input value changes', () => {
-    renderSearchBar(props)
+    renderSearchBar({ ...props, searchValue: '' })
     const input = screen.getByPlaceholderText('Search...')
-
     fireEvent.change(input, { target: { value: 'new value' } })
+    // Simulate controlled input by rerendering with new value
+    renderSearchBar({ ...props, searchValue: 'new value' })
     expect(mockOnSearchChange).toHaveBeenCalledWith('new value')
   })
 
@@ -86,15 +94,18 @@ describe('SearchBar', () => {
 
   it('toggles tags when clicked', () => {
     renderSearchBar(props)
-    const tag1 = screen.getByText('Theater')
-    const tag2 = screen.getByText('Dans')
-
-    fireEvent.click(tag1)
-    expect(mockOnTagToggle).toHaveBeenCalledWith('theatre')
-    fireEvent.click(tag2)
-    expect(mockOnTagToggle).toHaveBeenCalledWith('dance')
-    fireEvent.click(tag1)
-    expect(mockOnTagToggle).toHaveBeenCalledWith('theatre')
+    // Find all tag buttons and match by text
+    const tagButtons = screen.getAllByRole('button')
+    const tag1 = tagButtons.find((btn) => btn.textContent?.includes('Theater'))
+    const tag2 = tagButtons.find((btn) => btn.textContent?.includes('Dans'))
+    expect(tag1).toBeTruthy()
+    expect(tag2).toBeTruthy()
+    fireEvent.click(tag1!)
+    expect(mockOnTagToggle).toHaveBeenCalledWith('Theater')
+    fireEvent.click(tag2!)
+    expect(mockOnTagToggle).toHaveBeenCalledWith('Dans')
+    fireEvent.click(tag1!)
+    expect(mockOnTagToggle).toHaveBeenCalledWith('Theater')
   })
 
   it('displays the current layout', () => {

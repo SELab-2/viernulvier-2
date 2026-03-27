@@ -19,12 +19,12 @@ class URLTests(TestCase):
 
     def test_health_url_resolves(self):
         """Health endpoint resolves to the correct view"""
-        resolver = resolve("/health")
+        resolver = resolve("/health/")
         self.assertEqual(resolver.func, health)
 
     def test_health_endpoint_returns_response(self):
         """Health endpoint returns 200"""
-        response = self.client.get("/health")
+        response = self.client.get("/health/")
         self.assertEqual(response.status_code, 200)
 
     def test_admin_url_exists(self):
@@ -34,7 +34,7 @@ class URLTests(TestCase):
 
     def test_api_urls_included(self):
         """API route exists (basic check)"""
-        response = self.client.get("/api/")
+        response = self.client.get("/api/v1/")
         self.assertNotEqual(response.status_code, 404)
 
     def test_debug_toolbar_urls_not_included_in_production(self):

@@ -158,10 +158,10 @@ class TestMediaGalleryViewSet(TestCase):
         MediaGallery.objects.all().delete()
 
     def list_url(self):
-        return reverse("media-gallery-list")
+        return reverse("v1:media-gallery-list")
 
     def detail_url(self, pk):
-        return reverse("media-gallery-detail", kwargs={"pk": pk})
+        return reverse("v1:media-gallery-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -225,10 +225,10 @@ class TestMediaItemViewSet(TestCase):
         MediaItem.objects.all().delete()
 
     def list_url(self):
-        return reverse("media-item-list")
+        return reverse("v1:media-item-list")
 
     def detail_url(self, pk):
-        return reverse("media-item-detail", kwargs={"pk": pk})
+        return reverse("v1:media-item-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())

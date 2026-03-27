@@ -1,10 +1,10 @@
 import React from 'react'
 import { Box } from '@mui/material'
-import Tag from './Tag'
+import Tag from '../../Tag'
 
 // This represents the list of tags in the search bar, e.g. "Theater", "Concert", etc.
 interface TagListProps {
-  tags: { name: string; displayName: string }[]
+  tags: { display_name: string; name: Record<string, string> }[]
   selectedTags: string[]
   onTagToggle: (tag: string) => void
 }
@@ -16,10 +16,10 @@ const TagList: React.FC<TagListProps> = ({ tags, selectedTags, onTagToggle }) =>
     <Box display="flex" gap={1} flexWrap="wrap">
       {tags.map((tag) => (
         <Tag
-          key={tag.name}
-          name={tag.name}
-          displayName={tag.displayName}
-          selected={selectedTags.includes(tag.name)}
+          key={tag.display_name}
+          tagName={tag.display_name}
+          labels={tag.name}
+          selected={selectedTags.includes(tag.display_name)}
           onTagToggle={onTagToggle}
         />
       ))}

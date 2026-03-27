@@ -1,3 +1,8 @@
 # Environment variables
 infrastructure/.env.*
 !infrastructure/.env.*.example
+
+# Virtual environment
+/venv/
+venv/
+./venv/

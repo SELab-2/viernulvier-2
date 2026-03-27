@@ -156,7 +156,10 @@ class TestProductionSerializerScalarFields(TestCase):
         gallery = MediaGalleryFactory.create()
         production = ProductionFactory.create(media_gallery=gallery)
         data = ProductionSerializer(production).data
-        self.assertEqual(data["media_gallery"], {"id": 1, "name": "Gallery_456", "media_items": []})
+        self.assertEqual(
+            data["media_gallery"],
+            {"id": gallery.pk, "name": gallery.name, "media_items": []},
+        )
 
     def test_serializes_null_media_gallery_correctly(self):
         production = ProductionFactory.create(media_gallery=None)

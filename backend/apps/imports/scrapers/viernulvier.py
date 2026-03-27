@@ -53,6 +53,7 @@ __all__ = [
     "RateLimitError",
     "fetch_viernulvier",
     "sync_viernulvier",
+    "sync_media_item_gallery_links",
     "sync_media_item_crops",
     "normalize_url",
     "normalize_performer_type",
@@ -1226,6 +1227,230 @@ def sync_viernulvier(
     return saved
 
 
+def sync_media_item_gallery_links(
+    dry_run: bool = False,
+    etag_cache: Optional[Dict[str, str]] = None,
+    on_progress: Optional[Callable[[int, int], None]] = None,
+    params: Optional[Dict[str, str]] = None,
+) -> int:
+    """Link MediaItems to MediaGalleries using gallery payload `items` links.
+
+    The Peppered `/media/items` payload often has `gallery: null`. The
+    `/media/galleries` payload is the authoritative source because it embeds the
+    media item links. This sync resolves those links and updates
+    `MediaItem.gallery` (and `position`) in bulk.
+
+    Returns the number of MediaItem rows changed for compatibility fields
+    (`gallery` / `position`). Through-table writes are tracked separately for
+    observability but are not part of the returned metric.
+    """
+    from apps.import_log.models import ImportLog
+    from apps.media_library.models import MediaGallery, MediaGalleryItem, MediaItem
+
+    source = "viernulvier:media_item_gallery_links"
+    import_log = ImportLog.objects.create(
+        source=source,
+        status=ImportLog.Status.IN_PROGRESS,
+        started_at=timezone.now(),
+    )
+
+    try:
+        galleries = fetch_viernulvier(endpoint="/media/galleries", params=params, etag_cache=etag_cache)
+    except Exception as exc:
+        import_log.status = ImportLog.Status.FAILED
+        import_log.finished_at = timezone.now()
+        import_log.error_message = str(exc)
+        import_log.save()
+        raise
+
+    if not galleries:
+        import_log.status = ImportLog.Status.SUCCESS
+        import_log.records_total = 0
+        import_log.records_imported = 0
+        import_log.records_failed = 0
+        import_log.finished_at = timezone.now()
+        import_log.save()
+        return 0
+
+    gallery_pk_by_external_id = {str(ext_id): pk for ext_id, pk in MediaGallery.objects.values_list("external_id", "pk")}
+    media_pk_by_external_id = {str(ext_id): pk for ext_id, pk in MediaItem.objects.values_list("external_id", "pk")}
+
+    total = len(galleries)
+    errors = 0
+    error_messages: List[str] = []
+
+    gallery_item_links: List[MediaGalleryItem] = []
+    primary_item_to_gallery: Dict[int, int] = {}
+    primary_item_to_position: Dict[int, int] = {}
+    touched_gallery_ids: Set[int] = set()
+
+    def _record_error(msg: str) -> None:
+        nonlocal errors
+        errors += 1
+        if len(error_messages) < MAX_ERROR_MESSAGES:
+            error_messages.append(msg)
+
+    for idx, gallery_item in enumerate(galleries, start=1):
+        if not isinstance(gallery_item, dict):
+            _record_error(f"Gallery item is not a dict: {gallery_item!r}")
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        gallery_ext_id = _extract_external_id_from_url(gallery_item.get("@id"))
+        if not gallery_ext_id:
+            _record_error(f"Gallery missing @id: {str(gallery_item)[:200]}")
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        gallery_pk = gallery_pk_by_external_id.get(gallery_ext_id)
+        if gallery_pk is None:
+            _record_error(f"Gallery not found for external_id={gallery_ext_id}")
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        touched_gallery_ids.add(gallery_pk)
+        raw_items = gallery_item.get("items")
+        if not isinstance(raw_items, list):
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        for position, raw_media in enumerate(raw_items):
+            media_ext_id = _extract_external_id_from_url(raw_media)
+            if not media_ext_id:
+                continue
+            media_pk = media_pk_by_external_id.get(media_ext_id)
+            if media_pk is None:
+                _record_error(f"MediaItem not found for external_id={media_ext_id}")
+                continue
+
+            gallery_item_links.append(
+                MediaGalleryItem(
+                    gallery_id=gallery_pk,
+                    media_item_id=media_pk,
+                    position=position,
+                )
+            )
+
+            # Keep first occurrence as compatibility mirror for MediaItem.gallery.
+            if media_pk not in primary_item_to_gallery:
+                primary_item_to_gallery[media_pk] = gallery_pk
+                primary_item_to_position[media_pk] = position
+
+        if on_progress:
+            on_progress(idx, total)
+
+    linked_ids = set(primary_item_to_gallery.keys())
+
+    # Count MediaItem compatibility-field changes (clear + update).
+    media_items_to_clear = 0
+    media_items_to_update = 0
+    if touched_gallery_ids:
+        media_items_to_clear = (
+            MediaItem.objects.filter(gallery_id__in=touched_gallery_ids).exclude(pk__in=linked_ids).count()
+        )
+    if linked_ids:
+        for obj in MediaItem.objects.filter(pk__in=linked_ids).only("pk", "gallery_id", "position"):
+            new_gallery_id = primary_item_to_gallery[obj.pk]
+            new_position = primary_item_to_position[obj.pk]
+            if obj.gallery_id != new_gallery_id or obj.position != new_position:
+                media_items_to_update += 1
+
+    media_items_changed = media_items_to_clear + media_items_to_update
+    link_rows_written = len(gallery_item_links)
+
+    if dry_run:
+        import_log.status = ImportLog.Status.SUCCESS if errors == 0 else ImportLog.Status.PARTIAL_SUCCESS
+        import_log.records_total = total
+        import_log.records_imported = media_items_changed
+        import_log.records_failed = errors
+        import_log.finished_at = timezone.now()
+        if errors:
+            import_log.error_message = f"{errors} link issues: {', '.join(error_messages)}"
+        import_log.save()
+        logger.info(
+            "Gallery-item link sync complete: media_items_changed=%d link_rows=%d errors=%d [DRY RUN]",
+            media_items_changed,
+            link_rows_written,
+            errors,
+        )
+        return media_items_changed
+
+    actual_link_rows_written = 0
+    actual_media_items_changed = 0
+
+    exc: Optional[BaseException] = None
+    try:
+        with transaction.atomic():
+            if touched_gallery_ids:
+                # Replace links for galleries that were part of this sync run.
+                MediaGalleryItem.objects.filter(gallery_id__in=touched_gallery_ids).delete()
+                if gallery_item_links:
+                    MediaGalleryItem.objects.bulk_create(gallery_item_links)
+                actual_link_rows_written = len(gallery_item_links)
+
+                # Keep MediaItem.gallery in sync as a best-effort compatibility field.
+                cleared = (
+                    MediaItem.objects.filter(gallery_id__in=touched_gallery_ids)
+                    .exclude(pk__in=linked_ids)
+                    .update(gallery_id=None)
+                )
+                actual_media_items_changed += cleared
+
+            to_update = []
+            for obj in MediaItem.objects.filter(pk__in=linked_ids).only("pk", "gallery_id", "position"):
+                new_gallery_id = primary_item_to_gallery[obj.pk]
+                new_position = primary_item_to_position[obj.pk]
+                if obj.gallery_id != new_gallery_id or obj.position != new_position:
+                    obj.gallery_id = new_gallery_id
+                    obj.position = new_position
+                    to_update.append(obj)
+
+            if to_update:
+                MediaItem.objects.bulk_update(to_update, ["gallery", "position"])
+                actual_media_items_changed += len(to_update)
+    except Exception as e:
+        logger.exception("Error while syncing media gallery links")
+        exc = e
+    finally:
+        if exc is not None:
+            import_log.status = ImportLog.Status.FAILED
+            import_log.records_total = total
+            import_log.records_imported = actual_media_items_changed
+            import_log.records_failed = errors + 1
+            import_log.finished_at = timezone.now()
+            import_log.error_message = f"Exception during gallery link sync: {exc}"
+            import_log.save()
+    if exc is not None:
+        raise exc
+
+    import_log.records_total = total
+    import_log.records_imported = actual_media_items_changed
+    import_log.records_failed = errors
+    import_log.finished_at = timezone.now()
+
+    if errors == 0:
+        import_log.status = ImportLog.Status.SUCCESS
+    elif actual_media_items_changed > 0:
+        import_log.status = ImportLog.Status.PARTIAL_SUCCESS
+        import_log.error_message = f"{errors} link issues: {', '.join(error_messages)}"
+    else:
+        import_log.status = ImportLog.Status.FAILED
+        import_log.error_message = f"All {errors} link resolutions failed: {', '.join(error_messages)}"
+
+    import_log.save()
+    logger.info(
+        "Gallery-item link sync complete: media_items_changed=%d link_rows=%d errors=%d",
+        actual_media_items_changed,
+        actual_link_rows_written,
+        errors,
+    )
+    return actual_media_items_changed
+
+
 # ---------------------------------------------------------------------------
 # Media item crop sync
 # ---------------------------------------------------------------------------
@@ -1293,13 +1518,19 @@ def _download_image(session: requests.Session, url: str) -> Optional[bytes]:
 def sync_media_item_crops(
     dry_run: bool = False,
     on_progress: Optional[Callable[[int, int], None]] = None,
+    params: Optional[Dict[str, str]] = None,
 ) -> int:
     """Fetch individual foto MediaItems to obtain crop data, download images.
 
     Strategy:
-    1. Query the DB for all MediaItems with type="foto" and their external_id.
-    2. For each item, fetch its full API representation (which includes crops).
-    3. For each wanted crop variant (hd_ready, FE3_header):
+    1. Build the list of candidate media items.
+       - With created/updated filters: fetch `/media/items` from the API and use
+         those filtered results directly (independent of local DB state).
+       - Without filters: fall back to local foto items for performance.
+    2. For each candidate, fetch its full API representation (includes crops).
+    3. Ensure a local MediaItem exists before writing crops.
+       Crops depend on MediaItem via FK, so missing items are upserted first.
+    4. For each wanted crop variant (hd_ready, FE3_header):
        a. Download the image bytes.
        b. Upsert the MediaItemCrop row, saving the image via Django's storage
           backend. The file is written to storage before the DB row is touched
@@ -1312,12 +1543,14 @@ def sync_media_item_crops(
         dry_run:     When True, log what would be saved but write nothing.
         on_progress: Callback(processed_items, total_items) invoked after each
                      media item is handled (regardless of crop count).
+        params:      Optional API query parameters for timestamp filtering
+                     (e.g. created_at[after], updated_at[after]).
 
     Returns:
         Number of crops saved (created + updated). Always 0 in dry_run mode.
     """
     from apps.import_log.models import ImportLog
-    from apps.media_library.models import MediaItem, MediaItemCrop
+    from apps.media_library.models import MediaGallery, MediaItem, MediaItemCrop
 
     source = "viernulvier:media_item_crops"
     import_log = ImportLog.objects.create(
@@ -1326,8 +1559,86 @@ def sync_media_item_crops(
         started_at=timezone.now(),
     )
 
-    # Load all foto items: need pk (FK on MediaItemCrop) and external_id (API URL).
-    foto_items = list(MediaItem.objects.filter(type=MediaItem.MediaItemType.IMAGE).values("pk", "external_id"))
+    # Start from local foto items (fast path), then replace with API-driven
+    # candidates when timestamp filters are provided.
+    foto_items_query = MediaItem.objects.filter(type=MediaItem.MediaItemType.IMAGE)
+    api_filter_params: Dict[str, str] = {}
+
+    if params:
+        # Parse timestamp params. API filtering is independent from local model
+        # fields; local filtering remains best-effort as a pre-filter only.
+        for param_key, param_value in params.items():
+            match = re.fullmatch(r"(created_at|updated_at)\[(after|before|strictly_after|strictly_before)\]", param_key)
+            if not match:
+                continue
+
+            field_name, bound = match.groups()
+            api_filter_params[param_key] = param_value
+
+            try:
+                MediaItem._meta.get_field(field_name)
+            except FieldDoesNotExist:
+                logger.debug(
+                    "Skipping local pre-filter '%s' for media_item_crops (field '%s' not on MediaItem)",
+                    param_key,
+                    field_name,
+                )
+                continue
+
+            try:
+                dt = parse_datetime(param_value)
+            except (ValueError, TypeError):
+                continue
+
+            if not dt:
+                continue
+
+            lookup = "gte" if bound in {"after", "strictly_after"} else "lte"
+            foto_items_query = foto_items_query.filter(**{f"{field_name}__{lookup}": dt})
+
+    foto_items = list(foto_items_query.values("pk", "external_id"))
+
+    if api_filter_params:
+        # API-driven filtered runs: do not depend on local MediaItem existence.
+        try:
+            api_items = fetch_viernulvier(endpoint="/media/items", params=api_filter_params)
+        except Exception as exc:
+            import_log.status = ImportLog.Status.FAILED
+            import_log.finished_at = timezone.now()
+            import_log.error_message = str(exc)
+            import_log.save()
+            raise
+
+        existing_pk_by_external_id = {
+            str(row["external_id"]).strip(): row["pk"] for row in foto_items if row.get("external_id")
+        }
+        api_candidates: List[Dict[str, Any]] = []
+        for api_item in api_items:
+            if not isinstance(api_item, dict):
+                continue
+
+            raw_type = str(api_item.get("type") or "").strip().lower()
+            if raw_type and raw_type != MediaItem.MediaItemType.IMAGE:
+                continue
+
+            ext_id = _extract_external_id_from_url(api_item.get("@id") or api_item.get("external_id") or api_item.get("id"))
+            if ext_id:
+                normalized_ext_id = str(ext_id).strip()
+                api_candidates.append(
+                    {
+                        "pk": existing_pk_by_external_id.get(normalized_ext_id),
+                        "external_id": normalized_ext_id,
+                    }
+                )
+
+        before_count = len(foto_items)
+        foto_items = api_candidates
+
+        logger.info(
+            "Applied API filters to media_item_crops candidates: %d -> %d (local-independent)",
+            before_count,
+            len(foto_items),
+        )
 
     if not foto_items:
         import_log.status = ImportLog.Status.SUCCESS
@@ -1353,7 +1664,7 @@ def sync_media_item_crops(
     )
 
     for idx, row in enumerate(foto_items, start=1):
-        item_pk: int = row["pk"]
+        item_pk = row.get("pk")
         external_id: str = row["external_id"] or ""
 
         if not external_id:
@@ -1379,6 +1690,62 @@ def sync_media_item_crops(
 
         if item_data is None:
             # 304 Not Modified - crops unchanged, nothing to do
+            if on_progress:
+                on_progress(idx, total)
+            continue
+
+        if item_pk is None:
+            # Crops depend on MediaItem via FK. If the row is missing locally,
+            # create/update it from this same payload before persisting crops.
+            if dry_run:
+                logger.info("[DRY RUN] Would upsert missing MediaItem for crop sync: %s", external_id)
+            else:
+                try:
+                    media_type_raw = str(item_data.get("type") or MediaItem.MediaItemType.IMAGE).strip().lower()
+                    valid_types = {choice for choice, _ in MediaItem.MediaItemType.choices}
+                    media_type = media_type_raw if media_type_raw in valid_types else MediaItem.MediaItemType.IMAGE
+
+                    gallery_ext_id = _extract_external_id_from_url(item_data.get("gallery"))
+                    gallery_pk = None
+                    if gallery_ext_id:
+                        gallery_pk = (
+                            MediaGallery.objects.filter(external_id=str(gallery_ext_id).strip())
+                            .values_list("pk", flat=True)
+                            .first()
+                        )
+
+                    obj, _ = MediaItem.objects.update_or_create(
+                        external_id=external_id,
+                        defaults={
+                            "type": media_type,
+                            "gallery_id": gallery_pk,
+                            "original_filename": str(item_data.get("original_filename") or ""),
+                            "position": item_data.get("position") or 0,
+                            "width": item_data.get("width"),
+                            "height": item_data.get("height"),
+                            "format": str(item_data.get("format") or ""),
+                        },
+                    )
+                    item_pk = obj.pk
+                    logger.info(
+                        "Upserted missing MediaItem dependency for crops: %s (pk=%s)",
+                        external_id,
+                        item_pk,
+                    )
+                except Exception as exc:
+                    logger.exception("Failed to upsert MediaItem dependency for crop sync (%s): %s", external_id, exc)
+                    errors += 1
+                    if len(error_messages) < MAX_ERROR_MESSAGES:
+                        error_messages.append(f"Missing MediaItem upsert failed for {external_id}: {exc}")
+                    if on_progress:
+                        on_progress(idx, total)
+                    continue
+
+        if item_pk is None:
+            logger.error("MediaItem dependency unresolved for crop sync: %s", external_id)
+            errors += 1
+            if len(error_messages) < MAX_ERROR_MESSAGES:
+                error_messages.append(f"MediaItem dependency unresolved for {external_id}")
             if on_progress:
                 on_progress(idx, total)
             continue

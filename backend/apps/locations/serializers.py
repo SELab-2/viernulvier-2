@@ -152,7 +152,7 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "remark")
 
-    def get_space(self, obj):
+    def get_space(self, obj) -> dict | None:
         return SpaceNestedSerializer(obj.space, context=self.context).data
 
 
