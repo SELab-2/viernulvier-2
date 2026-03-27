@@ -52,7 +52,8 @@
       "error": {
         "invalidId": "Invalid production ID",
         "loadFailed": "Could not load production"
-      }
+      },
+      "events": "Events"
     }
   },
   "notFound": {

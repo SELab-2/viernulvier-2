@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useTheme } from '@mui/material'
+import { Box, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import type { Production } from '../types/Productions'
 import type { Event } from '../types/Events'
@@ -13,12 +13,12 @@ import Description from '../components/production/Description'
 import MetaPanel from '../components/production/MetaPanel'
 import MediaList from '../components/production/MediaList'
 import { getProduction } from '../services/productions/Productions'
+import getLocationName from '../utils/locations'
+import EventsList from '../components/production/EventList'
 
 // TODO: evenementen tonen (aparte component ?)
-// TODO: media tonen (aparte component ?)
 // TODO: check tags
 // TODO: andere producties in reeks tonen (aparte component ?)
-// TODO: gsm view
 
 // ---- Helpers ----
 
@@ -48,6 +48,18 @@ function formatDate(dateStr?: string | null): string {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+  })
+}
+
+function formatDateTime(dateStr?: string | null): string {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleString('nl-BE', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
@@ -266,6 +278,17 @@ export default function ProductionDetailsPage({
           />
           <HeroImage title={title} imageUrl={heroImage ?? null} />
           <Description teaser={teaser} description={description} />
+
+          <Box sx={(theme) => ({ mt: 3, p: 2, border: `1px solid ${theme.palette.divider}`, borderRadius: '4px' })}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={600}
+              sx={{ mb: 1, color: theme.palette.text.primary }}
+            >
+              {t('productions.detail.events', 'Events')}
+            </Typography>
+            <EventsList events={events} />
+          </Box>
         </div>
         {/* RIGHT: Metadata panel */}
         <div
