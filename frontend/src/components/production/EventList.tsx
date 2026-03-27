@@ -20,6 +20,7 @@ import {
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Event } from '../../types/Events'
+import { formatDate, formatTime } from '../../utils/formatDate'
 
 interface EventsListProps {
   events: Event[]
@@ -55,20 +56,6 @@ export default function EventsList({ events }: EventsListProps) {
       return next
     })
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(lang === 'nl' ? 'nl-BE' : 'en-GB', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
-
-  const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString(lang === 'nl' ? 'nl-BE' : 'en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-
   return (
     <Stack spacing={0} divider={<Divider />}>
       {events.map((event) => {
@@ -88,11 +75,9 @@ export default function EventsList({ events }: EventsListProps) {
                 {/* Date + time */}
                 <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
                   <Stack direction="row" spacing={0.75} alignItems="center">
-                    <CalendarTodayOutlinedIcon
-                      sx={{ fontSize: '0.9rem', color: 'text.primary' }}
-                    />
+                    <CalendarTodayOutlinedIcon sx={{ fontSize: '0.9rem', color: 'text.primary' }} />
                     <Typography variant="body2" fontWeight={600} color="text.primary">
-                      {event.starts_at ? formatDate(event.starts_at) : '—'}
+                      {event.starts_at ? formatDate(event.starts_at, lang) : '—'}
                     </Typography>
                   </Stack>
 
@@ -100,8 +85,8 @@ export default function EventsList({ events }: EventsListProps) {
                     <Stack direction="row" spacing={0.75} alignItems="center">
                       <ScheduleOutlinedIcon sx={{ fontSize: '0.9rem', color: 'text.primary' }} />
                       <Typography variant="body2" color="text.primary">
-                        {formatTime(event.starts_at)}
-                        {event.ends_at ? ` – ${formatTime(event.ends_at)}` : ''}
+                        {formatTime(event.starts_at, lang)}
+                        {event.ends_at ? ` – ${formatTime(event.ends_at, lang)}` : ''}
                       </Typography>
                     </Stack>
                   )}
@@ -123,7 +108,12 @@ export default function EventsList({ events }: EventsListProps) {
                 direction="row"
                 spacing={1}
                 alignItems="center"
-                sx={{ flexShrink: 0, ml: 2, minWidth: 0, maxWidth: { xs: '140px', sm: '220px', md: '280px' } }}
+                sx={{
+                  flexShrink: 0,
+                  ml: 2,
+                  minWidth: 0,
+                  maxWidth: { xs: '140px', sm: '220px', md: '280px' },
+                }}
               >
                 {hasPrices && (
                   <Stack

@@ -13,7 +13,7 @@ import Description from '../components/production/Description'
 import MetaPanel from '../components/production/MetaPanel'
 import MediaList from '../components/production/MediaList'
 import { getProduction } from '../services/productions/Productions'
-import getLocationName from '../utils/locations'
+import { formatDate } from '../utils/formatDate'
 import EventsList from '../components/production/EventList'
 
 // TODO: evenementen tonen (aparte component ?)
@@ -41,27 +41,6 @@ function getLocalizedValue(obj: Record<string, string>, lang: string = 'nl'): st
  * @param dateStr ISO date (e.g. `2026-03-25T20:00:00Z`) or `null`/`undefined`
  * @returns Formatted date (e.g. `25 March 2026`) or empty string
  */
-function formatDate(dateStr?: string | null): string {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('nl-BE', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-}
-
-function formatDateTime(dateStr?: string | null): string {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleString('nl-BE', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 
 /**
  * Calculate a date range for a list of events.
@@ -73,7 +52,7 @@ function formatDateTime(dateStr?: string | null): string {
  * @param events List of events (can be `null` or `undefined`)
  * @returns Formatted date range or empty string
  */
-function getDateRange(events?: Event[] | null): string {
+function getDateRange(events: Event[] | null | undefined, lang: string): string {
   const list = (events || []).filter((e) => !!e.starts_at) as Event[]
 
   if (!list.length) {
@@ -85,10 +64,10 @@ function getDateRange(events?: Event[] | null): string {
   const last = new Date(dates[dates.length - 1])
 
   if (first.toDateString() === last.toDateString()) {
-    return formatDate(list[0].starts_at)
+    return formatDate(list[0].starts_at, lang)
   }
 
-  return `${formatDate(first.toString())} - ${formatDate(last.toString())}`
+  return `${formatDate(first.toISOString(), lang)} - ${formatDate(last.toISOString(), lang)}`
 }
 
 /**
@@ -182,7 +161,6 @@ export default function ProductionDetailsPage({
     const fetchProduction = async () => {
       try {
         const data = await getProduction(parsed, ['events'])
-        console.log(data)
         setProd(data)
       } catch {
         const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
@@ -229,7 +207,7 @@ export default function ProductionDetailsPage({
   const heroImage = getProductionHeroImageUrl(production)
 
   const events = production.events ?? []
-  const dateRange = getDateRange(events)
+  const dateRange = getDateRange(events, lang)
   const venues = getUniqueVenues(events)
 
   const genreLabels = (production.genres || [])
@@ -300,7 +278,14 @@ export default function ProductionDetailsPage({
             allTags={allTags}
             style={{ borderLeft: 'none' }}
           />
-          <Box sx={(theme) => ({ mt: 3, p: 2, border: `1px solid ${theme.palette.divider}`, borderRadius: '4px' })}>
+          <Box
+            sx={(theme) => ({
+              mt: 3,
+              p: 2,
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: '4px',
+            })}
+          >
             <Typography
               variant="subtitle1"
               fontWeight={600}
@@ -313,7 +298,7 @@ export default function ProductionDetailsPage({
         </div>
       </div>
 
-      {production.media_gallery?.media_items?.length > 0 && (
+      {production.media_gallery.media_items.length > 0 && (
         <div style={{ padding: '0 16px 32px' }}>
           <MediaList mediaItems={production.media_gallery.media_items} />
         </div>
