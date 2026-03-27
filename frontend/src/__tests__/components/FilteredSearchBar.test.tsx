@@ -1,26 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-// Mock useTranslation to avoid i18n warning in tests
-jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'nl' } }),
-}))
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { MemoryRouter } from 'react-router-dom'
 import SearchBar, { FilteredSearchBarProps } from '../../components/searchbar/FilteredSearchBar'
+import { I18nextProvider } from 'react-i18next'
 import i18n from '../../i18n'
-import { I18nextProvider, initReactI18next } from 'react-i18next'
-
-i18n.use(initReactI18next).init({
-  lng: 'nl',
-  resources: {
-    nl: {
-      translation: {
-        'searchbar.layout.grid': 'Raster',
-        'searchbar.layout.list': 'Lijst',
-        'searchbar.period.label': 'Periode',
-      },
-    },
-  },
-})
 
 const renderSearchBar = (props: FilteredSearchBarProps) => {
   const theme = createTheme() // You can customize the theme as needed
