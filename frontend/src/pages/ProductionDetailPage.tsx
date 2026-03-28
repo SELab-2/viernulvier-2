@@ -8,17 +8,15 @@ import type { Genre } from '../types/Genres'
 import type { Tag as TagType } from '../types/Tags'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Breadcrumbs from '../components/production/Breadcrumbs'
-import HeroImage from '../components/production/HeroImage'
+import ImageWithFallback from '../components/ImageWithFallback'
 import Description from '../components/production/Description'
 import MetaPanel from '../components/production/MetaPanel'
-import MediaList from '../components/production/MediaList'
 import { getProduction } from '../services/productions/Productions'
 import { formatDate } from '../utils/formatDate'
 import EventsList from '../components/production/EventList'
+import MediaList from '../components/production/MediaList'
 
-// TODO: evenementen tonen (aparte component ?)
 // TODO: check tags
-// TODO: andere producties in reeks tonen (aparte component ?)
 
 // ---- Helpers ----
 
@@ -34,13 +32,6 @@ import EventsList from '../components/production/EventList'
 function getLocalizedValue(obj: Record<string, string>, lang: string = 'nl'): string {
   return obj[lang] || obj['nl'] || obj['en'] || Object.values(obj)[0] || ''
 }
-
-/**
- * Format an ISO date string into a readable Belgian date.
- *
- * @param dateStr ISO date (e.g. `2026-03-25T20:00:00Z`) or `null`/`undefined`
- * @returns Formatted date (e.g. `25 March 2026`) or empty string
- */
 
 /**
  * Calculate a date range for a list of events.
@@ -119,30 +110,28 @@ function getProductionHeroImageUrl(production: Production): string | null {
   return null
 }
 
-// Main Component
-
-interface ProductionDetailsPageProps {
-  production?: Production
-  /** Optional: override hero image URL */
-  heroImageUrl?: string
-}
-
-export default function ProductionDetailsPage({
-  production: initialProduction,
-}: ProductionDetailsPageProps) {
+/**
+ * Production detail page showing breadcrumb, hero image, description, meta panel,
+ * events and related media.
+ *
+ * Behavior:
+ * - Always loads data from backend by ID (from URL params).
+ * - Loading spinner is shown during fetch.
+ * - Invalid ID and fetch errors navigate to home with a floating alert state.
+ */
+const ProductionDetailsPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const theme = useTheme()
   const { i18n, t } = useTranslation()
   const lang = i18n.language
 
-  const [prod, setProd] = useState<Production | null>(initialProduction ?? null)
+  const [prod, setProd] = useState<Production | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
   // useEffect to fetch the production given the id in the URL.
   useEffect(() => {
-    if (prod) return
     if (!id) return
 
     setLoading(true)
@@ -174,10 +163,12 @@ export default function ProductionDetailsPage({
     }
 
     fetchProduction()
-  }, [id, prod, t, navigate])
+  }, [id, t, navigate])
 
+  // If the page is still loading, show the spinner.
   if (loading && !prod) return <LoadingSpinner fullScreen />
 
+  // If there was an error or no production was found, show an error message.
   if (!prod) {
     return (
       <div style={{ padding: 40 }}>
@@ -254,7 +245,23 @@ export default function ProductionDetailsPage({
               { label: title },
             ]}
           />
-          <HeroImage title={title} imageUrl={heroImage ?? null} />
+          <div
+            className="hero-image"
+            style={{
+              width: '100%',
+              aspectRatio: '16/7',
+              backgroundColor: 'transparent',
+              borderRadius: '4px',
+              overflow: 'hidden',
+              marginBottom: '32px',
+            }}
+          >
+            <ImageWithFallback
+              src={heroImage ?? null}
+              alt={title}
+              sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          </div>
           <Description teaser={teaser} description={description} />
         </div>
         {/* RIGHT: Metadata panel */}
@@ -303,6 +310,9 @@ export default function ProductionDetailsPage({
           <MediaList mediaItems={production.media_gallery.media_items} />
         </div>
       )}
+      <p> TODO: related productions tonen </p>
     </div>
   )
 }
+
+export default ProductionDetailsPage
