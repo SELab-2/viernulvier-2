@@ -29,10 +29,13 @@ from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.production import (
     ProductionFactory,
+    ProductionTagFactory,
+    ProductionTagTranslationFactory,
     ProductionTranslationFactory,
     UitDatabaseThemeFactory,
     UitDatabaseTypeFactory,
 )
+from tests.factories.tag import TagFactory
 
 PUB_KEY = "pub-production-view-test-key"
 INT_KEY = "int-production-view-test-key"
@@ -71,12 +74,6 @@ class TestProductionViewSetClass(TestCase):
 
     def test_serializer_class_is_production_serializer(self):
         self.assertEqual(ProductionViewSet.serializer_class, ProductionSerializer)
-
-    def test_queryset_has_prefetch_for_tags(self):
-        queryset = ProductionViewSet().get_queryset()
-        lookups = queryset._prefetch_related_lookups
-        lookup_names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
-        self.assertIn("tags", lookup_names)
 
 
 # ---------------------------------------------------------------------------
@@ -476,3 +473,81 @@ class TestProductionViewSetPrefetch(TestCase):
         with self.assertNumQueries(7):
             response = self.client.get("/api/v1/productions/", **pub_headers())
         self.assertEqual(response.status_code, 200)
+
+
+# ---------------------------------------------------------------------------
+# N+1 guard - prefetch tag translations
+# ---------------------------------------------------------------------------
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestProductionApiTagDescription(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.nl = LanguageFactory.create(code="nl")
+        self.production = ProductionFactory.create()
+        self.tag = TagFactory.create(type="theme")
+        self.production_tag = ProductionTagFactory.create(production=self.production, tag=self.tag)
+        ProductionTagTranslationFactory.create(
+            production_tag=self.production_tag,
+            language=self.nl,
+            description="Context voor dit thema.",
+        )
+
+    def _detail(self):
+        return self.client.get(f"/api/v1/productions/{self.production.pk}/", **pub_headers())
+
+    def test_tag_entry_in_detail_has_description_key(self):
+        data = self._detail().data
+        self.assertIn("description", data["tags"][0])
+
+    def test_tag_description_nl_is_correct_in_detail(self):
+        data = self._detail().data
+        self.assertEqual(data["tags"][0]["description"]["nl"], "Context voor dit thema.")
+
+    def test_tag_description_in_list_response(self):
+        response = self.client.get("/api/v1/productions/", **pub_headers())
+        tags = response.data["results"][0]["tags"]
+        self.assertIn("description", tags[0])
+        self.assertEqual(tags[0]["description"]["nl"], "Context voor dit thema.")
+
+    def test_tag_without_translation_has_empty_description_dict(self):
+        other_production = ProductionFactory.create()
+        other_tag = TagFactory.create(type="mood")
+        ProductionTagFactory.create(production=other_production, tag=other_tag)
+
+        response = self.client.get(f"/api/v1/productions/{other_production.pk}/", **pub_headers())
+        self.assertEqual(response.data["tags"][0]["description"], {})
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestProductionViewSetTagTranslationPrefetch(TestCase):
+    """N+1 guard: tag translations must be prefetched, not fetched per tag per production."""
+
+    def setUp(self):
+        self.client = APIClient()
+        nl = LanguageFactory.create(code="nl")
+        en = LanguageFactory.create(code="en")
+
+        for _ in range(5):
+            production = ProductionFactory.create()
+            for tag_type in ("theme", "mood"):
+                tag = TagFactory.create(type=tag_type)
+                pt = ProductionTagFactory.create(production=production, tag=tag)
+                ProductionTagTranslationFactory.create(production_tag=pt, language=nl, description="NL")
+                ProductionTagTranslationFactory.create(production_tag=pt, language=en, description="EN")
+
+    def test_list_with_tag_translations_executes_bounded_queries(self):
+        # Baseline from the existing N+1 test is 7 queries for 5 productions
+        # with translation prefetch. Adding tag translation prefetch must not
+        # grow this number linearly with the number of tags or productions.
+        with self.assertNumQueries(9):
+            response = self.client.get("/api/v1/productions/", **pub_headers())
+        self.assertEqual(response.status_code, 200)
+        results = response.data["results"]
+        self.assertEqual(len(results), 5)
+        # Spot-check that description data is present and correct
+        for item in results:
+            for tag in item["tags"]:
+                self.assertIn("nl", tag["description"])
+                self.assertIn("en", tag["description"])

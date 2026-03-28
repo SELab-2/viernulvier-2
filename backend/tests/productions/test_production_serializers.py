@@ -21,6 +21,7 @@ from django.test import TestCase
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.productions.serializers import (
     ProductionSerializer,
+    ProductionTagSerializer,
     UitDatabaseThemeSerializer,
     UitDatabaseTypeSerializer,
 )
@@ -28,6 +29,8 @@ from tests.factories.language import LanguageFactory
 from tests.factories.media_library import MediaGalleryFactory
 from tests.factories.production import (
     ProductionFactory,
+    ProductionTagFactory,
+    ProductionTagTranslationFactory,
     ProductionTranslationFactory,
     UitDatabaseThemeFactory,
     UitDatabaseTypeFactory,
@@ -406,3 +409,162 @@ class TestProductionSerializerInheritance(TestCase):
 
     def test_inherits_from_translatable_serializer_mixin(self):
         self.assertTrue(issubclass(ProductionSerializer, TranslatableSerializerMixin))
+
+
+# ---------------------------------------------------------------------------
+# ProductionTagSerializer - description field (empty state)
+# ---------------------------------------------------------------------------
+
+
+class TestProductionTagSerializerDescriptionEmpty(TestCase):
+    """description is an empty dict when no translations exist."""
+
+    def setUp(self):
+        self.production_tag = ProductionTagFactory.create()
+
+    def test_description_is_empty_dict_without_translations(self):
+        data = ProductionTagSerializer(self.production_tag).data
+        self.assertEqual(data["description"], {})
+
+    def test_description_key_is_always_present(self):
+        data = ProductionTagSerializer(self.production_tag).data
+        self.assertIn("description", data)
+
+
+class TestProductionTagSerializerDescriptionPopulated(TestCase):
+    """description returns a language-code dict when translations exist."""
+
+    def setUp(self):
+        self.production_tag = ProductionTagFactory.create()
+        self.nl = LanguageFactory.create(code="nl")
+        self.en = LanguageFactory.create(code="en")
+        ProductionTagTranslationFactory.create(
+            production_tag=self.production_tag,
+            language=self.nl,
+            description="Nederlandse context.",
+        )
+        ProductionTagTranslationFactory.create(
+            production_tag=self.production_tag,
+            language=self.en,
+            description="English context.",
+        )
+
+    def test_description_contains_nl_key(self):
+        data = ProductionTagSerializer(self.production_tag).data
+        self.assertIn("nl", data["description"])
+
+    def test_description_contains_en_key(self):
+        data = ProductionTagSerializer(self.production_tag).data
+        self.assertIn("en", data["description"])
+
+    def test_description_nl_value_is_correct(self):
+        data = ProductionTagSerializer(self.production_tag).data
+        self.assertEqual(data["description"]["nl"], "Nederlandse context.")
+
+    def test_description_en_value_is_correct(self):
+        data = ProductionTagSerializer(self.production_tag).data
+        self.assertEqual(data["description"]["en"], "English context.")
+
+    def test_description_has_exactly_two_entries(self):
+        data = ProductionTagSerializer(self.production_tag).data
+        self.assertEqual(len(data["description"]), 2)
+
+
+class TestProductionTagSerializerToRepresentation(TestCase):
+    """to_representation merges Tag fields first, then through-table fields."""
+
+    def setUp(self):
+        self.tag = TagFactory.create(type="theme")
+        self.production_tag = ProductionTagFactory.create(tag=self.tag)
+
+    def test_output_contains_tag_id(self):
+        data = ProductionTagSerializer(self.production_tag).data
+        self.assertEqual(data["id"], self.tag.id)
+
+    def test_output_contains_tag_type(self):
+        data = ProductionTagSerializer(self.production_tag).data
+        self.assertEqual(data["type"], "theme")
+
+    def test_output_contains_description_from_through_table(self):
+        data = ProductionTagSerializer(self.production_tag).data
+        self.assertIn("description", data)
+
+    def test_tag_fields_come_before_description_in_key_order(self):
+        """description must not shadow a tag field with the same name."""
+        data = ProductionTagSerializer(self.production_tag).data
+        keys = list(data.keys())
+        # id (from Tag) must appear before description (from through-table)
+        self.assertLess(keys.index("id"), keys.index("description"))
+
+
+class TestProductionSerializerTagsDescriptionEmpty(TestCase):
+    def test_tag_entry_has_description_key(self):
+        production = ProductionFactory.create()
+        tag = TagFactory.create()
+        production.tags.add(tag)
+        data = ProductionSerializer(production).data
+        self.assertIn("description", data["tags"][0])
+
+    def test_tag_entry_description_is_empty_dict_when_no_translations(self):
+        production = ProductionFactory.create()
+        tag = TagFactory.create()
+        production.tags.add(tag)
+        data = ProductionSerializer(production).data
+        self.assertEqual(data["tags"][0]["description"], {})
+
+
+class TestProductionSerializerTagsDescriptionPopulated(TestCase):
+    def setUp(self):
+        self.production = ProductionFactory.create()
+        self.tag = TagFactory.create(type="theme")
+        self.production_tag = ProductionTagFactory.create(production=self.production, tag=self.tag)
+        self.nl = LanguageFactory.create(code="nl")
+        self.en = LanguageFactory.create(code="en")
+        ProductionTagTranslationFactory.create(
+            production_tag=self.production_tag,
+            language=self.nl,
+            description="Thema in NL context.",
+        )
+        ProductionTagTranslationFactory.create(
+            production_tag=self.production_tag,
+            language=self.en,
+            description="Theme in EN context.",
+        )
+
+    def _tag_data(self):
+        return ProductionSerializer(self.production).data["tags"][0]
+
+    def test_description_nl_is_correct(self):
+        self.assertEqual(self._tag_data()["description"]["nl"], "Thema in NL context.")
+
+    def test_description_en_is_correct(self):
+        self.assertEqual(self._tag_data()["description"]["en"], "Theme in EN context.")
+
+    def test_description_has_two_entries(self):
+        self.assertEqual(len(self._tag_data()["description"]), 2)
+
+    def test_tag_id_is_still_present(self):
+        self.assertEqual(self._tag_data()["id"], self.tag.id)
+
+    def test_description_is_production_scoped(self):
+        """A second production with the same tag gets its own (empty) description."""
+        other_production = ProductionFactory.create()
+        ProductionTagFactory.create(production=other_production, tag=self.tag)
+        data = ProductionSerializer(other_production).data
+        self.assertEqual(data["tags"][0]["description"], {})
+
+
+class TestProductionSerializerTagsMultipleTags(TestCase):
+    def test_each_tag_entry_has_independent_description(self):
+        production = ProductionFactory.create()
+        tag_a = TagFactory.create(type="genre")
+        tag_b = TagFactory.create(type="mood")
+        pt_a = ProductionTagFactory.create(production=production, tag=tag_a)
+        _pt_b = ProductionTagFactory.create(production=production, tag=tag_b)
+        nl = LanguageFactory.create(code="nl")
+        ProductionTagTranslationFactory.create(production_tag=pt_a, language=nl, description="Beschrijving A.")
+
+        tags_data = {t["id"]: t for t in ProductionSerializer(production).data["tags"]}
+
+        self.assertEqual(tags_data[tag_a.id]["description"]["nl"], "Beschrijving A.")
+        self.assertEqual(tags_data[tag_b.id]["description"], {})
