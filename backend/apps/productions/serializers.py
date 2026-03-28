@@ -24,7 +24,7 @@ from apps.genres.serializers import GenreSerializer
 from apps.media_library.serializers import MediaGallerySerializer
 from apps.tags.serializers import TagSerializer
 
-from .models import Production, UitDatabaseTheme, UitDatabaseType
+from .models import Production, ProductionTag, UitDatabaseTheme, UitDatabaseType
 
 
 class UitDatabaseThemeSerializer(serializers.ModelSerializer):
@@ -51,6 +51,57 @@ class UitDatabaseTypeSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
+class ProductionTagSerializer(serializers.ModelSerializer):
+    """
+    Serializes a ProductionTag through-table record.
+
+    Exposes all ``Tag`` fields (delegated to ``TagSerializer``) plus a
+    ``description`` dictionary carrying all available translations of the
+    per-production-tag description.
+
+    The ``description`` field returns translations as a language-code dict
+    (e.g. ``{"nl": "...", "en": "..."}``) consistent with the pattern used
+    by ``TranslatableSerializerMixin`` on other models.
+
+    Queryset strategy
+    -----------------
+    Expects ``obj.translations`` to be pre-fetched with ``select_related("language")``
+    to avoid N+1 queries. When the viewset uses ``to_attr="prefetched_production_tags"``
+    the inline ``get_queryset`` should include
+    ``.prefetch_related("translations__language")``.
+    """
+
+    description = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary of all available translations for the tag description "
+            'within this production (e.g. {"nl": "...", "en": "..."}). '
+            "Empty dict when no descriptions have been added."
+        ),
+    )
+
+    class Meta:
+        model = ProductionTag
+        fields = ["description"]
+
+    def to_representation(self, instance):
+        """
+        Merge the full Tag representation with this through-table's own fields.
+
+        Tag fields always come first so the shape is backward-compatible with
+        the previous ``TagSerializer``-only output.
+        """
+        tag_data = TagSerializer(instance.tag).data
+        own_data = super().to_representation(instance)
+        return {**tag_data, **own_data}
+
+    def get_description(self, obj: ProductionTag) -> dict:
+        """Return all available translations as a language-code dictionary."""
+        return {
+            translation.language.code: translation.description
+            for translation in obj.translations.all()
+        }
+    
+    
 class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """
     Full representation of a Production.
@@ -148,10 +199,11 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         help_text="Nested UIT Database Type classification. `null` when not assigned.",
     )
 
-    tags = TagSerializer(
-        many=True,
-        read_only=True,
-        help_text="Tags attached to this production, each with localised fields.",
+    tags = serializers.SerializerMethodField(
+        help_text=(
+            "Tags attached to this production, each with localised fields and "
+            "an optional per-production ``description`` dictionary."
+        )
     )
 
     genres = serializers.SerializerMethodField(
@@ -272,6 +324,27 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     def get_display_artist_name(self, obj: Production) -> str | None:
         """Return the base-language artist/company name (with fallback)."""
         return self.get_base_translated_value(obj, field_name="artist_name")
+    
+    def get_tags(self, obj: Production) -> list:
+        """
+        Return serialised production–tag records in type/id order.
+
+        Reads from ``obj.prefetched_production_tags`` when the viewset has
+        used an explicit ``Prefetch`` with ``to_attr``; falls back to a live
+        queryset call to avoid silently returning an empty list.
+        """
+        production_tags = getattr(obj, "prefetched_production_tags", None)
+
+        if production_tags is None:
+            # Fallback — will trigger additional queries per production.
+            production_tags = (
+                obj.productiontag_set
+                .select_related("tag")
+                .prefetch_related("translations__language", "tag__translations__language")
+                .order_by("tag__type", "id")
+            )
+
+        return ProductionTagSerializer(production_tags, many=True).data
 
     def get_events(self, obj: Production) -> list:
         """Return a list of events for this production, if included in the serializer context."""

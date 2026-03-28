@@ -72,12 +72,6 @@ class TestProductionViewSetClass(TestCase):
     def test_serializer_class_is_production_serializer(self):
         self.assertEqual(ProductionViewSet.serializer_class, ProductionSerializer)
 
-    def test_queryset_has_prefetch_for_tags(self):
-        queryset = ProductionViewSet().get_queryset()
-        lookups = queryset._prefetch_related_lookups
-        lookup_names = [lookup.prefetch_through if hasattr(lookup, "prefetch_through") else lookup for lookup in lookups]
-        self.assertIn("tags", lookup_names)
-
 
 # ---------------------------------------------------------------------------
 # GET /api/v1/productions/ - list

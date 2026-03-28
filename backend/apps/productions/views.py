@@ -25,7 +25,7 @@ from apps.media_library.models import MediaItem
 from apps.pricing.models import PriceRankTranslation, PriceTranslation
 
 from .filters import ProductionFilter
-from .models import Production, ProductionGenre
+from .models import Production, ProductionGenre, ProductionTag
 from .schemas import production_schema
 from .serializers import ProductionSerializer
 
@@ -97,12 +97,18 @@ class ProductionViewSet(ApiModelViewSet):
         "media_gallery",
     ).prefetch_related(
         "translations__language",
-        "tags",
-        "tags__translations__language",
         Prefetch(
             "productiongenre_set",
             queryset=ProductionGenre.objects.select_related("genre").order_by("position"),
             to_attr="prefetched_production_genres",
+        ),
+        Prefetch(
+            "productiontag_set",
+            queryset=ProductionTag.objects.select_related("tag").prefetch_related(
+                "translations__language",
+                "tag__translations__language",
+            ).order_by("tag__type", "id"),
+            to_attr="prefetched_production_tags",
         ),
         Prefetch(
             "media_gallery__media_items",

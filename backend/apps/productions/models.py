@@ -324,7 +324,7 @@ class ProductionTranslation(BaseModel):
     meta_description = models.TextField(
         max_length=500,
         blank=True,
-        help_text="SEO meta description. Ideally 120–160 characters.",
+        help_text="SEO meta description. Ideally 120-160 characters.",
         db_comment="The meta description of the production in the given language.",
     )
 
@@ -384,6 +384,67 @@ class ProductionTag(BaseModel):
 
     def __str__(self) -> str:
         return f"Tag {self.tag} for {self.production}"
+    
+
+class ProductionTagTranslation(BaseModel):
+    """
+    Localised text fields for a ProductionTag through-table record.
+
+    Each production-tag link can have at most one translation per language,
+    allowing editors to provide multilingual descriptions or context notes for
+    a tag as it appears within a specific production.
+
+    Text fields that may contain HTML (``description``) should be sanitised
+    before saving to prevent XSS attacks.
+
+    Attributes:
+        production_tag: The production-tag link this translation belongs to.
+        language:       The language of this translation.
+        description:    Optional human-readable description or context note for
+                        this tag in the scope of the parent production.
+    """
+
+    production_tag = models.ForeignKey(
+        ProductionTag,
+        on_delete=models.CASCADE,
+        related_name="translations",
+        help_text="Production-tag link this translation belongs to.",
+        db_comment="FK to ProductionTag.",
+    )
+
+    language = models.ForeignKey(
+        Language,
+        on_delete=models.CASCADE,
+        related_name="production_tag_translations",
+        help_text="Language of this translation.",
+        db_comment="The language of the translation.",
+        db_column="language_code",
+    )
+
+    description = models.TextField(
+        max_length=1000,
+        blank=True,
+        help_text=(
+            "Multilingual description or context note for this tag within the production. "
+            "May contain HTML - sanitise before saving."
+        ),
+        db_comment="The description of the production tag in the given language.",
+    )
+
+    class Meta(BaseModel.Meta):
+        db_table = "production_tag_translation"
+        verbose_name = "Production Tag Translation"
+        verbose_name_plural = "Production Tag Translations"
+        ordering = ["language__code"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["production_tag", "language"],
+                name="unique_production_tag_language",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"Translation of ProductionTag {self.production_tag_id} in {self.language.code}"
 
 
 class ProductionGenre(BaseModel):

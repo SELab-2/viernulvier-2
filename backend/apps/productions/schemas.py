@@ -52,6 +52,7 @@ _PRODUCTION_RESPONSE = OpenApiExample(
                 "is_enabled": True,
                 "short_description": None,
                 "url_title": "",
+                "description": {"nl": "Eigentijdse dans- en theaterwerken.", "en": "Contemporary dance and theatre works."},
             }
         ],
         "genres": [{"id": 2, "type": "theater", "name": "Theater"}],
@@ -74,7 +75,21 @@ _PRODUCTION_RESPONSE_WITH_EVENTS = OpenApiExample(
         "tagline": "Een ode aan vergankelijkheid",
         "teaser": "Een indringende voorstelling over verlies en hoop.",
         "description": "Volledige beschrijving van de productie...",
-        "tags": [],
+        "tags": [
+            {
+                "id": 12,
+                "type": "theme",
+                "name": "Hedendaags",
+                "url": "",
+                "source": "",
+                "source_type": "",
+                "is_external": False,
+                "is_enabled": True,
+                "short_description": None,
+                "url_title": "",
+                "description": {},
+            }
+        ],
         "genres": [{"id": 2, "type": "theater", "name": "Theater"}],
         "events": [
             {
@@ -156,7 +171,10 @@ _PRODUCTION_LIST = extend_schema(
         "are returned as language-code dictionaries "
         '(e.g. {"en": "Title", "fr": "Titre"}).\n\n'
         "Nested `genres` are returned in their configured `position` order. "
-        "Nested `tags` and `genres` carry their own translated fields as dictionaries."
+        "Nested `tags` and `genres` carry their own translated fields as dictionaries. "
+        "Each tag also exposes a `description` dictionary containing per-production "
+        "context notes in all available languages; the dictionary is empty when no "
+        "descriptions have been added for that tag."
     ),
     responses={200: ProductionSerializer, **READ_ERRORS},
     examples=[_PRODUCTION_RESPONSE],
@@ -169,6 +187,8 @@ _PRODUCTION_RETRIEVE = extend_schema(
         "by its primary key.\n\n"
         "All translated fields are returned as language-code dictionaries. "
         "Genres are ordered by their `position` value. "
+        "Each tag exposes a `description` dictionary with per-production context notes "
+        "per language; the dictionary is empty when no descriptions have been added. "
         "Use `?include=events` to include all related events in the response."
     ),
     parameters=[
@@ -197,7 +217,9 @@ _PRODUCTION_CREATE = extend_schema(
         "- `uit_database_theme` and `uit_database_type` are optional FK references.\n"
         "- Translated fields (title, description, etc.) are managed via the "
         "**Production Translation** endpoints.\n"
-        "- Tags and genres are managed via their dedicated through-table endpoints.\n\n"
+        "- Tags and genres are managed via their dedicated through-table endpoints.\n"
+        "- Per-production tag descriptions are managed via the "
+        "**Production Tag Translation** endpoints.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=ProductionSerializer,
