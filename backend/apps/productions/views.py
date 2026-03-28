@@ -104,10 +104,12 @@ class ProductionViewSet(ApiModelViewSet):
         ),
         Prefetch(
             "productiontag_set",
-            queryset=ProductionTag.objects.select_related("tag").prefetch_related(
+            queryset=ProductionTag.objects.select_related("tag")
+            .prefetch_related(
                 "translations__language",
                 "tag__translations__language",
-            ).order_by("tag__type", "id"),
+            )
+            .order_by("tag__type", "id"),
             to_attr="prefetched_production_tags",
         ),
         Prefetch(

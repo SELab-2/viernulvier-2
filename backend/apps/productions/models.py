@@ -384,7 +384,7 @@ class ProductionTag(BaseModel):
 
     def __str__(self) -> str:
         return f"Tag {self.tag} for {self.production}"
-    
+
 
 class ProductionTagTranslation(BaseModel):
     """

@@ -96,12 +96,9 @@ class ProductionTagSerializer(serializers.ModelSerializer):
 
     def get_description(self, obj: ProductionTag) -> dict:
         """Return all available translations as a language-code dictionary."""
-        return {
-            translation.language.code: translation.description
-            for translation in obj.translations.all()
-        }
-    
-    
+        return {translation.language.code: translation.description for translation in obj.translations.all()}
+
+
 class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """
     Full representation of a Production.
@@ -324,7 +321,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     def get_display_artist_name(self, obj: Production) -> str | None:
         """Return the base-language artist/company name (with fallback)."""
         return self.get_base_translated_value(obj, field_name="artist_name")
-    
+
     def get_tags(self, obj: Production) -> list:
         """
         Return serialised production–tag records in type/id order.
@@ -338,8 +335,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         if production_tags is None:
             # Fallback — will trigger additional queries per production.
             production_tags = (
-                obj.productiontag_set
-                .select_related("tag")
+                obj.productiontag_set.select_related("tag")
                 .prefetch_related("translations__language", "tag__translations__language")
                 .order_by("tag__type", "id")
             )
