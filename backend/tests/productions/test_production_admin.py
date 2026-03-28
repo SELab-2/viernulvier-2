@@ -23,6 +23,7 @@ from apps.productions.admin import (
     ProductionGenreInline,
     ProductionTagAdmin,
     ProductionTagInline,
+    ProductionTagTranslationInline,
     ProductionTranslationAdmin,
     ProductionTranslationInline,
     UitDatabaseThemeAdmin,
@@ -32,6 +33,7 @@ from apps.productions.models import (
     Production,
     ProductionGenre,
     ProductionTag,
+    ProductionTagTranslation,
     ProductionTranslation,
     UitDatabaseTheme,
     UitDatabaseType,
@@ -325,6 +327,49 @@ class TestProductionTagAdminConfiguration(TestCase):
 
     def test_autocomplete_fields_contains_tag(self):
         self.assertIn("tag", self.admin.autocomplete_fields)
+
+
+class TestProductionTagTranslationInlineClass(TestCase):
+    def test_model_is_production_tag_translation(self):
+        self.assertEqual(ProductionTagTranslationInline.model, ProductionTagTranslation)
+
+    def test_extra_is_one(self):
+        self.assertEqual(ProductionTagTranslationInline.extra, 1)
+
+    def test_autocomplete_fields_contains_language(self):
+        self.assertIn("language", ProductionTagTranslationInline.autocomplete_fields)
+
+    def test_has_collapse_class(self):
+        self.assertIn("collapse", ProductionTagTranslationInline.classes)
+
+    def test_fields_contains_language(self):
+        self.assertIn("language", ProductionTagTranslationInline.fields)
+
+    def test_fields_contains_description(self):
+        self.assertIn("description", ProductionTagTranslationInline.fields)
+
+    def test_is_tabular_inline(self):
+        self.assertTrue(issubclass(ProductionTagTranslationInline, admin.TabularInline))
+
+
+class TestProductionTagAdminHasTranslationInline(TestCase):
+    def setUp(self):
+        self.admin = admin.site._registry[ProductionTag]
+
+    def test_production_tag_translation_inline_is_registered_on_tag_admin(self):
+        inline_models = [inline.model for inline in self.admin.inlines]
+        self.assertIn(ProductionTagTranslation, inline_models)
+
+    def test_get_queryset_selects_related_language_via_inline(self):
+        """
+        The inline's get_queryset must select_related('language') to avoid
+        N+1 queries when the inline rows are rendered.
+        """
+        inline_instance = next(i for i in self.admin.inlines if i.model is ProductionTagTranslation)
+        self.assertTrue(
+            hasattr(inline_instance, "get_queryset"),
+            "ProductionTagTranslationInline must override get_queryset",
+        )
 
 
 # ---------------------------------------------------------------------------

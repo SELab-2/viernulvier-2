@@ -6,6 +6,7 @@ from apps.productions.models import (
     Production,
     ProductionGenre,
     ProductionTag,
+    ProductionTagTranslation,
     ProductionTranslation,
     UitDatabaseTheme,
     UitDatabaseType,
@@ -80,6 +81,17 @@ class ProductionTagFactory(factory.django.DjangoModelFactory):
 
     production = SubFactory(ProductionFactory)
     tag = SubFactory(TagFactory)
+
+
+class ProductionTagTranslationFactory(factory.django.DjangoModelFactory):
+    """Factory for ProductionTagTranslation model."""
+
+    class Meta:
+        model = ProductionTagTranslation
+
+    production_tag = SubFactory(ProductionTagFactory)
+    language = SubFactory(LanguageFactory)
+    description = LazyFunction(lambda: faker.text(max_nb_chars=1000))
 
 
 class ProductionGenreFactory(factory.django.DjangoModelFactory):
