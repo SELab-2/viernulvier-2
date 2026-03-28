@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import MetaPanel from '../../../components/production/MetaPanel'
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'nl' }, t: (k: string, d: string) => d }),
+  useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),
 }))
 
 const mockNavigate = jest.fn()

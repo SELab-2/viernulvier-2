@@ -1,8 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react'
+import type { Event } from '../../../types/Events'
+import type { Production } from '../../../types/Productions'
 import EventList from '../../../components/production/EventList'
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'nl' }, t: (k: string, d: string) => d }),
+  useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),
 }))
 
 const mockNavigate = jest.fn()
@@ -13,6 +15,37 @@ jest.mock('react-router-dom', () => ({
 
 afterEach(() => jest.clearAllMocks())
 
+const baseProductionStub: Production = {
+  id: 1,
+  attendance_mode: 'offline',
+  performer_type: 'solo',
+  uit_database_theme: null,
+  uit_database_type: null,
+  display_title: null,
+  display_artist_name: null,
+  title: {},
+  artist_name: {},
+  tagline: {},
+  teaser: {},
+  description: {},
+  tags: [],
+  genres: [],
+  media_gallery: { id: 0, name: null, media_items: [] },
+  events: [],
+}
+
+const eventFactory = (overrides: Partial<Event>): Event => ({
+  id: 1,
+  production: { ...baseProductionStub },
+  production_display: 'Production',
+  hall: null,
+  hall_display: null,
+  starts_at: null,
+  ends_at: null,
+  prices: [],
+  ...overrides,
+})
+
 describe('EventList component', () => {
   it('renders no events text when array is empty', () => {
     render(<EventList events={[]} />)
@@ -21,13 +54,26 @@ describe('EventList component', () => {
 
   it('renders event with price and toggles expansion', () => {
     const events = [
-      {
+      eventFactory({
         id: 1,
+        production: { ...baseProductionStub, id: 1 },
+        production_display: 'Production 1',
+        hall_display: 'Main hall',
         starts_at: '2025-08-01T20:00:00Z',
         ends_at: '2025-08-01T22:00:00Z',
-        hall_display: 'Main hall',
-        prices: [{ id: 8, price_display: 'VIP', amount: 20, available: 12 }],
-      },
+        prices: [
+          {
+            id: 8,
+            event: 1,
+            price_rank: null,
+            price_rank_display: null,
+            price: null,
+            price_display: 'VIP',
+            amount: '20',
+            available: 12,
+          },
+        ],
+      }),
     ]
 
     render(<EventList events={events} />)
@@ -46,7 +92,35 @@ describe('EventList component', () => {
   })
 
   it('renders placeholder values when start/hall/prices are missing', () => {
-    const events = [{ id: 2, starts_at: null, hall_display: null, prices: [] }]
+    const events = [
+      {
+        id: 2,
+        production: {
+          id: 2,
+          attendance_mode: 'offline',
+          performer_type: 'solo',
+          uit_database_theme: null,
+          uit_database_type: null,
+          display_title: null,
+          display_artist_name: null,
+          title: {},
+          artist_name: {},
+          tagline: {},
+          teaser: {},
+          description: {},
+          tags: [],
+          genres: [],
+          media_gallery: { id: 0, name: null, media_items: [] },
+          events: [],
+        },
+        production_display: 'Production 2',
+        hall: null,
+        hall_display: null,
+        starts_at: null,
+        ends_at: null,
+        prices: [],
+      },
+    ] as unknown as Event[]
 
     render(<EventList events={events} />)
 
@@ -59,16 +133,48 @@ describe('EventList component', () => {
     const events = [
       {
         id: 3,
-        starts_at: '2025-08-05T20:00:00Z',
+        production: {
+          id: 3,
+          attendance_mode: 'offline',
+          performer_type: 'solo',
+          uit_database_theme: null,
+          uit_database_type: null,
+          display_title: null,
+          display_artist_name: null,
+          title: {},
+          artist_name: {},
+          tagline: {},
+          teaser: {},
+          description: {},
+          tags: [],
+          genres: [],
+          media_gallery: { id: 0, name: null, media_items: [] },
+          events: [],
+        },
+        production_display: 'Production 3',
+        hall: null,
         hall_display: 'Fallback hall',
-        prices: [{ id: 9, price_display: 'Standard', amount: 15 }],
+        starts_at: '2025-08-05T20:00:00Z',
+        ends_at: null,
+        prices: [
+          {
+            id: 9,
+            event: 3,
+            price_rank: null,
+            price_rank_display: null,
+            price: null,
+            price_display: 'Standard',
+            amount: '15',
+            available: 0,
+          },
+        ],
       },
-    ]
+    ] as unknown as Event[]
 
     render(<EventList events={events} />)
 
     expect(screen.queryByText(/ – /)).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /Prijzen tonen/i }))
-    expect(screen.getByText('—')).toBeInTheDocument()
+    expect(screen.getByText('0')).toBeInTheDocument()
   })
 })

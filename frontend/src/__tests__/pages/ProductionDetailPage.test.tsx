@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material'
 import ProductionDetailPage from '../../pages/ProductionDetailPage'
 import { getProduction } from '../../services/productions/Productions'
+import type { Event } from '../../types/Events'
 import type { Production } from '../../types/Productions'
 
 jest.mock('react-i18next', () => ({
@@ -71,36 +72,115 @@ describe('ProductionDetailPage', () => {
       description: { nl: 'Omschrijving NL' },
       teaser: { nl: 'Teaser NL' },
       media_gallery: {
+        id: 1,
+        name: 'Primary media',
         media_items: [
           {
             id: 1,
+            gallery: 1,
             type: 'foto',
-            display_title: 'Image title',
+            format: 'jpg',
             original_filename: 'img.jpg',
-            crops: [{ name: 'FE3_header', image_url: 'https://x.png' }],
+            position: 0,
+            width: null,
+            height: null,
+            title: null,
+            display_title: 'Image title',
+            description: null,
+            credits: null,
+            link: null,
+            crops: [{ id: 1, name: 'FE3_header', image_url: 'https://x.png' }],
           },
         ],
       },
       events: [
         {
           id: 1,
-          starts_at: '2025-10-01T20:00:00Z',
+          production: {
+            id: 42,
+            attendance_mode: 'offline',
+            performer_type: 'group',
+            uit_database_theme: null,
+            uit_database_type: null,
+            display_title: null,
+            display_artist_name: null,
+            title: {},
+            artist_name: {},
+            tagline: {},
+            teaser: {},
+            description: {},
+            tags: [],
+            genres: [],
+            media_gallery: { id: 1, name: 'Primary media', media_items: [] },
+            events: [],
+          },
+          production_display: 'Production 1',
+          hall: null,
           hall_display: 'Main hall',
+          starts_at: '2025-10-01T20:00:00Z',
+          ends_at: '2025-10-01T22:00:00Z',
           prices: [],
         },
         {
           id: 2,
-          starts_at: '2025-10-02T20:00:00Z',
+          production: {
+            id: 42,
+            attendance_mode: 'offline',
+            performer_type: 'group',
+            uit_database_theme: null,
+            uit_database_type: null,
+            display_title: null,
+            display_artist_name: null,
+            title: {},
+            artist_name: {},
+            tagline: {},
+            teaser: {},
+            description: {},
+            tags: [],
+            genres: [],
+            media_gallery: { id: 1, name: 'Primary media', media_items: [] },
+            events: [],
+          },
+          production_display: 'Production 2',
+          hall: null,
           hall_display: 'Second hall',
+          starts_at: '2025-10-02T20:00:00Z',
+          ends_at: '2025-10-02T22:00:00Z',
           prices: [],
         },
+      ] as unknown as Event[],
+      genres: [
+        {
+          id: 1,
+          type: 'genre',
+          use_as: { id: 1, name: 'main' },
+          name: { nl: 'Drama' },
+          display_name: 'Drama',
+          vendor_id: null,
+        },
       ],
-      genres: [{ display_name: 'Drama' }],
-      tags: [{ display_name: 'Tag1', type: 'tag' }],
-      uit_database_type: { name: 'TypeName' },
+      tags: [
+        {
+          id: 1,
+          url: 'https://tags.local/tag1',
+          source: 'local',
+          source_type: 'tag',
+          type: 'tag',
+          is_external: false,
+          is_enabled: true,
+          display_name: 'Tag1',
+          display_short_description: null,
+          display_url_title: null,
+          name: null,
+          short_description: null,
+          url_title: null,
+        },
+      ],
+      uit_database_theme: null,
+      uit_database_type: { id: 1, name: 'TypeName' },
       performer_type: 'group',
       attendance_mode: 'offline',
-    }
+    } as Production
 
     mockedGetProduction.mockResolvedValue(productionData as Production)
 

@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom'
 import Breadcrumbs from '../../../components/production/Breadcrumbs'
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'nl' }, t: (k: string, d: string) => d }),
+  useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),
 }))
 
 const mockNavigate = jest.fn()

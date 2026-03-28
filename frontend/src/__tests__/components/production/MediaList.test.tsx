@@ -1,9 +1,35 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material'
+import type { MediaItem, MediaItemCrop } from '../../../types/Media'
 import MediaList from '../../../components/production/MediaList'
 
+const baseCrop = (overrides: Partial<MediaItemCrop> = {}): MediaItemCrop => ({
+  id: 1,
+  name: 'hd_ready',
+  image_url: 'https://default.png',
+  ...overrides,
+})
+
+const baseMediaItem = (overrides: Partial<MediaItem> = {}): MediaItem => ({
+  id: 1,
+  gallery: 1,
+  type: 'foto',
+  format: 'jpg',
+  original_filename: 'default.jpg',
+  position: 0,
+  width: null,
+  height: null,
+  title: null,
+  display_title: 'Default',
+  description: null,
+  credits: null,
+  link: null,
+  crops: [baseCrop()],
+  ...overrides,
+})
+
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'nl' }, t: (k: string, d: string) => d }),
+  useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),
 }))
 
 function mockMatchMedia(mode: 'mobile' | 'tablet' | 'desktop') {
@@ -37,7 +63,7 @@ describe('MediaList component', () => {
   afterEach(() => jest.clearAllMocks())
 
   it('renders null when there are no media items or no images', () => {
-    mockMatchMedia(false)
+    mockMatchMedia('desktop')
     const { container } = render(<MediaList mediaItems={[]} />)
     expect(container.firstChild).toBeNull()
 
@@ -45,13 +71,15 @@ describe('MediaList component', () => {
     const noneContainer = render(
       <MediaList
         mediaItems={[
-          {
+          baseMediaItem({
             id: 1,
+            gallery: null,
             type: 'video',
-            display_title: 'nope',
+            format: 'mp4',
             original_filename: 'nope.png',
+            display_title: 'nope',
             crops: [],
-          },
+          }),
         ]}
       />,
     )
@@ -60,37 +88,33 @@ describe('MediaList component', () => {
 
   it('selectsFE3header and renders with pagination buttons and labels', () => {
     // desktop wide, 3 items per slide
-    mockMatchMedia(false)
+    mockMatchMedia('desktop')
 
     const items = [
-      {
+      baseMediaItem({
         id: 1,
         display_title: 'Img1',
         original_filename: 'orig1.png',
-        type: 'foto',
-        crops: [{ name: 'FE3_header', image_url: 'https://a.png' }],
-      },
-      {
+        crops: [{ id: 1, name: 'FE3_header', image_url: 'https://a.png' }],
+      }),
+      baseMediaItem({
         id: 2,
         display_title: 'Img2',
         original_filename: 'orig2.png',
-        type: 'foto',
-        crops: [{ name: 'hd_ready', image_url: 'https://b.png' }],
-      },
-      {
+        crops: [{ id: 2, name: 'hd_ready', image_url: 'https://b.png' }],
+      }),
+      baseMediaItem({
         id: 3,
         display_title: 'Img3',
         original_filename: 'orig3.png',
-        type: 'foto',
-        crops: [{ name: 'other', image_url: 'https://c.png' }],
-      },
-      {
+        crops: [{ id: 3, name: 'other', image_url: 'https://c.png' }],
+      }),
+      baseMediaItem({
         id: 4,
         display_title: 'Img4',
         original_filename: 'orig4.png',
-        type: 'foto',
-        crops: [{ name: 'other', image_url: 'https://d.png' }],
-      },
+        crops: [{ id: 4, name: 'other', image_url: 'https://d.png' }],
+      }),
     ]
 
     render(<MediaList mediaItems={items} />)
@@ -113,19 +137,37 @@ describe('MediaList component', () => {
     const items = [
       {
         id: 1,
-        display_title: 'Imghd',
-        original_filename: 'orig-hd.png',
+        gallery: null,
         type: 'foto',
+        format: 'jpg',
+        original_filename: 'orig-hd.png',
+        position: 0,
+        width: null,
+        height: null,
+        title: null,
+        display_title: 'Imghd',
+        description: null,
+        credits: null,
+        link: null,
         crops: [{ name: 'hd_ready', image_url: 'https://hd.png' }],
       },
       {
         id: 2,
-        display_title: 'Imgfallback',
-        original_filename: 'orig-fallback.png',
+        gallery: null,
         type: 'foto',
+        format: 'jpg',
+        original_filename: 'orig-fallback.png',
+        position: 1,
+        width: null,
+        height: null,
+        title: null,
+        display_title: 'Imgfallback',
+        description: null,
+        credits: null,
+        link: null,
         crops: [{ name: 'other', image_url: 'https://fallback.png' }],
       },
-    ]
+    ] as unknown as MediaItem[]
 
     render(<MediaList mediaItems={items} />)
 
@@ -144,27 +186,24 @@ describe('MediaList component', () => {
     })
 
     const items = [
-      {
+      baseMediaItem({
         id: 1,
         display_title: 'T1',
         original_filename: 't1.png',
-        type: 'foto',
-        crops: [{ name: 'hd_ready', image_url: 'https://t1.png' }],
-      },
-      {
+        crops: [{ id: 5, name: 'hd_ready', image_url: 'https://t1.png' }],
+      }),
+      baseMediaItem({
         id: 2,
         display_title: 'T2',
         original_filename: 't2.png',
-        type: 'foto',
-        crops: [{ name: 'hd_ready', image_url: 'https://t2.png' }],
-      },
-      {
+        crops: [{ id: 6, name: 'hd_ready', image_url: 'https://t2.png' }],
+      }),
+      baseMediaItem({
         id: 3,
         display_title: 'T3',
         original_filename: 't3.png',
-        type: 'foto',
-        crops: [{ name: 'other', image_url: 'https://t3.png' }],
-      },
+        crops: [{ id: 7, name: 'other', image_url: 'https://t3.png' }],
+      }),
     ]
 
     render(
@@ -197,14 +236,14 @@ describe('MediaList component', () => {
     mockMatchMedia('tablet')
 
     const fallbackItems = [
-      {
+      baseMediaItem({
         id: 4,
         display_title: '',
         original_filename: '',
-        type: 'foto',
-        crops: [{ name: 'other', image_url: 'https://fallback.png' }],
-      },
+        crops: [{ id: 8, name: 'other', image_url: 'https://fallback.png' }],
+      }),
     ]
+
     render(
       <ThemeProvider theme={theme}>
         <MediaList mediaItems={fallbackItems} />

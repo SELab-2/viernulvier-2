@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import Description from '../../../components/production/Description'
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'nl' }, t: (k: string, d: string) => d }),
+  useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),
 }))
 
 jest.mock('../../../utils/SanitizeHtml', () => ({
