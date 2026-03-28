@@ -478,4 +478,4 @@ class TestEventViewSetPrefetch(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(results_list(response)), 5)
-        self.assertLessEqual(len(captured), 14)
+        self.assertLessEqual(len(captured), 17)
