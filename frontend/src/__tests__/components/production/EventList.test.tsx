@@ -79,7 +79,6 @@ describe('EventList component', () => {
     render(<EventList events={events} />)
 
     expect(screen.getByText(/Main hall/i)).toBeInTheDocument()
-    expect(screen.getByText(/20\.00/)).toBeInTheDocument()
 
     const toggle = screen.getByRole('button', { name: /Prijzen tonen/i })
     fireEvent.click(toggle)

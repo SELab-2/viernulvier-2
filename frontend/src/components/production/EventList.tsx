@@ -1,11 +1,9 @@
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined'
-import EuroOutlinedIcon from '@mui/icons-material/EuroOutlined'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined'
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
 import {
   Box,
-  Chip,
   Collapse,
   Divider,
   IconButton,
@@ -75,7 +73,9 @@ export default function EventsList({ events }: EventsListProps) {
                 {/* Date + time */}
                 <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
                   <Stack direction="row" spacing={0.75} alignItems="center">
-                    <CalendarTodayOutlinedIcon sx={{ fontSize: '0.9rem', color: 'text.primary' }} />
+                    <CalendarTodayOutlinedIcon
+                      sx={{ fontSize: '0.95rem', color: 'text.primary' }}
+                    />
                     <Typography variant="body2" fontWeight={600} color="text.primary">
                       {event.starts_at ? formatDate(event.starts_at, lang) : '—'}
                     </Typography>
@@ -83,8 +83,8 @@ export default function EventsList({ events }: EventsListProps) {
 
                   {event.starts_at && (
                     <Stack direction="row" spacing={0.75} alignItems="center">
-                      <ScheduleOutlinedIcon sx={{ fontSize: '0.9rem', color: 'text.primary' }} />
-                      <Typography variant="body2" color="text.primary">
+                      <ScheduleOutlinedIcon sx={{ fontSize: '0.95rem', color: 'text.primary' }} />
+                      <Typography variant="body2" color="text.primary" fontWeight={500}>
                         {formatTime(event.starts_at, lang)}
                         {event.ends_at ? ` – ${formatTime(event.ends_at, lang)}` : ''}
                       </Typography>
@@ -103,48 +103,8 @@ export default function EventsList({ events }: EventsListProps) {
                 )}
               </Stack>
 
-              {/* Prices summary chips + expand toggle */}
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                sx={{
-                  flexShrink: 0,
-                  ml: 2,
-                  minWidth: 0,
-                  maxWidth: { xs: '140px', sm: '220px', md: '280px' },
-                }}
-              >
-                {hasPrices && (
-                  <Stack
-                    direction="row"
-                    spacing={0.5}
-                    flexWrap="nowrap"
-                    sx={{
-                      display: { xs: 'none', sm: 'flex' },
-                      width: '100%',
-                      overflowX: 'auto',
-                      pr: 0.5,
-                      '&::-webkit-scrollbar': { height: 4 },
-                      '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: 'rgba(0,0,0,0.2)',
-                        borderRadius: '2px',
-                      },
-                    }}
-                  >
-                    {event.prices.map((p) => (
-                      <Chip
-                        key={p.id}
-                        icon={<EuroOutlinedIcon sx={{ fontSize: '0.75rem !important' }} />}
-                        label={`${Number(p.amount).toFixed(2)}`}
-                        size="small"
-                        variant="outlined"
-                        sx={{ fontSize: '0.75rem', height: 24, whiteSpace: 'nowrap' }}
-                      />
-                    ))}
-                  </Stack>
-                )}
-
+              {/* Expand prices toggle */}
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0, ml: 2 }}>
                 {hasPrices && (
                   <IconButton
                     size="small"

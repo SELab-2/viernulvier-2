@@ -32,7 +32,14 @@ function MetaRow({ label, value }: { label: string; value: string }) {
         alignItems: 'start',
       }}
     >
-      <span style={{ color: theme.palette.text.secondary, fontSize: '0.82rem', paddingTop: '2px' }}>
+      <span
+        style={{
+          color: theme.palette.text.secondary,
+          fontSize: '0.95rem',
+          paddingTop: '2px',
+          fontWeight: 600,
+        }}
+      >
         {label}
       </span>
       <span style={{ fontSize: '0.92rem', color: theme.palette.text.primary, fontWeight: 500 }}>
