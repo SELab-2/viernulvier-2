@@ -1,5 +1,4 @@
-"""
-API key authentication for the core app.
+"""API key authentication for the core app.
 
 ``ApiKeyAuthentication`` is the sole authentication class used across the
 entire project. It is registered as the global default in
@@ -29,7 +28,7 @@ character.
 """
 
 import secrets
-from typing import Optional, Tuple
+from typing import Any
 
 from django.conf import settings
 from rest_framework.authentication import BaseAuthentication
@@ -37,8 +36,7 @@ from rest_framework.exceptions import AuthenticationFailed
 
 
 class ApiKeyAuthentication(BaseAuthentication):
-    """
-    DRF authentication class that validates ``X-API-Key`` request headers.
+    """DRF authentication class that validates ``X-API-Key`` request headers.
 
     On success, returns ``(None, "internal")`` or ``(None, "public")``.
     The second element of the tuple becomes ``request.auth`` and is used
@@ -55,9 +53,8 @@ class ApiKeyAuthentication(BaseAuthentication):
     header_name = "HTTP_X_API_KEY"
     www_authenticate_realm = "X-API-Key"
 
-    def authenticate(self, request) -> Optional[Tuple[None, str]]:
-        """
-        Read the ``X-API-Key`` header and validate the API key.
+    def authenticate(self, request: Any) -> tuple[None, str] | None:
+        """Read the ``X-API-Key`` header and validate the API key.
 
         Steps
         -----
@@ -79,7 +76,6 @@ class ApiKeyAuthentication(BaseAuthentication):
             :exc:`~rest_framework.exceptions.AuthenticationFailed`:
                 On invalid header bytes or invalid keys (-> HTTP 401).
         """
-
         # Django exposes request headers through request.META using the
         # HTTP_<HEADER_NAME> convention.
         raw_key = request.META.get(self.header_name)
@@ -91,8 +87,8 @@ class ApiKeyAuthentication(BaseAuthentication):
         if isinstance(raw_key, bytes):
             try:
                 raw_key.decode("utf-8")
-            except UnicodeDecodeError:
-                raise AuthenticationFailed("Invalid characters in API key.")
+            except UnicodeDecodeError as err:
+                raise AuthenticationFailed("Invalid characters in API key.") from err
             key_bytes = raw_key
         else:
             key_bytes = str(raw_key).encode("utf-8")
@@ -112,9 +108,8 @@ class ApiKeyAuthentication(BaseAuthentication):
         # No match - reject the request.
         raise AuthenticationFailed("Invalid API key.")
 
-    def authenticate_header(self, request) -> str:
-        """
-        Return the value for the ``WWW-Authenticate`` response header.
+    def authenticate_header(self, _request: Any) -> str:
+        """Return the value for the ``WWW-Authenticate`` response header.
 
         DRF uses this to construct a proper ``HTTP 401 Unauthorized``
         response when authentication fails. Without it, DRF would return

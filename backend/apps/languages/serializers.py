@@ -1,5 +1,4 @@
-"""
-Serializers for the Language app.
+"""Serializers for the Language app.
 
 Field-level `help_text` and `extra_kwargs` are picked up automatically
 by drf-spectacular and rendered in the Swagger UI, so descriptions do
@@ -12,8 +11,7 @@ from .models import Language
 
 
 class LanguageSerializer(serializers.ModelSerializer):
-    """
-    Represents a Language object.
+    """Represents a Language object.
 
     All fields are exposed.
     """

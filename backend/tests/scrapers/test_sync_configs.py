@@ -5,17 +5,19 @@ with the scraper architecture.
 """
 
 import importlib
-import sys
 from io import StringIO
+import re
+import sys
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-import pytest
 from django.core.management.base import CommandParser, OutputWrapper
 from django.db import models as django_models
+import pytest
 
 from apps.events.models import Event, EventPrice
 from apps.genres.models import Genre, GenreUseAs
+import apps.imports.management.commands.sync_viernulvier as cmd_module
 from apps.imports.management.commands.sync_viernulvier import (
     EVENT_CONFIG,
     EVENT_PRICE_CONFIG,
@@ -79,41 +81,41 @@ def get_model_field_names(model):
 class TestValueTransforms:
     """Test value transformation functions."""
 
-    def test_nee_ja_to_bool_with_ja_string(self):
+    def test_nee_ja_to_bool_with_ja_string(self) -> None:
         """Test that 'ja' string converts to True."""
         for val in ["ja", "JA", "  ja  "]:
             assert nee_ja_to_bool(val) is True
 
-    def test_nee_ja_to_bool_with_nee_string(self):
+    def test_nee_ja_to_bool_with_nee_string(self) -> None:
         """Test that 'nee' string converts to False."""
         for val in ["nee", "NEE", "  nee  "]:
             assert nee_ja_to_bool(val) is False
 
-    def test_nee_ja_to_bool_with_boolean(self):
+    def test_nee_ja_to_bool_with_boolean(self) -> None:
         """Test that boolean values pass through unchanged."""
         assert nee_ja_to_bool(True) is True
         assert nee_ja_to_bool(False) is False
 
-    def test_nee_ja_to_bool_with_english_strings(self):
+    def test_nee_ja_to_bool_with_english_strings(self) -> None:
         """Test English equivalents."""
         for val in ["true", "yes", "1", "TRUE", " YES ", " 1 "]:
             assert nee_ja_to_bool(val) is True
         for val in ["false", "no", "0", "FALSE", " NO ", " 0 "]:
             assert nee_ja_to_bool(val) is False
 
-    def test_nee_ja_to_bool_with_empty_string(self):
+    def test_nee_ja_to_bool_with_empty_string(self) -> None:
         """Empty string should return False."""
         assert nee_ja_to_bool("") is False
         assert nee_ja_to_bool("   ") is False
 
-    def test_nee_ja_to_bool_with_ints(self):
+    def test_nee_ja_to_bool_with_ints(self) -> None:
         """Integers should convert correctly."""
         assert nee_ja_to_bool(1) is True
         assert nee_ja_to_bool(0) is False
         assert nee_ja_to_bool(42) is True
         assert nee_ja_to_bool(-1) is True
 
-    def test_nee_ja_to_bool_with_other_values(self):
+    def test_nee_ja_to_bool_with_other_values(self) -> None:
         """Other types should be coerced via bool()."""
         assert nee_ja_to_bool(None) is False
         assert nee_ja_to_bool([]) is False
@@ -122,14 +124,14 @@ class TestValueTransforms:
         assert nee_ja_to_bool({"x": 1}) is True
 
     @pytest.mark.django_db
-    def test_resolve_genre_use_as_creates_new(self):
+    def test_resolve_genre_use_as_creates_new(self) -> None:
         """Test that _resolve_genre_use_as creates a new GenreUseAs when needed."""
         pk = _resolve_genre_use_as("test_genre")
         assert pk is not None
         assert GenreUseAs.objects.filter(pk=pk, name="test_genre").exists()
 
     @pytest.mark.django_db
-    def test_resolve_genre_use_as_returns_existing(self):
+    def test_resolve_genre_use_as_returns_existing(self) -> None:
         """Test that _resolve_genre_use_as returns existing GenreUseAs."""
         existing = GenreUseAs.objects.create(name="existing_genre")
         pk = _resolve_genre_use_as("existing_genre")
@@ -137,7 +139,7 @@ class TestValueTransforms:
         assert GenreUseAs.objects.filter(name="existing_genre").count() == 1
 
     @pytest.mark.django_db
-    def test_resolve_genre_use_as_handles_none(self):
+    def test_resolve_genre_use_as_handles_none(self) -> None:
         """Test that _resolve_genre_use_as handles None value."""
         pk = _resolve_genre_use_as(None)
         assert pk is not None
@@ -152,7 +154,7 @@ class TestValueTransforms:
 class TestConfigStructure:
     """Test that all configurations have the correct structure."""
 
-    def test_all_configs_are_model_sync_config(self):
+    def test_all_configs_are_model_sync_config(self) -> None:
         """Test that all config objects are instances of ModelSyncConfig."""
         configs = [
             UITDATABASE_THEME_CONFIG,
@@ -173,7 +175,7 @@ class TestConfigStructure:
         for config in configs:
             assert isinstance(config, ModelSyncConfig)
 
-    def test_configs_have_required_attributes(self):
+    def test_configs_have_required_attributes(self) -> None:
         """Test that all configs have required attributes."""
         configs = [
             UITDATABASE_THEME_CONFIG,
@@ -188,7 +190,7 @@ class TestConfigStructure:
             assert hasattr(config, "lookup_field")
             assert hasattr(config, "api_id_key")
 
-    def test_configs_with_translations_have_valid_structure(self):
+    def test_configs_with_translations_have_valid_structure(self) -> None:
         """Test that configs with translations have properly structured TranslationConfig objects."""
         configs_with_translations = [
             GENRE_CONFIG,
@@ -214,7 +216,7 @@ class TestConfigStructure:
                     assert hasattr(trans_cfg, "flat_field")
                     assert hasattr(trans_cfg, "language_fk")
 
-    def test_production_config_has_m2m(self):
+    def test_production_config_has_m2m(self) -> None:
         """Test that production config has M2M configuration."""
         assert hasattr(PRODUCTION_CONFIG, "m2m")
         assert isinstance(PRODUCTION_CONFIG.m2m, list)
@@ -237,7 +239,7 @@ class TestConfigStructure:
 class TestConfigCompatibility:
     """Test that configurations are compatible with their models."""
 
-    def test_all_mapped_fields_exist_in_models(self):
+    def test_all_mapped_fields_exist_in_models(self) -> None:
         """Test that field_map values reference valid model fields."""
         configs_and_models = [
             (UITDATABASE_THEME_CONFIG, UitDatabaseTheme),
@@ -265,7 +267,7 @@ class TestConfigCompatibility:
                         f"(from API field '{api_field}') doesn't exist in model"
                     )
 
-    def test_value_transforms_reference_model_fields(self):
+    def test_value_transforms_reference_model_fields(self) -> None:
         """Test that value_transforms reference valid model fields."""
         configs_and_models = [
             (TAG_CONFIG, Tag),
@@ -277,12 +279,12 @@ class TestConfigCompatibility:
             if hasattr(config, "value_transforms") and config.value_transforms:
                 model_fields = get_model_field_names(model)
 
-                for field_name in config.value_transforms.keys():
+                for field_name in config.value_transforms:
                     assert field_name in model_fields, (
                         f"Config for {model.__name__}: value_transform field '{field_name}' doesn't exist in model"
                     )
 
-    def test_fk_resolvers_reference_model_fields(self):
+    def test_fk_resolvers_reference_model_fields(self) -> None:
         """Test that fk_resolvers reference valid model fields."""
         configs_and_models = [
             (GENRE_CONFIG, Genre),
@@ -292,7 +294,7 @@ class TestConfigCompatibility:
             if hasattr(config, "fk_resolvers") and config.fk_resolvers:
                 model_fields = get_model_field_names(model)
 
-                for field_name in config.fk_resolvers.keys():
+                for field_name in config.fk_resolvers:
                     assert field_name in model_fields, (
                         f"Config for {model.__name__}: fk_resolver field '{field_name}' doesn't exist in model"
                     )
@@ -306,12 +308,12 @@ class TestConfigCompatibility:
 class TestSyncStepsConfiguration:
     """Test that SYNC_STEPS is properly configured."""
 
-    def test_sync_steps_is_list(self):
+    def test_sync_steps_is_list(self) -> None:
         """Test that SYNC_STEPS is a list."""
         assert isinstance(SYNC_STEPS, list)
         assert len(SYNC_STEPS) > 0
 
-    def test_sync_steps_structure(self):
+    def test_sync_steps_structure(self) -> None:
         """Test that each sync step has the correct structure."""
         for step in SYNC_STEPS:
             assert isinstance(step, tuple)
@@ -324,17 +326,17 @@ class TestSyncStepsConfiguration:
             assert isinstance(endpoint, str)
             assert endpoint.startswith("/")
 
-    def test_sync_steps_unique_names(self):
+    def test_sync_steps_unique_names(self) -> None:
         """Test that sync step names are unique."""
         names = [name for name, *_ in SYNC_STEPS]
         assert len(names) == len(set(names)), "Duplicate sync step names found"
 
-    def test_sync_steps_unique_endpoints(self):
+    def test_sync_steps_unique_endpoints(self) -> None:
         """Test that sync step endpoints are unique."""
         endpoints = [endpoint for *_, endpoint in SYNC_STEPS]
         assert len(endpoints) == len(set(endpoints)), "Duplicate sync step endpoints found"
 
-    def test_sync_steps_matches_configs(self):
+    def test_sync_steps_matches_configs(self) -> None:
         """Test that all defined configs are used in SYNC_STEPS."""
         configs_in_steps = [config for _, _, config, _ in SYNC_STEPS]
 
@@ -362,9 +364,9 @@ class TestSyncStepsConfiguration:
             f"SYNC_STEPS has {len(configs_in_steps)} configs but {len(defined_configs)} are defined"
         )
 
-    def test_all_models_in_sync_steps_have_external_id(self):
+    def test_all_models_in_sync_steps_have_external_id(self) -> None:
         """Test that all models in SYNC_STEPS have external_id field."""
-        for name, model, config, endpoint in SYNC_STEPS:
+        for name, model, _config, _endpoint in SYNC_STEPS:
             model_fields = get_model_field_names(model)
             assert "external_id" in model_fields, (
                 f"Model {model.__name__} used in sync step '{name}' doesn't have external_id"
@@ -379,7 +381,7 @@ class TestSyncStepsConfiguration:
 class TestExternalIDMapping:
     """Test that all configs properly map external_id."""
 
-    def test_all_configs_map_at_id_to_external_id(self):
+    def test_all_configs_map_at_id_to_external_id(self) -> None:
         """Test that all configs map '@id' to 'external_id' or use default."""
         configs = [
             ("UitDatabaseTheme", UitDatabaseTheme, UITDATABASE_THEME_CONFIG),
@@ -414,7 +416,7 @@ class TestExternalIDMapping:
 class TestConfigIntegration:
     """Integration tests to verify configs work with the scraper."""
 
-    def test_configs_compatible_with_sync_viernulvier(self):
+    def test_configs_compatible_with_sync_viernulvier(self) -> None:
         """Test that configs have all attributes required by sync_viernulvier function."""
         all_configs = [config for _, _, config, _ in SYNC_STEPS]
 
@@ -432,7 +434,7 @@ class TestConfigIntegration:
             for attr in required_attributes:
                 assert hasattr(config, attr), f"Config {config} missing required attribute '{attr}'"
 
-    def test_translation_configs_compatible_with_sync_translations(self):
+    def test_translation_configs_compatible_with_sync_translations(self) -> None:
         """Test that translation configs have required attributes."""
         all_configs = [config for _, _, config, _ in SYNC_STEPS]
 
@@ -449,7 +451,7 @@ class TestConfigIntegration:
                     for attr in required:
                         assert hasattr(trans_cfg, attr), f"TranslationConfig missing required attribute '{attr}'"
 
-    def test_m2m_configs_compatible_with_sync_m2m(self):
+    def test_m2m_configs_compatible_with_sync_m2m(self) -> None:
         """Test that M2M configs have required attributes."""
         all_configs = [config for _, _, config, _ in SYNC_STEPS]
 
@@ -467,9 +469,9 @@ class TestConfigIntegration:
                     for attr in required:
                         assert hasattr(m2m_cfg, attr), f"M2MConfig missing required attribute '{attr}'"
 
-    def test_lookup_field_exists_in_all_models(self):
+    def test_lookup_field_exists_in_all_models(self) -> None:
         """Test that lookup_field specified in config exists in the model."""
-        for name, model, config, endpoint in SYNC_STEPS:
+        for _name, model, config, _endpoint in SYNC_STEPS:
             model_fields = get_model_field_names(model)
             lookup_field = config.lookup_field
 
@@ -484,7 +486,7 @@ class TestConfigIntegration:
 class TestSyncCommandOptions:
     """Test management command option wiring and filter param construction."""
 
-    def test_add_arguments_registers_only_and_all_filter_variants(self):
+    def test_add_arguments_registers_only_and_all_filter_variants(self) -> None:
         """Test that add_arguments exposes --only and generated filter flags."""
         parser = CommandParser(prog="manage.py")
         command = Command()
@@ -499,7 +501,7 @@ class TestSyncCommandOptions:
                 assert f"--{prefix}-{bound}" in option_strings
                 assert f"--{prefix}-{bound}-x" in option_strings
 
-    def test_handle_builds_expected_filter_params_and_respects_only(self):
+    def test_handle_builds_expected_filter_params_and_respects_only(self) -> None:
         """Test filter option mapping to API params and --only step selection."""
         command = Command()
         stdout_buffer = StringIO()
@@ -527,7 +529,7 @@ class TestSyncCommandOptions:
             "updated_at[strictly_before]": "2024-12-31T23:59:59Z",
         }
 
-    def test_handle_reports_unknown_step_without_syncing(self):
+    def test_handle_reports_unknown_step_without_syncing(self) -> None:
         """Test unknown --only step triggers error path and no sync call."""
         command = Command()
         stdout_buffer = StringIO()
@@ -544,7 +546,7 @@ class TestSyncCommandOptions:
 
 
 @pytest.mark.parametrize("tqdm_installed", [True, False])
-def test_make_progress_callback(monkeypatch, tqdm_installed, capsys):
+def test_make_progress_callback(monkeypatch, tqdm_installed, capsys) -> None:
     """Test _make_progress_callback writes progress correctly."""
 
     command = Command()
@@ -579,22 +581,22 @@ def test_make_progress_callback(monkeypatch, tqdm_installed, capsys):
 
 
 class TestIsNotLongterm:
-    def test_normal_production_returns_true(self):
+    def test_normal_production_returns_true(self) -> None:
         assert _is_not_longterm({"production": {"@id": "/api/v1/productions/123"}}) is True
 
-    def test_longterm_production_returns_false(self):
+    def test_longterm_production_returns_false(self) -> None:
         assert _is_not_longterm({"production": {"@id": "/api/v1/longterm/456"}}) is False
 
-    def test_string_production_normal_returns_true(self):
+    def test_string_production_normal_returns_true(self) -> None:
         assert _is_not_longterm({"production": "/api/v1/productions/99"}) is True
 
-    def test_string_production_longterm_returns_false(self):
+    def test_string_production_longterm_returns_false(self) -> None:
         assert _is_not_longterm({"production": "/api/v1/longterm/99"}) is False
 
-    def test_missing_production_key_returns_true(self):
+    def test_missing_production_key_returns_true(self) -> None:
         assert _is_not_longterm({}) is True
 
-    def test_none_production_returns_true(self):
+    def test_none_production_returns_true(self) -> None:
         assert _is_not_longterm({"production": None}) is True
 
 
@@ -610,7 +612,7 @@ class TestManagementCommandCoverage:
         cmd.stderr = OutputWrapper(StringIO())
         return cmd
 
-    def test_dry_run_warning_written_to_stdout(self):
+    def test_dry_run_warning_written_to_stdout(self) -> None:
         """--dry-run prints DRY RUN warning before executing steps."""
         cmd = self._make_command()
         with patch(
@@ -620,7 +622,7 @@ class TestManagementCommandCoverage:
             cmd.handle(only="events", dry_run=True)
         assert "DRY RUN" in cmd.stdout.getvalue()
 
-    def test_exception_in_step_logged_as_failed(self):
+    def test_exception_in_step_logged_as_failed(self) -> None:
         """A RuntimeError in a step is caught and printed as FAILED."""
         cmd = self._make_command()
         with patch(
@@ -631,7 +633,7 @@ class TestManagementCommandCoverage:
         assert "FAILED" in cmd.stdout.getvalue()
         assert "API boom" in cmd.stdout.getvalue()
 
-    def test_handle_no_only_runs_all_steps(self):
+    def test_handle_no_only_runs_all_steps(self) -> None:
         """Omitting --only runs every step in SYNC_STEPS."""
         cmd = self._make_command()
         with patch(
@@ -641,7 +643,7 @@ class TestManagementCommandCoverage:
             cmd.handle()
         assert mock_sync.call_count == len(SYNC_STEPS)
 
-    def test_handle_exclusive_after_filter(self):
+    def test_handle_exclusive_after_filter(self) -> None:
         """--created-after-x maps to strictly_after query param."""
         cmd = self._make_command()
         with patch(
@@ -652,7 +654,7 @@ class TestManagementCommandCoverage:
         params = mock_sync.call_args.kwargs["params"]
         assert params == {"created_at[strictly_after]": "2024-01-01T00:00:00Z"}
 
-    def test_handle_exclusive_before_filter(self):
+    def test_handle_exclusive_before_filter(self) -> None:
         """--updated-before-x maps to strictly_before query param."""
         cmd = self._make_command()
         with patch(
@@ -663,7 +665,7 @@ class TestManagementCommandCoverage:
         params = mock_sync.call_args.kwargs["params"]
         assert params == {"updated_at[strictly_before]": "2024-12-31T23:59:59Z"}
 
-    def test_handle_starts_after_filter(self):
+    def test_handle_starts_after_filter(self) -> None:
         """--starts-after maps to starts_at[after] query param."""
         cmd = self._make_command()
         with patch(
@@ -674,7 +676,7 @@ class TestManagementCommandCoverage:
         params = mock_sync.call_args.kwargs["params"]
         assert params == {"starts_at[after]": "2025-06-01T00:00:00Z"}
 
-    def test_handle_combined_filters(self):
+    def test_handle_combined_filters(self) -> None:
         """Multiple filter flags are all forwarded in params."""
         cmd = self._make_command()
         with patch(
@@ -690,12 +692,12 @@ class TestManagementCommandCoverage:
         assert params["created_at[after]"] == "2024-01-01T00:00:00Z"
         assert params["ends_at[before]"] == "2024-12-31T23:59:59Z"
 
-    def test_etag_cache_shared_across_steps(self):
+    def test_etag_cache_shared_across_steps(self) -> None:
         """All sync steps receive the exact same etag_cache instance."""
         cmd = self._make_command()
         received_caches = []
 
-        def capture_cache(**kwargs):
+        def capture_cache(**kwargs) -> int:
             received_caches.append(id(kwargs.get("etag_cache")))
             return 0
 
@@ -707,7 +709,7 @@ class TestManagementCommandCoverage:
 
         assert len(set(received_caches)) == 1
 
-    def test_total_saved_count_in_summary(self):
+    def test_total_saved_count_in_summary(self) -> None:
         """Done summary line includes the total records count."""
         cmd = self._make_command()
         with patch(
@@ -717,7 +719,7 @@ class TestManagementCommandCoverage:
             cmd.handle(only="events")
         assert "42" in cmd.stdout.getvalue()
 
-    def test_make_progress_callback_tqdm_bar_lifecycle(self, monkeypatch):
+    def test_make_progress_callback_tqdm_bar_lifecycle(self, monkeypatch) -> None:
         """tqdm bar: lazy creation on first call, updated each call, closed at end."""
         cmd = Command()
         cmd.stdout = OutputWrapper(StringIO())
@@ -742,10 +744,8 @@ class TestManagementCommandCoverage:
         assert fake_bar.n == 500
         assert fake_bar.close.call_count == 1  # closed when done
 
-    def test_make_progress_bar_returns_value_when_tqdm_present(self, monkeypatch):
+    def test_make_progress_bar_returns_value_when_tqdm_present(self, monkeypatch) -> None:
         """_make_progress_bar uses _tqdm when it is available."""
-        from apps.imports.management.commands import sync_viernulvier as cmd_module
-
         fake_bar = Mock()
         fake_tqdm = Mock(return_value=fake_bar)
         monkeypatch.setattr(cmd_module, "_tqdm", fake_tqdm)
@@ -753,12 +753,10 @@ class TestManagementCommandCoverage:
         # Either the tqdm bar or None is acceptable depending on branch
         assert result is None or result == fake_bar
 
-    def test_make_progress_bar_graceful_degradation_when_tqdm_missing(monkeypatch):
+    def test_make_progress_bar_graceful_degradation_when_tqdm_missing(self) -> None:
         """Controls that _make_progress_bar returns None and doesn't error when _tqdm is None."""
 
         with patch.dict(sys.modules, {"tqdm": None}):
-            import apps.imports.management.commands.sync_viernulvier as cmd_module
-
             importlib.reload(cmd_module)
 
             assert cmd_module._tqdm is None
@@ -768,7 +766,7 @@ class TestManagementCommandCoverage:
 
         importlib.reload(cmd_module)
 
-    def test_make_progress_callback_no_tqdm_writes_at_500_intervals(self, monkeypatch, capsys):
+    def test_make_progress_callback_no_tqdm_writes_at_500_intervals(self, monkeypatch) -> None:
         """Without tqdm, progress is written to stdout every 500 records and at total."""
         cmd = Command()
         cmd.stdout = OutputWrapper(StringIO())
@@ -785,7 +783,7 @@ class TestManagementCommandCoverage:
         assert "500/2000" in output or "1000/2000" in output or "2000/2000" in output
 
 
-def test_run_crops_writes_media_item_crops_prefix():
+def test_run_crops_writes_media_item_crops_prefix() -> None:
     """'-> media_item_crops' is written to stdout when run_crops is True."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
@@ -798,7 +796,7 @@ def test_run_crops_writes_media_item_crops_prefix():
     assert "-> media_item_crops" in cmd.stdout.getvalue()
 
 
-def test_run_crops_success_line_uses_crops_label():
+def test_run_crops_success_line_uses_crops_label() -> None:
     """Normal (non-dry-run) success line says 'crops', not 'would save'."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
@@ -813,7 +811,7 @@ def test_run_crops_success_line_uses_crops_label():
     assert "would save" not in out
 
 
-def test_run_crops_dry_run_uses_would_save_label():
+def test_run_crops_dry_run_uses_would_save_label() -> None:
     """Dry-run success line says 'would save', not 'crops'."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
@@ -828,7 +826,7 @@ def test_run_crops_dry_run_uses_would_save_label():
     assert " crops" not in out.split("5 would save")[1][:10]
 
 
-def test_run_crops_saved_count_added_to_total():
+def test_run_crops_saved_count_added_to_total() -> None:
     """Crops saved by sync_media_item_crops are included in the Done total."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
@@ -842,7 +840,7 @@ def test_run_crops_saved_count_added_to_total():
     assert "9" in cmd.stdout.getvalue()
 
 
-def test_run_crops_elapsed_time_appears_in_output():
+def test_run_crops_elapsed_time_appears_in_output() -> None:
     """A timing value in seconds (e.g. '0.0s') appears in the crops success line."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
@@ -856,7 +854,7 @@ def test_run_crops_elapsed_time_appears_in_output():
     assert "s)" in cmd.stdout.getvalue()
 
 
-def test_run_crops_exception_logged_as_failed():
+def test_run_crops_exception_logged_as_failed() -> None:
     """An exception from sync_media_item_crops is caught and printed as FAILED."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
@@ -874,13 +872,13 @@ def test_run_crops_exception_logged_as_failed():
     assert "crops boom" in out
 
 
-def test_run_crops_dry_run_passes_dry_run_true_to_sync():
+def test_run_crops_dry_run_passes_dry_run_true_to_sync() -> None:
     """sync_media_item_crops receives dry_run=True when the command is called with --dry-run."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
     calls = []
 
-    def capture(**kwargs):
+    def capture(**kwargs) -> int:
         calls.append(kwargs)
         return 0
 
@@ -890,16 +888,17 @@ def test_run_crops_dry_run_passes_dry_run_true_to_sync():
     ):
         cmd.handle(dry_run=True)
 
-    assert calls and calls[0]["dry_run"] is True
+    assert calls
+    assert calls[0]["dry_run"] is True
 
 
-def test_run_crops_passes_on_progress_callback():
+def test_run_crops_passes_on_progress_callback() -> None:
     """sync_media_item_crops receives a non-None on_progress callable."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
     calls = []
 
-    def capture(**kwargs):
+    def capture(**kwargs) -> int:
         calls.append(kwargs)
         return 0
 
@@ -909,10 +908,11 @@ def test_run_crops_passes_on_progress_callback():
     ):
         cmd.handle()
 
-    assert calls and callable(calls[0]["on_progress"])
+    assert calls
+    assert callable(calls[0]["on_progress"])
 
 
-def test_run_crops_skipped_when_only_is_non_crop_step():
+def test_run_crops_skipped_when_only_is_non_crop_step() -> None:
     """sync_media_item_crops is NOT called when --only targets a different step."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
@@ -926,7 +926,7 @@ def test_run_crops_skipped_when_only_is_non_crop_step():
     assert "media_item_crops" not in cmd.stdout.getvalue()
 
 
-def test_run_crops_when_only_is_media_item_crops():
+def test_run_crops_when_only_is_media_item_crops() -> None:
     """--only media_item_crops skips all SYNC_STEPS but does run the crops block."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
@@ -941,7 +941,7 @@ def test_run_crops_when_only_is_media_item_crops():
     assert "4 crops" in cmd.stdout.getvalue()
 
 
-def test_command_exception_handlers_catch_and_log_all_failures():
+def test_command_exception_handlers_catch_and_log_all_failures() -> None:
     """
     Comprehensive test for exception handling across all sync command steps.
 
@@ -957,8 +957,6 @@ def test_command_exception_handlers_catch_and_log_all_failures():
     4. Error messages include timing, failure indicator (✗), and exception text
     5. Exceptions don't stop execution; command completes normally
     """
-    import re
-
     # Test Case 1: sync_viernulvier exception handling
     cmd1 = Command()
     cmd1.stdout = OutputWrapper(StringIO())
@@ -998,7 +996,7 @@ def test_command_exception_handlers_catch_and_log_all_failures():
     # Test Case 3: sync_media_item_crops exception handling
     cmd3 = Command()
     cmd3.stdout = OutputWrapper(StringIO())
-    test_exc3 = IOError("Database connection lost")
+    test_exc3 = OSError("Database connection lost")
 
     with (
         patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier") as mock_sync,

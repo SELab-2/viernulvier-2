@@ -11,7 +11,7 @@ from tests.factories.tag import TagFactory, TagTranslationFactory
 
 
 class TestProductionAdminFilters(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.factory = RequestFactory()
         self.admin = ProductionAdmin(Production, admin.site)
         self.language = LanguageFactory(code="nl", name="Dutch")
@@ -58,79 +58,80 @@ class TestProductionAdminFilters(TestCase):
         params = request.GET.copy()
         return filter_class(request, params, Production, self.admin)
 
-    def test_tag_filter_uses_and_semantics_for_multiple_selected_tags(self):
+    def test_tag_filter_uses_and_semantics_for_multiple_selected_tags(self) -> None:
         filter_instance = self._build_filter(
             TagFilter,
             f"tag={self.tag_theater.pk}&tag={self.tag_family.pk}",
         )
         queryset = filter_instance.queryset(filter_instance.request, Production.objects.order_by("id"))
-        self.assertEqual(list(queryset.values_list("id", flat=True)), [self.production_1.id])
+        assert list(queryset.values_list("id", flat=True)) == [self.production_1.id]
 
-    def test_genre_filter_uses_and_semantics_for_multiple_selected_genres(self):
+    def test_genre_filter_uses_and_semantics_for_multiple_selected_genres(self) -> None:
         filter_instance = self._build_filter(
             GenreFilter,
             f"genre={self.genre_dance.pk}&genre={self.genre_jazz.pk}",
         )
         queryset = filter_instance.queryset(filter_instance.request, Production.objects.order_by("id"))
-        self.assertEqual(list(queryset.values_list("id", flat=True)), [self.production_1.id])
+        assert list(queryset.values_list("id", flat=True)) == [self.production_1.id]
 
-    def test_artist_name_filter_uses_or_semantics(self):
+    def test_artist_name_filter_uses_or_semantics(self) -> None:
         filter_instance = self._build_filter(
             ArtistNameFilter,
             "artist_name=John+Doe&artist_name=Jane+Doe",
         )
         queryset = filter_instance.queryset(filter_instance.request, Production.objects.order_by("id"))
-        self.assertEqual(
-            set(queryset.values_list("id", flat=True)),
-            {self.production_1.id, self.production_2.id, self.production_3.id},
-        )
+        assert set(queryset.values_list("id", flat=True)) == {
+            self.production_1.id,
+            self.production_2.id,
+            self.production_3.id,
+        }
 
-    def test_tag_filter_search_includes_selected_value_outside_search_result(self):
+    def test_tag_filter_search_includes_selected_value_outside_search_result(self) -> None:
         filter_instance = self._build_filter(
             TagFilter,
             f"tag={self.tag_music.pk}&tag_q=thea",
         )
         option_values = {value for value, _ in filter_instance.lookups(filter_instance.request, self.admin)}
-        self.assertIn(str(self.tag_theater.pk), option_values)
-        self.assertIn(str(self.tag_music.pk), option_values)
+        assert str(self.tag_theater.pk) in option_values
+        assert str(self.tag_music.pk) in option_values
 
-    def test_tag_filter_search_without_selected_values_filters_by_search_only(self):
+    def test_tag_filter_search_without_selected_values_filters_by_search_only(self) -> None:
         filter_instance = self._build_filter(TagFilter, "tag_q=thea")
         option_values = [value for value, _ in filter_instance.lookups(filter_instance.request, self.admin)]
-        self.assertEqual(option_values, [str(self.tag_theater.pk)])
+        assert option_values == [str(self.tag_theater.pk)]
 
-    def test_genre_filter_search_matches_translation_names(self):
+    def test_genre_filter_search_matches_translation_names(self) -> None:
         filter_instance = self._build_filter(GenreFilter, "genre_q=dans")
         option_values = {value for value, _ in filter_instance.lookups(filter_instance.request, self.admin)}
-        self.assertIn(str(self.genre_dance.pk), option_values)
+        assert str(self.genre_dance.pk) in option_values
 
-    def test_genre_filter_search_includes_selected_value_outside_search_result(self):
+    def test_genre_filter_search_includes_selected_value_outside_search_result(self) -> None:
         filter_instance = self._build_filter(
             GenreFilter,
             f"genre={self.genre_rock.pk}&genre_q=dans",
         )
         option_values = {value for value, _ in filter_instance.lookups(filter_instance.request, self.admin)}
-        self.assertIn(str(self.genre_dance.pk), option_values)
-        self.assertIn(str(self.genre_rock.pk), option_values)
+        assert str(self.genre_dance.pk) in option_values
+        assert str(self.genre_rock.pk) in option_values
 
-    def test_artist_name_filter_search_limits_options(self):
+    def test_artist_name_filter_search_limits_options(self) -> None:
         filter_instance = self._build_filter(ArtistNameFilter, "artist_name_q=jane")
         option_values = [value for value, _ in filter_instance.lookups(filter_instance.request, self.admin)]
-        self.assertEqual(option_values, ["Jane Doe"])
+        assert option_values == ["Jane Doe"]
 
-    def test_artist_name_filter_keeps_selected_values_not_in_search_results(self):
+    def test_artist_name_filter_keeps_selected_values_not_in_search_results(self) -> None:
         filter_instance = self._build_filter(
             ArtistNameFilter,
             "artist_name=Zed+Artist&artist_name_q=jane",
         )
         option_values = [value for value, _ in filter_instance.lookups(filter_instance.request, self.admin)]
-        self.assertEqual(option_values, ["Jane Doe", "Zed Artist"])
+        assert option_values == ["Jane Doe", "Zed Artist"]
 
-    def test_tag_filter_uses_non_empty_label_when_type_is_blank(self):
+    def test_tag_filter_uses_non_empty_label_when_type_is_blank(self) -> None:
         tag_without_type = TagFactory(type="")
         TagTranslationFactory(tag=tag_without_type, language=self.language, name="Zonder type")
 
         filter_instance = self._build_filter(TagFilter, "")
         lookup_map = dict(filter_instance.lookups(filter_instance.request, self.admin))
 
-        self.assertEqual(lookup_map[str(tag_without_type.pk)], "Zonder type")
+        assert lookup_map[str(tag_without_type.pk)] == "Zonder type"

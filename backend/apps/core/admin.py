@@ -36,7 +36,7 @@ class BaseAdmin(admin.ModelAdmin):
     list_per_page = 50
     show_full_result_count = False
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: any) -> any:
         """
         Return the base queryset for this admin.
 
@@ -59,21 +59,21 @@ class TwoStepBulkActionMixin:
     two_step_action_template = "admin/two_step_action.html"
     two_step_empty_selection_message = "No items selected."
 
-    def _action_changelist_url(self):
+    def _action_changelist_url(self) -> str:
         """Return changelist URL for the current admin model."""
         return reverse(f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist")
 
     def _render_two_step_action_page(
         self,
-        request,
+        request: any,
         *,
-        selected_qs,
-        form,
-        action_name,
-        title,
-        changelist_url,
-        selected_label,
-    ):
+        selected_qs: any,
+        form: any,
+        action_name: str,
+        title: str,
+        changelist_url: str,
+        selected_label: str = "Selected items",
+    ) -> TemplateResponse:
         """Render the intermediate action page containing the extra form."""
         context = {
             **self.admin_site.each_context(request),
@@ -90,15 +90,15 @@ class TwoStepBulkActionMixin:
 
     def _run_two_step_bulk_action(
         self,
-        request,
-        queryset,
+        request: any,
+        queryset: any,
         *,
-        form_class,
-        action_name,
-        title,
-        apply_handler,
-        selected_label="Selected items",
-    ):
+        form_class: any,
+        action_name: str,
+        title: str,
+        apply_handler: any,
+        selected_label: str = "Selected items",
+    ) -> any:
         """Execute a two-step action with optional intermediate form data."""
         changelist_url = self._action_changelist_url()
 
