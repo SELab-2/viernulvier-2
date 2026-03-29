@@ -2,6 +2,7 @@ import { useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import Tag from '../Tag'
 import { formatDate } from '../../utils/formatDate'
+import { getHallDisplayName } from '../../utils/hall'
 import { getLocalizedValue } from '../../utils/localization'
 
 import type { CSSProperties } from 'react'
@@ -38,9 +39,12 @@ function getDateRange(events: Production['events'] | null | undefined, lang: str
  * This avoids repeated venue descriptions by using a set.
  * Note: event.hall_display is expected to be a fallback provided by the API.
  */
-function getUniqueVenues(events: Production['events'] | null | undefined): string {
+function getUniqueVenues(events: Production['events'] | null | undefined, lang: string): string {
   const list = events || []
-  const venues = [...new Set(list.map((e) => e.hall_display).filter(Boolean))] as string[]
+  const venues = [
+    ...new Set(list.map((e) => getHallDisplayName(e, lang) || e.hall_display).filter(Boolean)),
+  ] as string[]
+
   return venues.join(', ')
 }
 
@@ -156,10 +160,10 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
     getLocalizedValue(production.artist_name, language) || production.display_artist_name || ''
 
   const resolvedDateRange = getDateRange(production.events, language)
-  const resolvedVenues = getUniqueVenues(production.events)
+  const resolvedVenues = getUniqueVenues(production.events, language)
 
   const resolvedGenres = (production.genres || [])
-    .map((g) => g.display_name || getLocalizedValue(g.name || {}, language))
+    .map((g) => getLocalizedValue(g.name || {}, language) || g.display_name || '')
     .filter(Boolean)
     .join(', ')
 
