@@ -2,6 +2,7 @@ import { Box, Divider, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import type { Production } from '../../types/Productions'
 import { formatDate } from '../../utils/formatDate'
+import { getHallDisplayName } from '../../utils/hall'
 import { Event } from '../../types/Events'
 
 interface EventPricesPanelProps {
@@ -9,7 +10,7 @@ interface EventPricesPanelProps {
 }
 
 /**
- * Example component to pass as `expandContent` to {@link ListCard}.
+ * Component to pass as `expandContent` to {@link ListCard}.
  *
  * Renders a list of events, each with its date and available price options.
  * Fully self-contained — it only needs the {@link Production} object.
@@ -26,7 +27,7 @@ interface EventPricesPanelProps {
  * ```
  */
 const EventPricesPanel = ({ production }: EventPricesPanelProps) => {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const language = i18n.language
 
   if (!production.events?.length) return null
@@ -56,7 +57,7 @@ const EventPricesPanel = ({ production }: EventPricesPanelProps) => {
             color="text.secondary"
             sx={{ minWidth: 180, flexShrink: 0, pt: 0.25 }}
           >
-            {event.hall_display}
+            {getHallDisplayName(event, language)}
           </Typography>
 
           {/* Prices */}
@@ -82,7 +83,7 @@ const EventPricesPanel = ({ production }: EventPricesPanelProps) => {
                 </Typography>
                 {p.available != null && (
                   <Typography variant="caption" color="text.disabled">
-                    ({p.available} beschikbaar)
+                    {t('events.availableQuantity', '{{count}} beschikbaar', { count: p.available })}
                   </Typography>
                 )}
               </Box>

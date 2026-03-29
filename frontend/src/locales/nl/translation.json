@@ -25,7 +25,11 @@
     "listPlaceholder": "Lijst met evenementen wordt hier weergegeven.",
     "detailTitle": "Evenement Detail",
     "detailPlaceholder": "Details van evenement met ID {{id}} worden hier weergegeven.",
-    "backToEvents": "Terug naar Evenementen"
+    "backToEvents": "Terug naar Evenementen",
+    "priceType": "Type",
+    "price": "Prijs",
+    "available": "Beschikbaar",
+    "availableQuantity": "{{count}} beschikbaar"
   },
   "productions": {
     "title": "Producties",

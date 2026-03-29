@@ -13,6 +13,18 @@ interface BreadcrumbsProps {
   separator?: string
 }
 
+/**
+ * Breadcrumbs component for page navigation hierarchy.
+ *
+ * props:
+ * - items: breadcrumb path entries in order from home to current page.
+ * - separator: string shown between segments.
+ *
+ * Behavior:
+ * - last item is shown as current page label not clickable.
+ * - intermediate items are rendered as buttons when `to` is provided.
+ * - each item can optionally be translated via `translationKey`.
+ */
 export default function Breadcrumbs({ items, separator = ' / ' }: BreadcrumbsProps) {
   const navigate = useNavigate()
   const theme = useTheme()

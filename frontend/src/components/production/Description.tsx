@@ -7,6 +7,12 @@ interface DescriptionProps {
   description: string
 }
 
+/**
+ * Production description block.
+ *
+ * Displays teaser and full description as sanitized HTML.
+ * If no description is available, shows translated placeholder text.
+ */
 export default function Description({ teaser, description }: DescriptionProps) {
   const theme = useTheme()
   const { t } = useTranslation()

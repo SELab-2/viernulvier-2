@@ -25,7 +25,11 @@
     "listPlaceholder": "Events list will be displayed here.",
     "detailTitle": "Event Detail",
     "detailPlaceholder": "Event details for ID {{id}} will be displayed here.",
-    "backToEvents": "Back to Events"
+    "backToEvents": "Back to Events",
+    "priceType": "Type",
+    "price": "Price",
+    "available": "Available",
+    "availableQuantity": "{{count}} available"
   },
   "productions": {
     "title": "Productions",

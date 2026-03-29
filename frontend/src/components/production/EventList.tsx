@@ -19,6 +19,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Event } from '../../types/Events'
 import { formatDate, formatTime } from '../../utils/formatDate'
+import { getHallDisplayName } from '../../utils/hall'
 
 interface EventsListProps {
   events: Event[]
@@ -62,7 +63,7 @@ export default function EventsList({ events }: EventsListProps) {
 
         return (
           <Box key={event.id}>
-            {/* ── Event row ── */}
+            {/* -- Event row -- */}
             <Stack
               direction="row"
               alignItems="center"
@@ -86,21 +87,26 @@ export default function EventsList({ events }: EventsListProps) {
                       <ScheduleOutlinedIcon sx={{ fontSize: '0.95rem', color: 'text.primary' }} />
                       <Typography variant="body2" color="text.primary" fontWeight={500}>
                         {formatTime(event.starts_at, lang)}
-                        {event.ends_at ? ` – ${formatTime(event.ends_at, lang)}` : ''}
+                        {event.ends_at ? ` - ${formatTime(event.ends_at, lang)}` : ''}
                       </Typography>
                     </Stack>
                   )}
                 </Stack>
 
                 {/* Venue */}
-                {event.hall_display && (
-                  <Stack direction="row" spacing={0.75} alignItems="center">
-                    <RoomOutlinedIcon sx={{ fontSize: '0.9rem', color: 'text.primary' }} />
-                    <Typography variant="body2" color="text.primary">
-                      {event.hall_display}
-                    </Typography>
-                  </Stack>
-                )}
+                {(() => {
+                  const hallName = getHallDisplayName(event, lang)
+                  return (
+                    hallName && (
+                      <Stack direction="row" spacing={0.75} alignItems="center">
+                        <RoomOutlinedIcon sx={{ fontSize: '0.9rem', color: 'text.primary' }} />
+                        <Typography variant="body2" color="text.primary">
+                          {hallName}
+                        </Typography>
+                      </Stack>
+                    )
+                  )
+                })()}
               </Stack>
 
               {/* Expand prices toggle */}
@@ -128,7 +134,7 @@ export default function EventsList({ events }: EventsListProps) {
               </Stack>
             </Stack>
 
-            {/* ── Prices panel ── */}
+            {/* -- Prices panel -- */}
             {hasPrices && (
               <Collapse in={expanded} unmountOnExit>
                 <Box

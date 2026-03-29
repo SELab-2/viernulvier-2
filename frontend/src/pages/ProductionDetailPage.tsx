@@ -3,75 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import type { Production } from '../types/Productions'
-import type { Event } from '../types/Events'
-import type { Genre } from '../types/Genres'
-import type { Tag as TagType } from '../types/Tags'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Breadcrumbs from '../components/production/Breadcrumbs'
 import ImageWithFallback from '../components/ImageWithFallback'
 import Description from '../components/production/Description'
 import MetaPanel from '../components/production/MetaPanel'
 import { getProduction } from '../services/productions/Productions'
-import { formatDate } from '../utils/formatDate'
 import EventsList from '../components/production/EventList'
 import MediaList from '../components/production/MediaList'
-
-// TODO: check tags
-
-// ---- Helpers ----
-
-/**
- * Select a localized value from a translation object.
- *
- * Preference order: current language -> Dutch -> English -> first available -> empty.
- *
- * @param obj Object with language keys, e.g. `{ nl: '...', en: '...' }`
- * @param lang Desired language code (default `nl`)
- * @returns Text in the best matching language or empty string
- */
-function getLocalizedValue(obj: Record<string, string>, lang: string = 'nl'): string {
-  return obj[lang] || obj['nl'] || obj['en'] || Object.values(obj)[0] || ''
-}
-
-/**
- * Calculate a date range for a list of events.
- *
- * - Empty list -> empty string
- * - Single day -> that date
- * - Multiple days -> first to last date
- *
- * @param events List of events (can be `null` or `undefined`)
- * @returns Formatted date range or empty string
- */
-function getDateRange(events: Event[] | null | undefined, lang: string): string {
-  const list = (events || []).filter((e) => !!e.starts_at) as Event[]
-
-  if (!list.length) {
-    return ''
-  }
-
-  const dates = list.map((e) => new Date(e.starts_at as string).getTime()).sort((a, b) => a - b)
-  const first = new Date(dates[0])
-  const last = new Date(dates[dates.length - 1])
-
-  if (first.toDateString() === last.toDateString()) {
-    return formatDate(list[0].starts_at, lang)
-  }
-
-  return `${formatDate(first.toISOString(), lang)} - ${formatDate(last.toISOString(), lang)}`
-}
-
-/**
- * Returns a unique comma-separated list of venues from event data.
- *
- * @param events List of events (can be `null` or `undefined`)
- * @returns Comma-separated unique venue names
- */
-function getUniqueVenues(events?: Event[] | null): string {
-  const list = events || []
-  const venues = [...new Set(list.map((e) => e.hall_display).filter(Boolean))] as string[]
-  return venues.join(', ')
-}
+import { getLocalizedValue } from '../utils/localization'
 
 /**
  * Helper function to get the most suitable image URL for the production details page.
@@ -111,13 +51,17 @@ function getProductionHeroImageUrl(production: Production): string | null {
 }
 
 /**
- * Production detail page showing breadcrumb, hero image, description, meta panel,
- * events and related media.
+ * Production detail page.
  *
- * Behavior:
- * - Always loads data from backend by ID (from URL params).
- * - Loading spinner is shown during fetch.
- * - Invalid ID and fetch errors navigate to home with a floating alert state.
+ * Responsible for:
+ * - fetching production by ID from URL params
+ * - handling loading and error states
+ * - rendering content sections:
+ *   - breadcrumb, hero image, description
+ *   - metadata panel (with MetaPanel component)
+ *   - events list, media gallery
+ *
+ * Important: no business transformations here; MetaPanel handles production meta resolution.
  */
 const ProductionDetailsPage = () => {
   const { id } = useParams()
@@ -188,38 +132,12 @@ const ProductionDetailsPage = () => {
     production.display_title ||
     t('productions.detail.unknownProduction', 'Unknown production')
 
-  const artistName =
-    getLocalizedValue(production.artist_name, lang) || production.display_artist_name || ''
-
-  const tagline = getLocalizedValue(production.tagline, lang) || ''
   const description = getLocalizedValue(production.description, lang) || ''
   const teaser = getLocalizedValue(production.teaser, lang) || ''
 
   const heroImage = getProductionHeroImageUrl(production)
 
   const events = production.events ?? []
-  const dateRange = getDateRange(events, lang)
-  const venues = getUniqueVenues(events)
-
-  const genreLabels = (production.genres || [])
-    .map((g: Genre) => g.display_name || getLocalizedValue(g.name || {}, lang))
-    .filter(Boolean)
-
-  const genres = genreLabels.join(', ')
-  const typeName = production.uit_database_type?.name ?? ''
-
-  const tagLabels = (production.tags || [])
-    .map(
-      (t: TagType) =>
-        t.display_name ||
-        getLocalizedValue(t.name || {}, lang) ||
-        getLocalizedValue(t.url_title || {}, lang) ||
-        t.type ||
-        '',
-    )
-    .filter(Boolean)
-
-  const allTags = [...tagLabels, ...(typeName ? [typeName] : []), ...genreLabels]
 
   return (
     <div
@@ -272,19 +190,7 @@ const ProductionDetailsPage = () => {
             borderLeft: `1px solid ${theme.palette.divider}`,
           }}
         >
-          <MetaPanel
-            title={title}
-            tagline={tagline}
-            artistName={artistName}
-            dateRange={dateRange}
-            venues={venues}
-            genres={genres}
-            typeName={typeName}
-            performerType={production.performer_type}
-            attendanceMode={production.attendance_mode}
-            allTags={allTags}
-            style={{ borderLeft: 'none' }}
-          />
+          <MetaPanel production={production} language={lang} style={{ borderLeft: 'none' }} />
           <Box
             sx={(theme) => ({
               mt: 3,

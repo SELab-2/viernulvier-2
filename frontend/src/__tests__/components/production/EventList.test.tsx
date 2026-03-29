@@ -3,8 +3,24 @@ import type { Event } from '../../../types/Events'
 import type { Production } from '../../../types/Productions'
 import EventList from '../../../components/production/EventList'
 
+const mockI18n = { language: 'nl' }
+
+const enTranslations: Record<string, string> = {
+  'events.priceType': 'Type',
+  'events.price': 'Price',
+  'events.available': 'Available',
+  'events.availableQuantity': '{{count}} available',
+  'productions.detail.noEvents': 'No scheduled events.',
+  'events.expandPrices': 'Show prices',
+  'events.collapsePrices': 'Hide prices',
+}
+
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),
+  useTranslation: () => ({
+    i18n: mockI18n,
+    t: (key: string, defaultValue: string) =>
+      mockI18n.language === 'en' ? enTranslations[key] || defaultValue : defaultValue,
+  }),
 }))
 
 const mockNavigate = jest.fn()
@@ -52,7 +68,99 @@ describe('EventList component', () => {
     expect(screen.getByText('Geen geplande events.')).toBeInTheDocument()
   })
 
+  it('uses hall.name by language and falls back to hall_display only without extra value fallbacks', () => {
+    const events = [
+      eventFactory({
+        id: 4,
+        production: { ...baseProductionStub, id: 1 },
+        production_display: 'Production 4',
+        hall: {
+          id: 1,
+          space: null,
+          seat_selection: false,
+          open_seating: true,
+          name: { nl: 'Hoofdzaal', en: 'Main hall' },
+          display_name: 'Hall display',
+          remark: null,
+        },
+        hall_display: 'Fallback hall',
+        starts_at: '2025-08-01T20:00:00Z',
+        ends_at: '2025-08-01T22:00:00Z',
+        prices: [],
+      }),
+    ]
+
+    render(<EventList events={events} />)
+
+    expect(screen.getByText('Hoofdzaal')).toBeInTheDocument()
+    expect(screen.queryByText('Hall display')).not.toBeInTheDocument()
+    expect(screen.queryByText('Fallback hall')).not.toBeInTheDocument()
+  })
+
+  it('renders locale fallback to hall_display when hall.name locale missing', () => {
+    const events = [
+      eventFactory({
+        id: 5,
+        production: { ...baseProductionStub, id: 1 },
+        production_display: 'Production 5',
+        hall: {
+          id: 1,
+          space: null,
+          seat_selection: false,
+          open_seating: true,
+          name: { en: 'Main hall only' },
+          display_name: 'Hall display',
+          remark: null,
+        },
+        hall_display: 'Fallback hall 2',
+        starts_at: '2025-08-01T20:00:00Z',
+        ends_at: '2025-08-01T22:00:00Z',
+        prices: [],
+      }),
+    ]
+
+    render(<EventList events={events} />)
+
+    expect(screen.getByText('Fallback hall 2')).toBeInTheDocument()
+    expect(screen.queryByText('Main hall only')).not.toBeInTheDocument()
+  })
+
+  it('renders event header labels via i18n for English', () => {
+    mockI18n.language = 'en'
+    const events = [
+      eventFactory({
+        id: 1,
+        production: { ...baseProductionStub, id: 1 },
+        production_display: 'Production 1',
+        hall_display: 'Main hall',
+        starts_at: '2025-08-01T20:00:00Z',
+        ends_at: '2025-08-01T22:00:00Z',
+        prices: [
+          {
+            id: 8,
+            event: 1,
+            price_rank: null,
+            price_rank_display: null,
+            price: null,
+            price_display: 'VIP',
+            amount: '20',
+            available: 12,
+          },
+        ],
+      }),
+    ]
+
+    render(<EventList events={events} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Show prices|Prijzen tonen/i }))
+
+    expect(screen.getByText('Type')).toBeInTheDocument()
+    expect(screen.getByText('Price')).toBeInTheDocument()
+    expect(screen.getByText('Available')).toBeInTheDocument()
+  })
+
   it('renders event with price and toggles expansion', () => {
+    mockI18n.language = 'nl'
     const events = [
       eventFactory({
         id: 1,
