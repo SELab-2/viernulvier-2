@@ -162,7 +162,7 @@ export default function EventsList({ events }: EventsListProps) {
                     <TableBody>
                       {event.prices.map((p) => (
                         <TableRow key={p.id} hover>
-                          <TableCell>{p.price_display}</TableCell>
+                          <TableCell>{p.price?.description?.[lang] || p.price_display}</TableCell>
                           <TableCell align="right">
                             <Typography variant="body2" fontWeight={600}>
                               €{Number(p.amount).toFixed(2)}
@@ -170,7 +170,7 @@ export default function EventsList({ events }: EventsListProps) {
                           </TableCell>
                           <TableCell align="right">
                             <Typography variant="body2" color="text.secondary">
-                              {p.available ?? '—'}
+                              {p.available ?? '-'}
                             </Typography>
                           </TableCell>
                         </TableRow>
