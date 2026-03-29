@@ -1,145 +1,335 @@
-import { Container, Typography, Paper, Stack, Button, Chip, Divider, Box } from '@mui/material'
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Container,
+  Divider,
+  Stack,
+  Typography,
+} from '@mui/material'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 
-const placeholderSeriesTag = {
+type LocalizedText = {
+  nl: string
+  en: string
+}
+
+type PlaceholderProduction = {
+  id: number
+  year: string
+  title: LocalizedText
+  meta: LocalizedText
+  description: LocalizedText
+  tags: LocalizedText[]
+  image: string
+}
+
+const placeholderSeries: {
+  id: number
+  type: string
+  name: LocalizedText
+  description: LocalizedText
+  badge: LocalizedText
+  stats: { value: string; label: LocalizedText }[]
+  productions: PlaceholderProduction[]
+} = {
   id: 12,
   type: 'theme',
-  name: 'Hedendaags',
-  url: '',
-  source: '',
-  source_type: '',
-  is_external: false,
-  is_enabled: true,
-  short_description: null,
-  url_title: '',
+  name: {
+    nl: 'VIDEODROOM',
+    en: 'VIDEODROOM',
+  },
+  description: {
+    nl: 'Het audiovisuele festival dat de grenzen tussen muziek, beeld en performance verkent. Sinds 2013 brengt VIDEODROOM vernieuwende artiesten, live visuals en meeslepende clubnachten samen in één terugkerende reeks.',
+    en: 'The audiovisual festival that explores the boundaries between music, image and performance. Since 2013, VIDEODROOM has brought together groundbreaking artists, live visuals and immersive club nights in one recurring series.',
+  },
+  badge: {
+    nl: 'Terugkerende reeks',
+    en: 'Recurring series',
+  },
+  stats: [
+    {
+      value: '11',
+      label: { nl: 'Edities', en: 'Editions' },
+    },
+    {
+      value: '2013–2024',
+      label: { nl: 'Periode', en: 'Period' },
+    },
+    {
+      value: '150+',
+      label: { nl: 'Artiesten', en: 'Artists' },
+    },
+  ],
+  productions: [
+    {
+      id: 101,
+      year: '2024',
+      title: {
+        nl: 'VIDEODROOM 2024',
+        en: 'VIDEODROOM 2024',
+      },
+      meta: {
+        nl: '11e editie · 3–5 mei 2024 · Multiple locations',
+        en: '11th edition · 3–5 May 2024 · Multiple locations',
+      },
+      description: {
+        nl: 'De 11e editie bracht opnieuw cutting-edge elektronische muziek en visuele kunst samen, met headline sets, live cinema en nachtelijke performances verspreid over verschillende zalen.',
+        en: 'The 11th edition once again brought together cutting-edge electronic music and visual art, with headline sets, live cinema and late-night performances spread across multiple venues.',
+      },
+      tags: [
+        { nl: 'Festival', en: 'Festival' },
+        { nl: 'Audiovisueel', en: 'Audiovisual' },
+        { nl: '3 dagen', en: '3 days' },
+        { nl: '25 artiesten', en: '25 artists' },
+      ],
+      image:
+        'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80',
+    },
+    {
+      id: 102,
+      year: '2023',
+      title: {
+        nl: 'VIDEODROOM 2023',
+        en: 'VIDEODROOM 2023',
+      },
+      meta: {
+        nl: '10e editie (jubileum) · 12–14 mei 2023 · Multiple locations',
+        en: '10th edition (anniversary) · 12–14 May 2023 · Multiple locations',
+      },
+      description: {
+        nl: 'De jubileumeditie vierde tien jaar VIDEODROOM met een uitgebreid programma vol elektronische muziek, installaties en speciale gastperformances.',
+        en: 'The anniversary edition celebrated ten years of VIDEODROOM with an expanded programme full of electronic music, installations and special guest performances.',
+      },
+      tags: [
+        { nl: 'Festival', en: 'Festival' },
+        { nl: 'Jubileumeditie', en: 'Anniversary edition' },
+        { nl: '3 dagen', en: '3 days' },
+        { nl: '30 artiesten', en: '30 artists' },
+      ],
+      image:
+        'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80',
+    },
+    {
+      id: 103,
+      year: '2022',
+      title: {
+        nl: 'VIDEODROOM 2022',
+        en: 'VIDEODROOM 2022',
+      },
+      meta: {
+        nl: '9e editie · 6–8 mei 2022 · Multiple locations',
+        en: '9th edition · 6–8 May 2022 · Multiple locations',
+      },
+      description: {
+        nl: 'Na een tussenperiode keerde VIDEODROOM terug met een focus op hybride performances, experimentele concertformats en immersieve scenografie.',
+        en: 'After a break, VIDEODROOM returned with a focus on hybrid performances, experimental concert formats and immersive scenography.',
+      },
+      tags: [
+        { nl: 'Festival', en: 'Festival' },
+        { nl: 'Live visuals', en: 'Live visuals' },
+        { nl: '3 dagen', en: '3 days' },
+        { nl: '20 artiesten', en: '20 artists' },
+      ],
+      image:
+        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80',
+    },
+  ],
+}
+
+function getLocalizedValue(value: LocalizedText, language: string): string {
+  const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
+  return value[normalizedLanguage]
 }
 
 const SeriesDetailPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
-  const series = placeholderSeriesTag
+  const series = placeholderSeries
+  const seriesName = getLocalizedValue(series.name, i18n.language)
+  const seriesDescription = getLocalizedValue(series.description, i18n.language)
+  const seriesBadge = getLocalizedValue(series.badge, i18n.language)
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Stack spacing={3}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/series')}
-          sx={{ alignSelf: 'flex-start' }}
-        >
-          {t('series.backToSeries', { defaultValue: 'Back to series' })}
-        </Button>
+    <Container maxWidth="lg" sx={{ py: 5 }}>
+      <Stack spacing={4}>
+        <Stack spacing={2}>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/series')}
+            sx={{ alignSelf: 'flex-start' }}
+          >
+            {t('series.backToSeries')}
+          </Button>
 
-        <Box>
-          <Typography variant="overline" color="text.secondary">
-            {t('series.detailLabel', { defaultValue: 'Productiereeks' })}
-          </Typography>
-          <Typography variant="h4" component="h1" gutterBottom>
-            {series.name}
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {t('series.detailSubtitle', {
-              defaultValue: 'Voorbeeldweergave van een detailpagina voor een reeks-tag.',
+          <Typography variant="body2" color="text.secondary">
+            {t('series.breadcrumb', {
+              defaultValue: `Archief / Reeksen / ${seriesName}`,
             })}
           </Typography>
-        </Box>
+        </Stack>
 
-        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-          <Chip label={`${t('series.id', { defaultValue: 'ID' })}: ${series.id}`} />
-          <Chip label={`${t('series.type', { defaultValue: 'Type' })}: ${series.type}`} />
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', md: 'flex-start' }}
+          spacing={3}
+        >
+          <Box sx={{ maxWidth: 760 }}>
+            <Typography variant="h3" component="h1" sx={{ fontWeight: 800, mb: 2 }}>
+              {seriesName}
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.05rem' }}>
+              {seriesDescription}
+            </Typography>
+          </Box>
+
           <Chip
-            color={series.is_enabled ? 'success' : 'default'}
-            label={
-              series.is_enabled
-                ? t('series.enabled', { defaultValue: 'Enabled' })
-                : t('series.disabled', { defaultValue: 'Disabled' })
-            }
-          />
-          <Chip
-            color={series.is_external ? 'info' : 'default'}
-            label={
-              series.is_external
-                ? t('series.external', { defaultValue: 'External' })
-                : t('series.internal', { defaultValue: 'Internal' })
-            }
+            label={seriesBadge}
+            color="secondary"
+            sx={{ borderRadius: 999, px: 1, fontWeight: 600 }}
           />
         </Stack>
 
-        <Paper elevation={2} sx={{ p: 3 }}>
-          <Stack spacing={2.5}>
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                {t('series.overview', { defaultValue: 'Overzicht' })}
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={{ xs: 2, sm: 5 }}
+          divider={<Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />}
+          sx={{ py: 1 }}
+        >
+          {series.stats.map((stat) => (
+            <Box key={stat.value + stat.label.nl}>
+              <Typography variant="h4" sx={{ fontWeight: 800 }}>
+                {stat.value}
               </Typography>
-              <Typography variant="body1">
-                {t('series.placeholderDescription', {
-                  defaultValue:
-                    'Deze pagina gebruikt tijdelijk een placeholder-tag uit een productie-instantie zodat je de lay-out kunt beoordelen voordat de echte API-koppeling is toegevoegd.',
-                })}
+              <Typography variant="body2" color="text.secondary">
+                {getLocalizedValue(stat.label, i18n.language)}
               </Typography>
             </Box>
+          ))}
+        </Stack>
 
-            <Divider />
+        <Divider />
 
-            <Stack spacing={1.5}>
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  {t('series.name', { defaultValue: 'Naam' })}
-                </Typography>
-                <Typography variant="body1">{series.name}</Typography>
-              </Box>
+        <Stack spacing={1}>
+          <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+            {t('series.allEditions')}
+          </Typography>
 
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  {t('series.tagType', { defaultValue: 'Tagtype' })}
-                </Typography>
-                <Typography variant="body1">{series.type}</Typography>
-              </Box>
+          <Typography variant="body2" color="text.secondary">
+            {t('series.allEditionsSubtitle')}
+          </Typography>
+        </Stack>
 
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  {t('series.shortDescription', { defaultValue: 'Korte beschrijving' })}
-                </Typography>
-                <Typography variant="body1">
-                  {series.short_description ??
-                    t('series.noDescription', {
-                      defaultValue: 'Geen korte beschrijving beschikbaar.',
-                    })}
-                </Typography>
-              </Box>
+        <Stack spacing={4} sx={{ position: 'relative', pl: { xs: 0, md: 3 } }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              left: 11,
+              top: 10,
+              bottom: 10,
+              width: '1px',
+              bgcolor: 'divider',
+              display: { xs: 'none', md: 'block' },
+            }}
+          />
 
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  {t('series.source', { defaultValue: 'Bron' })}
+          {series.productions.map((production) => (
+            <Stack
+              key={production.id}
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={2}
+              alignItems={{ xs: 'flex-start', md: 'flex-start' }}
+              sx={{ position: 'relative' }}
+            >
+              <Stack
+                direction={{ xs: 'row', md: 'column' }}
+                spacing={1}
+                alignItems="center"
+                sx={{ width: { xs: 'auto', md: 40 }, flexShrink: 0 }}
+              >
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    bgcolor: 'text.primary',
+                    display: { xs: 'none', md: 'block' },
+                    mt: 2,
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 44 }}>
+                  {production.year}
                 </Typography>
-                <Typography variant="body1">
-                  {series.source || t('common.notAvailable', { defaultValue: 'Niet beschikbaar' })}
-                </Typography>
-              </Box>
+              </Stack>
 
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  {t('series.sourceType', { defaultValue: 'Brontype' })}
-                </Typography>
-                <Typography variant="body1">
-                  {series.source_type ||
-                    t('common.notAvailable', { defaultValue: 'Niet beschikbaar' })}
-                </Typography>
-              </Box>
+              <Card
+                elevation={0}
+                sx={{
+                  flex: 1,
+                  width: '100%',
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                }}
+              >
+                <CardContent sx={{ p: 2.5 }}>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5}>
+                    <Avatar
+                      variant="rounded"
+                      src={production.image}
+                      alt={getLocalizedValue(production.title, i18n.language)}
+                      sx={{
+                        width: { xs: '100%', sm: 140 },
+                        height: { xs: 180, sm: 105 },
+                        borderRadius: 2,
+                        flexShrink: 0,
+                      }}
+                    />
 
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  {t('series.routeParam', { defaultValue: 'Route parameter' })}
-                </Typography>
-                <Typography variant="body1">{id ?? '—'}</Typography>
-              </Box>
+                    <Stack spacing={1.25} sx={{ flex: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        {getLocalizedValue(production.title, i18n.language)}
+                      </Typography>
+
+                      <Typography variant="body2" color="text.secondary">
+                        {getLocalizedValue(production.meta, i18n.language)}
+                      </Typography>
+
+                      <Typography variant="body2" color="text.secondary">
+                        {getLocalizedValue(production.description, i18n.language)}
+                      </Typography>
+
+                      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                        {production.tags.map((tag) => (
+                          <Chip
+                            key={`${production.id}-${tag.nl}`}
+                            label={getLocalizedValue(tag, i18n.language)}
+                            size="small"
+                            variant="outlined"
+                          />
+                        ))}
+                      </Stack>
+                    </Stack>
+                  </Stack>
+                </CardContent>
+              </Card>
             </Stack>
-          </Stack>
-        </Paper>
+          ))}
+        </Stack>
+
+        <Typography variant="caption" color="text.secondary">
+          {t('series.placeholderNote', {
+            defaultValue: `Placeholder-detailpagina, opgebouwd met voorbeeldproducties tot de API-koppeling klaar is.`,
+          })}
+        </Typography>
       </Stack>
     </Container>
   )

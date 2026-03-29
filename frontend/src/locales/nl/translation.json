@@ -58,5 +58,10 @@
     "newsletter": {
       "cta": "blijf op de hoogte"
     }
+  },
+  "series": {
+    "backToSeries": "Terug naar reeksen",
+    "allEditions": "Alle edities",
+    "allEditionsSubtitle": "Chronologisch overzicht van de producties binnen deze reeks."
   }
 }

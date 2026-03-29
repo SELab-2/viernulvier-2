@@ -58,5 +58,10 @@
     "newsletter": {
       "cta": "stay up to date"
     }
+  },
+  "series": {
+    "backToSeries": "Back to series",
+    "allEditions": "All editions",
+    "allEditionsSubtitle": "Chronological overview of productions within this series."
   }
 }
