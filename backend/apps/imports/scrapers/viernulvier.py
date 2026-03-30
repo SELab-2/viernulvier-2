@@ -78,10 +78,6 @@ clean_vendor_id = _normalize.clean_vendor_id
 nee_ja_to_bool = _normalize.nee_ja_to_bool
 
 
-def _get_api_key_or_raise() -> str:
-    return _http.get_api_key_or_raise()
-
-
 def _build_session() -> requests.Session:
     return _http.build_session()
 
