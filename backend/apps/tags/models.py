@@ -1,5 +1,4 @@
-"""
-Models for the Tags app.
+"""Models for the Tags app.
 
 Tags are classification labels that can be attached to productions:
 
@@ -18,8 +17,7 @@ from apps.languages.models import Language
 
 
 class Tag(BaseModel):
-    """
-    A classification label that can be attached to one or more productions.
+    """A classification label that can be attached to one or more productions.
 
     Tags support both internally created labels and labels imported from
     external systems (e.g. UiTdatabank). The ``is_external`` flag and
@@ -83,6 +81,7 @@ class Tag(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
+        """String representation of a Tag is its name in the default language, or a fallback."""
         name = self.get_base_display_name(
             related_name="translations",
             name_field="name",
@@ -93,8 +92,7 @@ class Tag(BaseModel):
 
 
 class TagTranslation(BaseModel):
-    """
-    Localised text fields for a Tag.
+    """Localised text fields for a Tag.
 
     Each tag can have at most one translation per language. The ``name``
     field is the primary display label; ``short_description`` and
@@ -160,4 +158,5 @@ class TagTranslation(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """String representation of a TagTranslation includes the language code and name."""
         return f"{self.language.code} - {self.name}"

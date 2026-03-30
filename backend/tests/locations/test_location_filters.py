@@ -2,9 +2,9 @@
 Tests for apps/locations/filters.py and apps/locations/views.py.
 """
 
-import pytest
 from django.test import TestCase, override_settings
 from django.urls import reverse
+import pytest
 from rest_framework.test import APIClient
 
 from apps.locations.filters import HallFilter, LocationFilter, SpaceFilter
@@ -42,44 +42,44 @@ class TestLocationFilter:
     def _qs(self, params):
         return LocationFilter(params, queryset=Location.objects.all()).qs
 
-    def test_city_icontains(self):
+    def test_city_icontains(self) -> None:
         LocationFactory(city="Gent")
         LocationFactory(city="Brussel")
 
         assert self._qs({"city": "gent"}).count() == 1
         assert self._qs({"city": "ent"}).count() == 1
 
-    def test_country_iexact(self):
+    def test_country_iexact(self) -> None:
         LocationFactory(country="BE")
         LocationFactory(country="NL")
 
         assert self._qs({"country": "be"}).count() == 1
         assert self._qs({"country": "BE"}).count() == 1
 
-    def test_country_no_partial_match(self):
+    def test_country_no_partial_match(self) -> None:
         LocationFactory(country="BE")
 
         assert self._qs({"country": "B"}).count() == 0
 
-    def test_postal_code_exact(self):
+    def test_postal_code_exact(self) -> None:
         LocationFactory(postal_code="9000")
         LocationFactory(postal_code="1000")
 
         assert self._qs({"postal_code": "9000"}).count() == 1
 
-    def test_is_own_location_true(self):
+    def test_is_own_location_true(self) -> None:
         LocationFactory(is_own_location=True)
         LocationFactory(is_own_location=False)
 
         assert self._qs({"is_own_location": "true"}).count() == 1
 
-    def test_is_own_location_false(self):
+    def test_is_own_location_false(self) -> None:
         LocationFactory(is_own_location=True)
         LocationFactory(is_own_location=False)
 
         assert self._qs({"is_own_location": "false"}).count() == 1
 
-    def test_name_filter_across_translations(self):
+    def test_name_filter_across_translations(self) -> None:
         lang = LanguageFactory(code="nl")
         loc_a = LocationFactory()
         loc_b = LocationFactory()
@@ -91,7 +91,7 @@ class TestLocationFilter:
         assert result.count() == 1
         assert result.first() == loc_a
 
-    def test_name_filter_distinct_no_duplicates(self):
+    def test_name_filter_distinct_no_duplicates(self) -> None:
         lang_nl = LanguageFactory(code="nl")
         lang_fr = LanguageFactory(code="fr")
         loc = LocationFactory()
@@ -100,14 +100,14 @@ class TestLocationFilter:
 
         assert self._qs({"name": "theat"}).count() == 1
 
-    def test_combined_city_and_is_own(self):
+    def test_combined_city_and_is_own(self) -> None:
         LocationFactory(city="Gent", is_own_location=True)
         LocationFactory(city="Gent", is_own_location=False)
         LocationFactory(city="Brussel", is_own_location=True)
 
         assert self._qs({"city": "gent", "is_own_location": "true"}).count() == 1
 
-    def test_no_params_returns_all(self):
+    def test_no_params_returns_all(self) -> None:
         LocationFactory.create_batch(3)
 
         assert self._qs({}).count() == 3
@@ -122,7 +122,7 @@ class TestSpaceFilter:
     def _qs(self, params):
         return SpaceFilter(params, queryset=Space.objects.all()).qs
 
-    def test_filter_by_location(self):
+    def test_filter_by_location(self) -> None:
         loc_a = LocationFactory()
         loc_b = LocationFactory()
         SpaceFactory(location=loc_a)
@@ -130,7 +130,7 @@ class TestSpaceFilter:
 
         assert self._qs({"location": loc_a.id}).count() == 1
 
-    def test_name_filter_across_translations(self):
+    def test_name_filter_across_translations(self) -> None:
         lang = LanguageFactory(code="nl")
         space_a = SpaceFactory()
         space_b = SpaceFactory()
@@ -139,7 +139,7 @@ class TestSpaceFilter:
 
         assert self._qs({"name": "foyer"}).count() == 1
 
-    def test_no_params_returns_all(self):
+    def test_no_params_returns_all(self) -> None:
         SpaceFactory.create_batch(3)
 
         assert self._qs({}).count() == 3
@@ -154,7 +154,7 @@ class TestHallFilter:
     def _qs(self, params):
         return HallFilter(params, queryset=Hall.objects.all()).qs
 
-    def test_filter_by_space(self):
+    def test_filter_by_space(self) -> None:
         space_a = SpaceFactory()
         space_b = SpaceFactory()
         HallFactory(space=space_a)
@@ -162,7 +162,7 @@ class TestHallFilter:
 
         assert self._qs({"space": space_a.id}).count() == 1
 
-    def test_filter_by_location_traverses_chain(self):
+    def test_filter_by_location_traverses_chain(self) -> None:
         loc_a = LocationFactory()
         loc_b = LocationFactory()
         HallFactory(space=SpaceFactory(location=loc_a))
@@ -170,25 +170,25 @@ class TestHallFilter:
 
         assert self._qs({"location": loc_a.id}).count() == 1
 
-    def test_seat_selection_true(self):
+    def test_seat_selection_true(self) -> None:
         HallFactory(seat_selection=True)
         HallFactory(seat_selection=False)
 
         assert self._qs({"seat_selection": "true"}).count() == 1
 
-    def test_seat_selection_false(self):
+    def test_seat_selection_false(self) -> None:
         HallFactory(seat_selection=True)
         HallFactory(seat_selection=False)
 
         assert self._qs({"seat_selection": "false"}).count() == 1
 
-    def test_open_seating_true(self):
+    def test_open_seating_true(self) -> None:
         HallFactory(open_seating=True)
         HallFactory(open_seating=False)
 
         assert self._qs({"open_seating": "true"}).count() == 1
 
-    def test_name_filter_across_translations(self):
+    def test_name_filter_across_translations(self) -> None:
         lang = LanguageFactory(code="nl")
         hall_a = HallFactory()
         hall_b = HallFactory()
@@ -197,7 +197,7 @@ class TestHallFilter:
 
         assert self._qs({"name": "grote"}).count() == 1
 
-    def test_combined_seat_selection_and_space(self):
+    def test_combined_seat_selection_and_space(self) -> None:
         space = SpaceFactory()
         HallFactory(space=space, seat_selection=True)
         HallFactory(space=space, seat_selection=False)
@@ -212,7 +212,7 @@ class TestHallFilter:
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLocationViewSet(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = APIClient()
         Location.objects.all().delete()
 
@@ -222,62 +222,62 @@ class TestLocationViewSet(TestCase):
     def detail_url(self, pk):
         return reverse("v1:location-detail", kwargs={"pk": pk})
 
-    def test_anon_is_rejected(self):
+    def test_anon_is_rejected(self) -> None:
         response = self.client.get(self.list_url())
-        self.assertIn(response.status_code, (401, 403))
+        assert response.status_code in (401, 403)
 
-    def test_public_can_list(self):
+    def test_public_can_list(self) -> None:
         LocationFactory.create_batch(2)
         response = self.client.get(self.list_url(), **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_public_cannot_delete(self):
+    def test_public_cannot_delete(self) -> None:
         loc = LocationFactory()
         response = self.client.delete(self.detail_url(loc.pk), **pub_headers())
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
-    def test_internal_can_delete(self):
+    def test_internal_can_delete(self) -> None:
         loc = LocationFactory()
         response = self.client.delete(self.detail_url(loc.pk), **int_headers())
-        self.assertEqual(response.status_code, 204)
-        self.assertFalse(Location.objects.filter(pk=loc.pk).exists())
+        assert response.status_code == 204
+        assert not Location.objects.filter(pk=loc.pk).exists()
 
-    def test_filter_by_city(self):
+    def test_filter_by_city(self) -> None:
         LocationFactory(city="Gent")
         LocationFactory(city="Brussel")
         response = self.client.get(self.list_url(), {"city": "Gent"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
-    def test_filter_by_is_own_location(self):
+    def test_filter_by_is_own_location(self) -> None:
         LocationFactory(is_own_location=True)
         LocationFactory(is_own_location=False)
         response = self.client.get(self.list_url(), {"is_own_location": "true"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
-    def test_filter_by_translated_name(self):
+    def test_filter_by_translated_name(self) -> None:
         lang = LanguageFactory(code="nl")
         loc = LocationFactory()
         LocationTranslationFactory(location=loc, language=lang, name="Stadsschouwburg")
         LocationFactory()
         response = self.client.get(self.list_url(), {"name": "stads"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
-    def test_ordering_by_city(self):
+    def test_ordering_by_city(self) -> None:
         LocationFactory(city="Gent")
         LocationFactory(city="Antwerpen")
         response = self.client.get(self.list_url(), {"ordering": "city"}, **pub_headers())
         cities = [r["city"] for r in response.data.get("results", response.data)]
-        self.assertEqual(cities, sorted(cities))
+        assert cities == sorted(cities)
 
-    def test_search_by_city(self):
+    def test_search_by_city(self) -> None:
         LocationFactory(city="Gent")
         LocationFactory(city="Brussel")
         response = self.client.get(self.list_url(), {"search": "Gent"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
 
 # =====================================================
@@ -287,7 +287,7 @@ class TestLocationViewSet(TestCase):
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestSpaceViewSet(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = APIClient()
         Space.objects.all().delete()
 
@@ -297,36 +297,36 @@ class TestSpaceViewSet(TestCase):
     def detail_url(self, pk):
         return reverse("v1:space-detail", kwargs={"pk": pk})
 
-    def test_anon_is_rejected(self):
+    def test_anon_is_rejected(self) -> None:
         response = self.client.get(self.list_url())
-        self.assertIn(response.status_code, (401, 403))
+        assert response.status_code in (401, 403)
 
-    def test_public_can_list(self):
+    def test_public_can_list(self) -> None:
         SpaceFactory.create_batch(3)
         response = self.client.get(self.list_url(), **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_filter_by_location(self):
+    def test_filter_by_location(self) -> None:
         loc = LocationFactory()
         SpaceFactory(location=loc)
         SpaceFactory()
         response = self.client.get(self.list_url(), {"location": loc.id}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
-    def test_filter_by_translated_name(self):
+    def test_filter_by_translated_name(self) -> None:
         lang = LanguageFactory(code="nl")
         space = SpaceFactory()
         SpaceTranslationFactory(space=space, language=lang, name="Foyer")
         SpaceFactory()
         response = self.client.get(self.list_url(), {"name": "foyer"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
-    def test_internal_can_delete(self):
+    def test_internal_can_delete(self) -> None:
         space = SpaceFactory()
         response = self.client.delete(self.detail_url(space.pk), **int_headers())
-        self.assertEqual(response.status_code, 204)
+        assert response.status_code == 204
 
 
 # =====================================================
@@ -336,56 +336,56 @@ class TestSpaceViewSet(TestCase):
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestHallViewSet(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = APIClient()
         Hall.objects.all().delete()
 
     def list_url(self):
         return reverse("v1:hall-list")
 
-    def test_anon_is_rejected(self):
+    def test_anon_is_rejected(self) -> None:
         response = self.client.get(self.list_url())
-        self.assertIn(response.status_code, (401, 403))
+        assert response.status_code in (401, 403)
 
-    def test_public_can_list(self):
+    def test_public_can_list(self) -> None:
         HallFactory.create_batch(2)
         response = self.client.get(self.list_url(), **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_filter_by_space(self):
+    def test_filter_by_space(self) -> None:
         space = SpaceFactory()
         HallFactory(space=space)
         HallFactory()
         response = self.client.get(self.list_url(), {"space": space.id}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
-    def test_filter_by_location(self):
+    def test_filter_by_location(self) -> None:
         loc = LocationFactory()
         HallFactory(space=SpaceFactory(location=loc))
         HallFactory()
         response = self.client.get(self.list_url(), {"location": loc.id}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
-    def test_filter_by_seat_selection(self):
+    def test_filter_by_seat_selection(self) -> None:
         HallFactory(seat_selection=True)
         HallFactory(seat_selection=False)
         response = self.client.get(self.list_url(), {"seat_selection": "true"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
-    def test_search_by_translated_name(self):
+    def test_search_by_translated_name(self) -> None:
         lang = LanguageFactory(code="nl")
         hall = HallFactory()
         HallTranslationFactory(hall=hall, language=lang, name="Grote Zaal")
         HallFactory()
         response = self.client.get(self.list_url(), {"search": "Grote"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
-    def test_ordering_by_id(self):
+    def test_ordering_by_id(self) -> None:
         HallFactory.create_batch(3)
         response = self.client.get(self.list_url(), {"ordering": "id"}, **pub_headers())
         ids = [r["id"] for r in response.data.get("results", response.data)]
-        self.assertEqual(ids, sorted(ids))
+        assert ids == sorted(ids)

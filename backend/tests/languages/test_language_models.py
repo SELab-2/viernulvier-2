@@ -1,5 +1,5 @@
-import pytest
 from django.core.exceptions import ValidationError
+import pytest
 
 from tests.factories.genre import GenreTranslationFactory
 from tests.factories.language import LanguageFactory
@@ -16,7 +16,7 @@ pytestmark = pytest.mark.django_db
 
 
 class TestLanguageModel:
-    def test_language_creation_defaults(self):
+    def test_language_creation_defaults(self) -> None:
         """Test that a language can be created with expected default values."""
         lang = LanguageFactory.create(code="nl", name="Dutch")
 
@@ -25,7 +25,7 @@ class TestLanguageModel:
         assert lang.name == "Dutch"
         assert lang.is_active is True  # default defined in factory
 
-    def test_language_creation_inactive(self):
+    def test_language_creation_inactive(self) -> None:
         """Test that is_active can be explicitly set to False."""
         lang = LanguageFactory.create(code="en", name="English", is_active=False)
 
@@ -33,22 +33,22 @@ class TestLanguageModel:
         assert lang.name == "English"
         assert lang.is_active is False
 
-    def test_language_code_too_long_raises_validation_error(self):
+    def test_language_code_too_long_raises_validation_error(self) -> None:
         """Code exceeding max_length=2 should raise ValidationError."""
         with pytest.raises(ValidationError):
             LanguageFactory.create(code="invalidCodeLength", name="English")
 
-    def test_language_name_too_long_raises_validation_error(self):
+    def test_language_name_too_long_raises_validation_error(self) -> None:
         """Name exceeding max_length=15 should raise ValidationError."""
         with pytest.raises(ValidationError):
             LanguageFactory.create(code="en", name="A" * 16)
 
-    def test_language_str(self):
+    def test_language_str(self) -> None:
         """Test the string representation of the Language model."""
         lang = LanguageFactory.create(code="en", name="English")
         assert str(lang) == "en - English"
 
-    def test_language_code_is_primary_key(self):
+    def test_language_code_is_primary_key(self) -> None:
         """Test that the code field is the primary key."""
         lang1 = LanguageFactory.create(code="en", name="English")
         lang2 = LanguageFactory.create(code="nl", name="Dutch")
@@ -56,17 +56,17 @@ class TestLanguageModel:
         assert lang1.pk == "en"
         assert lang2.pk == "nl"
 
-    def test_name_null_raises_validation_error(self):
+    def test_name_null_raises_validation_error(self) -> None:
         """name=None should raise ValidationError."""
         with pytest.raises(ValidationError):
             LanguageFactory.create(code="en", name=None)
 
-    def test_name_blank_raises_validation_error(self):
+    def test_name_blank_raises_validation_error(self) -> None:
         """name='' should raise ValidationError."""
         with pytest.raises(ValidationError):
             LanguageFactory.create(code="en", name="")
 
-    def test_genre_translations(self):
+    def test_genre_translations(self) -> None:
         """Language should expose related genre translations via genre_translations."""
         language = LanguageFactory.create(code="en", name="English")
         translations = GenreTranslationFactory.create_batch(3, language=language)
@@ -75,7 +75,7 @@ class TestLanguageModel:
         assert all(tr.language == language for tr in translations)
         assert all(str(tr).startswith("en - ") for tr in translations)
 
-    def test_media_item_translations_related_name(self):
+    def test_media_item_translations_related_name(self) -> None:
         """
         Language should expose media item translations
         via media_item_translations.
@@ -86,7 +86,7 @@ class TestLanguageModel:
         assert language.media_item_translations.count() == 2
         assert all(tr.language == language for tr in translations)
 
-    def test_location_space_hall_translations_related_names(self):
+    def test_location_space_hall_translations_related_names(self) -> None:
         """Language should expose location, space, and hall translations
         via <location|space|hall>_translations.
         """
@@ -105,7 +105,7 @@ class TestLanguageModel:
         assert language.hall_translations.count() == 1
         assert hall_translation.language == language
 
-    def test_price_translation_related_name(self):
+    def test_price_translation_related_name(self) -> None:
         """Language should expose price translations via price_translations."""
         language = LanguageFactory.create(code="it", name="Italian")
         translations = PriceTranslationFactory.create_batch(2, language=language)
@@ -113,7 +113,7 @@ class TestLanguageModel:
         assert language.price_translations.count() == 2
         assert all(tr.language == language for tr in translations)
 
-    def test_price_rank_translation_reverse_manager(self):
+    def test_price_rank_translation_reverse_manager(self) -> None:
         """Language should expose price rank translations via pricerank_translations."""
         language = LanguageFactory.create(code="es", name="Spanish")
         translation = PriceRankTranslationFactory.create(language=language)
@@ -121,7 +121,7 @@ class TestLanguageModel:
         assert language.pricerank_translations.count() == 1
         assert translation.language == language
 
-    def test_tag_translations_related_name(self):
+    def test_tag_translations_related_name(self) -> None:
         """Language should expose tag translations via tag_translations."""
         language = LanguageFactory.create(code="pt", name="Portuguese")
         translations = TagTranslationFactory.create_batch(2, language=language)

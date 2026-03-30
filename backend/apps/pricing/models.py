@@ -1,5 +1,4 @@
-"""
-Models for the Pricing app.
+"""Models for the Pricing app.
 
 Pricing is split across two independent hierarchies:
 
@@ -23,8 +22,7 @@ from apps.languages.models import Language
 
 
 class Price(BaseModel):
-    """
-    A ticket price category.
+    """A ticket price category.
 
     Prices are typed (e.g. ``full``, ``student``) and carry visibility and
     membership rules. Variable pricing is supported via the ``minimum``,
@@ -122,12 +120,12 @@ class Price(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the price."""
         return f"{self.type} (id={self.id})"
 
 
 class PriceTranslation(BaseModel):
-    """
-    Localised description for a Price.
+    """Localised description for a Price.
 
     Each price can have at most one translation per language.
 
@@ -177,12 +175,12 @@ class PriceTranslation(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the price translation."""
         return f"{self.price.type} [{self.language.code}]"
 
 
 class PriceRank(BaseModel):
-    """
-    An ordered availability tier for pricing.
+    """An ordered availability tier for pricing.
 
     Price ranks control when a price level is considered sold out.
     A ``sold_out_buffer`` allows a rank to be marked sold out slightly
@@ -222,12 +220,12 @@ class PriceRank(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the price rank."""
         return f"Rank {self.position}"
 
 
 class PriceRankTranslation(BaseModel):
-    """
-    Localised description for a PriceRank.
+    """Localised description for a PriceRank.
 
     Each price rank can have at most one translation per language.
 
@@ -277,4 +275,5 @@ class PriceRankTranslation(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the price rank translation."""
         return f"{self.price_rank} [{self.language.code}]"

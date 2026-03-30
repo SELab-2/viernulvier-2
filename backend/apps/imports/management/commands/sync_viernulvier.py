@@ -1,4 +1,4 @@
-"""Django management command: sync_viernulvier
+"""Django management command: sync_viernulvier.
 
 Fetches all configured endpoints from the Viernulvier / Peppered API and
 upserts the results into the local database.
@@ -15,9 +15,11 @@ File path:
     apps/imports/management/commands/sync_viernulvier.py
 """
 
+from argparse import ArgumentParser
+from collections.abc import Callable
 import logging
 import time
-from typing import Any, Callable, Optional
+from typing import Any
 
 from django.core.management.base import BaseCommand
 
@@ -57,17 +59,19 @@ from apps.tags.models import Tag, TagTranslation
 logger = logging.getLogger(__name__)
 
 # tqdm is optional - degrade gracefully to a simple counter if not installed
+
 try:
+    from tqdm import tqdm  # for type hint
     from tqdm import tqdm as _tqdm
 
-    def _make_progress_bar(name: str, total: int):  # type: ignore[return]
-        """Return a tqdm bar or a no-op context manager."""
+    def _make_progress_bar(name: str, total: int) -> tqdm | None:
+        """Return a tqdm bar or None."""
         return _tqdm(total=total, desc=name, unit="records", leave=False)
 
 except ImportError:
     _tqdm = None  # type: ignore[assignment]
 
-    def _make_progress_bar(name: str, total: int):  # type: ignore[return]
+    def _make_progress_bar(_name: str, _total: int) -> None:
         return None
 
 
@@ -76,7 +80,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 
-def _resolve_genre_use_as(raw_value: Any) -> Optional[int]:
+def _resolve_genre_use_as(raw_value: Any) -> int | None:
     """Resolve the GenreUseAs FK by name, creating the row if needed."""
     name = str(raw_value).strip() if raw_value else "unknown"
     obj, _ = GenreUseAs.objects.get_or_create(name=name)
@@ -419,6 +423,8 @@ ALL_STEP_NAMES = [name for name, *_ in SYNC_STEPS] + sorted(CUSTOM_STEPS)
 
 
 class Command(BaseCommand):
+    """Django management command to sync Viernulvier / Peppered API data into the local database."""
+
     help = "Sync Viernulvier / Peppered API data into the local database"
 
     FILTER_FIELDS = {
@@ -428,7 +434,8 @@ class Command(BaseCommand):
         "ends": "ends_at",
     }
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
+        """Define command-line arguments for filtering and step selection."""
         parser.add_argument(
             "--only",
             type=str,
@@ -464,8 +471,9 @@ class Command(BaseCommand):
                     ),
                 )
 
-    def handle(self, *args, **options):
-        only: Optional[str] = options.get("only")
+    def handle(self, *_args: tuple, **options: dict) -> None:  # noqa: PLR0915, C901
+        """Run the sync process for the specified steps and options."""
+        only: str | None = options.get("only")
         dry_run: bool = options.get("dry_run", False)
 
         if only and only not in ALL_STEP_NAMES:

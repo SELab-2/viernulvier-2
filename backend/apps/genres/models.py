@@ -1,5 +1,4 @@
-"""
-Models for the Genre app.
+"""Models for the Genre app.
 
 Genres classify productions and can be applied in different contexts
 (e.g. as a taxonomy genre or as a lightweight tag).
@@ -12,8 +11,7 @@ from apps.languages.models import Language
 
 
 class GenreUseAs(BaseModel):
-    """
-    Defines how a Genre is used in the system.
+    """Defines how a Genre is used in the system.
 
     Examples:
         - ``genre``  -> used as a production classification
@@ -35,12 +33,12 @@ class GenreUseAs(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
+        """Return the use case name (e.g. 'genre', 'tag')."""
         return self.name
 
 
 class Genre(BaseModel):
-    """
-    Core genre entity.
+    """Core genre entity.
 
     A genre represents a classification type such as Theater, Festival,
     or Book Presentation. Each genre has:
@@ -85,6 +83,7 @@ class Genre(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the genre, preferring the base display name, then vendor_id, then type."""
         name = self.get_base_display_name(
             related_name="translations",
             fallback=None,
@@ -101,8 +100,7 @@ class Genre(BaseModel):
 
 
 class GenreTranslation(BaseModel):
-    """
-    Localised display name for a Genre.
+    """Localised display name for a Genre.
 
     Each genre can have at most one translation per language.
     """
@@ -138,4 +136,5 @@ class GenreTranslation(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
+        """Return a string representation of the translation, including the language code and name."""
         return f"{self.language.code} - {self.name}"

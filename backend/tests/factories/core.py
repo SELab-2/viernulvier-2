@@ -1,5 +1,5 @@
-import factory
 from django.db import models
+import factory
 
 from apps.core.models import BaseModel
 

@@ -1,5 +1,4 @@
-"""
-Staging settings for the viernulvier_archive project.
+"""Staging settings for the viernulvier_archive project.
 
 Mirrors production as closely as possible so that staging catches
 configuration drift before it reaches prod. The main differences are:
@@ -14,7 +13,7 @@ Usage:
 
 import os
 
-from .base import *  # noqa: F401, F403
+from .base import *  # noqa: F403
 from .base import REST_FRAMEWORK
 
 # ---------------------------------------------------------------------------

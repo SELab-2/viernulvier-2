@@ -1,5 +1,4 @@
-"""
-Serializers for the Media app.
+"""Serializers for the Media app.
 
 Field-level `help_text` and `extra_kwargs` are picked up automatically
 by drf-spectacular and rendered in the Swagger UI, so descriptions do
@@ -18,8 +17,7 @@ from .models import MediaGallery, MediaItem, MediaItemCrop
 
 
 class MediaItemCropSerializer(serializers.ModelSerializer):
-    """
-    Represents a named crop variant of a MediaItem.
+    """Represents a named crop variant of a MediaItem.
 
     ``image_url`` is a read-only computed field that returns the publicly
     accessible URL of the stored image file. It is derived from the
@@ -67,8 +65,7 @@ class MediaGalleryReferenceSerializer(serializers.ModelSerializer):
 
 
 class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
-    """
-    Represents a MediaItem with its translated metadata and nested crops.
+    """Represents a MediaItem with its translated metadata and nested crops.
 
     Translated fields (`title`, `description`, `credits`, `link`) return all
     available translations as dictionaries (e.g. {"en": "Poster", "fr": "Affiche"}).
@@ -199,8 +196,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
 
 
 class MediaGallerySerializer(serializers.ModelSerializer):
-    """
-    Represents a MediaGallery with its nested media items.
+    """Represents a MediaGallery with its nested media items.
 
     The `media_items` field is a read-only nested list of all items in the
     gallery, ordered by `position`. Each item includes its translated metadata

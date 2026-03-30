@@ -1,6 +1,8 @@
 """Admin configuration for the Pricing app."""
 
 from django.contrib import admin
+from django.db.models import QuerySet
+from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin
 
@@ -16,7 +18,7 @@ class PriceTranslationInline(admin.TabularInline):
     autocomplete_fields = ("language",)
     ordering = ("language",)
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("language")
 
 
@@ -40,7 +42,7 @@ class PriceAdmin(BaseAdmin):
     ordering = ("sort_order", "id")
     inlines = [PriceTranslationInline]
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Prefetch translations to avoid N+1 queries on the detail page."""
         return super().get_queryset(request).prefetch_related("translations")
 
@@ -55,7 +57,7 @@ class PriceTranslationAdmin(BaseAdmin):
     ordering = ("price", "language")
     autocomplete_fields = ("price", "language")
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Select related price and language to avoid N+1 queries."""
         return super().get_queryset(request).select_related("price", "language")
 
@@ -69,7 +71,7 @@ class PriceRankTranslationInline(admin.TabularInline):
     autocomplete_fields = ("language",)
     ordering = ("language",)
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("language")
 
 
@@ -82,7 +84,7 @@ class PriceRankAdmin(BaseAdmin):
     ordering = ("position", "id")
     inlines = [PriceRankTranslationInline]
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Prefetch translations to avoid N+1 queries on the detail page."""
         return super().get_queryset(request).prefetch_related("translations")
 
@@ -97,6 +99,6 @@ class PriceRankTranslationAdmin(BaseAdmin):
     ordering = ("price_rank", "language")
     autocomplete_fields = ("price_rank", "language")
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Select related price_rank and language to avoid N+1 queries."""
         return super().get_queryset(request).select_related("price_rank", "language")

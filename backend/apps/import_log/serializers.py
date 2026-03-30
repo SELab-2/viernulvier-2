@@ -1,5 +1,4 @@
-"""
-Serializers for the Imports app.
+"""Serializers for the Imports app.
 
 ``ImportLogSerializer`` is a read-only serializer that adds a computed
 ``duration`` field to the standard model fields. Write operations are
@@ -17,8 +16,7 @@ from .models import ImportLog
 
 
 class ImportLogSerializer(serializers.ModelSerializer):
-    """
-    Read-only representation of an ImportLog.
+    """Read-only representation of an ImportLog.
 
     Exposes the full audit trail of an import run, including record counts,
     status, timestamps, and a computed ``duration`` field. All fields are
@@ -97,8 +95,7 @@ class ImportLogSerializer(serializers.ModelSerializer):
     # ---------------------------------------------------------------------------
 
     def get_duration(self, obj: ImportLog) -> str | None:
-        """
-        Return the total processing time as an ``HH:MM:SS`` string.
+        """Return the total processing time as an ``HH:MM:SS`` string.
 
         Microseconds are stripped by splitting on ``.`` so the value is
         human-readable at a glance. Returns ``None`` when either timestamp
@@ -113,10 +110,10 @@ class ImportLogSerializer(serializers.ModelSerializer):
     # Explicit write guards
     # ---------------------------------------------------------------------------
 
-    def create(self, validated_data: dict) -> None:
+    def create(self, _validated_data: dict) -> None:
         """Prevent creation of import logs via the API."""
         raise serializers.ValidationError("Import logs cannot be created via the API.")
 
-    def update(self, instance: ImportLog, validated_data: dict) -> None:
+    def update(self, _instance: ImportLog, _validated_data: dict) -> None:
         """Prevent modification of import logs via the API."""
         raise serializers.ValidationError("Import logs cannot be updated via the API.")

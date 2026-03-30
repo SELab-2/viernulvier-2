@@ -1,5 +1,4 @@
-"""
-Models for the Locations app.
+"""Models for the Locations app.
 
 The location hierarchy is three levels deep:
 
@@ -20,8 +19,7 @@ from apps.languages.models import Language
 
 
 class Location(BaseModel):
-    """
-    A physical venue or address.
+    """A physical venue or address.
 
     Attributes:
         street:          Street name.
@@ -102,6 +100,7 @@ class Location(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the location."""
         name = self.get_base_display_name(related_name="translations", fallback=None)
 
         street_part = " ".join(filter(None, [self.street, self.number]))
@@ -114,8 +113,7 @@ class Location(BaseModel):
 
 
 class LocationTranslation(BaseModel):
-    """
-    Localised name for a Location.
+    """Localised name for a Location.
 
     Each location can have at most one translation per language.
 
@@ -162,12 +160,12 @@ class LocationTranslation(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the location translation."""
         return f"{self.language.code} - {self.name}"
 
 
 class Space(BaseModel):
-    """
-    A distinct physical area within a Location.
+    """A distinct physical area within a Location.
 
     A space groups one or more halls and represents a building, wing,
     or other named section of a venue.
@@ -191,6 +189,7 @@ class Space(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the space."""
         name = self.get_base_display_name(related_name="translations", fallback=f"Space {self.id}")
         try:
             city = self.location.city or ""
@@ -200,8 +199,7 @@ class Space(BaseModel):
 
 
 class SpaceTranslation(BaseModel):
-    """
-    Localised name for a Space.
+    """Localised name for a Space.
 
     Each space can have at most one translation per language.
 
@@ -248,12 +246,12 @@ class SpaceTranslation(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the space translation."""
         return f"{self.language.code} - {self.name}"
 
 
 class Hall(BaseModel):
-    """
-    A specific room or auditorium within a Space.
+    """A specific room or auditorium within a Space.
 
     Carries seating configuration flags that determine how tickets are
     sold and seats are assigned for events held in this hall.
@@ -293,6 +291,7 @@ class Hall(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the hall."""
         name = self.get_base_display_name(related_name="translations", fallback=f"Hall {self.id}")
         try:
             city = self.space.location.city or ""
@@ -302,8 +301,7 @@ class Hall(BaseModel):
 
 
 class HallTranslation(BaseModel):
-    """
-    Localised name and optional remark for a Hall.
+    """Localised name and optional remark for a Hall.
 
     Each hall can have at most one translation per language.
 
@@ -358,4 +356,5 @@ class HallTranslation(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the hall translation."""
         return f"{self.language.code} - {self.name}"

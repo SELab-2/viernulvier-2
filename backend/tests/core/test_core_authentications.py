@@ -29,132 +29,128 @@ def _make_request(api_key: str | bytes | None = None):
 def _patch_settings(internal: str | None = None, public: str | None = None):
     return patch(
         "apps.core.authentications.settings",
-        **{
-            "INTERNAL_API_KEY": internal,
-            "PUBLIC_API_KEY": public,
-        },
+        INTERNAL_API_KEY=internal,
+        PUBLIC_API_KEY=public,
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def auth():
     return ApiKeyAuthentication()
 
 
 class TestMissingHeader:
-    def test_returns_none_when_header_is_absent(self, auth):
+    def test_returns_none_when_header_is_absent(self, auth) -> None:
         assert auth.authenticate(_make_request()) is None
 
-    def test_returns_none_when_header_is_empty_string(self, auth):
+    def test_returns_none_when_header_is_empty_string(self, auth) -> None:
         assert auth.authenticate(_make_request("")) is None
 
-    def test_returns_none_when_header_is_empty_bytes(self, auth):
+    def test_returns_none_when_header_is_empty_bytes(self, auth) -> None:
         assert auth.authenticate(_make_request(b"")) is None
 
 
 class TestSuccessfulAuthentication:
-    def test_valid_internal_key_returns_internal_scope(self, auth):
+    def test_valid_internal_key_returns_internal_scope(self, auth) -> None:
         with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
             result = auth.authenticate(_make_request(INTERNAL_KEY))
         assert result == (None, "internal")
 
-    def test_valid_public_key_returns_public_scope(self, auth):
+    def test_valid_public_key_returns_public_scope(self, auth) -> None:
         with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
             result = auth.authenticate(_make_request(PUBLIC_KEY))
         assert result == (None, "public")
 
-    def test_internal_key_takes_priority_when_both_match(self, auth):
+    def test_internal_key_takes_priority_when_both_match(self, auth) -> None:
         with _patch_settings(internal=INTERNAL_KEY, public=INTERNAL_KEY):
             result = auth.authenticate(_make_request(INTERNAL_KEY))
         assert result == (None, "internal")
 
-    def test_bytes_header_is_accepted_when_utf8(self, auth):
+    def test_bytes_header_is_accepted_when_utf8(self, auth) -> None:
         with _patch_settings(internal=INTERNAL_KEY):
             result = auth.authenticate(_make_request(INTERNAL_KEY.encode("utf-8")))
         assert result == (None, "internal")
 
 
 class TestInvalidAuthentication:
-    def test_wrong_key_raises_authentication_failed(self, auth):
-        with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
-            with pytest.raises(AuthenticationFailed) as exc_info:
-                auth.authenticate(_make_request("totallywrongkey"))
+    def test_wrong_key_raises_authentication_failed(self, auth) -> None:
+        with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY), pytest.raises(AuthenticationFailed) as exc_info:
+            auth.authenticate(_make_request("totallywrongkey"))
         assert "Invalid API key" in str(exc_info.value.detail)
 
-    def test_invalid_utf8_bytes_raise_authentication_failed(self, auth):
-        with _patch_settings(internal=INTERNAL_KEY):
-            with pytest.raises(AuthenticationFailed) as exc_info:
-                auth.authenticate(_make_request(b"\xff\xfe"))
+    def test_invalid_utf8_bytes_raise_authentication_failed(self, auth) -> None:
+        with _patch_settings(internal=INTERNAL_KEY), pytest.raises(AuthenticationFailed) as exc_info:
+            auth.authenticate(_make_request(b"\xff\xfe"))
         assert "Invalid characters in API key" in str(exc_info.value.detail)
 
-    def test_unknown_key_is_rejected_when_only_internal_exists(self, auth):
-        with _patch_settings(internal=INTERNAL_KEY, public=None):
-            with pytest.raises(AuthenticationFailed):
-                auth.authenticate(_make_request("unknownkey"))
+    def test_unknown_key_is_rejected_when_only_internal_exists(self, auth) -> None:
+        with _patch_settings(internal=INTERNAL_KEY, public=None), pytest.raises(AuthenticationFailed):
+            auth.authenticate(_make_request("unknownkey"))
 
-    def test_unknown_key_is_rejected_when_only_public_exists(self, auth):
-        with _patch_settings(internal=None, public=PUBLIC_KEY):
-            with pytest.raises(AuthenticationFailed):
-                auth.authenticate(_make_request("unknownkey"))
+    def test_unknown_key_is_rejected_when_only_public_exists(self, auth) -> None:
+        with _patch_settings(internal=None, public=PUBLIC_KEY), pytest.raises(AuthenticationFailed):
+            auth.authenticate(_make_request("unknownkey"))
 
-    def test_no_key_matches_when_settings_are_empty(self, auth):
-        with _patch_settings(internal="", public=""):
-            with pytest.raises(AuthenticationFailed):
-                auth.authenticate(_make_request("somekey"))
+    def test_no_key_matches_when_settings_are_empty(self, auth) -> None:
+        with _patch_settings(internal="", public=""), pytest.raises(AuthenticationFailed):
+            auth.authenticate(_make_request("somekey"))
 
 
 class TestAuthenticateHeader:
-    def test_returns_x_api_key_realm(self, auth):
+    def test_returns_x_api_key_realm(self, auth) -> None:
         assert auth.authenticate_header(MagicMock()) == "X-API-Key"
 
-    def test_return_type_is_string(self, auth):
+    def test_return_type_is_string(self, auth) -> None:
         assert isinstance(auth.authenticate_header(MagicMock()), str)
 
 
 class TestComparisonBehavior:
-    def test_key_matching_is_case_sensitive(self, auth):
-        with _patch_settings(internal=INTERNAL_KEY):
-            with pytest.raises(AuthenticationFailed):
-                auth.authenticate(_make_request(INTERNAL_KEY.upper()))
+    def test_key_matching_is_case_sensitive(self, auth) -> None:
+        with _patch_settings(internal=INTERNAL_KEY), pytest.raises(AuthenticationFailed):
+            auth.authenticate(_make_request(INTERNAL_KEY.upper()))
 
-    def test_compare_digest_is_used(self, auth):
-        with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
-            with patch(
+    def test_compare_digest_is_used(self, auth) -> None:
+        with (
+            _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY),
+            patch(
                 "apps.core.authentications.secrets.compare_digest",
                 wraps=secrets.compare_digest,
-            ) as mock_compare_digest:
-                auth.authenticate(_make_request(PUBLIC_KEY))
+            ) as mock_compare_digest,
+        ):
+            auth.authenticate(_make_request(PUBLIC_KEY))
         assert mock_compare_digest.called
         assert mock_compare_digest.call_count == 2
 
-    def test_compare_digest_receives_bytes(self, auth):
-        with _patch_settings(internal=INTERNAL_KEY):
-            with patch(
+    def test_compare_digest_receives_bytes(self, auth) -> None:
+        with (
+            _patch_settings(internal=INTERNAL_KEY),
+            patch(
                 "apps.core.authentications.secrets.compare_digest",
                 wraps=secrets.compare_digest,
-            ) as mock_compare_digest:
-                auth.authenticate(_make_request(INTERNAL_KEY))
+            ) as mock_compare_digest,
+        ):
+            auth.authenticate(_make_request(INTERNAL_KEY))
         args, _ = mock_compare_digest.call_args
         assert all(isinstance(arg, bytes) for arg in args)
 
 
 class TestGeneralRobustness:
-    def test_supports_special_ascii_keys(self, auth):
+    def test_supports_special_ascii_keys(self, auth) -> None:
         special_key = "k3y-w1th-$pec!@l_ch@r$"
         with _patch_settings(internal=special_key):
             result = auth.authenticate(_make_request(special_key))
         assert result == (None, "internal")
 
-    def test_supports_unicode_keys(self, auth):
+    def test_supports_unicode_keys(self, auth) -> None:
         unicode_key = "kéy-wïth-ünícödé"
         with _patch_settings(internal=unicode_key):
             result = auth.authenticate(_make_request(unicode_key))
         assert result == (None, "internal")
 
-    def test_authentication_class_inherits_from_base_authentication(self):
+    def test_authentication_class_inherits_from_base_authentication(self) -> None:
         assert issubclass(ApiKeyAuthentication, BaseAuthentication)
 
-    def test_authentication_is_stateless_across_calls(self, auth):
+    def test_authentication_is_stateless_across_calls(self, auth) -> None:
         with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
             first = auth.authenticate(_make_request(INTERNAL_KEY))
             second = auth.authenticate(_make_request(PUBLIC_KEY))

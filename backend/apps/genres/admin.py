@@ -1,6 +1,8 @@
 """Admin configuration for the Genre app."""
 
 from django.contrib import admin
+from django.db.models import QuerySet
+from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin
 
@@ -13,7 +15,7 @@ class GenreTranslationInline(admin.TabularInline):
     fields = ("language", "name")
     autocomplete_fields = ("language",)
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[GenreTranslation]:
         return super().get_queryset(request).select_related("language")
 
 
@@ -48,10 +50,10 @@ class GenreAdmin(BaseAdmin):
     inlines = [GenreTranslationInline]
 
     @admin.display(description="Name")
-    def name(self, obj):
+    def name(self, obj: Genre) -> str:
         return str(obj)
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Genre]:
         """Select related use_as and prefetch translations to avoid N+1 queries."""
         return super().get_queryset(request).select_related("use_as").prefetch_related("translations")
 
@@ -66,6 +68,6 @@ class GenreTranslationAdmin(BaseAdmin):
     ordering = ("id",)
     autocomplete_fields = ("language", "genre")
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[GenreTranslation]:
         """Select related genre and language to avoid N+1 queries."""
         return super().get_queryset(request).select_related("genre", "language")
