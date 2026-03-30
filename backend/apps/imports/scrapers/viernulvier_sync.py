@@ -176,4 +176,3 @@ def sync_viernulvier_impl(
     import_log.save()
     logger.info("Sync complete: saved=%d, errors=%d%s", saved, errors, " [DRY RUN]" if dry_run else "")
     return saved
-

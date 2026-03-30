@@ -251,9 +251,7 @@ def fetch_viernulvier_impl(
         view = data.get("view") or {}
         next_raw = view.get("next")
         current_url: Optional[str] = (
-            (next_raw if next_raw.startswith("http") else urljoin(base_domain, next_raw))
-            if next_raw
-            else None
+            (next_raw if next_raw.startswith("http") else urljoin(base_domain, next_raw)) if next_raw else None
         )
         while current_url:
             page_data, page_etag = fetch_with_retry_fn(session, current_url, etag=etag_cache.get(current_url))
@@ -266,9 +264,7 @@ def fetch_viernulvier_impl(
                 next_view = page_data.get("view") or {}
                 next_raw = next_view.get("next")
                 current_url = (
-                    (next_raw if next_raw.startswith("http") else urljoin(base_domain, next_raw))
-                    if next_raw
-                    else None
+                    (next_raw if next_raw.startswith("http") else urljoin(base_domain, next_raw)) if next_raw else None
                 )
             else:
                 all_items.extend(page_data if isinstance(page_data, list) else [])
@@ -276,4 +272,3 @@ def fetch_viernulvier_impl(
 
     logger.info("Fetched %d items from %s", len(all_items), endpoint)
     return all_items
-

@@ -299,4 +299,3 @@ def sync_m2m(
                     parent_obj.__class__.__name__,
                     parent_obj.pk,
                 )
-

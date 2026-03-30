@@ -91,4 +91,3 @@ class ModelSyncConfig:
     lookup_field: str = "external_id"
     api_id_key: str = "@id"
     item_filter: Optional[Callable[[Mapping[str, Any]], bool]] = None
-

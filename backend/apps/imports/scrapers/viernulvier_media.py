@@ -183,9 +183,7 @@ def sync_media_item_gallery_links_impl(
     media_items_to_update = 0
     if touched_gallery_ids:
         media_items_to_clear = (
-            MediaItem.objects.filter(gallery_id__in=touched_gallery_ids)
-            .exclude(pk__in=linked_ids)
-            .count()
+            MediaItem.objects.filter(gallery_id__in=touched_gallery_ids).exclude(pk__in=linked_ids).count()
         )
     if linked_ids:
         for obj in MediaItem.objects.filter(pk__in=linked_ids).only("pk", "gallery_id", "position"):
@@ -354,9 +352,7 @@ def sync_media_item_crops_impl(
             raise
 
         existing_pk_by_external_id = {
-            str(row["external_id"]).strip(): row["pk"]
-            for row in foto_items
-            if row.get("external_id")
+            str(row["external_id"]).strip(): row["pk"] for row in foto_items if row.get("external_id")
         }
         api_candidates: List[Dict[str, Any]] = []
         for api_item in api_items:
@@ -566,4 +562,3 @@ def sync_media_item_crops_impl(
     import_log.save()
     logger.info("Crop sync complete: saved=%d, errors=%d%s", saved, errors, " [DRY RUN]" if dry_run else "")
     return saved
-
