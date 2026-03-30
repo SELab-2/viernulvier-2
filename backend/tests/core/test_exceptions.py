@@ -752,3 +752,23 @@ class TestMethodNotAllowedNoRequest:
         response = custom_exception_handler(MethodNotAllowed("PATCH"), context={})
 
         assert "instance" not in response.data
+
+class TestUnknownExceptionWithDRFResponse:
+    """Covers the final ``return None``.
+
+    This branch is reached when drf_exception_handler returns a Response for
+    an exception that is not an APIException subclass (and was not converted
+    to one by the Django-exception guard at the top of the handler).
+    In production this path shoould be unreachable, but we can force it via a mock.
+    """
+
+    def test_returns_none_for_unrecognised_exc_with_drf_response(self) -> None:
+        mystery_exc = Exception("some unknown exception")
+
+        fake_response = MagicMock(spec=Response)
+        fake_response.status_code = 418
+
+        with patch("apps.core.exceptions.drf_exception_handler", return_value=fake_response):
+            result = custom_exception_handler(mystery_exc, make_context())
+
+        assert result is None
