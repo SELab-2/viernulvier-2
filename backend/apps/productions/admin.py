@@ -26,6 +26,7 @@ from .models import (
     Production,
     ProductionGenre,
     ProductionTag,
+    ProductionTagTranslation,
     ProductionTranslation,
     UitDatabaseTheme,
     UitDatabaseType,
@@ -110,6 +111,25 @@ class ProductionTagInline(admin.TabularInline):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("tag")
+
+
+class ProductionTagTranslationInline(admin.TabularInline):
+    """
+    Inline for editing localised descriptions directly inside the
+    ProductionTag change page.
+
+    Translations are collapsed by default to keep the page readable when
+    many languages are configured.
+    """
+
+    model = ProductionTagTranslation
+    extra = 1
+    autocomplete_fields = ("language",)
+    classes = ("collapse",)
+    fields = ("language", "description")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("language")
 
 
 # ===========================================================================
@@ -425,6 +445,8 @@ class ProductionTagAdmin(BaseAdmin):
     autocomplete_fields = ("production", "tag")
 
     ordering = ("production", "tag__type")
+
+    inlines = [ProductionTagTranslationInline]
 
     def get_queryset(self, request):
         """Select related production and tag to avoid N+1 queries."""

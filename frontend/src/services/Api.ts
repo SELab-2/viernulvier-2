@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { normalizeApiError } from './ApiErrorMapper'
 
-const API_KEY: string = import.meta.env.VITE_PUBLIC_API_KEY
+const API_KEY: string = process.env.VITE_PUBLIC_API_KEY ?? ''
 
 /**
  * Shared Axios instance pre-configured with the correct base URL and API key

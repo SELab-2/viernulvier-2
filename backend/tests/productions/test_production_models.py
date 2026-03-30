@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from apps.productions.models import (
     ProductionGenre,
     ProductionTag,
+    ProductionTagTranslation,
     ProductionTranslation,
 )
 from tests.factories.genre import GenreFactory
@@ -15,6 +16,7 @@ from tests.factories.production import (
     ProductionFactory,
     ProductionGenreFactory,
     ProductionTagFactory,
+    ProductionTagTranslationFactory,
     ProductionTranslationFactory,
     UitDatabaseThemeFactory,
     UitDatabaseTypeFactory,
@@ -229,6 +231,116 @@ class TestProductionTag:
         tag.delete()
 
         assert ProductionTag.objects.count() == 0
+
+
+class TestProductionTagTranslationCreation:
+    def test_can_create_translation(self):
+        translation = ProductionTagTranslationFactory.create()
+        assert translation.pk is not None
+
+    def test_has_production_tag_relation(self):
+        translation = ProductionTagTranslationFactory.create()
+        assert translation.production_tag is not None
+
+    def test_has_language_relation(self):
+        translation = ProductionTagTranslationFactory.create()
+        assert translation.language is not None
+
+    def test_description_defaults_to_blank(self):
+        translation = ProductionTagTranslationFactory.create(description="")
+        assert translation.description == ""
+
+    def test_description_can_be_set(self):
+        translation = ProductionTagTranslationFactory.create(description="Some context note.")
+        assert translation.description == "Some context note."
+
+
+class TestProductionTagTranslationUniqueConstraint:
+    def test_duplicate_production_tag_language_raises(self):
+        production_tag = ProductionTagFactory.create()
+        language = LanguageFactory.create()
+        ProductionTagTranslationFactory.create(production_tag=production_tag, language=language)
+
+        with pytest.raises(ValidationError):
+            ProductionTagTranslationFactory.create(production_tag=production_tag, language=language)
+
+    def test_same_language_different_production_tags_is_allowed(self):
+        language = LanguageFactory.create()
+        pt1 = ProductionTagFactory.create()
+        pt2 = ProductionTagFactory.create()
+
+        t1 = ProductionTagTranslationFactory.create(production_tag=pt1, language=language)
+        t2 = ProductionTagTranslationFactory.create(production_tag=pt2, language=language)
+
+        assert t1.pk != t2.pk
+
+    def test_same_production_tag_different_languages_is_allowed(self):
+        production_tag = ProductionTagFactory.create()
+        lang_nl = LanguageFactory.create(code="nl")
+        lang_en = LanguageFactory.create(code="en")
+
+        t1 = ProductionTagTranslationFactory.create(production_tag=production_tag, language=lang_nl)
+        t2 = ProductionTagTranslationFactory.create(production_tag=production_tag, language=lang_en)
+
+        assert t1.pk != t2.pk
+
+
+class TestProductionTagTranslationCascade:
+    def test_deleting_production_tag_cascades_to_translations(self):
+        production_tag = ProductionTagFactory.create()
+        ProductionTagTranslationFactory.create_batch(2, production_tag=production_tag)
+
+        production_tag_id = production_tag.id
+
+        production_tag.delete()
+
+        assert not ProductionTagTranslation.objects.filter(production_tag_id=production_tag_id).exists()
+
+    def test_deleting_language_cascades_to_translations(self):
+        language = LanguageFactory.create()
+        ProductionTagTranslationFactory.create_batch(2, language=language)
+
+        language_pk = language.pk
+
+        language.delete()
+
+        assert not ProductionTagTranslation.objects.filter(language_id=language_pk).exists()
+
+
+class TestProductionTagTranslationReverseRelation:
+    def test_translations_accessible_from_production_tag(self):
+        production_tag = ProductionTagFactory.create()
+        lang_nl = LanguageFactory.create(code="nl")
+        lang_en = LanguageFactory.create(code="en")
+        ProductionTagTranslationFactory.create(production_tag=production_tag, language=lang_nl)
+        ProductionTagTranslationFactory.create(production_tag=production_tag, language=lang_en)
+
+        assert production_tag.translations.count() == 2
+
+
+class TestProductionTagTranslationStr:
+    def test_str_contains_production_tag_id(self):
+        translation = ProductionTagTranslationFactory.create()
+        assert str(translation.production_tag_id) in str(translation)
+
+    def test_str_contains_language_code(self):
+        language = LanguageFactory.create(code="fr")
+        translation = ProductionTagTranslationFactory.create(language=language)
+        assert "fr" in str(translation)
+
+
+class TestProductionTagTranslationOrdering:
+    def test_default_ordering_is_by_language_code(self):
+        production_tag = ProductionTagFactory.create()
+        lang_nl = LanguageFactory.create(code="nl")
+        lang_en = LanguageFactory.create(code="en")
+        lang_de = LanguageFactory.create(code="de")
+        ProductionTagTranslationFactory.create(production_tag=production_tag, language=lang_nl)
+        ProductionTagTranslationFactory.create(production_tag=production_tag, language=lang_en)
+        ProductionTagTranslationFactory.create(production_tag=production_tag, language=lang_de)
+
+        codes = list(production_tag.translations.values_list("language__code", flat=True))
+        assert codes == sorted(codes)
 
 
 class TestProductionGenre:

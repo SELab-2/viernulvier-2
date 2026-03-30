@@ -13,6 +13,13 @@
     "switchToLightMode": "Dark mode",
     "switchToDarkMode": "Light mode"
   },
+  "listCard": {
+    "view": "View",
+    "imageAlt": "Image for {{title}}"
+  },
+  "genreChip": {
+    "filterByGenre": "Filter by {{genre}}"
+  },
   "events": {
     "title": "Events",
     "listPlaceholder": "Events list will be displayed here.",
@@ -32,5 +39,24 @@
     "title": "Page not found",
     "description": "The page you are looking for does not exist or has been moved.",
     "backHome": "Back to archive"
+  },
+  "footer": {
+    "address": {
+      "org": "Kunstencentrum VIERNULVIER vzw",
+      "street": "Sint-Pietersnieuwstraat 23",
+      "city": "9000 Ghent, BE",
+      "phone": "T. +32 (0)9 267 28 20",
+      "email": "info@viernulvier.gent",
+      "vat": "BTW BE 0423.063.619"
+    },
+    "nav": {
+      "ariaLabel": "Navigation",
+      "home": "Archive",
+      "series": "Series",
+      "events": "Events"
+    },
+    "newsletter": {
+      "cta": "stay up to date"
+    }
   }
 }

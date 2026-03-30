@@ -13,6 +13,13 @@
     "switchToLightMode": "Donkere modus",
     "switchToDarkMode": "Lichte modus"
   },
+  "listCard": {
+    "view": "Bekijk",
+    "imageAlt": "Afbeelding voor {{title}}"
+  },
+  "genreChip": {
+    "filterByGenre": "Filter op {{genre}}"
+  },
   "events": {
     "title": "Evenementen",
     "listPlaceholder": "Lijst met evenementen wordt hier weergegeven.",
@@ -32,5 +39,24 @@
     "title": "Pagina niet gevonden",
     "description": "De pagina die je zoekt bestaat niet of is verplaatst.",
     "backHome": "Terug naar archief"
+  },
+  "footer": {
+    "address": {
+      "org": "Kunstencentrum VIERNULVIER vzw",
+      "street": "Sint-Pietersnieuwstraat 23",
+      "city": "9000 Gent",
+      "phone": "T. 09 267 28 20",
+      "email": "info@viernulvier.gent",
+      "vat": "BTW BE 0423.063.619"
+    },
+    "nav": {
+      "ariaLabel": "Navigatie",
+      "home": "Archief",  
+      "series": "Reeksen",
+      "events": "Evenementen"
+    },
+    "newsletter": {
+      "cta": "blijf op de hoogte"
+    }
   }
 }
