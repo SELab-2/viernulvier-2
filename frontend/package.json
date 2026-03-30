@@ -22,7 +22,7 @@
     "i18next": "^26.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-i18next": "^16.6.2",
+    "react-i18next": "^17.0.1",
     "react-router-dom": "^7.13.2",
     "simple-icons": "^16.14.0"
   },
