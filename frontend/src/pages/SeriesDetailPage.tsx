@@ -144,7 +144,7 @@ function getLocalizedValue(value: LocalizedText, language: string): string {
 }
 
 const SeriesDetailPage = () => {
-  useParams<{ id: string} >()
+  useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
 

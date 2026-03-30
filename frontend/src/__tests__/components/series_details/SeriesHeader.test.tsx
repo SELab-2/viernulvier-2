@@ -22,13 +22,7 @@ describe('SeriesHeader', () => {
   })
 
   it('renders exactly one heading-like title text', () => {
-    render(
-      <SeriesHeader
-        name="VIDEODROOM"
-        description="Beschrijving"
-        badge="Recurring series"
-      />,
-    )
+    render(<SeriesHeader name="VIDEODROOM" description="Beschrijving" badge="Recurring series" />)
 
     expect(screen.getByText('VIDEODROOM')).toBeInTheDocument()
     expect(screen.getByText('Beschrijving')).toBeInTheDocument()
