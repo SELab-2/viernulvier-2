@@ -19,7 +19,7 @@
     "@mui/material": "^7.3.9",
     "@mui/system": "^7.3.9",
     "axios": "^1.13.6",
-    "i18next": "^25.10.5",
+    "i18next": "^26.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-i18next": "^16.6.2",
