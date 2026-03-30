@@ -123,6 +123,7 @@ def fetch_viernulvier(
     params: dict[str, str] | None = None,
     etag_cache: dict[str, str] | None = None,
 ) -> list[Any]:
+    """Fetch a Viernulvier endpoint with shared retry, ETag, and pagination behavior."""
     return _http.fetch_viernulvier_impl(
         endpoint=endpoint,
         params=params,
@@ -181,6 +182,7 @@ def sync_viernulvier(
     etag_cache: dict[str, str] | None = None,
     on_progress: Callable[[int, int], None] | None = None,
 ) -> int:
+    """Synchronize one model using the configured field, translation, and M2M mappings."""
     return _sync.sync_viernulvier_impl(
         model,
         config,
@@ -220,6 +222,7 @@ def sync_media_item_gallery_links(
     on_progress: Callable[[int, int], None] | None = None,
     params: dict[str, str] | None = None,
 ) -> int:
+    """Sync gallery-to-media relationships from Viernulvier gallery payloads."""
     return _media.sync_media_item_gallery_links_impl(
         fetch_fn=fetch_viernulvier,
         extract_external_id_fn=_extract_external_id_from_url,
@@ -236,6 +239,7 @@ def sync_media_item_crops(
     on_progress: Callable[[int, int], None] | None = None,
     params: dict[str, str] | None = None,
 ) -> int:
+    """Download and upsert configured image crops for synced media items."""
     return _media.sync_media_item_crops_impl(
         fetch_fn=fetch_viernulvier,
         build_session_fn=_build_session,

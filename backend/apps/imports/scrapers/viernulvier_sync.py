@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("apps.imports.scrapers.viernulvier")
 
 
-def sync_viernulvier_impl(
+def sync_viernulvier_impl(  # noqa: C901, PLR0912, PLR0915
     model: type[models.Model],
     config: ModelSyncConfig,
     *,
@@ -32,9 +32,9 @@ def sync_viernulvier_impl(
     sync_translations_fn: Callable[[models.Model, Mapping[str, Any], list], None],
     sync_m2m_fn: Callable[[models.Model, Mapping[str, Any], Any, Any], None],
     extract_lookup_value_fn: Callable[[Mapping[str, Any], ModelSyncConfig], str | None],
-    fk_cache_cls,
-    transaction_module,
-    timezone_module,
+    fk_cache_cls: Callable[[], Any],
+    transaction_module: Any,
+    timezone_module: Any,
     endpoint: str = DEFAULT_ENDPOINT,
     params: dict[str, str] | None = None,
     dry_run: bool = False,

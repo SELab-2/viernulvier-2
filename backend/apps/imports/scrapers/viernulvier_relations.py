@@ -27,6 +27,7 @@ class FKCache:
         self._loaded: dict[type[models.Model], bool] = {}
 
     def warmup(self, model: type[models.Model]) -> None:
+        """Populate cache entries for one related model if not loaded yet."""
         if model in self._loaded:
             return
         try:
@@ -41,10 +42,12 @@ class FKCache:
             logger.warning("FK cache warmup failed for %s (no external_id field?)", model.__name__, exc_info=True)
 
     def get(self, model: type[models.Model], ext_id: str) -> Any | None:
+        """Return a cached PK for a model/external-id pair, warming cache on demand."""
         self.warmup(model)
         return self._cache.get((model, str(ext_id)))
 
     def set(self, model: type[models.Model], ext_id: str, pk: Any) -> None:
+        """Store a model/external-id to PK mapping in the local cache."""
         self._cache[(model, str(ext_id))] = pk
 
 
@@ -100,7 +103,7 @@ def extract_lookup_value(item: Mapping[str, Any], config: ModelSyncConfig) -> st
     return str(raw).strip() if raw is not None else None
 
 
-def build_defaults(
+def build_defaults(  # noqa: C901, PLR0912
     model: type[models.Model],
     item: Mapping[str, Any],
     config: ModelSyncConfig,
@@ -166,7 +169,7 @@ def build_defaults(
     return defaults
 
 
-def sync_all_translations(
+def sync_all_translations(  # noqa: C901, PLR0912
     parent_obj: models.Model,
     item: Mapping[str, Any],
     translation_configs: list[TranslationConfig],
@@ -235,7 +238,7 @@ def sync_all_translations(
                 )
 
 
-def sync_m2m(
+def sync_m2m(  # noqa: C901
     parent_obj: models.Model,
     item: Mapping[str, Any],
     m2m_config: M2MConfig,

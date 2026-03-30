@@ -13,6 +13,9 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 import requests
 
+from apps.import_log.models import ImportLog
+from apps.media_library.models import MediaGallery, MediaGalleryItem, MediaItem, MediaItemCrop
+
 from .viernulvier_constants import BASE_DOMAIN, MAX_ERROR_MESSAGES, MAX_RETRIES
 
 if TYPE_CHECKING:
@@ -42,23 +45,23 @@ def download_image(
     url: str,
     *,
     max_retries: int = MAX_RETRIES,
-    sleep_fn=time.sleep,
+    sleep_fn: Callable[[float], None] = time.sleep,
     backoff_fn: Callable[[int], float],
 ) -> bytes | None:
     """Download image bytes from a CDN URL with retry + backoff."""
     for attempt in range(max_retries + 1):
         try:
             response = session.get(url, timeout=30, stream=True)
-        except (requests.ConnectionError, requests.Timeout) as exc:
+        except (requests.ConnectionError, requests.Timeout):
             if attempt == max_retries:
-                logger.exception("Image download failed after %d retries: %s (%s)", max_retries, url, exc)
+                logger.exception("Image download failed after %d retries: %s", max_retries, url)
                 return None
             wait = backoff_fn(attempt)
             logger.warning("Image download error - retry %d in %.1fs: %s", attempt + 1, wait, url)
             sleep_fn(wait)
             continue
-        except requests.RequestException as exc:
-            logger.exception("Image download request error: %s (%s)", url, exc)
+        except requests.RequestException:
+            logger.exception("Image download request error: %s", url)
             return None
 
         if response.status_code == 429:
@@ -79,20 +82,17 @@ def download_image(
     return None
 
 
-def sync_media_item_gallery_links_impl(
+def sync_media_item_gallery_links_impl(  # noqa: C901, PLR0912, PLR0915
     *,
-    fetch_fn,
-    extract_external_id_fn,
-    timezone_module,
+    fetch_fn: Callable[..., list[Any]],
+    extract_external_id_fn: Callable[[Any], str | None],
+    timezone_module: Any,
     dry_run: bool = False,
     etag_cache: dict[str, str] | None = None,
     on_progress: Callable[[int, int], None] | None = None,
     params: dict[str, str] | None = None,
 ) -> int:
     """Link MediaItems to MediaGalleries using gallery payload `items` links."""
-    from apps.import_log.models import ImportLog
-    from apps.media_library.models import MediaGallery, MediaGalleryItem, MediaItem
-
     source = "viernulvier:media_item_gallery_links"
     import_log = ImportLog.objects.create(
         source=source,
@@ -283,24 +283,21 @@ def sync_media_item_gallery_links_impl(
     return actual_media_items_changed
 
 
-def sync_media_item_crops_impl(
+def sync_media_item_crops_impl(  # noqa: C901, PLR0912, PLR0915
     *,
-    fetch_fn,
-    build_session_fn,
-    fetch_with_retry_fn,
-    download_image_fn,
-    derive_crop_filename_fn,
-    extract_external_id_fn,
-    parse_datetime_fn,
-    timezone_module,
+    fetch_fn: Callable[..., list[Any]],
+    build_session_fn: Callable[[], requests.Session],
+    fetch_with_retry_fn: Callable[..., tuple[Any | None, str | None]],
+    download_image_fn: Callable[[requests.Session, str], bytes | None],
+    derive_crop_filename_fn: Callable[[str, str, str], str],
+    extract_external_id_fn: Callable[[Any], str | None],
+    parse_datetime_fn: Callable[[str], Any | None],
+    timezone_module: Any,
     dry_run: bool = False,
     on_progress: Callable[[int, int], None] | None = None,
     params: dict[str, str] | None = None,
 ) -> int:
     """Fetch individual foto MediaItems, download wanted crops, and persist them."""
-    from apps.import_log.models import ImportLog
-    from apps.media_library.models import MediaGallery, MediaItem, MediaItemCrop
-
     source = "viernulvier:media_item_crops"
     import_log = ImportLog.objects.create(
         source=source,
@@ -422,7 +419,7 @@ def sync_media_item_crops_impl(
         try:
             item_data, _ = fetch_with_retry_fn(session, item_url)
         except Exception as exc:
-            logger.exception("Failed to fetch media item %s: %s", item_url, exc)
+            logger.exception("Failed to fetch media item %s", item_url)
             errors += 1
             if len(error_messages) < MAX_ERROR_MESSAGES:
                 error_messages.append(f"Fetch failed for {external_id}: {exc}")
@@ -470,7 +467,7 @@ def sync_media_item_crops_impl(
                     item_pk = obj.pk
                     logger.info("Upserted missing MediaItem dependency for crops: %s (pk=%s)", external_id, item_pk)
                 except Exception as exc:
-                    logger.exception("Failed to upsert MediaItem dependency for crop sync (%s): %s", external_id, exc)
+                    logger.exception("Failed to upsert MediaItem dependency for crop sync (%s)", external_id)
                     errors += 1
                     if len(error_messages) < MAX_ERROR_MESSAGES:
                         error_messages.append(f"Missing MediaItem upsert failed for {external_id}: {exc}")
@@ -542,7 +539,7 @@ def sync_media_item_crops_impl(
                     saved_path,
                 )
             except Exception as exc:
-                logger.exception("Error saving crop '%s' for MediaItem pk=%d: %s", crop_name, item_pk, exc)
+                logger.exception("Error saving crop '%s' for MediaItem pk=%d", crop_name, item_pk)
                 errors += 1
                 if len(error_messages) < MAX_ERROR_MESSAGES:
                     error_messages.append(f"Save failed for crop '{crop_name}' on {external_id}: {exc}")

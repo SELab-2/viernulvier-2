@@ -8,7 +8,7 @@ import os
 import random
 import re
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -32,8 +32,12 @@ from .viernulvier_constants import (
 
 logger = logging.getLogger("apps.imports.scrapers.viernulvier")
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 def get_api_key_or_raise() -> str:
+    """Return the configured API key used to authenticate scraper requests."""
     api_key = os.getenv("VIERNULVIER_API_KEY")
     if not api_key:
         raise ScraperError("VIERNULVIER_API_KEY environment variable is not set")
@@ -79,7 +83,7 @@ def parse_retry_after(response: requests.Response) -> int | None:
     return None
 
 
-def fetch_with_retry(
+def fetch_with_retry(  # noqa: C901, PLR0912, PLR0915
     session: requests.Session,
     url: str,
     params: dict[str, str] | None = None,
@@ -88,9 +92,9 @@ def fetch_with_retry(
     max_retries: int = MAX_RETRIES,
     timeout: int = DEFAULT_TIMEOUT,
     retry_status_codes: set[int] = RETRY_STATUS_CODES,
-    sleep_fn=time.sleep,
-    backoff_fn=backoff_seconds,
-    parse_retry_after_fn=parse_retry_after,
+    sleep_fn: Callable[[float], None] = time.sleep,
+    backoff_fn: Callable[[int], float] = backoff_seconds,
+    parse_retry_after_fn: Callable[[requests.Response], int | None] = parse_retry_after,
 ) -> tuple[Any | None, str | None]:
     """Fetch one URL with retry + exponential backoff + jitter."""
     headers: dict[str, str] = {}
@@ -179,16 +183,16 @@ def discover_extra_pages(data: dict, *, base_domain: str = BASE_DOMAIN) -> list[
     return pages
 
 
-def fetch_viernulvier_impl(
+def fetch_viernulvier_impl(  # noqa: C901, PLR0912, PLR0915
     endpoint: str = DEFAULT_ENDPOINT,
     params: dict[str, str] | None = None,
     etag_cache: dict[str, str] | None = None,
     *,
     base_url: str = BASE_URL,
     base_domain: str = BASE_DOMAIN,
-    build_session_fn=build_session,
-    fetch_with_retry_fn=fetch_with_retry,
-    discover_extra_pages_fn=discover_extra_pages,
+    build_session_fn: Callable[[], requests.Session] = build_session,
+    fetch_with_retry_fn: Callable[..., tuple[Any | None, str | None]] = fetch_with_retry,
+    discover_extra_pages_fn: Callable[[dict], list[str]] = discover_extra_pages,
 ) -> list[Any]:
     """Fetch all items from an API endpoint, following pagination automatically."""
     parsed = urlparse(endpoint)
@@ -242,8 +246,8 @@ def fetch_viernulvier_impl(
                     if page_data is None:
                         continue
                     page_results[page_url] = page_data.get("member", []) if isinstance(page_data, dict) else page_data
-                except ScraperError as exc:
-                    logger.exception("Page fetch failed for %s: %s", page_url, exc)
+                except ScraperError:
+                    logger.exception("Page fetch failed for %s", page_url)
 
         for page_url in extra_pages:
             all_items.extend(page_results.get(page_url, []))
