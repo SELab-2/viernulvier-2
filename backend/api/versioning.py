@@ -1,5 +1,4 @@
-"""
-API versioning for the viernulvier_archive project.
+"""API versioning for the viernulvier_archive project.
 
 Uses URL path versioning so the version is explicit in every request,
 visible in logs, and cacheable by CDNs without special header config.

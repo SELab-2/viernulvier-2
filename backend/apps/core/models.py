@@ -1,5 +1,4 @@
-"""
-Base model for the core app.
+"""Base model for the core app.
 
 ``BaseModel`` is the single abstract parent for every concrete model in
 the project. Inheriting from it guarantees that model-level validation
@@ -12,8 +11,7 @@ from django.db import models
 
 
 class BaseModel(models.Model):
-    """
-    Project-wide abstract base class for all models.
+    """Project-wide abstract base class for all models.
 
     Every app-level model should inherit from ``BaseModel`` instead of
     ``django.db.models.Model`` directly. This ensures ``full_clean()``
@@ -22,7 +20,7 @@ class BaseModel(models.Model):
     save originates from the Django admin, the API, a management command,
     or a test.
 
-    Attributes
+    Attributes:
     ----------
     external_id : CharField
         Optional external identifier for integration with external systems.
@@ -42,7 +40,7 @@ class BaseModel(models.Model):
     Subclasses should override ``clean()`` for cross-field business rules
     and rely on field-level validators for single-field constraints.
 
-    Notes
+    Notes:
     -----
     - ``full_clean()`` is **not** called automatically by Django's ORM on
       ``save()`` by default - this base class adds that behaviour explicitly.
@@ -59,6 +57,7 @@ class BaseModel(models.Model):
     ::
 
         from apps.core.models import BaseModel
+
 
         class MyModel(BaseModel):
             name = models.CharField(max_length=100)
@@ -79,9 +78,8 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-    def save(self, *args, **kwargs) -> None:
-        """
-        Run full model validation before persisting to the database.
+    def save(self, *args: tuple, **kwargs: dict) -> None:
+        """Run full model validation before persisting to the database.
 
         Calls ``self.full_clean()`` prior to delegating to the standard
         ``Model.save()``. Any ``ValidationError`` raised during validation
@@ -92,17 +90,12 @@ class BaseModel(models.Model):
 
     @classmethod
     def base_language_code(cls) -> str:
-        """
-        Returns the project's base language code. (defaults to "en" if not set)
-        """
+        """Returns the project's base language code. (defaults to "en" if not set)."""
         code = getattr(settings, "LANGUAGE_CODE", "en")
         return code.split("-")[0].lower()
 
-    def get_base_translation(self, related_name="translations"):
-        """
-        Returns the translation object for the base language,
-        falling back to the first available translation.
-        """
+    def get_base_translation(self, related_name: str = "translations") -> models.Model | None:
+        """Returns the translation object for the base language, falling back to the first available translation."""
         manager = getattr(self, related_name, None)
         if not manager:
             return None
@@ -113,14 +106,11 @@ class BaseModel(models.Model):
 
     def get_base_display_name(
         self,
-        related_name="translations",
-        name_field="name",
-        fallback=None,
-    ):
-        """
-        Returns the display name for the base language, falling
-        back to the first available translation or a provided default.
-        """
+        related_name: str = "translations",
+        name_field: str = "name",
+        fallback: str | None = None,
+    ) -> str | None:
+        """Returns the display name for the base language, falling back to the first available translation or a provided default."""
         tr = self.get_base_translation(related_name=related_name)
         if not tr:
             return fallback

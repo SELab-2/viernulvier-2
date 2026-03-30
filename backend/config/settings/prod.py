@@ -1,5 +1,4 @@
-"""
-Production settings for the viernulvier_archive project.
+"""Production settings for the viernulvier_archive project.
 
 Extends base.py with:
 - Strict security headers (HSTS, secure cookies, SSL redirect)
@@ -16,8 +15,8 @@ Usage:
 
 import os
 
-from .base import *  # noqa: F401, F403
-from .base import REST_FRAMEWORK  # noqa: F811
+from .base import *  # noqa: F403
+from .base import REST_FRAMEWORK
 
 # ---------------------------------------------------------------------------
 # Core

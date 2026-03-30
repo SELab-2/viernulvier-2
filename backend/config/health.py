@@ -1,5 +1,4 @@
-"""
-Health check endpoint for the viernulvier_archive project.
+"""Health check endpoint for the viernulvier_archive project.
 
 Exposed at ``/health/`` by ``config.urls``. Used by load balancers,
 container orchestrators (Kubernetes liveness/readiness probes), and
@@ -14,12 +13,11 @@ Response codes
 
 from django.db import connections
 from django.db.utils import OperationalError
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
 
 
-def health(_request) -> JsonResponse:
-    """
-    Return 200 if the application and database are healthy, 503 otherwise.
+def health(_request: HttpRequest) -> JsonResponse:
+    """Return 200 if the application and database are healthy, 503 otherwise.
 
     The database check executes a minimal ``SELECT 1`` query against the
     default connection. Any ``OperationalError`` (e.g. the database is

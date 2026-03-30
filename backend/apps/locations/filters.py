@@ -1,6 +1,4 @@
-"""
-Filters for the Locations app.
-"""
+"""Filters for the Locations app."""
 
 import django_filters
 
@@ -10,8 +8,7 @@ from .models import Hall, Location, Space
 
 
 class LocationFilter(BaseModelFilter):
-    """
-    FilterSet for Location list queries.
+    """FilterSet for Location list queries.
 
     Supported query parameters
     --------------------------
@@ -47,8 +44,7 @@ class LocationFilter(BaseModelFilter):
 
 
 class SpaceFilter(BaseModelFilter):
-    """
-    FilterSet for Space list queries.
+    """FilterSet for Space list queries.
 
     Supported query parameters
     --------------------------
@@ -72,8 +68,7 @@ class SpaceFilter(BaseModelFilter):
 
 
 class HallFilter(BaseModelFilter):
-    """
-    FilterSet for Hall list queries.
+    """FilterSet for Hall list queries.
 
     Supported query parameters
     --------------------------

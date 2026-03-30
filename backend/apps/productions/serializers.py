@@ -1,5 +1,4 @@
-"""
-Serializers for the Productions app.
+"""Serializers for the Productions app.
 
 Field-level ``help_text`` and ``extra_kwargs`` are picked up automatically
 by drf-spectacular and rendered in the Swagger UI, so descriptions do not
@@ -28,8 +27,7 @@ from .models import Production, ProductionTag, UitDatabaseTheme, UitDatabaseType
 
 
 class UitDatabaseThemeSerializer(serializers.ModelSerializer):
-    """
-    Read-only representation of a UIT Database Theme.
+    """Read-only representation of a UIT Database Theme.
 
     Used as a nested field inside ``ProductionSerializer``.
     """
@@ -40,8 +38,7 @@ class UitDatabaseThemeSerializer(serializers.ModelSerializer):
 
 
 class UitDatabaseTypeSerializer(serializers.ModelSerializer):
-    """
-    Read-only representation of a UIT Database Type.
+    """Read-only representation of a UIT Database Type.
 
     Used as a nested field inside ``ProductionSerializer``.
     """
@@ -52,8 +49,7 @@ class UitDatabaseTypeSerializer(serializers.ModelSerializer):
 
 
 class ProductionTagSerializer(serializers.ModelSerializer):
-    """
-    Serializes a ProductionTag through-table record.
+    """Serializes a ProductionTag through-table record.
 
     Exposes all ``Tag`` fields (delegated to ``TagSerializer``) plus a
     ``description`` dictionary carrying all available translations of the
@@ -83,9 +79,8 @@ class ProductionTagSerializer(serializers.ModelSerializer):
         model = ProductionTag
         fields = ["description"]
 
-    def to_representation(self, instance):
-        """
-        Merge the full Tag representation with this through-table's own fields.
+    def to_representation(self, instance: ProductionTag) -> dict:
+        """Merge the full Tag representation with this through-table's own fields.
 
         Tag fields always come first so the shape is backward-compatible with
         the previous ``TagSerializer``-only output.
@@ -100,8 +95,7 @@ class ProductionTagSerializer(serializers.ModelSerializer):
 
 
 class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
-    """
-    Full representation of a Production.
+    """Full representation of a Production.
 
     Translated fields
     -----------------
@@ -277,8 +271,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     # ---------------------------------------------------------------------------
 
     def get_genres(self, obj: Production) -> list:
-        """
-        Return serialised genres in correct position order.
+        """Return serialised genres in correct position order.
 
         Reads from ``obj.prefetched_production_genres`` when the viewset has
         used an explicit ``Prefetch`` with ``to_attr``; falls back to a live
@@ -323,8 +316,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         return self.get_base_translated_value(obj, field_name="artist_name")
 
     def get_tags(self, obj: Production) -> list:
-        """
-        Return serialised production–tag records in type/id order.
+        """Return serialised production-tag records in type/id order.
 
         Reads from ``obj.prefetched_production_tags`` when the viewset has
         used an explicit ``Prefetch`` with ``to_attr``; falls back to a live
@@ -348,14 +340,14 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             return None
 
         # Lazy import, since importing at the top level would cause a circular import between the serializers.
-        from apps.events.serializers import NestedEventSerializer
+        from apps.events.serializers import NestedEventSerializer  # noqa: PLC0415
 
         events = obj.events.all()
         return NestedEventSerializer(events, many=True).data
 
-    def to_representation(self, instance):
-        """
-        Override to conditionally include the `events` field based on the serializer context.
+    def to_representation(self, instance: Production) -> dict:
+        """Override to conditionally include the `events` field based on the serializer context.
+
         If the events are not included, the events field is removed from the output instead of being returned as `null`.
         """
         rep = super().to_representation(instance)

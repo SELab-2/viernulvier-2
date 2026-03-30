@@ -1,6 +1,4 @@
-"""
-Filters for the Productions app.
-"""
+"""Filters for the Productions app."""
 
 import django_filters
 
@@ -10,8 +8,7 @@ from .models import Production
 
 
 class ProductionFilter(BaseModelFilter):
-    """
-    FilterSet for Production list queries.
+    """FilterSet for Production list queries.
 
     Supported query parameters
     --------------------------
@@ -74,7 +71,8 @@ class ProductionFilter(BaseModelFilter):
         distinct=True,
     )
 
-    def filter_has_media(self, queryset, name, value):
+    def filter_has_media(self, queryset: Production, _name: str, value: bool) -> Production:
+        """Filter productions by whether they have a media gallery assigned."""
         if value:
             return queryset.exclude(media_gallery__isnull=True)
         return queryset.filter(media_gallery__isnull=True)

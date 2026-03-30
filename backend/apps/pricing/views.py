@@ -1,5 +1,4 @@
-"""
-ViewSets for the Pricing app.
+"""ViewSets for the Pricing app.
 
 Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
@@ -20,8 +19,7 @@ _TAG = "Pricing"
 @extend_schema(tags=[_TAG])
 @price_schema
 class PriceViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Price objects.
+    """CRUD endpoints for Price objects.
 
     A price defines a ticket category (e.g. full price, student, Cineville).
 
@@ -71,8 +69,7 @@ class PriceViewSet(ApiModelViewSet):
 @extend_schema(tags=[_TAG])
 @price_rank_schema
 class PriceRankViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for PriceRank objects.
+    """CRUD endpoints for PriceRank objects.
 
     A price rank defines an ordered availability tier that controls when a
     price level is considered sold out.
