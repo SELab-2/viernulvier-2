@@ -14,7 +14,8 @@ from django.db import transaction
 import requests
 
 from apps.import_log.models import ImportLog
-from apps.media_library.models import MediaGallery, MediaGalleryItem, MediaItem, MediaItemCrop
+from apps.media_library import models as media_models
+from apps.media_library.models import MediaGallery, MediaGalleryItem, MediaItem
 
 from .viernulvier_constants import BASE_DOMAIN, MAX_ERROR_MESSAGES, MAX_RETRIES
 
@@ -394,7 +395,7 @@ def sync_media_item_crops_impl(  # noqa: C901, PLR0912, PLR0915
         logger.info("No foto MediaItems found - skipping crop sync.")
         return 0
 
-    wanted_crops: set[str] = MediaItemCrop.SYNCED_CROP_NAMES
+    wanted_crops: set[str] = media_models.MediaItemCrop.SYNCED_CROP_NAMES
     total = len(foto_items)
     saved = 0
     errors = 0
@@ -519,12 +520,12 @@ def sync_media_item_crops_impl(  # noqa: C901, PLR0912, PLR0915
             filename = derive_crop_filename_fn(crop_name, external_id, image_url)
 
             try:
-                image_field = cast("models.ImageField", MediaItemCrop._meta.get_field("image"))
+                image_field = cast("models.ImageField", media_models.MediaItemCrop._meta.get_field("image"))
                 upload_name = image_field.generate_filename(None, filename)
                 saved_path = image_field.storage.save(upload_name, ContentFile(image_bytes))
 
                 with transaction.atomic():
-                    _, created = MediaItemCrop.objects.update_or_create(
+                    _, created = media_models.MediaItemCrop.objects.update_or_create(
                         media_item_id=item_pk,
                         name=crop_name,
                         defaults={"image": saved_path},
