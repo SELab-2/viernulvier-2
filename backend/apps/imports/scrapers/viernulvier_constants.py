@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Mapping, Optional, Set, Type
+from typing import TYPE_CHECKING, Any
 
-from django.db import models
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+
+    from django.db import models
 
 # ---------------------------------------------------------------------------
 # API configuration
@@ -38,7 +41,7 @@ USER_AGENT_POOL = [
 ]
 
 # String values treated as empty *only* in URL fields.
-_EMPTY_URL_VALUES: Set[str] = {"", "0", "none", "null", "undefined", "-", "n/a", "nvt"}
+_EMPTY_URL_VALUES: set[str] = {"", "0", "none", "null", "undefined", "-", "n/a", "nvt"}
 
 
 class ScraperError(Exception):
@@ -48,7 +51,7 @@ class ScraperError(Exception):
 class RateLimitError(ScraperError):
     """Raised on HTTP 429 after all retries are exhausted."""
 
-    def __init__(self, retry_after: Optional[int] = None) -> None:
+    def __init__(self, retry_after: int | None = None) -> None:
         self.retry_after = retry_after
         msg = f"Rate limited by API (Retry-After: {retry_after}s)" if retry_after else "Rate limited by API"
         super().__init__(msg)
@@ -59,11 +62,11 @@ class TranslationConfig:
     """Configuration for syncing one translated field to a translation model."""
 
     api_key: str
-    model: Type[models.Model]
+    model: type[models.Model]
     parent_fk: str
     flat_field: str
     language_fk: str = "language_id"
-    value_transforms: Dict[str, Callable[[Any], Any]] = field(default_factory=dict)
+    value_transforms: dict[str, Callable[[Any], Any]] = field(default_factory=dict)
 
 
 @dataclass
@@ -71,23 +74,23 @@ class M2MConfig:
     """Configuration for a M2M relation expressed via an explicit through table."""
 
     api_key: str
-    related_model: Type[models.Model]
-    through_model: Type[models.Model]
+    related_model: type[models.Model]
+    through_model: type[models.Model]
     parent_fk: str
     related_fk: str
     related_lookup_field: str = "external_id"
-    extra_fields: Dict[str, str] = field(default_factory=dict)
+    extra_fields: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
 class ModelSyncConfig:
     """Complete sync configuration for one Django model."""
 
-    field_map: Dict[str, Optional[str]] = field(default_factory=dict)
-    value_transforms: Dict[str, Callable[[Any], Any]] = field(default_factory=dict)
-    fk_resolvers: Dict[str, Callable[[Any], Optional[Any]]] = field(default_factory=dict)
-    translations: List[TranslationConfig] = field(default_factory=list)
-    m2m: List[M2MConfig] = field(default_factory=list)
+    field_map: dict[str, str | None] = field(default_factory=dict)
+    value_transforms: dict[str, Callable[[Any], Any]] = field(default_factory=dict)
+    fk_resolvers: dict[str, Callable[[Any], Any | None]] = field(default_factory=dict)
+    translations: list[TranslationConfig] = field(default_factory=list)
+    m2m: list[M2MConfig] = field(default_factory=list)
     lookup_field: str = "external_id"
     api_id_key: str = "@id"
-    item_filter: Optional[Callable[[Mapping[str, Any]], bool]] = None
+    item_filter: Callable[[Mapping[str, Any]], bool] | None = None

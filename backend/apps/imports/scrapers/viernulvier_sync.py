@@ -4,37 +4,44 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import Any, Callable, Dict, List, Mapping, Optional, Set, Type
+from typing import TYPE_CHECKING, Any
 
 from django.core.exceptions import FieldError, ValidationError
-from django.db import DatabaseError, IntegrityError, models
+from django.db import DatabaseError, IntegrityError
 
-from .viernulvier_constants import DEFAULT_ENDPOINT, MAX_ERROR_MESSAGES, ModelSyncConfig
+from apps.import_log.models import ImportLog
+
+from .viernulvier_constants import DEFAULT_ENDPOINT, MAX_ERROR_MESSAGES
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+
+    from django.db import models
+
+    from .viernulvier_constants import ModelSyncConfig
 
 logger = logging.getLogger("apps.imports.scrapers.viernulvier")
 
 
 def sync_viernulvier_impl(
-    model: Type[models.Model],
+    model: type[models.Model],
     config: ModelSyncConfig,
     *,
-    fetch_fn: Callable[..., List[Any]],
-    build_defaults_fn: Callable[[Type[models.Model], Mapping[str, Any], ModelSyncConfig, Any], Dict[str, Any]],
+    fetch_fn: Callable[..., list[Any]],
+    build_defaults_fn: Callable[[type[models.Model], Mapping[str, Any], ModelSyncConfig, Any], dict[str, Any]],
     sync_translations_fn: Callable[[models.Model, Mapping[str, Any], list], None],
     sync_m2m_fn: Callable[[models.Model, Mapping[str, Any], Any, Any], None],
-    extract_lookup_value_fn: Callable[[Mapping[str, Any], ModelSyncConfig], Optional[str]],
+    extract_lookup_value_fn: Callable[[Mapping[str, Any], ModelSyncConfig], str | None],
     fk_cache_cls,
     transaction_module,
     timezone_module,
     endpoint: str = DEFAULT_ENDPOINT,
-    params: Optional[Dict[str, str]] = None,
+    params: dict[str, str] | None = None,
     dry_run: bool = False,
-    etag_cache: Optional[Dict[str, str]] = None,
-    on_progress: Optional[Callable[[int, int], None]] = None,
+    etag_cache: dict[str, str] | None = None,
+    on_progress: Callable[[int, int], None] | None = None,
 ) -> int:
     """Fetch Viernulvier API data and persist it to a Django model."""
-    from apps.import_log.models import ImportLog
-
     source = f"viernulvier:{endpoint}"
     if params:
         params_str = ",".join(f"{k}={v}" for k, v in sorted(params.items()))
@@ -71,8 +78,8 @@ def sync_viernulvier_impl(
 
     saved = 0
     errors = 0
-    error_messages: List[str] = []
-    seen: Set[str] = set()
+    error_messages: list[str] = []
+    seen: set[str] = set()
     total = len(items)
 
     def _record_error(msg: str) -> None:
@@ -142,21 +149,21 @@ def sync_viernulvier_impl(
             transaction_module.savepoint_rollback(sid)
             msgs = [f"{f}: {err}" if f != "__all__" else err for f, errs in exc.message_dict.items() for err in errs]
             _record_error(f"Validation error for {lookup_value}: {'; '.join(msgs)}")
-            logger.error("Validation error for %s: %s", lookup_value, "; ".join(msgs))
+            logger.exception("Validation error for %s: %s", lookup_value, "; ".join(msgs))
 
         except (IntegrityError, DatabaseError, FieldError):
             transaction_module.savepoint_rollback(sid)
             exc_type, exc_value, _ = sys.exc_info()
             msg = f"Database error for {lookup_value}: {exc_type.__name__}: {exc_value}"
             _record_error(msg)
-            logger.error(msg, exc_info=True)
+            logger.exception(msg)
 
         except Exception:
             transaction_module.savepoint_rollback(sid)
             exc_type, exc_value, _ = sys.exc_info()
             msg = f"Unexpected error for {lookup_value}: {exc_type.__name__}: {exc_value}"
             _record_error(msg)
-            logger.error(msg, exc_info=True)
+            logger.exception(msg)
 
     truncation_note = f" (showing first {MAX_ERROR_MESSAGES} of {errors})" if errors > MAX_ERROR_MESSAGES else ""
     import_log.records_total = total

@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-import logging
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Mapping, Optional, Set, Tuple, Type
+import logging
+from typing import TYPE_CHECKING, Any
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 
-from .viernulvier_constants import M2MConfig, ModelSyncConfig, TranslationConfig
 from .viernulvier_normalize import camel_to_snake, parse_field_value
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+
+    from .viernulvier_constants import M2MConfig, ModelSyncConfig, TranslationConfig
 
 logger = logging.getLogger("apps.imports.scrapers.viernulvier")
 
@@ -19,10 +23,10 @@ class FKCache:
     """In-memory cache of (model, external_id) -> pk."""
 
     def __init__(self) -> None:
-        self._cache: Dict[Tuple[Type[models.Model], str], Any] = {}
-        self._loaded: Dict[Type[models.Model], bool] = {}
+        self._cache: dict[tuple[type[models.Model], str], Any] = {}
+        self._loaded: dict[type[models.Model], bool] = {}
 
-    def warmup(self, model: Type[models.Model]) -> None:
+    def warmup(self, model: type[models.Model]) -> None:
         if model in self._loaded:
             return
         try:
@@ -36,15 +40,15 @@ class FKCache:
             self._loaded[model] = False
             logger.warning("FK cache warmup failed for %s (no external_id field?)", model.__name__, exc_info=True)
 
-    def get(self, model: Type[models.Model], ext_id: str) -> Optional[Any]:
+    def get(self, model: type[models.Model], ext_id: str) -> Any | None:
         self.warmup(model)
         return self._cache.get((model, str(ext_id)))
 
-    def set(self, model: Type[models.Model], ext_id: str, pk: Any) -> None:
+    def set(self, model: type[models.Model], ext_id: str, pk: Any) -> None:
         self._cache[(model, str(ext_id))] = pk
 
 
-def extract_external_id_from_url(raw: Any) -> Optional[str]:
+def extract_external_id_from_url(raw: Any) -> str | None:
     """Extract an external ID string from a URL, embedded dict, or integer."""
     if raw is None:
         return None
@@ -63,7 +67,7 @@ def resolve_fk(
     model_field: models.Field,
     raw_value: Any,
     fk_cache: FKCache,
-) -> Optional[Any]:
+) -> Any | None:
     """Resolve a FK raw value (URL or embedded dict) to a database primary key."""
     related_model = model_field.remote_field.model
     ext_id = extract_external_id_from_url(raw_value)
@@ -86,7 +90,7 @@ def resolve_fk(
         return None
 
 
-def extract_lookup_value(item: Mapping[str, Any], config: ModelSyncConfig) -> Optional[str]:
+def extract_lookup_value(item: Mapping[str, Any], config: ModelSyncConfig) -> str | None:
     """Extract the primary lookup value (usually the API @id) from an item."""
     raw = item.get(config.api_id_key) or item.get("external_id") or item.get("id")
     if raw is None:
@@ -97,14 +101,14 @@ def extract_lookup_value(item: Mapping[str, Any], config: ModelSyncConfig) -> Op
 
 
 def build_defaults(
-    model: Type[models.Model],
+    model: type[models.Model],
     item: Mapping[str, Any],
     config: ModelSyncConfig,
     fk_cache: FKCache,
-    resolve_fk_fn: Callable[[models.Field, Any, FKCache], Optional[Any]],
-) -> Dict[str, Any]:
+    resolve_fk_fn: Callable[[models.Field, Any, FKCache], Any | None],
+) -> dict[str, Any]:
     """Convert an API item to defaults for update_or_create."""
-    defaults: Dict[str, Any] = {}
+    defaults: dict[str, Any] = {}
     explicitly_mapped = set(config.field_map.keys())
 
     def _apply(model_field: models.Field, raw_value: Any, field_name: str) -> None:
@@ -165,7 +169,7 @@ def build_defaults(
 def sync_all_translations(
     parent_obj: models.Model,
     item: Mapping[str, Any],
-    translation_configs: List[TranslationConfig],
+    translation_configs: list[TranslationConfig],
 ) -> None:
     """Sync all translated fields for one parent object in language batches."""
     if not translation_configs:
@@ -176,7 +180,7 @@ def sync_all_translations(
         groups[(cfg.model, cfg.parent_fk, cfg.language_fk)].append(cfg)
 
     for (trans_model, parent_fk, language_fk), cfgs in groups.items():
-        all_languages: Set[str] = set()
+        all_languages: set[str] = set()
         for cfg in cfgs:
             raw_dict = item.get(cfg.api_key)
             if isinstance(raw_dict, dict):
@@ -186,7 +190,7 @@ def sync_all_translations(
             if not lang_code:
                 continue
 
-            field_updates: Dict[str, Any] = {}
+            field_updates: dict[str, Any] = {}
 
             for cfg in cfgs:
                 raw_dict = item.get(cfg.api_key)
@@ -269,7 +273,7 @@ def sync_m2m(
                 )
                 continue
 
-        through_kwargs: Dict[str, Any] = {
+        through_kwargs: dict[str, Any] = {
             m2m_config.parent_fk: parent_obj,
             m2m_config.related_fk: related_model(pk=pk),
         }

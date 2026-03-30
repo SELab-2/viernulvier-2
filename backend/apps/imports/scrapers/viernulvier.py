@@ -16,10 +16,9 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Any
 
-import requests
-from django.db import models, transaction
+from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -30,6 +29,12 @@ from . import viernulvier_normalize as _normalize
 from . import viernulvier_relations as _relations
 from . import viernulvier_sync as _sync
 from .viernulvier_constants import M2MConfig, ModelSyncConfig, RateLimitError, ScraperError, TranslationConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+
+    from django.db import models
+    import requests
 
 BASE_DOMAIN = _constants.BASE_DOMAIN
 BASE_URL = _constants.BASE_URL
@@ -47,20 +52,20 @@ USER_AGENT_POOL = _constants.USER_AGENT_POOL
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "ModelSyncConfig",
-    "TranslationConfig",
-    "M2MConfig",
     "FKCache",
-    "ScraperError",
+    "M2MConfig",
+    "ModelSyncConfig",
     "RateLimitError",
-    "fetch_viernulvier",
-    "sync_viernulvier",
-    "sync_media_item_gallery_links",
-    "sync_media_item_crops",
-    "normalize_url",
-    "normalize_performer_type",
-    "nee_ja_to_bool",
+    "ScraperError",
+    "TranslationConfig",
     "clean_string",
+    "fetch_viernulvier",
+    "nee_ja_to_bool",
+    "normalize_performer_type",
+    "normalize_url",
+    "sync_media_item_crops",
+    "sync_media_item_gallery_links",
+    "sync_viernulvier",
 ]
 
 
@@ -85,16 +90,16 @@ def _backoff_seconds(attempt: int) -> float:
     return _http.backoff_seconds(attempt, backoff_base=RETRY_BACKOFF_BASE, backoff_max=RETRY_BACKOFF_MAX)
 
 
-def _parse_retry_after(response: requests.Response) -> Optional[int]:
+def _parse_retry_after(response: requests.Response) -> int | None:
     return _http.parse_retry_after(response)
 
 
 def _fetch_with_retry(
     session: requests.Session,
     url: str,
-    params: Optional[Dict[str, str]] = None,
-    etag: Optional[str] = None,
-) -> Tuple[Optional[Any], Optional[str]]:
+    params: dict[str, str] | None = None,
+    etag: str | None = None,
+) -> tuple[Any | None, str | None]:
     return _http.fetch_with_retry(
         session,
         url,
@@ -109,15 +114,15 @@ def _fetch_with_retry(
     )
 
 
-def _discover_extra_pages(data: dict) -> List[str]:
+def _discover_extra_pages(data: dict) -> list[str]:
     return _http.discover_extra_pages(data, base_domain=BASE_DOMAIN)
 
 
 def fetch_viernulvier(
     endpoint: str = DEFAULT_ENDPOINT,
-    params: Optional[Dict[str, str]] = None,
-    etag_cache: Optional[Dict[str, str]] = None,
-) -> List[Any]:
+    params: dict[str, str] | None = None,
+    etag_cache: dict[str, str] | None = None,
+) -> list[Any]:
     return _http.fetch_viernulvier_impl(
         endpoint=endpoint,
         params=params,
@@ -134,31 +139,31 @@ def _parse_field_value(model_field: models.Field, value: Any) -> Any:
     return _normalize.parse_field_value(model_field, value)
 
 
-def _extract_external_id_from_url(raw: Any) -> Optional[str]:
+def _extract_external_id_from_url(raw: Any) -> str | None:
     return _relations.extract_external_id_from_url(raw)
 
 
-def _resolve_fk(model_field: models.Field, raw_value: Any, fk_cache: FKCache) -> Optional[Any]:
+def _resolve_fk(model_field: models.Field, raw_value: Any, fk_cache: FKCache) -> Any | None:
     return _relations.resolve_fk(model_field, raw_value, fk_cache)
 
 
-def _extract_lookup_value(item: Mapping[str, Any], config: ModelSyncConfig) -> Optional[str]:
+def _extract_lookup_value(item: Mapping[str, Any], config: ModelSyncConfig) -> str | None:
     return _relations.extract_lookup_value(item, config)
 
 
 def _build_defaults(
-    model: Type[models.Model],
+    model: type[models.Model],
     item: Mapping[str, Any],
     config: ModelSyncConfig,
     fk_cache: FKCache,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return _relations.build_defaults(model, item, config, fk_cache, resolve_fk_fn=_resolve_fk)
 
 
 def _sync_all_translations(
     parent_obj: models.Model,
     item: Mapping[str, Any],
-    translation_configs: List[TranslationConfig],
+    translation_configs: list[TranslationConfig],
 ) -> None:
     _relations.sync_all_translations(parent_obj, item, translation_configs)
 
@@ -168,13 +173,13 @@ def _sync_m2m(parent_obj: models.Model, item: Mapping[str, Any], m2m_config: M2M
 
 
 def sync_viernulvier(
-    model: Type[models.Model],
+    model: type[models.Model],
     config: ModelSyncConfig,
     endpoint: str = DEFAULT_ENDPOINT,
-    params: Optional[Dict[str, str]] = None,
+    params: dict[str, str] | None = None,
     dry_run: bool = False,
-    etag_cache: Optional[Dict[str, str]] = None,
-    on_progress: Optional[Callable[[int, int], None]] = None,
+    etag_cache: dict[str, str] | None = None,
+    on_progress: Callable[[int, int], None] | None = None,
 ) -> int:
     return _sync.sync_viernulvier_impl(
         model,
@@ -199,7 +204,7 @@ def _derive_crop_filename(crop_name: str, item_external_id: str, image_url: str)
     return _media.derive_crop_filename(crop_name, item_external_id, image_url)
 
 
-def _download_image(session: requests.Session, url: str) -> Optional[bytes]:
+def _download_image(session: requests.Session, url: str) -> bytes | None:
     return _media.download_image(
         session,
         url,
@@ -211,9 +216,9 @@ def _download_image(session: requests.Session, url: str) -> Optional[bytes]:
 
 def sync_media_item_gallery_links(
     dry_run: bool = False,
-    etag_cache: Optional[Dict[str, str]] = None,
-    on_progress: Optional[Callable[[int, int], None]] = None,
-    params: Optional[Dict[str, str]] = None,
+    etag_cache: dict[str, str] | None = None,
+    on_progress: Callable[[int, int], None] | None = None,
+    params: dict[str, str] | None = None,
 ) -> int:
     return _media.sync_media_item_gallery_links_impl(
         fetch_fn=fetch_viernulvier,
@@ -228,8 +233,8 @@ def sync_media_item_gallery_links(
 
 def sync_media_item_crops(
     dry_run: bool = False,
-    on_progress: Optional[Callable[[int, int], None]] = None,
-    params: Optional[Dict[str, str]] = None,
+    on_progress: Callable[[int, int], None] | None = None,
+    params: dict[str, str] | None = None,
 ) -> int:
     return _media.sync_media_item_crops_impl(
         fetch_fn=fetch_viernulvier,

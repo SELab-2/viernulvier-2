@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
 import logging
 import re
-from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from django.core.exceptions import ValidationError
@@ -44,8 +44,7 @@ def clean_string(value: Any) -> str:
     if value is None:
         return ""
     s = str(value).strip()
-    s = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", s)
-    return s
+    return re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", s)
 
 
 def clean_vendor_id(value: Any) -> str | None:
@@ -120,8 +119,7 @@ def parse_field_value(model_field: models.Field, value: Any) -> Any:
 
     if isinstance(model_field, models.DateTimeField) and isinstance(value, str):
         v = value
-        if v.startswith("-"):
-            v = v[1:]
+        v = v.removeprefix("-")
         if v[:4] == "0000":
             v = "1970" + v[4:]
         parsed = parse_datetime(v)

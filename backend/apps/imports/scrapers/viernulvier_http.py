@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 import os
 import random
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -68,7 +68,7 @@ def backoff_seconds(
     return min(backoff_base * (2**attempt) + random.uniform(0, 1), backoff_max)
 
 
-def parse_retry_after(response: requests.Response) -> Optional[int]:
+def parse_retry_after(response: requests.Response) -> int | None:
     """Parse the Retry-After header as an integer number of seconds."""
     header = response.headers.get("Retry-After")
     if header:
@@ -82,8 +82,8 @@ def parse_retry_after(response: requests.Response) -> Optional[int]:
 def fetch_with_retry(
     session: requests.Session,
     url: str,
-    params: Optional[Dict[str, str]] = None,
-    etag: Optional[str] = None,
+    params: dict[str, str] | None = None,
+    etag: str | None = None,
     *,
     max_retries: int = MAX_RETRIES,
     timeout: int = DEFAULT_TIMEOUT,
@@ -91,9 +91,9 @@ def fetch_with_retry(
     sleep_fn=time.sleep,
     backoff_fn=backoff_seconds,
     parse_retry_after_fn=parse_retry_after,
-) -> Tuple[Optional[Any], Optional[str]]:
+) -> tuple[Any | None, str | None]:
     """Fetch one URL with retry + exponential backoff + jitter."""
-    headers: Dict[str, str] = {}
+    headers: dict[str, str] = {}
     if etag:
         headers["If-None-Match"] = etag
 
@@ -160,7 +160,7 @@ def fetch_with_retry(
     raise ScraperError(f"Retries exhausted for: {url}")
 
 
-def discover_extra_pages(data: dict, *, base_domain: str = BASE_DOMAIN) -> List[str]:
+def discover_extra_pages(data: dict, *, base_domain: str = BASE_DOMAIN) -> list[str]:
     """Discover page URLs beyond page 1 from hydra:view metadata."""
     view = data.get("view") or {}
     last_url = view.get("last", "")
@@ -181,15 +181,15 @@ def discover_extra_pages(data: dict, *, base_domain: str = BASE_DOMAIN) -> List[
 
 def fetch_viernulvier_impl(
     endpoint: str = DEFAULT_ENDPOINT,
-    params: Optional[Dict[str, str]] = None,
-    etag_cache: Optional[Dict[str, str]] = None,
+    params: dict[str, str] | None = None,
+    etag_cache: dict[str, str] | None = None,
     *,
     base_url: str = BASE_URL,
     base_domain: str = BASE_DOMAIN,
     build_session_fn=build_session,
     fetch_with_retry_fn=fetch_with_retry,
     discover_extra_pages_fn=discover_extra_pages,
-) -> List[Any]:
+) -> list[Any]:
     """Fetch all items from an API endpoint, following pagination automatically."""
     parsed = urlparse(endpoint)
     if parsed.scheme or parsed.netloc:
@@ -217,7 +217,7 @@ def fetch_viernulvier_impl(
     members = data.get("member", [])
     if not members and "@context" in data:
         members = [data]
-    all_items: List[Any] = list(members)
+    all_items: list[Any] = list(members)
 
     total_items = data.get("totalItems") or data.get("hydra:totalItems")
     extra_pages = discover_extra_pages_fn(data)
@@ -226,7 +226,7 @@ def fetch_viernulvier_impl(
         logger.info("API reports %d total items - %d additional pages to fetch", total_items, len(extra_pages))
 
     if extra_pages:
-        page_results: Dict[str, List[Any]] = {}
+        page_results: dict[str, list[Any]] = {}
 
         with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_PAGES) as executor:
             future_to_url = {
@@ -243,14 +243,14 @@ def fetch_viernulvier_impl(
                         continue
                     page_results[page_url] = page_data.get("member", []) if isinstance(page_data, dict) else page_data
                 except ScraperError as exc:
-                    logger.error("Page fetch failed for %s: %s", page_url, exc)
+                    logger.exception("Page fetch failed for %s: %s", page_url, exc)
 
         for page_url in extra_pages:
             all_items.extend(page_results.get(page_url, []))
     else:
         view = data.get("view") or {}
         next_raw = view.get("next")
-        current_url: Optional[str] = (
+        current_url: str | None = (
             (next_raw if next_raw.startswith("http") else urljoin(base_domain, next_raw)) if next_raw else None
         )
         while current_url:
