@@ -158,7 +158,14 @@ const SeriesDetailPage = () => {
   const seriesBadge = getLocalizedValue(series.badge, i18n.language)
 
   return (
-    <Container maxWidth="lg" sx={{ py: 5 }}>
+    <Container
+      maxWidth="lg"
+      sx={{
+        py: { xs: 3, md: 5 },
+        px: { xs: 2, sm: 3 },
+        overflowX: 'hidden',
+      }}
+    >
       <Stack spacing={4}>
         <Stack spacing={2}>
           <Button
@@ -182,11 +189,35 @@ const SeriesDetailPage = () => {
           alignItems={{ xs: 'flex-start', md: 'flex-start' }}
           spacing={3}
         >
-          <Box sx={{ maxWidth: 760 }}>
-            <Typography variant="h3" component="h1" sx={{ fontWeight: 800, mb: 2 }}>
+          <Box
+            sx={{
+              maxWidth: 760,
+              width: '100%',
+              minWidth: 0,
+            }}
+          >
+            <Typography
+              variant="h3"
+              component="h1"
+              sx={{
+                fontWeight: 800,
+                mb: 2,
+                fontSize: { xs: '2.5rem', sm: '3rem', md: '3.75rem' },
+                overflowWrap: 'break-word',
+                wordBreak: 'break-word',
+              }}
+            >
               {seriesName}
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.05rem' }}>
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: '1rem', md: '1.05rem' },
+                overflowWrap: 'break-word',
+                wordBreak: 'break-word',
+              }}
+            >
               {seriesDescription}
             </Typography>
           </Box>
@@ -194,7 +225,15 @@ const SeriesDetailPage = () => {
           <Chip
             label={seriesBadge}
             color="secondary"
-            sx={{ borderRadius: 999, px: 1, fontWeight: 600 }}
+            sx={{
+              borderRadius: 999,
+              px: 1,
+              fontWeight: 600,
+              maxWidth: '100%',
+              '& .MuiChip-label': {
+                whiteSpace: 'normal',
+              },
+            }}
           />
         </Stack>
 
@@ -294,7 +333,7 @@ const SeriesDetailPage = () => {
                       }}
                     />
 
-                    <Stack spacing={1.25} sx={{ flex: 1 }}>
+                    <Stack spacing={1.25} sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
                         {getLocalizedValue(production.title, i18n.language)}
                       </Typography>
