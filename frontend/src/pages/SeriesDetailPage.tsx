@@ -1,18 +1,12 @@
-import {
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Container,
-  Divider,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+
+import SeriesHeader from '../components/series/SeriesHeader'
+import SeriesStats from '../components/series/SeriesStats'
+import ProductionCard from '../components/series/ProductionCard'
+import TimelineItem from '../components/series/TimelineItem'
 
 type LocalizedText = {
   nl: string
@@ -157,6 +151,11 @@ const SeriesDetailPage = () => {
   const seriesDescription = getLocalizedValue(series.description, i18n.language)
   const seriesBadge = getLocalizedValue(series.badge, i18n.language)
 
+  const localizedStats = series.stats.map((stat) => ({
+    value: stat.value,
+    label: getLocalizedValue(stat.label, i18n.language),
+  }))
+
   return (
     <Container
       maxWidth="lg"
@@ -183,77 +182,13 @@ const SeriesDetailPage = () => {
           </Typography>
         </Stack>
 
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'flex-start', md: 'flex-start' }}
-          spacing={3}
-        >
-          <Box
-            sx={{
-              maxWidth: 760,
-              width: '100%',
-              minWidth: 0,
-            }}
-          >
-            <Typography
-              variant="h3"
-              component="h1"
-              sx={{
-                fontWeight: 800,
-                mb: 2,
-                fontSize: { xs: '2.5rem', sm: '3rem', md: '3.75rem' },
-                overflowWrap: 'break-word',
-                wordBreak: 'break-word',
-              }}
-            >
-              {seriesName}
-            </Typography>
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{
-                fontSize: { xs: '1rem', md: '1.05rem' },
-                overflowWrap: 'break-word',
-                wordBreak: 'break-word',
-              }}
-            >
-              {seriesDescription}
-            </Typography>
-          </Box>
+        <SeriesHeader
+          name={seriesName}
+          description={seriesDescription}
+          badge={seriesBadge}
+        />
 
-          <Chip
-            label={seriesBadge}
-            color="secondary"
-            sx={{
-              borderRadius: 999,
-              px: 1,
-              fontWeight: 600,
-              maxWidth: '100%',
-              '& .MuiChip-label': {
-                whiteSpace: 'normal',
-              },
-            }}
-          />
-        </Stack>
-
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={{ xs: 2, sm: 5 }}
-          divider={<Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />}
-          sx={{ py: 1 }}
-        >
-          {series.stats.map((stat) => (
-            <Box key={stat.value + stat.label.nl}>
-              <Typography variant="h4" sx={{ fontWeight: 800 }}>
-                {stat.value}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {getLocalizedValue(stat.label, i18n.language)}
-              </Typography>
-            </Box>
-          ))}
-        </Stack>
+        <SeriesStats stats={localizedStats} />
 
         <Divider />
 
@@ -281,92 +216,24 @@ const SeriesDetailPage = () => {
           />
 
           {series.productions.map((production) => (
-            <Stack
-              key={production.id}
-              direction={{ xs: 'column', md: 'row' }}
-              spacing={2}
-              alignItems={{ xs: 'flex-start', md: 'flex-start' }}
-              sx={{ position: 'relative' }}
-            >
-              <Stack
-                direction={{ xs: 'row', md: 'column' }}
-                spacing={1}
-                alignItems="center"
-                sx={{ width: { xs: 'auto', md: 40 }, flexShrink: 0 }}
-              >
-                <Box
-                  sx={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    bgcolor: 'text.primary',
-                    display: { xs: 'none', md: 'block' },
-                    mt: 2,
-                  }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 44 }}>
-                  {production.year}
-                </Typography>
-              </Stack>
-
-              <Card
-                elevation={0}
-                sx={{
-                  flex: 1,
-                  width: '100%',
-                  border: 1,
-                  borderColor: 'divider',
-                  borderRadius: 2,
-                }}
-              >
-                <CardContent sx={{ p: 2.5 }}>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5}>
-                    <Avatar
-                      variant="rounded"
-                      src={production.image}
-                      alt={getLocalizedValue(production.title, i18n.language)}
-                      sx={{
-                        width: { xs: '100%', sm: 140 },
-                        height: { xs: 180, sm: 105 },
-                        borderRadius: 2,
-                        flexShrink: 0,
-                      }}
-                    />
-
-                    <Stack spacing={1.25} sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        {getLocalizedValue(production.title, i18n.language)}
-                      </Typography>
-
-                      <Typography variant="body2" color="text.secondary">
-                        {getLocalizedValue(production.meta, i18n.language)}
-                      </Typography>
-
-                      <Typography variant="body2" color="text.secondary">
-                        {getLocalizedValue(production.description, i18n.language)}
-                      </Typography>
-
-                      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                        {production.tags.map((tag) => (
-                          <Chip
-                            key={`${production.id}-${tag.nl}`}
-                            label={getLocalizedValue(tag, i18n.language)}
-                            size="small"
-                            variant="outlined"
-                          />
-                        ))}
-                      </Stack>
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Stack>
+            <TimelineItem key={production.id} year={production.year}>
+              <ProductionCard
+                title={getLocalizedValue(production.title, i18n.language)}
+                meta={getLocalizedValue(production.meta, i18n.language)}
+                description={getLocalizedValue(production.description, i18n.language)}
+                tags={production.tags.map((tag) =>
+                  getLocalizedValue(tag, i18n.language)
+                )}
+                image={production.image}
+              />
+            </TimelineItem>
           ))}
         </Stack>
 
         <Typography variant="caption" color="text.secondary">
           {t('series.placeholderNote', {
-            defaultValue: `Placeholder-detailpagina, opgebouwd met voorbeeldproducties tot de API-koppeling klaar is.`,
+            defaultValue:
+              'Placeholder-detailpagina, opgebouwd met voorbeeldproducties tot de API-koppeling klaar is.',
           })}
         </Typography>
       </Stack>
