@@ -1,11 +1,4 @@
-import {
-  Avatar,
-  Card,
-  CardContent,
-  Chip,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Avatar, Card, CardContent, Chip, Stack, Typography } from '@mui/material'
 
 type Props = {
   title: string
@@ -15,13 +8,7 @@ type Props = {
   image: string
 }
 
-const ProductionCard = ({
-  title,
-  meta,
-  description,
-  tags,
-  image,
-}: Props) => {
+const ProductionCard = ({ title, meta, description, tags, image }: Props) => {
   return (
     <Card
       elevation={0}

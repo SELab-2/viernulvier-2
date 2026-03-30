@@ -15,11 +15,7 @@ const SeriesStats = ({ stats }: Props) => {
       direction={{ xs: 'column', sm: 'row' }}
       spacing={{ xs: 2, sm: 5 }}
       divider={
-        <Divider
-          orientation="vertical"
-          flexItem
-          sx={{ display: { xs: 'none', sm: 'block' } }}
-        />
+        <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />
       }
       sx={{ py: 1 }}
     >

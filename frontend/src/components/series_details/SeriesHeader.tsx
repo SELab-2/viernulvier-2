@@ -8,11 +8,7 @@ type Props = {
 
 const SeriesHeader = ({ name, description, badge }: Props) => {
   return (
-    <Stack
-      direction={{ xs: 'column', md: 'row' }}
-      justifyContent="space-between"
-      spacing={3}
-    >
+    <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={3}>
       <Box
         sx={{
           maxWidth: 760,

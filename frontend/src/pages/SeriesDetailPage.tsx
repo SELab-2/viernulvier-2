@@ -3,10 +3,12 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
-import SeriesHeader from '../components/series/SeriesHeader'
-import SeriesStats from '../components/series/SeriesStats'
-import ProductionCard from '../components/series/ProductionCard'
-import TimelineItem from '../components/series/TimelineItem'
+import SeriesHeader from '../components/series_details/SeriesHeader'
+import SeriesStats from '../components/series_details/SeriesStats'
+import ProductionCard from '../components/series_details/ProductionCard'
+import TimelineItem from '../components/series_details/TimelineItem'
+
+// TODO: Fetch series and productions from API instead of using hardcoded placeholder data.
 
 type LocalizedText = {
   nl: string
@@ -142,7 +144,7 @@ function getLocalizedValue(value: LocalizedText, language: string): string {
 }
 
 const SeriesDetailPage = () => {
-  const { id } = useParams<{ id: string }>()
+  useParams<{ id: string} >()
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
 
@@ -182,11 +184,7 @@ const SeriesDetailPage = () => {
           </Typography>
         </Stack>
 
-        <SeriesHeader
-          name={seriesName}
-          description={seriesDescription}
-          badge={seriesBadge}
-        />
+        <SeriesHeader name={seriesName} description={seriesDescription} badge={seriesBadge} />
 
         <SeriesStats stats={localizedStats} />
 
@@ -221,9 +219,7 @@ const SeriesDetailPage = () => {
                 title={getLocalizedValue(production.title, i18n.language)}
                 meta={getLocalizedValue(production.meta, i18n.language)}
                 description={getLocalizedValue(production.description, i18n.language)}
-                tags={production.tags.map((tag) =>
-                  getLocalizedValue(tag, i18n.language)
-                )}
+                tags={production.tags.map((tag) => getLocalizedValue(tag, i18n.language))}
                 image={production.image}
               />
             </TimelineItem>
