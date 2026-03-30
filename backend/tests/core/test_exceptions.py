@@ -24,8 +24,8 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 from rest_framework.request import Request
-from rest_framework.test import APIRequestFactory
 from rest_framework.response import Response
+from rest_framework.test import APIRequestFactory
 
 from apps.core.exceptions import _build_problem, _flatten_errors, custom_exception_handler
 
@@ -753,6 +753,7 @@ class TestMethodNotAllowedNoRequest:
         response = custom_exception_handler(MethodNotAllowed("PATCH"), context={})
 
         assert "instance" not in response.data
+
 
 class TestUnknownExceptionWithDRFResponse:
     """Covers the final ``return None``.
