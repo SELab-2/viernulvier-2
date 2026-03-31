@@ -1,9 +1,9 @@
 import { useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import Tag from '../Tag'
 import { formatDate } from '../../utils/formatDate'
 import { getHallDisplayName } from '../../utils/hall'
 import { getLocalizedValue } from '../../utils/localization'
+import Tag from '../Tag'
 
 import type { CSSProperties } from 'react'
 import { Production } from '../../types/Productions'
@@ -167,7 +167,8 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
     .filter(Boolean)
     .join(', ')
 
-  const resolvedTypeName = production.uit_database_type?.name || ''
+  const resolvedTypeName = production.uit_database_type?.name || '';
+  const capitalizedResolvedTypeName = resolvedTypeName ? resolvedTypeName[0].toUpperCase() + resolvedTypeName.slice(1) : '';
 
   const resolvedPerformerType = production.performer_type || ''
   const resolvedAttendanceMode = production.attendance_mode || ''
@@ -224,8 +225,8 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
         {resolvedGenres && (
           <MetaRow label={t('productions.detail.meta.genre', 'Genre')} value={resolvedGenres} />
         )}
-        {resolvedTypeName && (
-          <MetaRow label={t('productions.detail.meta.type', 'Type')} value={resolvedTypeName} />
+        {capitalizedResolvedTypeName && (
+          <MetaRow label={t('productions.detail.meta.type', 'Type')} value={capitalizedResolvedTypeName} />
         )}
         <MetaRow
           label={t('productions.detail.meta.performerType', 'Uitvoering')}
