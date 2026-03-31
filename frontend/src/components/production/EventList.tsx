@@ -64,11 +64,7 @@ export default function EventsList({ events }: EventsListProps) {
         return (
           <Box key={event.id}>
             {/* -- Event row -- */}
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-            >
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
                 {/* Date + time */}
                 <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
@@ -167,9 +163,7 @@ export default function EventsList({ events }: EventsListProps) {
                         <TableRow key={p.id} hover>
                           <TableCell>{p.price?.description?.[lang] || p.price_display}</TableCell>
                           <TableCell align="right">
-                            <Typography variant="body2">
-                              €{Number(p.amount).toFixed(2)}
-                            </Typography>
+                            <Typography variant="body2">€{Number(p.amount).toFixed(2)}</Typography>
                           </TableCell>
                           <TableCell align="right">
                             <Typography variant="body2" color="text.secondary">

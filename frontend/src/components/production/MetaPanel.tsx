@@ -167,8 +167,10 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
     .filter(Boolean)
     .join(', ')
 
-  const resolvedTypeName = production.uit_database_type?.name || '';
-  const capitalizedResolvedTypeName = resolvedTypeName ? resolvedTypeName[0].toUpperCase() + resolvedTypeName.slice(1) : '';
+  const resolvedTypeName = production.uit_database_type?.name || ''
+  const capitalizedResolvedTypeName = resolvedTypeName
+    ? resolvedTypeName[0].toUpperCase() + resolvedTypeName.slice(1)
+    : ''
 
   const resolvedPerformerType = production.performer_type || ''
   const resolvedAttendanceMode = production.attendance_mode || ''
@@ -226,7 +228,10 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
           <MetaRow label={t('productions.detail.meta.genre', 'Genre')} value={resolvedGenres} />
         )}
         {capitalizedResolvedTypeName && (
-          <MetaRow label={t('productions.detail.meta.type', 'Type')} value={capitalizedResolvedTypeName} />
+          <MetaRow
+            label={t('productions.detail.meta.type', 'Type')}
+            value={capitalizedResolvedTypeName}
+          />
         )}
         <MetaRow
           label={t('productions.detail.meta.performerType', 'Uitvoering')}
