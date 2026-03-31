@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
 import { useMediaQuery, useTheme } from '@mui/material'
+import useEmblaCarousel from 'embla-carousel-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { MediaItem } from '../../types/Media'
 
 interface MediaListProps {
@@ -8,7 +9,6 @@ interface MediaListProps {
 
 // TODO: code duplicatie met functie in ProductionDetailPage
 // TODO: arrow niet zo nice
-// TODO: animaties bij switch
 // TODO: vergoot afbeelding bij klick
 /**
  * Pick the most suitable image URL from crop metadata.
@@ -40,15 +40,14 @@ function getBestImageUrl(item: MediaItem): string | null {
  * - Dark mode aware styling via MUI theme
  * - Responsive one-item viewport on mobile + basic thumbnail strip
  * - Arrow buttons (pijl symbolen) for non-touch navigation
- * - Inline documentation + typed props
+ * - Powered by Embla Carousel for smooth, touch-enabled sliding
  */
 export default function MediaList({ mediaItems }: MediaListProps) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'))
-  const itemsPerSlide = isMobile ? 1 : isTablet ? 2 : 3
+  const slidesToScroll = isMobile ? 1 : isTablet ? 2 : 3
 
-  const [currentIndex, setCurrentIndex] = useState(0)
   const navButtonBackground =
     theme.palette.mode === 'dark' ? 'rgba(10, 14, 40, 0.65)' : 'rgba(255,255,255,0.8)'
 
@@ -62,29 +61,37 @@ export default function MediaList({ mediaItems }: MediaListProps) {
 
   const total = slides.length
 
-  const normalizedCurrentIndex = total > 0 ? ((currentIndex % total) + total) % total : 0
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    slidesToScroll,
+    align: 'start',
+  })
 
-  const visibleSlides = useMemo(() => {
-    if (total <= itemsPerSlide) {
-      return slides
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  useEffect(() => {
+    if (!emblaApi) return
+    const onSelect = () => setCurrentIndex(emblaApi.selectedScrollSnap())
+    emblaApi.on('select', onSelect)
+    onSelect()
+    return () => {
+      emblaApi.off('select', onSelect)
     }
+  }, [emblaApi])
 
-    return Array.from({ length: itemsPerSlide }).map((_, i) => {
-      return slides[(normalizedCurrentIndex + i) % total]
-    })
-  }, [slides, normalizedCurrentIndex, itemsPerSlide, total])
+  useEffect(() => {
+    if (!emblaApi) return
+    emblaApi.reInit({ loop: true, slidesToScroll, align: 'start' })
+  }, [emblaApi, slidesToScroll])
+
+  const goPrevious = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
+  const goNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
 
   if (!slides.length) {
     return null
   }
 
-  function goPrevious() {
-    setCurrentIndex((old) => (old - itemsPerSlide + total) % total)
-  }
-
-  function goNext() {
-    setCurrentIndex((old) => (old + itemsPerSlide) % total)
-  }
+  const displayIndex = currentIndex * slidesToScroll + 1
 
   return (
     <section
@@ -116,56 +123,46 @@ export default function MediaList({ mediaItems }: MediaListProps) {
         style={{
           position: 'relative',
           borderRadius: '8px',
-          overflow: 'hidden',
-          background: theme.palette.background.default,
+          background: theme.palette.background.paper,
           border: `1px solid ${theme.palette.divider}`,
+          padding: '8px',
         }}
       >
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${itemsPerSlide}, minmax(0, 1fr))`,
-            gap: '8px',
-            width: '100%',
-            minHeight: '220px',
-            padding: '8px',
-            boxSizing: 'border-box',
-            background: theme.palette.background.paper,
-          }}
-        >
-          {visibleSlides.length ? (
-            visibleSlides.map((item) => (
+        <div ref={emblaRef} style={{ overflow: 'hidden' }}>
+          <div
+            style={{
+              display: 'flex',
+              marginLeft: '-8px',
+            }}
+          >
+            {slides.map((item) => (
               <div
                 key={item.id}
                 style={{
-                  width: '100%',
-                  aspectRatio: '16/9',
-                  overflow: 'hidden',
-                  borderRadius: '6px',
-                  background: theme.palette.mode === 'dark' ? '#101436' : '#f7f7f7',
+                  flex: `0 0 calc(${100 / slidesToScroll}%)`,
+                  minWidth: 0,
+                  paddingLeft: '8px',
+                  boxSizing: 'border-box',
                 }}
               >
-                <img
-                  src={item.imageUrl as string}
-                  alt={item.display_title || item.original_filename || 'Media item'}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
+                <div
+                  style={{
+                    width: '100%',
+                    aspectRatio: '16/9',
+                    overflow: 'hidden',
+                    borderRadius: '6px',
+                    background: theme.palette.mode === 'dark' ? '#101436' : '#f7f7f7',
+                  }}
+                >
+                  <img
+                    src={item.imageUrl as string}
+                    alt={item.display_title || item.original_filename || 'Media item'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                </div>
               </div>
-            ))
-          ) : (
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: theme.palette.text.disabled,
-              }}
-            >
-              No image
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
         <button
@@ -225,7 +222,7 @@ export default function MediaList({ mediaItems }: MediaListProps) {
           fontSize: '0.9rem',
         }}
       >
-        {`${normalizedCurrentIndex + 1} / ${total}`}
+        {`${displayIndex} / ${total}`}
       </div>
     </section>
   )
