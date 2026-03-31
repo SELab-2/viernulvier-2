@@ -124,11 +124,15 @@ export default function EventsList({ events }: EventsListProps) {
                     sx={(theme) => ({
                       border: `1px solid ${theme.palette.divider}`,
                       borderRadius: '4px',
-                      transition: 'transform 200ms ease',
-                      transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
                     })}
                   >
-                    <ExpandMoreIcon fontSize="small" />
+                    <ExpandMoreIcon
+                      fontSize="small"
+                      sx={{
+                        transition: 'transform 200ms ease',
+                        transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                      }}
+                    />
                   </IconButton>
                 )}
               </Stack>
