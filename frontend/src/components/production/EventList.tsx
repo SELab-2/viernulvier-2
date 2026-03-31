@@ -56,7 +56,7 @@ export default function EventsList({ events }: EventsListProps) {
     })
 
   return (
-    <Stack spacing={0} divider={<Divider />}>
+    <Stack spacing={0} divider={<Divider sx={{ my: 1.5 }} />}>
       {events.map((event) => {
         const expanded = expandedIds.has(event.id)
         const hasPrices = event.prices?.length > 0
@@ -68,7 +68,6 @@ export default function EventsList({ events }: EventsListProps) {
               direction="row"
               alignItems="center"
               justifyContent="space-between"
-              sx={{ py: 1.5, px: 0 }}
             >
               <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
                 {/* Date + time */}
@@ -143,7 +142,7 @@ export default function EventsList({ events }: EventsListProps) {
               <Collapse in={expanded} unmountOnExit>
                 <Box
                   sx={(theme) => ({
-                    mb: 1.5,
+                    mt: 1.5,
                     border: `1px solid ${theme.palette.divider}`,
                     borderRadius: '4px',
                     overflow: 'hidden',
@@ -168,7 +167,7 @@ export default function EventsList({ events }: EventsListProps) {
                         <TableRow key={p.id} hover>
                           <TableCell>{p.price?.description?.[lang] || p.price_display}</TableCell>
                           <TableCell align="right">
-                            <Typography variant="body2" fontWeight={600}>
+                            <Typography variant="body2">
                               €{Number(p.amount).toFixed(2)}
                             </Typography>
                           </TableCell>
