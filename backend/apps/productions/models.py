@@ -1,5 +1,4 @@
-"""
-Models for the Productions app.
+"""Models for the Productions app.
 
 Productions are the core catalogue entity in the archive. The hierarchy is:
 
@@ -28,8 +27,7 @@ from apps.tags.models import Tag
 
 
 class UitDatabaseTheme(BaseModel):
-    """
-    A theme classification imported from the UIT Database.
+    """A theme classification imported from the UIT Database.
 
     UIT Database themes are used to broadly categorise productions
     (e.g. "Theater", "Muziek", "Dans"). They are typically synced from an
@@ -52,12 +50,12 @@ class UitDatabaseTheme(BaseModel):
         ordering = ["name"]
 
     def __str__(self) -> str:
+        """String representation of the UIT Database theme, showing the name."""
         return self.name
 
 
 class UitDatabaseType(BaseModel):
-    """
-    A type classification imported from the UIT Database.
+    """A type classification imported from the UIT Database.
 
     UIT Database types provide a more granular classification than themes
     (e.g. "Voorstelling", "Concert", "Tentoonstelling"). Like themes they
@@ -80,12 +78,12 @@ class UitDatabaseType(BaseModel):
         ordering = ["name"]
 
     def __str__(self) -> str:
+        """String representation of the UIT Database type, showing the name."""
         return self.name
 
 
 class Production(BaseModel):
-    """
-    The central catalogue record representing a performance work.
+    """The central catalogue record representing a performance work.
 
     A production groups one or more :class:`~apps.events.models.Event`
     instances and carries structural metadata. All human-readable text
@@ -185,6 +183,7 @@ class Production(BaseModel):
         ordering = ["-id"]
 
     def __str__(self) -> str:
+        """String representation of the production, showing the title in the default language or a fallback."""
         title = self.get_base_display_name(
             related_name="translations",
             name_field="title",
@@ -194,8 +193,7 @@ class Production(BaseModel):
 
 
 class ProductionTranslation(BaseModel):
-    """
-    Localised text fields for a Production.
+    """Localised text fields for a Production.
 
     Each production can have at most one translation per language. All
     human-readable content that must be presented in multiple languages is
@@ -341,12 +339,12 @@ class ProductionTranslation(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """String representation of the production translation, showing the title and language."""
         return f"Translation of Production {self.production.id} in {self.language.code}"
 
 
 class ProductionTag(BaseModel):
-    """
-    Through-table for the many-to-many relation between Productions and Tags.
+    """Through-table for the many-to-many relation between Productions and Tags.
 
     Each combination of production and tag must be unique. There is no
     ordering requirement - tags are an unordered set on a production.
@@ -383,12 +381,12 @@ class ProductionTag(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """String representation of the production tag, showing the tag name."""
         return f"Tag {self.tag} for {self.production}"
 
 
 class ProductionTagTranslation(BaseModel):
-    """
-    Localised text fields for a ProductionTag through-table record.
+    """Localised text fields for a ProductionTag through-table record.
 
     Each production-tag link can have at most one translation per language,
     allowing editors to provide multilingual descriptions or context notes for
@@ -444,13 +442,12 @@ class ProductionTagTranslation(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """String representation of the production-tag translation, showing the parent tag and language."""
         return f"Translation of ProductionTag {self.production_tag_id} in {self.language.code}"
 
 
 class ProductionGenre(BaseModel):
-    """
-    Ordered through-table for the many-to-many relation between Productions
-    and Genres.
+    """Ordered through-table for the many-to-many relation between Productions and Genres.
 
     The ``position`` field controls the display order of genres within a
     production. Lower values appear first. Unlike :class:`ProductionTag`,
@@ -495,4 +492,5 @@ class ProductionGenre(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """String representation of the production genre, showing the genre name."""
         return str(self.genre)

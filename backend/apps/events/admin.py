@@ -1,6 +1,8 @@
 """Admin configuration for the events app."""
 
 from django.contrib import admin
+from django.db.models import QuerySet
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -25,7 +27,7 @@ class EventPriceInline(admin.TabularInline):
     ordering = ("price_rank__position",)
     show_change_link = False
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[EventPrice]:
         return super().get_queryset(request).select_related("price_rank", "price")
 
 
@@ -73,7 +75,7 @@ class EventAdmin(BaseAdmin):
     readonly_fields = ("production_admin_link",)
 
     @admin.display(description="Production details")
-    def production_admin_link(self, obj):
+    def production_admin_link(self, obj: Event) -> str:
         """Return a link to the related Production admin change page."""
         if not obj or not obj.production_id:
             return "-"
@@ -84,7 +86,7 @@ class EventAdmin(BaseAdmin):
         label = f"{obj.production} by {artist_name}" if artist_name else str(obj.production)
         return format_html('<a href="{}">{}</a>', url, label)
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Event]:
         return (
             super()
             .get_queryset(request)

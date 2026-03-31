@@ -1,5 +1,4 @@
-"""
-Serializers for the Pricing app.
+"""Serializers for the Pricing app.
 
 Field-level `help_text` and `extra_kwargs` are picked up automatically
 by drf-spectacular and rendered in the Swagger UI, so descriptions do
@@ -18,8 +17,7 @@ from .models import Price, PriceRank
 
 
 class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
-    """
-    Represents a Price category.
+    """Represents a Price category.
 
     The `description` field contains all available translations as a
     dictionary (e.g. {"en": "Full price", "fr": "Plein tarif"}).
@@ -102,8 +100,7 @@ class PriceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
 
 
 class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
-    """
-    Represents a PriceRank availability tier.
+    """Represents a PriceRank availability tier.
 
     The `description` field contains all available translations as a
     dictionary (e.g. {"en": "Early Bird", "fr": "Prévente"}).
@@ -151,4 +148,5 @@ class PriceRankSerializer(serializers.ModelSerializer, TranslatableSerializerMix
         return self.get_translated_field(obj, "description")
 
     def get_display_description(self, obj: PriceRank) -> str | None:
+        """Return the price rank label in the project's base language."""
         return self.get_base_translated_value(obj, field_name="description")

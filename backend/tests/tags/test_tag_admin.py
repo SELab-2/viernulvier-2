@@ -30,17 +30,17 @@ from tests.factories.tag import TagFactory, TagTranslationFactory
 
 
 class TestTagAdminRegistration(TestCase):
-    def test_tag_is_registered(self):
-        self.assertIn(Tag, admin.site._registry)
+    def test_tag_is_registered(self) -> None:
+        assert Tag in admin.site._registry
 
-    def test_registered_admin_is_tag_admin(self):
-        self.assertIsInstance(admin.site._registry[Tag], TagAdmin)
+    def test_registered_admin_is_tag_admin(self) -> None:
+        assert isinstance(admin.site._registry[Tag], TagAdmin)
 
-    def test_tag_translation_is_registered(self):
-        self.assertIn(TagTranslation, admin.site._registry)
+    def test_tag_translation_is_registered(self) -> None:
+        assert TagTranslation in admin.site._registry
 
-    def test_registered_admin_is_tag_translation_admin(self):
-        self.assertIsInstance(admin.site._registry[TagTranslation], TagTranslationAdmin)
+    def test_registered_admin_is_tag_translation_admin(self) -> None:
+        assert isinstance(admin.site._registry[TagTranslation], TagTranslationAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -49,17 +49,17 @@ class TestTagAdminRegistration(TestCase):
 
 
 class TestTagAdminInheritance(TestCase):
-    def test_tag_admin_inherits_from_base_admin(self):
-        self.assertTrue(issubclass(TagAdmin, BaseAdmin))
+    def test_tag_admin_inherits_from_base_admin(self) -> None:
+        assert issubclass(TagAdmin, BaseAdmin)
 
-    def test_tag_admin_inherits_from_model_admin(self):
-        self.assertTrue(issubclass(TagAdmin, admin.ModelAdmin))
+    def test_tag_admin_inherits_from_model_admin(self) -> None:
+        assert issubclass(TagAdmin, admin.ModelAdmin)
 
-    def test_tag_translation_admin_inherits_from_base_admin(self):
-        self.assertTrue(issubclass(TagTranslationAdmin, BaseAdmin))
+    def test_tag_translation_admin_inherits_from_base_admin(self) -> None:
+        assert issubclass(TagTranslationAdmin, BaseAdmin)
 
-    def test_tag_translation_admin_inherits_from_model_admin(self):
-        self.assertTrue(issubclass(TagTranslationAdmin, admin.ModelAdmin))
+    def test_tag_translation_admin_inherits_from_model_admin(self) -> None:
+        assert issubclass(TagTranslationAdmin, admin.ModelAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -68,55 +68,55 @@ class TestTagAdminInheritance(TestCase):
 
 
 class TestTagAdminConfiguration(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = TagAdmin(Tag, admin.site)
 
     # -- list_display ---------------------------------------------------------
 
-    def test_list_display_contains_id(self):
-        self.assertIn("id", self.admin.list_display)
+    def test_list_display_contains_id(self) -> None:
+        assert "id" in self.admin.list_display
 
-    def test_list_display_contains_type(self):
-        self.assertIn("type", self.admin.list_display)
+    def test_list_display_contains_type(self) -> None:
+        assert "type" in self.admin.list_display
 
-    def test_list_display_contains_is_external(self):
-        self.assertIn("is_external", self.admin.list_display)
+    def test_list_display_contains_is_external(self) -> None:
+        assert "is_external" in self.admin.list_display
 
-    def test_list_display_contains_is_enabled(self):
-        self.assertIn("is_enabled", self.admin.list_display)
+    def test_list_display_contains_is_enabled(self) -> None:
+        assert "is_enabled" in self.admin.list_display
 
-    def test_list_display_is_tuple_or_list(self):
-        self.assertIsInstance(self.admin.list_display, (tuple, list))
+    def test_list_display_is_tuple_or_list(self) -> None:
+        assert isinstance(self.admin.list_display, (tuple, list))
 
     # -- list_filter ----------------------------------------------------------
 
-    def test_list_filter_contains_is_external(self):
-        self.assertIn("is_external", self.admin.list_filter)
+    def test_list_filter_contains_is_external(self) -> None:
+        assert "is_external" in self.admin.list_filter
 
-    def test_list_filter_contains_is_enabled(self):
-        self.assertIn("is_enabled", self.admin.list_filter)
+    def test_list_filter_contains_is_enabled(self) -> None:
+        assert "is_enabled" in self.admin.list_filter
 
-    def test_list_filter_contains_type(self):
-        self.assertIn("type", self.admin.list_filter)
+    def test_list_filter_contains_type(self) -> None:
+        assert "type" in self.admin.list_filter
 
-    def test_list_filter_is_tuple_or_list(self):
-        self.assertIsInstance(self.admin.list_filter, (tuple, list))
+    def test_list_filter_is_tuple_or_list(self) -> None:
+        assert isinstance(self.admin.list_filter, (tuple, list))
 
     # -- search_fields --------------------------------------------------------
 
-    def test_search_fields_contains_type(self):
-        self.assertIn("type", self.admin.search_fields)
+    def test_search_fields_contains_type(self) -> None:
+        assert "type" in self.admin.search_fields
 
-    def test_search_fields_contains_source(self):
-        self.assertIn("source", self.admin.search_fields)
+    def test_search_fields_contains_source(self) -> None:
+        assert "source" in self.admin.search_fields
 
-    def test_search_fields_is_tuple_or_list(self):
-        self.assertIsInstance(self.admin.search_fields, (tuple, list))
+    def test_search_fields_is_tuple_or_list(self) -> None:
+        assert isinstance(self.admin.search_fields, (tuple, list))
 
     # -- inlines --------------------------------------------------------------
 
-    def test_inlines_contains_tag_translation_inline(self):
-        self.assertIn(TagTranslationInline, self.admin.inlines)
+    def test_inlines_contains_tag_translation_inline(self) -> None:
+        assert TagTranslationInline in self.admin.inlines
 
 
 # ---------------------------------------------------------------------------
@@ -125,17 +125,17 @@ class TestTagAdminConfiguration(TestCase):
 
 
 class TestTagTranslationInlineConfiguration(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.inline = TagTranslationInline(Tag, admin.site)
 
-    def test_inline_model_is_tag_translation(self):
-        self.assertEqual(self.inline.model, TagTranslation)
+    def test_inline_model_is_tag_translation(self) -> None:
+        assert self.inline.model == TagTranslation
 
-    def test_inline_extra_is_one(self):
-        self.assertEqual(self.inline.extra, 1)
+    def test_inline_extra_is_one(self) -> None:
+        assert self.inline.extra == 1
 
-    def test_inline_autocomplete_fields_contains_language(self):
-        self.assertIn("language", self.inline.autocomplete_fields)
+    def test_inline_autocomplete_fields_contains_language(self) -> None:
+        assert "language" in self.inline.autocomplete_fields
 
 
 # ---------------------------------------------------------------------------
@@ -144,51 +144,51 @@ class TestTagTranslationInlineConfiguration(TestCase):
 
 
 class TestTagTranslationAdminConfiguration(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = TagTranslationAdmin(TagTranslation, admin.site)
 
     # -- list_display ---------------------------------------------------------
 
-    def test_list_display_contains_id(self):
-        self.assertIn("id", self.admin.list_display)
+    def test_list_display_contains_id(self) -> None:
+        assert "id" in self.admin.list_display
 
-    def test_list_display_contains_tag(self):
-        self.assertIn("tag", self.admin.list_display)
+    def test_list_display_contains_tag(self) -> None:
+        assert "tag" in self.admin.list_display
 
-    def test_list_display_contains_language(self):
-        self.assertIn("language", self.admin.list_display)
+    def test_list_display_contains_language(self) -> None:
+        assert "language" in self.admin.list_display
 
-    def test_list_display_contains_name(self):
-        self.assertIn("name", self.admin.list_display)
+    def test_list_display_contains_name(self) -> None:
+        assert "name" in self.admin.list_display
 
-    def test_list_display_is_tuple_or_list(self):
-        self.assertIsInstance(self.admin.list_display, (tuple, list))
+    def test_list_display_is_tuple_or_list(self) -> None:
+        assert isinstance(self.admin.list_display, (tuple, list))
 
     # -- list_filter ----------------------------------------------------------
 
-    def test_list_filter_contains_language_code(self):
+    def test_list_filter_contains_language_code(self) -> None:
         """list_filter must use 'language__code', not plain 'language'."""
-        self.assertIn("language__code", self.admin.list_filter)
+        assert "language__code" in self.admin.list_filter
 
-    def test_list_filter_does_not_contain_plain_language(self):
+    def test_list_filter_does_not_contain_plain_language(self) -> None:
         """plain 'language' was replaced by 'language__code'."""
-        self.assertNotIn("language", self.admin.list_filter)
+        assert "language" not in self.admin.list_filter
 
     # -- search_fields --------------------------------------------------------
 
-    def test_search_fields_contains_name(self):
-        self.assertIn("name", self.admin.search_fields)
+    def test_search_fields_contains_name(self) -> None:
+        assert "name" in self.admin.search_fields
 
-    def test_search_fields_contains_tag_type(self):
-        self.assertIn("tag__type", self.admin.search_fields)
+    def test_search_fields_contains_tag_type(self) -> None:
+        assert "tag__type" in self.admin.search_fields
 
     # -- autocomplete_fields --------------------------------------------------
 
-    def test_autocomplete_fields_contains_tag(self):
-        self.assertIn("tag", self.admin.autocomplete_fields)
+    def test_autocomplete_fields_contains_tag(self) -> None:
+        assert "tag" in self.admin.autocomplete_fields
 
-    def test_autocomplete_fields_contains_language(self):
-        self.assertIn("language", self.admin.autocomplete_fields)
+    def test_autocomplete_fields_contains_language(self) -> None:
+        assert "language" in self.admin.autocomplete_fields
 
 
 # ---------------------------------------------------------------------------
@@ -197,41 +197,41 @@ class TestTagTranslationAdminConfiguration(TestCase):
 
 
 class TestTagAdminFunctional(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = User.objects.create_superuser(username="admin", password="secret", email="admin@example.com")
         self.client.force_login(self.superuser)
         self.tag = TagFactory.create(type="genre")
 
-    def test_changelist_returns_200(self):
+    def test_changelist_returns_200(self) -> None:
         url = reverse("admin:tags_tag_changelist")
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changeform_returns_200(self):
+    def test_changeform_returns_200(self) -> None:
         url = reverse("admin:tags_tag_change", args=[self.tag.pk])
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_add_form_returns_200(self):
+    def test_add_form_returns_200(self) -> None:
         url = reverse("admin:tags_tag_add")
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
 
 class TestTagTranslationAdminFunctional(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = User.objects.create_superuser(username="admin", password="secret", email="admin@example.com")
         self.client.force_login(self.superuser)
         self.lang = LanguageFactory.create(code="nl", name="Dutch")
         self.tag = TagFactory.create(type="genre")
         self.translation = TagTranslationFactory.create(tag=self.tag, language=self.lang, name="Genre", url_title="genre")
 
-    def test_changelist_returns_200(self):
+    def test_changelist_returns_200(self) -> None:
         url = reverse("admin:tags_tagtranslation_changelist")
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changeform_returns_200(self):
+    def test_changeform_returns_200(self) -> None:
         url = reverse("admin:tags_tagtranslation_change", args=[self.translation.pk])
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changelist_filter_by_language_code(self):
+    def test_changelist_filter_by_language_code(self) -> None:
         """Changelist filter must use language__code lookup."""
         url = reverse("admin:tags_tagtranslation_changelist")
-        self.assertEqual(self.client.get(url, {"language__code": "nl"}).status_code, 200)
+        assert self.client.get(url, {"language__code": "nl"}).status_code == 200

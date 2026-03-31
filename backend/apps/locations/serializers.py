@@ -1,5 +1,4 @@
-"""
-Serializers for the Locations app.
+"""Serializers for the Locations app.
 
 Field-level `help_text` and `extra_kwargs` are picked up automatically
 by drf-spectacular and rendered in the Swagger UI, so descriptions do
@@ -17,8 +16,7 @@ from .models import Hall, Location, Space
 
 
 class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
-    """
-    Represents a Location.
+    """Represents a Location.
 
     The `name` field contains all available translations as a dictionary,
     for example: {"en": "City Hall", "fr": "Hôtel de Ville"}.
@@ -79,8 +77,7 @@ class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixi
 
 
 class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
-    """
-    Represents a Hall.
+    """Represents a Hall.
 
     Both `name` and `remark` contain all available translations
     as dictionaries (e.g. {"en": "Main Hall", "fr": "Grande Salle"}).
@@ -152,14 +149,13 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "remark")
 
-    def get_space(self, obj) -> dict | None:
+    def get_space(self, obj: Hall) -> dict | None:
+        """Return a nested representation of the parent Space."""
         return SpaceNestedSerializer(obj.space, context=self.context).data
 
 
 class HallNestedSerializer(HallSerializer):
-    """
-    Nested representation of a Hall. Excludes `space` and `space_id` to avoid circular nesting.
-    """
+    """Nested representation of a Hall. Excludes `space` and `space_id` to avoid circular nesting."""
 
     class Meta(HallSerializer.Meta):
         fields = [f for f in HallSerializer.Meta.fields if f not in ("space", "space_id")]
@@ -167,8 +163,7 @@ class HallNestedSerializer(HallSerializer):
 
 
 class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
-    """
-    Represents a Space.
+    """Represents a Space.
 
     The `name` field contains all available translations as a dictionary,
     for example: {"en": "Stage A", "fr": "Scène A"}.
@@ -212,9 +207,7 @@ class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
 
 
 class SpaceNestedSerializer(SpaceSerializer):
-    """
-    Nested representation of a Space. Excludes `halls` and `location_id` to avoid circular nesting.
-    """
+    """Nested representation of a Space. Excludes `halls` and `location_id` to avoid circular nesting."""
 
     class Meta(SpaceSerializer.Meta):
         fields = [f for f in SpaceSerializer.Meta.fields if f not in ("halls", "location_id")]

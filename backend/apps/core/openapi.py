@@ -1,5 +1,4 @@
-"""
-Shared OpenAPI building blocks for the core app.
+"""Shared OpenAPI building blocks for the core app.
 
 This module defines reusable :class:`~drf_spectacular.utils.OpenApiResponse`
 objects for the HTTP status codes that appear across multiple apps. Every
@@ -11,9 +10,9 @@ Usage
 Import the convenience sets that match the action pattern::
 
     from apps.core.openapi import (
-        READ_ERRORS,    # 401, 403
-        ITEM_ERRORS,    # 401, 403, 404
-        WRITE_ERRORS,   # 401, 403, 422
+        READ_ERRORS,  # 401, 403
+        ITEM_ERRORS,  # 401, 403, 404
+        WRITE_ERRORS,  # 401, 403, 422
         MUTATE_ERRORS,  # 401, 403, 404, 422
         DELETE_ERRORS,  # 401, 403, 404
     )
@@ -247,7 +246,7 @@ def error_responses(*codes: int) -> dict[int, OpenApiResponse]:
 
     Example::
 
-        responses={201: MySerializer, **error_responses(401, 403, 422)}
+        responses = {201: MySerializer, **error_responses(401, 403, 422)}
     """
     unknown = set(codes) - _CODE_MAP.keys()
     if unknown:

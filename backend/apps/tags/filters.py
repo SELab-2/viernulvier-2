@@ -1,6 +1,4 @@
-"""
-Filters for the Tags app.
-"""
+"""Filters for the Tags app."""
 
 import django_filters
 
@@ -10,8 +8,7 @@ from .models import Tag
 
 
 class TagFilter(BaseModelFilter):
-    """
-    FilterSet for Tag list queries.
+    """FilterSet for Tag list queries.
 
     Supported query parameters
     --------------------------

@@ -10,8 +10,8 @@ Covers:
 - PriceRankSerializer validation (unique position)
 """
 
-import pytest
 from django.test import TestCase, override_settings
+import pytest
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 
@@ -35,7 +35,7 @@ class TestPriceSerializerFields(TestCase):
     """Verify that the correct fields are exposed."""
 
     @classmethod
-    def setUpTestData(cls):
+    def setUpTestData(cls) -> None:
         cls.factory = APIRequestFactory()
         cls.lang_en = LanguageFactory.create(code="en", name="English")
 
@@ -59,7 +59,7 @@ class TestPriceSerializerFields(TestCase):
         django_req = self.factory.get(path)
         return Request(django_req)
 
-    def test_expected_fields_are_present(self):
+    def test_expected_fields_are_present(self) -> None:
         """Test case for test_expected_fields_are_present."""
         serializer = PriceSerializer(self.price, context={"request": self._drf_request("/dummy")})
         data = serializer.data
@@ -77,39 +77,36 @@ class TestPriceSerializerFields(TestCase):
             "description",
         }
         for f in expected:
-            self.assertIn(f, data)
+            assert f in data
 
-    def test_translations_field_is_not_exposed(self):
+    def test_translations_field_is_not_exposed(self) -> None:
         """Test case for test_translations_field_is_not_exposed."""
         serializer = PriceSerializer(self.price, context={"request": self._drf_request("/dummy")})
-        self.assertNotIn("translations", serializer.data)
+        assert "translations" not in serializer.data
 
-    def test_no_extra_fields_are_exposed(self):
+    def test_no_extra_fields_are_exposed(self) -> None:
         """Test case for test_no_extra_fields_are_exposed."""
         serializer = PriceSerializer(self.price, context={"request": self._drf_request("/dummy")})
-        self.assertEqual(
-            set(serializer.data.keys()),
-            {
-                "id",
-                "type",
-                "visibility",
-                "membership",
-                "minimum",
-                "maximum",
-                "step",
-                "sort_order",
-                "cineville_box",
-                "description",
-                "display_description",
-            },
-        )
+        assert set(serializer.data.keys()) == {
+            "id",
+            "type",
+            "visibility",
+            "membership",
+            "minimum",
+            "maximum",
+            "step",
+            "sort_order",
+            "cineville_box",
+            "description",
+            "display_description",
+        }
 
 
 class TestPriceSerializerSerialization(TestCase):
     """Model -> dict serialization."""
 
     @classmethod
-    def setUpTestData(cls):
+    def setUpTestData(cls) -> None:
         cls.factory = APIRequestFactory()
         cls.lang_en = LanguageFactory.create(code="en", name="English")
         cls.lang_nl = LanguageFactory.create(code="nl", name="Nederlands")
@@ -128,45 +125,39 @@ class TestPriceSerializerSerialization(TestCase):
         PriceTranslationFactory.create(price=cls.price, language=cls.lang_en, description="Standard ticket")
         PriceTranslationFactory.create(price=cls.price, language=cls.lang_nl, description="Standaard ticket")
 
-    def test_serializes_price_core_fields(self):
+    def test_serializes_price_core_fields(self) -> None:
         """Test case for test_serializes_price_core_fields."""
         serializer = PriceSerializer(self.price, context={"request": _drf_request(self.factory, "/dummy")})
         data = serializer.data
 
-        self.assertEqual(data["type"], "Standard")
-        self.assertEqual(data["visibility"], "public")
-        self.assertEqual(data["membership"], "Member")
-        self.assertIsNone(data["minimum"])
-        self.assertIsNone(data["maximum"])
-        self.assertIsNone(data["step"])
-        self.assertEqual(data["sort_order"], 0)
-        self.assertIsInstance(data["cineville_box"], bool)
+        assert data["type"] == "Standard"
+        assert data["visibility"] == "public"
+        assert data["membership"] == "Member"
+        assert data["minimum"] is None
+        assert data["maximum"] is None
+        assert data["step"] is None
+        assert data["sort_order"] == 0
+        assert isinstance(data["cineville_box"], bool)
 
-    def test_description_is_dict(self):
+    def test_description_is_dict(self) -> None:
         """Test case for test_description_is_dict."""
         serializer = PriceSerializer(self.price, context={"request": _drf_request(self.factory, "/dummy")})
-        self.assertIsInstance(serializer.data["description"], dict)
+        assert isinstance(serializer.data["description"], dict)
 
-    def test_description_contains_all_translations(self):
+    def test_description_contains_all_translations(self) -> None:
         """Test case for test_description_contains_all_translations."""
         serializer = PriceSerializer(self.price, context={"request": _drf_request(self.factory, "/dummy")})
-        self.assertEqual(
-            serializer.data["description"],
-            {"en": "Standard ticket", "nl": "Standaard ticket"},
-        )
+        assert serializer.data["description"] == {"en": "Standard ticket", "nl": "Standaard ticket"}
 
-    def test_description_with_requested_lang_still_returns_dict(self):
+    def test_description_with_requested_lang_still_returns_dict(self) -> None:
         """Test case for test_description_with_requested_lang_still_returns_dict."""
         serializer = PriceSerializer(
             self.price,
             context={"request": _drf_request(self.factory, "/dummy?lang=nl")},
         )
-        self.assertEqual(
-            serializer.data["description"],
-            {"en": "Standard ticket", "nl": "Standaard ticket"},
-        )
+        assert serializer.data["description"] == {"en": "Standard ticket", "nl": "Standaard ticket"}
 
-    def test_serializes_queryset(self):
+    def test_serializes_queryset(self) -> None:
         """Test case for test_serializes_queryset."""
         PriceFactory.create(
             type="Other",
@@ -184,33 +175,33 @@ class TestPriceSerializerSerialization(TestCase):
             context={"request": _drf_request(self.factory, "/dummy")},
         )
         types = [item["type"] for item in serializer.data]
-        self.assertIn("Standard", types)
-        self.assertIn("Other", types)
+        assert "Standard" in types
+        assert "Other" in types
 
-    def test_type_visibility_membership_are_strings(self):
+    def test_type_visibility_membership_are_strings(self) -> None:
         """Test case for test_type_visibility_membership_are_strings."""
         serializer = PriceSerializer(self.price, context={"request": _drf_request(self.factory, "/dummy")})
         data = serializer.data
-        self.assertIsInstance(data["type"], str)
-        self.assertIsInstance(data["visibility"], str)
-        self.assertIsInstance(data["membership"], str)
+        assert isinstance(data["type"], str)
+        assert isinstance(data["visibility"], str)
+        assert isinstance(data["membership"], str)
 
-    def test_sort_order_is_int(self):
+    def test_sort_order_is_int(self) -> None:
         """Test case for test_sort_order_is_int."""
         serializer = PriceSerializer(self.price, context={"request": _drf_request(self.factory, "/dummy")})
-        self.assertIsInstance(serializer.data["sort_order"], int)
+        assert isinstance(serializer.data["sort_order"], int)
 
 
 class TestPriceSerializerTranslationEdgeCases(TestCase):
     """Edge cases for translation dict output."""
 
     @classmethod
-    def setUpTestData(cls):
+    def setUpTestData(cls) -> None:
         cls.factory = APIRequestFactory()
         cls.lang_en = LanguageFactory.create(code="en", name="English")
         cls.lang_nl = LanguageFactory.create(code="nl", name="Nederlands")
 
-    def test_description_empty_dict_if_no_translations(self):
+    def test_description_empty_dict_if_no_translations(self) -> None:
         """Test case for test_description_empty_dict_if_no_translations."""
         price = PriceFactory.create(
             type="NoTrans",
@@ -223,9 +214,9 @@ class TestPriceSerializerTranslationEdgeCases(TestCase):
             cineville_box=False,
         )
         serializer = PriceSerializer(price, context={"request": _drf_request(self.factory, "/dummy?lang=en")})
-        self.assertEqual(serializer.data["description"], {})
+        assert serializer.data["description"] == {}
 
-    def test_description_skips_missing_language_keys(self):
+    def test_description_skips_missing_language_keys(self) -> None:
         """Test case for test_description_skips_missing_language_keys."""
         """
         If only one translation exists, the dict contains only that language.
@@ -242,18 +233,18 @@ class TestPriceSerializerTranslationEdgeCases(TestCase):
         )
         PriceTranslationFactory.create(price=price, language=self.lang_en, description="Only EN")
         serializer = PriceSerializer(price, context={"request": _drf_request(self.factory, "/dummy?lang=nl")})
-        self.assertEqual(serializer.data["description"], {"en": "Only EN"})
+        assert serializer.data["description"] == {"en": "Only EN"}
 
 
 class TestPriceSerializerDeserialization(TestCase):
     """dict -> model (create / update)."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.factory = APIRequestFactory()
 
     # -- Valid data -----------------------------------------------------------
 
-    def test_valid_data_is_valid(self):
+    def test_valid_data_is_valid(self) -> None:
         """Test case for test_valid_data_is_valid."""
         data = {
             "type": "Standard",
@@ -266,9 +257,9 @@ class TestPriceSerializerDeserialization(TestCase):
             "cineville_box": False,
         }
         serializer = PriceSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        assert serializer.is_valid(), serializer.errors
 
-    def test_valid_data_saves_to_db(self):
+    def test_valid_data_saves_to_db(self) -> None:
         """Test case for test_valid_data_saves_to_db."""
         data = {
             "type": "Standard",
@@ -281,13 +272,13 @@ class TestPriceSerializerDeserialization(TestCase):
             "cineville_box": False,
         }
         serializer = PriceSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        assert serializer.is_valid(), serializer.errors
         price = serializer.save()
-        self.assertTrue(Price.objects.filter(id=price.id).exists())
+        assert Price.objects.filter(id=price.id).exists()
 
     # -- Read-only behavior ---------------------------------------------------
 
-    def test_description_is_read_only(self):
+    def test_description_is_read_only(self) -> None:
         """Test case for test_description_is_read_only."""
         """
         If `description` is SerializerMethodField, it should not be writable.
@@ -304,16 +295,16 @@ class TestPriceSerializerDeserialization(TestCase):
             "description": {"en": "Hacked"},  # should be ignored / not validated as input
         }
         serializer = PriceSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        assert serializer.is_valid(), serializer.errors
 
         price = serializer.save()
         # There are no translations created from serializer input; description output remains {}.
         out = PriceSerializer(price, context={"request": _drf_request(self.factory, "/dummy")}).data
-        self.assertEqual(out["description"], {})
+        assert out["description"] == {}
 
     # -- Invalid data ---------------------------------------------------------
 
-    def test_missing_type_is_invalid(self):
+    def test_missing_type_is_invalid(self) -> None:
         """Test case for test_missing_type_is_invalid."""
         data = {
             "visibility": "public",
@@ -322,10 +313,10 @@ class TestPriceSerializerDeserialization(TestCase):
             "cineville_box": False,
         }
         serializer = PriceSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
-        self.assertFalse(serializer.is_valid())
-        self.assertIn("type", serializer.errors)
+        assert not serializer.is_valid()
+        assert "type" in serializer.errors
 
-    def test_missing_visibility_is_invalid(self):
+    def test_missing_visibility_is_invalid(self) -> None:
         """Test case for test_missing_visibility_is_invalid."""
         data = {
             "type": "Standard",
@@ -334,10 +325,10 @@ class TestPriceSerializerDeserialization(TestCase):
             "cineville_box": False,
         }
         serializer = PriceSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
-        self.assertFalse(serializer.is_valid())
-        self.assertIn("visibility", serializer.errors)
+        assert not serializer.is_valid()
+        assert "visibility" in serializer.errors
 
-    def test_sort_order_must_be_int(self):
+    def test_sort_order_must_be_int(self) -> None:
         """Test case for test_sort_order_must_be_int."""
         data = {
             "type": "Standard",
@@ -347,12 +338,12 @@ class TestPriceSerializerDeserialization(TestCase):
             "cineville_box": False,
         }
         serializer = PriceSerializer(data=data, context={"request": _drf_request(self.factory, "/dummy")})
-        self.assertFalse(serializer.is_valid())
-        self.assertIn("sort_order", serializer.errors)
+        assert not serializer.is_valid()
+        assert "sort_order" in serializer.errors
 
     # -- Partial update -------------------------------------------------------
 
-    def test_partial_update_type_only(self):
+    def test_partial_update_type_only(self) -> None:
         """Test case for test_partial_update_type_only."""
         price = PriceFactory.create(
             type="Standard",
@@ -370,39 +361,39 @@ class TestPriceSerializerDeserialization(TestCase):
             partial=True,
             context={"request": _drf_request(self.factory, "/dummy")},
         )
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        assert serializer.is_valid(), serializer.errors
         updated = serializer.save()
-        self.assertEqual(updated.type, "Updated")
-        self.assertEqual(updated.visibility, "public")  # unchanged
+        assert updated.type == "Updated"
+        assert updated.visibility == "public"  # unchanged
 
 
 class TestPriceRankSerializer(TestCase):
     """PriceRankSerializer validation behavior."""
 
-    def test_valid_price_rank_is_valid(self):
+    def test_valid_price_rank_is_valid(self) -> None:
         """Test case for test_valid_price_rank_is_valid."""
         serializer = PriceRankSerializer(data={"position": 1, "sold_out_buffer": 0})
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        assert serializer.is_valid(), serializer.errors
 
-    def test_valid_price_rank_saves(self):
+    def test_valid_price_rank_saves(self) -> None:
         """Test case for test_valid_price_rank_saves."""
         serializer = PriceRankSerializer(data={"position": 1, "sold_out_buffer": 0})
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        assert serializer.is_valid(), serializer.errors
         rank = serializer.save()
-        self.assertTrue(PriceRank.objects.filter(id=rank.id).exists())
+        assert PriceRank.objects.filter(id=rank.id).exists()
 
-    def test_unique_position_validator(self):
+    def test_unique_position_validator(self) -> None:
         """Test case for test_unique_position_validator."""
         PriceRankFactory.create(position=1, sold_out_buffer=0)
         serializer = PriceRankSerializer(data={"position": 1, "sold_out_buffer": 0})
-        self.assertFalse(serializer.is_valid())
-        self.assertIn("position", serializer.errors)
+        assert not serializer.is_valid()
+        assert "position" in serializer.errors
 
-    def test_position_must_be_int(self):
+    def test_position_must_be_int(self) -> None:
         """Test case for test_position_must_be_int."""
         serializer = PriceRankSerializer(data={"position": "nope", "sold_out_buffer": 0})
-        self.assertFalse(serializer.is_valid())
-        self.assertIn("position", serializer.errors)
+        assert not serializer.is_valid()
+        assert "position" in serializer.errors
 
 
 def _display_ctx():
@@ -415,7 +406,7 @@ class TestPriceRankDisplayDescriptionBaseLanguage:
 
     @pytest.mark.django_db
     @override_settings(LANGUAGE_CODE="en-us")
-    def test_uses_base_language_when_present(self):
+    def test_uses_base_language_when_present(self) -> None:
         en = Language.objects.create(code="en", name="English")
         nl = Language.objects.create(code="nl", name="Dutch")
 
@@ -428,7 +419,7 @@ class TestPriceRankDisplayDescriptionBaseLanguage:
 
     @pytest.mark.django_db
     @override_settings(LANGUAGE_CODE="en-us")
-    def test_falls_back_when_base_language_missing(self):
+    def test_falls_back_when_base_language_missing(self) -> None:
         nl = Language.objects.create(code="nl", name="Dutch")
 
         rank = PriceRank.objects.create(position=1, sold_out_buffer=0)
