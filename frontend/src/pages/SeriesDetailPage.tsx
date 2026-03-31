@@ -1,4 +1,5 @@
-import { Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
+import { useEffect, useMemo, useState } from 'react'
+import { Alert, Box, Button, CircularProgress, Container, Divider, Stack, Typography } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -8,155 +9,214 @@ import SeriesStats from '../components/series_details/SeriesStats'
 import ProductionCard from '../components/series_details/ProductionCard'
 import TimelineItem from '../components/series_details/TimelineItem'
 
-// TODO: Fetch series and productions from API instead of using hardcoded placeholder data.
+import { getTag } from '../services/tags/Tags'
+import { getProductions } from '../services/productions/Productions'
+import type { Tag } from '../types/Tags'
+import type { Production } from '../types/Productions'
 
-type LocalizedText = {
-  nl: string
-  en: string
+type SeriesStat = {
+  value: string
+  label: string
 }
 
-type PlaceholderProduction = {
-  id: number
-  year: string
-  title: LocalizedText
-  meta: LocalizedText
-  description: LocalizedText
-  tags: LocalizedText[]
-  image: string
-}
+function getLocalizedRecordValue(
+  value: Record<string, string> | null | undefined,
+  language: string,
+  fallback = '',
+): string {
+  if (!value) return fallback
 
-const placeholderSeries: {
-  id: number
-  type: string
-  name: LocalizedText
-  description: LocalizedText
-  badge: LocalizedText
-  stats: { value: string; label: LocalizedText }[]
-  productions: PlaceholderProduction[]
-} = {
-  id: 12,
-  type: 'theme',
-  name: {
-    nl: 'VIDEODROOM',
-    en: 'VIDEODROOM',
-  },
-  description: {
-    nl: 'Het audiovisuele festival dat de grenzen tussen muziek, beeld en performance verkent. Sinds 2013 brengt VIDEODROOM vernieuwende artiesten, live visuals en meeslepende clubnachten samen in één terugkerende reeks.',
-    en: 'The audiovisual festival that explores the boundaries between music, image and performance. Since 2013, VIDEODROOM has brought together groundbreaking artists, live visuals and immersive club nights in one recurring series.',
-  },
-  badge: {
-    nl: 'Terugkerende reeks',
-    en: 'Recurring series',
-  },
-  stats: [
-    {
-      value: '11',
-      label: { nl: 'Edities', en: 'Editions' },
-    },
-    {
-      value: '2013–2024',
-      label: { nl: 'Periode', en: 'Period' },
-    },
-    {
-      value: '150+',
-      label: { nl: 'Artiesten', en: 'Artists' },
-    },
-  ],
-  productions: [
-    {
-      id: 101,
-      year: '2024',
-      title: {
-        nl: 'VIDEODROOM 2024',
-        en: 'VIDEODROOM 2024',
-      },
-      meta: {
-        nl: '11e editie · 3–5 mei 2024 · Multiple locations',
-        en: '11th edition · 3–5 May 2024 · Multiple locations',
-      },
-      description: {
-        nl: 'De 11e editie bracht opnieuw cutting-edge elektronische muziek en visuele kunst samen, met headline sets, live cinema en nachtelijke performances verspreid over verschillende zalen.',
-        en: 'The 11th edition once again brought together cutting-edge electronic music and visual art, with headline sets, live cinema and late-night performances spread across multiple venues.',
-      },
-      tags: [
-        { nl: 'Festival', en: 'Festival' },
-        { nl: 'Audiovisueel', en: 'Audiovisual' },
-        { nl: '3 dagen', en: '3 days' },
-        { nl: '25 artiesten', en: '25 artists' },
-      ],
-      image:
-        'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      id: 102,
-      year: '2023',
-      title: {
-        nl: 'VIDEODROOM 2023',
-        en: 'VIDEODROOM 2023',
-      },
-      meta: {
-        nl: '10e editie (jubileum) · 12–14 mei 2023 · Multiple locations',
-        en: '10th edition (anniversary) · 12–14 May 2023 · Multiple locations',
-      },
-      description: {
-        nl: 'De jubileumeditie vierde tien jaar VIDEODROOM met een uitgebreid programma vol elektronische muziek, installaties en speciale gastperformances.',
-        en: 'The anniversary edition celebrated ten years of VIDEODROOM with an expanded programme full of electronic music, installations and special guest performances.',
-      },
-      tags: [
-        { nl: 'Festival', en: 'Festival' },
-        { nl: 'Jubileumeditie', en: 'Anniversary edition' },
-        { nl: '3 dagen', en: '3 days' },
-        { nl: '30 artiesten', en: '30 artists' },
-      ],
-      image:
-        'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      id: 103,
-      year: '2022',
-      title: {
-        nl: 'VIDEODROOM 2022',
-        en: 'VIDEODROOM 2022',
-      },
-      meta: {
-        nl: '9e editie · 6–8 mei 2022 · Multiple locations',
-        en: '9th edition · 6–8 May 2022 · Multiple locations',
-      },
-      description: {
-        nl: 'Na een tussenperiode keerde VIDEODROOM terug met een focus op hybride performances, experimentele concertformats en immersieve scenografie.',
-        en: 'After a break, VIDEODROOM returned with a focus on hybrid performances, experimental concert formats and immersive scenography.',
-      },
-      tags: [
-        { nl: 'Festival', en: 'Festival' },
-        { nl: 'Live visuals', en: 'Live visuals' },
-        { nl: '3 dagen', en: '3 days' },
-        { nl: '20 artiesten', en: '20 artists' },
-      ],
-      image:
-        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80',
-    },
-  ],
-}
-
-function getLocalizedValue(value: LocalizedText, language: string): string {
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
-  return value[normalizedLanguage]
+
+  return value[normalizedLanguage] ?? value.en ?? value.nl ?? Object.values(value)[0] ?? fallback
+}
+
+function getSeriesBadge(tag: Tag, language: string, t: (key: string, options?: Record<string, unknown>) => string) {
+  const localizedType = tag.type?.trim()
+
+  if (localizedType) {
+    return localizedType
+  }
+
+  return language.startsWith('en')
+    ? t('series.recurringSeries', { defaultValue: 'Recurring series' })
+    : t('series.recurringSeries', { defaultValue: 'Terugkerende reeks' })
+}
+
+function extractYearFromProduction(production: Production): string {
+  const candidates = [
+    production.display_title,
+    ...Object.values(production.title ?? {}),
+  ].filter(Boolean) as string[]
+
+  for (const candidate of candidates) {
+    const match = candidate.match(/\b(19|20)\d{2}\b/)
+    if (match) return match[0]
+  }
+
+  return '—'
+}
+
+function buildProductionMeta(production: Production, language: string): string {
+  const parts = [
+    getLocalizedRecordValue(production.artist_name, language),
+    production.uit_database_type?.name ?? '',
+    production.uit_database_theme?.name ?? '',
+  ].filter(Boolean)
+
+  return parts.join(' · ')
+}
+
+function buildProductionDescription(production: Production, language: string): string {
+  return (
+    getLocalizedRecordValue(production.teaser, language) ||
+    getLocalizedRecordValue(production.description, language) ||
+    ''
+  )
+}
+
+function buildProductionImage(_production: Production): string {
+  // Geen bruikbare media shape beschikbaar in de gedeelde types/snippets,
+  // dus voorlopig leeg laten i.p.v. placeholders te gebruiken.
+  return ''
 }
 
 const SeriesDetailPage = () => {
-  useParams<{ id: string }>()
+  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
 
-  const series = placeholderSeries
-  const seriesName = getLocalizedValue(series.name, i18n.language)
-  const seriesDescription = getLocalizedValue(series.description, i18n.language)
-  const seriesBadge = getLocalizedValue(series.badge, i18n.language)
+  const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
+  const [productions, setProductions] = useState<Production[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const localizedStats = series.stats.map((stat) => ({
-    value: stat.value,
-    label: getLocalizedValue(stat.label, i18n.language),
-  }))
+
+  console.log(seriesTag)
+  console.log(i18n.language)
+  
+  useEffect(() => {
+    const numericId = Number(id)
+
+    if (!numericId || Number.isNaN(numericId)) {
+      setError(t('series.invalidId', { defaultValue: 'Ongeldig reeks-ID.' }))
+      setIsLoading(false)
+      return
+    }
+
+    const fetchSeries = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        const [tag, productionsResponse] = await Promise.all([
+          getTag(numericId),
+          getProductions({
+            pageSize: 100,
+            filters: {
+              tag: numericId,
+            },
+          }),
+        ])
+
+        setSeriesTag(tag)
+        setProductions(productionsResponse.results)
+      } catch {
+        setError(
+          t('series.fetchError', {
+            defaultValue: 'Kon de reeks niet ophalen.',
+          }),
+        )
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    void fetchSeries()
+  }, [id, t])
+
+  const sortedProductions = useMemo(() => {
+    return [...productions].sort((a, b) => {
+      const yearA = Number(extractYearFromProduction(a))
+      const yearB = Number(extractYearFromProduction(b))
+
+      if (Number.isNaN(yearA) && Number.isNaN(yearB)) return b.id - a.id
+      if (Number.isNaN(yearA)) return 1
+      if (Number.isNaN(yearB)) return -1
+
+      return yearB - yearA
+    })
+  }, [productions])
+
+  const stats = useMemo<SeriesStat[]>(() => {
+    const years = sortedProductions
+      .map((production) => extractYearFromProduction(production))
+      .filter((year) => /^\d{4}$/.test(year))
+      .map(Number)
+
+    const minYear = years.length ? Math.min(...years) : null
+    const maxYear = years.length ? Math.max(...years) : null
+
+    return [
+      {
+        value: String(sortedProductions.length),
+        label: t('series.stats.editions', { defaultValue: 'Edities' }),
+      },
+      {
+        value: minYear && maxYear ? `${minYear}–${maxYear}` : '—',
+        label: t('series.stats.period', { defaultValue: 'Periode' }),
+      },
+      {
+        value: seriesTag?.type || '—',
+        label: t('series.stats.type', { defaultValue: 'Type' }),
+      },
+    ]
+  }, [seriesTag?.type, sortedProductions, t])
+
+  if (isLoading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 }, px: { xs: 2, sm: 3 } }}>
+        <Stack spacing={3} alignItems="center">
+          <CircularProgress />
+          <Typography color="text.secondary">
+            {t('series.loading', { defaultValue: 'Reeks wordt geladen...' })}
+          </Typography>
+        </Stack>
+      </Container>
+    )
+  }
+
+  if (error || !seriesTag) {
+    return (
+      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 }, px: { xs: 2, sm: 3 } }}>
+        <Stack spacing={3}>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/series')}
+            sx={{ alignSelf: 'flex-start' }}
+          >
+            {t('series.backToSeries')}
+          </Button>
+
+          <Alert severity="error">
+            {error || t('series.notFound', { defaultValue: 'Reeks niet gevonden.' })}
+          </Alert>
+        </Stack>
+      </Container>
+    )
+  }
+
+  const seriesName =
+    getLocalizedRecordValue(seriesTag.name, i18n.language) ||
+    seriesTag.display_name ||
+    t('series.untitled', { defaultValue: 'Naamloze reeks' })
+
+  const seriesDescription =
+    getLocalizedRecordValue(seriesTag.short_description, i18n.language) ||
+    seriesTag.display_short_description ||
+    t('series.noDescription', { defaultValue: 'Geen beschrijving beschikbaar.' })
+
+  const seriesBadge = getSeriesBadge(seriesTag, i18n.language, t)
 
   return (
     <Container
@@ -184,54 +244,65 @@ const SeriesDetailPage = () => {
           </Typography>
         </Stack>
 
-        <SeriesHeader name={seriesName} description={seriesDescription} badge={seriesBadge} />
+        <SeriesHeader
+          name={seriesName}
+          description={seriesDescription}
+          badge={seriesBadge}
+        />
 
-        <SeriesStats stats={localizedStats} />
+        <SeriesStats stats={stats} />
 
         <Divider />
 
         <Stack spacing={1}>
           <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
-            {t('series.allEditions')}
+            {t('series.allEditions', { defaultValue: 'Alle edities' })}
           </Typography>
 
           <Typography variant="body2" color="text.secondary">
-            {t('series.allEditionsSubtitle')}
+            {t('series.allEditionsSubtitle', {
+              defaultValue: 'Alle producties die aan deze reeks-tag gekoppeld zijn.',
+            })}
           </Typography>
         </Stack>
 
-        <Stack spacing={4} sx={{ position: 'relative', pl: { xs: 0, md: 3 } }}>
-          <Box
-            sx={{
-              position: 'absolute',
-              left: 11,
-              top: 10,
-              bottom: 10,
-              width: '1px',
-              bgcolor: 'divider',
-              display: { xs: 'none', md: 'block' },
-            }}
-          />
+        {sortedProductions.length === 0 ? (
+          <Alert severity="info">
+            {t('series.noProductions', {
+              defaultValue: 'Er zijn nog geen producties gekoppeld aan deze reeks.',
+            })}
+          </Alert>
+        ) : (
+          <Stack spacing={4} sx={{ position: 'relative', pl: { xs: 0, md: 3 } }}>
+            <Box
+              sx={{
+                position: 'absolute',
+                left: 11,
+                top: 10,
+                bottom: 10,
+                width: '1px',
+                bgcolor: 'divider',
+                display: { xs: 'none', md: 'block' },
+              }}
+            />
 
-          {series.productions.map((production) => (
-            <TimelineItem key={production.id} year={production.year}>
-              <ProductionCard
-                title={getLocalizedValue(production.title, i18n.language)}
-                meta={getLocalizedValue(production.meta, i18n.language)}
-                description={getLocalizedValue(production.description, i18n.language)}
-                tags={production.tags.map((tag) => getLocalizedValue(tag, i18n.language))}
-                image={production.image}
-              />
-            </TimelineItem>
-          ))}
-        </Stack>
-
-        <Typography variant="caption" color="text.secondary">
-          {t('series.placeholderNote', {
-            defaultValue:
-              'Placeholder-detailpagina, opgebouwd met voorbeeldproducties tot de API-koppeling klaar is.',
-          })}
-        </Typography>
+            {sortedProductions.map((production) => (
+              <TimelineItem key={production.id} year={extractYearFromProduction(production)}>
+                <ProductionCard
+                  title={
+                    production.display_title ||
+                    getLocalizedRecordValue(production.title, i18n.language) ||
+                    t('series.untitledProduction', { defaultValue: 'Naamloze productie' })
+                  }
+                  meta={buildProductionMeta(production, i18n.language)}
+                  description={buildProductionDescription(production, i18n.language)}
+                  tags={production.tags.map((tag) => tag.display_name || getLocalizedRecordValue(tag.name, i18n.language))}
+                  image={buildProductionImage(production)}
+                />
+              </TimelineItem>
+            ))}
+          </Stack>
+        )}
       </Stack>
     </Container>
   )

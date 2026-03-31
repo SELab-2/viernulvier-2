@@ -1,3 +1,8 @@
+/*
+ * Displays the main header of a series detail page:
+ * title, description and a badge.
+ */
+
 import { Box, Chip, Stack, Typography } from '@mui/material'
 
 type Props = {
@@ -9,13 +14,15 @@ type Props = {
 const SeriesHeader = ({ name, description, badge }: Props) => {
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={3}>
+      {/* Text container */}
       <Box
         sx={{
           maxWidth: 760,
           width: '100%',
-          minWidth: 0,
+          minWidth: 0, // Prevent overflow in flex layouts
         }}
       >
+        {/* Title */}
         <Typography
           variant="h3"
           sx={{
@@ -28,6 +35,7 @@ const SeriesHeader = ({ name, description, badge }: Props) => {
           {name}
         </Typography>
 
+        {/* Description */}
         <Typography
           variant="body1"
           color="text.secondary"
@@ -40,6 +48,7 @@ const SeriesHeader = ({ name, description, badge }: Props) => {
         </Typography>
       </Box>
 
+      {/* Badge */}
       <Chip
         label={badge}
         color="secondary"
