@@ -77,10 +77,10 @@ function buildProductionDescription(production: Production, language: string): s
   )
 }
 
-// TODO: use production images in production cards. This is just a placeholder for the moment. 
-function buildProductionImage(_production: Production): string {
-  return ''
-}
+// TODO: use production images in production cards. This is just a placeholder for the moment.
+//function buildProductionImage(_production: Production): string {
+//  return ''
+//}
 
 const SeriesDetailPage = () => {
   const { id } = useParams<{ id: string }>()
@@ -175,12 +175,13 @@ const SeriesDetailPage = () => {
       <Container
         maxWidth="lg"
         sx={{
-          minHeight: '100vh',          
+          minHeight: '100vh',
           display: 'flex',
-          alignItems: 'center',       
-          justifyContent: 'center',    
+          alignItems: 'center',
+          justifyContent: 'center',
           px: { xs: 2, sm: 3 },
-        }}>
+        }}
+      >
         <Stack spacing={3} alignItems="center">
           <CircularProgress />
           <Typography color="text.secondary">

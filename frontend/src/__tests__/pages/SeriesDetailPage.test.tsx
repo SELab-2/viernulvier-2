@@ -16,7 +16,7 @@ jest.mock('../../services/productions/Productions', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, opts?: any) => opts?.defaultValue ?? key,
+    t: (key: string, opts?: { defaultValue: string }) => opts?.defaultValue ?? key,
     i18n: { language: 'nl' },
   }),
 }))
