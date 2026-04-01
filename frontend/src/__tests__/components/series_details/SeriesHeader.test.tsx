@@ -3,29 +3,23 @@ import '@testing-library/jest-dom'
 import SeriesHeader from '../../../components/series_details/SeriesHeader'
 
 describe('SeriesHeader', () => {
-  it('renders name, description and badge', () => {
-    render(
-      <SeriesHeader
-        name="VIDEODROOM"
-        description="Het audiovisuele festival dat de grenzen tussen muziek, beeld en performance verkent."
-        badge="Terugkerende reeks"
-      />,
-    )
+  const defaultProps = {
+    name: 'VIDEODROOM',
+    description:
+      'Het audiovisuele festival dat de grenzen tussen muziek, beeld en performance verkent.',
+  }
 
-    expect(screen.getByText('VIDEODROOM')).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'Het audiovisuele festival dat de grenzen tussen muziek, beeld en performance verkent.',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Terugkerende reeks')).toBeInTheDocument()
+  it('renders name and description', () => {
+    render(<SeriesHeader {...defaultProps} />)
+
+    expect(screen.getByText(defaultProps.name)).toBeInTheDocument()
+    expect(screen.getByText(defaultProps.description)).toBeInTheDocument()
   })
 
-  it('renders exactly one heading-like title text', () => {
-    render(<SeriesHeader name="VIDEODROOM" description="Beschrijving" badge="Recurring series" />)
+  it('renders the title as a heading', () => {
+    render(<SeriesHeader name="VIDEODROOM" description="Beschrijving" />)
 
-    expect(screen.getByText('VIDEODROOM')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'VIDEODROOM' })).toBeInTheDocument()
     expect(screen.getByText('Beschrijving')).toBeInTheDocument()
-    expect(screen.getByText('Recurring series')).toBeInTheDocument()
   })
 })

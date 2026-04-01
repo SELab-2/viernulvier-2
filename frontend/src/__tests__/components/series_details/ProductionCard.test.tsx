@@ -3,28 +3,23 @@ import '@testing-library/jest-dom'
 import ProductionCard from '../../../components/series_details/ProductionCard'
 
 describe('ProductionCard', () => {
-  it('renders title, meta, description, image and tags', () => {
-    render(
-      <ProductionCard
-        title="VIDEODROOM 2024"
-        meta="11e editie · 3–5 mei 2024"
-        description="Een audiovisuele editie met live visuals en performances."
-        tags={['Festival', 'Audiovisueel', '3 dagen']}
-        image="https://example.com/image.jpg"
-      />,
-    )
+  const defaultProps = {
+    title: 'VIDEODROOM 2024',
+    meta: '11e editie · 3–5 mei 2024',
+    description: 'Een audiovisuele editie met live visuals en performances.',
+    tags: ['Festival', 'Audiovisueel', '3 dagen'],
+  }
 
-    expect(screen.getByText('VIDEODROOM 2024')).toBeInTheDocument()
-    expect(screen.getByText('11e editie · 3–5 mei 2024')).toBeInTheDocument()
-    expect(
-      screen.getByText('Een audiovisuele editie met live visuals en performances.'),
-    ).toBeInTheDocument()
+  it('renders title, meta, description and tags', () => {
+    render(<ProductionCard {...defaultProps} />)
 
-    expect(screen.getByAltText('VIDEODROOM 2024')).toBeInTheDocument()
+    expect(screen.getByText(defaultProps.title)).toBeInTheDocument()
+    expect(screen.getByText(defaultProps.meta)).toBeInTheDocument()
+    expect(screen.getByText(defaultProps.description)).toBeInTheDocument()
 
-    expect(screen.getByText('Festival')).toBeInTheDocument()
-    expect(screen.getByText('Audiovisueel')).toBeInTheDocument()
-    expect(screen.getByText('3 dagen')).toBeInTheDocument()
+    defaultProps.tags.forEach((tag) => {
+      expect(screen.getByText(tag)).toBeInTheDocument()
+    })
   })
 
   it('renders all provided tags', () => {
@@ -36,12 +31,17 @@ describe('ProductionCard', () => {
         meta="10e editie"
         description="Beschrijving"
         tags={tags}
-        image="https://example.com/image.jpg"
       />,
     )
 
     tags.forEach((tag) => {
       expect(screen.getByText(tag)).toBeInTheDocument()
     })
+  })
+
+  it('does not render an image', () => {
+    render(<ProductionCard {...defaultProps} />)
+
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 })

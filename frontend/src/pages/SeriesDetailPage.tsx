@@ -1,3 +1,9 @@
+/**
+ * Displays detailed information about a specific series (tag),
+ * including its metadata, statistics and a chronological list
+ * of associated productions.
+ */
+
 import { useEffect, useMemo, useState } from 'react'
 import {
   Alert,
@@ -71,6 +77,7 @@ function buildProductionDescription(production: Production, language: string): s
   )
 }
 
+// TODO: use production images in production cards. This is just a placeholder for the moment. 
 function buildProductionImage(_production: Production): string {
   return ''
 }
@@ -276,7 +283,7 @@ const SeriesDetailPage = () => {
                   tags={production.tags.map(
                     (tag) => tag.display_name || getLocalizedRecordValue(tag.name, i18n.language),
                   )}
-                  image={buildProductionImage(production)}
+                  //image={buildProductionImage(production)}
                 />
               </TimelineItem>
             ))}

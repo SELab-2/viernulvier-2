@@ -3,39 +3,24 @@ import '@testing-library/jest-dom'
 import SeriesStats from '../../../components/series_details/SeriesStats'
 
 describe('SeriesStats', () => {
-  it('renders all stats values and labels', () => {
-    render(
-      <SeriesStats
-        stats={[
-          { value: '11', label: 'Edities' },
-          { value: '2013–2024', label: 'Periode' },
-          { value: '150+', label: 'Artiesten' },
-        ]}
-      />,
-    )
+  const stats = [
+    { value: '11', label: 'Edities' },
+    { value: '2013–2024', label: 'Periode' },
+    { value: 'Festival', label: 'Type' },
+  ]
 
-    expect(screen.getByText('11')).toBeInTheDocument()
-    expect(screen.getByText('Edities')).toBeInTheDocument()
-
-    expect(screen.getByText('2013–2024')).toBeInTheDocument()
-    expect(screen.getByText('Periode')).toBeInTheDocument()
-
-    expect(screen.getByText('150+')).toBeInTheDocument()
-    expect(screen.getByText('Artiesten')).toBeInTheDocument()
-  })
-
-  it('renders the correct number of stat labels', () => {
-    const stats = [
-      { value: '11', label: 'Edities' },
-      { value: '2013–2024', label: 'Periode' },
-      { value: '150+', label: 'Artiesten' },
-    ]
-
+  it('renders all stat values and labels', () => {
     render(<SeriesStats stats={stats} />)
 
     stats.forEach((stat) => {
       expect(screen.getByText(stat.value)).toBeInTheDocument()
       expect(screen.getByText(stat.label)).toBeInTheDocument()
     })
+  })
+
+  it('renders the correct number of stat labels', () => {
+    render(<SeriesStats stats={stats} />)
+
+    expect(screen.getAllByText(/Edities|Periode|Type/)).toHaveLength(3)
   })
 })
