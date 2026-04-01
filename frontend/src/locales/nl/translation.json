@@ -51,7 +51,7 @@
     },
     "nav": {
       "ariaLabel": "Navigatie",
-      "home": "Archief",  
+      "home": "Archief",
       "series": "Reeksen",
       "events": "Evenementen"
     },
@@ -62,6 +62,20 @@
   "series": {
     "backToSeries": "Terug naar reeksen",
     "allEditions": "Alle edities",
-    "allEditionsSubtitle": "Chronologisch overzicht van de producties binnen deze reeks."
+    "allEditionsSubtitle": "Chronologisch overzicht van de producties binnen deze reeks.",
+    "breadcrumb": "Archief / Reeksen / {{name}}",
+    "noDescription": "Geen beschrijving beschikbaar.",
+    "noProductions": "Er zijn nog geen producties gekoppeld aan deze reeks.",
+    "loading": "Reeks wordt geladen...",
+    "notFound": "Reeks niet gevonden.",
+    "invalidId": "Ongeldig reeks-ID.",
+    "fetchError": "Kon de reeks niet ophalen.",
+    "untitled": "Naamloze reeks",
+    "untitledProduction": "Naamloze productie",
+    "stats": {
+      "editions": "Edities",
+      "period": "Periode",
+      "type": "Type"
+    }
   }
 }

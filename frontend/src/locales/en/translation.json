@@ -62,6 +62,20 @@
   "series": {
     "backToSeries": "Back to series",
     "allEditions": "All editions",
-    "allEditionsSubtitle": "Chronological overview of productions within this series."
+    "allEditionsSubtitle": "Chronological overview of the productions within this series.",
+    "breadcrumb": "Archive / Series / {{name}}",
+    "noDescription": "No description available.",
+    "noProductions": "There are no productions linked to this series yet.",
+    "loading": "Loading series...",
+    "notFound": "Series not found.",
+    "invalidId": "Invalid series ID.",
+    "fetchError": "Could not fetch the series.",
+    "untitled": "Untitled series",
+    "untitledProduction": "Untitled production",
+    "stats": {
+      "editions": "Editions",
+      "period": "Period",
+      "type": "Type"
+    }
   }
 }

@@ -3,15 +3,14 @@
  * title, description and a badge.
  */
 
-import { Box, Chip, Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 
 type Props = {
   name: string
   description: string
-  badge: string
 }
 
-const SeriesHeader = ({ name, description, badge }: Props) => {
+const SeriesHeader = ({ name, description }: Props) => {
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={3}>
       {/* Text container */}
@@ -47,19 +46,6 @@ const SeriesHeader = ({ name, description, badge }: Props) => {
           {description}
         </Typography>
       </Box>
-
-      {/* Badge */}
-      <Chip
-        label={badge}
-        color="secondary"
-        sx={{
-          borderRadius: 999,
-          px: 1,
-          fontWeight: 600,
-          maxWidth: '100%',
-          '& .MuiChip-label': { whiteSpace: 'normal' },
-        }}
-      />
     </Stack>
   )
 }

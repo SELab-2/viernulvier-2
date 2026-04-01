@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Box, Button, CircularProgress, Container, Divider, Stack, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Divider,
+  Stack,
+  Typography,
+} from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 import SeriesHeader from '../components/series_details/SeriesHeader'
@@ -31,23 +40,10 @@ function getLocalizedRecordValue(
   return value[normalizedLanguage] ?? value.en ?? value.nl ?? Object.values(value)[0] ?? fallback
 }
 
-function getSeriesBadge(tag: Tag, language: string, t: (key: string, options?: Record<string, unknown>) => string) {
-  const localizedType = tag.type?.trim()
-
-  if (localizedType) {
-    return localizedType
-  }
-
-  return language.startsWith('en')
-    ? t('series.recurringSeries', { defaultValue: 'Recurring series' })
-    : t('series.recurringSeries', { defaultValue: 'Terugkerende reeks' })
-}
-
 function extractYearFromProduction(production: Production): string {
-  const candidates = [
-    production.display_title,
-    ...Object.values(production.title ?? {}),
-  ].filter(Boolean) as string[]
+  const candidates = [production.display_title, ...Object.values(production.title ?? {})].filter(
+    Boolean,
+  ) as string[]
 
   for (const candidate of candidates) {
     const match = candidate.match(/\b(19|20)\d{2}\b/)
@@ -76,8 +72,6 @@ function buildProductionDescription(production: Production, language: string): s
 }
 
 function buildProductionImage(_production: Production): string {
-  // Geen bruikbare media shape beschikbaar in de gedeelde types/snippets,
-  // dus voorlopig leeg laten i.p.v. placeholders te gebruiken.
   return ''
 }
 
@@ -91,10 +85,6 @@ const SeriesDetailPage = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-
-  console.log(seriesTag)
-  console.log(i18n.language)
-  
   useEffect(() => {
     const numericId = Number(id)
 
@@ -175,7 +165,15 @@ const SeriesDetailPage = () => {
 
   if (isLoading) {
     return (
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 }, px: { xs: 2, sm: 3 } }}>
+      <Container
+        maxWidth="lg"
+        sx={{
+          minHeight: '100vh',          
+          display: 'flex',
+          alignItems: 'center',       
+          justifyContent: 'center',    
+          px: { xs: 2, sm: 3 },
+        }}>
         <Stack spacing={3} alignItems="center">
           <CircularProgress />
           <Typography color="text.secondary">
@@ -187,23 +185,7 @@ const SeriesDetailPage = () => {
   }
 
   if (error || !seriesTag) {
-    return (
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 }, px: { xs: 2, sm: 3 } }}>
-        <Stack spacing={3}>
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/series')}
-            sx={{ alignSelf: 'flex-start' }}
-          >
-            {t('series.backToSeries')}
-          </Button>
-
-          <Alert severity="error">
-            {error || t('series.notFound', { defaultValue: 'Reeks niet gevonden.' })}
-          </Alert>
-        </Stack>
-      </Container>
-    )
+    return <Navigate to="/404" replace />
   }
 
   const seriesName =
@@ -215,8 +197,6 @@ const SeriesDetailPage = () => {
     getLocalizedRecordValue(seriesTag.short_description, i18n.language) ||
     seriesTag.display_short_description ||
     t('series.noDescription', { defaultValue: 'Geen beschrijving beschikbaar.' })
-
-  const seriesBadge = getSeriesBadge(seriesTag, i18n.language, t)
 
   return (
     <Container
@@ -239,16 +219,13 @@ const SeriesDetailPage = () => {
 
           <Typography variant="body2" color="text.secondary">
             {t('series.breadcrumb', {
-              defaultValue: `Archief / Reeksen / ${seriesName}`,
+              name: seriesName,
+              defaultValue: `Archive / Series / ${seriesName}`,
             })}
           </Typography>
         </Stack>
 
-        <SeriesHeader
-          name={seriesName}
-          description={seriesDescription}
-          badge={seriesBadge}
-        />
+        <SeriesHeader name={seriesName} description={seriesDescription} />
 
         <SeriesStats stats={stats} />
 
@@ -296,7 +273,9 @@ const SeriesDetailPage = () => {
                   }
                   meta={buildProductionMeta(production, i18n.language)}
                   description={buildProductionDescription(production, i18n.language)}
-                  tags={production.tags.map((tag) => tag.display_name || getLocalizedRecordValue(tag.name, i18n.language))}
+                  tags={production.tags.map(
+                    (tag) => tag.display_name || getLocalizedRecordValue(tag.name, i18n.language),
+                  )}
                   image={buildProductionImage(production)}
                 />
               </TimelineItem>
