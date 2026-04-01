@@ -1,5 +1,4 @@
-"""
-Router for API v1.
+"""Router for API v1.
 
 All current viewsets are registered here. When a breaking change is
 needed, create ``api/v2/urls.py``, import the unchanged viewsets from

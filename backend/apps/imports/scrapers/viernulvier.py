@@ -1,4 +1,4 @@
-"""Viernulvier / Peppered scraper
+"""Viernulvier / Peppered scraper.
 
 Key design decisions
 --------------------
@@ -21,44 +21,46 @@ Key design decisions
 
 from __future__ import annotations
 
-import logging
-import os
-import random
-import re
-import sys
-import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
-from typing import Any, Callable, Dict, List, Mapping, Optional, Set, Tuple, Type
+import logging
+import os
+import random
+import re
+import time
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin, urlparse
 
-import requests
 from django.core.exceptions import FieldDoesNotExist, FieldError, ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import URLValidator
 from django.db import DatabaseError, IntegrityError, models, transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
+import requests
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "ModelSyncConfig",
-    "TranslationConfig",
-    "M2MConfig",
     "FKCache",
-    "ScraperError",
+    "M2MConfig",
+    "ModelSyncConfig",
     "RateLimitError",
-    "fetch_viernulvier",
-    "sync_viernulvier",
-    "sync_media_item_gallery_links",
-    "sync_media_item_crops",
-    "normalize_url",
-    "normalize_performer_type",
-    "nee_ja_to_bool",
+    "ScraperError",
+    "TranslationConfig",
     "clean_string",
+    "fetch_viernulvier",
+    "nee_ja_to_bool",
+    "normalize_performer_type",
+    "normalize_url",
+    "sync_media_item_crops",
+    "sync_media_item_gallery_links",
+    "sync_viernulvier",
 ]
 
 # ---------------------------------------------------------------------------
@@ -93,7 +95,7 @@ USER_AGENT_POOL = [
 
 # String values treated as empty *only* in URL fields.
 # Not used for regular CharField / TextField - "0" is valid text.
-_EMPTY_URL_VALUES: Set[str] = {"", "0", "none", "null", "undefined", "-", "n/a", "nvt"}
+_EMPTY_URL_VALUES: set[str] = {"", "0", "none", "null", "undefined", "-", "n/a", "nvt"}
 
 
 # ---------------------------------------------------------------------------
@@ -108,7 +110,7 @@ class ScraperError(Exception):
 class RateLimitError(ScraperError):
     """Raised on HTTP 429 after all retries are exhausted."""
 
-    def __init__(self, retry_after: Optional[int] = None) -> None:
+    def __init__(self, retry_after: int | None = None) -> None:
         self.retry_after = retry_after
         msg = f"Rate limited by API (Retry-After: {retry_after}s)" if retry_after else "Rate limited by API"
         super().__init__(msg)
@@ -141,11 +143,11 @@ class TranslationConfig:
     """
 
     api_key: str
-    model: Type[models.Model]
+    model: type[models.Model]
     parent_fk: str
     flat_field: str
     language_fk: str = "language_id"
-    value_transforms: Dict[str, Callable[[Any], Any]] = field(default_factory=dict)
+    value_transforms: dict[str, Callable[[Any], Any]] = field(default_factory=dict)
 
 
 @dataclass
@@ -167,12 +169,12 @@ class M2MConfig:
     """
 
     api_key: str
-    related_model: Type[models.Model]
-    through_model: Type[models.Model]
+    related_model: type[models.Model]
+    through_model: type[models.Model]
     parent_fk: str
     related_fk: str
     related_lookup_field: str = "external_id"
-    extra_fields: Dict[str, str] = field(default_factory=dict)
+    extra_fields: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -193,14 +195,14 @@ class ModelSyncConfig:
         item_filter:      Optional predicate - return False to skip an item.
     """
 
-    field_map: Dict[str, Optional[str]] = field(default_factory=dict)
-    value_transforms: Dict[str, Callable[[Any], Any]] = field(default_factory=dict)
-    fk_resolvers: Dict[str, Callable[[Any], Optional[Any]]] = field(default_factory=dict)
-    translations: List[TranslationConfig] = field(default_factory=list)
-    m2m: List[M2MConfig] = field(default_factory=list)
+    field_map: dict[str, str | None] = field(default_factory=dict)
+    value_transforms: dict[str, Callable[[Any], Any]] = field(default_factory=dict)
+    fk_resolvers: dict[str, Callable[[Any], Any | None]] = field(default_factory=dict)
+    translations: list[TranslationConfig] = field(default_factory=list)
+    m2m: list[M2MConfig] = field(default_factory=list)
     lookup_field: str = "external_id"
     api_id_key: str = "@id"
-    item_filter: Optional[Callable[[Mapping[str, Any]], bool]] = None
+    item_filter: Callable[[Mapping[str, Any]], bool] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -242,7 +244,7 @@ def _backoff_seconds(attempt: int) -> float:
     )
 
 
-def _parse_retry_after(response: requests.Response) -> Optional[int]:
+def _parse_retry_after(response: requests.Response) -> int | None:
     """Parse the Retry-After response header as an integer number of seconds."""
     header = response.headers.get("Retry-After")
     if header:
@@ -256,9 +258,9 @@ def _parse_retry_after(response: requests.Response) -> Optional[int]:
 def _fetch_with_retry(
     session: requests.Session,
     url: str,
-    params: Optional[Dict[str, str]] = None,
-    etag: Optional[str] = None,
-) -> Tuple[Optional[Any], Optional[str]]:
+    params: dict[str, str] | None = None,
+    etag: str | None = None,
+) -> tuple[Any | None, str | None]:
     """Fetch one URL with retry + exponential backoff + jitter.
 
     Handles:
@@ -271,7 +273,7 @@ def _fetch_with_retry(
     Returns:
         (data, new_etag). data is None when the server returns 304.
     """
-    headers: Dict[str, str] = {}
+    headers: dict[str, str] = {}
     if etag:
         headers["If-None-Match"] = etag
 
@@ -350,7 +352,7 @@ def _fetch_with_retry(
 # ---------------------------------------------------------------------------
 
 
-def _discover_extra_pages(data: dict) -> List[str]:
+def _discover_extra_pages(data: dict) -> list[str]:
     """Discover page URLs beyond page 1 from the hydra:view metadata.
 
     Primary strategy: parse the "last" URL for the total page count and
@@ -386,9 +388,9 @@ def _discover_extra_pages(data: dict) -> List[str]:
 
 def fetch_viernulvier(
     endpoint: str = DEFAULT_ENDPOINT,
-    params: Optional[Dict[str, str]] = None,
-    etag_cache: Optional[Dict[str, str]] = None,
-) -> List[Any]:
+    params: dict[str, str] | None = None,
+    etag_cache: dict[str, str] | None = None,
+) -> list[Any]:
     """Fetch all items from an API endpoint, following pagination automatically.
 
     Two pagination strategies:
@@ -432,7 +434,7 @@ def fetch_viernulvier(
     members = data.get("member", [])
     if not members and "@context" in data:
         members = [data]  # Single-object response wrapped in hydra context
-    all_items: List[Any] = list(members)
+    all_items: list[Any] = list(members)
 
     total_items = data.get("totalItems") or data.get("hydra:totalItems")
     extra_pages = _discover_extra_pages(data)
@@ -446,7 +448,7 @@ def fetch_viernulvier(
 
     # --- Strategy 1: concurrent page fetch (all URLs known upfront) ---
     if extra_pages:
-        page_results: Dict[str, List[Any]] = {}
+        page_results: dict[str, list[Any]] = {}
 
         with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_PAGES) as executor:
             future_to_url = {
@@ -468,8 +470,8 @@ def fetch_viernulvier(
                     if page_data is None:
                         continue  # 304
                     page_results[page_url] = page_data.get("member", []) if isinstance(page_data, dict) else page_data
-                except ScraperError as exc:
-                    logger.error("Page fetch failed for %s: %s", page_url, exc)
+                except ScraperError:
+                    logger.exception("Page fetch failed for %s", page_url)
 
         # Merge in original page order (as_completed is unordered)
         for page_url in extra_pages:
@@ -479,7 +481,7 @@ def fetch_viernulvier(
     else:
         view = data.get("view") or {}
         next_raw = view.get("next")
-        current_url: Optional[str] = (
+        current_url: str | None = (
             (next_raw if next_raw.startswith("http") else urljoin(BASE_DOMAIN, next_raw)) if next_raw else None
         )
         while current_url:
@@ -532,7 +534,7 @@ def normalize_performer_type(value: Any) -> str:
 
 
 def clean_string(value: Any) -> str:
-    """Strip surrounding whitespace and remove non-printable control characters.
+    r"""Strip surrounding whitespace and remove non-printable control characters.
 
     Keeps tab (\\t), line feed (\\n), and carriage return (\\r) intact.
     Removes null bytes and other ASCII control characters that would corrupt
@@ -541,14 +543,11 @@ def clean_string(value: Any) -> str:
     if value is None:
         return ""
     s = str(value).strip()
-    s = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", s)
-    return s
+    return re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", s)
 
 
-def clean_vendor_id(value: Any) -> Optional[str]:
-    """
-    Transform vendor_id: return None if empty or HTML-like, else return as string.
-    """
+def clean_vendor_id(value: Any) -> str | None:
+    """Transform vendor_id: return None if empty or HTML-like, else return as string."""
     if value is None:
         return None
     s = str(value).strip()
@@ -580,7 +579,7 @@ def _camel_to_snake(value: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "_", value).lower()
 
 
-def _parse_field_value(model_field: models.Field, value: Any) -> Any:
+def _parse_field_value(model_field: models.Field, value: Any) -> Any:  # noqa: PLR0911
     """Coerce an API value to the correct Python type for the given model field.
 
     Supported field types:
@@ -641,8 +640,7 @@ def _parse_field_value(model_field: models.Field, value: Any) -> Any:
     if isinstance(model_field, models.DateTimeField) and isinstance(value, str):
         v = value
         # Repair two broken date formats observed in this API
-        if v.startswith("-"):
-            v = v[1:]
+        v = v.removeprefix("-")
         if v[:4] == "0000":
             v = "1970" + v[4:]
         parsed = parse_datetime(v)
@@ -676,11 +674,11 @@ class FKCache:
     """
 
     def __init__(self) -> None:
-        self._cache: Dict[Tuple[Type[models.Model], str], Any] = {}
+        self._cache: dict[tuple[type[models.Model], str], Any] = {}
         # True = warmed up successfully, False = warmup failed
-        self._loaded: Dict[Type[models.Model], bool] = {}
+        self._loaded: dict[type[models.Model], bool] = {}
 
-    def warmup(self, model: Type[models.Model]) -> None:
+    def warmup(self, model: type[models.Model]) -> None:
         """Pre-load all external_id -> pk mappings for a model in one query."""
         if model in self._loaded:
             return
@@ -700,11 +698,12 @@ class FKCache:
                 exc_info=True,
             )
 
-    def get(self, model: Type[models.Model], ext_id: str) -> Optional[Any]:
+    def get(self, model: type[models.Model], ext_id: str) -> Any | None:
+        """Get the pk for the given model and external_id, or None if not found."""
         self.warmup(model)
         return self._cache.get((model, str(ext_id)))
 
-    def set(self, model: Type[models.Model], ext_id: str, pk: Any) -> None:
+    def set(self, model: type[models.Model], ext_id: str, pk: Any) -> None:
         """Insert or update a cache entry after creating a new object."""
         self._cache[(model, str(ext_id))] = pk
 
@@ -714,7 +713,7 @@ class FKCache:
 # ---------------------------------------------------------------------------
 
 
-def _extract_external_id_from_url(raw: Any) -> Optional[str]:
+def _extract_external_id_from_url(raw: Any) -> str | None:
     """Extract an external ID string from a URL, embedded dict, or integer.
 
     Examples:
@@ -739,7 +738,7 @@ def _resolve_fk(
     model_field: models.Field,
     raw_value: Any,
     fk_cache: FKCache,
-) -> Optional[Any]:
+) -> Any | None:
     """Resolve a FK raw value (URL or embedded dict) to a database primary key.
 
     Uses the FK cache for fast lookups. On cache miss, queries the DB once
@@ -773,7 +772,7 @@ def _resolve_fk(
 def _extract_lookup_value(
     item: Mapping[str, Any],
     config: ModelSyncConfig,
-) -> Optional[str]:
+) -> str | None:
     """Extract the primary lookup value (usually the API @id) from an item."""
     raw = item.get(config.api_id_key) or item.get("external_id") or item.get("id")
     if raw is None:
@@ -789,11 +788,11 @@ def _extract_lookup_value(
 
 
 def _build_defaults(
-    model: Type[models.Model],
+    model: type[models.Model],
     item: Mapping[str, Any],
     config: ModelSyncConfig,
     fk_cache: FKCache,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Convert an API item to a defaults dict for update_or_create.
 
     Pass 1: process explicit field_map entries (highest priority).
@@ -801,7 +800,7 @@ def _build_defaults(
 
     Flat dicts (translations) and lists (M2M) are skipped here.
     """
-    defaults: Dict[str, Any] = {}
+    defaults: dict[str, Any] = {}
     explicitly_mapped = set(config.field_map.keys())
 
     def _apply(model_field: models.Field, raw_value: Any, field_name: str) -> None:
@@ -869,7 +868,7 @@ def _build_defaults(
 def _sync_all_translations(
     parent_obj: models.Model,
     item: Mapping[str, Any],
-    translation_configs: List[TranslationConfig],
+    translation_configs: list[TranslationConfig],
 ) -> None:
     """Sync all translated fields for one parent object.
 
@@ -892,7 +891,7 @@ def _sync_all_translations(
 
     for (trans_model, parent_fk, language_fk), cfgs in groups.items():
         # Collect every language code present across all field dicts
-        all_languages: Set[str] = set()
+        all_languages: set[str] = set()
         for cfg in cfgs:
             raw_dict = item.get(cfg.api_key)
             if isinstance(raw_dict, dict):
@@ -902,7 +901,7 @@ def _sync_all_translations(
             if not lang_code:
                 continue
 
-            field_updates: Dict[str, Any] = {}
+            field_updates: dict[str, Any] = {}
 
             for cfg in cfgs:
                 raw_dict = item.get(cfg.api_key)
@@ -999,7 +998,7 @@ def _sync_m2m(
                 )
                 continue
 
-        through_kwargs: Dict[str, Any] = {
+        through_kwargs: dict[str, Any] = {
             m2m_config.parent_fk: parent_obj,
             m2m_config.related_fk: related_model(pk=pk),
         }
@@ -1040,13 +1039,13 @@ def _sync_m2m(
 
 
 def sync_viernulvier(
-    model: Type[models.Model],
+    model: type[models.Model],
     config: ModelSyncConfig,
     endpoint: str = DEFAULT_ENDPOINT,
-    params: Optional[Dict[str, str]] = None,
+    params: dict[str, str] | None = None,
     dry_run: bool = False,
-    etag_cache: Optional[Dict[str, str]] = None,
-    on_progress: Optional[Callable[[int, int], None]] = None,
+    etag_cache: dict[str, str] | None = None,
+    on_progress: Callable[[int, int], None] | None = None,
 ) -> int:
     """Fetch Viernulvier API data and persist it to a Django model.
 
@@ -1066,7 +1065,7 @@ def sync_viernulvier(
     Returns:
         Number of records saved (created + updated). Always 0 in dry_run mode.
     """
-    from apps.import_log.models import ImportLog
+    from apps.import_log.models import ImportLog  # noqa: PLC0415
 
     source = f"viernulvier:{endpoint}"
     if params:
@@ -1106,8 +1105,8 @@ def sync_viernulvier(
 
     saved = 0
     errors = 0
-    error_messages: List[str] = []  # capped at MAX_ERROR_MESSAGES
-    seen: Set[str] = set()
+    error_messages: list[str] = []  # capped at MAX_ERROR_MESSAGES
+    seen: set[str] = set()
     total = len(items)
 
     def _record_error(msg: str) -> None:
@@ -1185,21 +1184,19 @@ def sync_viernulvier(
             transaction.savepoint_rollback(sid)
             msgs = [f"{f}: {err}" if f != "__all__" else err for f, errs in exc.message_dict.items() for err in errs]
             _record_error(f"Validation error for {lookup_value}: {'; '.join(msgs)}")
-            logger.error("Validation error for %s: %s", lookup_value, "; ".join(msgs))
+            logger.exception("Validation error for %s: %s", lookup_value, "; ".join(msgs))
 
-        except (IntegrityError, DatabaseError, FieldError):
+        except (IntegrityError, DatabaseError, FieldError) as e:
             transaction.savepoint_rollback(sid)
-            exc_type, exc_value, _ = sys.exc_info()
-            msg = f"Database error for {lookup_value}: {exc_type.__name__}: {exc_value}"
-            _record_error(msg)
-            logger.error(msg, exc_info=True)
+            msg = "Database error for %s: %s"
+            logger.exception(msg, lookup_value, type(e).__name__)
+            _record_error(msg % (lookup_value, type(e).__name__))
 
-        except Exception:
+        except Exception as e:
             transaction.savepoint_rollback(sid)
-            exc_type, exc_value, _ = sys.exc_info()
-            msg = f"Unexpected error for {lookup_value}: {exc_type.__name__}: {exc_value}"
-            _record_error(msg)
-            logger.error(msg, exc_info=True)
+            msg = "Unexpected error for %s: %s"
+            logger.exception(msg, lookup_value, type(e).__name__)
+            _record_error(msg % (lookup_value, type(e).__name__))
 
     # Finalise import log
     truncation_note = f" (showing first {MAX_ERROR_MESSAGES} of {errors})" if errors > MAX_ERROR_MESSAGES else ""
@@ -1229,9 +1226,9 @@ def sync_viernulvier(
 
 def sync_media_item_gallery_links(
     dry_run: bool = False,
-    etag_cache: Optional[Dict[str, str]] = None,
-    on_progress: Optional[Callable[[int, int], None]] = None,
-    params: Optional[Dict[str, str]] = None,
+    etag_cache: dict[str, str] | None = None,
+    on_progress: Callable[[int, int], None] | None = None,
+    params: dict[str, str] | None = None,
 ) -> int:
     """Link MediaItems to MediaGalleries using gallery payload `items` links.
 
@@ -1244,8 +1241,8 @@ def sync_media_item_gallery_links(
     (`gallery` / `position`). Through-table writes are tracked separately for
     observability but are not part of the returned metric.
     """
-    from apps.import_log.models import ImportLog
-    from apps.media_library.models import MediaGallery, MediaGalleryItem, MediaItem
+    from apps.import_log.models import ImportLog  # noqa: PLC0415
+    from apps.media_library.models import MediaGallery, MediaGalleryItem, MediaItem  # noqa: PLC0415
 
     source = "viernulvier:media_item_gallery_links"
     import_log = ImportLog.objects.create(
@@ -1277,12 +1274,12 @@ def sync_media_item_gallery_links(
 
     total = len(galleries)
     errors = 0
-    error_messages: List[str] = []
+    error_messages: list[str] = []
 
-    gallery_item_links: List[MediaGalleryItem] = []
-    primary_item_to_gallery: Dict[int, int] = {}
-    primary_item_to_position: Dict[int, int] = {}
-    touched_gallery_ids: Set[int] = set()
+    gallery_item_links: list[MediaGalleryItem] = []
+    primary_item_to_gallery: dict[int, int] = {}
+    primary_item_to_position: dict[int, int] = {}
+    touched_gallery_ids: set[int] = set()
 
     def _record_error(msg: str) -> None:
         nonlocal errors
@@ -1382,7 +1379,7 @@ def sync_media_item_gallery_links(
     actual_link_rows_written = 0
     actual_media_items_changed = 0
 
-    exc: Optional[BaseException] = None
+    exc: BaseException | None = None
     try:
         with transaction.atomic():
             if touched_gallery_ids:
@@ -1464,7 +1461,7 @@ def _derive_crop_filename(crop_name: str, item_external_id: str, image_url: str)
     """
     slug = item_external_id.strip("/").replace("/", "_")
     # Extract extension from the CDN URL path (before any query string)
-    path_part = image_url.split("?")[0]
+    path_part = image_url.split("?", maxsplit=1)[0]
     last_segment = path_part.split("/")[-1]
     if "." in last_segment:
         ext = "." + last_segment.rsplit(".", 1)[-1].lower()
@@ -1476,7 +1473,7 @@ def _derive_crop_filename(crop_name: str, item_external_id: str, image_url: str)
     return f"{slug}_{crop_name}{ext}"
 
 
-def _download_image(session: requests.Session, url: str) -> Optional[bytes]:
+def _download_image(session: requests.Session, url: str) -> bytes | None:
     """Download image bytes from a CDN URL with retry + backoff.
 
     Returns None on permanent failure so the caller can skip this crop
@@ -1485,16 +1482,16 @@ def _download_image(session: requests.Session, url: str) -> Optional[bytes]:
     for attempt in range(MAX_RETRIES + 1):
         try:
             response = session.get(url, timeout=30, stream=True)
-        except (requests.ConnectionError, requests.Timeout) as exc:
+        except (requests.ConnectionError, requests.Timeout):
             if attempt == MAX_RETRIES:
-                logger.error("Image download failed after %d retries: %s (%s)", MAX_RETRIES, url, exc)
+                logger.exception("Image download failed after %d retries: %s", MAX_RETRIES, url)
                 return None
             wait = _backoff_seconds(attempt)
             logger.warning("Image download error - retry %d in %.1fs: %s", attempt + 1, wait, url)
             time.sleep(wait)
             continue
-        except requests.RequestException as exc:
-            logger.error("Image download request error: %s (%s)", url, exc)
+        except requests.RequestException:
+            logger.exception("Image download request error: %s", url)
             return None
 
         if response.status_code == 429:
@@ -1517,8 +1514,8 @@ def _download_image(session: requests.Session, url: str) -> Optional[bytes]:
 
 def sync_media_item_crops(
     dry_run: bool = False,
-    on_progress: Optional[Callable[[int, int], None]] = None,
-    params: Optional[Dict[str, str]] = None,
+    on_progress: Callable[[int, int], None] | None = None,
+    params: dict[str, str] | None = None,
 ) -> int:
     """Fetch individual foto MediaItems to obtain crop data, download images.
 
@@ -1549,8 +1546,8 @@ def sync_media_item_crops(
     Returns:
         Number of crops saved (created + updated). Always 0 in dry_run mode.
     """
-    from apps.import_log.models import ImportLog
-    from apps.media_library.models import MediaGallery, MediaItem, MediaItemCrop
+    from apps.import_log.models import ImportLog  # noqa: PLC0415
+    from apps.media_library.models import MediaGallery, MediaItem, MediaItemCrop  # noqa: PLC0415
 
     source = "viernulvier:media_item_crops"
     import_log = ImportLog.objects.create(
@@ -1562,7 +1559,7 @@ def sync_media_item_crops(
     # Start from local foto items (fast path), then replace with API-driven
     # candidates when timestamp filters are provided.
     foto_items_query = MediaItem.objects.filter(type=MediaItem.MediaItemType.IMAGE)
-    api_filter_params: Dict[str, str] = {}
+    api_filter_params: dict[str, str] = {}
 
     if params:
         # Parse timestamp params. API filtering is independent from local model
@@ -1612,7 +1609,7 @@ def sync_media_item_crops(
         existing_pk_by_external_id = {
             str(row["external_id"]).strip(): row["pk"] for row in foto_items if row.get("external_id")
         }
-        api_candidates: List[Dict[str, Any]] = []
+        api_candidates: list[dict[str, Any]] = []
         for api_item in api_items:
             if not isinstance(api_item, dict):
                 continue
@@ -1650,11 +1647,11 @@ def sync_media_item_crops(
         logger.info("No foto MediaItems found - skipping crop sync.")
         return 0
 
-    wanted_crops: Set[str] = MediaItemCrop.SYNCED_CROP_NAMES
+    wanted_crops: set[str] = MediaItemCrop.SYNCED_CROP_NAMES
     total = len(foto_items)
     saved = 0
     errors = 0
-    error_messages: List[str] = []
+    error_messages: list[str] = []
     session = _build_session()
 
     logger.info(
@@ -1680,7 +1677,7 @@ def sync_media_item_crops(
         try:
             item_data, _ = _fetch_with_retry(session, item_url)
         except ScraperError as exc:
-            logger.error("Failed to fetch media item %s: %s", item_url, exc)
+            logger.exception("Failed to fetch media item %s", item_url)
             errors += 1
             if len(error_messages) < MAX_ERROR_MESSAGES:
                 error_messages.append(f"Fetch failed for {external_id}: {exc}")
@@ -1733,7 +1730,7 @@ def sync_media_item_crops(
                         item_pk,
                     )
                 except Exception as exc:
-                    logger.exception("Failed to upsert MediaItem dependency for crop sync (%s): %s", external_id, exc)
+                    logger.exception("Failed to upsert MediaItem dependency for crop sync (%s)", external_id)
                     errors += 1
                     if len(error_messages) < MAX_ERROR_MESSAGES:
                         error_messages.append(f"Missing MediaItem upsert failed for {external_id}: {exc}")
@@ -1813,10 +1810,9 @@ def sync_media_item_crops(
                 )
             except Exception as exc:
                 logger.exception(
-                    "Error saving crop '%s' for MediaItem pk=%d: %s",
+                    "Error saving crop '%s' for MediaItem pk=%d",
                     crop_name,
                     item_pk,
-                    exc,
                 )
                 errors += 1
                 if len(error_messages) < MAX_ERROR_MESSAGES:

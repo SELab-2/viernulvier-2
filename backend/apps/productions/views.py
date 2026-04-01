@@ -1,5 +1,4 @@
-"""
-ViewSets for the Productions app.
+"""ViewSets for the Productions app.
 
 Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
@@ -16,6 +15,7 @@ allowing consumers to access all languages in a single request.
 """
 
 from django.db.models import Prefetch
+from django.http import HttpRequest
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
@@ -25,7 +25,7 @@ from apps.media_library.models import MediaItem
 from apps.pricing.models import PriceRankTranslation, PriceTranslation
 
 from .filters import ProductionFilter
-from .models import Production, ProductionGenre
+from .models import Production, ProductionGenre, ProductionTag
 from .schemas import production_schema
 from .serializers import ProductionSerializer
 
@@ -35,8 +35,7 @@ _TAG = "Productions"
 @extend_schema(tags=[_TAG])
 @production_schema
 class ProductionViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Production objects.
+    """CRUD endpoints for Production objects.
 
     A production is the central catalogue record - it groups events and
     carries all translated metadata (title, artist name, description, etc.).
@@ -97,12 +96,20 @@ class ProductionViewSet(ApiModelViewSet):
         "media_gallery",
     ).prefetch_related(
         "translations__language",
-        "tags",
-        "tags__translations__language",
         Prefetch(
             "productiongenre_set",
             queryset=ProductionGenre.objects.select_related("genre").order_by("position"),
             to_attr="prefetched_production_genres",
+        ),
+        Prefetch(
+            "productiontag_set",
+            queryset=ProductionTag.objects.select_related("tag")
+            .prefetch_related(
+                "translations__language",
+                "tag__translations__language",
+            )
+            .order_by("tag__type", "id"),
+            to_attr="prefetched_production_tags",
         ),
         Prefetch(
             "media_gallery__media_items",
@@ -123,17 +130,19 @@ class ProductionViewSet(ApiModelViewSet):
     ]
 
     @property
-    def includes(self):
+    def includes(self) -> set[str]:
+        """Parse the 'include' query parameter into a set of related fields to include."""
         return set(self.request.query_params.get("include", "").split(","))
 
-    def get_serializer(self, *args, **kwargs):
+    def get_serializer(self, *args: tuple, **kwargs: dict) -> ProductionSerializer:
+        """Pass the 'include' query parameter to the serializer context for dynamic field inclusion."""
         kwargs.setdefault("context", self.get_serializer_context())
         kwargs["context"]["include"] = self.includes
         return super().get_serializer(*args, **kwargs)
 
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve a production by its ID, with optional inclusion of related events.
+    def retrieve(self, request: HttpRequest, *args: tuple, **kwargs: dict) -> HttpRequest:
+        """Retrieve a production by its ID, with optional inclusion of related events.
+
         When events are included, the queryset is optimized with additional prefetches to avoid N+1 queries.
         """
         if "events" in self.includes:

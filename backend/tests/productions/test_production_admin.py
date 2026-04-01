@@ -23,6 +23,7 @@ from apps.productions.admin import (
     ProductionGenreInline,
     ProductionTagAdmin,
     ProductionTagInline,
+    ProductionTagTranslationInline,
     ProductionTranslationAdmin,
     ProductionTranslationInline,
     UitDatabaseThemeAdmin,
@@ -32,6 +33,7 @@ from apps.productions.models import (
     Production,
     ProductionGenre,
     ProductionTag,
+    ProductionTagTranslation,
     ProductionTranslation,
     UitDatabaseTheme,
     UitDatabaseType,
@@ -61,41 +63,41 @@ def make_superuser(username="admin"):
 
 
 class TestAdminRegistration(TestCase):
-    def test_production_is_registered(self):
-        self.assertIn(Production, admin.site._registry)
+    def test_production_is_registered(self) -> None:
+        assert Production in admin.site._registry
 
-    def test_registered_admin_is_production_admin(self):
-        self.assertIsInstance(admin.site._registry[Production], ProductionAdmin)
+    def test_registered_admin_is_production_admin(self) -> None:
+        assert isinstance(admin.site._registry[Production], ProductionAdmin)
 
-    def test_production_translation_is_registered(self):
-        self.assertIn(ProductionTranslation, admin.site._registry)
+    def test_production_translation_is_registered(self) -> None:
+        assert ProductionTranslation in admin.site._registry
 
-    def test_registered_admin_is_production_translation_admin(self):
-        self.assertIsInstance(admin.site._registry[ProductionTranslation], ProductionTranslationAdmin)
+    def test_registered_admin_is_production_translation_admin(self) -> None:
+        assert isinstance(admin.site._registry[ProductionTranslation], ProductionTranslationAdmin)
 
-    def test_uit_database_theme_is_registered(self):
-        self.assertIn(UitDatabaseTheme, admin.site._registry)
+    def test_uit_database_theme_is_registered(self) -> None:
+        assert UitDatabaseTheme in admin.site._registry
 
-    def test_registered_admin_is_uit_database_theme_admin(self):
-        self.assertIsInstance(admin.site._registry[UitDatabaseTheme], UitDatabaseThemeAdmin)
+    def test_registered_admin_is_uit_database_theme_admin(self) -> None:
+        assert isinstance(admin.site._registry[UitDatabaseTheme], UitDatabaseThemeAdmin)
 
-    def test_uit_database_type_is_registered(self):
-        self.assertIn(UitDatabaseType, admin.site._registry)
+    def test_uit_database_type_is_registered(self) -> None:
+        assert UitDatabaseType in admin.site._registry
 
-    def test_registered_admin_is_uit_database_type_admin(self):
-        self.assertIsInstance(admin.site._registry[UitDatabaseType], UitDatabaseTypeAdmin)
+    def test_registered_admin_is_uit_database_type_admin(self) -> None:
+        assert isinstance(admin.site._registry[UitDatabaseType], UitDatabaseTypeAdmin)
 
-    def test_production_genre_is_registered(self):
-        self.assertIn(ProductionGenre, admin.site._registry)
+    def test_production_genre_is_registered(self) -> None:
+        assert ProductionGenre in admin.site._registry
 
-    def test_registered_admin_is_production_genre_admin(self):
-        self.assertIsInstance(admin.site._registry[ProductionGenre], ProductionGenreAdmin)
+    def test_registered_admin_is_production_genre_admin(self) -> None:
+        assert isinstance(admin.site._registry[ProductionGenre], ProductionGenreAdmin)
 
-    def test_production_tag_is_registered(self):
-        self.assertIn(ProductionTag, admin.site._registry)
+    def test_production_tag_is_registered(self) -> None:
+        assert ProductionTag in admin.site._registry
 
-    def test_registered_admin_is_production_tag_admin(self):
-        self.assertIsInstance(admin.site._registry[ProductionTag], ProductionTagAdmin)
+    def test_registered_admin_is_production_tag_admin(self) -> None:
+        assert isinstance(admin.site._registry[ProductionTag], ProductionTagAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -113,15 +115,15 @@ class TestAdminInheritance(TestCase):
         ProductionTagAdmin,
     ]
 
-    def test_all_admins_inherit_from_base_admin(self):
+    def test_all_admins_inherit_from_base_admin(self) -> None:
         for admin_class in self.admins:
             with self.subTest(admin_class=admin_class.__name__):
-                self.assertTrue(issubclass(admin_class, BaseAdmin))
+                assert issubclass(admin_class, BaseAdmin)
 
-    def test_all_admins_inherit_from_model_admin(self):
+    def test_all_admins_inherit_from_model_admin(self) -> None:
         for admin_class in self.admins:
             with self.subTest(admin_class=admin_class.__name__):
-                self.assertTrue(issubclass(admin_class, admin.ModelAdmin))
+                assert issubclass(admin_class, admin.ModelAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -130,17 +132,17 @@ class TestAdminInheritance(TestCase):
 
 
 class TestUitDatabaseThemeAdminConfiguration(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = admin.site._registry[UitDatabaseTheme]
 
-    def test_list_display_contains_id(self):
-        self.assertIn("id", self.admin.list_display)
+    def test_list_display_contains_id(self) -> None:
+        assert "id" in self.admin.list_display
 
-    def test_list_display_contains_name(self):
-        self.assertIn("name", self.admin.list_display)
+    def test_list_display_contains_name(self) -> None:
+        assert "name" in self.admin.list_display
 
-    def test_search_fields_contains_name(self):
-        self.assertIn("name", self.admin.search_fields)
+    def test_search_fields_contains_name(self) -> None:
+        assert "name" in self.admin.search_fields
 
 
 # ---------------------------------------------------------------------------
@@ -149,17 +151,17 @@ class TestUitDatabaseThemeAdminConfiguration(TestCase):
 
 
 class TestUitDatabaseTypeAdminConfiguration(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = admin.site._registry[UitDatabaseType]
 
-    def test_list_display_contains_id(self):
-        self.assertIn("id", self.admin.list_display)
+    def test_list_display_contains_id(self) -> None:
+        assert "id" in self.admin.list_display
 
-    def test_list_display_contains_name(self):
-        self.assertIn("name", self.admin.list_display)
+    def test_list_display_contains_name(self) -> None:
+        assert "name" in self.admin.list_display
 
-    def test_search_fields_contains_name(self):
-        self.assertIn("name", self.admin.search_fields)
+    def test_search_fields_contains_name(self) -> None:
+        assert "name" in self.admin.search_fields
 
 
 # ---------------------------------------------------------------------------
@@ -168,65 +170,65 @@ class TestUitDatabaseTypeAdminConfiguration(TestCase):
 
 
 class TestProductionAdminConfiguration(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = admin.site._registry[Production]
 
     # list_display
-    def test_list_display_contains_id(self):
-        self.assertIn("id", self.admin.list_display)
+    def test_list_display_contains_id(self) -> None:
+        assert "id" in self.admin.list_display
 
-    def test_list_display_contains_attendance_mode(self):
-        self.assertIn("attendance_mode", self.admin.list_display)
+    def test_list_display_contains_attendance_mode(self) -> None:
+        assert "attendance_mode" in self.admin.list_display
 
-    def test_list_display_contains_performer_type(self):
-        self.assertIn("performer_type", self.admin.list_display)
+    def test_list_display_contains_performer_type(self) -> None:
+        assert "performer_type" in self.admin.list_display
 
-    def test_list_display_contains_uit_database_theme(self):
-        self.assertIn("uit_database_theme", self.admin.list_display)
+    def test_list_display_contains_uit_database_theme(self) -> None:
+        assert "uit_database_theme" in self.admin.list_display
 
-    def test_list_display_contains_uit_database_type(self):
-        self.assertIn("uit_database_type", self.admin.list_display)
+    def test_list_display_contains_uit_database_type(self) -> None:
+        assert "uit_database_type" in self.admin.list_display
 
     # list_filter
-    def test_list_filter_contains_attendance_mode(self):
-        self.assertIn("attendance_mode", self.admin.list_filter)
+    def test_list_filter_contains_attendance_mode(self) -> None:
+        assert "attendance_mode" in self.admin.list_filter
 
-    def test_list_filter_contains_performer_type(self):
-        self.assertIn("performer_type", self.admin.list_filter)
+    def test_list_filter_contains_performer_type(self) -> None:
+        assert "performer_type" in self.admin.list_filter
 
-    def test_list_filter_does_not_contain_uit_database_theme(self):
+    def test_list_filter_does_not_contain_uit_database_theme(self) -> None:
         """uit_database_theme was removed from ProductionAdmin.list_filter."""
-        self.assertNotIn("uit_database_theme", self.admin.list_filter)
+        assert "uit_database_theme" not in self.admin.list_filter
 
     # search_fields
-    def test_search_fields_contains_id(self):
-        self.assertIn("id", self.admin.search_fields)
+    def test_search_fields_contains_id(self) -> None:
+        assert "id" in self.admin.search_fields
 
-    def test_search_fields_contains_translations_title(self):
-        self.assertIn("translations__title", self.admin.search_fields)
+    def test_search_fields_contains_translations_title(self) -> None:
+        assert "translations__title" in self.admin.search_fields
 
     # autocomplete_fields
-    def test_autocomplete_fields_contains_uit_database_theme(self):
-        self.assertIn("uit_database_theme", self.admin.autocomplete_fields)
+    def test_autocomplete_fields_contains_uit_database_theme(self) -> None:
+        assert "uit_database_theme" in self.admin.autocomplete_fields
 
-    def test_autocomplete_fields_contains_uit_database_type(self):
-        self.assertIn("uit_database_type", self.admin.autocomplete_fields)
+    def test_autocomplete_fields_contains_uit_database_type(self) -> None:
+        assert "uit_database_type" in self.admin.autocomplete_fields
 
     # inlines
-    def test_inlines_contains_production_translation_inline(self):
+    def test_inlines_contains_production_translation_inline(self) -> None:
         inline_classes = [inline.model for inline in self.admin.inlines]
-        self.assertIn(ProductionTranslation, inline_classes)
+        assert ProductionTranslation in inline_classes
 
-    def test_inlines_contains_production_genre_inline(self):
+    def test_inlines_contains_production_genre_inline(self) -> None:
         inline_classes = [inline.model for inline in self.admin.inlines]
-        self.assertIn(ProductionGenre, inline_classes)
+        assert ProductionGenre in inline_classes
 
-    def test_inlines_contains_production_tag_inline(self):
+    def test_inlines_contains_production_tag_inline(self) -> None:
         inline_classes = [inline.model for inline in self.admin.inlines]
-        self.assertIn(ProductionTag, inline_classes)
+        assert ProductionTag in inline_classes
 
-    def test_three_inlines_registered(self):
-        self.assertEqual(len(self.admin.inlines), 3)
+    def test_three_inlines_registered(self) -> None:
+        assert len(self.admin.inlines) == 3
 
 
 # ---------------------------------------------------------------------------
@@ -235,46 +237,46 @@ class TestProductionAdminConfiguration(TestCase):
 
 
 class TestProductionTranslationAdminConfiguration(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = admin.site._registry[ProductionTranslation]
 
     # list_display
-    def test_list_display_contains_id(self):
-        self.assertIn("id", self.admin.list_display)
+    def test_list_display_contains_id(self) -> None:
+        assert "id" in self.admin.list_display
 
-    def test_list_display_contains_production(self):
-        self.assertIn("production", self.admin.list_display)
+    def test_list_display_contains_production(self) -> None:
+        assert "production" in self.admin.list_display
 
-    def test_list_display_contains_language(self):
-        self.assertIn("language", self.admin.list_display)
+    def test_list_display_contains_language(self) -> None:
+        assert "language" in self.admin.list_display
 
-    def test_list_display_contains_title(self):
-        self.assertIn("title", self.admin.list_display)
+    def test_list_display_contains_title(self) -> None:
+        assert "title" in self.admin.list_display
 
-    def test_list_display_contains_artist_name(self):
-        self.assertIn("artist_name", self.admin.list_display)
+    def test_list_display_contains_artist_name(self) -> None:
+        assert "artist_name" in self.admin.list_display
 
     # list_filter - now uses language__code, not language
-    def test_list_filter_contains_language_code(self):
+    def test_list_filter_contains_language_code(self) -> None:
         """list_filter must use 'language__code', not plain 'language'."""
-        self.assertIn("language__code", self.admin.list_filter)
+        assert "language__code" in self.admin.list_filter
 
-    def test_list_filter_does_not_contain_plain_language(self):
-        self.assertNotIn("language", self.admin.list_filter)
+    def test_list_filter_does_not_contain_plain_language(self) -> None:
+        assert "language" not in self.admin.list_filter
 
     # search_fields
-    def test_search_fields_contains_title(self):
-        self.assertIn("title", self.admin.search_fields)
+    def test_search_fields_contains_title(self) -> None:
+        assert "title" in self.admin.search_fields
 
-    def test_search_fields_contains_production_id(self):
-        self.assertIn("production__id", self.admin.search_fields)
+    def test_search_fields_contains_production_id(self) -> None:
+        assert "production__id" in self.admin.search_fields
 
     # autocomplete_fields
-    def test_autocomplete_fields_contains_production(self):
-        self.assertIn("production", self.admin.autocomplete_fields)
+    def test_autocomplete_fields_contains_production(self) -> None:
+        assert "production" in self.admin.autocomplete_fields
 
-    def test_autocomplete_fields_contains_language(self):
-        self.assertIn("language", self.admin.autocomplete_fields)
+    def test_autocomplete_fields_contains_language(self) -> None:
+        assert "language" in self.admin.autocomplete_fields
 
 
 # ---------------------------------------------------------------------------
@@ -283,23 +285,23 @@ class TestProductionTranslationAdminConfiguration(TestCase):
 
 
 class TestProductionGenreAdminConfiguration(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = admin.site._registry[ProductionGenre]
 
-    def test_list_display_contains_id(self):
-        self.assertIn("id", self.admin.list_display)
+    def test_list_display_contains_id(self) -> None:
+        assert "id" in self.admin.list_display
 
-    def test_list_display_contains_production(self):
-        self.assertIn("production", self.admin.list_display)
+    def test_list_display_contains_production(self) -> None:
+        assert "production" in self.admin.list_display
 
-    def test_list_display_contains_genre(self):
-        self.assertIn("genre", self.admin.list_display)
+    def test_list_display_contains_genre(self) -> None:
+        assert "genre" in self.admin.list_display
 
-    def test_list_display_contains_position(self):
-        self.assertIn("position", self.admin.list_display)
+    def test_list_display_contains_position(self) -> None:
+        assert "position" in self.admin.list_display
 
-    def test_autocomplete_fields_contains_production(self):
-        self.assertIn("production", self.admin.autocomplete_fields)
+    def test_autocomplete_fields_contains_production(self) -> None:
+        assert "production" in self.admin.autocomplete_fields
 
 
 # ---------------------------------------------------------------------------
@@ -308,23 +310,63 @@ class TestProductionGenreAdminConfiguration(TestCase):
 
 
 class TestProductionTagAdminConfiguration(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = admin.site._registry[ProductionTag]
 
-    def test_list_display_contains_id(self):
-        self.assertIn("id", self.admin.list_display)
+    def test_list_display_contains_id(self) -> None:
+        assert "id" in self.admin.list_display
 
-    def test_list_display_contains_production(self):
-        self.assertIn("production", self.admin.list_display)
+    def test_list_display_contains_production(self) -> None:
+        assert "production" in self.admin.list_display
 
-    def test_list_display_contains_tag(self):
-        self.assertIn("tag", self.admin.list_display)
+    def test_list_display_contains_tag(self) -> None:
+        assert "tag" in self.admin.list_display
 
-    def test_autocomplete_fields_contains_production(self):
-        self.assertIn("production", self.admin.autocomplete_fields)
+    def test_autocomplete_fields_contains_production(self) -> None:
+        assert "production" in self.admin.autocomplete_fields
 
-    def test_autocomplete_fields_contains_tag(self):
-        self.assertIn("tag", self.admin.autocomplete_fields)
+    def test_autocomplete_fields_contains_tag(self) -> None:
+        assert "tag" in self.admin.autocomplete_fields
+
+
+class TestProductionTagTranslationInlineClass(TestCase):
+    def test_model_is_production_tag_translation(self) -> None:
+        assert ProductionTagTranslationInline.model == ProductionTagTranslation
+
+    def test_extra_is_one(self) -> None:
+        assert ProductionTagTranslationInline.extra == 1
+
+    def test_autocomplete_fields_contains_language(self) -> None:
+        assert "language" in ProductionTagTranslationInline.autocomplete_fields
+
+    def test_has_collapse_class(self) -> None:
+        assert "collapse" in ProductionTagTranslationInline.classes
+
+    def test_fields_contains_language(self) -> None:
+        assert "language" in ProductionTagTranslationInline.fields
+
+    def test_fields_contains_description(self) -> None:
+        assert "description" in ProductionTagTranslationInline.fields
+
+    def test_is_tabular_inline(self) -> None:
+        assert issubclass(ProductionTagTranslationInline, admin.TabularInline)
+
+
+class TestProductionTagAdminHasTranslationInline(TestCase):
+    def setUp(self) -> None:
+        self.admin = admin.site._registry[ProductionTag]
+
+    def test_production_tag_translation_inline_is_registered_on_tag_admin(self) -> None:
+        inline_models = [inline.model for inline in self.admin.inlines]
+        assert ProductionTagTranslation in inline_models
+
+    def test_get_queryset_selects_related_language_via_inline(self) -> None:
+        """
+        The inline's get_queryset must select_related('language') to avoid
+        N+1 queries when the inline rows are rendered.
+        """
+        inline_instance = next(i for i in self.admin.inlines if i.model is ProductionTagTranslation)
+        assert hasattr(inline_instance, "get_queryset"), "ProductionTagTranslationInline must override get_queryset"
 
 
 # ---------------------------------------------------------------------------
@@ -333,45 +375,45 @@ class TestProductionTagAdminConfiguration(TestCase):
 
 
 class TestProductionTranslationInline(TestCase):
-    def test_model_is_production_translation(self):
-        self.assertEqual(ProductionTranslationInline.model, ProductionTranslation)
+    def test_model_is_production_translation(self) -> None:
+        assert ProductionTranslationInline.model == ProductionTranslation
 
-    def test_extra_is_one(self):
-        self.assertEqual(ProductionTranslationInline.extra, 1)
+    def test_extra_is_one(self) -> None:
+        assert ProductionTranslationInline.extra == 1
 
-    def test_autocomplete_fields_contains_language(self):
-        self.assertIn("language", ProductionTranslationInline.autocomplete_fields)
+    def test_autocomplete_fields_contains_language(self) -> None:
+        assert "language" in ProductionTranslationInline.autocomplete_fields
 
-    def test_has_collapse_class(self):
-        self.assertIn("collapse", ProductionTranslationInline.classes)
+    def test_has_collapse_class(self) -> None:
+        assert "collapse" in ProductionTranslationInline.classes
 
-    def test_is_tabular_inline(self):
-        self.assertTrue(issubclass(ProductionTranslationInline, admin.TabularInline))
+    def test_is_tabular_inline(self) -> None:
+        assert issubclass(ProductionTranslationInline, admin.TabularInline)
 
 
 class TestProductionGenreInline(TestCase):
-    def test_model_is_production_genre(self):
-        self.assertEqual(ProductionGenreInline.model, ProductionGenre)
+    def test_model_is_production_genre(self) -> None:
+        assert ProductionGenreInline.model == ProductionGenre
 
-    def test_extra_is_one(self):
-        self.assertEqual(ProductionGenreInline.extra, 1)
+    def test_extra_is_one(self) -> None:
+        assert ProductionGenreInline.extra == 1
 
-    def test_is_tabular_inline(self):
-        self.assertTrue(issubclass(ProductionGenreInline, admin.TabularInline))
+    def test_is_tabular_inline(self) -> None:
+        assert issubclass(ProductionGenreInline, admin.TabularInline)
 
 
 class TestProductionTagInline(TestCase):
-    def test_model_is_production_tag(self):
-        self.assertEqual(ProductionTagInline.model, ProductionTag)
+    def test_model_is_production_tag(self) -> None:
+        assert ProductionTagInline.model == ProductionTag
 
-    def test_extra_is_one(self):
-        self.assertEqual(ProductionTagInline.extra, 1)
+    def test_extra_is_one(self) -> None:
+        assert ProductionTagInline.extra == 1
 
-    def test_autocomplete_fields_contains_tag(self):
-        self.assertIn("tag", ProductionTagInline.autocomplete_fields)
+    def test_autocomplete_fields_contains_tag(self) -> None:
+        assert "tag" in ProductionTagInline.autocomplete_fields
 
-    def test_is_tabular_inline(self):
-        self.assertTrue(issubclass(ProductionTagInline, admin.TabularInline))
+    def test_is_tabular_inline(self) -> None:
+        assert issubclass(ProductionTagInline, admin.TabularInline)
 
 
 # ---------------------------------------------------------------------------
@@ -380,7 +422,7 @@ class TestProductionTagInline(TestCase):
 
 
 class TestProductionAdminGetQueryset(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = make_superuser()
         self.factory = RequestFactory()
         self.model_admin = admin.site._registry[Production]
@@ -390,17 +432,17 @@ class TestProductionAdminGetQueryset(TestCase):
         request.user = self.superuser
         return request
 
-    def test_queryset_is_production_queryset(self):
+    def test_queryset_is_production_queryset(self) -> None:
         qs = self.model_admin.get_queryset(self._make_request())
-        self.assertEqual(qs.model, Production)
+        assert qs.model == Production
 
-    def test_queryset_has_select_related_for_uit_database_theme(self):
+    def test_queryset_has_select_related_for_uit_database_theme(self) -> None:
         qs = self.model_admin.get_queryset(self._make_request())
-        self.assertIn("uit_database_theme", qs.query.select_related)
+        assert "uit_database_theme" in qs.query.select_related
 
-    def test_queryset_has_select_related_for_uit_database_type(self):
+    def test_queryset_has_select_related_for_uit_database_type(self) -> None:
         qs = self.model_admin.get_queryset(self._make_request())
-        self.assertIn("uit_database_type", qs.query.select_related)
+        assert "uit_database_type" in qs.query.select_related
 
 
 # ---------------------------------------------------------------------------
@@ -409,130 +451,130 @@ class TestProductionAdminGetQueryset(TestCase):
 
 
 class TestUitDatabaseThemeAdminChangelist(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = make_superuser("theme_admin")
         self.client.force_login(self.superuser)
 
-    def test_changelist_returns_200(self):
+    def test_changelist_returns_200(self) -> None:
         url = reverse("admin:productions_uitdatabasetheme_changelist")
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changelist_shows_theme(self):
+    def test_changelist_shows_theme(self) -> None:
         UitDatabaseThemeFactory.create(name="Jazz Night")
         url = reverse("admin:productions_uitdatabasetheme_changelist")
         self.assertContains(self.client.get(url), "Jazz Night")
 
-    def test_changeform_returns_200(self):
+    def test_changeform_returns_200(self) -> None:
         theme = UitDatabaseThemeFactory.create(name="Test Theme")
         url = reverse("admin:productions_uitdatabasetheme_change", args=[theme.pk])
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
 
 class TestUitDatabaseTypeAdminChangelist(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = make_superuser("type_admin")
         self.client.force_login(self.superuser)
 
-    def test_changelist_returns_200(self):
+    def test_changelist_returns_200(self) -> None:
         url = reverse("admin:productions_uitdatabasetype_changelist")
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changelist_shows_type(self):
+    def test_changelist_shows_type(self) -> None:
         UitDatabaseTypeFactory.create(name="Concert")
         url = reverse("admin:productions_uitdatabasetype_changelist")
         self.assertContains(self.client.get(url), "Concert")
 
-    def test_changeform_returns_200(self):
+    def test_changeform_returns_200(self) -> None:
         db_type = UitDatabaseTypeFactory.create(name="Test Type")
         url = reverse("admin:productions_uitdatabasetype_change", args=[db_type.pk])
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
 
 class TestProductionAdminChangelist(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = make_superuser("prod_admin")
         self.client.force_login(self.superuser)
 
-    def test_changelist_returns_200(self):
+    def test_changelist_returns_200(self) -> None:
         url = reverse("admin:productions_production_changelist")
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changelist_with_production(self):
+    def test_changelist_with_production(self) -> None:
         ProductionFactory.create()
         url = reverse("admin:productions_production_changelist")
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changeform_returns_200(self):
+    def test_changeform_returns_200(self) -> None:
         production = ProductionFactory.create()
         url = reverse("admin:productions_production_change", args=[production.pk])
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changelist_filter_by_attendance_mode(self):
+    def test_changelist_filter_by_attendance_mode(self) -> None:
         ProductionFactory.create(attendance_mode="offline")
         url = reverse("admin:productions_production_changelist")
-        self.assertEqual(self.client.get(url, {"attendance_mode": "offline"}).status_code, 200)
+        assert self.client.get(url, {"attendance_mode": "offline"}).status_code == 200
 
-    def test_changelist_filter_by_performer_type(self):
+    def test_changelist_filter_by_performer_type(self) -> None:
         ProductionFactory.create(performer_type="solo")
         url = reverse("admin:productions_production_changelist")
-        self.assertEqual(self.client.get(url, {"performer_type": "solo"}).status_code, 200)
+        assert self.client.get(url, {"performer_type": "solo"}).status_code == 200
 
-    def test_changelist_search(self):
+    def test_changelist_search(self) -> None:
         url = reverse("admin:productions_production_changelist")
-        self.assertEqual(self.client.get(url, {"q": "test"}).status_code, 200)
+        assert self.client.get(url, {"q": "test"}).status_code == 200
 
 
 class TestProductionTranslationAdminChangelist(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = make_superuser("trans_admin")
         self.client.force_login(self.superuser)
 
-    def test_changelist_returns_200(self):
+    def test_changelist_returns_200(self) -> None:
         url = reverse("admin:productions_productiontranslation_changelist")
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changeform_returns_200(self):
+    def test_changeform_returns_200(self) -> None:
         production = ProductionFactory.create()
         language = LanguageFactory.create(code="en", name="English")
         translation = ProductionTranslationFactory.create(production=production, language=language, title="Test Title")
         url = reverse("admin:productions_productiontranslation_change", args=[translation.pk])
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changelist_shows_translation_title(self):
+    def test_changelist_shows_translation_title(self) -> None:
         production = ProductionFactory.create()
         language = LanguageFactory.create(code="en", name="English")
         ProductionTranslationFactory.create(production=production, language=language, title="Visible Title")
         url = reverse("admin:productions_productiontranslation_changelist")
         self.assertContains(self.client.get(url), "Visible Title")
 
-    def test_changelist_filter_by_language_code(self):
+    def test_changelist_filter_by_language_code(self) -> None:
         """Changelist filter must use language__code lookup."""
         url = reverse("admin:productions_productiontranslation_changelist")
-        self.assertEqual(self.client.get(url, {"language__code": "en"}).status_code, 200)
+        assert self.client.get(url, {"language__code": "en"}).status_code == 200
 
 
 class TestProductionGenreAdminChangelist(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = make_superuser("genre_admin")
         self.client.force_login(self.superuser)
 
-    def test_changelist_returns_200(self):
+    def test_changelist_returns_200(self) -> None:
         url = reverse("admin:productions_productiongenre_changelist")
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
 
 class TestProductionTagAdminChangelist(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = make_superuser("tag_admin")
         self.client.force_login(self.superuser)
 
-    def test_changelist_returns_200(self):
+    def test_changelist_returns_200(self) -> None:
         url = reverse("admin:productions_productiontag_changelist")
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changeform_returns_200(self):
+    def test_changeform_returns_200(self) -> None:
         production = ProductionFactory.create()
         tag = TagFactory.create()
         production_tag = ProductionTagFactory.create(production=production, tag=tag)
         url = reverse("admin:productions_productiontag_change", args=[production_tag.pk])
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200

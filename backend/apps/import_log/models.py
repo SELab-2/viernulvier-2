@@ -1,5 +1,4 @@
-"""
-Models for the Imports app.
+"""Models for the Imports app.
 
 The imports app provides a lightweight audit trail for the data ingestion
 pipeline:
@@ -22,8 +21,7 @@ from apps.core.models import BaseModel
 
 
 class ImportLog(BaseModel):
-    """
-    Audit record for a single run of the data import pipeline.
+    """Audit record for a single run of the data import pipeline.
 
     An ``ImportLog`` is created automatically when an import job starts and
     updated as the job progresses. The ``status`` field reflects the current
@@ -135,4 +133,5 @@ class ImportLog(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """String representation of an ImportLog instance."""
         return f"{self.source} - {self.status}"

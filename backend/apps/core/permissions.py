@@ -1,5 +1,4 @@
-"""
-API key permission enforcement for the core app.
+"""API key permission enforcement for the core app.
 
 ``ApiKeyPermission`` works in tandem with
 :class:`~apps.core.authentications.ApiKeyAuthentication`. The authenticator
@@ -25,12 +24,12 @@ returned ``None``, causing DRF to issue ``HTTP 401 Unauthorized`` before
 this permission class is even called.
 """
 
+from django.http import HttpRequest
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class ApiKeyPermission(BasePermission):
-    """
-    DRF permission class that gates access based on the API key scope.
+    """DRF permission class that gates access based on the API key scope.
 
     Reads ``request.auth`` - set by
     :class:`~apps.core.authentications.ApiKeyAuthentication` - and allows
@@ -48,9 +47,8 @@ class ApiKeyPermission(BasePermission):
     HTTP specification and therefore permitted for public keys.
     """
 
-    def has_permission(self, request, view) -> bool:
-        """
-        Return ``True`` if the request should be permitted.
+    def has_permission(self, request: HttpRequest, _view: any) -> bool:
+        """Return ``True`` if the request should be permitted.
 
         - Internal keys are granted unconditional access.
         - Public keys may only perform safe (read-only) operations.

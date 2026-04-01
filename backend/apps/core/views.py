@@ -1,5 +1,4 @@
-"""
-Base ViewSet classes for the core app.
+"""Base ViewSet classes for the core app.
 
 All app-level ViewSets inherit from one of the two classes defined here:
 
@@ -33,8 +32,7 @@ from .permissions import ApiKeyPermission
 
 
 class ApiModelViewSet(ModelViewSet):
-    """
-    Base ViewSet for full CRUD operations.
+    """Base ViewSet for full CRUD operations.
 
     Registers all standard DRF routes:
     ``list``, ``create``, ``retrieve``, ``update``, ``partial_update``,
@@ -57,8 +55,7 @@ class ApiModelViewSet(ModelViewSet):
 
 
 class ApiReadOnlyViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
-    """
-    Base ViewSet for read-only access.
+    """Base ViewSet for read-only access.
 
     Only the ``list`` and ``retrieve`` routes are registered - write
     routes (``create``, ``update``, ``partial_update``, ``destroy``) are

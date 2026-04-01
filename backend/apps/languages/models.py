@@ -1,5 +1,4 @@
-"""
-Models for the Language app.
+"""Models for the Language app.
 
 A Language represents a locale supported by the platform.
 Each language has an ISO 639-1 code, a human-readable name, and an
@@ -13,8 +12,7 @@ from apps.core.models import BaseModel
 
 
 class Language(BaseModel):
-    """
-    A locale supported by the platform.
+    """A locale supported by the platform.
 
     Used as a FK target by every translation table in the system
     (GenreTranslation, LocationTranslation, SpaceTranslation, …).
@@ -58,4 +56,5 @@ class Language(BaseModel):
         ordering = ["code"]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the language."""
         return f"{self.code} - {self.name}"

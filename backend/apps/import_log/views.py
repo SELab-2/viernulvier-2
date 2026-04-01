@@ -1,5 +1,4 @@
-"""
-ViewSets for the Imports app.
+"""ViewSets for the Imports app.
 
 Schema annotations are kept in schemas.py so this file stays focused
 on routing logic only.
@@ -24,8 +23,7 @@ _TAG = "Imports"
 @extend_schema(tags=[_TAG])
 @import_log_schema
 class ImportLogViewSet(ApiReadOnlyViewSet):
-    """
-    Read-only endpoint for monitoring ImportLog records.
+    """Read-only endpoint for monitoring ImportLog records.
 
     Import logs are created and updated exclusively by the import pipeline.
     This endpoint provides visibility into the pipeline's activity and is

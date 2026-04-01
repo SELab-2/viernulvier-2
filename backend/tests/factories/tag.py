@@ -17,11 +17,11 @@ class TagFactory(factory.django.DjangoModelFactory):
         model = Tag
 
     url = LazyFunction(faker.url)
-    source = LazyFunction(lambda: faker.word())
-    source_type = LazyFunction(lambda: faker.word())
+    source = LazyFunction(faker.word)
+    source_type = LazyFunction(faker.word)
     is_external = LazyFunction(lambda: faker.boolean(chance_of_getting_true=50))
     is_enabled = LazyFunction(lambda: faker.boolean(chance_of_getting_true=90))
-    type = LazyFunction(lambda: faker.word())
+    type = LazyFunction(faker.word)
 
 
 # ==============================

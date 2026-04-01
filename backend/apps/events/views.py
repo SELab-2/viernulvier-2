@@ -1,5 +1,4 @@
-"""
-ViewSets for the Events app.
+"""ViewSets for the Events app.
 
 Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
@@ -29,8 +28,7 @@ _TAG = "Events"
 @extend_schema(tags=[_TAG])
 @event_schema
 class EventViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Event objects.
+    """CRUD endpoints for Event objects.
 
     An event is a scheduled performance of a production inside a hall.
     It carries a ``starts_at`` / ``ends_at`` window (both enforced by a
