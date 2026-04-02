@@ -1,7 +1,7 @@
 from datetime import timedelta
 
-import factory
 from django.utils import timezone
+import factory
 from factory.declarations import LazyAttribute, LazyFunction
 from factory.helpers import post_generation
 from faker import Faker
@@ -42,32 +42,32 @@ class ImportLogFactory(factory.django.DjangoModelFactory):
     error_message = None
 
     @post_generation
-    def adjust_counts(obj, create, extracted, **kwargs):
+    def adjust_counts(self, create, _) -> None:
         """
         Zorgt dat imported + failed <= total
         """
         if not create:
             return
 
-        total = obj.records_total
+        total = self.records_total
         imported = faker.random_int(min=0, max=total)
         failed = faker.random_int(min=0, max=(total - imported))
 
-        obj.records_imported = imported
-        obj.records_failed = failed
-        obj.save()
+        self.records_imported = imported
+        self.records_failed = failed
+        self.save()
 
     @post_generation
-    def adjust_status_logic(obj, create, extracted, **kwargs):
+    def adjust_status_logic(self, create, _, **__) -> None:
         """
         Logische status-afhandeling.
         """
         if not create:
             return
 
-        if obj.status == ImportLog.Status.FAILED:
-            obj.error_message = faker.sentence()
-        elif obj.status in [ImportLog.Status.PENDING, ImportLog.Status.IN_PROGRESS]:
-            obj.finished_at = None
+        if self.status == ImportLog.Status.FAILED:
+            self.error_message = faker.sentence()
+        elif self.status in [ImportLog.Status.PENDING, ImportLog.Status.IN_PROGRESS]:
+            self.finished_at = None
 
-        obj.save()
+        self.save()

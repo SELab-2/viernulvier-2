@@ -1,5 +1,4 @@
-"""
-Serializers for the Tags app.
+"""Serializers for the Tags app.
 
 Translated fields on ``TagSerializer`` (``name``,
 ``short_description``, ``url_title``) return all available translations
@@ -15,8 +14,7 @@ from .models import Tag
 
 
 class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
-    """
-    Full representation of a Tag.
+    """Full representation of a Tag.
 
     Translated fields
     -----------------

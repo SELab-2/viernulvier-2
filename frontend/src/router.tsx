@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import SeriesDetailPage from './pages/SeriesDetailPage'
 import SeriesPage from './pages/SeriesPage'
+import ProductionDetailPage from './pages/ProductionDetailPage'
 
 type RouterProps = {
   mode: 'light' | 'dark'
@@ -29,7 +30,7 @@ const Router = ({ mode, onToggleMode }: RouterProps) => {
             <Route path="/events" element={<Navigate to="/series" replace />} />
             <Route path="/events/:id" element={<Navigate to="/series" replace />} />
             <Route path="/productions" element={<Navigate to="/artists" replace />} />
-            <Route path="/productions/:id" element={<Navigate to="/artists" replace />} />
+            <Route path="/productions/:id" element={<ProductionDetailPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Box>

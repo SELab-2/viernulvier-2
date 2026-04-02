@@ -1,6 +1,4 @@
-"""
-Filters for the Genre app.
-"""
+"""Filters for the Genre app."""
 
 import django_filters
 
@@ -10,8 +8,7 @@ from .models import Genre, GenreUseAs
 
 
 class GenreUseAsFilter(BaseModelFilter):
-    """
-    FilterSet for GenreUseAs list queries.
+    """FilterSet for GenreUseAs list queries.
 
     Supported query parameters
     --------------------------
@@ -28,8 +25,7 @@ class GenreUseAsFilter(BaseModelFilter):
 
 
 class GenreFilter(BaseModelFilter):
-    """
-    FilterSet for Genre list queries.
+    """FilterSet for Genre list queries.
 
     Supported query parameters
     --------------------------

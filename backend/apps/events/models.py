@@ -1,5 +1,4 @@
-"""
-Models for the Events app.
+"""Models for the Events app.
 
 Events are scheduled occurrences of productions:
 
@@ -27,8 +26,7 @@ from apps.productions.models import Production
 
 
 class Event(BaseModel):
-    """
-    A scheduled occurrence of a production inside a hall.
+    """A scheduled occurrence of a production inside a hall.
 
     An event has a start and end time, and a set of :class:`EventPrice`
     entries that define capacity and pricing per price rank. The ``hall``
@@ -92,8 +90,7 @@ class Event(BaseModel):
         ]
 
     def clean(self) -> None:
-        """
-        Enforce that ``ends_at`` is later or equal to ``starts_at``.
+        """Enforce that ``ends_at`` is later or equal to ``starts_at``.
 
         This mirrors the database-level ``CheckConstraint`` so that the
         validation error surfaces in the Django admin and any form-based
@@ -104,14 +101,14 @@ class Event(BaseModel):
             raise ValidationError("Event end time cannot be before start time.")
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the event, including the production and start time."""
         production = str(self.production) if self.production else "Unknown Production"
         date = self.starts_at.strftime("%Y-%m-%d %H:%M") if self.starts_at else "TBA"
         return f"{production} @ {date}"
 
 
 class EventPrice(BaseModel):
-    """
-    A price tier assigned to a specific event.
+    """A price tier assigned to a specific event.
 
     Each ``EventPrice`` links an :class:`Event` to a
     :class:`~apps.pricing.models.PriceRank` and records the ticket amount
@@ -188,5 +185,6 @@ class EventPrice(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the event price, including the event and price rank."""
         rank = str(self.price_rank) if self.price_rank else "No rank"
         return f"{self.event} - {rank} (€{self.amount})"

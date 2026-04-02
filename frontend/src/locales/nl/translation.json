@@ -25,14 +25,40 @@
     "listPlaceholder": "Lijst met evenementen wordt hier weergegeven.",
     "detailTitle": "Evenement Detail",
     "detailPlaceholder": "Details van evenement met ID {{id}} worden hier weergegeven.",
-    "backToEvents": "Terug naar Evenementen"
+    "backToEvents": "Terug naar Evenementen",
+    "priceType": "Type",
+    "price": "Prijs",
+    "available": "Beschikbaar",
+    "availableQuantity": "{{count}} beschikbaar"
   },
   "productions": {
     "title": "Producties",
     "listPlaceholder": "Lijst met producties wordt hier weergegeven.",
     "detailTitle": "Productie Detail",
     "detailPlaceholder": "Details van productie met ID {{id}} worden hier weergegeven.",
-    "backToProductions": "Terug naar Producties"
+    "backToProductions": "Terug naar Producties",
+    "detail": {
+      "meta": {
+        "period": "Periode",
+        "venues": "Locaties",
+        "genre": "Genre",
+        "type": "Type",
+        "performerType": "Uitvoering",
+        "group": "Groep",
+        "solo": "Solo",
+        "attendance": "Aanwezigheid",
+        "offline": "Fysiek",
+        "online": "Online"
+      },
+      "notFound": "Productie niet gevonden.",
+      "unknownProduction": "Onbekende productie",
+      "noDescription": "Geen beschrijving beschikbaar.",
+      "error": {
+        "invalidId": "Ongeldige productie-id",
+        "loadFailed": "Kon productie niet laden"
+      },
+      "events": "Evenementen"
+    }
   },
   "notFound": {
     "code": "404",
@@ -51,7 +77,7 @@
     },
     "nav": {
       "ariaLabel": "Navigatie",
-      "home": "Archief",  
+      "home": "Archief",
       "series": "Reeksen",
       "events": "Evenementen"
     },

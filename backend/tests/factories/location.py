@@ -83,4 +83,4 @@ class HallTranslationFactory(factory.django.DjangoModelFactory):
     hall = factory.SubFactory(HallFactory)
     language = factory.SubFactory(LanguageFactory)
     name = factory.LazyAttribute(lambda o: f"Hall {o.hall.id} ({o.language.code})")
-    remark = factory.LazyFunction(lambda: faker.sentence())
+    remark = factory.LazyFunction(faker.sentence)

@@ -58,11 +58,11 @@ def make_import_log(**kwargs):
 class TestImportLogAdminRegistration(TestCase):
     """Verify ImportLogAdmin is registered."""
 
-    def test_import_log_is_registered(self):
-        self.assertIn(ImportLog, admin.site._registry)
+    def test_import_log_is_registered(self) -> None:
+        assert ImportLog in admin.site._registry
 
-    def test_registered_admin_is_import_log_admin(self):
-        self.assertIsInstance(admin.site._registry[ImportLog], ImportLogAdmin)
+    def test_registered_admin_is_import_log_admin(self) -> None:
+        assert isinstance(admin.site._registry[ImportLog], ImportLogAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -73,11 +73,11 @@ class TestImportLogAdminRegistration(TestCase):
 class TestImportLogAdminInheritance(TestCase):
     """ImportLogAdmin must extend BaseAdmin."""
 
-    def test_inherits_from_base_admin(self):
-        self.assertTrue(issubclass(ImportLogAdmin, BaseAdmin))
+    def test_inherits_from_base_admin(self) -> None:
+        assert issubclass(ImportLogAdmin, BaseAdmin)
 
-    def test_inherits_from_model_admin(self):
-        self.assertTrue(issubclass(ImportLogAdmin, admin.ModelAdmin))
+    def test_inherits_from_model_admin(self) -> None:
+        assert issubclass(ImportLogAdmin, admin.ModelAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -88,32 +88,32 @@ class TestImportLogAdminInheritance(TestCase):
 class TestImportLogAdminListDisplay(TestCase):
     """Tests for list_display configuration."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = admin.site._registry[ImportLog]
 
-    def test_list_display_contains_id(self):
-        self.assertIn("id", self.admin.list_display)
+    def test_list_display_contains_id(self) -> None:
+        assert "id" in self.admin.list_display
 
-    def test_list_display_contains_source(self):
-        self.assertIn("source", self.admin.list_display)
+    def test_list_display_contains_source(self) -> None:
+        assert "source" in self.admin.list_display
 
-    def test_list_display_contains_status(self):
-        self.assertIn("status", self.admin.list_display)
+    def test_list_display_contains_status(self) -> None:
+        assert "status" in self.admin.list_display
 
-    def test_list_display_contains_records_total(self):
-        self.assertIn("records_total", self.admin.list_display)
+    def test_list_display_contains_records_total(self) -> None:
+        assert "records_total" in self.admin.list_display
 
-    def test_list_display_contains_records_imported(self):
-        self.assertIn("records_imported", self.admin.list_display)
+    def test_list_display_contains_records_imported(self) -> None:
+        assert "records_imported" in self.admin.list_display
 
-    def test_list_display_contains_records_failed(self):
-        self.assertIn("records_failed", self.admin.list_display)
+    def test_list_display_contains_records_failed(self) -> None:
+        assert "records_failed" in self.admin.list_display
 
-    def test_list_display_contains_started_at(self):
-        self.assertIn("started_at", self.admin.list_display)
+    def test_list_display_contains_started_at(self) -> None:
+        assert "started_at" in self.admin.list_display
 
-    def test_list_display_contains_finished_at(self):
-        self.assertIn("finished_at", self.admin.list_display)
+    def test_list_display_contains_finished_at(self) -> None:
+        assert "finished_at" in self.admin.list_display
 
 
 # ---------------------------------------------------------------------------
@@ -124,11 +124,11 @@ class TestImportLogAdminListDisplay(TestCase):
 class TestImportLogAdminListFilter(TestCase):
     """Tests for list_filter configuration."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = admin.site._registry[ImportLog]
 
-    def test_list_filter_contains_status(self):
-        self.assertIn("status", self.admin.list_filter)
+    def test_list_filter_contains_status(self) -> None:
+        assert "status" in self.admin.list_filter
 
 
 # ---------------------------------------------------------------------------
@@ -139,14 +139,14 @@ class TestImportLogAdminListFilter(TestCase):
 class TestImportLogAdminSearchFields(TestCase):
     """Tests for search_fields configuration."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = admin.site._registry[ImportLog]
 
-    def test_search_fields_contains_source(self):
-        self.assertIn("source", self.admin.search_fields)
+    def test_search_fields_contains_source(self) -> None:
+        assert "source" in self.admin.search_fields
 
-    def test_search_fields_contains_error_message(self):
-        self.assertIn("error_message", self.admin.search_fields)
+    def test_search_fields_contains_error_message(self) -> None:
+        assert "error_message" in self.admin.search_fields
 
 
 # ---------------------------------------------------------------------------
@@ -157,32 +157,32 @@ class TestImportLogAdminSearchFields(TestCase):
 class TestImportLogAdminReadonlyFields(TestCase):
     """All data fields must be read-only to protect log integrity."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = admin.site._registry[ImportLog]
 
-    def test_readonly_fields_contains_source(self):
-        self.assertIn("source", self.admin.readonly_fields)
+    def test_readonly_fields_contains_source(self) -> None:
+        assert "source" in self.admin.readonly_fields
 
-    def test_readonly_fields_contains_status(self):
-        self.assertIn("status", self.admin.readonly_fields)
+    def test_readonly_fields_contains_status(self) -> None:
+        assert "status" in self.admin.readonly_fields
 
-    def test_readonly_fields_contains_records_total(self):
-        self.assertIn("records_total", self.admin.readonly_fields)
+    def test_readonly_fields_contains_records_total(self) -> None:
+        assert "records_total" in self.admin.readonly_fields
 
-    def test_readonly_fields_contains_records_imported(self):
-        self.assertIn("records_imported", self.admin.readonly_fields)
+    def test_readonly_fields_contains_records_imported(self) -> None:
+        assert "records_imported" in self.admin.readonly_fields
 
-    def test_readonly_fields_contains_records_failed(self):
-        self.assertIn("records_failed", self.admin.readonly_fields)
+    def test_readonly_fields_contains_records_failed(self) -> None:
+        assert "records_failed" in self.admin.readonly_fields
 
-    def test_readonly_fields_contains_started_at(self):
-        self.assertIn("started_at", self.admin.readonly_fields)
+    def test_readonly_fields_contains_started_at(self) -> None:
+        assert "started_at" in self.admin.readonly_fields
 
-    def test_readonly_fields_contains_finished_at(self):
-        self.assertIn("finished_at", self.admin.readonly_fields)
+    def test_readonly_fields_contains_finished_at(self) -> None:
+        assert "finished_at" in self.admin.readonly_fields
 
-    def test_readonly_fields_contains_error_message(self):
-        self.assertIn("error_message", self.admin.readonly_fields)
+    def test_readonly_fields_contains_error_message(self) -> None:
+        assert "error_message" in self.admin.readonly_fields
 
 
 # ---------------------------------------------------------------------------
@@ -193,7 +193,7 @@ class TestImportLogAdminReadonlyFields(TestCase):
 class TestImportLogAdminAddPermission(TestCase):
     """has_add_permission must always return False."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = make_superuser()
         self.factory = RequestFactory()
         self.model_admin = admin.site._registry[ImportLog]
@@ -203,12 +203,12 @@ class TestImportLogAdminAddPermission(TestCase):
         request.user = user or self.superuser
         return request
 
-    def test_has_add_permission_returns_false_for_superuser(self):
-        self.assertFalse(self.model_admin.has_add_permission(self._make_request(self.superuser)))
+    def test_has_add_permission_returns_false_for_superuser(self) -> None:
+        assert not self.model_admin.has_add_permission(self._make_request(self.superuser))
 
-    def test_has_add_permission_returns_false_for_regular_user(self):
+    def test_has_add_permission_returns_false_for_regular_user(self) -> None:
         regular = User.objects.create_user(username="regular", password="password")
-        self.assertFalse(self.model_admin.has_add_permission(self._make_request(regular)))
+        assert not self.model_admin.has_add_permission(self._make_request(regular))
 
 
 # ---------------------------------------------------------------------------
@@ -219,43 +219,43 @@ class TestImportLogAdminAddPermission(TestCase):
 class TestImportLogAdminChangelist(TestCase):
     """Functional tests for ImportLogAdmin via HTTP."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = make_superuser("log_admin")
         self.client.force_login(self.superuser)
 
-    def test_changelist_returns_200(self):
+    def test_changelist_returns_200(self) -> None:
         url = reverse("admin:import_log_importlog_changelist")
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_changelist_shows_source(self):
+    def test_changelist_shows_source(self) -> None:
         make_import_log(source="visible_source.xml")
         url = reverse("admin:import_log_importlog_changelist")
         self.assertContains(self.client.get(url), "visible_source.xml")
 
-    def test_changeform_returns_200(self):
+    def test_changeform_returns_200(self) -> None:
         log = make_import_log()
         url = reverse("admin:import_log_importlog_change", args=[log.pk])
-        self.assertEqual(self.client.get(url).status_code, 200)
+        assert self.client.get(url).status_code == 200
 
-    def test_add_view_is_blocked(self):
+    def test_add_view_is_blocked(self) -> None:
         url = reverse("admin:import_log_importlog_add")
-        self.assertEqual(self.client.get(url).status_code, 403)
+        assert self.client.get(url).status_code == 403
 
-    def test_changelist_filter_by_status_success(self):
+    def test_changelist_filter_by_status_success(self) -> None:
         make_import_log(status=ImportLog.Status.SUCCESS)
         url = reverse("admin:import_log_importlog_changelist")
-        self.assertEqual(self.client.get(url, {"status": ImportLog.Status.SUCCESS}).status_code, 200)
+        assert self.client.get(url, {"status": ImportLog.Status.SUCCESS}).status_code == 200
 
-    def test_changelist_filter_by_status_failed(self):
+    def test_changelist_filter_by_status_failed(self) -> None:
         make_import_log(status=ImportLog.Status.FAILED, error_message="timeout")
         url = reverse("admin:import_log_importlog_changelist")
-        self.assertEqual(self.client.get(url, {"status": ImportLog.Status.FAILED}).status_code, 200)
+        assert self.client.get(url, {"status": ImportLog.Status.FAILED}).status_code == 200
 
-    def test_changelist_search_by_source(self):
+    def test_changelist_search_by_source(self) -> None:
         url = reverse("admin:import_log_importlog_changelist")
-        self.assertEqual(self.client.get(url, {"q": "import"}).status_code, 200)
+        assert self.client.get(url, {"q": "import"}).status_code == 200
 
-    def test_changelist_search_by_error_message(self):
+    def test_changelist_search_by_error_message(self) -> None:
         make_import_log(status=ImportLog.Status.FAILED, error_message="connection refused")
         url = reverse("admin:import_log_importlog_changelist")
-        self.assertEqual(self.client.get(url, {"q": "connection refused"}).status_code, 200)
+        assert self.client.get(url, {"q": "connection refused"}).status_code == 200

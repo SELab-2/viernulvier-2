@@ -22,19 +22,16 @@ class TagFilter(SearchableMultiSelectFilter):
     parameter_name = "tag"
     search_param = "tag_q"
 
-    def get_option_queryset(self):
+    def get_option_queryset(self) -> list[tuple[str, str]]:
         """Return tag options as ``(id, label)`` tuples for the filter UI."""
         tags = Tag.objects.prefetch_related("translations")
         if self.search_value:
             search_q = Q(type__icontains=self.search_value) | Q(translations__name__icontains=self.search_value)
-            if self.selected_values:
-                tags = tags.filter(search_q | Q(id__in=self.selected_values))
-            else:
-                tags = tags.filter(search_q)
+            tags = tags.filter(search_q | Q(id__in=self.selected_values)) if self.selected_values else tags.filter(search_q)
         tags = tags.distinct().order_by("type", "id")
         return [(str(tag.pk), tag.type.strip() or str(tag)) for tag in tags]
 
-    def filter_queryset(self, queryset):
+    def filter_queryset(self, queryset: Q) -> Q:
         """Apply selected tags to queryset using cumulative AND filters."""
         filtered = queryset
         for tag_id in self.selected_values:
@@ -56,16 +53,16 @@ class GenreFilter(SearchableMultiSelectFilter):
     search_param = "genre_q"
 
     @staticmethod
-    def _genre_label(genre):
+    def _genre_label(genre: Genre) -> str:
         """Return the label exactly as the model exposes it via ``__str__``."""
         return str(genre)
 
     @staticmethod
-    def _genre_search_text(genre):
+    def _genre_search_text(genre: Genre) -> str:
         """Return only the human-readable part used for searching."""
         return genre.get_base_display_name(related_name="translations", fallback="") or ""
 
-    def get_option_queryset(self):
+    def get_option_queryset(self) -> list[tuple[str, str]]:
         """Return genre options as ``(id, label)`` tuples."""
         genres = list(Genre.objects.prefetch_related("translations").order_by("type", "id"))
         if self.search_value:
@@ -79,7 +76,7 @@ class GenreFilter(SearchableMultiSelectFilter):
 
         return [(str(genre.pk), self._genre_label(genre)) for genre in genres]
 
-    def filter_queryset(self, queryset):
+    def filter_queryset(self, queryset: Q) -> Q:
         """Apply selected genres with cumulative AND semantics."""
         filtered = queryset
         for genre_id in self.selected_values:
@@ -104,7 +101,7 @@ class ArtistNameFilter(SearchableMultiSelectFilter):
     parameter_name = "artist_name"
     search_param = "artist_name_q"
 
-    def get_option_queryset(self):
+    def get_option_queryset(self) -> list[tuple[str, str]]:
         """Return artist-name options as ``(value, label)`` tuples."""
         names = (
             ProductionTranslation.objects.exclude(artist_name="")
@@ -122,6 +119,6 @@ class ArtistNameFilter(SearchableMultiSelectFilter):
 
         return [(name, name) for name in name_values]
 
-    def filter_queryset(self, queryset):
+    def filter_queryset(self, queryset: Q) -> Q:
         """Filter productions by selected artist names (OR semantics)."""
         return queryset.filter(translations__artist_name__in=self.selected_values).distinct()
