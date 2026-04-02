@@ -16,7 +16,29 @@ jest.mock('../../services/productions/Productions', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, opts?: { defaultValue: string }) => opts?.defaultValue ?? key,
+    t: (key: string, options?: { name?: string }) => {
+      const translations: Record<string, string> = {
+        'series.loading': 'Reeks wordt geladen...',
+        'series.backToSeries': 'Terug naar reeksen',
+        'series.breadcrumb': options?.name
+          ? `Archief / Reeksen / ${options.name}`
+          : 'Archief / Reeksen',
+        'series.allEditions': 'Alle edities',
+        'series.allEditionsSubtitle':
+          'Chronologisch overzicht van de producties binnen deze reeks.',
+        'series.noProductions': 'Er zijn nog geen producties gekoppeld aan deze reeks.',
+        'series.invalidId': 'Ongeldig reeks-ID.',
+        'series.fetchError': 'Kon de reeks niet ophalen.',
+        'series.noDescription': 'Geen beschrijving beschikbaar.',
+        'series.untitled': 'Naamloze reeks',
+        'series.untitledProduction': 'Naamloze productie',
+        'series.stats.editions': 'Edities',
+        'series.stats.period': 'Periode',
+        'series.stats.type': 'Type',
+      }
+
+      return translations[key] ?? key
+    },
     i18n: { language: 'nl' },
   }),
 }))
@@ -30,7 +52,7 @@ describe('SeriesDetailPage', () => {
     mockedGetProductions.mockReset()
   })
 
-  const renderPage = (id: string = '1') => {
+  const renderPage = (id = '1') => {
     return render(
       <MemoryRouter initialEntries={[`/series/${id}`]}>
         <Routes>
@@ -80,6 +102,7 @@ describe('SeriesDetailPage', () => {
 
     expect(screen.getByText('Beschrijving van de reeks')).toBeInTheDocument()
     expect(screen.getByText('VIDEODROOM 2024')).toBeInTheDocument()
+    expect(screen.getByText('Alle edities')).toBeInTheDocument()
   })
 
   it('redirects to /404 when tag is not found', async () => {
