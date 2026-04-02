@@ -54,6 +54,6 @@ REST_FRAMEWORK = {
         "public_min": "40/minute",
         "public_hour": "800/hour",
         # fallback for unauthenticated requests, should be blocked by permissions but just in case
-        "anon": "5/minute",
+        "anon": "10/minute",
     },
 }
