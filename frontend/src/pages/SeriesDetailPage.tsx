@@ -96,7 +96,7 @@ const SeriesDetailPage = () => {
     const numericId = Number(id)
 
     if (!numericId || Number.isNaN(numericId)) {
-      setError(t('series.invalidId', { defaultValue: 'Ongeldig reeks-ID.' }))
+      setError(t('series.invalidId'))
       setIsLoading(false)
       return
     }
@@ -120,9 +120,7 @@ const SeriesDetailPage = () => {
         setProductions(productionsResponse.results)
       } catch {
         setError(
-          t('series.fetchError', {
-            defaultValue: 'Kon de reeks niet ophalen.',
-          }),
+          t('series.fetchError'),
         )
       } finally {
         setIsLoading(false)
@@ -157,15 +155,15 @@ const SeriesDetailPage = () => {
     return [
       {
         value: String(sortedProductions.length),
-        label: t('series.stats.editions', { defaultValue: 'Edities' }),
+        label: t('series.stats.editions'),
       },
       {
         value: minYear && maxYear ? `${minYear}–${maxYear}` : '—',
-        label: t('series.stats.period', { defaultValue: 'Periode' }),
+        label: t('series.stats.period'),
       },
       {
         value: seriesTag?.type || '—',
-        label: t('series.stats.type', { defaultValue: 'Type' }),
+        label: t('series.stats.type'),
       },
     ]
   }, [seriesTag?.type, sortedProductions, t])
@@ -185,7 +183,7 @@ const SeriesDetailPage = () => {
         <Stack spacing={3} alignItems="center">
           <CircularProgress />
           <Typography color="text.secondary">
-            {t('series.loading', { defaultValue: 'Reeks wordt geladen...' })}
+            {t('series.loading')}
           </Typography>
         </Stack>
       </Container>
@@ -199,12 +197,12 @@ const SeriesDetailPage = () => {
   const seriesName =
     getLocalizedRecordValue(seriesTag.name, i18n.language) ||
     seriesTag.display_name ||
-    t('series.untitled', { defaultValue: 'Naamloze reeks' })
+    t('series.untitled')
 
   const seriesDescription =
     getLocalizedRecordValue(seriesTag.short_description, i18n.language) ||
     seriesTag.display_short_description ||
-    t('series.noDescription', { defaultValue: 'Geen beschrijving beschikbaar.' })
+    t('series.noDescription')
 
   return (
     <Container
@@ -227,8 +225,7 @@ const SeriesDetailPage = () => {
 
           <Typography variant="body2" color="text.secondary">
             {t('series.breadcrumb', {
-              name: seriesName,
-              defaultValue: `Archive / Series / ${seriesName}`,
+              name: seriesName
             })}
           </Typography>
         </Stack>
@@ -241,13 +238,11 @@ const SeriesDetailPage = () => {
 
         <Stack spacing={1}>
           <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
-            {t('series.allEditions', { defaultValue: 'Alle edities' })}
+            {t('series.allEditions')}
           </Typography>
 
           <Typography variant="body2" color="text.secondary">
-            {t('series.allEditionsSubtitle', {
-              defaultValue: 'Alle producties die aan deze reeks-tag gekoppeld zijn.',
-            })}
+            {t('series.allEditionsSubtitle')}
           </Typography>
         </Stack>
 
@@ -275,7 +270,7 @@ const SeriesDetailPage = () => {
                   title={
                     production.display_title ||
                     getLocalizedRecordValue(production.title, i18n.language) ||
-                    t('series.untitledProduction', { defaultValue: 'Naamloze productie' })
+                    t('series.untitledProduction')
                   }
                   meta={buildProductionMeta(production, i18n.language)}
                   description={buildProductionDescription(production, i18n.language)}
