@@ -18,36 +18,6 @@ INTERNAL_KEY = "super-secret-internal-key-abc123"
 PUBLIC_KEY = "public-readonly-key-xyz789"
 
 
-def _assert_api_key_result(result, expected_scope: str) -> None:
-    """Assert that the result is a valid (ApiKeyUser, scope) tuple."""
-    user, scope = result
-    assert isinstance(user, ApiKeyUser)
-    assert user.is_authenticated is True
-    assert scope == expected_scope
-
-
-class TestSuccessfulAuthentication:
-    def test_valid_internal_key_returns_internal_scope(self, auth) -> None:
-        with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
-            result = auth.authenticate(_make_request(INTERNAL_KEY))
-        assert result == (None, "internal")
-
-    def test_valid_public_key_returns_public_scope(self, auth) -> None:
-        with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
-            result = auth.authenticate(_make_request(PUBLIC_KEY))
-        assert result == (None, "public")
-
-    def test_internal_key_takes_priority_when_both_match(self, auth) -> None:
-        with _patch_settings(internal=INTERNAL_KEY, public=INTERNAL_KEY):
-            result = auth.authenticate(_make_request(INTERNAL_KEY))
-        assert result == (None, "internal")
-
-    def test_bytes_header_is_accepted_when_utf8(self, auth) -> None:
-        with _patch_settings(internal=INTERNAL_KEY):
-            result = auth.authenticate(_make_request(INTERNAL_KEY.encode("utf-8")))
-        assert result == (None, "internal")
-
-
 def _make_request(api_key: str | bytes | None = None):
     request = MagicMock()
     request.META = {}
@@ -64,6 +34,14 @@ def _patch_settings(internal: str | None = None, public: str | None = None):
     )
 
 
+def _assert_api_key_result(result, expected_scope: str) -> None:
+    """Assert that the result is a valid (ApiKeyUser, scope) tuple."""
+    user, scope = result
+    assert isinstance(user, ApiKeyUser)
+    assert user.is_authenticated is True
+    assert scope == expected_scope
+
+
 @pytest.fixture
 def auth():
     return ApiKeyAuthentication()
@@ -78,6 +56,34 @@ class TestMissingHeader:
 
     def test_returns_none_when_header_is_empty_bytes(self, auth) -> None:
         assert auth.authenticate(_make_request(b"")) is None
+
+
+class TestSuccessfulAuthentication:
+    def test_valid_internal_key_returns_internal_scope(self, auth) -> None:
+        with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
+            result = auth.authenticate(_make_request(INTERNAL_KEY))
+        _assert_api_key_result(result, "internal")
+
+    def test_valid_public_key_returns_public_scope(self, auth) -> None:
+        with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
+            result = auth.authenticate(_make_request(PUBLIC_KEY))
+        _assert_api_key_result(result, "public")
+
+    def test_internal_key_takes_priority_when_both_match(self, auth) -> None:
+        with _patch_settings(internal=INTERNAL_KEY, public=INTERNAL_KEY):
+            result = auth.authenticate(_make_request(INTERNAL_KEY))
+        _assert_api_key_result(result, "internal")
+
+    def test_bytes_header_is_accepted_when_utf8(self, auth) -> None:
+        with _patch_settings(internal=INTERNAL_KEY):
+            result = auth.authenticate(_make_request(INTERNAL_KEY.encode("utf-8")))
+        _assert_api_key_result(result, "internal")
+
+    def test_user_is_authenticated(self, auth) -> None:
+        """ApiKeyUser must satisfy DRF's is_authenticated check (fixes AnonRateThrottle)."""
+        with _patch_settings(internal=INTERNAL_KEY):
+            user, _ = auth.authenticate(_make_request(INTERNAL_KEY))
+        assert user.is_authenticated is True
 
 
 class TestInvalidAuthentication:
