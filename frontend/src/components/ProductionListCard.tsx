@@ -1,5 +1,6 @@
+import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
-import { Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import type { Production } from '../types/Productions'
@@ -8,15 +9,15 @@ import { getTranslatedRecord } from '../utils/translations'
 import GenreChip from './GenreChip'
 import ImageWithFallback from './ImageWithFallback'
 
-export interface GridCardProps {
+export interface ListCardProps {
   production: Production
   selectedGenreIds: number[]
   onGenreClick: (genreId: number) => void
 }
 
 /**
- * Vertical card for a {@link Production}: full-width image, title, artist, genre chips,
- * and a link to the detail route. Intended for mobile-friendly grid layouts.
+ * Horizontal card for a {@link Production} or {@link Event}: image, title, artist, optional date and venue,
+ * genre filters, and a full-card link to the detail route (genre chips stay separate filters).
  *
  * Text is resolved with the active i18n locale via {@link getTranslatedRecord}. The image uses the
  * first crop of the first gallery image when present; otherwise {@link ImageWithFallback} shows the
@@ -25,9 +26,9 @@ export interface GridCardProps {
  * @param props.production Full API payload (title, artist, media gallery, genres, events, etc.).
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
  * @param props.onGenreClick Called with a genre id when that chip is pressed.
- * @returns The grid card element.
+ * @returns The list row element.
  */
-const GridCard = ({ production, selectedGenreIds, onGenreClick }: GridCardProps) => {
+const ProductionListCard = ({ production, selectedGenreIds, onGenreClick }: ListCardProps) => {
   const { i18n } = useTranslation()
   const language = i18n.language
 
@@ -45,29 +46,45 @@ const GridCard = ({ production, selectedGenreIds, onGenreClick }: GridCardProps)
     <Stack
       component={RouterLink}
       to={`/productions/${production.id}`}
-      width={350}
-      borderRadius={4}
+      direction="row"
+      gap={3}
+      height={175}
+      padding={3}
+      borderRadius="4px"
       overflow="hidden"
       sx={(theme) => ({
-        textDecoration: 'none',
-        border: `1px solid ${theme.palette.divider}`,
         backgroundColor: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
+        textDecoration: 'none',
         transition: 'box-shadow 0.2s ease',
         '&:hover': {
           boxShadow: theme.shadows[3],
         },
       })}
     >
-      <ImageWithFallback src={imageSrc} alt={title} sx={{ aspectRatio: 16 / 9 }} />
+      <ImageWithFallback
+        src={imageSrc}
+        alt={title}
+        height="100%"
+        borderRadius="4px"
+        sx={{ aspectRatio: 16 / 9 }}
+      />
 
-      <Stack flex={1} justifyContent="space-between" gap={1} padding={3}>
+      <Stack
+        flex={1}
+        minWidth={0}
+        height="100%"
+        justifyContent="space-between"
+        gap={1}
+        overflow="hidden"
+      >
         <Stack>
-          <Typography component="h2" variant="h5" color="textPrimary" fontWeight="bold">
+          <Typography component="h2" variant="h5" color="textPrimary" fontWeight="bold" noWrap>
             {title}
           </Typography>
 
           {artistName ? (
-            <Typography component="p" color="textSecondary">
+            <Typography component="p" color="textSecondary" noWrap>
               {artistName}
             </Typography>
           ) : null}
@@ -84,8 +101,8 @@ const GridCard = ({ production, selectedGenreIds, onGenreClick }: GridCardProps)
           ) : null}
 
           {genres.length > 0 ? (
-            <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24}>
-              {production.genres.map((genre) => (
+            <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24} overflow="hidden">
+              {genres.map((genre) => (
                 <GenreChip
                   key={genre.id}
                   genre={genre}
@@ -97,8 +114,12 @@ const GridCard = ({ production, selectedGenreIds, onGenreClick }: GridCardProps)
           ) : null}
         </Stack>
       </Stack>
+
+      <Box alignSelf="center" paddingRight={2}>
+        <ArrowForwardOutlinedIcon color="action" />
+      </Box>
     </Stack>
   )
 }
 
-export default GridCard
+export default ProductionListCard

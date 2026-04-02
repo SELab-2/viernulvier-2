@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import type { ReactElement } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
-import GridCard from '../../components/GridCard'
+import ProductionGridCard from '../../components/ProductionGridCard'
 import i18n from '../../i18n'
 import type { Event } from '../../types/Events'
 import type { Genre } from '../../types/Genres'
@@ -69,7 +69,7 @@ const renderGridCard = (props: {
   const { production, selectedGenreIds = [], onGenreClick = jest.fn() } = props
 
   const ui: ReactElement = (
-    <GridCard
+    <ProductionGridCard
       production={production}
       selectedGenreIds={selectedGenreIds}
       onGenreClick={onGenreClick}
@@ -93,7 +93,7 @@ afterEach(() => {
   void i18n.changeLanguage('nl')
 })
 
-describe('GridCard', () => {
+describe('ProductionGridCard', () => {
   it('renders title, artist, and poster image with translated alt text', () => {
     const production = baseProduction({
       media_gallery: {
