@@ -35,6 +35,10 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 
+class ApiKeyUser:
+    """Minimal user-like object so DRF treats API key requests as authenticated."""
+    is_authenticated = True
+
 class ApiKeyAuthentication(BaseAuthentication):
     """DRF authentication class that validates ``X-API-Key`` request headers.
 
@@ -99,11 +103,11 @@ class ApiKeyAuthentication(BaseAuthentication):
 
         # Check against INTERNAL_API_KEY first (grants full access).
         if internal_key and secrets.compare_digest(key_bytes, internal_key.encode("utf-8")):
-            return (None, "internal")
+            return (ApiKeyUser(), "internal")
 
         # Check against PUBLIC_API_KEY (grants read-only access).
         if public_key and secrets.compare_digest(key_bytes, public_key.encode("utf-8")):
-            return (None, "public")
+            return (ApiKeyUser(), "public")
 
         # No match - reject the request.
         raise AuthenticationFailed("Invalid API key.")
