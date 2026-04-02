@@ -1,9 +1,10 @@
 /*
- * Displays a single production with image, metadata, description and tags.
+ * Displays a single production with metadata, description and tags.
  * Designed to be reusable across different pages (lists, search, etc.).
  */
 
-import { Card, CardContent, Chip, Stack, Typography } from '@mui/material'
+import { Card, CardContent, Stack, Typography } from '@mui/material'
+import Tag from '../Tag'
 
 type Props = {
   title: string
@@ -25,7 +26,6 @@ const ProductionCard = ({ title, meta, description, tags }: Props) => {
       }}
     >
       <CardContent sx={{ p: 2.5 }}>
-        {/* Geen row layout meer nodig */}
         <Stack spacing={1.25}>
           {/* Title */}
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
@@ -45,7 +45,11 @@ const ProductionCard = ({ title, meta, description, tags }: Props) => {
           {/* Tags */}
           <Stack direction="row" spacing={1} flexWrap="wrap">
             {tags.map((tag) => (
-              <Chip key={tag} label={tag} size="small" variant="outlined" />
+              <Tag
+                key={tag}
+                tagName={tag}
+                context="series"
+              />
             ))}
           </Stack>
         </Stack>

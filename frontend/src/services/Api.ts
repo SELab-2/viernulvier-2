@@ -4,7 +4,7 @@ import { normalizeApiError } from './ApiErrorMapper'
 // When running Vite, `process.env.VITE_PUBLIC_API_KEY` is replaced from envdefs.
 // In Jest/tests, this value is available via process.env and no import.meta usage
 // is needed, avoiding `Cannot use 'import.meta' outside a module` bug.
-const API_KEY: string = process.env.VITE_PUBLIC_API_KEY ?? ''
+const API_KEY: string = import.meta.env.VITE_PUBLIC_API_KEY ?? ''
 
 /**
  * Shared Axios instance pre-configured with the correct base URL and API key
