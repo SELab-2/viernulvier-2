@@ -153,17 +153,17 @@ describe('GridCard', () => {
 
     expect(screen.getByRole('heading', { name: 'Voorstelling' })).toBeInTheDocument()
     expect(screen.getByText('Artiest')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Afbeelding voor Voorstelling' })).toHaveAttribute(
+    expect(screen.getByRole('img', { name: 'Voorstelling' })).toHaveAttribute(
       'src',
       'https://cdn.example.com/a.jpg',
     )
   })
 
-  it('the image is wrapped in a link to the production detail route', () => {
+  it('the card links to the production detail route', () => {
     const production = baseProduction({ id: 7 })
     renderGridCard({ production })
 
-    expect(screen.getByRole('link', { name: /Afbeelding voor/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Voorstelling/ })).toHaveAttribute(
       'href',
       '/productions/7',
     )
@@ -197,7 +197,7 @@ describe('GridCard', () => {
     renderGridCard({ production })
 
     expect(screen.getByRole('heading', { name: 'Fallback titel' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Afbeelding voor Fallback titel' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Fallback titel' })).toBeInTheDocument()
   })
 
   it('uses display_artist_name when artist translations are empty for the active language', () => {
@@ -507,7 +507,7 @@ describe('GridCard', () => {
 
     expect(screen.getByRole('heading', { name: 'Production' })).toBeInTheDocument()
     expect(screen.getByText('Artist')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Image for Production' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Production' })).toBeInTheDocument()
   })
 
   it('formats the date range for the active locale (en)', async () => {

@@ -123,7 +123,7 @@ afterEach(() => {
 })
 
 describe('ListCard', () => {
-  it('renders title, artist, view link, and poster image with translated alt text', () => {
+  it('renders title, artist, full-card link, and poster image with title as alt text', () => {
     const production = baseProduction({
       media_gallery: {
         id: 1,
@@ -153,8 +153,11 @@ describe('ListCard', () => {
 
     expect(screen.getByRole('heading', { name: 'Voorstelling' })).toBeInTheDocument()
     expect(screen.getByText('Artiest')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Bekijk/ })).toHaveAttribute('href', '/productions/1')
-    expect(screen.getByRole('img', { name: 'Afbeelding voor Voorstelling' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Voorstelling/ })).toHaveAttribute(
+      'href',
+      '/productions/1',
+    )
+    expect(screen.getByRole('img', { name: 'Voorstelling' })).toHaveAttribute(
       'src',
       'https://cdn.example.com/a.jpg',
     )
@@ -180,7 +183,7 @@ describe('ListCard', () => {
     renderListCard({ production })
 
     expect(screen.getByRole('heading', { name: 'Fallback titel' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Afbeelding voor Fallback titel' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Fallback titel' })).toBeInTheDocument()
   })
 
   it('uses display_artist_name when artist translations are empty for the active language', () => {
@@ -368,11 +371,14 @@ describe('ListCard', () => {
     expect(screen.queryByRole('button', { name: /Filter op/ })).not.toBeInTheDocument()
   })
 
-  it('links the view button to the production detail route', () => {
+  it('links the full card to the production detail route', () => {
     const production = baseProduction({ id: 42 })
     renderListCard({ production })
 
-    expect(screen.getByRole('link', { name: /Bekijk/ })).toHaveAttribute('href', '/productions/42')
+    expect(screen.getByRole('link', { name: /Voorstelling/ })).toHaveAttribute(
+      'href',
+      '/productions/42',
+    )
   })
 
   it('uses English copy when the locale is en', async () => {
@@ -382,8 +388,11 @@ describe('ListCard', () => {
 
     expect(screen.getByRole('heading', { name: 'Production' })).toBeInTheDocument()
     expect(screen.getByText('Artist')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /View/ })).toHaveAttribute('href', '/productions/1')
-    expect(screen.getByRole('img', { name: 'Image for Production' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Production/ })).toHaveAttribute(
+      'href',
+      '/productions/1',
+    )
+    expect(screen.getByRole('img', { name: 'Production' })).toBeInTheDocument()
   })
 
   it('formats the date range for the active locale (en)', async () => {
@@ -508,7 +517,7 @@ describe('ListCard', () => {
     await user.click(screen.getByRole('button', { name: 'Filter op Chip' }))
     expect(onGenreClick).toHaveBeenCalledWith(5)
 
-    const viewLink = screen.getByRole('link', { name: /Bekijk/ })
-    expect(viewLink).toHaveAttribute('href', '/productions/1')
+    const cardLink = screen.getByRole('link', { name: /Voorstelling/ })
+    expect(cardLink).toHaveAttribute('href', '/productions/1')
   })
 })
