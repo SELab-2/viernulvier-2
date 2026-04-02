@@ -91,7 +91,7 @@
     "allEditionsSubtitle": "Chronologisch overzicht van de producties binnen deze reeks.",
     "breadcrumb": "Archief / Reeksen / {{name}}",
     "noDescription": "Geen beschrijving beschikbaar.",
-    "noProductions": "Er zijn nog geen producties gekoppeld aan deze reeks.",
+    "noProductions": "Er zijn geen producties gekoppeld aan deze reeks.",
     "loading": "Reeks wordt geladen...",
     "notFound": "Reeks niet gevonden.",
     "invalidId": "Ongeldig reeks-ID.",

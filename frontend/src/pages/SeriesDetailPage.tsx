@@ -252,10 +252,8 @@ const SeriesDetailPage = () => {
         </Stack>
 
         {sortedProductions.length === 0 ? (
-          <Alert severity="info">
-            {t('series.noProductions', {
-              defaultValue: 'Er zijn nog geen producties gekoppeld aan deze reeks.',
-            })}
+          <Alert severity="info" variant="outlined">
+            {t('series.noProductions')}
           </Alert>
         ) : (
           <Stack spacing={4} sx={{ position: 'relative', pl: { xs: 0, md: 3 } }}>
@@ -284,7 +282,7 @@ const SeriesDetailPage = () => {
                   tags={production.tags.map(
                     (tag) => tag.display_name || getLocalizedRecordValue(tag.name, i18n.language),
                   )}
-                  //image={buildProductionImage(production)}
+                //image={buildProductionImage(production)}
                 />
               </TimelineItem>
             ))}
