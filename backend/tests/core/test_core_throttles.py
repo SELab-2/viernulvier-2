@@ -9,7 +9,6 @@ from apps.core.throttles import (
     InternalKeyThrottle,
     PublicKeyHourThrottle,
     PublicKeyMinuteThrottle,
-    PublicKeyThrottle,
 )
 
 
@@ -24,7 +23,7 @@ def make_request(ip="1.2.3.4", ua="TestAgent/1.0", auth="public"):
 
 class TestPublicKeyThrottle(TestCase):
     def setUp(self) -> None:
-        self.throttle = PublicKeyThrottle()
+        self.throttle = PublicKeyMinuteThrottle()
         self.view = MagicMock()
 
     def test_returns_cache_key_for_public_auth(self) -> None:
@@ -45,7 +44,7 @@ class TestPublicKeyThrottle(TestCase):
     def test_cache_key_contains_scope(self) -> None:
         request = make_request()
         key = self.throttle.get_cache_key(request, self.view)
-        assert "public" in key
+        assert "public_min" in key
 
     def test_cache_key_contains_sha256_fingerprint(self) -> None:
         request = make_request(ip="1.2.3.4", ua="TestAgent/1.0")
