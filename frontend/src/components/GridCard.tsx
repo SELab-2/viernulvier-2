@@ -1,6 +1,6 @@
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined'
-import { Paper, Stack, Typography } from '@mui/material'
+import { Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import type { Production } from '../types/Productions'
@@ -29,7 +29,7 @@ export interface GridCardProps {
  * @returns The grid card element.
  */
 const GridCard = ({ production, selectedGenreIds, onGenreClick }: GridCardProps) => {
-  const { t, i18n } = useTranslation()
+  const { i18n } = useTranslation()
   const language = i18n.language
 
   const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url
@@ -45,53 +45,25 @@ const GridCard = ({ production, selectedGenreIds, onGenreClick }: GridCardProps)
 
   return (
     <Stack
-      component={Paper}
-      elevation={0}
-      direction="column"
+      component={RouterLink}
+      to={`/productions/${production.id}`}
+      width={350}
+      borderRadius={4}
+      overflow="hidden"
       sx={(theme) => ({
-        width: '350px',
-        overflow: 'hidden',
-        border: `1px solid ${theme.palette.divider}`,
-        borderRadius: '16px',
-        backgroundColor: theme.palette.background.paper,
         textDecoration: 'none',
-        color: 'inherit',
-        cursor: 'pointer',
+        border: `1px solid ${theme.palette.divider}`,
+        backgroundColor: theme.palette.background.paper,
         transition: 'box-shadow 0.2s ease',
         '&:hover': {
           boxShadow: theme.shadows[3],
         },
       })}
     >
-      <RouterLink
-        to={`/productions/${production.id}`}
-        style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}
-        aria-label={t('listCard.imageAlt', { title })}
-      >
-        <ImageWithFallback
-          src={imageSrc}
-          alt={t('listCard.imageAlt', { title })}
-          sx={{
-            aspectRatio: '16 / 9',
-            objectFit: 'cover',
-          }}
-        />
-      </RouterLink>
+      <ImageWithFallback src={imageSrc} alt={title} sx={{ aspectRatio: 16 / 9 }} />
 
-      <Stack
-        component={RouterLink}
-        to={`/productions/${production.id}`}
-        direction="column"
-        justifyContent="space-between"
-        sx={{
-          p: 3,
-          gap: 1,
-          textDecoration: 'none',
-          color: 'inherit',
-          flex: 1,
-        }}
-      >
-        <Stack spacing={0.75}>
+      <Stack flex={1} justifyContent="space-between" gap={1} padding={3}>
+        <Stack>
           <Typography component="h2" variant="h5" color="textPrimary" fontWeight="bold">
             {title}
           </Typography>
@@ -103,56 +75,29 @@ const GridCard = ({ production, selectedGenreIds, onGenreClick }: GridCardProps)
           ) : null}
         </Stack>
 
-        <Stack spacing={1.25}>
-          {dateRangeLabel || locationName ? (
-            <Stack sx={{ color: 'text.secondary', alignItems: 'flex-start' }}>
-              {dateRangeLabel ? (
-                <Stack
-                  direction="row"
-                  spacing={0.75}
-                  alignItems="center"
-                  sx={{ minWidth: 0, flex: '0 1 auto' }}
-                >
-                  <DateRangeOutlinedIcon sx={{ fontSize: '1rem', flexShrink: 0 }} />
-                  <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
-                    {dateRangeLabel}
-                  </Typography>
-                </Stack>
-              ) : null}
+        <Stack color="text.secondary" spacing={1}>
+          <Stack>
+            {dateRangeLabel ? (
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <DateRangeOutlinedIcon fontSize="inherit" />
+                <Typography variant="body2" noWrap>
+                  {dateRangeLabel}
+                </Typography>
+              </Stack>
+            ) : null}
 
-              {locationName ? (
-                <Stack
-                  direction="row"
-                  spacing={0.75}
-                  alignItems="center"
-                  sx={{ minWidth: 0, flex: '0 1 auto' }}
-                >
-                  <RoomOutlinedIcon sx={{ fontSize: '1rem', flexShrink: 0 }} />
-                  <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
-                    {locationName}
-                  </Typography>
-                </Stack>
-              ) : null}
-            </Stack>
-          ) : null}
+            {locationName ? (
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <RoomOutlinedIcon fontSize="inherit" />
+                <Typography variant="body2" noWrap>
+                  {locationName}
+                </Typography>
+              </Stack>
+            ) : null}
+          </Stack>
 
           {genres.length > 0 ? (
-            <Stack
-              direction="row"
-              spacing={0.75}
-              sx={{
-                borderRadius: '4px',
-                flexWrap: 'nowrap',
-                minWidth: 0,
-                maxWidth: '100%',
-                overflowX: 'auto',
-                overflowY: 'hidden',
-                WebkitOverflowScrolling: 'touch',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-                '&::-webkit-scrollbar': { display: 'none' },
-              }}
-            >
+            <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24}>
               {production.genres.map((genre) => (
                 <GenreChip
                   key={genre.id}
