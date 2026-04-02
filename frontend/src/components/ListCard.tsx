@@ -4,7 +4,7 @@ import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import type { Production } from '../types/Productions'
-import { getEventDateRangeLabel } from '../utils/productionEvents'
+import { getProductionDateLabel } from '../utils/dateUtils'
 import { getTranslatedRecord } from '../utils/translations'
 import GenreChip from './GenreChip'
 import ImageWithFallback from './ImageWithFallback'
@@ -39,7 +39,7 @@ const ListCard = ({ production, selectedGenreIds, onGenreClick }: ListCardProps)
     language,
     production.display_artist_name,
   )
-  const dateRangeLabel = getEventDateRangeLabel(production.events, language)
+  const dateLabel = getProductionDateLabel(production.events, language)
   const genres = production.genres.filter((genre) => genre.display_name)
 
   return (
@@ -91,11 +91,11 @@ const ListCard = ({ production, selectedGenreIds, onGenreClick }: ListCardProps)
         </Stack>
 
         <Stack color="text.secondary" spacing={1}>
-          {dateRangeLabel ? (
+          {dateLabel ? (
             <Stack direction="row" alignItems="center" spacing={1}>
               <DateRangeOutlinedIcon fontSize="inherit" />
               <Typography variant="body2" noWrap>
-                {dateRangeLabel}
+                {dateLabel}
               </Typography>
             </Stack>
           ) : null}
