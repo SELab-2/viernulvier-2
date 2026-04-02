@@ -74,7 +74,7 @@ const baseProduction = (overrides: Partial<Production> = {}): Production => ({
   id: 1,
   attendance_mode: 'offline',
   performer_type: 'solo',
-  media_gallery: null,
+  media_gallery: { id: 0, name: null, media_items: [] },
   uit_database_theme: null,
   uit_database_type: null,
   display_title: null,
