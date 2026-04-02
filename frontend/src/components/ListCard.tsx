@@ -3,19 +3,14 @@ import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined'
 import { Button, Paper, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
-import type { Hall } from '../types/Halls'
 import type { Production } from '../types/Productions'
-import { formatDate } from '../utils/formatDate'
-import getLocationName from '../utils/locations'
+import { getEventDateRangeLabel, getSharedLocationName } from '../utils/productionEvents'
 import { getTranslatedRecord } from '../utils/translations'
 import GenreChip from './GenreChip'
 import ImageWithFallback from './ImageWithFallback'
 
 export interface ListCardProps {
   production: Production
-  pathname: string
-  hall?: Hall | null
-  startsAt?: string | null
   selectedGenreIds: number[]
   onGenreClick: (genreId: number) => void
 }
@@ -28,22 +23,12 @@ export interface ListCardProps {
  * first crop of the first gallery image when present; otherwise {@link ImageWithFallback} shows the
  * branded placeholder.
  *
- * @param props.production Full API payload (title, artist, media gallery, genres, etc.).
- * @param props.pathname Client route for the view button (e.g. production or event detail path).
- * @param props.hall Optional {@link Hall}; when set, shows a venue line via {@link getLocationName}.
- * @param props.startsAt Optional ISO start time for the listing; falsy values hide the date row.
+ * @param props.production Full API payload (title, artist, media gallery, genres, events, etc.).
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
  * @param props.onGenreClick Called with a genre id when that chip is pressed.
  * @returns The list row element.
  */
-const ListCard = ({
-  production,
-  pathname,
-  hall,
-  startsAt,
-  selectedGenreIds,
-  onGenreClick,
-}: ListCardProps) => {
+const ListCard = ({ production, selectedGenreIds, onGenreClick }: ListCardProps) => {
   const { t, i18n } = useTranslation()
   const language = i18n.language
 
@@ -54,6 +39,9 @@ const ListCard = ({
     language,
     production.display_artist_name,
   )
+  const dateRangeLabel = getEventDateRangeLabel(production.events, language)
+  const locationName = getSharedLocationName(production.events, language)
+  const genres = production.genres.filter((genre) => genre.display_name)
 
   return (
     <Stack
@@ -62,7 +50,7 @@ const ListCard = ({
       direction="row"
       alignItems="stretch"
       sx={(theme) => ({
-        height: 175,
+        height: 200,
         gap: 3,
         p: 3,
         minWidth: 0,
@@ -88,7 +76,7 @@ const ListCard = ({
       <Stack
         direction="column"
         justifyContent="space-between"
-        sx={{ flex: 1, minWidth: 0, overflow: 'hidden', alignSelf: 'stretch' }}
+        sx={{ flex: 1, minWidth: 0, overflow: 'hidden', alignSelf: 'stretch', gap: 1 }}
       >
         <Stack spacing={0.75}>
           <Typography component="h2" variant="h5" color="textPrimary" fontWeight="bold" noWrap>
@@ -104,11 +92,9 @@ const ListCard = ({
 
         <Stack spacing={1.25}>
           <Stack
-            direction="row"
-            spacing={1.5}
-            sx={{ color: 'text.secondary', justifyContent: 'flex-start', alignItems: 'center' }}
+            sx={{ color: 'text.secondary', justifyContent: 'flex-start', alignItems: 'flex-start' }}
           >
-            {startsAt ? (
+            {dateRangeLabel ? (
               <Stack
                 direction="row"
                 spacing={0.75}
@@ -117,12 +103,12 @@ const ListCard = ({
               >
                 <DateRangeOutlinedIcon sx={{ fontSize: '1rem', flexShrink: 0 }} />
                 <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
-                  {formatDate(startsAt, language)}
+                  {dateRangeLabel}
                 </Typography>
               </Stack>
             ) : null}
 
-            {hall ? (
+            {locationName ? (
               <Stack
                 direction="row"
                 spacing={0.75}
@@ -131,13 +117,13 @@ const ListCard = ({
               >
                 <RoomOutlinedIcon sx={{ fontSize: '1rem', flexShrink: 0 }} />
                 <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
-                  {getLocationName(hall, language)}
+                  {locationName}
                 </Typography>
               </Stack>
             ) : null}
           </Stack>
 
-          {production.genres.length > 0 ? (
+          {genres.length > 0 ? (
             <Stack
               direction="row"
               spacing={0.75}
@@ -169,7 +155,7 @@ const ListCard = ({
 
       <Button
         component={RouterLink}
-        to={pathname}
+        to={`/productions/${production.id}`}
         variant="outlined"
         sx={(theme) => ({
           alignSelf: 'center',

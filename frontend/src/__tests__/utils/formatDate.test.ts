@@ -16,7 +16,7 @@ describe('formatDate', () => {
   it('formats a valid ISO date with the given locale', () => {
     const out = formatDate('2025-06-15T12:00:00.000Z', 'en-US')
     expect(out).toMatch(/2025/)
-    expect(out).toMatch(/June/)
+    expect(out).toMatch(/jun/i)
     expect(out).toMatch(/15/)
   })
 
@@ -28,6 +28,6 @@ describe('formatDate', () => {
   it('accepts calendar date ISO strings without a time component', () => {
     const out = formatDate('2025-12-01', 'en-US')
     expect(out).toMatch(/2025/)
-    expect(out).toMatch(/December/)
+    expect(out).toMatch(/dec/i)
   })
 })
