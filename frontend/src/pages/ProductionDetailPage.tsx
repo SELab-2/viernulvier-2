@@ -11,6 +11,7 @@ import MetaPanel from '../components/production/MetaPanel'
 import { getProduction } from '../services/productions/Productions'
 import EventsList from '../components/production/EventList'
 import MediaList from '../components/production/MediaList'
+import RelatedProductions from '../components/production/RelatedProductions'
 import { getLocalizedValue } from '../utils/localization'
 
 /**
@@ -216,7 +217,14 @@ const ProductionDetailsPage = () => {
           <MediaList mediaItems={production.media_gallery.media_items} />
         </div>
       )}
-      <p> TODO: related productions tonen </p>
+
+      <div style={{ padding: '0 16px 32px' }}>
+        <RelatedProductions
+          tags={production.tags}
+          lang={lang}
+          currentProductionId={production.id}
+        />
+      </div>
     </div>
   )
 }
