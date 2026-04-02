@@ -1,11 +1,11 @@
 import hashlib
 
+from django.http import HttpRequest
 from rest_framework.throttling import SimpleRateThrottle
 
 
 class PublicKeyThrottle(SimpleRateThrottle):
-    """
-    Rate limiting for the shared public API key, differentiated per client.
+    """Rate limiting for the shared public API key, differentiated per client.
 
     Uses DRF's built-in get_ident() for IP resolution (handles
     X-Forwarded-For and REMOTE_ADDR automatically), combined with the
@@ -14,7 +14,8 @@ class PublicKeyThrottle(SimpleRateThrottle):
 
     scope = "public"
 
-    def get_cache_key(self, request, view):
+    def get_cache_key(self, request: HttpRequest, _view: any) -> str | None:
+        """Generate a cache key based on the client's IP and User-Agent."""
         if request.auth != "public":
             return None
 
@@ -35,8 +36,9 @@ class InternalKeyThrottle(SimpleRateThrottle):
 
     scope = "internal"
 
-    def get_cache_key(self, request, view):
-        return None
+    def get_cache_key(self, _request: HttpRequest, _view: any) -> None:
+        """No caching key - effectively disables throttling for the internal API key."""
+        return
 
 
 class PublicKeyMinuteThrottle(PublicKeyThrottle):

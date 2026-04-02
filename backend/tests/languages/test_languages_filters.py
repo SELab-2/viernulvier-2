@@ -2,9 +2,9 @@
 Tests for apps/languages/filters.py and apps/languages/views.py.
 """
 
-import pytest
 from django.test import TestCase, override_settings
 from django.urls import reverse
+import pytest
 from rest_framework.test import APIClient
 
 from apps.languages.filters import LanguageFilter
@@ -25,41 +25,41 @@ class TestLanguageFilter:
 
     # --- code ---
 
-    def test_code_exact_match(self):
+    def test_code_exact_match(self) -> None:
         LanguageFactory(code="nl")
         LanguageFactory(code="en")
 
         assert self._qs({"code": "nl"}).count() == 1
         assert self._qs({"code": "nl"}).first().code == "nl"
 
-    def test_code_is_case_insensitive(self):
+    def test_code_is_case_insensitive(self) -> None:
         LanguageFactory(code="nl")
 
         assert self._qs({"code": "NL"}).count() == 1
         assert self._qs({"code": "Nl"}).count() == 1
 
-    def test_code_no_partial_match(self):
+    def test_code_no_partial_match(self) -> None:
         LanguageFactory(code="nl")
 
         assert self._qs({"code": "n"}).count() == 0
 
     # --- name ---
 
-    def test_name_icontains(self):
+    def test_name_icontains(self) -> None:
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
 
         assert self._qs({"name": "dutch"}).count() == 1
         assert self._qs({"name": "ngl"}).count() == 1
 
-    def test_name_no_match(self):
+    def test_name_no_match(self) -> None:
         LanguageFactory(code="nl", name="Dutch")
 
         assert self._qs({"name": "French"}).count() == 0
 
     # --- is_active ---
 
-    def test_is_active_true(self):
+    def test_is_active_true(self) -> None:
         LanguageFactory(code="nl", is_active=True)
         LanguageFactory(code="en", is_active=False)
 
@@ -68,7 +68,7 @@ class TestLanguageFilter:
         assert result.count() == 1
         assert result.first().code == "nl"
 
-    def test_is_active_false(self):
+    def test_is_active_false(self) -> None:
         LanguageFactory(code="nl", is_active=True)
         LanguageFactory(code="en", is_active=False)
 
@@ -76,7 +76,7 @@ class TestLanguageFilter:
 
     # --- external_id ---
 
-    def test_external_id_iexact(self):
+    def test_external_id_iexact(self) -> None:
         LanguageFactory(code="nl", external_id="ext-001")
         LanguageFactory(code="en", external_id="ext-002")
 
@@ -84,7 +84,7 @@ class TestLanguageFilter:
 
     # --- combined ---
 
-    def test_multiple_filters_are_anded(self):
+    def test_multiple_filters_are_anded(self) -> None:
         LanguageFactory(code="nl", name="Dutch", is_active=True)
         LanguageFactory(code="de", name="German", is_active=False)
 
@@ -93,7 +93,7 @@ class TestLanguageFilter:
         assert result.count() == 1
         assert result.first().code == "de"
 
-    def test_no_filters_returns_all(self):
+    def test_no_filters_returns_all(self) -> None:
         LanguageFactory.create_batch(3)
 
         assert self._qs({}).count() == 3
@@ -117,7 +117,7 @@ def pub_headers():
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestLanguageViewSet(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = APIClient()
         Language.objects.all().delete()
 
@@ -126,99 +126,99 @@ class TestLanguageViewSet(TestCase):
 
     list_url = reverse("v1:language-list")
 
-    def test_anon_returns_401_or_403(self):
+    def test_anon_returns_401_or_403(self) -> None:
         response = self.client.get(self.list_url)
-        self.assertIn(response.status_code, (401, 403))
+        assert response.status_code in (401, 403)
 
-    def test_public_can_list(self):
+    def test_public_can_list(self) -> None:
         LanguageFactory.create_batch(2)
         response = self.client.get(self.list_url, **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 2)
+        assert len(results) == 2
 
-    def test_public_can_retrieve(self):
+    def test_public_can_retrieve(self) -> None:
         LanguageFactory(code="nl")
         response = self.client.get(self.detail_url("nl"), **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_public_cannot_create(self):
+    def test_public_cannot_create(self) -> None:
         response = self.client.post(self.list_url, {"code": "de", "name": "German"}, format="json", **pub_headers())
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
-    def test_public_cannot_update(self):
+    def test_public_cannot_update(self) -> None:
         LanguageFactory(code="nl")
         response = self.client.patch(self.detail_url("nl"), {"name": "Nederlands"}, format="json", **pub_headers())
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
-    def test_public_cannot_delete(self):
+    def test_public_cannot_delete(self) -> None:
         LanguageFactory(code="nl")
         response = self.client.delete(self.detail_url("nl"), **pub_headers())
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
-    def test_internal_can_create(self):
+    def test_internal_can_create(self) -> None:
         response = self.client.post(
             self.list_url, {"code": "de", "name": "German", "is_active": False}, format="json", **int_headers()
         )
-        self.assertEqual(response.status_code, 201)
-        self.assertTrue(Language.objects.filter(code="de").exists())
+        assert response.status_code == 201
+        assert Language.objects.filter(code="de").exists()
 
-    def test_internal_can_delete(self):
+    def test_internal_can_delete(self) -> None:
         LanguageFactory(code="nl")
         response = self.client.delete(self.detail_url("nl"), **int_headers())
-        self.assertEqual(response.status_code, 204)
-        self.assertFalse(Language.objects.filter(code="nl").exists())
+        assert response.status_code == 204
+        assert not Language.objects.filter(code="nl").exists()
 
-    def test_filter_by_code(self):
+    def test_filter_by_code(self) -> None:
         LanguageFactory(code="nl")
         LanguageFactory(code="en")
         response = self.client.get(self.list_url, {"code": "nl"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["code"], "nl")
+        assert len(results) == 1
+        assert results[0]["code"] == "nl"
 
-    def test_filter_by_is_active(self):
+    def test_filter_by_is_active(self) -> None:
         LanguageFactory(code="nl", is_active=True)
         LanguageFactory(code="en", is_active=False)
         response = self.client.get(self.list_url, {"is_active": "true"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
-    def test_ordering_by_name_ascending(self):
+    def test_ordering_by_name_ascending(self) -> None:
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
         LanguageFactory(code="fr", name="French")
         response = self.client.get(self.list_url, {"ordering": "name"}, **pub_headers())
         names = [r["name"] for r in response.data.get("results", response.data)]
-        self.assertEqual(names, sorted(names))
+        assert names == sorted(names)
 
-    def test_ordering_by_name_descending(self):
+    def test_ordering_by_name_descending(self) -> None:
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
         response = self.client.get(self.list_url, {"ordering": "-name"}, **pub_headers())
         names = [r["name"] for r in response.data.get("results", response.data)]
-        self.assertEqual(names, sorted(names, reverse=True))
+        assert names == sorted(names, reverse=True)
 
-    def test_search_by_code(self):
+    def test_search_by_code(self) -> None:
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
         response = self.client.get(self.list_url, {"search": "nl"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
-    def test_search_by_name(self):
+    def test_search_by_name(self) -> None:
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
         response = self.client.get(self.list_url, {"search": "English"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["code"], "en")
+        assert len(results) == 1
+        assert results[0]["code"] == "en"
 
-    def test_lookup_by_code_not_pk(self):
+    def test_lookup_by_code_not_pk(self) -> None:
         LanguageFactory(code="nl")
         response = self.client.get(self.detail_url("nl"), **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_unknown_code_returns_404(self):
+    def test_unknown_code_returns_404(self) -> None:
         response = self.client.get(self.detail_url("xx"), **pub_headers())
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404

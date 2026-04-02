@@ -50,13 +50,13 @@ def admin_change_url(model, pk):
 
 
 class TestEventsAdminRegistration(TestCase):
-    def test_event_is_registered(self):
+    def test_event_is_registered(self) -> None:
         """Event model has to be registered in admin."""
-        self.assertIn(Event, admin.site._registry)
+        assert Event in admin.site._registry
 
-    def test_registered_admin_class_for_event(self):
+    def test_registered_admin_class_for_event(self) -> None:
         """Event admin class has to be of type EventAdmin."""
-        self.assertIsInstance(admin.site._registry[Event], EventAdmin)
+        assert isinstance(admin.site._registry[Event], EventAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -67,15 +67,15 @@ class TestEventsAdminRegistration(TestCase):
 class TestEventsAdminInheritance(TestCase):
     admins = [EventAdmin]
 
-    def test_admins_inherit_from_base_admin_if_used(self):
+    def test_admins_inherit_from_base_admin_if_used(self) -> None:
         for admin_class in self.admins:
             with self.subTest(admin_class=admin_class.__name__):
-                self.assertTrue(issubclass(admin_class, BaseAdmin))
+                assert issubclass(admin_class, BaseAdmin)
 
-    def test_admins_inherit_from_model_admin(self):
+    def test_admins_inherit_from_model_admin(self) -> None:
         for admin_class in self.admins:
             with self.subTest(admin_class=admin_class.__name__):
-                self.assertTrue(issubclass(admin_class, admin.ModelAdmin))
+                assert issubclass(admin_class, admin.ModelAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -84,38 +84,38 @@ class TestEventsAdminInheritance(TestCase):
 
 
 class TestEventsAdminConfiguration(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.site = AdminSite()
 
-    def test_event_admin_configuration(self):
+    def test_event_admin_configuration(self) -> None:
         admin_obj = EventAdmin(Event, self.site)
 
         # Ordering / date hierarchy
-        self.assertEqual(admin_obj.ordering, ("-starts_at",))
-        self.assertEqual(admin_obj.date_hierarchy, "starts_at")
+        assert admin_obj.ordering == ("-starts_at",)
+        assert admin_obj.date_hierarchy == "starts_at"
 
         # list_display
         for field in ["production", "hall", "starts_at", "ends_at"]:
-            self.assertIn(field, admin_obj.list_display)
+            assert field in admin_obj.list_display
 
-        self.assertIn("production", admin_obj.autocomplete_fields)
-        self.assertIn("hall", admin_obj.autocomplete_fields)
-        self.assertIn("production_admin_link", admin_obj.readonly_fields)
+        assert "production" in admin_obj.autocomplete_fields
+        assert "hall" in admin_obj.autocomplete_fields
+        assert "production_admin_link" in admin_obj.readonly_fields
 
         # inlines
-        self.assertTrue(admin_obj.inlines)
-        self.assertIn(EventPriceInline, admin_obj.inlines)
+        assert admin_obj.inlines
+        assert EventPriceInline in admin_obj.inlines
 
-    def test_event_price_inline_configuration(self):
-        self.assertEqual(EventPriceInline.extra, 0)
-        self.assertIn("price_rank", EventPriceInline.autocomplete_fields)
-        self.assertIn("price", EventPriceInline.autocomplete_fields)
-        self.assertEqual(EventPriceInline.fields, ("price_rank", "price", "amount", "available"))
+    def test_event_price_inline_configuration(self) -> None:
+        assert EventPriceInline.extra == 0
+        assert "price_rank" in EventPriceInline.autocomplete_fields
+        assert "price" in EventPriceInline.autocomplete_fields
+        assert EventPriceInline.fields == ("price_rank", "price", "amount", "available")
 
-    def test_production_admin_link_returns_dash_without_object(self):
+    def test_production_admin_link_returns_dash_without_object(self) -> None:
         admin_obj = EventAdmin(Event, self.site)
 
-        self.assertEqual(admin_obj.production_admin_link(None), "-")
+        assert admin_obj.production_admin_link(None) == "-"
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +125,7 @@ class TestEventsAdminConfiguration(TestCase):
 
 class TestEventAdminGetQueryset(TestCase):
     @classmethod
-    def setUpTestData(cls):
+    def setUpTestData(cls) -> None:
         cls.prod = ProductionFactory()
         cls.hall = HallFactory()
         now = timezone.now()
@@ -136,11 +136,11 @@ class TestEventAdminGetQueryset(TestCase):
             ends_at=now + timedelta(hours=2),
         )
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.site = AdminSite()
         self.factory = RequestFactory()
 
-    def test_event_admin_queryset_uses_select_related_and_prefetch_related(self):
+    def test_event_admin_queryset_uses_select_related_and_prefetch_related(self) -> None:
         admin_obj = EventAdmin(Event, self.site)
         request = self.factory.get("/admin/")
         qs = admin_obj.get_queryset(request)
@@ -148,13 +148,13 @@ class TestEventAdminGetQueryset(TestCase):
         # Check select_related fields
         related_fields = ["production", "hall"]
         for field in related_fields:
-            self.assertIn(field, qs.query.select_related)
+            assert field in qs.query.select_related
 
         # Check prefetch_related fields
         prefetch_fields = ["production__translations", "hall__translations"]
         prefetches = set(qs._prefetch_related_lookups)
         for field in prefetch_fields:
-            self.assertIn(field, prefetches)
+            assert field in prefetches
 
 
 # ---------------------------------------------------------------------------
@@ -163,7 +163,7 @@ class TestEventAdminGetQueryset(TestCase):
 
 
 class TestEventsAdminChangelists(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = make_superuser("events_admin")
         self.client.force_login(self.superuser)
 
@@ -177,17 +177,17 @@ class TestEventsAdminChangelists(TestCase):
             ends_at=now + timedelta(hours=2),
         )
 
-    def test_event_changelist_returns_200(self):
+    def test_event_changelist_returns_200(self) -> None:
         url = admin_changelist_url(Event)
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_event_changeform_returns_200(self):
+    def test_event_changeform_returns_200(self) -> None:
         """Test case for test_event_changeform_returns_200."""
         response = self.client.get(admin_change_url(Event, self.event.pk))
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_event_changeform_shows_production_admin_link(self):
+    def test_event_changeform_shows_production_admin_link(self) -> None:
         response = self.client.get(admin_change_url(Event, self.event.pk))
         production_admin_url = reverse("admin:productions_production_change", args=[self.prod.pk])
 
@@ -197,7 +197,7 @@ class TestEventsAdminChangelists(TestCase):
         # available base translation data, but the target URL must always exist.
         self.assertContains(response, "Production details")
 
-    def test_event_changeform_shows_artist_name_in_production_link(self):
+    def test_event_changeform_shows_artist_name_in_production_link(self) -> None:
         language = LanguageFactory(code="nl", name="Dutch")
         ProductionTranslationFactory(
             production=self.prod,

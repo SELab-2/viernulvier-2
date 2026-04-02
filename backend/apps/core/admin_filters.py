@@ -62,7 +62,7 @@ class SearchableMultiSelectFilter(SimpleListFilter):
     reset_url = "?"
     is_open = False
 
-    def __init__(self, request, params, model, model_admin):
+    def __init__(self, request: any, params: dict, model: any, model_admin: any) -> None:
         """Initialize filter state and sanitize custom query params.
 
         Django's changelist only knows about parameters registered via
@@ -71,7 +71,6 @@ class SearchableMultiSelectFilter(SimpleListFilter):
         Therefore this initializer explicitly pops the custom search/open
         parameters from ``params`` before delegating to ``SimpleListFilter``.
         """
-
         current_search_param = self.search_param or f"{self.parameter_name}_q"
         current_open_param = self.open_param or f"{self.parameter_name}_open"
         params.pop(current_search_param, None)
@@ -104,27 +103,27 @@ class SearchableMultiSelectFilter(SimpleListFilter):
         qs_without_self.pop("e", None)
         self.reset_url = f"?{qs_without_self.urlencode()}" if qs_without_self else "?"
 
-    def value(self):
+    def value(self) -> tuple[str, ...]:
         """Return selected values as list, compatible with template usage."""
         return self.selected_values
 
-    def expected_parameters(self):
+    def expected_parameters(self) -> list[str]:
         """Declare all query params this filter owns."""
         return [self.parameter_name, self.search_param, self.open_param]
 
-    def get_option_queryset(self):
+    def get_option_queryset(self) -> list[tuple[str, str]]:
         """Return list of selectable options as ``[(value, label), ...]``."""
         raise NotImplementedError
 
-    def filter_queryset(self, queryset):
+    def filter_queryset(self, _queryset: any) -> any:
         """Apply selected values to the provided queryset."""
         raise NotImplementedError
 
-    def lookups(self, request, model_admin):
+    def lookups(self, _request: any, _model_admin: any) -> list[tuple[str, str]]:
         """Django hook: supply choices for the sidebar UI."""
         return self.get_option_queryset()
 
-    def queryset(self, request, queryset):
+    def queryset(self, _request: any, queryset: any) -> any:
         """Django hook: return filtered queryset when values are selected."""
         if self.selected_values:
             return self.filter_queryset(queryset)

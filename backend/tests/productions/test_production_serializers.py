@@ -21,6 +21,7 @@ from django.test import TestCase
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.productions.serializers import (
     ProductionSerializer,
+    ProductionTagSerializer,
     UitDatabaseThemeSerializer,
     UitDatabaseTypeSerializer,
 )
@@ -28,6 +29,8 @@ from tests.factories.language import LanguageFactory
 from tests.factories.media_library import MediaGalleryFactory
 from tests.factories.production import (
     ProductionFactory,
+    ProductionTagFactory,
+    ProductionTagTranslationFactory,
     ProductionTranslationFactory,
     UitDatabaseThemeFactory,
     UitDatabaseTypeFactory,
@@ -42,25 +45,25 @@ from tests.factories.tag import TagFactory
 class TestUitDatabaseThemeSerializerFields(TestCase):
     """Verify field presence and output of UitDatabaseThemeSerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.theme = UitDatabaseThemeFactory.create(name="Drama")
 
-    def test_expected_fields_are_present(self):
+    def test_expected_fields_are_present(self) -> None:
         data = UitDatabaseThemeSerializer(self.theme).data
         for field in ("id", "name"):
-            self.assertIn(field, data)
+            assert field in data
 
-    def test_no_extra_fields_are_exposed(self):
+    def test_no_extra_fields_are_exposed(self) -> None:
         data = UitDatabaseThemeSerializer(self.theme).data
-        self.assertEqual(set(data.keys()), {"id", "name"})
+        assert set(data.keys()) == {"id", "name"}
 
-    def test_serializes_name_correctly(self):
+    def test_serializes_name_correctly(self) -> None:
         data = UitDatabaseThemeSerializer(self.theme).data
-        self.assertEqual(data["name"], "Drama")
+        assert data["name"] == "Drama"
 
-    def test_serializes_id_correctly(self):
+    def test_serializes_id_correctly(self) -> None:
         data = UitDatabaseThemeSerializer(self.theme).data
-        self.assertEqual(data["id"], self.theme.id)
+        assert data["id"] == self.theme.id
 
 
 # ---------------------------------------------------------------------------
@@ -71,25 +74,25 @@ class TestUitDatabaseThemeSerializerFields(TestCase):
 class TestUitDatabaseTypeSerializerFields(TestCase):
     """Verify field presence and output of UitDatabaseTypeSerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.db_type = UitDatabaseTypeFactory.create(name="Concert")
 
-    def test_expected_fields_are_present(self):
+    def test_expected_fields_are_present(self) -> None:
         data = UitDatabaseTypeSerializer(self.db_type).data
         for field in ("id", "name"):
-            self.assertIn(field, data)
+            assert field in data
 
-    def test_no_extra_fields_are_exposed(self):
+    def test_no_extra_fields_are_exposed(self) -> None:
         data = UitDatabaseTypeSerializer(self.db_type).data
-        self.assertEqual(set(data.keys()), {"id", "name"})
+        assert set(data.keys()) == {"id", "name"}
 
-    def test_serializes_name_correctly(self):
+    def test_serializes_name_correctly(self) -> None:
         data = UitDatabaseTypeSerializer(self.db_type).data
-        self.assertEqual(data["name"], "Concert")
+        assert data["name"] == "Concert"
 
-    def test_serializes_id_correctly(self):
+    def test_serializes_id_correctly(self) -> None:
         data = UitDatabaseTypeSerializer(self.db_type).data
-        self.assertEqual(data["id"], self.db_type.id)
+        assert data["id"] == self.db_type.id
 
 
 # ---------------------------------------------------------------------------
@@ -100,10 +103,10 @@ class TestUitDatabaseTypeSerializerFields(TestCase):
 class TestProductionSerializerFields(TestCase):
     """Verify that exactly the expected fields are exposed."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.production = ProductionFactory.create()
 
-    def test_expected_fields_are_present(self):
+    def test_expected_fields_are_present(self) -> None:
         data = ProductionSerializer(self.production).data
         expected = {
             "id",
@@ -120,9 +123,9 @@ class TestProductionSerializerFields(TestCase):
             "tags",
         }
         for field in expected:
-            self.assertIn(field, data)
+            assert field in data
 
-    def test_no_extra_fields_are_exposed(self):
+    def test_no_extra_fields_are_exposed(self) -> None:
         data = ProductionSerializer(self.production).data
         expected = {
             "id",
@@ -141,7 +144,7 @@ class TestProductionSerializerFields(TestCase):
             "display_title",
             "display_artist_name",
         }
-        self.assertEqual(set(data.keys()), expected)
+        assert set(data.keys()) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -152,44 +155,41 @@ class TestProductionSerializerFields(TestCase):
 class TestProductionSerializerScalarFields(TestCase):
     """Model -> dict for non-translated, non-nested fields."""
 
-    def test_serializes_media_gallery_correctly(self):
+    def test_serializes_media_gallery_correctly(self) -> None:
         gallery = MediaGalleryFactory.create()
         production = ProductionFactory.create(media_gallery=gallery)
         data = ProductionSerializer(production).data
-        self.assertEqual(
-            data["media_gallery"],
-            {"id": gallery.pk, "name": gallery.name, "media_items": []},
-        )
+        assert data["media_gallery"] == {"id": gallery.pk, "name": gallery.name, "media_items": []}
 
-    def test_serializes_null_media_gallery_correctly(self):
+    def test_serializes_null_media_gallery_correctly(self) -> None:
         production = ProductionFactory.create(media_gallery=None)
         data = ProductionSerializer(production).data
-        self.assertIsNone(data["media_gallery"])
+        assert data["media_gallery"] is None
 
-    def test_serializes_attendance_mode_correctly(self):
+    def test_serializes_attendance_mode_correctly(self) -> None:
         production = ProductionFactory.create(attendance_mode="offline")
         data = ProductionSerializer(production).data
-        self.assertEqual(data["attendance_mode"], "offline")
+        assert data["attendance_mode"] == "offline"
 
-    def test_serializes_online_attendance_mode_correctly(self):
+    def test_serializes_online_attendance_mode_correctly(self) -> None:
         production = ProductionFactory.create(attendance_mode="online")
         data = ProductionSerializer(production).data
-        self.assertEqual(data["attendance_mode"], "online")
+        assert data["attendance_mode"] == "online"
 
-    def test_serializes_blank_attendance_mode_correctly(self):
+    def test_serializes_blank_attendance_mode_correctly(self) -> None:
         production = ProductionFactory.create(attendance_mode="")
         data = ProductionSerializer(production).data
-        self.assertEqual(data["attendance_mode"], "")
+        assert data["attendance_mode"] == ""
 
-    def test_serializes_performer_type_group_correctly(self):
+    def test_serializes_performer_type_group_correctly(self) -> None:
         production = ProductionFactory.create(performer_type="group")
         data = ProductionSerializer(production).data
-        self.assertEqual(data["performer_type"], "group")
+        assert data["performer_type"] == "group"
 
-    def test_serializes_performer_type_solo_correctly(self):
+    def test_serializes_performer_type_solo_correctly(self) -> None:
         production = ProductionFactory.create(performer_type="solo")
         data = ProductionSerializer(production).data
-        self.assertEqual(data["performer_type"], "solo")
+        assert data["performer_type"] == "solo"
 
 
 # ---------------------------------------------------------------------------
@@ -200,58 +200,58 @@ class TestProductionSerializerScalarFields(TestCase):
 class TestProductionSerializerNestedUitDatabaseTheme(TestCase):
     """Verify nested UitDatabaseTheme serialization."""
 
-    def test_uit_database_theme_is_null_when_not_set(self):
+    def test_uit_database_theme_is_null_when_not_set(self) -> None:
         production = ProductionFactory.create(uit_database_theme=None)
         data = ProductionSerializer(production).data
-        self.assertIsNone(data["uit_database_theme"])
+        assert data["uit_database_theme"] is None
 
-    def test_uit_database_theme_contains_id_and_name(self):
+    def test_uit_database_theme_contains_id_and_name(self) -> None:
         theme = UitDatabaseThemeFactory.create(name="Jazz")
         production = ProductionFactory.create(uit_database_theme=theme)
         data = ProductionSerializer(production).data
-        self.assertEqual(data["uit_database_theme"]["id"], theme.id)
-        self.assertEqual(data["uit_database_theme"]["name"], "Jazz")
+        assert data["uit_database_theme"]["id"] == theme.id
+        assert data["uit_database_theme"]["name"] == "Jazz"
 
 
 class TestProductionSerializerNestedUitDatabaseType(TestCase):
     """Verify nested UitDatabaseType serialization."""
 
-    def test_uit_database_type_is_null_when_not_set(self):
+    def test_uit_database_type_is_null_when_not_set(self) -> None:
         production = ProductionFactory.create(uit_database_type=None)
         data = ProductionSerializer(production).data
-        self.assertIsNone(data["uit_database_type"])
+        assert data["uit_database_type"] is None
 
-    def test_uit_database_type_contains_id_and_name(self):
+    def test_uit_database_type_contains_id_and_name(self) -> None:
         db_type = UitDatabaseTypeFactory.create(name="Theater")
         production = ProductionFactory.create(uit_database_type=db_type)
         data = ProductionSerializer(production).data
-        self.assertEqual(data["uit_database_type"]["id"], db_type.id)
-        self.assertEqual(data["uit_database_type"]["name"], "Theater")
+        assert data["uit_database_type"]["id"] == db_type.id
+        assert data["uit_database_type"]["name"] == "Theater"
 
 
 class TestProductionSerializerNestedTags(TestCase):
     """Verify nested Tags serialization."""
 
-    def test_tags_is_empty_list_when_no_tags(self):
+    def test_tags_is_empty_list_when_no_tags(self) -> None:
         production = ProductionFactory.create()
         data = ProductionSerializer(production).data
-        self.assertEqual(data["tags"], [])
+        assert data["tags"] == []
 
-    def test_tags_contains_tag_data(self):
+    def test_tags_contains_tag_data(self) -> None:
         production = ProductionFactory.create()
         tag = TagFactory.create(type="theme")
         production.tags.add(tag)
         data = ProductionSerializer(production).data
-        self.assertEqual(len(data["tags"]), 1)
-        self.assertEqual(data["tags"][0]["id"], tag.id)
+        assert len(data["tags"]) == 1
+        assert data["tags"][0]["id"] == tag.id
 
-    def test_tags_contains_multiple_tags(self):
+    def test_tags_contains_multiple_tags(self) -> None:
         production = ProductionFactory.create()
         tag_a = TagFactory.create(type="genre")
         tag_b = TagFactory.create(type="mood")
         production.tags.add(tag_a, tag_b)
         data = ProductionSerializer(production).data
-        self.assertEqual(len(data["tags"]), 2)
+        assert len(data["tags"]) == 2
 
 
 # ---------------------------------------------------------------------------
@@ -262,28 +262,28 @@ class TestProductionSerializerNestedTags(TestCase):
 class TestProductionSerializerTranslatedFieldsEmpty(TestCase):
     """Translated fields return an empty dict when no translations exist."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.production = ProductionFactory.create()
 
-    def test_title_is_empty_dict_without_translations(self):
+    def test_title_is_empty_dict_without_translations(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["title"], {})
+        assert data["title"] == {}
 
-    def test_description_is_empty_dict_without_translations(self):
+    def test_description_is_empty_dict_without_translations(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["description"], {})
+        assert data["description"] == {}
 
-    def test_teaser_is_empty_dict_without_translations(self):
+    def test_teaser_is_empty_dict_without_translations(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["teaser"], {})
+        assert data["teaser"] == {}
 
-    def test_artist_name_is_empty_dict_without_translations(self):
+    def test_artist_name_is_empty_dict_without_translations(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["artist_name"], {})
+        assert data["artist_name"] == {}
 
-    def test_tagline_is_empty_dict_without_translations(self):
+    def test_tagline_is_empty_dict_without_translations(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["tagline"], {})
+        assert data["tagline"] == {}
 
 
 # ---------------------------------------------------------------------------
@@ -294,7 +294,7 @@ class TestProductionSerializerTranslatedFieldsEmpty(TestCase):
 class TestProductionSerializerTranslatedFieldsPopulated(TestCase):
     """Translated fields return a dict keyed by language code when translations exist."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.production = ProductionFactory.create()
         self.nl = LanguageFactory.create(code="nl", name="Dutch")
         ProductionTranslationFactory.create(
@@ -307,29 +307,29 @@ class TestProductionSerializerTranslatedFieldsPopulated(TestCase):
             tagline="Tagline NL",
         )
 
-    def test_title_contains_language_code_key(self):
+    def test_title_contains_language_code_key(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertIn("nl", data["title"])
+        assert "nl" in data["title"]
 
-    def test_title_value_matches_translation(self):
+    def test_title_value_matches_translation(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["title"]["nl"], "Nederlandse Titel")
+        assert data["title"]["nl"] == "Nederlandse Titel"
 
-    def test_description_value_matches_translation(self):
+    def test_description_value_matches_translation(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["description"]["nl"], "Nederlandse beschrijving")
+        assert data["description"]["nl"] == "Nederlandse beschrijving"
 
-    def test_teaser_value_matches_translation(self):
+    def test_teaser_value_matches_translation(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["teaser"]["nl"], "Nederlandse teaser")
+        assert data["teaser"]["nl"] == "Nederlandse teaser"
 
-    def test_artist_name_value_matches_translation(self):
+    def test_artist_name_value_matches_translation(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["artist_name"]["nl"], "Artiest NL")
+        assert data["artist_name"]["nl"] == "Artiest NL"
 
-    def test_tagline_value_matches_translation(self):
+    def test_tagline_value_matches_translation(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["tagline"]["nl"], "Tagline NL")
+        assert data["tagline"]["nl"] == "Tagline NL"
 
 
 # ---------------------------------------------------------------------------
@@ -340,29 +340,29 @@ class TestProductionSerializerTranslatedFieldsPopulated(TestCase):
 class TestProductionSerializerMultipleTranslations(TestCase):
     """Multiple language translations are all present in the output dict."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.production = ProductionFactory.create()
         self.nl = LanguageFactory.create(code="nl", name="Dutch")
         self.en = LanguageFactory.create(code="en", name="English")
         ProductionTranslationFactory.create(production=self.production, language=self.nl, title="Titel NL")
         ProductionTranslationFactory.create(production=self.production, language=self.en, title="Title EN")
 
-    def test_title_contains_both_language_codes(self):
+    def test_title_contains_both_language_codes(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertIn("nl", data["title"])
-        self.assertIn("en", data["title"])
+        assert "nl" in data["title"]
+        assert "en" in data["title"]
 
-    def test_title_nl_value_is_correct(self):
+    def test_title_nl_value_is_correct(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["title"]["nl"], "Titel NL")
+        assert data["title"]["nl"] == "Titel NL"
 
-    def test_title_en_value_is_correct(self):
+    def test_title_en_value_is_correct(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(data["title"]["en"], "Title EN")
+        assert data["title"]["en"] == "Title EN"
 
-    def test_title_dict_has_exactly_two_entries(self):
+    def test_title_dict_has_exactly_two_entries(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertEqual(len(data["title"]), 2)
+        assert len(data["title"]) == 2
 
 
 # ---------------------------------------------------------------------------
@@ -373,7 +373,7 @@ class TestProductionSerializerMultipleTranslations(TestCase):
 class TestProductionSerializerTranslatedFieldsOmitBlanks(TestCase):
     """Blank translated field values must not appear in the output dict."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.production = ProductionFactory.create()
         self.nl = LanguageFactory.create(code="nl", name="Dutch")
         # Only title is set; description, teaser etc. are blank
@@ -387,13 +387,13 @@ class TestProductionSerializerTranslatedFieldsOmitBlanks(TestCase):
             tagline="",
         )
 
-    def test_blank_description_is_omitted_from_dict(self):
+    def test_blank_description_is_omitted_from_dict(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertNotIn("nl", data["description"])
+        assert "nl" not in data["description"]
 
-    def test_non_blank_title_is_present_in_dict(self):
+    def test_non_blank_title_is_present_in_dict(self) -> None:
         data = ProductionSerializer(self.production).data
-        self.assertIn("nl", data["title"])
+        assert "nl" in data["title"]
 
 
 # ---------------------------------------------------------------------------
@@ -404,5 +404,164 @@ class TestProductionSerializerTranslatedFieldsOmitBlanks(TestCase):
 class TestProductionSerializerInheritance(TestCase):
     """ProductionSerializer must use TranslatableSerializerMixin."""
 
-    def test_inherits_from_translatable_serializer_mixin(self):
-        self.assertTrue(issubclass(ProductionSerializer, TranslatableSerializerMixin))
+    def test_inherits_from_translatable_serializer_mixin(self) -> None:
+        assert issubclass(ProductionSerializer, TranslatableSerializerMixin)
+
+
+# ---------------------------------------------------------------------------
+# ProductionTagSerializer - description field (empty state)
+# ---------------------------------------------------------------------------
+
+
+class TestProductionTagSerializerDescriptionEmpty(TestCase):
+    """description is an empty dict when no translations exist."""
+
+    def setUp(self) -> None:
+        self.production_tag = ProductionTagFactory.create()
+
+    def test_description_is_empty_dict_without_translations(self) -> None:
+        data = ProductionTagSerializer(self.production_tag).data
+        assert data["description"] == {}
+
+    def test_description_key_is_always_present(self) -> None:
+        data = ProductionTagSerializer(self.production_tag).data
+        assert "description" in data
+
+
+class TestProductionTagSerializerDescriptionPopulated(TestCase):
+    """description returns a language-code dict when translations exist."""
+
+    def setUp(self) -> None:
+        self.production_tag = ProductionTagFactory.create()
+        self.nl = LanguageFactory.create(code="nl")
+        self.en = LanguageFactory.create(code="en")
+        ProductionTagTranslationFactory.create(
+            production_tag=self.production_tag,
+            language=self.nl,
+            description="Nederlandse context.",
+        )
+        ProductionTagTranslationFactory.create(
+            production_tag=self.production_tag,
+            language=self.en,
+            description="English context.",
+        )
+
+    def test_description_contains_nl_key(self) -> None:
+        data = ProductionTagSerializer(self.production_tag).data
+        assert "nl" in data["description"]
+
+    def test_description_contains_en_key(self) -> None:
+        data = ProductionTagSerializer(self.production_tag).data
+        assert "en" in data["description"]
+
+    def test_description_nl_value_is_correct(self) -> None:
+        data = ProductionTagSerializer(self.production_tag).data
+        assert data["description"]["nl"] == "Nederlandse context."
+
+    def test_description_en_value_is_correct(self) -> None:
+        data = ProductionTagSerializer(self.production_tag).data
+        assert data["description"]["en"] == "English context."
+
+    def test_description_has_exactly_two_entries(self) -> None:
+        data = ProductionTagSerializer(self.production_tag).data
+        assert len(data["description"]) == 2
+
+
+class TestProductionTagSerializerToRepresentation(TestCase):
+    """to_representation merges Tag fields first, then through-table fields."""
+
+    def setUp(self) -> None:
+        self.tag = TagFactory.create(type="theme")
+        self.production_tag = ProductionTagFactory.create(tag=self.tag)
+
+    def test_output_contains_tag_id(self) -> None:
+        data = ProductionTagSerializer(self.production_tag).data
+        assert data["id"] == self.tag.id
+
+    def test_output_contains_tag_type(self) -> None:
+        data = ProductionTagSerializer(self.production_tag).data
+        assert data["type"] == "theme"
+
+    def test_output_contains_description_from_through_table(self) -> None:
+        data = ProductionTagSerializer(self.production_tag).data
+        assert "description" in data
+
+    def test_tag_fields_come_before_description_in_key_order(self) -> None:
+        """description must not shadow a tag field with the same name."""
+        data = ProductionTagSerializer(self.production_tag).data
+        keys = list(data.keys())
+        # id (from Tag) must appear before description (from through-table)
+        assert keys.index("id") < keys.index("description")
+
+
+class TestProductionSerializerTagsDescriptionEmpty(TestCase):
+    def test_tag_entry_has_description_key(self) -> None:
+        production = ProductionFactory.create()
+        tag = TagFactory.create()
+        production.tags.add(tag)
+        data = ProductionSerializer(production).data
+        assert "description" in data["tags"][0]
+
+    def test_tag_entry_description_is_empty_dict_when_no_translations(self) -> None:
+        production = ProductionFactory.create()
+        tag = TagFactory.create()
+        production.tags.add(tag)
+        data = ProductionSerializer(production).data
+        assert data["tags"][0]["description"] == {}
+
+
+class TestProductionSerializerTagsDescriptionPopulated(TestCase):
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        self.tag = TagFactory.create(type="theme")
+        self.production_tag = ProductionTagFactory.create(production=self.production, tag=self.tag)
+        self.nl = LanguageFactory.create(code="nl")
+        self.en = LanguageFactory.create(code="en")
+        ProductionTagTranslationFactory.create(
+            production_tag=self.production_tag,
+            language=self.nl,
+            description="Thema in NL context.",
+        )
+        ProductionTagTranslationFactory.create(
+            production_tag=self.production_tag,
+            language=self.en,
+            description="Theme in EN context.",
+        )
+
+    def _tag_data(self):
+        return ProductionSerializer(self.production).data["tags"][0]
+
+    def test_description_nl_is_correct(self) -> None:
+        assert self._tag_data()["description"]["nl"] == "Thema in NL context."
+
+    def test_description_en_is_correct(self) -> None:
+        assert self._tag_data()["description"]["en"] == "Theme in EN context."
+
+    def test_description_has_two_entries(self) -> None:
+        assert len(self._tag_data()["description"]) == 2
+
+    def test_tag_id_is_still_present(self) -> None:
+        assert self._tag_data()["id"] == self.tag.id
+
+    def test_description_is_production_scoped(self) -> None:
+        """A second production with the same tag gets its own (empty) description."""
+        other_production = ProductionFactory.create()
+        ProductionTagFactory.create(production=other_production, tag=self.tag)
+        data = ProductionSerializer(other_production).data
+        assert data["tags"][0]["description"] == {}
+
+
+class TestProductionSerializerTagsMultipleTags(TestCase):
+    def test_each_tag_entry_has_independent_description(self) -> None:
+        production = ProductionFactory.create()
+        tag_a = TagFactory.create(type="genre")
+        tag_b = TagFactory.create(type="mood")
+        pt_a = ProductionTagFactory.create(production=production, tag=tag_a)
+        _pt_b = ProductionTagFactory.create(production=production, tag=tag_b)
+        nl = LanguageFactory.create(code="nl")
+        ProductionTagTranslationFactory.create(production_tag=pt_a, language=nl, description="Beschrijving A.")
+
+        tags_data = {t["id"]: t for t in ProductionSerializer(production).data["tags"]}
+
+        assert tags_data[tag_a.id]["description"]["nl"] == "Beschrijving A."
+        assert tags_data[tag_b.id]["description"] == {}

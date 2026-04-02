@@ -1,6 +1,4 @@
-"""
-Filters for the Media app.
-"""
+"""Filters for the Media app."""
 
 import django_filters
 
@@ -10,8 +8,7 @@ from .models import MediaGallery, MediaItem
 
 
 class MediaGalleryFilter(BaseModelFilter):
-    """
-    FilterSet for MediaGallery list queries.
+    """FilterSet for MediaGallery list queries.
 
     Supported query parameters
     --------------------------
@@ -28,8 +25,7 @@ class MediaGalleryFilter(BaseModelFilter):
 
 
 class MediaItemFilter(BaseModelFilter):
-    """
-    FilterSet for MediaItem list queries.
+    """FilterSet for MediaItem list queries.
 
     Supported query parameters
     --------------------------

@@ -6,6 +6,7 @@ from apps.productions.models import (
     Production,
     ProductionGenre,
     ProductionTag,
+    ProductionTagTranslation,
     ProductionTranslation,
     UitDatabaseTheme,
     UitDatabaseType,
@@ -24,7 +25,7 @@ class UitDatabaseThemeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = UitDatabaseTheme
 
-    name = LazyFunction(lambda: faker.word())
+    name = LazyFunction(faker.word)
 
 
 class UitDatabaseTypeFactory(factory.django.DjangoModelFactory):
@@ -33,7 +34,7 @@ class UitDatabaseTypeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = UitDatabaseType
 
-    name = LazyFunction(lambda: faker.word())
+    name = LazyFunction(faker.word)
 
 
 class ProductionFactory(factory.django.DjangoModelFactory):
@@ -59,15 +60,15 @@ class ProductionTranslationFactory(factory.django.DjangoModelFactory):
     language = SubFactory(LanguageFactory)
     supertitle = LazyFunction(lambda: faker.sentence(nb_words=3))
     title = LazyFunction(lambda: faker.sentence(nb_words=4))
-    artist_name = LazyFunction(lambda: faker.name())
+    artist_name = LazyFunction(faker.name)
     tagline = LazyFunction(lambda: faker.sentence(nb_words=6))
     teaser = LazyFunction(lambda: faker.text(max_nb_chars=120))
     description = LazyFunction(lambda: faker.text(max_nb_chars=240))
     description_short = LazyFunction(lambda: faker.text(max_nb_chars=80))
     description_extra = LazyFunction(lambda: faker.text(max_nb_chars=160))
     description_2 = LazyFunction(lambda: faker.text(max_nb_chars=160))
-    video_1 = LazyFunction(lambda: faker.url())
-    video_2 = LazyFunction(lambda: faker.url())
+    video_1 = LazyFunction(faker.url)
+    video_2 = LazyFunction(faker.url)
     meta_title = LazyFunction(lambda: faker.sentence(nb_words=5))
     meta_description = LazyFunction(lambda: faker.text(max_nb_chars=150))
 
@@ -80,6 +81,17 @@ class ProductionTagFactory(factory.django.DjangoModelFactory):
 
     production = SubFactory(ProductionFactory)
     tag = SubFactory(TagFactory)
+
+
+class ProductionTagTranslationFactory(factory.django.DjangoModelFactory):
+    """Factory for ProductionTagTranslation model."""
+
+    class Meta:
+        model = ProductionTagTranslation
+
+    production_tag = SubFactory(ProductionTagFactory)
+    language = SubFactory(LanguageFactory)
+    description = LazyFunction(lambda: faker.text(max_nb_chars=1000))
 
 
 class ProductionGenreFactory(factory.django.DjangoModelFactory):

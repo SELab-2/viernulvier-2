@@ -1,6 +1,4 @@
-"""
-RFC 7807 (Problem Details for HTTP APIs) compliant exception handler for DRF.
-"""
+"""RFC 7807 (Problem Details for HTTP APIs) compliant exception handler for DRF."""
 
 import logging
 from typing import Any
@@ -36,10 +34,11 @@ logger = logging.getLogger(__name__)
 
 
 def _flatten_errors(detail: Any, field_prefix: str = "") -> list[dict]:
-    """
+    """Add recursively flatten DRF's nested error structures into a flat list of error dicts with JSON Pointer paths.
+
     Recursively walk DRF's nested error structure and return a flat list of
     RFC 7807-style error dicts:
-        {"pointer": "/field/subfield", "detail": "error message", "code": "error_code"}
+        {"pointer": "/field/subfield", "detail": "error message", "code": "error_code"}.
     """
     errors: list[dict] = []
 
@@ -125,9 +124,8 @@ def _title_for(status_code: int, fallback: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def custom_exception_handler(exc: Exception, context: dict) -> Response | None:
-    """
-    RFC 7807-compliant exception handler.
+def custom_exception_handler(exc: Exception, context: dict) -> Response | None:  # noqa: C901, PLR0911, PLR0912, PLR0915
+    """RFC 7807-compliant exception handler.
 
     All HTTP errors are returned as:
         {
@@ -282,3 +280,4 @@ def custom_exception_handler(exc: Exception, context: dict) -> Response | None:
             )
         response.data = problem
         return response
+    return None

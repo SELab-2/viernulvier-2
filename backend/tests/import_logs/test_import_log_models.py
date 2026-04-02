@@ -1,9 +1,9 @@
 from datetime import timedelta
 
-import pytest
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+import pytest
 
 from apps.import_log.models import ImportLog
 from tests.factories.import_log import ImportLogFactory
@@ -16,24 +16,24 @@ pytestmark = pytest.mark.django_db
 
 
 class TestImportLog:
-    def test_requires_source(self):
+    def test_requires_source(self) -> None:
         log = ImportLogFactory.build(source="")
         with pytest.raises(ValidationError):
             log.full_clean()
 
-    def test_str_representation(self):
+    def test_str_representation(self) -> None:
         log = ImportLogFactory(source="file.csv", status=ImportLog.Status.SUCCESS)
         assert str(log) == "file.csv - SUCCESS"
 
-    def test_status_is_valid_choice(self):
+    def test_status_is_valid_choice(self) -> None:
         log = ImportLogFactory(status=ImportLog.Status.FAILED)
         assert log.status in ImportLog.Status.values
 
-    def test_records_consistency_from_factory(self):
+    def test_records_consistency_from_factory(self) -> None:
         log = ImportLogFactory()
         assert log.records_imported + log.records_failed <= log.records_total
 
-    def test_finished_after_started_constraint_valid(self):
+    def test_finished_after_started_constraint_valid(self) -> None:
         started = timezone.now()
         finished = started + timedelta(minutes=10)
 
@@ -41,31 +41,30 @@ class TestImportLog:
 
         assert log.finished_at > log.started_at
 
-    def test_finished_before_started_raises_validation_error(self):
+    def test_finished_before_started_raises_validation_error(self) -> None:
         started = timezone.now()
         finished = started - timedelta(minutes=10)
 
-        with pytest.raises(ValidationError):
-            with transaction.atomic():
-                ImportLogFactory(started_at=started, finished_at=finished)
+        with pytest.raises(ValidationError), transaction.atomic():
+            ImportLogFactory(started_at=started, finished_at=finished)
 
-    def test_null_timestamps_allowed(self):
+    def test_null_timestamps_allowed(self) -> None:
         log = ImportLogFactory(started_at=None, finished_at=None)
 
         assert log.started_at is None
         assert log.finished_at is None
 
-    def test_pending_or_in_progress_has_no_finished_at(self):
+    def test_pending_or_in_progress_has_no_finished_at(self) -> None:
         log = ImportLogFactory(status=ImportLog.Status.PENDING)
         assert log.finished_at is None
 
         log = ImportLogFactory(status=ImportLog.Status.IN_PROGRESS)
         assert log.finished_at is None
 
-    def test_failed_status_sets_error_message(self):
+    def test_failed_status_sets_error_message(self) -> None:
         log = ImportLogFactory(status=ImportLog.Status.FAILED)
         assert log.error_message is not None
 
-    def test_success_status_can_have_finished_at(self):
+    def test_success_status_can_have_finished_at(self) -> None:
         log = ImportLogFactory(status=ImportLog.Status.SUCCESS)
         assert log.finished_at is not None

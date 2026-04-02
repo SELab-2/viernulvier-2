@@ -2,8 +2,9 @@ import { Container, Paper, Stack, Typography, Box } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import FilteredSearchBar from '../components/searchbar/FilteredSearchBar'
 import Tag from '../components/Tag'
+import FloatingAlert from '../components/FloatingAlert'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 const TAGS = [
   { display_name: 'theater', name: { nl: 'Theater', en: 'THEATER' } },
@@ -33,6 +34,25 @@ const HomePage = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const selectedTags = parseTagsFromQuery(location.search)
+
+  const locationState = location.state as
+    | {
+        floatingAlert?: {
+          open: boolean
+          message: string
+          severity: 'error' | 'warning' | 'info' | 'success'
+        }
+      }
+    | null
+    | undefined
+
+  // toast message when redirected from detail error
+  const [toastOpen, setToastOpen] = useState(locationState?.floatingAlert?.open ?? false)
+  const [toastMessage] = useState(locationState?.floatingAlert?.message ?? '')
+  const [toastSeverity] = useState<'error' | 'warning' | 'info' | 'success'>(
+    locationState?.floatingAlert?.severity ?? 'info',
+  )
+
   // Local state for search input
   const [searchValue, setSearchValue] = useState('')
   // Demo: no filters or layout options
@@ -44,6 +64,12 @@ const HomePage = () => {
    * Toggle a tag's selection and update the URL.
    * @param tag - The tag name to toggle
    */
+  useEffect(() => {
+    if (locationState?.floatingAlert?.open) {
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location.pathname, locationState, navigate])
+
   const handleTagToggle = useCallback(
     (tag: string) => {
       // Get current tags from URL and toggle the clicked tag
@@ -68,6 +94,12 @@ const HomePage = () => {
 
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
+      <FloatingAlert
+        open={toastOpen}
+        onClose={() => setToastOpen(false)}
+        message={toastMessage}
+        severity={toastSeverity}
+      />
       <Paper elevation={3} sx={{ p: 4 }}>
         <Stack spacing={3}>
           <Typography variant="h3" component="h1">

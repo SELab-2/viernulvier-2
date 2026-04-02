@@ -13,6 +13,8 @@ language in a single query.
 """
 
 from django.contrib import admin
+from django.db.models import QuerySet
+from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin
 
@@ -37,7 +39,7 @@ class TagTranslationInline(admin.TabularInline):
     fields = ("language", "name", "short_description", "url_title")
     ordering = ("language__code",)
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("language")
 
 
@@ -87,7 +89,7 @@ class TagAdmin(BaseAdmin):
 
     inlines = [TagTranslationInline]
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Prefetch translations to avoid N+1 queries on the detail page."""
         return super().get_queryset(request).prefetch_related("translations")
 
@@ -130,6 +132,6 @@ class TagTranslationAdmin(BaseAdmin):
 
     ordering = ("tag", "language__code")
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Select related tag and language to avoid N+1 queries."""
         return super().get_queryset(request).select_related("tag", "language")
