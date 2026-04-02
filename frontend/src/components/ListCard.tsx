@@ -44,13 +44,11 @@ const ListCard = ({ production, selectedGenreIds, onGenreClick }: ListCardProps)
   const locationName = getSharedLocationName(production.events, language)
   const genres = production.genres.filter((genre) => genre.display_name)
 
-  const detailPath = `/productions/${production.id}`
-
   return (
     <Stack
       component={RouterLink}
-      to={detailPath}
-      flexDirection="row"
+      to={`/productions/${production.id}`}
+      direction="row"
       gap={3}
       height={200}
       padding={3}
@@ -71,7 +69,7 @@ const ListCard = ({ production, selectedGenreIds, onGenreClick }: ListCardProps)
         alt={title}
         height="100%"
         borderRadius="4px"
-        sx={{ aspectRatio: 5 / 3 }}
+        sx={{ aspectRatio: 16 / 9 }}
       />
 
       <Stack
