@@ -37,7 +37,9 @@ from rest_framework.exceptions import AuthenticationFailed
 
 class ApiKeyUser:
     """Minimal user-like object so DRF treats API key requests as authenticated."""
+
     is_authenticated = True
+
 
 class ApiKeyAuthentication(BaseAuthentication):
     """DRF authentication class that validates ``X-API-Key`` request headers.
