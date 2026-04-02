@@ -1,6 +1,5 @@
 import type { Event } from '../types/Events'
 import { formatDate } from './formatDate'
-import getLocationName from './locations'
 
 /**
  * Builds a human-readable date-range label from a production's event list.
@@ -36,39 +35,4 @@ export function getEventDateRangeLabel(events: Event[] | undefined, language: st
   }
 
   return `${first} - ${last}`
-}
-
-/**
- * Returns the shared location name when every event in the list takes place at
- * the same location, otherwise returns `null`.
- *
- * Two events are considered to share a location when {@link getLocationName}
- * resolves to the same non-empty string for both. Events without a hall
- * (or with a hall that resolves to an empty string) cause the function to
- * return `null` immediately.
- *
- * @param events The production's event list (may be `undefined` when not loaded).
- * @param language BCP 47 locale tag for {@link getLocationName}.
- * @returns The shared location label, or `null` when locations differ or are absent.
- */
-export function getSharedLocationName(
-  events: Event[] | undefined,
-  language: string,
-): string | null {
-  if (!events || events.length === 0) {
-    return null
-  }
-
-  const names = events.map((e) => getLocationName(e.hall, language))
-
-  const first = names[0]
-  if (!first) {
-    return null
-  }
-
-  if (names.every((n) => n === first)) {
-    return first
-  }
-
-  return null
 }

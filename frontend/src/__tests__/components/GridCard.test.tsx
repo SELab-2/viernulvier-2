@@ -8,7 +8,6 @@ import GridCard from '../../components/GridCard'
 import i18n from '../../i18n'
 import type { Event } from '../../types/Events'
 import type { Genre } from '../../types/Genres'
-import type { Hall } from '../../types/Halls'
 import type { Production } from '../../types/Productions'
 
 const accentTheme = createTheme({
@@ -28,34 +27,6 @@ const minimalGenre = (id: number, nlName: string): Genre => ({
   name: { nl: nlName },
   display_name: nlName,
   vendor_id: null,
-})
-
-const hallWithLocation = (locationNl: string): Hall => ({
-  id: 10,
-  space: {
-    id: 2,
-    location: {
-      id: 3,
-      street: null,
-      number: null,
-      postal_code: null,
-      city: null,
-      country: 'BE',
-      phone_1: null,
-      phone_2: null,
-      is_own_location: true,
-      name: { nl: locationNl },
-      display_name: null,
-    },
-    name: { nl: 'Ruimte' },
-    display_name: null,
-    halls: [],
-  },
-  seat_selection: false,
-  open_seating: true,
-  name: { nl: 'Zaal' },
-  display_name: null,
-  remark: null,
 })
 
 const makeEvent = (overrides: Partial<Event> = {}): Event => ({
@@ -340,73 +311,6 @@ describe('GridCard', () => {
     expect(screen.queryByText(/ - /)).not.toBeInTheDocument()
   })
 
-  it('shows hall location when all events share the same location', () => {
-    const hall = hallWithLocation('Campus 404')
-    const production = baseProduction({
-      events: [makeEvent({ id: 1, hall }), makeEvent({ id: 2, hall })],
-    })
-    renderGridCard({ production })
-
-    expect(screen.getByText('Campus 404')).toBeInTheDocument()
-  })
-
-  it('does not show location when events have different locations', () => {
-    const production = baseProduction({
-      events: [
-        makeEvent({ id: 1, hall: hallWithLocation('Campus 404') }),
-        makeEvent({ id: 2, hall: hallWithLocation('Andere Zaal') }),
-      ],
-    })
-    renderGridCard({ production })
-
-    expect(screen.queryByText('Campus 404')).not.toBeInTheDocument()
-    expect(screen.queryByText('Andere Zaal')).not.toBeInTheDocument()
-  })
-
-  it('does not show location when events have no hall', () => {
-    const production = baseProduction({
-      events: [makeEvent({ id: 1, hall: null })],
-    })
-    renderGridCard({ production })
-
-    expect(screen.queryByText('Ruimte')).not.toBeInTheDocument()
-  })
-
-  it('shows both date range and location when all events share a location and have dates', () => {
-    const hall = hallWithLocation('Campus 404')
-    const production = baseProduction({
-      events: [
-        makeEvent({ id: 1, starts_at: '2026-06-01T20:00:00.000Z', hall }),
-        makeEvent({ id: 2, starts_at: '2026-06-05T20:00:00.000Z', hall }),
-      ],
-    })
-    renderGridCard({ production })
-
-    expect(screen.getByText('Campus 404')).toBeInTheDocument()
-    expect(screen.getByText(/2026/)).toBeInTheDocument()
-    expect(screen.getByText(/jun|Jun/)).toBeInTheDocument()
-  })
-
-  it('shows only the date row when there is a start time but no hall', () => {
-    const production = baseProduction({
-      events: [makeEvent({ id: 1, starts_at: '2026-01-10T12:00:00.000Z', hall: null })],
-    })
-    renderGridCard({ production })
-
-    expect(screen.getByText(/2026/)).toBeInTheDocument()
-    expect(screen.queryByText('Campus 404')).not.toBeInTheDocument()
-  })
-
-  it('shows only the hall row when events have a hall but no start date', () => {
-    const production = baseProduction({
-      events: [makeEvent({ id: 1, hall: hallWithLocation('Solo zaal'), starts_at: null })],
-    })
-    renderGridCard({ production })
-
-    expect(screen.getByText('Solo zaal')).toBeInTheDocument()
-    expect(screen.queryByText(/2026/)).not.toBeInTheDocument()
-  })
-
   it('renders genre chips and forwards clicks', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
@@ -480,24 +384,6 @@ describe('GridCard', () => {
 
     const links = screen.getAllByRole('link')
     expect(links.some((l) => l.getAttribute('href') === '/productions/1')).toBe(true)
-  })
-
-  it('still renders when the hall label resolves to an empty string', () => {
-    const hall: Hall = {
-      id: 1,
-      space: null,
-      seat_selection: false,
-      open_seating: true,
-      name: { nl: '' },
-      display_name: null,
-      remark: null,
-    }
-    const production = baseProduction({
-      events: [makeEvent({ id: 1, hall })],
-    })
-    renderGridCard({ production })
-
-    expect(screen.getByRole('heading', { name: 'Voorstelling' })).toBeInTheDocument()
   })
 
   it('uses English copy when the locale is en', async () => {

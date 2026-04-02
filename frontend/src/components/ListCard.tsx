@@ -1,11 +1,10 @@
 import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
-import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined'
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import type { Production } from '../types/Productions'
-import { getEventDateRangeLabel, getSharedLocationName } from '../utils/productionEvents'
+import { getEventDateRangeLabel } from '../utils/productionEvents'
 import { getTranslatedRecord } from '../utils/translations'
 import GenreChip from './GenreChip'
 import ImageWithFallback from './ImageWithFallback'
@@ -41,7 +40,6 @@ const ListCard = ({ production, selectedGenreIds, onGenreClick }: ListCardProps)
     production.display_artist_name,
   )
   const dateRangeLabel = getEventDateRangeLabel(production.events, language)
-  const locationName = getSharedLocationName(production.events, language)
   const genres = production.genres.filter((genre) => genre.display_name)
 
   return (
@@ -50,7 +48,7 @@ const ListCard = ({ production, selectedGenreIds, onGenreClick }: ListCardProps)
       to={`/productions/${production.id}`}
       direction="row"
       gap={3}
-      height={200}
+      height={175}
       padding={3}
       borderRadius="4px"
       overflow="hidden"
@@ -93,25 +91,14 @@ const ListCard = ({ production, selectedGenreIds, onGenreClick }: ListCardProps)
         </Stack>
 
         <Stack color="text.secondary" spacing={1}>
-          <Stack>
-            {dateRangeLabel ? (
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <DateRangeOutlinedIcon fontSize="inherit" />
-                <Typography variant="body2" noWrap>
-                  {dateRangeLabel}
-                </Typography>
-              </Stack>
-            ) : null}
-
-            {locationName ? (
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <RoomOutlinedIcon fontSize="inherit" />
-                <Typography variant="body2" noWrap>
-                  {locationName}
-                </Typography>
-              </Stack>
-            ) : null}
-          </Stack>
+          {dateRangeLabel ? (
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <DateRangeOutlinedIcon fontSize="inherit" />
+              <Typography variant="body2" noWrap>
+                {dateRangeLabel}
+              </Typography>
+            </Stack>
+          ) : null}
 
           {genres.length > 0 ? (
             <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24}>
