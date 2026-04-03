@@ -17,7 +17,8 @@ from apps.import_log.models import ImportLog
 from apps.media_library import models as media_models
 from apps.media_library.models import MediaGallery, MediaGalleryItem, MediaItem
 
-from .viernulvier_constants import BASE_DOMAIN, MAX_ERROR_MESSAGES, MAX_RETRIES
+from .viernulvier_constants import BASE_DOMAIN, MAX_RETRIES
+from .viernulvier_import_log import append_limited_error, finalize_empty_import, finalize_import_log
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -81,21 +82,6 @@ def download_image(
         return response.content
 
     return None
-
-
-def _append_limited_error(errors: list[str], message: str) -> None:
-    if len(errors) < MAX_ERROR_MESSAGES:
-        errors.append(message)
-
-
-def _finalize_empty_import(import_log: ImportLog, timezone_module: Any) -> int:
-    import_log.status = ImportLog.Status.SUCCESS
-    import_log.records_total = 0
-    import_log.records_imported = 0
-    import_log.records_failed = 0
-    import_log.finished_at = timezone_module.now()
-    import_log.save()
-    return 0
 
 
 def _handle_gallery_payload(
@@ -201,32 +187,6 @@ def _persist_gallery_links(
     return actual_media_items_changed
 
 
-def _finish_gallery_import_log(
-    *,
-    import_log: ImportLog,
-    total: int,
-    imported: int,
-    errors: int,
-    error_messages: list[str],
-    timezone_module: Any,
-    always_partial_on_errors: bool = False,
-) -> None:
-    import_log.records_total = total
-    import_log.records_imported = imported
-    import_log.records_failed = errors
-    import_log.finished_at = timezone_module.now()
-
-    if errors == 0:
-        import_log.status = ImportLog.Status.SUCCESS
-    elif always_partial_on_errors or imported > 0:
-        import_log.status = ImportLog.Status.PARTIAL_SUCCESS
-        import_log.error_message = f"{errors} link issues: {', '.join(error_messages)}"
-    else:
-        import_log.status = ImportLog.Status.FAILED
-        import_log.error_message = f"All {errors} link resolutions failed: {', '.join(error_messages)}"
-    import_log.save()
-
-
 def _process_gallery_item(
     *,
     gallery_item: Any,
@@ -240,17 +200,17 @@ def _process_gallery_item(
     error_messages: list[str],
 ) -> int:
     if not isinstance(gallery_item, dict):
-        _append_limited_error(error_messages, f"Gallery item is not a dict: {gallery_item!r}")
+        append_limited_error(error_messages, f"Gallery item is not a dict: {gallery_item!r}")
         return 1
 
     gallery_ext_id = extract_external_id_fn(gallery_item.get("@id"))
     if not gallery_ext_id:
-        _append_limited_error(error_messages, f"Gallery missing @id: {str(gallery_item)[:200]}")
+        append_limited_error(error_messages, f"Gallery missing @id: {str(gallery_item)[:200]}")
         return 1
 
     gallery_pk = gallery_pk_by_external_id.get(gallery_ext_id)
     if gallery_pk is None:
-        _append_limited_error(error_messages, f"Gallery not found for external_id={gallery_ext_id}")
+        append_limited_error(error_messages, f"Gallery not found for external_id={gallery_ext_id}")
         return 1
 
     touched_gallery_ids.add(gallery_pk)
@@ -266,7 +226,7 @@ def _process_gallery_item(
         media_pk = media_pk_by_external_id.get(media_ext_id)
         if media_pk is None:
             errors += 1
-            _append_limited_error(error_messages, f"MediaItem not found for external_id={media_ext_id}")
+            append_limited_error(error_messages, f"MediaItem not found for external_id={media_ext_id}")
             continue
         gallery_item_links.append(MediaGalleryItem(gallery_id=gallery_pk, media_item_id=media_pk, position=position))
         if media_pk not in primary_item_to_gallery:
@@ -303,7 +263,7 @@ def sync_media_item_gallery_links_impl(
         raise
 
     if not galleries:
-        return _finalize_empty_import(import_log, timezone_module)
+        return finalize_empty_import(import_log, timezone_module)
 
     gallery_pk_by_external_id = {str(ext_id): pk for ext_id, pk in MediaGallery.objects.values_list("external_id", "pk")}
     media_pk_by_external_id = {str(ext_id): pk for ext_id, pk in MediaItem.objects.values_list("external_id", "pk")}
@@ -334,7 +294,7 @@ def sync_media_item_gallery_links_impl(
     )
 
     if dry_run:
-        _finish_gallery_import_log(
+        finalize_import_log(
             import_log=import_log,
             total=total,
             imported=media_items_changed,
@@ -342,6 +302,8 @@ def sync_media_item_gallery_links_impl(
             error_messages=error_messages,
             timezone_module=timezone_module,
             always_partial_on_errors=True,
+            partial_error_label="link issues",
+            failed_error_label="link resolutions failed",
         )
         logger.info(
             "Gallery-item link sync complete: media_items_changed=%d link_rows=%d errors=%d [DRY RUN]",
@@ -371,13 +333,15 @@ def sync_media_item_gallery_links_impl(
         import_log.save()
         raise
 
-    _finish_gallery_import_log(
+    finalize_import_log(
         import_log=import_log,
         total=total,
         imported=actual_media_items_changed,
         errors=errors,
         error_messages=error_messages,
         timezone_module=timezone_module,
+        partial_error_label="link issues",
+        failed_error_label="link resolutions failed",
     )
     logger.info(
         "Gallery-item link sync complete: media_items_changed=%d link_rows=%d errors=%d",
@@ -506,7 +470,7 @@ def _save_single_crop(
 
     image_bytes = download_image_fn(session, image_url)
     if image_bytes is None:
-        _append_limited_error(error_messages, f"Download failed for crop '{crop_name}' on {external_id}")
+        append_limited_error(error_messages, f"Download failed for crop '{crop_name}' on {external_id}")
         return 0, 1
 
     filename = derive_crop_filename_fn(crop_name, external_id, image_url)
@@ -530,7 +494,7 @@ def _save_single_crop(
         return 1, 0
     except Exception as exc:
         logger.exception("Error saving crop '%s' for MediaItem pk=%d", crop_name, item_pk)
-        _append_limited_error(error_messages, f"Save failed for crop '{crop_name}' on {external_id}: {exc}")
+        append_limited_error(error_messages, f"Save failed for crop '{crop_name}' on {external_id}: {exc}")
         return 0, 1
 
 
@@ -600,12 +564,12 @@ def _fetch_crop_item_data(
         item_data, _ = fetch_with_retry_fn(session, item_url)
     except Exception as exc:
         logger.exception("Failed to fetch media item %s", item_url)
-        _append_limited_error(error_messages, f"Fetch failed for {external_id}: {exc}")
+        append_limited_error(error_messages, f"Fetch failed for {external_id}: {exc}")
         return None, 1
     if item_data is None:
         return None, 0
     if not isinstance(item_data, dict):
-        _append_limited_error(error_messages, f"Unexpected media item payload for {external_id}")
+        append_limited_error(error_messages, f"Unexpected media item payload for {external_id}")
         return None, 1
     return item_data, 0
 
@@ -623,13 +587,13 @@ def _ensure_crop_item_pk(
         return item_pk, 0
     if dry_run:
         logger.info("[DRY RUN] Would upsert missing MediaItem for crop sync: %s", external_id)
-        _append_limited_error(error_messages, f"MediaItem dependency unresolved for {external_id}")
+        append_limited_error(error_messages, f"MediaItem dependency unresolved for {external_id}")
         return None, 1
     try:
         return _upsert_missing_media_item(external_id, item_data, extract_external_id_fn), 0
     except Exception as exc:
         logger.exception("Failed to upsert MediaItem dependency for crop sync (%s)", external_id)
-        _append_limited_error(error_messages, f"Missing MediaItem upsert failed for {external_id}: {exc}")
+        append_limited_error(error_messages, f"Missing MediaItem upsert failed for {external_id}: {exc}")
         return None, 1
 
 
@@ -735,7 +699,7 @@ def sync_media_item_crops_impl(
 
     if not foto_items:
         logger.info("No foto MediaItems found - skipping crop sync.")
-        return _finalize_empty_import(import_log, timezone_module)
+        return finalize_empty_import(import_log, timezone_module)
 
     wanted_crops: set[str] = media_models.MediaItemCrop.SYNCED_CROP_NAMES
     total = len(foto_items)
@@ -764,13 +728,15 @@ def sync_media_item_crops_impl(
         if on_progress:
             on_progress(idx, total)
 
-    _finish_crop_import_log(
-        import_log,
+    finalize_import_log(
+        import_log=import_log,
         total=total,
-        saved=saved,
+        imported=saved,
         errors=errors,
         error_messages=error_messages,
         timezone_module=timezone_module,
+        partial_error_label="crops failed",
+        failed_error_label="crops failed",
     )
     logger.info("Crop sync complete: saved=%d, errors=%d%s", saved, errors, " [DRY RUN]" if dry_run else "")
     return saved

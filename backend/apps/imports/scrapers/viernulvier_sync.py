@@ -11,7 +11,8 @@ from django.db import DatabaseError, IntegrityError
 
 from apps.import_log.models import ImportLog
 
-from .viernulvier_constants import DEFAULT_ENDPOINT, MAX_ERROR_MESSAGES
+from .viernulvier_constants import DEFAULT_ENDPOINT
+from .viernulvier_import_log import append_limited_error, finalize_import_log
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
@@ -30,11 +31,6 @@ def _build_import_source(endpoint: str, params: dict[str, str] | None) -> str:
     params_str = ",".join(f"{k}={v}" for k, v in sorted(params.items()))
     suffix = f"?{params_str}"
     return source[: 200 - len(suffix)] + suffix
-
-
-def _record_error(error_messages: list[str], message: str) -> None:
-    if len(error_messages) < MAX_ERROR_MESSAGES:
-        error_messages.append(message)
 
 
 def _validate_item(
@@ -111,33 +107,6 @@ def _sync_single_item(
         return False, msg
 
 
-def _finish_import_log(
-    import_log: ImportLog,
-    *,
-    total: int,
-    saved: int,
-    errors: int,
-    error_messages: list[str],
-    timezone_module: Any,
-) -> None:
-    truncation_note = f" (showing first {MAX_ERROR_MESSAGES} of {errors})" if errors > MAX_ERROR_MESSAGES else ""
-    import_log.records_total = total
-    import_log.records_imported = saved
-    import_log.records_failed = errors
-    import_log.finished_at = timezone_module.now()
-
-    if errors == 0:
-        import_log.status = ImportLog.Status.SUCCESS
-    elif saved > 0:
-        import_log.status = ImportLog.Status.PARTIAL_SUCCESS
-        import_log.error_message = f"{errors} records failed{truncation_note}: {', '.join(error_messages)}"
-    else:
-        import_log.status = ImportLog.Status.FAILED
-        import_log.error_message = f"All {errors} records failed{truncation_note}: {', '.join(error_messages)}"
-
-    import_log.save()
-
-
 def _process_items(
     *,
     items: list[Any],
@@ -162,7 +131,7 @@ def _process_items(
         valid_item, lookup_value, validation_error = _validate_item(item, config, extract_lookup_value_fn, seen)
         if validation_error:
             errors += 1
-            _record_error(error_messages, validation_error)
+            append_limited_error(error_messages, validation_error)
             continue
         if valid_item is None or lookup_value is None:
             continue
@@ -193,7 +162,7 @@ def _process_items(
             continue
         errors += 1
         if sync_error:
-            _record_error(error_messages, sync_error)
+            append_limited_error(error_messages, sync_error)
 
     return saved, errors, error_messages, total
 
@@ -261,13 +230,15 @@ def sync_viernulvier_impl(
         sync_m2m_fn=sync_m2m_fn,
     )
 
-    _finish_import_log(
+    finalize_import_log(
         import_log,
         total=total,
-        saved=saved,
+        imported=saved,
         errors=errors,
         error_messages=error_messages,
         timezone_module=timezone_module,
+        partial_error_label="records failed",
+        failed_error_label="records failed",
     )
     logger.info("Sync complete: saved=%d, errors=%d%s", saved, errors, " [DRY RUN]" if dry_run else "")
     return saved
