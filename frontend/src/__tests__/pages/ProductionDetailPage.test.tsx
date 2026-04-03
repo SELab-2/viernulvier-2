@@ -5,9 +5,11 @@ import { getProduction } from '../../services/productions/Productions'
 import type { Event } from '../../types/Events'
 import type { Production } from '../../types/Productions'
 
+const languageState = { current: 'nl' }
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    i18n: { language: 'nl' },
+    i18n: { language: languageState.current },
     t: (_key: string, defaultValue: string) => defaultValue,
   }),
 }))
@@ -25,6 +27,11 @@ jest.mock('../../services/productions/Productions', () => ({
   getProduction: jest.fn(),
 }))
 
+jest.mock('../../components/production/RelatedProductions', () => ({
+  __esModule: true,
+  default: () => <div data-testid="related-productions-mock" />,
+}))
+
 const mockedGetProduction = getProduction as jest.MockedFunction<typeof getProduction>
 
 const renderPage = () =>
@@ -37,11 +44,12 @@ const renderPage = () =>
 describe('ProductionDetailPage', () => {
   afterEach(() => {
     jest.clearAllMocks()
+    mockedGetProduction.mockReset()
+    languageState.current = 'nl'
   })
 
   it('shows invalid id error and navigates to home for non-numeric ID', async () => {
     mockUseParams.mockReturnValue({ id: 'abc' })
-    mockedGetProduction.mockResolvedValueOnce(undefined as never)
 
     renderPage()
 
@@ -217,5 +225,51 @@ describe('ProductionDetailPage', () => {
         },
       })
     })
+  })
+
+  it('does not refetch production data when language changes', async () => {
+    mockUseParams.mockReturnValue({ id: '42' })
+
+    const productionData = {
+      id: 42,
+      title: { nl: 'Productie NL', en: 'Production EN' },
+      display_title: 'Display production',
+      artist_name: { nl: 'Kunstenaar NL' },
+      display_artist_name: 'Artist display',
+      tagline: { nl: 'Tagline NL' },
+      description: { nl: 'Omschrijving NL' },
+      teaser: { nl: 'Teaser NL' },
+      media_gallery: { id: 1, name: 'Primary media', media_items: [] },
+      events: [],
+      genres: [],
+      tags: [],
+      uit_database_theme: null,
+      uit_database_type: null,
+      performer_type: 'group',
+      attendance_mode: 'offline',
+    } as Production
+
+    mockedGetProduction.mockResolvedValue(productionData)
+
+    const { rerender } = renderPage()
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Productie NL')).toHaveLength(2)
+    })
+
+    expect(mockedGetProduction).toHaveBeenCalledTimes(1)
+
+    languageState.current = 'en'
+    rerender(
+      <ThemeProvider theme={createTheme()}>
+        <ProductionDetailPage />
+      </ThemeProvider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Production EN')).toHaveLength(2)
+    })
+
+    expect(mockedGetProduction).toHaveBeenCalledTimes(1)
   })
 })

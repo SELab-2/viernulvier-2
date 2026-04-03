@@ -40,34 +40,29 @@ export async function getProductionsForTag(tagId: number): Promise<Production[]>
  * Fetches all productions that are tagged with any of the given tag IDs, handling pagination automatically.
  *
  * @param tags the Tag objects for which to fetch productions
- * @param lang language code used to pick a display name for each tag (falls back to `display_name` or tag id)
  * @param currentProductionId optional ID of the production to exclude from results
- * @returns an array of tuples where the first item is the tag display name and the second item is the list of productions for that tag
+ * @returns an array of tuples where the first item is the original tag object and the second item is the list of productions for that tag
  */
 export async function getRelatedProductions(
   tags: Tag[],
-  lang: string,
   currentProductionId?: number,
-): Promise<Array<[string, Production[]]>> {
+): Promise<Array<[Tag, Production[]]>> {
   if (!tags || tags.length === 0) {
     return []
   }
 
   // Fetch productions for each tag in parallel.
   const perTagResults = await Promise.all(tags.map((tag) => getProductionsForTag(tag.id)))
-  const result: Array<[string, Production[]]> = []
+  const result: Array<[Tag, Production[]]> = []
 
-  // For each tag, we want to extract a human friendly display name
+  // Pair every tag with its filtered production list.
   tags.forEach((tag, idx) => {
     const list = perTagResults[idx] ?? []
 
     // exclude the current production
     const filtered = list.filter((p) => !(currentProductionId && p.id === currentProductionId))
 
-    // Resolve a human-friendly name for the tag in the requested language.
-    const display = (tag.name && tag.name[lang]) ?? tag.display_name ?? `tag:${tag.id}`
-
-    result.push([display, filtered])
+    result.push([tag, filtered])
   })
 
   return result

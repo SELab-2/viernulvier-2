@@ -38,6 +38,7 @@
     "detailPlaceholder": "Details van productie met ID {{id}} worden hier weergegeven.",
     "backToProductions": "Terug naar Producties",
     "detail": {
+      "related": "Gerelateerde producties",
       "meta": {
         "period": "Periode",
         "venues": "Locaties",

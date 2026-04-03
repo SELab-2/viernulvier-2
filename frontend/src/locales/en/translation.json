@@ -38,6 +38,7 @@
     "detailPlaceholder": "Production details for ID {{id}} will be displayed here.",
     "backToProductions": "Back to Productions",
     "detail": {
+      "related": "Related productions",
       "meta": {
         "period": "Period",
         "venues": "Venues",

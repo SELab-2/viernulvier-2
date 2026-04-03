@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
@@ -70,10 +70,16 @@ const ProductionDetailsPage = () => {
   const theme = useTheme()
   const { i18n, t } = useTranslation()
   const lang = i18n.language
+  const translatorRef = useRef(t)
 
   const [prod, setProd] = useState<Production | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Keep a mutable reference to the latest translator so the data fetch effect remains id-driven.
+  useEffect(() => {
+    translatorRef.current = t
+  }, [t])
 
   // useEffect to fetch the production given the id in the URL.
   useEffect(() => {
@@ -83,7 +89,7 @@ const ProductionDetailsPage = () => {
 
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
-      const errMsg = t('productions.detail.error.invalidId', 'Invalid production ID')
+      const errMsg = translatorRef.current('productions.detail.error.invalidId', 'Invalid production ID')
       navigate('/', {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
@@ -97,7 +103,8 @@ const ProductionDetailsPage = () => {
         const data = await getProduction(parsed, ['events'])
         setProd(data)
       } catch {
-        const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
+        // The visible error message is localized, but changing locale does not retrigger the fetch.
+        const errMsg = translatorRef.current('productions.detail.error.loadFailed', 'Could not load production')
         navigate('/', {
           state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
         })
@@ -108,7 +115,7 @@ const ProductionDetailsPage = () => {
     }
 
     fetchProduction()
-  }, [id, t, navigate])
+  }, [id, navigate])
 
   // If the page is still loading, show the spinner.
   if (loading && !prod) return <LoadingSpinner fullScreen />
