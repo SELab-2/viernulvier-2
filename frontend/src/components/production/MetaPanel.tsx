@@ -1,6 +1,6 @@
 import { useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { formatDate } from '../../utils/formatDate'
+import { formatDate } from '../../utils/dateUtils'
 import { getHallDisplayName } from '../../utils/hall'
 import { getLocalizedValue } from '../../utils/localization'
 import Tag from '../Tag'

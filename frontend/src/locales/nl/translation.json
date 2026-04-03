@@ -13,10 +13,6 @@
     "switchToLightMode": "Donkere modus",
     "switchToDarkMode": "Lichte modus"
   },
-  "listCard": {
-    "view": "Bekijk",
-    "imageAlt": "Afbeelding voor {{title}}"
-  },
   "genreChip": {
     "filterByGenre": "Filter op {{genre}}"
   },
