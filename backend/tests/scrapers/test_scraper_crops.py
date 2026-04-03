@@ -575,7 +575,7 @@ def test_sync_crops_params_skip_api_items_without_external_id(monkeypatch) -> No
 
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: FakeQuerySet())
 
-    def fake_get_field():
+    def fake_get_field(_name):
         return Mock()
 
     monkeypatch.setattr(media_models.MediaItem._meta, "get_field", fake_get_field)
