@@ -59,7 +59,7 @@ class ApiKeyAuthentication(BaseAuthentication):
     header_name = "HTTP_X_API_KEY"
     www_authenticate_realm = "X-API-Key"
 
-    def authenticate(self, request: Any) -> tuple[None, str] | None:
+    def authenticate(self, request: Any) -> tuple[ApiKeyUser, str] | None:
         """Read the ``X-API-Key`` header and validate the API key.
 
         Steps
