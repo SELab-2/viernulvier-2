@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("apps.imports.scrapers.viernulvier")
 
 
-def sync_viernulvier_impl(  # noqa: C901, PLR0912, PLR0915
+def sync_viernulvier_impl(
     model: type[models.Model],
     config: ModelSyncConfig,
     *,

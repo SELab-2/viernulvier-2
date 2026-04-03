@@ -83,7 +83,7 @@ def download_image(
     return None
 
 
-def sync_media_item_gallery_links_impl(  # noqa: C901, PLR0912, PLR0915
+def sync_media_item_gallery_links_impl(
     *,
     fetch_fn: Callable[..., list[Any]],
     extract_external_id_fn: Callable[[Any], str | None],
@@ -284,7 +284,7 @@ def sync_media_item_gallery_links_impl(  # noqa: C901, PLR0912, PLR0915
     return actual_media_items_changed
 
 
-def sync_media_item_crops_impl(  # noqa: C901, PLR0912, PLR0915
+def sync_media_item_crops_impl(
     *,
     fetch_fn: Callable[..., list[Any]],
     build_session_fn: Callable[[], requests.Session],

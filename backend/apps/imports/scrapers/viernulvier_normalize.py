@@ -77,7 +77,7 @@ def camel_to_snake(value: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "_", value).lower()
 
 
-def parse_field_value(model_field: models.Field, value: Any) -> Any:  # noqa: C901, PLR0911, PLR0912
+def parse_field_value(model_field: models.Field, value: Any) -> Any:
     """Coerce an API value to the correct Python type for the given model field."""
     if value is None:
         return None

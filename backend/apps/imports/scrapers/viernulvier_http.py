@@ -83,7 +83,7 @@ def parse_retry_after(response: requests.Response) -> int | None:
     return None
 
 
-def fetch_with_retry(  # noqa: C901, PLR0912, PLR0915
+def fetch_with_retry(
     session: requests.Session,
     url: str,
     params: dict[str, str] | None = None,
@@ -183,7 +183,7 @@ def discover_extra_pages(data: dict, *, base_domain: str = BASE_DOMAIN) -> list[
     return pages
 
 
-def fetch_viernulvier_impl(  # noqa: C901, PLR0912, PLR0915
+def fetch_viernulvier_impl(
     endpoint: str = DEFAULT_ENDPOINT,
     params: dict[str, str] | None = None,
     etag_cache: dict[str, str] | None = None,

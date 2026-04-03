@@ -103,7 +103,7 @@ def extract_lookup_value(item: Mapping[str, Any], config: ModelSyncConfig) -> st
     return str(raw).strip() if raw is not None else None
 
 
-def build_defaults(  # noqa: C901, PLR0912
+def build_defaults(
     model: type[models.Model],
     item: Mapping[str, Any],
     config: ModelSyncConfig,
@@ -169,7 +169,7 @@ def build_defaults(  # noqa: C901, PLR0912
     return defaults
 
 
-def sync_all_translations(  # noqa: C901, PLR0912
+def sync_all_translations(
     parent_obj: models.Model,
     item: Mapping[str, Any],
     translation_configs: list[TranslationConfig],
@@ -238,7 +238,7 @@ def sync_all_translations(  # noqa: C901, PLR0912
                 )
 
 
-def sync_m2m(  # noqa: C901
+def sync_m2m(
     parent_obj: models.Model,
     item: Mapping[str, Any],
     m2m_config: M2MConfig,
