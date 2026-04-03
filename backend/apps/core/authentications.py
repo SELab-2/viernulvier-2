@@ -75,7 +75,7 @@ class ApiKeyAuthentication(BaseAuthentication):
 
         Returns:
             ``(ApiKeyUser(), "internal")`` for a valid internal key.
-            ``(None, "public")`` for a valid public key.
+            ``(ApiKeyUser(), "public")`` for a valid public key.
             ``None`` if no ``X-API-Key`` header is present.
 
         Raises:
