@@ -74,7 +74,7 @@ class ApiKeyAuthentication(BaseAuthentication):
         5. Raise ``AuthenticationFailed`` if neither key matches.
 
         Returns:
-            ``(None, "internal")`` for a valid internal key.
+            ``(ApiKeyUser(), "internal")`` for a valid internal key.
             ``(None, "public")`` for a valid public key.
             ``None`` if no ``X-API-Key`` header is present.
 
