@@ -77,11 +77,65 @@ def camel_to_snake(value: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "_", value).lower()
 
 
+def _parse_decimal(model_field: models.Field, value: Any) -> Decimal | None:
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        logger.warning("Cannot convert '%s' to Decimal for field '%s'", value, model_field.name)
+        return None
+
+
+def _parse_int(model_field: models.Field, value: Any) -> int | None:
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        logger.warning("Cannot convert '%s' to int for field '%s'", value, model_field.name)
+        return None
+
+
+def _parse_float(model_field: models.Field, value: Any) -> float | None:
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        logger.warning("Cannot convert '%s' to float for field '%s'", value, model_field.name)
+        return None
+
+
+def _parse_datetime_value(model_field: models.Field, value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    candidate = value.removeprefix("-")
+    if candidate[:4] == "0000":
+        candidate = "1970" + candidate[4:]
+    parsed = parse_datetime(candidate)
+    if parsed is None:
+        logger.debug("Cannot parse datetime '%s' for field '%s'", value, model_field.name)
+    return parsed
+
+
+def _parse_non_text_field(model_field: models.Field, value: Any) -> Any:
+    parsed_value: Any = value
+    if isinstance(model_field, models.URLField):
+        parsed_value = normalize_url(value)
+    elif isinstance(model_field, models.BooleanField):
+        parsed_value = nee_ja_to_bool(value)
+    elif isinstance(model_field, models.DecimalField):
+        parsed_value = _parse_decimal(model_field, value)
+    elif isinstance(model_field, models.IntegerField):
+        parsed_value = _parse_int(model_field, value)
+    elif isinstance(model_field, models.FloatField):
+        parsed_value = _parse_float(model_field, value)
+    elif isinstance(model_field, models.DateTimeField):
+        parsed_value = _parse_datetime_value(model_field, value)
+    elif isinstance(model_field, models.DateField) and isinstance(value, str):
+        parsed_value = parse_date(value)
+    return parsed_value
+
+
 def parse_field_value(model_field: models.Field, value: Any) -> Any:
     """Coerce an API value to the correct Python type for the given model field."""
     if value is None:
         return None
-
     if isinstance(model_field, (models.TextField, models.CharField)):
         cleaned = clean_string(value)
         max_len = getattr(model_field, "max_length", None)
@@ -89,45 +143,5 @@ def parse_field_value(model_field: models.Field, value: Any) -> Any:
             logger.debug("Field '%s' truncated: %d -> %d chars", model_field.name, len(cleaned), max_len)
             cleaned = cleaned[:max_len]
         return cleaned
+    return _parse_non_text_field(model_field, value)
 
-    if isinstance(model_field, models.URLField):
-        return normalize_url(value)
-
-    if isinstance(model_field, models.BooleanField):
-        return nee_ja_to_bool(value)
-
-    if isinstance(model_field, models.DecimalField):
-        try:
-            return Decimal(str(value))
-        except (InvalidOperation, ValueError, TypeError):
-            logger.warning("Cannot convert '%s' to Decimal for field '%s'", value, model_field.name)
-            return None
-
-    if isinstance(model_field, models.IntegerField):
-        try:
-            return int(value)
-        except (ValueError, TypeError):
-            logger.warning("Cannot convert '%s' to int for field '%s'", value, model_field.name)
-            return None
-
-    if isinstance(model_field, models.FloatField):
-        try:
-            return float(value)
-        except (ValueError, TypeError):
-            logger.warning("Cannot convert '%s' to float for field '%s'", value, model_field.name)
-            return None
-
-    if isinstance(model_field, models.DateTimeField) and isinstance(value, str):
-        v = value
-        v = v.removeprefix("-")
-        if v[:4] == "0000":
-            v = "1970" + v[4:]
-        parsed = parse_datetime(v)
-        if parsed is None:
-            logger.debug("Cannot parse datetime '%s' for field '%s'", value, model_field.name)
-        return parsed
-
-    if isinstance(model_field, models.DateField) and isinstance(value, str):
-        return parse_date(value)
-
-    return value

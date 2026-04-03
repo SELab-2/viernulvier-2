@@ -83,6 +83,83 @@ def parse_retry_after(response: requests.Response) -> int | None:
     return None
 
 
+def _request_with_retriable_errors(
+    session: requests.Session,
+    url: str,
+    params: dict[str, str] | None,
+    headers: dict[str, str],
+    timeout: int,
+    attempt: int,
+    max_retries: int,
+    sleep_fn: Callable[[float], None],
+    backoff_fn: Callable[[int], float],
+) -> requests.Response | None:
+    try:
+        return session.get(url, params=params, headers=headers, timeout=timeout)
+    except requests.ConnectionError as exc:
+        if attempt == max_retries:
+            raise ScraperError(f"Connection failed after {max_retries} attempts: {url}") from exc
+        wait = backoff_fn(attempt)
+        logger.warning("ConnectionError - retry %d in %.1fs: %s", attempt + 1, wait, url)
+        sleep_fn(wait)
+        return None
+    except requests.Timeout as exc:
+        if attempt == max_retries:
+            raise ScraperError(f"Request timed out after {max_retries} attempts: {url}") from exc
+        wait = backoff_fn(attempt)
+        logger.warning("Timeout - retry %d in %.1fs: %s", attempt + 1, wait, url)
+        sleep_fn(wait)
+        return None
+    except requests.RequestException as exc:
+        raise ScraperError(f"Request failed: {url}") from exc
+
+
+def _handle_retriable_status(
+    response: requests.Response,
+    *,
+    url: str,
+    attempt: int,
+    max_retries: int,
+    retry_status_codes: set[int],
+    sleep_fn: Callable[[float], None],
+    backoff_fn: Callable[[int], float],
+    parse_retry_after_fn: Callable[[requests.Response], int | None],
+) -> bool:
+    if response.status_code == 429:
+        retry_after = parse_retry_after_fn(response)
+        if attempt == max_retries:
+            raise RateLimitError(retry_after)
+        wait = float(retry_after) if retry_after else backoff_fn(attempt)
+        logger.warning("HTTP 429 - waiting %.1fs before retry %d: %s", wait, attempt + 1, url)
+        sleep_fn(wait)
+        return True
+
+    if response.status_code in retry_status_codes:
+        if attempt == max_retries:
+            raise ScraperError(f"HTTP {response.status_code} after {max_retries} attempts: {url}")
+        wait = backoff_fn(attempt)
+        logger.warning("HTTP %d - retry %d in %.1fs: %s", response.status_code, attempt + 1, wait, url)
+        sleep_fn(wait)
+        return True
+
+    return False
+
+
+def _decode_payload(response: requests.Response, url: str) -> Any:
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise ScraperError(f"Invalid JSON from API: {url}") from exc
+
+    if data is None:
+        raise ScraperError(f"API returned null payload: {url}")
+    if isinstance(data, dict) and data.get("@context") == ERROR_CONTEXT_PATH:
+        status = data.get("status", "unknown")
+        detail = data.get("detail", "no detail provided")
+        raise ScraperError(f"API error response: status={status}, detail={detail}")
+    return data
+
+
 def fetch_with_retry(
     session: requests.Session,
     url: str,
@@ -102,62 +179,40 @@ def fetch_with_retry(
         headers["If-None-Match"] = etag
 
     for attempt in range(max_retries + 1):
-        try:
-            response = session.get(url, params=params, headers=headers, timeout=timeout)
-        except requests.ConnectionError as exc:
-            if attempt == max_retries:
-                raise ScraperError(f"Connection failed after {max_retries} attempts: {url}") from exc
-            wait = backoff_fn(attempt)
-            logger.warning("ConnectionError - retry %d in %.1fs: %s", attempt + 1, wait, url)
-            sleep_fn(wait)
+        response = _request_with_retriable_errors(
+            session,
+            url,
+            params,
+            headers,
+            timeout,
+            attempt,
+            max_retries,
+            sleep_fn,
+            backoff_fn,
+        )
+        if response is None:
             continue
-        except requests.Timeout as exc:
-            if attempt == max_retries:
-                raise ScraperError(f"Request timed out after {max_retries} attempts: {url}") from exc
-            wait = backoff_fn(attempt)
-            logger.warning("Timeout - retry %d in %.1fs: %s", attempt + 1, wait, url)
-            sleep_fn(wait)
-            continue
-        except requests.RequestException as exc:
-            raise ScraperError(f"Request failed: {url}") from exc
 
         if response.status_code == 304:
             logger.debug("304 Not Modified - page unchanged: %s", url)
             return None, etag
 
-        if response.status_code == 429:
-            retry_after = parse_retry_after_fn(response)
-            if attempt == max_retries:
-                raise RateLimitError(retry_after)
-            wait = float(retry_after) if retry_after else backoff_fn(attempt)
-            logger.warning("HTTP 429 - waiting %.1fs before retry %d: %s", wait, attempt + 1, url)
-            sleep_fn(wait)
-            continue
-
-        if response.status_code in retry_status_codes:
-            if attempt == max_retries:
-                raise ScraperError(f"HTTP {response.status_code} after {max_retries} attempts: {url}")
-            wait = backoff_fn(attempt)
-            logger.warning("HTTP %d - retry %d in %.1fs: %s", response.status_code, attempt + 1, wait, url)
-            sleep_fn(wait)
+        if _handle_retriable_status(
+            response,
+            url=url,
+            attempt=attempt,
+            max_retries=max_retries,
+            retry_status_codes=retry_status_codes,
+            sleep_fn=sleep_fn,
+            backoff_fn=backoff_fn,
+            parse_retry_after_fn=parse_retry_after_fn,
+        ):
             continue
 
         if not response.ok:
             raise ScraperError(f"API error: {response.status_code} - {url}")
 
-        try:
-            data = response.json()
-        except ValueError as exc:
-            raise ScraperError(f"Invalid JSON from API: {url}") from exc
-
-        if data is None:
-            raise ScraperError(f"API returned null payload: {url}")
-
-        if isinstance(data, dict) and data.get("@context") == ERROR_CONTEXT_PATH:
-            status = data.get("status", "unknown")
-            detail = data.get("detail", "no detail provided")
-            raise ScraperError(f"API error response: status={status}, detail={detail}")
-
+        data = _decode_payload(response, url)
         new_etag = response.headers.get("ETag")
         return data, new_etag
 
@@ -181,6 +236,81 @@ def discover_extra_pages(data: dict, *, base_domain: str = BASE_DOMAIN) -> list[
             page_url = urljoin(base_domain, page_url)
         pages.append(page_url)
     return pages
+
+
+def _normalize_absolute_url(raw_url: str | None, base_domain: str) -> str | None:
+    if not raw_url:
+        return None
+    if raw_url.startswith("http"):
+        return raw_url
+    return urljoin(base_domain, raw_url)
+
+
+def _collect_page_members(page_data: Any) -> list[Any]:
+    if isinstance(page_data, dict):
+        return page_data.get("member", [])
+    if isinstance(page_data, list):
+        return page_data
+    return []
+
+
+def _fetch_remaining_pages(
+    session: requests.Session,
+    all_items: list[Any],
+    extra_pages: list[str],
+    cache: dict[str, str],
+    fetch_with_retry_fn: Callable[..., tuple[Any | None, str | None]],
+) -> None:
+    page_results: dict[str, list[Any]] = {}
+    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_PAGES) as executor:
+        future_to_url = {
+            executor.submit(fetch_with_retry_fn, session, page_url, None, cache.get(page_url)): page_url
+            for page_url in extra_pages
+        }
+        for future in as_completed(future_to_url):
+            page_url = future_to_url[future]
+            try:
+                page_data, page_etag = future.result()
+            except ScraperError:
+                logger.exception("Page fetch failed for %s", page_url)
+                continue
+            if page_etag:
+                cache[page_url] = page_etag
+            if page_data is not None:
+                page_results[page_url] = _collect_page_members(page_data)
+
+    for page_url in extra_pages:
+        all_items.extend(page_results.get(page_url, []))
+
+
+def _fetch_next_chain(
+    session: requests.Session,
+    all_items: list[Any],
+    first_data: dict[str, Any],
+    cache: dict[str, str],
+    base_domain: str,
+    fetch_with_retry_fn: Callable[..., tuple[Any | None, str | None]],
+) -> None:
+    view = first_data.get("view") or {}
+    current_url = _normalize_absolute_url(view.get("next"), base_domain)
+    while current_url:
+        page_data, page_etag = fetch_with_retry_fn(session, current_url, etag=cache.get(current_url))
+        if page_etag:
+            cache[current_url] = page_etag
+        if page_data is None:
+            break
+        all_items.extend(_collect_page_members(page_data))
+        if not isinstance(page_data, dict):
+            break
+        next_view = page_data.get("view") or {}
+        current_url = _normalize_absolute_url(next_view.get("next"), base_domain)
+
+
+def _extract_initial_members(data: dict[str, Any]) -> list[Any]:
+    members = data.get("member", [])
+    if not members and "@context" in data:
+        return [data]
+    return list(members)
 
 
 def fetch_viernulvier_impl(
@@ -218,10 +348,7 @@ def fetch_viernulvier_impl(
     if not isinstance(data, dict):
         raise ScraperError(f"Unexpected payload type: {type(data)}")
 
-    members = data.get("member", [])
-    if not members and "@context" in data:
-        members = [data]
-    all_items: list[Any] = list(members)
+    all_items: list[Any] = _extract_initial_members(data)
 
     total_items = data.get("totalItems") or data.get("hydra:totalItems")
     extra_pages = discover_extra_pages_fn(data)
@@ -230,49 +357,9 @@ def fetch_viernulvier_impl(
         logger.info("API reports %d total items - %d additional pages to fetch", total_items, len(extra_pages))
 
     if extra_pages:
-        page_results: dict[str, list[Any]] = {}
-
-        with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_PAGES) as executor:
-            future_to_url = {
-                executor.submit(fetch_with_retry_fn, session, page_url, None, etag_cache.get(page_url)): page_url
-                for page_url in extra_pages
-            }
-            for future in as_completed(future_to_url):
-                page_url = future_to_url[future]
-                try:
-                    page_data, page_etag = future.result()
-                    if page_etag:
-                        etag_cache[page_url] = page_etag
-                    if page_data is None:
-                        continue
-                    page_results[page_url] = page_data.get("member", []) if isinstance(page_data, dict) else page_data
-                except ScraperError:
-                    logger.exception("Page fetch failed for %s", page_url)
-
-        for page_url in extra_pages:
-            all_items.extend(page_results.get(page_url, []))
+        _fetch_remaining_pages(session, all_items, extra_pages, etag_cache, fetch_with_retry_fn)
     else:
-        view = data.get("view") or {}
-        next_raw = view.get("next")
-        current_url: str | None = (
-            (next_raw if next_raw.startswith("http") else urljoin(base_domain, next_raw)) if next_raw else None
-        )
-        while current_url:
-            page_data, page_etag = fetch_with_retry_fn(session, current_url, etag=etag_cache.get(current_url))
-            if page_etag:
-                etag_cache[current_url] = page_etag
-            if page_data is None:
-                break
-            if isinstance(page_data, dict):
-                all_items.extend(page_data.get("member", []))
-                next_view = page_data.get("view") or {}
-                next_raw = next_view.get("next")
-                current_url = (
-                    (next_raw if next_raw.startswith("http") else urljoin(base_domain, next_raw)) if next_raw else None
-                )
-            else:
-                all_items.extend(page_data if isinstance(page_data, list) else [])
-                break
+        _fetch_next_chain(session, all_items, data, etag_cache, base_domain, fetch_with_retry_fn)
 
     logger.info("Fetched %d items from %s", len(all_items), endpoint)
     return all_items

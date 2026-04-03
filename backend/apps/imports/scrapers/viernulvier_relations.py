@@ -103,6 +103,60 @@ def extract_lookup_value(item: Mapping[str, Any], config: ModelSyncConfig) -> st
     return str(raw).strip() if raw is not None else None
 
 
+def _apply_default_value(
+    defaults: dict[str, Any],
+    model_field: models.Field,
+    raw_value: Any,
+    field_name: str,
+    config: ModelSyncConfig,
+    fk_cache: FKCache,
+    resolve_fk_fn: Callable[[models.Field, Any, FKCache], Any | None],
+) -> None:
+    if model_field.is_relation and model_field.many_to_one:
+        custom = config.fk_resolvers.get(field_name)
+        pk = custom(raw_value) if custom else resolve_fk_fn(model_field, raw_value, fk_cache)
+        if pk is not None:
+            defaults[f"{model_field.name}_id"] = pk
+        return
+
+    converted = parse_field_value(model_field, raw_value)
+    transform = config.value_transforms.get(field_name)
+    if transform:
+        converted = transform(converted)
+    if converted is not None:
+        defaults[model_field.name] = converted
+
+
+def _resolve_model_field(
+    model: type[models.Model],
+    api_key: str,
+    raw_value: Any,
+) -> models.Field | None:
+    if isinstance(raw_value, (list, dict)):
+        return None
+    snake_key = camel_to_snake(api_key)
+    for candidate in (api_key, snake_key):
+        try:
+            field = model._meta.get_field(candidate)
+        except FieldDoesNotExist:
+            continue
+        if isinstance(field, models.Field) and not field.primary_key:
+            return field
+    return None
+
+
+def _mapped_fields(config: ModelSyncConfig, item: Mapping[str, Any]) -> list[tuple[str, str, Any]]:
+    mapped: list[tuple[str, str, Any]] = []
+    for api_key, model_field_name in config.field_map.items():
+        if model_field_name is None:
+            continue
+        raw_value = item.get(api_key)
+        if raw_value is None:
+            continue
+        mapped.append((api_key, model_field_name, raw_value))
+    return mapped
+
+
 def build_defaults(
     model: type[models.Model],
     item: Mapping[str, Any],
@@ -114,26 +168,7 @@ def build_defaults(
     defaults: dict[str, Any] = {}
     explicitly_mapped = set(config.field_map.keys())
 
-    def _apply(model_field: models.Field, raw_value: Any, field_name: str) -> None:
-        if model_field.is_relation and model_field.many_to_one:
-            custom = config.fk_resolvers.get(field_name)
-            pk = custom(raw_value) if custom else resolve_fk_fn(model_field, raw_value, fk_cache)
-            if pk is not None:
-                defaults[f"{model_field.name}_id"] = pk
-        else:
-            converted = parse_field_value(model_field, raw_value)
-            transform = config.value_transforms.get(field_name)
-            if transform:
-                converted = transform(converted)
-            if converted is not None:
-                defaults[model_field.name] = converted
-
-    for api_key, model_field_name in config.field_map.items():
-        if model_field_name is None:
-            continue
-        raw_value = item.get(api_key)
-        if raw_value is None:
-            continue
+    for _, model_field_name, raw_value in _mapped_fields(config, item):
         try:
             model_field = model._meta.get_field(model_field_name)
         except FieldDoesNotExist:
@@ -143,30 +178,68 @@ def build_defaults(
             continue
         if isinstance(raw_value, dict) and not model_field.is_relation:
             continue
-        _apply(model_field, raw_value, model_field_name)
+        _apply_default_value(defaults, model_field, raw_value, model_field_name, config, fk_cache, resolve_fk_fn)
 
     for api_key, raw_value in item.items():
         if api_key in explicitly_mapped or api_key.startswith("@") or raw_value is None:
             continue
-        if isinstance(raw_value, (list, dict)):
-            continue
-
-        snake_key = camel_to_snake(api_key)
-        model_field = None
-        for candidate in (api_key, snake_key):
-            try:
-                f = model._meta.get_field(candidate)
-                if isinstance(f, models.Field) and not f.primary_key:
-                    model_field = f
-                    break
-            except FieldDoesNotExist:
-                pass
-
+        model_field = _resolve_model_field(model, api_key, raw_value)
         if model_field is None:
             continue
-        _apply(model_field, raw_value, model_field.name)
+        _apply_default_value(defaults, model_field, raw_value, model_field.name, config, fk_cache, resolve_fk_fn)
 
     return defaults
+
+
+def _group_translation_configs(
+    translation_configs: list[TranslationConfig],
+) -> dict[tuple[type[models.Model], str, str], list[TranslationConfig]]:
+    groups: dict[tuple[type[models.Model], str, str], list[TranslationConfig]] = defaultdict(list)
+    for cfg in translation_configs:
+        groups[(cfg.model, cfg.parent_fk, cfg.language_fk)].append(cfg)
+    return groups
+
+
+def _collect_languages(item: Mapping[str, Any], cfgs: list[TranslationConfig]) -> set[str]:
+    all_languages: set[str] = set()
+    for cfg in cfgs:
+        raw_dict = item.get(cfg.api_key)
+        if isinstance(raw_dict, dict):
+            all_languages.update(raw_dict.keys())
+    return all_languages
+
+
+def _build_translation_updates(
+    trans_model: type[models.Model],
+    item: Mapping[str, Any],
+    cfgs: list[TranslationConfig],
+    lang_code: str,
+) -> dict[str, Any]:
+    updates: dict[str, Any] = {}
+    for cfg in cfgs:
+        raw_dict = item.get(cfg.api_key)
+        if not isinstance(raw_dict, dict):
+            continue
+        raw_value = raw_dict.get(lang_code)
+        if raw_value is None:
+            continue
+
+        try:
+            model_field = trans_model._meta.get_field(cfg.flat_field)
+        except FieldDoesNotExist:
+            logger.warning("Translation field '%s' not found on %s", cfg.flat_field, trans_model.__name__)
+            continue
+
+        if raw_value == "" and not getattr(model_field, "blank", True):
+            continue
+
+        converted = parse_field_value(model_field, raw_value)
+        transform = cfg.value_transforms.get(cfg.flat_field)
+        if transform:
+            converted = transform(converted)
+        if converted is not None:
+            updates[cfg.flat_field] = converted
+    return updates
 
 
 def sync_all_translations(
@@ -178,47 +251,16 @@ def sync_all_translations(
     if not translation_configs:
         return
 
-    groups = defaultdict(list)
-    for cfg in translation_configs:
-        groups[(cfg.model, cfg.parent_fk, cfg.language_fk)].append(cfg)
+    groups = _group_translation_configs(translation_configs)
 
     for (trans_model, parent_fk, language_fk), cfgs in groups.items():
-        all_languages: set[str] = set()
-        for cfg in cfgs:
-            raw_dict = item.get(cfg.api_key)
-            if isinstance(raw_dict, dict):
-                all_languages.update(raw_dict.keys())
+        all_languages = _collect_languages(item, cfgs)
 
         for lang_code in all_languages:
             if not lang_code:
                 continue
 
-            field_updates: dict[str, Any] = {}
-
-            for cfg in cfgs:
-                raw_dict = item.get(cfg.api_key)
-                if not isinstance(raw_dict, dict):
-                    continue
-                raw_value = raw_dict.get(lang_code)
-                if raw_value is None:
-                    continue
-
-                try:
-                    model_field = trans_model._meta.get_field(cfg.flat_field)
-                except FieldDoesNotExist:
-                    logger.warning("Translation field '%s' not found on %s", cfg.flat_field, trans_model.__name__)
-                    continue
-
-                if raw_value == "" and not getattr(model_field, "blank", True):
-                    continue
-
-                converted = parse_field_value(model_field, raw_value)
-                transform = cfg.value_transforms.get(cfg.flat_field)
-                if transform:
-                    converted = transform(converted)
-                if converted is not None:
-                    field_updates[cfg.flat_field] = converted
-
+            field_updates = _build_translation_updates(trans_model, item, cfgs, lang_code)
             if not field_updates:
                 continue
 
@@ -236,6 +278,45 @@ def sync_all_translations(
                     lang_code,
                     list(field_updates.keys()),
                 )
+
+
+def _resolve_related_pk(related_model: type[models.Model], ext_id: str, m2m_config: M2MConfig, fk_cache: FKCache) -> Any | None:
+    pk = fk_cache.get(related_model, ext_id)
+    if pk is not None:
+        return pk
+    try:
+        obj = related_model.objects.get(**{m2m_config.related_lookup_field: ext_id})
+    except related_model.DoesNotExist:
+        logger.warning(
+            "%s with %s=%r not found - sync related models first.",
+            related_model.__name__,
+            m2m_config.related_lookup_field,
+            ext_id,
+        )
+        return None
+    fk_cache.set(related_model, ext_id, obj.pk)
+    return obj.pk
+
+
+def _build_through_kwargs(
+    parent_obj: models.Model,
+    related_model: type[models.Model],
+    m2m_config: M2MConfig,
+    raw_item: Any,
+    position: int,
+    related_pk: Any,
+) -> dict[str, Any]:
+    through_kwargs: dict[str, Any] = {
+        m2m_config.parent_fk: parent_obj,
+        m2m_config.related_fk: related_model(pk=related_pk),
+    }
+    for api_field, through_field in m2m_config.extra_fields.items():
+        value = raw_item.get(api_field) if isinstance(raw_item, dict) else None
+        if value is None and api_field == "position":
+            value = position
+        if value is not None:
+            through_kwargs[through_field] = value
+    return through_kwargs
 
 
 def sync_m2m(
@@ -261,32 +342,10 @@ def sync_m2m(
         if not ext_id:
             continue
 
-        pk = fk_cache.get(related_model, ext_id)
+        pk = _resolve_related_pk(related_model, ext_id, m2m_config, fk_cache)
         if pk is None:
-            try:
-                obj = related_model.objects.get(**{m2m_config.related_lookup_field: ext_id})
-                fk_cache.set(related_model, ext_id, obj.pk)
-                pk = obj.pk
-            except related_model.DoesNotExist:
-                logger.warning(
-                    "%s with %s=%r not found - sync related models first.",
-                    related_model.__name__,
-                    m2m_config.related_lookup_field,
-                    ext_id,
-                )
-                continue
-
-        through_kwargs: dict[str, Any] = {
-            m2m_config.parent_fk: parent_obj,
-            m2m_config.related_fk: related_model(pk=pk),
-        }
-        for api_field, through_field in m2m_config.extra_fields.items():
-            val = raw_item.get(api_field) if isinstance(raw_item, dict) else None
-            if val is None and api_field == "position":
-                val = position
-            if val is not None:
-                through_kwargs[through_field] = val
-
+            continue
+        through_kwargs = _build_through_kwargs(parent_obj, related_model, m2m_config, raw_item, position, pk)
         to_create.append(through_model(**through_kwargs))
 
     if not to_create:
