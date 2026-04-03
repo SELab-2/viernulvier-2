@@ -44,7 +44,7 @@ class ApiKeyUser:
 class ApiKeyAuthentication(BaseAuthentication):
     """DRF authentication class that validates ``X-API-Key`` request headers.
 
-    On success, returns ``(None, "internal")`` or ``(None, "public")``.
+    On success, returns ``(ApiKeyUser(), "internal")`` or ``(ApiKeyUser(), "public")``.
     The second element of the tuple becomes ``request.auth`` and is used
     by :class:`~apps.core.permissions.ApiKeyPermission` to determine what
     actions the caller is allowed to perform.
