@@ -45,11 +45,7 @@ const ProductionCard = ({ title, meta, description, tags }: Props) => {
           {/* Tags */}
           <Stack direction="row" spacing={1} flexWrap="wrap">
             {tags.map((tag) => (
-              <Tag
-                key={tag}
-                tagName={tag}
-                context="series"
-              />
+              <Tag key={tag} tagName={tag} context="series" />
             ))}
           </Stack>
         </Stack>

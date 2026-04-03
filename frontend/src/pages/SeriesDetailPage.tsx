@@ -119,9 +119,7 @@ const SeriesDetailPage = () => {
         setSeriesTag(tag)
         setProductions(productionsResponse.results)
       } catch {
-        setError(
-          t('series.fetchError'),
-        )
+        setError(t('series.fetchError'))
       } finally {
         setIsLoading(false)
       }
@@ -182,9 +180,7 @@ const SeriesDetailPage = () => {
       >
         <Stack spacing={3} alignItems="center">
           <CircularProgress />
-          <Typography color="text.secondary">
-            {t('series.loading')}
-          </Typography>
+          <Typography color="text.secondary">{t('series.loading')}</Typography>
         </Stack>
       </Container>
     )
@@ -225,7 +221,7 @@ const SeriesDetailPage = () => {
 
           <Typography variant="body2" color="text.secondary">
             {t('series.breadcrumb', {
-              name: seriesName
+              name: seriesName,
             })}
           </Typography>
         </Stack>
@@ -277,7 +273,7 @@ const SeriesDetailPage = () => {
                   tags={production.tags.map(
                     (tag) => tag.display_name || getLocalizedRecordValue(tag.name, i18n.language),
                   )}
-                //image={buildProductionImage(production)}
+                  //image={buildProductionImage(production)}
                 />
               </TimelineItem>
             ))}
