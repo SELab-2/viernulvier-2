@@ -498,30 +498,6 @@ def _save_single_crop(
         return 0, 1
 
 
-def _finish_crop_import_log(
-    import_log: ImportLog,
-    *,
-    total: int,
-    saved: int,
-    errors: int,
-    error_messages: list[str],
-    timezone_module: Any,
-) -> None:
-    import_log.records_total = total
-    import_log.records_imported = saved
-    import_log.records_failed = errors
-    import_log.finished_at = timezone_module.now()
-    if errors == 0:
-        import_log.status = ImportLog.Status.SUCCESS
-    elif saved > 0:
-        import_log.status = ImportLog.Status.PARTIAL_SUCCESS
-        import_log.error_message = f"{errors} crops failed: {', '.join(error_messages)}"
-    else:
-        import_log.status = ImportLog.Status.FAILED
-        import_log.error_message = f"All {errors} crops failed: {', '.join(error_messages)}"
-    import_log.save()
-
-
 def _load_crop_candidates(
     *,
     fetch_fn: Callable[..., list[Any]],
