@@ -14,7 +14,21 @@
     "switchToDarkMode": "Lichte modus"
   },
   "searchbar": {
+    "searchPlaceholder": "Zoek naar evenementen, artiesten of locaties...",
+    "searchPlaceholderMobile": "Zoek evenementen, artiesten...",
     "search": "Zoeken",
+    "resultsFound": "{{count}} resultaten gevonden",
+    "sort": {
+      "label": "Sorteer op",
+      "targetLabel": "Sorteer op",
+      "directionLabel": "Sorteerrichting",
+      "name": "Naam",
+      "date": "Datum",
+      "ascending": "Oplopend",
+      "descending": "Aflopend",
+      "switchToAscending": "Schakel naar oplopend",
+      "switchToDescending": "Schakel naar aflopend"
+    },
     "period": {
       "label": "Periode",
       "from_x": "Vanaf {{date}}",
@@ -24,6 +38,7 @@
       "all": "Alles"
     },
     "layout": {
+      "label": "Weergave",
       "list": "Lijst",
       "grid": "Raster"
     }
