@@ -18,7 +18,7 @@ import {
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Event } from '../../types/Events'
-import { formatDate, formatTime } from '../../utils/formatDate'
+import { formatDate, formatTime } from '../../utils/dateUtils'
 import { getHallDisplayName } from '../../utils/hall'
 
 interface EventsListProps {
