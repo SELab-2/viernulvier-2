@@ -1,5 +1,4 @@
-"""
-URL configuration for the viernulvier_archive API.
+"""URL configuration for the viernulvier_archive API.
 
 Structure
 ---------

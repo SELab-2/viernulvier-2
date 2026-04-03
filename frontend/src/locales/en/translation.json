@@ -55,14 +55,40 @@
     "listPlaceholder": "Events list will be displayed here.",
     "detailTitle": "Event Detail",
     "detailPlaceholder": "Event details for ID {{id}} will be displayed here.",
-    "backToEvents": "Back to Events"
+    "backToEvents": "Back to Events",
+    "priceType": "Type",
+    "price": "Price",
+    "available": "Available",
+    "availableQuantity": "{{count}} available"
   },
   "productions": {
     "title": "Productions",
     "listPlaceholder": "Productions list will be displayed here.",
     "detailTitle": "Production Detail",
     "detailPlaceholder": "Production details for ID {{id}} will be displayed here.",
-    "backToProductions": "Back to Productions"
+    "backToProductions": "Back to Productions",
+    "detail": {
+      "meta": {
+        "period": "Period",
+        "venues": "Venues",
+        "genre": "Genre",
+        "type": "Type",
+        "performerType": "Performer type",
+        "group": "Group",
+        "solo": "Solo",
+        "attendance": "Attendance",
+        "offline": "Offline",
+        "online": "Online"
+      },
+      "notFound": "Production not found.",
+      "unknownProduction": "Unknown production",
+      "noDescription": "No description available.",
+      "error": {
+        "invalidId": "Invalid production ID",
+        "loadFailed": "Could not load production"
+      },
+      "events": "Events"
+    }
   },
   "notFound": {
     "code": "404",

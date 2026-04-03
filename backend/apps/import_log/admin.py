@@ -69,7 +69,7 @@ class ImportLogAdmin(BaseAdmin):
         "error_message",
     )
 
-    def has_add_permission(self, request) -> bool:
+    def has_add_permission(self, _request: any) -> bool:
         """
         Prevent manual creation of import logs via the admin.
 
@@ -78,7 +78,7 @@ class ImportLogAdmin(BaseAdmin):
         """
         return False
 
-    def has_change_permission(self, request, obj=None) -> bool:
+    def has_change_permission(self, _request: any, _obj: ImportLog | None = None) -> bool:
         """
         Prevent editing of import logs via the admin.
 

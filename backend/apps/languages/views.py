@@ -1,5 +1,4 @@
-"""
-ViewSets for the Language app.
+"""ViewSets for the Language app.
 
 Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
@@ -18,8 +17,7 @@ _TAG = "Languages"
 @extend_schema(tags=[_TAG])
 @language_schema
 class LanguageViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Language objects.
+    """CRUD endpoints for Language objects.
 
     Languages are identified by their ISO 639-1 ``code`` (e.g. ``en``, ``nl``)
     instead of a numeric primary key, so the URL lookup field is ``code``.

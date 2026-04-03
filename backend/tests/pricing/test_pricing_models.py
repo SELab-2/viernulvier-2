@@ -11,8 +11,8 @@ Covers:
 - cascade delete behavior
 """
 
-import pytest
 from django.core.exceptions import ValidationError
+import pytest
 
 from apps.pricing.models import PriceRankTranslation, PriceTranslation
 from tests.factories.language import LanguageFactory
@@ -31,14 +31,14 @@ pytestmark = pytest.mark.django_db(transaction=True)
 # ---------------------------------------------------------------------------
 
 
-def test_price_str_contains_type_and_id():
+def test_price_str_contains_type_and_id() -> None:
     p = PriceFactory(type="standard")
     s = str(p)
     assert "standard" in s
     assert f"id={p.id}" in s
 
 
-def test_price_meta_ordering_by_sort_order():
+def test_price_meta_ordering_by_sort_order() -> None:
     p2 = PriceFactory(sort_order=2)
     p1 = PriceFactory(sort_order=1)
 
@@ -46,30 +46,30 @@ def test_price_meta_ordering_by_sort_order():
     assert [p.id for p in prices] == [p1.id, p2.id]
 
 
-def test_price_allows_minimum_set_with_maximum_null():
+def test_price_allows_minimum_set_with_maximum_null() -> None:
     """price_min_max_both_null_or_both_set constraint was removed; minimum set with
     maximum null is now permitted."""
     p = PriceFactory(minimum=0, maximum=None)
     assert p.id is not None
 
 
-def test_price_allows_both_null():
+def test_price_allows_both_null() -> None:
     p = PriceFactory(minimum=None, maximum=None)
     assert p.id is not None
 
 
-def test_price_allows_both_set():
+def test_price_allows_both_set() -> None:
     p = PriceFactory(minimum=0, maximum=10)
     assert p.id is not None
 
 
-def test_price_check_constraint_min_lte_max():
+def test_price_check_constraint_min_lte_max() -> None:
     """minimum must not exceed maximum when both are provided."""
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         PriceFactory(minimum=20, maximum=10)
 
 
-def test_price_step_min_value_validator():
+def test_price_step_min_value_validator() -> None:
     p = PriceFactory.build(step=0)
     with pytest.raises(ValidationError):
         p.full_clean()
@@ -78,12 +78,12 @@ def test_price_step_min_value_validator():
     assert p2.step == 1
 
 
-def test_price_allows_step_null_and_minmax_null():
+def test_price_allows_step_null_and_minmax_null() -> None:
     p = PriceFactory(step=None, minimum=None, maximum=None)
     assert p.id is not None
 
 
-def test_price_constraints_names_present():
+def test_price_constraints_names_present() -> None:
     """Only price_min_lte_max remains; price_min_max_both_null_or_both_set was removed."""
     names = {c.name for c in type(PriceFactory())._meta.constraints}
     assert "price_min_lte_max" in names
@@ -95,7 +95,7 @@ def test_price_constraints_names_present():
 # ---------------------------------------------------------------------------
 
 
-def test_price_translation_unique_per_price_and_language():
+def test_price_translation_unique_per_price_and_language() -> None:
     lang = LanguageFactory(code="nl")
     p = PriceFactory()
 
@@ -105,7 +105,7 @@ def test_price_translation_unique_per_price_and_language():
         PriceTranslationFactory(price=p, language=lang)
 
 
-def test_price_translation_str_contains_price_type_and_language_code():
+def test_price_translation_str_contains_price_type_and_language_code() -> None:
     lang = LanguageFactory(code="en")
     p = PriceFactory(type="student")
     pt = PriceTranslationFactory(price=p, language=lang)
@@ -114,14 +114,14 @@ def test_price_translation_str_contains_price_type_and_language_code():
     assert "[en]" in s
 
 
-def test_price_translation_default_description_is_empty_string():
+def test_price_translation_default_description_is_empty_string() -> None:
     lang = LanguageFactory(code="en")
     p = PriceFactory()
     pt = PriceTranslationFactory(price=p, language=lang, description="")
     assert pt.description == ""
 
 
-def test_price_translation_reverse_relation_from_price():
+def test_price_translation_reverse_relation_from_price() -> None:
     p = PriceFactory()
     t1 = PriceTranslationFactory(price=p)
     t2 = PriceTranslationFactory(price=p)
@@ -130,7 +130,7 @@ def test_price_translation_reverse_relation_from_price():
     assert set(p.translations.values_list("id", flat=True)) == {t1.id, t2.id}
 
 
-def test_price_translation_cascade_delete_price_deletes_translations():
+def test_price_translation_cascade_delete_price_deletes_translations() -> None:
     p = PriceFactory()
     PriceTranslationFactory.create_batch(2, price=p)
 
@@ -138,7 +138,7 @@ def test_price_translation_cascade_delete_price_deletes_translations():
     assert PriceTranslation.objects.count() == 0
 
 
-def test_price_translation_indexes_present():
+def test_price_translation_indexes_present() -> None:
     idx_names = {idx.name for idx in PriceTranslation._meta.indexes}
     assert "idx_price_lang" in idx_names
 
@@ -148,7 +148,7 @@ def test_price_translation_indexes_present():
 # ---------------------------------------------------------------------------
 
 
-def test_price_rank_meta_ordering_by_position():
+def test_price_rank_meta_ordering_by_position() -> None:
     r2 = PriceRankFactory(position=2)
     r1 = PriceRankFactory(position=1)
 
@@ -156,20 +156,20 @@ def test_price_rank_meta_ordering_by_position():
     assert [r.id for r in ranks] == [r1.id, r2.id]
 
 
-def test_price_rank_unique_position():
+def test_price_rank_unique_position() -> None:
     PriceRankFactory(position=1)
     with pytest.raises(ValidationError):
         PriceRankFactory(position=1)
 
 
-def test_price_rank_default_sold_out_buffer_is_zero():
+def test_price_rank_default_sold_out_buffer_is_zero() -> None:
     r = PriceRankFactory.build(sold_out_buffer=0)
     r.full_clean()
     r.save()
     assert r.sold_out_buffer == 0
 
 
-def test_price_rank_str():
+def test_price_rank_str() -> None:
     pr = PriceRankFactory(position=3)
     assert str(pr) == "Rank 3"
 
@@ -179,7 +179,7 @@ def test_price_rank_str():
 # ---------------------------------------------------------------------------
 
 
-def test_price_rank_translation_unique_per_rank_and_language():
+def test_price_rank_translation_unique_per_rank_and_language() -> None:
     lang = LanguageFactory(code="fr")
     pr = PriceRankFactory(position=10)
 
@@ -189,7 +189,7 @@ def test_price_rank_translation_unique_per_rank_and_language():
         PriceRankTranslationFactory(price_rank=pr, language=lang)
 
 
-def test_price_rank_translation_str_contains_rank_and_language():
+def test_price_rank_translation_str_contains_rank_and_language() -> None:
     lang = LanguageFactory(code="de")
     pr = PriceRankFactory(position=2)
     prt = PriceRankTranslationFactory(price_rank=pr, language=lang)
@@ -198,7 +198,7 @@ def test_price_rank_translation_str_contains_rank_and_language():
     assert "[de]" in s
 
 
-def test_price_rank_translation_reverse_relation_from_rank():
+def test_price_rank_translation_reverse_relation_from_rank() -> None:
     pr = PriceRankFactory()
     t1 = PriceRankTranslationFactory(price_rank=pr)
     t2 = PriceRankTranslationFactory(price_rank=pr)
@@ -207,6 +207,6 @@ def test_price_rank_translation_reverse_relation_from_rank():
     assert set(pr.translations.values_list("id", flat=True)) == {t1.id, t2.id}
 
 
-def test_price_rank_translation_indexes_present():
+def test_price_rank_translation_indexes_present() -> None:
     idx_names = {idx.name for idx in PriceRankTranslation._meta.indexes}
     assert "idx_price_rank_lang" in idx_names

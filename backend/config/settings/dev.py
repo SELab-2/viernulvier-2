@@ -1,5 +1,4 @@
-"""
-Development settings for the viernulvier_archive project.
+"""Development settings for the viernulvier_archive project.
 
 Extends base.py with:
 - DEBUG mode and relaxed security
@@ -17,7 +16,7 @@ import os
 
 from corsheaders.defaults import default_headers
 
-from .base import *  # noqa: F401, F403
+from .base import *  # noqa: F403
 from .base import INSTALLED_APPS, MIDDLEWARE, REST_FRAMEWORK
 
 # ---------------------------------------------------------------------------
