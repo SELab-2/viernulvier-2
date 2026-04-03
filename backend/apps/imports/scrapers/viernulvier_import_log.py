@@ -55,4 +55,3 @@ def finalize_import_log(
         import_log.error_message = f"All {errors} {failed_error_label}{truncation_note}: {', '.join(error_messages)}"
 
     import_log.save()
-
