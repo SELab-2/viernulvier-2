@@ -280,7 +280,9 @@ def sync_all_translations(
                 )
 
 
-def _resolve_related_pk(related_model: type[models.Model], ext_id: str, m2m_config: M2MConfig, fk_cache: FKCache) -> Any | None:
+def _resolve_related_pk(
+    related_model: type[models.Model], ext_id: str, m2m_config: M2MConfig, fk_cache: FKCache
+) -> Any | None:
     pk = fk_cache.get(related_model, ext_id)
     if pk is not None:
         return pk

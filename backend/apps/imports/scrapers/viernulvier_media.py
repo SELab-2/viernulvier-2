@@ -388,7 +388,9 @@ def sync_media_item_gallery_links_impl(
     return actual_media_items_changed
 
 
-def _apply_local_crop_filters(base_query: Any, params: dict[str, str], parse_datetime_fn: Callable[[str], Any | None]) -> tuple[Any, dict[str, str]]:
+def _apply_local_crop_filters(
+    base_query: Any, params: dict[str, str], parse_datetime_fn: Callable[[str], Any | None]
+) -> tuple[Any, dict[str, str]]:
     query = base_query
     api_filter_params: dict[str, str] = {}
     for param_key, param_value in params.items():
@@ -457,7 +459,9 @@ def _upsert_missing_media_item(
     gallery_ext_id = extract_external_id_fn(item_data.get("gallery"))
     gallery_pk = None
     if gallery_ext_id:
-        gallery_pk = MediaGallery.objects.filter(external_id=str(gallery_ext_id).strip()).values_list("pk", flat=True).first()
+        gallery_pk = (
+            MediaGallery.objects.filter(external_id=str(gallery_ext_id).strip()).values_list("pk", flat=True).first()
+        )
 
     obj, _ = MediaItem.objects.update_or_create(
         external_id=external_id,
