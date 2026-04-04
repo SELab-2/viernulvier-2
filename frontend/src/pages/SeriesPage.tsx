@@ -17,8 +17,8 @@ const SeriesPage = () => {
           </Typography>
           <Typography variant="body2" sx={{ mt: 2 }}>
             Example:{' '}
-            <MuiLink component={Link} to="/series/123" underline="hover">
-              View Series #123
+            <MuiLink component={Link} to="/series/10" underline="hover">
+              View Series #10
             </MuiLink>
           </Typography>
         </Paper>

@@ -5,16 +5,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Container,
-  Divider,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -23,11 +14,13 @@ import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
 import ProductionCard from '../components/series_details/ProductionCard'
 import TimelineItem from '../components/series_details/TimelineItem'
+import SeriesDetailBreadcrumbs from '../components/series_details/Breadcrumbs'
 
 import { getTag } from '../services/tags/Tags'
 import { getProductions } from '../services/productions/Productions'
 import type { Tag } from '../types/Tags'
 import type { Production } from '../types/Productions'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 type SeriesStat = {
   value: string
@@ -167,23 +160,7 @@ const SeriesDetailPage = () => {
   }, [seriesTag?.type, sortedProductions, t])
 
   if (isLoading) {
-    return (
-      <Container
-        maxWidth="lg"
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          px: { xs: 2, sm: 3 },
-        }}
-      >
-        <Stack spacing={3} alignItems="center">
-          <CircularProgress />
-          <Typography color="text.secondary">{t('series.loading')}</Typography>
-        </Stack>
-      </Container>
-    )
+    return <LoadingSpinner label={t('series.loading')} fullScreen />
   }
 
   if (error || !seriesTag) {
@@ -219,11 +196,13 @@ const SeriesDetailPage = () => {
             {t('series.backToSeries')}
           </Button>
 
-          <Typography variant="body2" color="text.secondary">
-            {t('series.breadcrumb', {
-              name: seriesName,
-            })}
-          </Typography>
+          <SeriesDetailBreadcrumbs
+            items={[
+              { label: t('nav.home'), to: '/' },
+              { label: t('footer.nav.series'), to: '/series' },
+              { label: seriesName },
+            ]}
+          />
         </Stack>
 
         <SeriesHeader name={seriesName} description={seriesDescription} />

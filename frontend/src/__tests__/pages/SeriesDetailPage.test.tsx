@@ -16,13 +16,10 @@ jest.mock('../../services/productions/Productions', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, options?: { name?: string }) => {
+    t: (key: string) => {
       const translations: Record<string, string> = {
         'series.loading': 'Reeks wordt geladen...',
         'series.backToSeries': 'Terug naar reeksen',
-        'series.breadcrumb': options?.name
-          ? `Archief / Reeksen / ${options.name}`
-          : 'Archief / Reeksen',
         'series.allEditions': 'Alle edities',
         'series.allEditionsSubtitle':
           'Chronologisch overzicht van de producties binnen deze reeks.',
@@ -35,6 +32,8 @@ jest.mock('react-i18next', () => ({
         'series.stats.editions': 'Edities',
         'series.stats.period': 'Periode',
         'series.stats.type': 'Type',
+        'nav.home': 'Archief',
+        'footer.nav.series': 'Reeksen',
       }
 
       return translations[key] ?? key
@@ -64,11 +63,12 @@ describe('SeriesDetailPage', () => {
   }
 
   it('shows loading state initially', () => {
-    mockedGetTag.mockResolvedValue({})
-    mockedGetProductions.mockResolvedValue({ results: [] })
+    mockedGetTag.mockImplementation(() => new Promise(() => {}))
+    mockedGetProductions.mockImplementation(() => new Promise(() => {}))
 
     renderPage()
 
+    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
     expect(screen.getByText('Reeks wordt geladen...')).toBeInTheDocument()
   })
 
@@ -96,13 +96,30 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
-    await waitFor(() => {
-      expect(screen.getByText('VIDEODROOM')).toBeInTheDocument()
-    })
-
+    expect(await screen.findByRole('heading', { name: 'VIDEODROOM' })).toBeInTheDocument()
     expect(screen.getByText('Beschrijving van de reeks')).toBeInTheDocument()
     expect(screen.getByText('VIDEODROOM 2024')).toBeInTheDocument()
     expect(screen.getByText('Alle edities')).toBeInTheDocument()
+  })
+
+  it('renders breadcrumb links to archive and series overview', async () => {
+    mockedGetTag.mockResolvedValue({
+      id: 1,
+      name: { nl: 'VIDEODROOM' },
+      short_description: { nl: 'Beschrijving van de reeks' },
+      type: 'festival',
+    })
+
+    mockedGetProductions.mockResolvedValue({
+      results: [],
+    })
+
+    renderPage()
+
+    await screen.findByRole('heading', { name: 'VIDEODROOM' })
+
+    expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Reeksen' })).toHaveAttribute('href', '/series')
   })
 
   it('redirects to /404 when tag is not found', async () => {
@@ -111,9 +128,7 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
-    await waitFor(() => {
-      expect(screen.getByText('404 PAGE')).toBeInTheDocument()
-    })
+    expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
   })
 
   it('redirects to /404 when API throws error', async () => {
@@ -122,9 +137,7 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
-    await waitFor(() => {
-      expect(screen.getByText('404 PAGE')).toBeInTheDocument()
-    })
+    expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
   })
 
   it('shows empty state when no productions exist', async () => {
@@ -141,11 +154,9 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
-    await waitFor(() => {
-      expect(
-        screen.getByText('Er zijn nog geen producties gekoppeld aan deze reeks.'),
-      ).toBeInTheDocument()
-    })
+    expect(
+      await screen.findByText('Er zijn nog geen producties gekoppeld aan deze reeks.'),
+    ).toBeInTheDocument()
   })
 
   it('redirects to /404 when id is invalid', async () => {
