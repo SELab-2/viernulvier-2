@@ -12,7 +12,7 @@ import pytest
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
-from apps.core.authentications import ApiKeyAuthentication
+from apps.core.authentications import ApiKeyAuthentication, ApiKeyUser
 
 INTERNAL_KEY = "super-secret-internal-key-abc123"
 PUBLIC_KEY = "public-readonly-key-xyz789"
@@ -32,6 +32,14 @@ def _patch_settings(internal: str | None = None, public: str | None = None):
         INTERNAL_API_KEY=internal,
         PUBLIC_API_KEY=public,
     )
+
+
+def _assert_api_key_result(result, expected_scope: str) -> None:
+    """Assert that the result is a valid (ApiKeyUser, scope) tuple."""
+    user, scope = result
+    assert isinstance(user, ApiKeyUser)
+    assert user.is_authenticated is True
+    assert scope == expected_scope
 
 
 @pytest.fixture
@@ -54,22 +62,28 @@ class TestSuccessfulAuthentication:
     def test_valid_internal_key_returns_internal_scope(self, auth) -> None:
         with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
             result = auth.authenticate(_make_request(INTERNAL_KEY))
-        assert result == (None, "internal")
+        _assert_api_key_result(result, "internal")
 
     def test_valid_public_key_returns_public_scope(self, auth) -> None:
         with _patch_settings(internal=INTERNAL_KEY, public=PUBLIC_KEY):
             result = auth.authenticate(_make_request(PUBLIC_KEY))
-        assert result == (None, "public")
+        _assert_api_key_result(result, "public")
 
     def test_internal_key_takes_priority_when_both_match(self, auth) -> None:
         with _patch_settings(internal=INTERNAL_KEY, public=INTERNAL_KEY):
             result = auth.authenticate(_make_request(INTERNAL_KEY))
-        assert result == (None, "internal")
+        _assert_api_key_result(result, "internal")
 
     def test_bytes_header_is_accepted_when_utf8(self, auth) -> None:
         with _patch_settings(internal=INTERNAL_KEY):
             result = auth.authenticate(_make_request(INTERNAL_KEY.encode("utf-8")))
-        assert result == (None, "internal")
+        _assert_api_key_result(result, "internal")
+
+    def test_user_is_authenticated(self, auth) -> None:
+        """ApiKeyUser must satisfy DRF's is_authenticated check (fixes AnonRateThrottle)."""
+        with _patch_settings(internal=INTERNAL_KEY):
+            user, _ = auth.authenticate(_make_request(INTERNAL_KEY))
+        assert user.is_authenticated is True
 
 
 class TestInvalidAuthentication:
@@ -139,13 +153,13 @@ class TestGeneralRobustness:
         special_key = "k3y-w1th-$pec!@l_ch@r$"
         with _patch_settings(internal=special_key):
             result = auth.authenticate(_make_request(special_key))
-        assert result == (None, "internal")
+        _assert_api_key_result(result, "internal")
 
     def test_supports_unicode_keys(self, auth) -> None:
         unicode_key = "kéy-wïth-ünícödé"
         with _patch_settings(internal=unicode_key):
             result = auth.authenticate(_make_request(unicode_key))
-        assert result == (None, "internal")
+        _assert_api_key_result(result, "internal")
 
     def test_authentication_class_inherits_from_base_authentication(self) -> None:
         assert issubclass(ApiKeyAuthentication, BaseAuthentication)
@@ -155,6 +169,13 @@ class TestGeneralRobustness:
             first = auth.authenticate(_make_request(INTERNAL_KEY))
             second = auth.authenticate(_make_request(PUBLIC_KEY))
             third = auth.authenticate(_make_request())
-        assert first == (None, "internal")
-        assert second == (None, "public")
+        _assert_api_key_result(first, "internal")
+        _assert_api_key_result(second, "public")
         assert third is None
+
+    def test_each_call_returns_distinct_user_instance(self, auth) -> None:
+        """ApiKeyUser instances are not shared across requests."""
+        with _patch_settings(internal=INTERNAL_KEY):
+            user1, _ = auth.authenticate(_make_request(INTERNAL_KEY))
+            user2, _ = auth.authenticate(_make_request(INTERNAL_KEY))
+        assert user1 is not user2
