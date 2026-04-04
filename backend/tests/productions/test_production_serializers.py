@@ -16,9 +16,10 @@ Covers:
 - ProductionSerializer inherits from TranslatableSerializerMixin
 """
 
-from django.test import TestCase
 from types import SimpleNamespace
 from unittest.mock import patch
+
+from django.test import TestCase
 
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.productions.serializers import (
