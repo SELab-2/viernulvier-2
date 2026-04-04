@@ -16,10 +16,12 @@ Nested relations
 - ``TagSerializer`` - nested many-to-many, carries its own translated fields.
 """
 
+from django.db.models import Prefetch
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.genres.serializers import GenreSerializer
+from apps.media_library.models import MediaItem
 from apps.media_library.serializers import MediaGallerySerializer
 from apps.tags.serializers import TagSerializer
 
@@ -92,6 +94,14 @@ class ProductionTagSerializer(serializers.ModelSerializer):
     def get_description(self, obj: ProductionTag) -> dict:
         """Return all available translations as a language-code dictionary."""
         return {translation.language.code: translation.description for translation in obj.translations.all()}
+
+
+class RelatedTagSerializer(TagSerializer):
+    """Compact tag representation for related production groupings."""
+
+    class Meta(TagSerializer.Meta):
+        fields = ["id", "name", "display_name"]
+        read_only_fields = fields
 
 
 class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
@@ -219,6 +229,14 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         help_text="Nested MediaGallery with all media items and crops. `null` when no gallery is assigned.",
     )
 
+    related = serializers.SerializerMethodField(
+        help_text=(
+            "Related productions grouped by tag. Only present when `include=related` is passed "
+            "to the production detail endpoint."
+        ),
+        read_only=True,
+    )
+
     class Meta:
         model = Production
         fields = [
@@ -238,6 +256,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "tags",
             "genres",
             "events",
+            "related",
         ]
         read_only_fields = [
             "id",
@@ -253,6 +272,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "tags",
             "genres",
             "events",
+            "related",
         ]
         extra_kwargs = {
             "attendance_mode": {
@@ -334,6 +354,64 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
         return ProductionTagSerializer(production_tags, many=True).data
 
+    def get_related(self, obj: Production) -> list | None:
+        """Return related productions grouped by the tags on this production."""
+        if "related" not in self.context.get("include", set()):
+            return None
+
+        production_tags = getattr(obj, "prefetched_production_tags", None)
+        if production_tags is not None:
+            tags = [production_tag.tag for production_tag in production_tags]
+        else:
+            tags = list(obj.tags.all())
+
+        if not tags:
+            return []
+
+        tag_ids = [tag.id for tag in tags]
+        related_rows = (
+            ProductionTag.objects.filter(tag_id__in=tag_ids)
+            .exclude(production_id=obj.id)
+            .select_related("production", "production__media_gallery")
+            .prefetch_related(
+                "production__translations__language",
+                Prefetch(
+                    "production__media_gallery__media_items",
+                    queryset=MediaItem.objects.prefetch_related("translations__language", "crops").order_by("position"),
+                ),
+            )
+            .order_by("tag__type", "id")
+        )
+
+        grouped_productions: dict[int, list[Production]] = {tag.id: [] for tag in tags}
+        seen_production_ids: dict[int, set[int]] = {tag.id: set() for tag in tags}
+
+        for row in related_rows:
+            production = row.production
+            seen_for_tag = seen_production_ids.setdefault(row.tag_id, set())
+            if production.id in seen_for_tag:
+                continue
+
+            grouped_productions.setdefault(row.tag_id, []).append(production)
+            seen_for_tag.add(production.id)
+
+        related_serializer_context = {**self.context}
+        result = []
+
+        for tag in tags:
+            result.append(
+                {
+                    "tag": RelatedTagSerializer(tag, context=self.context).data,
+                    "productions": RelatedProductionSerializer(
+                        grouped_productions.get(tag.id, []),
+                        many=True,
+                        context=related_serializer_context,
+                    ).data,
+                },
+            )
+
+        return result
+
     def get_events(self, obj: Production) -> list:
         """Return a list of events for this production, if included in the serializer context."""
         if "events" not in self.context.get("include", set()):
@@ -353,4 +431,19 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         rep = super().to_representation(instance)
         if "events" not in self.context.get("include", set()):
             rep.pop("events", None)
+        if "related" not in self.context.get("include", set()):
+            rep.pop("related", None)
         return rep
+
+
+class RelatedProductionSerializer(ProductionSerializer):
+    """Compact representation used inside `ProductionSerializer.related`.
+
+    This reuses the same translation and media-gallery wiring as the main
+    production serializer, but only exposes the fields needed for related
+    cards.
+    """
+
+    class Meta(ProductionSerializer.Meta):
+        fields = ["id", "title", "display_title", "artist_name", "display_artist_name", "media_gallery"]
+        read_only_fields = fields

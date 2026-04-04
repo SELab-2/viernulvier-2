@@ -22,6 +22,8 @@ from apps.core.serializers import TranslatableSerializerMixin
 from apps.productions.serializers import (
     ProductionSerializer,
     ProductionTagSerializer,
+    RelatedProductionSerializer,
+    RelatedTagSerializer,
     UitDatabaseThemeSerializer,
     UitDatabaseTypeSerializer,
 )
@@ -145,6 +147,39 @@ class TestProductionSerializerFields(TestCase):
             "display_artist_name",
         }
         assert set(data.keys()) == expected
+
+
+class TestRelatedProductionSerializerFields(TestCase):
+    """Verify the compact serializer used for related productions."""
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        self.language = LanguageFactory.create(code="nl", name="Dutch")
+        ProductionTranslationFactory.create(
+            production=self.production,
+            language=self.language,
+            title="Related productie",
+            artist_name="Related maker",
+        )
+
+    def test_expected_fields_are_present(self) -> None:
+        data = RelatedProductionSerializer(self.production).data
+        assert set(data.keys()) == {"id", "title", "display_title", "artist_name", "display_artist_name", "media_gallery"}
+
+    def test_display_title_uses_base_language_fallback(self) -> None:
+        data = RelatedProductionSerializer(self.production).data
+        assert data["display_title"] == "Related productie"
+
+
+class TestRelatedTagSerializerFields(TestCase):
+    """Verify the compact tag serializer used for related productions."""
+
+    def setUp(self) -> None:
+        self.tag = TagFactory.create(type="theme")
+
+    def test_expected_fields_are_present(self) -> None:
+        data = RelatedTagSerializer(self.tag).data
+        assert set(data.keys()) == {"id", "name", "display_name"}
 
 
 # ---------------------------------------------------------------------------

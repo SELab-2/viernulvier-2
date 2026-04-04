@@ -434,6 +434,54 @@ class TestProductionViewSetResponseStructure(TestCase):
         assert "production_id" not in nested_event
         assert "production_display" not in nested_event
 
+    def test_retrieve_with_include_related_contains_related_field(self) -> None:
+        """related field is present in response when ?include=related is set."""
+        response = self.client.get(
+            f"/api/v1/productions/{self.production.id}/?include=related",
+            **pub_headers(),
+        )
+        assert response.status_code == 200
+        assert "related" in response.data
+
+    def test_retrieve_without_include_excludes_related_field(self) -> None:
+        """related field is absent from response when ?include=related is not set."""
+        response = self.client.get(f"/api/v1/productions/{self.production.id}/", **pub_headers())
+        assert response.status_code == 200
+        assert "related" not in response.data
+
+    def test_retrieve_with_include_related_groups_productions_by_tag(self) -> None:
+        """related groups productions per tag and excludes the current production."""
+        tag = TagFactory.create(type="theme")
+        other_a = ProductionFactory.create()
+        other_b = ProductionFactory.create()
+        ProductionTagFactory.create(production=self.production, tag=tag)
+        ProductionTagFactory.create(production=other_a, tag=tag)
+        ProductionTagFactory.create(production=other_b, tag=tag)
+
+        response = self.client.get(
+            f"/api/v1/productions/{self.production.id}/?include=related",
+            **pub_headers(),
+        )
+
+        assert response.status_code == 200
+        assert len(response.data["related"]) == 1
+
+        related_group = response.data["related"][0]
+        assert set(related_group["tag"].keys()) == {"id", "name", "display_name"}
+        assert related_group["tag"]["id"] == tag.id
+        related_ids = [item["id"] for item in related_group["productions"]]
+        assert self.production.id not in related_ids
+        assert other_a.id in related_ids
+        assert other_b.id in related_ids
+        assert set(related_group["productions"][0].keys()) == {
+            "id",
+            "title",
+            "display_title",
+            "artist_name",
+            "display_artist_name",
+            "media_gallery",
+        }
+
 
 # ---------------------------------------------------------------------------
 # N+1 guard - prefetch translations
