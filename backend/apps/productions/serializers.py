@@ -140,6 +140,18 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         ),
     )
 
+    first_event_start = serializers.DateTimeField(
+        read_only=True,
+        allow_null=True,
+        help_text="Start time of the earliest event linked to this production (UTC). `null` when no events exist.",
+    )
+
+    last_event_end = serializers.DateTimeField(
+        read_only=True,
+        allow_null=True,
+        help_text="End time of the latest event linked to this production (UTC). `null` when no events exist.",
+    )
+
     artist_name = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the artist or company name "
@@ -243,6 +255,8 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "id",
             "attendance_mode",
             "performer_type",
+            "first_event_start",
+            "last_event_end",
             "media_gallery",
             "uit_database_theme",
             "uit_database_type",
@@ -260,6 +274,8 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         ]
         read_only_fields = [
             "id",
+            "first_event_start",
+            "last_event_end",
             "uit_database_theme",
             "uit_database_type",
             "display_title",

@@ -19,9 +19,13 @@ Covers:
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from datetime import UTC, datetime
+
+from django.db.models import Max, Min
 from django.test import TestCase
 
 from apps.core.serializers import TranslatableSerializerMixin
+from apps.productions.models import Production
 from apps.productions.serializers import (
     ProductionSerializer,
     ProductionTagSerializer,
@@ -30,6 +34,7 @@ from apps.productions.serializers import (
     UitDatabaseThemeSerializer,
     UitDatabaseTypeSerializer,
 )
+from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.media_library import MediaGalleryFactory
 from tests.factories.production import (
@@ -136,6 +141,8 @@ class TestProductionSerializerFields(TestCase):
             "id",
             "attendance_mode",
             "performer_type",
+            "first_event_start",
+            "last_event_end",
             "media_gallery",
             "uit_database_theme",
             "uit_database_type",
@@ -662,3 +669,69 @@ class TestProductionSerializerTagsMultipleTags(TestCase):
 
         assert tags_data[tag_a.id]["description"]["nl"] == "Beschrijving A."
         assert tags_data[tag_b.id]["description"] == {}
+
+
+# ---------------------------------------------------------------------------
+# ProductionSerializer - first_event_start / last_event_end
+# ---------------------------------------------------------------------------
+
+
+def _dt(year, month, day, hour=0):
+    return datetime(year, month, day, hour, tzinfo=UTC)
+
+
+def _annotated(production):
+    qs = Production.objects.annotate(
+        first_event_start=Min("events__starts_at"),
+        last_event_end=Max("events__ends_at"),
+    )
+    return ProductionSerializer(qs.get(pk=production.pk)).data
+
+
+class TestProductionSerializerEventDateFieldsEmpty(TestCase):
+    """Both fields are null when the production has no linked events."""
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+
+    def test_first_event_start_is_null_without_events(self) -> None:
+        assert _annotated(self.production)["first_event_start"] is None
+
+    def test_last_event_end_is_null_without_events(self) -> None:
+        assert _annotated(self.production)["last_event_end"] is None
+
+    def test_first_event_start_key_is_present(self) -> None:
+        assert "first_event_start" in _annotated(self.production)
+
+    def test_last_event_end_key_is_present(self) -> None:
+        assert "last_event_end" in _annotated(self.production)
+
+
+class TestProductionSerializerEventDateFieldsPopulated(TestCase):
+    """Fields reflect min(starts_at) and max(ends_at) over all linked events."""
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        EventFactory.create(production=self.production, starts_at=_dt(2025, 9, 20), ends_at=_dt(2025, 9, 20, 22))
+        EventFactory.create(production=self.production, starts_at=_dt(2025, 9, 15), ends_at=_dt(2025, 9, 15, 21))
+        EventFactory.create(production=self.production, starts_at=_dt(2025, 11, 1), ends_at=_dt(2025, 11, 1, 23))
+        self.data = _annotated(self.production)
+
+    def _parse(self, value):
+        return datetime.fromisoformat(value)
+
+    def test_first_event_start_is_the_earliest_starts_at(self) -> None:
+        assert self._parse(self.data["first_event_start"]) == _dt(2025, 9, 15)
+
+    def test_last_event_end_is_the_latest_ends_at(self) -> None:
+        assert self._parse(self.data["last_event_end"]) == _dt(2025, 11, 1, 23)
+
+    def test_first_event_start_is_not_the_last_inserted(self) -> None:
+        assert self._parse(self.data["first_event_start"]) != _dt(2025, 11, 1)
+
+    def test_timestamps_are_iso8601_strings(self) -> None:
+        for field in ("first_event_start", "last_event_end"):
+            value = self.data[field]
+            assert isinstance(value, str)
+            parsed = datetime.fromisoformat(value)
+            assert parsed.tzinfo is not None
