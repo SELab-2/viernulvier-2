@@ -13,10 +13,6 @@
     "switchToLightMode": "Dark mode",
     "switchToDarkMode": "Light mode"
   },
-  "listCard": {
-    "view": "View",
-    "imageAlt": "Image for {{title}}"
-  },
   "genreChip": {
     "filterByGenre": "Filter by {{genre}}"
   },

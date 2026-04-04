@@ -113,9 +113,13 @@ viernulvier_archive/
 |       |
 │       └── scrapers/
 │           ├── __init__.py
-│           └──  viernulvier.py
-│               ├── __init__.py
-│               └── sync_viernulvier.py
+│           ├── viernulvier.py                 # Compatibility facade
+│           ├── viernulvier_constants.py       # API config, exceptions, dataclasses
+│           ├── viernulvier_http.py            # HTTP, retry, pagination
+│           ├── viernulvier_normalize.py       # Value normalization & coercion
+│           ├── viernulvier_relations.py       # FK resolution, translations, M2M
+│           ├── viernulvier_sync.py            # Core sync loop & upsert logic
+│           └── viernulvier_media.py           # Media gallery & crop sync
 │
 ├── api/                             # OpenAPI / DRF router
 │   ├── __init__.py

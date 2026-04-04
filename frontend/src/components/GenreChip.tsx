@@ -27,7 +27,10 @@ const GenreChip = ({ genre, selectedIds, onClick }: GenreChipProps) => {
 
   return (
     <Button
-      onClick={() => onClick(genre.id)}
+      onClick={(event) => {
+        event.stopPropagation()
+        onClick(genre.id)
+      }}
       aria-pressed={isActive}
       aria-label={t('genreChip.filterByGenre', { genre: name })}
       sx={(theme) => ({
