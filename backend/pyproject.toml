@@ -125,11 +125,6 @@ ignore = [
 "**/schemas.py" = [
     "D",       # drf-spectacular schema classes do not require docstrings
 ]
-"apps/imports/scrapers/viernulvier.py" = [
-    "C901",
-    "PLR0912",
-    "PLR0915",
-]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10  # functions exceeding this complexity threshold will be flagged
