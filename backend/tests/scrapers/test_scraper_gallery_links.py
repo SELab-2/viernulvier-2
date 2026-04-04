@@ -146,6 +146,21 @@ def test_sync_media_item_gallery_links_dry_run_records_link_errors(monkeypatch) 
 
 
 @pytest.mark.django_db
+def test_sync_media_item_gallery_links_skips_items_without_external_id(monkeypatch) -> None:
+    MediaGalleryFactory.create(external_id="/api/v1/media/galleries/1")
+    payload = [{"@id": "/api/v1/media/galleries/1", "items": [None]}]
+    monkeypatch.setattr("apps.imports.scrapers.viernulvier.fetch_viernulvier", lambda **_: payload)
+
+    changed = sync_media_item_gallery_links()
+
+    log = ImportLog.objects.latest("started_at")
+    assert changed == 0
+    assert MediaGalleryItem.objects.count() == 0
+    assert log.status == ImportLog.Status.SUCCESS
+    assert log.records_failed == 0
+
+
+@pytest.mark.django_db
 def test_sync_media_item_gallery_links_non_dry_failed_when_only_errors(monkeypatch) -> None:
     MediaGalleryFactory.create(external_id="/api/v1/media/galleries/1")
     payload = [{"@id": "/api/v1/media/galleries/1", "items": ["/api/v1/media/items/999"]}]
