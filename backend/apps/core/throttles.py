@@ -12,8 +12,6 @@ class PublicKeyThrottle(SimpleRateThrottle):
     User-Agent header to distinguish clients sharing the same IP.
     """
 
-    scope = "public"
-
     def get_cache_key(self, request: HttpRequest, _view: any) -> str | None:
         """Generate a cache key based on the client's IP and User-Agent."""
         if request.auth != "public":

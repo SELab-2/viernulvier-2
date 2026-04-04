@@ -9,7 +9,6 @@ from apps.core.throttles import (
     InternalKeyThrottle,
     PublicKeyHourThrottle,
     PublicKeyMinuteThrottle,
-    PublicKeyThrottle,
 )
 
 
@@ -24,7 +23,7 @@ def make_request(ip="1.2.3.4", ua="TestAgent/1.0", auth="public"):
 
 class TestPublicKeyThrottle(TestCase):
     def setUp(self) -> None:
-        self.throttle = PublicKeyThrottle()
+        self.throttle = PublicKeyMinuteThrottle()
         self.view = MagicMock()
 
     def test_returns_cache_key_for_public_auth(self) -> None:
@@ -45,7 +44,7 @@ class TestPublicKeyThrottle(TestCase):
     def test_cache_key_contains_scope(self) -> None:
         request = make_request()
         key = self.throttle.get_cache_key(request, self.view)
-        assert "public" in key
+        assert "public_min" in key
 
     def test_cache_key_contains_sha256_fingerprint(self) -> None:
         request = make_request(ip="1.2.3.4", ua="TestAgent/1.0")
@@ -131,7 +130,6 @@ PROD_REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_CLASSES": [
         "apps.core.throttles.PublicKeyMinuteThrottle",
         "apps.core.throttles.PublicKeyHourThrottle",
-        "apps.core.throttles.InternalKeyThrottle",
         # fallback for unauthenticated requests, should be blocked by permissions but just in case
         "rest_framework.throttling.AnonRateThrottle",
     ],
@@ -140,7 +138,6 @@ PROD_REST_FRAMEWORK = {
         "public_hour": "800/hour",
         # fallback for unauthenticated requests, should be blocked by permissions but just in case
         "anon": "10/minute",
-        "internal": None,
     },
 }
 
@@ -151,7 +148,6 @@ class TestProductionThrottleConfig(TestCase):
         classes = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"]
         assert "apps.core.throttles.PublicKeyMinuteThrottle" in classes
         assert "apps.core.throttles.PublicKeyHourThrottle" in classes
-        assert "apps.core.throttles.InternalKeyThrottle" in classes
 
     def test_public_minute_rate(self) -> None:
         assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["public_min"] == "40/minute"
@@ -159,5 +155,5 @@ class TestProductionThrottleConfig(TestCase):
     def test_public_hour_rate(self) -> None:
         assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["public_hour"] == "800/hour"
 
-    def test_internal_rate_is_none(self) -> None:
-        assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["internal"] is None
+    def test_anon_rate(self) -> None:
+        assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["anon"] == "10/minute"
