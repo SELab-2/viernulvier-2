@@ -16,10 +16,9 @@ Covers:
 - ProductionSerializer inherits from TranslatableSerializerMixin
 """
 
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import patch
-
-from datetime import UTC, datetime
 
 from django.db.models import Max, Min
 from django.test import TestCase
