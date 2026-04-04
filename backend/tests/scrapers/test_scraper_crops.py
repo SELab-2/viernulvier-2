@@ -565,6 +565,33 @@ def test_sync_crops_params_skip_non_image_api_items(monkeypatch) -> None:
 
 
 @pytest.mark.django_db
+def test_sync_crops_params_skip_api_items_without_external_id(monkeypatch) -> None:
+    class FakeQuerySet:
+        def filter(self, **_kwargs):
+            return self
+
+        def values(self, *_args, **_kwargs):
+            return [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
+
+    monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: FakeQuerySet())
+
+    def fake_get_field(_name):
+        return Mock()
+
+    monkeypatch.setattr(media_models.MediaItem._meta, "get_field", fake_get_field)
+    monkeypatch.setattr(viernulvier, "parse_datetime", Mock(return_value=datetime(2024, 1, 1, tzinfo=UTC)))
+    monkeypatch.setattr(
+        viernulvier,
+        "fetch_viernulvier",
+        lambda **_kw: [{"@id": "", "type": "foto"}],
+    )
+
+    result = sync_media_item_crops(params={"updated_at[after]": "2024-01-01T00:00:00+00:00"})
+
+    assert result == 0
+
+
+@pytest.mark.django_db
 def test_sync_crops_params_skip_non_dict_api_items(monkeypatch) -> None:
     class FakeQuerySet:
         def values(self, *_args, **_kwargs):

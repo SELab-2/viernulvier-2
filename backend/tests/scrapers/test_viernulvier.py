@@ -44,6 +44,7 @@ from apps.imports.scrapers.viernulvier import (
     normalize_url,
     sync_viernulvier,
 )
+from apps.imports.scrapers.viernulvier_http import _collect_page_members
 from apps.pricing.models import PriceRank
 from apps.productions.models import Production
 
@@ -298,6 +299,11 @@ def test_fetch_dict_without_context_or_member_returns_empty(monkeypatch) -> None
     assert result == []
 
 
+def test_collect_page_members_fallback_returns_empty_list() -> None:
+    """Non-dict and non-list page payloads fall back to an empty list."""
+    assert _collect_page_members(None) == []
+
+
 def test_fetch_extracts_member_collection(monkeypatch) -> None:
     """JSON-LD member collection is returned as a flat list."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
@@ -496,6 +502,14 @@ class TestHTTPRetryEdgeCases:
         r.headers = Mock()
         r.headers.get = Mock(return_value="30")
         assert _parse_retry_after(r) == 30
+
+    def test_fetch_viernulvier_impl_returns_empty_list_when_fetch_returns_none(self, monkeypatch) -> None:
+        monkeypatch.setattr(viernulvier, "_build_session", SimpleNamespace)
+        monkeypatch.setattr(viernulvier, "_fetch_with_retry", lambda *_args, **_kwargs: (None, None))
+
+        result = viernulvier.fetch_viernulvier(endpoint="/events")
+
+        assert result == []
 
     def test_parse_retry_after_non_integer_returns_none(self) -> None:
         r = Mock()
@@ -1805,6 +1819,11 @@ class TestParseFieldValue:
         result = _parse_field_value(models.DateTimeField(), "-2024-06-01T00:00:00Z")
         assert result is not None
         assert result.year == 2024
+
+    def test_datetimefield_non_string_passthrough(self) -> None:
+        value = datetime.datetime(2024, 6, 1, 12, 30, tzinfo=datetime.UTC)
+
+        assert _parse_field_value(models.DateTimeField(), value) is value
 
     def test_datetimefield_year_zero_mapped_to_1970(self) -> None:
         result = _parse_field_value(models.DateTimeField(), "0000-12-25T10:00:00Z")
