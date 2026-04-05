@@ -185,6 +185,33 @@ class TestProductionViewSetDetail(TestCase):
         response = self.client.get("/api/v1/productions/99999999/", **pub_headers())
         assert response.status_code == 404
 
+    def test_retrieve_with_include_related_no_n_plus_one(self) -> None:
+        """Related productions + hun translations mogen geen N+1 veroorzaken."""
+        nl = LanguageFactory.create(code="nl", name="Dutch")
+        tag = TagFactory.create(type="theme")
+        ProductionTagFactory.create(production=self.production, tag=tag)
+
+        for _ in range(5):
+            related = ProductionFactory.create()
+            ProductionTranslationFactory.create(
+                production=related,
+                language=nl,
+                title="Gerelateerde titel",
+                artist_name="",
+                tagline="",
+                teaser="",
+                description="",
+            )
+            ProductionTagFactory.create(production=related, tag=tag)
+
+        with self.assertNumQueries(11):
+            response = self.client.get(
+                f"/api/v1/productions/{self.production.id}/?include=related",
+                **pub_headers(),
+            )
+        assert response.status_code == 200
+        assert len(response.data["related"][0]["productions"]) == 5
+
 
 # ---------------------------------------------------------------------------
 # POST /api/v1/productions/ - create
