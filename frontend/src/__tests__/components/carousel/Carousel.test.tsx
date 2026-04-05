@@ -42,22 +42,22 @@ jest.mock('embla-carousel-react', () => ({
     jest.fn(),
     {
       selectedScrollSnap: () => selectedIndex,
-        scrollSnapList: () => Array.from({ length: totalSnaps }, (_, index) => index),
-        canScrollPrev: () => totalSnaps > 1,
-        canScrollNext: () => totalSnaps > 1,
+      scrollSnapList: () => Array.from({ length: totalSnaps }, (_, index) => index),
+      canScrollPrev: () => totalSnaps > 1,
+      canScrollNext: () => totalSnaps > 1,
       scrollPrev: () => {
-          selectedIndex = (selectedIndex - 1 + totalSnaps) % totalSnaps
-          emit('select')
+        selectedIndex = (selectedIndex - 1 + totalSnaps) % totalSnaps
+        emit('select')
       },
       scrollNext: () => {
-          selectedIndex = (selectedIndex + 1) % totalSnaps
-          emit('select')
+        selectedIndex = (selectedIndex + 1) % totalSnaps
+        emit('select')
       },
       scrollTo: (index: number) => {
-          selectedIndex = index
-          emit('select')
+        selectedIndex = index
+        emit('select')
       },
-        reInit: () => emit('reInit'),
+      reInit: () => emit('reInit'),
       on: (event: keyof typeof listeners, callback: Listener) => {
         listeners[event].add(callback)
       },
@@ -78,7 +78,12 @@ describe('Carousel', () => {
 
   it('renders generic children and exposes navigation controls', async () => {
     render(
-      <Carousel ariaLabel="Featured productions" previousLabel="Previous" nextLabel="Next" slideLabel="Slide">
+      <Carousel
+        ariaLabel="Featured productions"
+        previousLabel="Previous"
+        nextLabel="Next"
+        slideLabel="Slide"
+      >
         <Box>One</Box>
         <Box>Two</Box>
         <Box>Three</Box>

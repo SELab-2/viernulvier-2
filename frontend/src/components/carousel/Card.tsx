@@ -17,7 +17,7 @@ export interface CardProps {
  *
  * The component deliberately contains no carousel logic; it only handles image, copy, hover state,
  * and optional linking.
- * 
+ *
  * TODO: check to use Jasper's Card component when available
  */
 function Card({ title, subtitle, imageSrc, imageAlt, href, children }: CardProps) {

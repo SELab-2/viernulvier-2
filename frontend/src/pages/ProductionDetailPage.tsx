@@ -89,7 +89,10 @@ const ProductionDetailsPage = () => {
 
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
-      const errMsg = translatorRef.current('productions.detail.error.invalidId', 'Invalid production ID')
+      const errMsg = translatorRef.current(
+        'productions.detail.error.invalidId',
+        'Invalid production ID',
+      )
       navigate('/', {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
@@ -100,11 +103,14 @@ const ProductionDetailsPage = () => {
 
     const fetchProduction = async () => {
       try {
-        const data = await getProduction(parsed, ['events'])
+        const data = await getProduction(parsed, ['events', 'related'])
         setProd(data)
       } catch {
         // The visible error message is localized, but changing locale does not retrigger the fetch.
-        const errMsg = translatorRef.current('productions.detail.error.loadFailed', 'Could not load production')
+        const errMsg = translatorRef.current(
+          'productions.detail.error.loadFailed',
+          'Could not load production',
+        )
         navigate('/', {
           state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
         })
@@ -225,13 +231,11 @@ const ProductionDetailsPage = () => {
         </div>
       )}
 
-      <div style={{ padding: '0 16px 32px' }}>
-        <RelatedProductions
-          tags={production.tags}
-          lang={lang}
-          currentProductionId={production.id}
-        />
-      </div>
+      {production.related && production.related.length > 0 && (
+        <div style={{ padding: '0 16px 32px' }}>
+          <RelatedProductions related={production.related ?? []} lang={lang} />
+        </div>
+      )}
     </div>
   )
 }

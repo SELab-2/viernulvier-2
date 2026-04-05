@@ -1,16 +1,9 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import RelatedProductions from '../../../components/production/RelatedProductions'
-import type { Tag } from '../../../types/Tags'
+import type { ProductionRelated, RelatedProduction } from '../../../types/Productions'
+import React from 'react'
 
-const getRelatedProductionsMock = jest.fn()
 const languageState = { current: 'nl' }
-let resolveFetch:
-  | ((value: Array<[Tag, Array<{ id: number; title: Record<string, string>; artist_name: Record<string, string>; display_title: string | null; display_artist_name: string | null; media_gallery: { media_items: Array<{ type: string; crops: Array<{ name: string; image_url: string | null }> }> } }>]>) => void)
-  | undefined
-
-jest.mock('../../../utils/productions', () => ({
-  getRelatedProductions: (...args: unknown[]) => getRelatedProductionsMock(...args),
-}))
 
 jest.mock('../../../components/carousel/Carousel', () => ({
   __esModule: true,
@@ -42,36 +35,10 @@ jest.mock('react-i18next', () => ({
 
 describe('RelatedProductions', () => {
   beforeEach(() => {
-    getRelatedProductionsMock.mockReset()
-    resolveFetch = undefined
     languageState.current = 'nl'
   })
 
-  it('shows a skeleton while loading and does not refetch on language change', async () => {
-    getRelatedProductionsMock.mockReturnValue(
-      new Promise((resolve) => {
-        resolveFetch = resolve
-      }),
-    )
-
-    const tags: Tag[] = [
-      {
-        id: 1,
-        url: '/tags/1',
-        source: 'test',
-        source_type: 'manual',
-        type: 'genre',
-        is_external: false,
-        is_enabled: true,
-        display_name: 'Huidig label',
-        display_short_description: null,
-        display_url_title: null,
-        name: { nl: 'Nederlands label', en: 'English label' },
-        short_description: null,
-        url_title: null,
-      },
-    ]
-
+  it('renders related productions and updates labels on language change', async () => {
     const production = {
       id: 99,
       title: { nl: 'Productie NL', en: 'Production EN' },
@@ -79,6 +46,8 @@ describe('RelatedProductions', () => {
       display_title: 'Productie NL',
       display_artist_name: 'Artiest NL',
       media_gallery: {
+        id: 123,
+        name: '-',
         media_items: [
           {
             type: 'foto',
@@ -86,15 +55,20 @@ describe('RelatedProductions', () => {
           },
         ],
       },
-    }
+    } as unknown as RelatedProduction
 
-    const { rerender } = render(<RelatedProductions tags={tags} currentProductionId={10} />)
+    const related: ProductionRelated[] = [
+      {
+        tag: {
+          id: 1,
+          name: { nl: 'Nederlands label', en: 'English label' },
+          display_name: 'Huidig label',
+        },
+        productions: [production],
+      },
+    ]
 
-    expect(screen.getByTestId('related-productions-skeleton')).toBeInTheDocument()
-
-    await act(async () => {
-      resolveFetch?.([[tags[0], [production]]])
-    })
+    const { rerender } = render(<RelatedProductions related={related} />)
 
     await waitFor(() => {
       expect(screen.getByText('Gerelateerde producties')).toBeInTheDocument()
@@ -103,12 +77,11 @@ describe('RelatedProductions', () => {
     })
 
     languageState.current = 'en'
-    rerender(<RelatedProductions tags={tags} currentProductionId={10} />)
+    rerender(<RelatedProductions related={related} />)
 
     await waitFor(() => {
       expect(screen.getByText('Related productions')).toBeInTheDocument()
       expect(screen.getByText('English label')).toBeInTheDocument()
-      expect(getRelatedProductionsMock).toHaveBeenCalledTimes(1)
     })
   })
 })

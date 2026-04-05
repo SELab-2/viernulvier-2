@@ -55,7 +55,8 @@ function Carousel({
   const [canScrollNext, setCanScrollNext] = useState(false)
 
   // Embla reports snaps per page, which keeps the dots aligned with the visible slide groups.
-  const snapCount = emblaApi?.scrollSnapList().length ?? Math.max(1, Math.ceil(slides.length / slidesToScroll))
+  const snapCount =
+    emblaApi?.scrollSnapList().length ?? Math.max(1, Math.ceil(slides.length / slidesToScroll))
 
   /**
    * Syncs the arrow state and the active dot with the current Embla snap.
@@ -202,7 +203,8 @@ function Carousel({
                       backgroundColor: active ? theme.palette.text.primary : theme.palette.divider,
                       cursor: 'pointer',
                       opacity: active ? 1 : 0.55,
-                      transition: 'transform 160ms ease, opacity 160ms ease, background-color 160ms ease',
+                      transition:
+                        'transform 160ms ease, opacity 160ms ease, background-color 160ms ease',
                       '&:hover': {
                         transform: 'scale(1.12)',
                         opacity: 1,
