@@ -249,7 +249,7 @@ describe('ProductionListCard', () => {
     expect(screen.queryByText(/ - /)).not.toBeInTheDocument()
   })
 
-  it('renders genre chips and forwards clicks', () => {
+  it('renders static genre chips without interactive filter behavior', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(1, 'Dans'), minimalGenre(2, 'Muziek')],
@@ -257,17 +257,10 @@ describe('ProductionListCard', () => {
 
     renderListCard({ production, onGenreClick, selectedGenreIds: [1] })
 
-    expect(screen.getByRole('button', { name: 'Filter op Dans' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    expect(screen.getByRole('button', { name: 'Filter op Muziek' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: 'Filter op Muziek' }))
-    expect(onGenreClick).toHaveBeenCalledWith(2)
+    expect(screen.getByText('Dans')).toBeInTheDocument()
+    expect(screen.getByText('Muziek')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
+    expect(onGenreClick).not.toHaveBeenCalled()
   })
 
   it('does not render a genre row when there are no genres', () => {
@@ -292,7 +285,7 @@ describe('ProductionListCard', () => {
     })
     renderListCard({ production })
 
-    expect(screen.getByRole('button', { name: 'Filter op Zonder display' })).toBeInTheDocument()
+    expect(screen.getByText('Zonder display')).toBeInTheDocument()
   })
 
   it('links the full card to the production detail route', () => {
@@ -378,30 +371,28 @@ describe('ProductionListCard', () => {
     expect(screen.getByAltText('Fallback image')).toBeInTheDocument()
   })
 
-  it('fires onGenreClick once per chip and for each distinct genre', () => {
+  it('does not fire onGenreClick for static chips', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(1, 'A'), minimalGenre(2, 'B')],
     })
     renderListCard({ production, onGenreClick })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Filter op A' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Filter op B' }))
-    expect(onGenreClick).toHaveBeenCalledTimes(2)
-    expect(onGenreClick).toHaveBeenNthCalledWith(1, 1)
-    expect(onGenreClick).toHaveBeenNthCalledWith(2, 2)
+    expect(screen.getByText('A')).toBeInTheDocument()
+    expect(screen.getByText('B')).toBeInTheDocument()
+    expect(onGenreClick).not.toHaveBeenCalled()
   })
 
-  it('does not navigate when interacting with a genre chip (link remains separate)', async () => {
-    const user = userEvent.setup()
+  it('keeps only the card link interactive when genres are static', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(5, 'Chip')],
     })
     renderListCard({ production, onGenreClick })
 
-    await user.click(screen.getByRole('button', { name: 'Filter op Chip' }))
-    expect(onGenreClick).toHaveBeenCalledWith(5)
+    expect(screen.getByText('Chip')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
+    expect(onGenreClick).not.toHaveBeenCalled()
 
     const cardLink = screen.getByRole('link', { name: /Voorstelling/ })
     expect(cardLink).toHaveAttribute('href', '/productions/1')

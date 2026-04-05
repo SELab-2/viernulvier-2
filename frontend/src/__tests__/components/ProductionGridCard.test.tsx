@@ -311,7 +311,7 @@ describe('ProductionGridCard', () => {
     expect(screen.queryByText(/ - /)).not.toBeInTheDocument()
   })
 
-  it('renders genre chips and forwards clicks', () => {
+  it('renders static genre chips without interactive filter behavior', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(1, 'Dans'), minimalGenre(2, 'Muziek')],
@@ -319,17 +319,10 @@ describe('ProductionGridCard', () => {
 
     renderGridCard({ production, onGenreClick, selectedGenreIds: [1] })
 
-    expect(screen.getByRole('button', { name: 'Filter op Dans' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    expect(screen.getByRole('button', { name: 'Filter op Muziek' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: 'Filter op Muziek' }))
-    expect(onGenreClick).toHaveBeenCalledWith(2)
+    expect(screen.getByText('Dans')).toBeInTheDocument()
+    expect(screen.getByText('Muziek')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
+    expect(onGenreClick).not.toHaveBeenCalled()
   })
 
   it('does not render a genre row when there are no genres', () => {
@@ -354,33 +347,31 @@ describe('ProductionGridCard', () => {
     })
     renderGridCard({ production })
 
-    expect(screen.getByRole('button', { name: 'Filter op Zonder display' })).toBeInTheDocument()
+    expect(screen.getByText('Zonder display')).toBeInTheDocument()
   })
 
-  it('fires onGenreClick once per chip and for each distinct genre', () => {
+  it('does not fire onGenreClick for static chips', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(1, 'A'), minimalGenre(2, 'B')],
     })
     renderGridCard({ production, onGenreClick })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Filter op A' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Filter op B' }))
-    expect(onGenreClick).toHaveBeenCalledTimes(2)
-    expect(onGenreClick).toHaveBeenNthCalledWith(1, 1)
-    expect(onGenreClick).toHaveBeenNthCalledWith(2, 2)
+    expect(screen.getByText('A')).toBeInTheDocument()
+    expect(screen.getByText('B')).toBeInTheDocument()
+    expect(onGenreClick).not.toHaveBeenCalled()
   })
 
-  it('does not navigate when interacting with a genre chip (links remain separate)', async () => {
-    const user = userEvent.setup()
+  it('keeps only the card link interactive when genres are static', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(5, 'Chip')],
     })
     renderGridCard({ production, onGenreClick })
 
-    await user.click(screen.getByRole('button', { name: 'Filter op Chip' }))
-    expect(onGenreClick).toHaveBeenCalledWith(5)
+    expect(screen.getByText('Chip')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
+    expect(onGenreClick).not.toHaveBeenCalled()
 
     const links = screen.getAllByRole('link')
     expect(links.some((l) => l.getAttribute('href') === '/productions/1')).toBe(true)
