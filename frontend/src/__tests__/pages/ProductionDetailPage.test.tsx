@@ -180,6 +180,8 @@ describe('ProductionDetailPage', () => {
       uit_database_type: { id: 1, name: 'TypeName' },
       performer_type: 'group',
       attendance_mode: 'offline',
+      first_event_start: null,
+      last_event_end: null,
     } as Production
 
     mockedGetProduction.mockResolvedValue(productionData as Production)
