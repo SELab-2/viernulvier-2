@@ -40,6 +40,12 @@ function getLocalizedRecordValue(
 }
 
 function extractYearFromProduction(production: Production): string {
+  if (production.first_event_start) {
+    return new Date(production.first_event_start).getFullYear().toString()
+  }
+  if (production.last_event_end) {
+    return new Date(production.last_event_end).getFullYear().toString()
+  }
   const candidates = [production.display_title, ...Object.values(production.title ?? {})].filter(
     Boolean,
   ) as string[]
