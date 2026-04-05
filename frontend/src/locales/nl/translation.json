@@ -13,6 +13,40 @@
     "switchToLightMode": "Donkere modus",
     "switchToDarkMode": "Lichte modus"
   },
+  "searchbar": {
+    "searchPlaceholder": "Zoek naar evenementen, artiesten of locaties...",
+    "searchPlaceholderMobile": "Zoek evenementen, artiesten...",
+    "search": "Zoeken",
+    "resultsFound": "{{count}} resultaten gevonden",
+    "sort": {
+      "label": "Sorteer op",
+      "targetLabel": "Sorteer op",
+      "directionLabel": "Sorteerrichting",
+      "name": "Naam",
+      "date": "Datum",
+      "ascending": "Oplopend",
+      "descending": "Aflopend",
+      "switchToAscending": "Schakel naar oplopend",
+      "switchToDescending": "Schakel naar aflopend"
+    },
+    "period": {
+      "label": "Periode",
+      "from_x": "Vanaf {{date}}",
+      "to_x": "Tot en met {{date}}",
+      "from_label": "Van",
+      "to_label": "Tot",
+      "all": "Alles"
+    },
+    "layout": {
+      "label": "Weergave",
+      "list": "Lijst",
+      "grid": "Raster"
+    }
+  },
+  "listCard": {
+    "view": "Bekijk",
+    "imageAlt": "Afbeelding voor {{title}}"
+  },
   "genreChip": {
     "filterByGenre": "Filter op {{genre}}"
   },
