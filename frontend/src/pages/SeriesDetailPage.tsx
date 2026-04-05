@@ -194,18 +194,10 @@ const SeriesDetailPage = () => {
     >
       <Stack spacing={4}>
         <Stack spacing={2}>
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/series')}
-            sx={{ alignSelf: 'flex-start' }}
-          >
-            {t('series.backToSeries')}
-          </Button>
-
           <SeriesDetailBreadcrumbs
             items={[
               { label: t('nav.home'), to: '/' },
-              { label: t('footer.nav.series') },
+              { label: t('footer.nav.series'), to: '/series' },
               { label: seriesName },
             ]}
           />
