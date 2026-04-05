@@ -205,7 +205,7 @@ const SeriesDetailPage = () => {
           <SeriesDetailBreadcrumbs
             items={[
               { label: t('nav.home'), to: '/' },
-              { label: t('footer.nav.series'), to: '/series' },
+              { label: t('footer.nav.series') },
               { label: seriesName },
             ]}
           />

@@ -119,7 +119,8 @@ describe('SeriesDetailPage', () => {
     await screen.findByRole('heading', { name: 'VIDEODROOM' })
 
     expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'Reeksen' })).toHaveAttribute('href', '/series')
+    expect(screen.queryByRole('link', { name: 'Reeksen' })).not.toBeInTheDocument()
+    expect(screen.getByText('Reeksen')).toBeInTheDocument()
   })
 
   it('redirects to /404 when tag is not found', async () => {

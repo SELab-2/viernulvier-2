@@ -15,12 +15,13 @@ describe('SeriesDetailsBreadcrumbs', () => {
   it('renders clickable links for all items except the last one', () => {
     renderBreadcrumbs([
       { label: 'Archief', to: '/' },
-      { label: 'Reeksen', to: '/series' },
+      { label: 'Reeksen' },
       { label: 'VIDEODROOM' },
     ])
 
     expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'Reeksen' })).toHaveAttribute('href', '/series')
+    expect(screen.queryByRole('link', { name: 'Reeksen' })).not.toBeInTheDocument()
+    expect(screen.getByText('Reeksen')).toBeInTheDocument()
     expect(screen.getByText('VIDEODROOM')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'VIDEODROOM' })).not.toBeInTheDocument()
   })
