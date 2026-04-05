@@ -1,5 +1,4 @@
-"""
-ViewSets for the Genre app.
+"""ViewSets for the Genre app.
 
 Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
@@ -20,8 +19,7 @@ _TAG = "Genres"
 @extend_schema(tags=[_TAG])
 @genre_use_as_schema
 class GenreUseAsViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for GenreUseAs objects.
+    """CRUD endpoints for GenreUseAs objects.
 
     A GenreUseAs defines the role a genre plays in the system,
     for example as a production classification or as a tag.
@@ -59,8 +57,7 @@ class GenreUseAsViewSet(ApiModelViewSet):
 @extend_schema(tags=[_TAG])
 @genre_schema
 class GenreViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Genre objects.
+    """CRUD endpoints for Genre objects.
 
     Genres categorise productions (e.g. Theater, Festival, Book Presentation).
     Each genre links to a usage context and supports multiple translations.

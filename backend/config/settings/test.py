@@ -1,5 +1,4 @@
-"""
-Test settings for the viernulvier_archive project.
+"""Test settings for the viernulvier_archive project.
 
 Extends base.py with:
 - In-memory SQLite so tests run without a Postgres instance
@@ -15,7 +14,7 @@ Usage (via pytest.ini):
 
 import tempfile
 
-from .base import *  # noqa: F401, F403
+from .base import *  # noqa: F403
 from .base import REST_FRAMEWORK
 
 # ---------------------------------------------------------------------------

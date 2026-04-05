@@ -1,6 +1,4 @@
-"""
-Filters for the Productions app.
-"""
+"""Filters for the Productions app."""
 
 import django_filters
 
@@ -10,8 +8,7 @@ from .models import Production
 
 
 class ProductionFilter(BaseModelFilter):
-    """
-    FilterSet for Production list queries.
+    """FilterSet for Production list queries.
 
     Supported query parameters
     --------------------------
@@ -73,8 +70,21 @@ class ProductionFilter(BaseModelFilter):
         label="Translated artist name contains",
         distinct=True,
     )
+    first_event_start_after = django_filters.IsoDateTimeFilter(
+        field_name="events__starts_at",
+        lookup_expr="gte",
+        label="Has an event starting on or after (ISO 8601)",
+        distinct=True,
+    )
+    first_event_start_before = django_filters.IsoDateTimeFilter(
+        field_name="events__starts_at",
+        lookup_expr="lte",
+        label="Has an event starting on or before (ISO 8601)",
+        distinct=True,
+    )
 
-    def filter_has_media(self, queryset, name, value):
+    def filter_has_media(self, queryset: Production, _name: str, value: bool) -> Production:
+        """Filter productions by whether they have a media gallery assigned."""
         if value:
             return queryset.exclude(media_gallery__isnull=True)
         return queryset.filter(media_gallery__isnull=True)
@@ -90,4 +100,6 @@ class ProductionFilter(BaseModelFilter):
             "tag",
             "has_media",
             "external_id",
+            "first_event_start_after",
+            "first_event_start_before",
         ]

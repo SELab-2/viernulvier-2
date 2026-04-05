@@ -1,6 +1,4 @@
-"""
-Filters for the Pricing app.
-"""
+"""Filters for the Pricing app."""
 
 import django_filters
 
@@ -10,8 +8,7 @@ from .models import Price, PriceRank
 
 
 class PriceFilter(BaseModelFilter):
-    """
-    FilterSet for Price list queries.
+    """FilterSet for Price list queries.
 
     Supported query parameters
     --------------------------
@@ -48,8 +45,7 @@ class PriceFilter(BaseModelFilter):
 
 
 class PriceRankFilter(BaseModelFilter):
-    """
-    FilterSet for PriceRank list queries.
+    """FilterSet for PriceRank list queries.
 
     Supported query parameters
     --------------------------

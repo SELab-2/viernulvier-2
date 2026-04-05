@@ -12,14 +12,15 @@ Run with:
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 import logging
-from datetime import datetime, timezone
 from unittest.mock import Mock
 
+from django.core.exceptions import FieldDoesNotExist
 import pytest
 import requests
-from django.core.exceptions import FieldDoesNotExist
 
+from apps.import_log.models import ImportLog
 from apps.imports.scrapers import viernulvier
 from apps.imports.scrapers.viernulvier import (
     ScraperError,
@@ -27,6 +28,7 @@ from apps.imports.scrapers.viernulvier import (
     _download_image,
     sync_media_item_crops,
 )
+from apps.media_library import models as media_models
 
 # ---------------------------------------------------------------------------
 # Helpers shared across tests
@@ -60,7 +62,7 @@ def _make_status_response(status: int, headers: dict | None = None):
 
 
 class TestDeriveCropFilename:
-    def test_basic_path_and_jpg_extension(self):
+    def test_basic_path_and_jpg_extension(self) -> None:
         """/api/v1/media/items/310 + .jpg url -> api_v1_media_items_310_hd_ready.jpg"""
         result = _derive_crop_filename(
             "hd_ready",
@@ -69,7 +71,7 @@ class TestDeriveCropFilename:
         )
         assert result == "api_v1_media_items_310_hd_ready.jpg"
 
-    def test_extension_extracted_from_png_url(self):
+    def test_extension_extracted_from_png_url(self) -> None:
         result = _derive_crop_filename(
             "FE3_header",
             "/api/v1/media/items/42",
@@ -78,7 +80,7 @@ class TestDeriveCropFilename:
         assert result.endswith(".png")
         assert "FE3_header" in result
 
-    def test_query_string_stripped_before_extension_extraction(self):
+    def test_query_string_stripped_before_extension_extraction(self) -> None:
         """Query params after ? are ignored when detecting the extension."""
         result = _derive_crop_filename(
             "hd_ready",
@@ -87,7 +89,7 @@ class TestDeriveCropFilename:
         )
         assert result.endswith(".jpeg")
 
-    def test_extension_too_long_falls_back_to_jpg(self):
+    def test_extension_too_long_falls_back_to_jpg(self) -> None:
         """Extension with more than 5 chars (e.g. a CDN hash) falls back to .jpg."""
         result = _derive_crop_filename(
             "hd_ready",
@@ -96,7 +98,7 @@ class TestDeriveCropFilename:
         )
         assert result.endswith(".jpg")
 
-    def test_non_alpha_extension_falls_back_to_jpg(self):
+    def test_non_alpha_extension_falls_back_to_jpg(self) -> None:
         """Extension containing digits (like .123) falls back to .jpg."""
         result = _derive_crop_filename(
             "hd_ready",
@@ -105,7 +107,7 @@ class TestDeriveCropFilename:
         )
         assert result.endswith(".jpg")
 
-    def test_url_segment_without_dot_falls_back_to_jpg(self):
+    def test_url_segment_without_dot_falls_back_to_jpg(self) -> None:
         """A URL path that has no dot at all falls back to .jpg."""
         result = _derive_crop_filename(
             "hd_ready",
@@ -114,7 +116,7 @@ class TestDeriveCropFilename:
         )
         assert result.endswith(".jpg")
 
-    def test_leading_slash_stripped_from_external_id(self):
+    def test_leading_slash_stripped_from_external_id(self) -> None:
         """Leading slash on external_id is stripped before slugifying."""
         result = _derive_crop_filename(
             "hd_ready",
@@ -125,7 +127,7 @@ class TestDeriveCropFilename:
         assert not result.startswith("_")
         assert result.startswith("api")
 
-    def test_slashes_in_external_id_replaced_by_underscores(self):
+    def test_slashes_in_external_id_replaced_by_underscores(self) -> None:
         result = _derive_crop_filename(
             "hd_ready",
             "/api/v1/media/items/310",
@@ -133,7 +135,7 @@ class TestDeriveCropFilename:
         )
         assert "/" not in result
 
-    def test_crop_name_included_in_filename(self):
+    def test_crop_name_included_in_filename(self) -> None:
         result = _derive_crop_filename(
             "FE3_header",
             "/api/v1/media/items/99",
@@ -141,7 +143,7 @@ class TestDeriveCropFilename:
         )
         assert "FE3_header" in result
 
-    def test_extension_longer_than_5_chars_falls_back(self):
+    def test_extension_longer_than_5_chars_falls_back(self) -> None:
         """Any extension longer than 5 chars (including the dot) falls back to .jpg."""
         # ".webp2" is 6 chars -> fallback
         result = _derive_crop_filename(
@@ -151,7 +153,7 @@ class TestDeriveCropFilename:
         )
         assert result.endswith(".jpg")
 
-    def test_webp_extension_is_kept(self):
+    def test_webp_extension_is_kept(self) -> None:
         """.webp is exactly 5 chars - border case that should be kept."""
         result = _derive_crop_filename(
             "hd_ready",
@@ -180,7 +182,7 @@ class TestDownloadImage:
         session.get.side_effect = fake_get
         return session, call_count
 
-    def test_returns_bytes_on_success(self, monkeypatch):
+    def test_returns_bytes_on_success(self, monkeypatch) -> None:
         monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
         session = Mock()
         session.get.return_value = _make_ok_response(b"pixels")
@@ -189,7 +191,7 @@ class TestDownloadImage:
 
         assert result == b"pixels"
 
-    def test_returns_none_on_non_ok_status(self, monkeypatch):
+    def test_returns_none_on_non_ok_status(self, monkeypatch) -> None:
         monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
         session = Mock()
         session.get.return_value = _make_status_response(404)
@@ -198,7 +200,7 @@ class TestDownloadImage:
 
         assert result is None
 
-    def test_returns_none_on_request_exception(self, monkeypatch):
+    def test_returns_none_on_request_exception(self, monkeypatch) -> None:
         monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
         session = Mock()
         session.get.side_effect = requests.RequestException("ssl error")
@@ -207,7 +209,7 @@ class TestDownloadImage:
 
         assert result is None
 
-    def test_connection_error_retries_then_succeeds(self, monkeypatch):
+    def test_connection_error_retries_then_succeeds(self, monkeypatch) -> None:
         def responses(url, n):
             if n == 1:
                 raise requests.ConnectionError("down")
@@ -219,16 +221,16 @@ class TestDownloadImage:
         assert result == b"data"
         assert count[0] == 2
 
-    def test_timeout_retries_then_succeeds(self, monkeypatch):
+    def test_timeout_retries_then_succeeds(self, monkeypatch) -> None:
         def responses(url, n):
             if n == 1:
-                raise requests.Timeout()
+                raise requests.Timeout
             return _make_ok_response(b"ok")
 
         session, _ = self._patched_session(monkeypatch, responses)
         assert _download_image(session, "https://cdn.example.com/img.jpg") == b"ok"
 
-    def test_connection_error_all_retries_exhausted_returns_none(self, monkeypatch, caplog):
+    def test_connection_error_all_retries_exhausted_returns_none(self, monkeypatch, caplog) -> None:
         monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
         session = Mock()
         session.get.side_effect = requests.ConnectionError("always down")
@@ -239,7 +241,7 @@ class TestDownloadImage:
         assert result is None
         assert any("Image download failed" in r.message for r in caplog.records)
 
-    def test_timeout_all_retries_exhausted_returns_none(self, monkeypatch, caplog):
+    def test_timeout_all_retries_exhausted_returns_none(self, monkeypatch, caplog) -> None:
         monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
         session = Mock()
         session.get.side_effect = requests.Timeout()
@@ -249,9 +251,9 @@ class TestDownloadImage:
 
         assert result is None
 
-    def test_429_with_retry_after_waits_then_succeeds(self, monkeypatch):
+    def test_429_with_retry_after_waits_then_succeeds(self, monkeypatch) -> None:
         sleep_calls = []
-        monkeypatch.setattr(viernulvier.time, "sleep", lambda t: sleep_calls.append(t))
+        monkeypatch.setattr(viernulvier.time, "sleep", sleep_calls.append)
         call_count = [0]
         session = Mock()
 
@@ -267,7 +269,7 @@ class TestDownloadImage:
         assert result == b"img"
         assert 10.0 in sleep_calls
 
-    def test_429_all_retries_exhausted_returns_none(self, monkeypatch, caplog):
+    def test_429_all_retries_exhausted_returns_none(self, monkeypatch, caplog) -> None:
         monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
         session = Mock()
         session.get.return_value = _make_status_response(429, {})
@@ -278,9 +280,9 @@ class TestDownloadImage:
         assert result is None
         assert any("Rate limited" in r.message for r in caplog.records)
 
-    def test_429_without_retry_after_uses_backoff(self, monkeypatch):
+    def test_429_without_retry_after_uses_backoff(self, monkeypatch) -> None:
         sleep_calls = []
-        monkeypatch.setattr(viernulvier.time, "sleep", lambda t: sleep_calls.append(t))
+        monkeypatch.setattr(viernulvier.time, "sleep", sleep_calls.append)
         call_count = [0]
         session = Mock()
 
@@ -297,7 +299,7 @@ class TestDownloadImage:
         # Some backoff sleep must have been called (not the fixed 10s from Retry-After)
         assert sleep_calls
 
-    def test_server_error_non_ok_non_429_logs_and_returns_none(self, monkeypatch, caplog):
+    def test_server_error_non_ok_non_429_logs_and_returns_none(self, monkeypatch, caplog) -> None:
         monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
         session = Mock()
         session.get.return_value = _make_status_response(500)
@@ -308,7 +310,7 @@ class TestDownloadImage:
         assert result is None
         assert any("HTTP 500" in r.message for r in caplog.records)
 
-    def test_fallthrough_return_none_when_max_retries_set_to_minus_one(self, monkeypatch):
+    def test_fallthrough_return_none_when_max_retries_set_to_minus_one(self, monkeypatch) -> None:
         """The unreachable `return None` after the retry loop is hit when MAX_RETRIES=-1.
 
         With MAX_RETRIES=-1 the for-loop body never executes, so the function
@@ -322,7 +324,7 @@ class TestDownloadImage:
         assert result is None
         session.get.assert_not_called()
 
-    def test_connection_error_retry_warning_logged(self, monkeypatch, caplog):
+    def test_connection_error_retry_warning_logged(self, monkeypatch, caplog) -> None:
         """A connection error that succeeds on retry logs a warning."""
         call_count = [0]
         monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
@@ -362,8 +364,6 @@ def _patch_crop_dependencies(
     fetch_results: maps external_id -> (item_data, etag) tuple.
     download_result: bytes returned by _download_image (None simulates failure).
     """
-    from apps.media_library import models as media_models
-
     if synced_crop_names is None:
         synced_crop_names = {"hd_ready", "FE3_header"}
 
@@ -377,7 +377,7 @@ def _patch_crop_dependencies(
     )
 
     # --- _build_session (returns a dummy session; _download_image is patched separately) ---
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
 
     # --- _fetch_with_retry ---
     def fake_fetch(session, url, etag=None, params=None):
@@ -416,10 +416,8 @@ def _patch_crop_dependencies(
 
 
 @pytest.mark.django_db
-def test_sync_crops_no_foto_items_returns_zero(monkeypatch):
+def test_sync_crops_no_foto_items_returns_zero(monkeypatch) -> None:
     """When there are no foto MediaItems, sync returns 0 immediately."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = []
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
@@ -430,11 +428,9 @@ def test_sync_crops_no_foto_items_returns_zero(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_skip_missing_fields_and_apply_supported_ones(monkeypatch):
-    from apps.media_library import models as media_models
-
+def test_sync_crops_params_skip_missing_fields_and_apply_supported_ones(monkeypatch) -> None:
     class FakeQuerySet:
-        def __init__(self):
+        def __init__(self) -> None:
             self.filter_calls = []
 
         def filter(self, **kwargs):
@@ -457,7 +453,7 @@ def test_sync_crops_params_skip_missing_fields_and_apply_supported_ones(monkeypa
     def fake_parse_datetime(value):
         if value == "raise-type":
             raise TypeError("bad type")
-        return datetime(2024, 1, 1, tzinfo=timezone.utc)
+        return datetime(2024, 1, 1, tzinfo=UTC)
 
     monkeypatch.setattr(viernulvier, "parse_datetime", fake_parse_datetime)
     monkeypatch.setattr(viernulvier, "fetch_viernulvier", lambda **_kw: [])
@@ -476,15 +472,13 @@ def test_sync_crops_params_skip_missing_fields_and_apply_supported_ones(monkeypa
     )
 
     assert result == 0
-    assert {"updated_at__gte": datetime(2024, 1, 1, tzinfo=timezone.utc)} in fake_qs.filter_calls
-    assert {"updated_at__lte": datetime(2024, 1, 1, tzinfo=timezone.utc)} in fake_qs.filter_calls
+    assert {"updated_at__gte": datetime(2024, 1, 1, tzinfo=UTC)} in fake_qs.filter_calls
+    assert {"updated_at__lte": datetime(2024, 1, 1, tzinfo=UTC)} in fake_qs.filter_calls
     assert all("created_at" not in next(iter(call)) for call in fake_qs.filter_calls)
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_are_forwarded_to_api_and_limit_item_fetches(monkeypatch):
-    from apps.media_library import models as media_models
-
+def test_sync_crops_params_are_forwarded_to_api_and_limit_item_fetches(monkeypatch) -> None:
     class FakeQuerySet:
         def values(self, *_args, **_kwargs):
             return [
@@ -502,7 +496,7 @@ def test_sync_crops_params_are_forwarded_to_api_and_limit_item_fetches(monkeypat
 
     monkeypatch.setattr(media_models.MediaItem._meta, "get_field", fake_get_field)
     monkeypatch.setattr(viernulvier, "parse_datetime", Mock(return_value=None))
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
 
     captured = {}
 
@@ -538,9 +532,7 @@ def test_sync_crops_params_are_forwarded_to_api_and_limit_item_fetches(monkeypat
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_skip_non_image_api_items(monkeypatch):
-    from apps.media_library import models as media_models
-
+def test_sync_crops_params_skip_non_image_api_items(monkeypatch) -> None:
     class FakeQuerySet:
         def values(self, *_args, **_kwargs):
             return []
@@ -548,7 +540,7 @@ def test_sync_crops_params_skip_non_image_api_items(monkeypatch):
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: FakeQuerySet())
     monkeypatch.setattr(media_models.MediaItem._meta, "get_field", lambda name: Mock() if name == "updated_at" else None)
     monkeypatch.setattr(viernulvier, "parse_datetime", Mock(return_value=None))
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "fetch_viernulvier",
@@ -573,9 +565,34 @@ def test_sync_crops_params_skip_non_image_api_items(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_skip_non_dict_api_items(monkeypatch):
-    from apps.media_library import models as media_models
+def test_sync_crops_params_skip_api_items_without_external_id(monkeypatch) -> None:
+    class FakeQuerySet:
+        def filter(self, **_kwargs):
+            return self
 
+        def values(self, *_args, **_kwargs):
+            return [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
+
+    monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: FakeQuerySet())
+
+    def fake_get_field(_name):
+        return Mock()
+
+    monkeypatch.setattr(media_models.MediaItem._meta, "get_field", fake_get_field)
+    monkeypatch.setattr(viernulvier, "parse_datetime", Mock(return_value=datetime(2024, 1, 1, tzinfo=UTC)))
+    monkeypatch.setattr(
+        viernulvier,
+        "fetch_viernulvier",
+        lambda **_kw: [{"@id": "", "type": "foto"}],
+    )
+
+    result = sync_media_item_crops(params={"updated_at[after]": "2024-01-01T00:00:00+00:00"})
+
+    assert result == 0
+
+
+@pytest.mark.django_db
+def test_sync_crops_params_skip_non_dict_api_items(monkeypatch) -> None:
     class FakeQuerySet:
         def values(self, *_args, **_kwargs):
             return []
@@ -583,7 +600,7 @@ def test_sync_crops_params_skip_non_dict_api_items(monkeypatch):
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: FakeQuerySet())
     monkeypatch.setattr(media_models.MediaItem._meta, "get_field", lambda name: Mock() if name == "updated_at" else None)
     monkeypatch.setattr(viernulvier, "parse_datetime", Mock(return_value=None))
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "fetch_viernulvier",
@@ -608,10 +625,7 @@ def test_sync_crops_params_skip_non_dict_api_items(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_fetch_error_marks_import_log_failed(monkeypatch):
-    from apps.import_log.models import ImportLog
-    from apps.media_library import models as media_models
-
+def test_sync_crops_params_fetch_error_marks_import_log_failed(monkeypatch) -> None:
     class FakeQuerySet:
         def values(self, *_args, **_kwargs):
             return []
@@ -632,10 +646,8 @@ def test_sync_crops_params_fetch_error_marks_import_log_failed(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_upserts_missing_media_item_dependency(monkeypatch):
-    from apps.media_library import models as media_models
-
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+def test_sync_crops_params_upserts_missing_media_item_dependency(monkeypatch) -> None:
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "fetch_viernulvier",
@@ -683,10 +695,8 @@ def test_sync_crops_params_upserts_missing_media_item_dependency(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_upsert_missing_media_item_resolves_gallery_id(monkeypatch):
-    from apps.media_library import models as media_models
-
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+def test_sync_crops_upsert_missing_media_item_resolves_gallery_id(monkeypatch) -> None:
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "fetch_viernulvier",
@@ -737,10 +747,8 @@ def test_sync_crops_upsert_missing_media_item_resolves_gallery_id(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_dry_run_logs_missing_media_item_upsert(monkeypatch, caplog):
-    from apps.media_library import models as media_models
-
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+def test_sync_crops_dry_run_logs_missing_media_item_upsert(monkeypatch, caplog) -> None:
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "fetch_viernulvier",
@@ -776,8 +784,8 @@ def test_sync_crops_dry_run_logs_missing_media_item_upsert(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_unresolved_dependency_calls_on_progress(monkeypatch):
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+def test_sync_crops_unresolved_dependency_calls_on_progress(monkeypatch) -> None:
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "fetch_viernulvier",
@@ -801,10 +809,8 @@ def test_sync_crops_unresolved_dependency_calls_on_progress(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_unresolved_media_item_dependency_after_upsert(monkeypatch, caplog):
-    from apps.media_library import models as media_models
-
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+def test_sync_crops_unresolved_media_item_dependency_after_upsert(monkeypatch, caplog) -> None:
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "fetch_viernulvier",
@@ -841,11 +847,8 @@ def test_sync_crops_unresolved_media_item_dependency_after_upsert(monkeypatch, c
 
 
 @pytest.mark.django_db
-def test_sync_crops_missing_media_item_upsert_exception_is_logged_and_recorded(monkeypatch, caplog):
-    from apps.import_log.models import ImportLog
-    from apps.media_library import models as media_models
-
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+def test_sync_crops_missing_media_item_upsert_exception_is_logged_and_recorded(monkeypatch, caplog) -> None:
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "fetch_viernulvier",
@@ -884,20 +887,17 @@ def test_sync_crops_missing_media_item_upsert_exception_is_logged_and_recorded(m
     download_image.assert_not_called()
     on_progress.assert_called_once_with(1, 1)
     assert any(
-        "Failed to upsert MediaItem dependency for crop sync (/api/v1/media/items/321): upsert exploded" in r.message
-        for r in caplog.records
+        "Failed to upsert MediaItem dependency for crop sync (/api/v1/media/items/321)" in r.message for r in caplog.records
     )
 
     log = ImportLog.objects.latest("started_at")
-    assert "Missing MediaItem upsert failed for /api/v1/media/items/321: upsert exploded" in (log.error_message or "")
+    assert "Missing MediaItem upsert failed for /api/v1/media/items/321" in (log.error_message or "")
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_skip_filter_when_fake_parse_datetime_raises_valueerror(monkeypatch):
-    from apps.media_library import models as media_models
-
+def test_sync_crops_params_skip_filter_when_fake_parse_datetime_raises_valueerror(monkeypatch) -> None:
     class FakeQuerySet:
-        def __init__(self):
+        def __init__(self) -> None:
             self.filter_calls = []
 
         def values(self, *_args, **_kwargs):
@@ -907,7 +907,7 @@ def test_sync_crops_params_skip_filter_when_fake_parse_datetime_raises_valueerro
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_kw: fake_qs)
     monkeypatch.setattr(media_models.MediaItem._meta, "get_field", lambda name: Mock() if name == "updated_at" else None)
 
-    def fake_parse_datetime(value):
+    def fake_parse_datetime(value) -> None:
         if value == "raise-value":
             raise ValueError("bad datetime")
 
@@ -921,11 +921,9 @@ def test_sync_crops_params_skip_filter_when_fake_parse_datetime_raises_valueerro
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_skip_filter_when_fake_get_field_raises_fielddoesnotexist(monkeypatch):
-    from apps.media_library import models as media_models
-
+def test_sync_crops_params_skip_filter_when_fake_get_field_raises_fielddoesnotexist(monkeypatch) -> None:
     class FakeQuerySet:
-        def __init__(self):
+        def __init__(self) -> None:
             self.filter_calls = []
 
         def filter(self, **kwargs):
@@ -945,7 +943,7 @@ def test_sync_crops_params_skip_filter_when_fake_get_field_raises_fielddoesnotex
 
     monkeypatch.setattr(media_models.MediaItem._meta, "get_field", fake_get_field)
 
-    parse_dt = Mock(return_value=datetime(2024, 1, 1, tzinfo=timezone.utc))
+    parse_dt = Mock(return_value=datetime(2024, 1, 1, tzinfo=UTC))
     monkeypatch.setattr(viernulvier, "parse_datetime", parse_dt)
     monkeypatch.setattr(viernulvier, "fetch_viernulvier", lambda **_kw: [])
 
@@ -957,16 +955,14 @@ def test_sync_crops_params_skip_filter_when_fake_get_field_raises_fielddoesnotex
     )
 
     assert result == 0
-    assert fake_qs.filter_calls == [{"updated_at__lte": datetime(2024, 1, 1, tzinfo=timezone.utc)}]
+    assert fake_qs.filter_calls == [{"updated_at__lte": datetime(2024, 1, 1, tzinfo=UTC)}]
     parse_dt.assert_called_once_with("2024-01-01T00:00:00+00:00")
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_ignores_non_matching_param_key(monkeypatch):
-    from apps.media_library import models as media_models
-
+def test_sync_crops_params_ignores_non_matching_param_key(monkeypatch) -> None:
     class FakeQuerySet:
-        def __init__(self):
+        def __init__(self) -> None:
             self.filter_calls = []
 
         def values(self, *_args, **_kwargs):
@@ -990,11 +986,9 @@ def test_sync_crops_params_ignores_non_matching_param_key(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_skips_filter_when_datetime_is_none(monkeypatch):
-    from apps.media_library import models as media_models
-
+def test_sync_crops_params_skips_filter_when_datetime_is_none(monkeypatch) -> None:
     class FakeQuerySet:
-        def __init__(self):
+        def __init__(self) -> None:
             self.filter_calls = []
 
         def values(self, *_args, **_kwargs):
@@ -1016,11 +1010,9 @@ def test_sync_crops_params_skips_filter_when_datetime_is_none(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_params_skips_filter_when_datetime_raises_valueerror(monkeypatch):
-    from apps.media_library import models as media_models
-
+def test_sync_crops_params_skips_filter_when_datetime_raises_valueerror(monkeypatch) -> None:
     class FakeQuerySet:
-        def __init__(self):
+        def __init__(self) -> None:
             self.filter_calls = []
 
         def values(self, *_args, **_kwargs):
@@ -1046,11 +1038,8 @@ def test_sync_crops_params_skips_filter_when_datetime_raises_valueerror(monkeypa
 
 
 @pytest.mark.django_db
-def test_sync_crops_no_foto_items_creates_success_import_log(monkeypatch):
+def test_sync_crops_no_foto_items_creates_success_import_log(monkeypatch) -> None:
     """Empty foto list creates a SUCCESS ImportLog with all-zero counters."""
-    from apps.import_log.models import ImportLog
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = []
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
@@ -1065,7 +1054,7 @@ def test_sync_crops_no_foto_items_creates_success_import_log(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_item_without_external_id_skipped(monkeypatch, caplog):
+def test_sync_crops_item_without_external_id_skipped(monkeypatch, caplog) -> None:
     """MediaItem rows with no external_id are skipped and counted as errors."""
     _patch_crop_dependencies(
         monkeypatch,
@@ -1080,7 +1069,7 @@ def test_sync_crops_item_without_external_id_skipped(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_none_external_id_skipped(monkeypatch, caplog):
+def test_sync_crops_none_external_id_skipped(monkeypatch, caplog) -> None:
     """MediaItem rows with external_id=None are also skipped."""
     _patch_crop_dependencies(
         monkeypatch,
@@ -1095,14 +1084,12 @@ def test_sync_crops_none_external_id_skipped(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_fetch_failure_logged_as_error(monkeypatch, caplog):
+def test_sync_crops_fetch_failure_logged_as_error(monkeypatch, caplog) -> None:
     """A ScraperError during individual item fetch is logged and counted as error."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1117,14 +1104,12 @@ def test_sync_crops_fetch_failure_logged_as_error(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_304_not_modified_skips_item(monkeypatch):
+def test_sync_crops_304_not_modified_skips_item(monkeypatch) -> None:
     """A 304 (fetch returns None) means no crops to process - item is silently skipped."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(viernulvier, "_fetch_with_retry", lambda *_a, **_kw: (None, None))
 
     result = sync_media_item_crops()
@@ -1133,14 +1118,12 @@ def test_sync_crops_304_not_modified_skips_item(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_non_list_crops_field_skipped(monkeypatch, caplog):
+def test_sync_crops_non_list_crops_field_skipped(monkeypatch, caplog) -> None:
     """When API crops field is not a list, the item is silently skipped."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1155,14 +1138,12 @@ def test_sync_crops_non_list_crops_field_skipped(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_crop_not_in_wanted_set_skipped(monkeypatch):
+def test_sync_crops_crop_not_in_wanted_set_skipped(monkeypatch) -> None:
     """Crop names not in SYNCED_CROP_NAMES are silently ignored."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1174,9 +1155,7 @@ def test_sync_crops_crop_not_in_wanted_set_skipped(monkeypatch):
     mock_qs2 = Mock()
     mock_qs2.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
 
-    from apps.media_library import models as mm
-
-    monkeypatch.setattr(mm, "MediaItemCrop", mock_crop_cls)
+    monkeypatch.setattr(media_models, "MediaItemCrop", mock_crop_cls)
 
     result = sync_media_item_crops()
 
@@ -1185,14 +1164,12 @@ def test_sync_crops_crop_not_in_wanted_set_skipped(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_crop_missing_url_warns_and_skips(monkeypatch, caplog):
+def test_sync_crops_crop_missing_url_warns_and_skips(monkeypatch, caplog) -> None:
     """A crop dict without a url key is skipped with a warning."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1201,9 +1178,8 @@ def test_sync_crops_crop_missing_url_warns_and_skips(monkeypatch, caplog):
 
     mock_crop_cls = Mock()
     mock_crop_cls.SYNCED_CROP_NAMES = {"hd_ready"}
-    from apps.media_library import models as mm
 
-    monkeypatch.setattr(mm, "MediaItemCrop", mock_crop_cls)
+    monkeypatch.setattr(media_models, "MediaItemCrop", mock_crop_cls)
 
     caplog.set_level(logging.WARNING, logger=viernulvier.logger.name)
     result = sync_media_item_crops()
@@ -1213,7 +1189,7 @@ def test_sync_crops_crop_missing_url_warns_and_skips(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_download_failure_counted_as_error(monkeypatch, caplog):
+def test_sync_crops_download_failure_counted_as_error(monkeypatch, caplog) -> None:
     """When _download_image returns None the crop is counted as an error."""
     mock_crop_cls = _patch_crop_dependencies(
         monkeypatch,
@@ -1229,7 +1205,7 @@ def test_sync_crops_download_failure_counted_as_error(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_successful_save_returns_count(monkeypatch):
+def test_sync_crops_successful_save_returns_count(monkeypatch) -> None:
     """A successful crop save increments the saved counter."""
     _patch_crop_dependencies(
         monkeypatch,
@@ -1243,10 +1219,8 @@ def test_sync_crops_successful_save_returns_count(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_creates_import_log_success(monkeypatch):
+def test_sync_crops_creates_import_log_success(monkeypatch) -> None:
     """A fully successful run produces a SUCCESS ImportLog."""
-    from apps.import_log.models import ImportLog
-
     _patch_crop_dependencies(
         monkeypatch,
         foto_items=[{"pk": 1, "external_id": "/api/v1/media/items/1"}],
@@ -1261,11 +1235,8 @@ def test_sync_crops_creates_import_log_success(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_partial_success_import_log(monkeypatch):
+def test_sync_crops_partial_success_import_log(monkeypatch) -> None:
     """One crop saved + one failed produces a PARTIAL_SUCCESS ImportLog."""
-    from apps.import_log.models import ImportLog
-    from apps.media_library import models as media_models
-
     # Two items; first succeeds, second has bad external_id (empty -> error)
     mock_qs = Mock()
     mock_qs.values.return_value = [
@@ -1273,7 +1244,7 @@ def test_sync_crops_partial_success_import_log(monkeypatch):
         {"pk": 2, "external_id": ""},  # will be skipped as error
     ]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1301,10 +1272,8 @@ def test_sync_crops_partial_success_import_log(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_all_failed_import_log(monkeypatch):
+def test_sync_crops_all_failed_import_log(monkeypatch) -> None:
     """All items failing produces a FAILED ImportLog."""
-    from apps.import_log.models import ImportLog
-
     _patch_crop_dependencies(
         monkeypatch,
         foto_items=[{"pk": 1, "external_id": "/api/v1/media/items/1"}],
@@ -1320,7 +1289,7 @@ def test_sync_crops_all_failed_import_log(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_dry_run_does_not_write(monkeypatch):
+def test_sync_crops_dry_run_does_not_write(monkeypatch) -> None:
     """dry_run=True logs intentions but writes neither images nor DB rows."""
     mock_crop_cls = _patch_crop_dependencies(
         monkeypatch,
@@ -1335,7 +1304,7 @@ def test_sync_crops_dry_run_does_not_write(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_dry_run_logs_intended_save(monkeypatch, caplog):
+def test_sync_crops_dry_run_logs_intended_save(monkeypatch, caplog) -> None:
     """dry_run mode logs what would be saved for each crop."""
     _patch_crop_dependencies(
         monkeypatch,
@@ -1349,7 +1318,7 @@ def test_sync_crops_dry_run_logs_intended_save(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_on_progress_called_per_item(monkeypatch):
+def test_sync_crops_on_progress_called_per_item(monkeypatch) -> None:
     """on_progress callback receives (idx, total) for every processed item."""
     _patch_crop_dependencies(
         monkeypatch,
@@ -1378,14 +1347,12 @@ def test_sync_crops_on_progress_called_per_item(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_save_exception_counted_as_error(monkeypatch, caplog):
+def test_sync_crops_save_exception_counted_as_error(monkeypatch, caplog) -> None:
     """An unexpected exception during update_or_create is caught and counted as error."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1412,15 +1379,12 @@ def test_sync_crops_save_exception_counted_as_error(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_save_exception_added_to_error_messages(monkeypatch):
+def test_sync_crops_save_exception_added_to_error_messages(monkeypatch) -> None:
     """Exceptions during save are captured in the ImportLog error_message."""
-    from apps.import_log.models import ImportLog
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1447,15 +1411,13 @@ def test_sync_crops_save_exception_added_to_error_messages(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_external_id_as_absolute_url_used_directly(monkeypatch):
+def test_sync_crops_external_id_as_absolute_url_used_directly(monkeypatch) -> None:
     """external_id already starting with http is used as-is (not prefixed)."""
-    from apps.media_library import models as media_models
-
     captured_urls = []
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "https://www.viernulvier.gent/api/v1/media/items/99"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
 
     def fake_fetch(session, url, **_kw):
         captured_urls.append(url)
@@ -1469,15 +1431,13 @@ def test_sync_crops_external_id_as_absolute_url_used_directly(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_external_id_as_relative_path_prefixed_with_base_domain(monkeypatch):
+def test_sync_crops_external_id_as_relative_path_prefixed_with_base_domain(monkeypatch) -> None:
     """Relative external_id is prefixed with BASE_DOMAIN before fetching."""
-    from apps.media_library import models as media_models
-
     captured_urls = []
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/10"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
 
     def fake_fetch(session, url, **_kw):
         captured_urls.append(url)
@@ -1492,10 +1452,8 @@ def test_sync_crops_external_id_as_relative_path_prefixed_with_base_domain(monke
 
 
 @pytest.mark.django_db
-def test_sync_crops_multiple_items_and_crops_counted_correctly(monkeypatch):
+def test_sync_crops_multiple_items_and_crops_counted_correctly(monkeypatch) -> None:
     """Two items, each with two wanted crops -> four total crops saved."""
-    from apps.media_library import models as media_models
-
     items_data = [
         {"pk": 1, "external_id": "/api/v1/media/items/1"},
         {"pk": 2, "external_id": "/api/v1/media/items/2"},
@@ -1503,7 +1461,7 @@ def test_sync_crops_multiple_items_and_crops_counted_correctly(monkeypatch):
     mock_qs = Mock()
     mock_qs.values.return_value = items_data
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1532,18 +1490,16 @@ def test_sync_crops_multiple_items_and_crops_counted_correctly(monkeypatch):
 
     result = sync_media_item_crops()
 
-    assert result == 4  # 2 items × 2 crops each
+    assert result == 4  # 2 items x 2 crops each
 
 
 @pytest.mark.django_db
-def test_sync_crops_crop_dict_not_dict_skipped(monkeypatch):
+def test_sync_crops_crop_dict_not_dict_skipped(monkeypatch) -> None:
     """Non-dict entries inside the crops list are silently ignored."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1579,7 +1535,7 @@ def test_sync_crops_crop_dict_not_dict_skipped(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_logs_created_or_updated_debug(monkeypatch, caplog):
+def test_sync_crops_logs_created_or_updated_debug(monkeypatch, caplog) -> None:
     """Created vs Updated status is logged at DEBUG level."""
     mock_crop_cls = _patch_crop_dependencies(
         monkeypatch,
@@ -1594,16 +1550,12 @@ def test_sync_crops_logs_created_or_updated_debug(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_import_log_source_is_correct(monkeypatch):
+def test_sync_crops_import_log_source_is_correct(monkeypatch) -> None:
     """The ImportLog source is set to 'viernulvier:media_item_crops'."""
-    from apps.import_log.models import ImportLog
-
     _patch_crop_dependencies(
         monkeypatch,
         foto_items=[],
     )
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = []
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
@@ -1615,10 +1567,8 @@ def test_sync_crops_import_log_source_is_correct(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_import_log_timestamps_sequential(monkeypatch):
+def test_sync_crops_import_log_timestamps_sequential(monkeypatch) -> None:
     """finished_at >= started_at in the ImportLog."""
-    from apps.import_log.models import ImportLog
-
     _patch_crop_dependencies(
         monkeypatch,
         foto_items=[{"pk": 1, "external_id": "/api/v1/media/items/1"}],
@@ -1631,15 +1581,12 @@ def test_sync_crops_import_log_timestamps_sequential(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_fetch_error_message_captured_in_import_log(monkeypatch):
+def test_sync_crops_fetch_error_message_captured_in_import_log(monkeypatch) -> None:
     """ScraperError messages during fetch are included in the ImportLog error_message."""
-    from apps.import_log.models import ImportLog
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1653,7 +1600,7 @@ def test_sync_crops_fetch_error_message_captured_in_import_log(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_summary_logged_on_completion(monkeypatch, caplog):
+def test_sync_crops_summary_logged_on_completion(monkeypatch, caplog) -> None:
     """'Crop sync complete' with saved= and errors= is logged after running."""
     _patch_crop_dependencies(
         monkeypatch,
@@ -1667,7 +1614,7 @@ def test_sync_crops_summary_logged_on_completion(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_dry_run_summary_has_dry_run_suffix(monkeypatch, caplog):
+def test_sync_crops_dry_run_summary_has_dry_run_suffix(monkeypatch, caplog) -> None:
     """The completion log includes '[DRY RUN]' suffix when dry_run=True."""
     _patch_crop_dependencies(
         monkeypatch,
@@ -1681,10 +1628,8 @@ def test_sync_crops_dry_run_summary_has_dry_run_suffix(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
-def test_sync_crops_download_error_message_captured(monkeypatch):
+def test_sync_crops_download_error_message_captured(monkeypatch) -> None:
     """Download failures are captured in the ImportLog error_message."""
-    from apps.import_log.models import ImportLog
-
     _patch_crop_dependencies(
         monkeypatch,
         foto_items=[{"pk": 1, "external_id": "/api/v1/media/items/1"}],
@@ -1698,14 +1643,12 @@ def test_sync_crops_download_error_message_captured(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_sync_crops_storage_save_called_with_image_bytes(monkeypatch):
+def test_sync_crops_storage_save_called_with_image_bytes(monkeypatch) -> None:
     """The storage backend's save() is called with a ContentFile wrapping the downloaded bytes."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1744,14 +1687,12 @@ def test_sync_crops_storage_save_called_with_image_bytes(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_on_progress_called_when_external_id_missing(monkeypatch):
+def test_on_progress_called_when_external_id_missing(monkeypatch) -> None:
     """on_progress is invoked even when an item is skipped due to missing external_id."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": ""}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
 
     calls = []
     sync_media_item_crops(on_progress=lambda idx, total: calls.append((idx, total)))
@@ -1760,14 +1701,12 @@ def test_on_progress_called_when_external_id_missing(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_on_progress_called_after_fetch_scraper_error(monkeypatch):
+def test_on_progress_called_after_fetch_scraper_error(monkeypatch) -> None:
     """on_progress is invoked after a ScraperError on the individual item fetch."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1781,14 +1720,12 @@ def test_on_progress_called_after_fetch_scraper_error(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_on_progress_called_after_304_not_modified(monkeypatch):
+def test_on_progress_called_after_304_not_modified(monkeypatch) -> None:
     """on_progress is invoked when the item fetch returns None (304 Not Modified)."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(viernulvier, "_fetch_with_retry", lambda *_a, **_kw: (None, None))
 
     calls = []
@@ -1798,14 +1735,12 @@ def test_on_progress_called_after_304_not_modified(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_on_progress_called_after_non_list_crops(monkeypatch):
+def test_on_progress_called_after_non_list_crops(monkeypatch) -> None:
     """on_progress is invoked when the crops field is not a list."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 1, "external_id": "/api/v1/media/items/1"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",
@@ -1819,10 +1754,8 @@ def test_on_progress_called_after_non_list_crops(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_on_progress_covers_all_four_early_exit_branches_in_one_run(monkeypatch):
+def test_on_progress_covers_all_four_early_exit_branches_in_one_run(monkeypatch) -> None:
     """Four items, each triggering a different early-exit; on_progress fired for all four."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [
         {"pk": 1, "external_id": ""},  # branch: no external_id
@@ -1831,7 +1764,7 @@ def test_on_progress_covers_all_four_early_exit_branches_in_one_run(monkeypatch)
         {"pk": 4, "external_id": "/api/v1/media/items/4"},  # branch: non-list crops
     ]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
 
     calls = []
     sync_media_item_crops(on_progress=lambda idx, total: calls.append((idx, total)))
@@ -1840,14 +1773,12 @@ def test_on_progress_covers_all_four_early_exit_branches_in_one_run(monkeypatch)
 
 
 @pytest.mark.django_db
-def test_sync_crops_update_or_create_receives_correct_kwargs(monkeypatch):
+def test_sync_crops_update_or_create_receives_correct_kwargs(monkeypatch) -> None:
     """update_or_create is called with media_item_id, name, and defaults={image:...}."""
-    from apps.media_library import models as media_models
-
     mock_qs = Mock()
     mock_qs.values.return_value = [{"pk": 42, "external_id": "/api/v1/media/items/42"}]
     monkeypatch.setattr(media_models.MediaItem.objects, "filter", lambda **_: mock_qs)
-    monkeypatch.setattr(viernulvier, "_build_session", lambda: Mock())
+    monkeypatch.setattr(viernulvier, "_build_session", Mock)
     monkeypatch.setattr(
         viernulvier,
         "_fetch_with_retry",

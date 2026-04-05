@@ -13,24 +13,91 @@
     "switchToLightMode": "Donkere modus",
     "switchToDarkMode": "Lichte modus"
   },
+  "genreChip": {
+    "filterByGenre": "Filter op {{genre}}"
+  },
   "events": {
     "title": "Evenementen",
     "listPlaceholder": "Lijst met evenementen wordt hier weergegeven.",
     "detailTitle": "Evenement Detail",
     "detailPlaceholder": "Details van evenement met ID {{id}} worden hier weergegeven.",
-    "backToEvents": "Terug naar Evenementen"
+    "backToEvents": "Terug naar Evenementen",
+    "priceType": "Type",
+    "price": "Prijs",
+    "available": "Beschikbaar",
+    "availableQuantity": "{{count}} beschikbaar"
   },
   "productions": {
     "title": "Producties",
     "listPlaceholder": "Lijst met producties wordt hier weergegeven.",
     "detailTitle": "Productie Detail",
     "detailPlaceholder": "Details van productie met ID {{id}} worden hier weergegeven.",
-    "backToProductions": "Terug naar Producties"
+    "backToProductions": "Terug naar Producties",
+    "detail": {
+      "meta": {
+        "period": "Periode",
+        "venues": "Locaties",
+        "genre": "Genre",
+        "type": "Type",
+        "performerType": "Uitvoering",
+        "group": "Groep",
+        "solo": "Solo",
+        "attendance": "Aanwezigheid",
+        "offline": "Fysiek",
+        "online": "Online"
+      },
+      "notFound": "Productie niet gevonden.",
+      "unknownProduction": "Onbekende productie",
+      "noDescription": "Geen beschrijving beschikbaar.",
+      "error": {
+        "invalidId": "Ongeldige productie-id",
+        "loadFailed": "Kon productie niet laden"
+      },
+      "events": "Evenementen"
+    }
   },
   "notFound": {
     "code": "404",
     "title": "Pagina niet gevonden",
     "description": "De pagina die je zoekt bestaat niet of is verplaatst.",
     "backHome": "Terug naar archief"
+  },
+  "footer": {
+    "address": {
+      "org": "Kunstencentrum VIERNULVIER vzw",
+      "street": "Sint-Pietersnieuwstraat 23",
+      "city": "9000 Gent",
+      "phone": "T. 09 267 28 20",
+      "email": "info@viernulvier.gent",
+      "vat": "BTW BE 0423.063.619"
+    },
+    "nav": {
+      "ariaLabel": "Navigatie",
+      "home": "Archief",
+      "series": "Reeksen",
+      "events": "Evenementen"
+    },
+    "newsletter": {
+      "cta": "blijf op de hoogte"
+    }
+  },
+  "series": {
+    "backToSeries": "Terug naar reeksen",
+    "allEditions": "Alle edities",
+    "allEditionsSubtitle": "Chronologisch overzicht van de producties binnen deze reeks.",
+    "breadcrumb": "Archief / Reeksen / {{name}}",
+    "noDescription": "Geen beschrijving beschikbaar.",
+    "noProductions": "Er zijn geen producties gekoppeld aan deze reeks.",
+    "loading": "Reeks wordt geladen...",
+    "notFound": "Reeks niet gevonden.",
+    "invalidId": "Ongeldig reeks-ID.",
+    "fetchError": "Kon de reeks niet ophalen.",
+    "untitled": "Naamloze reeks",
+    "untitledProduction": "Naamloze productie",
+    "stats": {
+      "editions": "Edities",
+      "period": "Periode",
+      "type": "Type"
+    }
   }
 }

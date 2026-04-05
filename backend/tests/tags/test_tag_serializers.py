@@ -12,8 +12,8 @@ Covers:
 - Field types
 """
 
-import pytest
 from django.test import TestCase, override_settings
+import pytest
 from rest_framework.test import APIRequestFactory
 
 from apps.languages.models import Language
@@ -30,10 +30,10 @@ from tests.factories.tag import TagFactory, TagTranslationFactory
 class TestTagSerializerFields(TestCase):
     """Verify that the correct fields are exposed."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.tag = TagFactory.create()
 
-    def test_expected_fields_are_present(self):
+    def test_expected_fields_are_present(self) -> None:
         serializer = TagSerializer(self.tag)
         data = serializer.data
         for field in (
@@ -48,9 +48,9 @@ class TestTagSerializerFields(TestCase):
             "short_description",
             "url_title",
         ):
-            self.assertIn(field, data)
+            assert field in data
 
-    def test_no_extra_fields_are_exposed(self):
+    def test_no_extra_fields_are_exposed(self) -> None:
         serializer = TagSerializer(self.tag)
         expected = {
             "id",
@@ -67,7 +67,7 @@ class TestTagSerializerFields(TestCase):
             "short_description",
             "url_title",
         }
-        self.assertEqual(set(serializer.data.keys()), expected)
+        assert set(serializer.data.keys()) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -78,60 +78,60 @@ class TestTagSerializerFields(TestCase):
 class TestTagSerializerScalarFields(TestCase):
     """Model -> dict for non-translated fields."""
 
-    def test_serializes_type_correctly(self):
+    def test_serializes_type_correctly(self) -> None:
         tag = TagFactory.create(type="mood")
         data = TagSerializer(tag).data
-        self.assertEqual(data["type"], "mood")
+        assert data["type"] == "mood"
 
-    def test_serializes_source_correctly(self):
+    def test_serializes_source_correctly(self) -> None:
         tag = TagFactory.create(source="external-api")
         data = TagSerializer(tag).data
-        self.assertEqual(data["source"], "external-api")
+        assert data["source"] == "external-api"
 
-    def test_serializes_source_type_correctly(self):
+    def test_serializes_source_type_correctly(self) -> None:
         tag = TagFactory.create(source_type="api")
         data = TagSerializer(tag).data
-        self.assertEqual(data["source_type"], "api")
+        assert data["source_type"] == "api"
 
-    def test_serializes_is_external_true(self):
+    def test_serializes_is_external_true(self) -> None:
         tag = TagFactory.create(is_external=True)
         data = TagSerializer(tag).data
-        self.assertTrue(data["is_external"])
+        assert data["is_external"]
 
-    def test_serializes_is_external_false(self):
+    def test_serializes_is_external_false(self) -> None:
         tag = TagFactory.create(is_external=False)
         data = TagSerializer(tag).data
-        self.assertFalse(data["is_external"])
+        assert not data["is_external"]
 
-    def test_serializes_is_enabled_true(self):
+    def test_serializes_is_enabled_true(self) -> None:
         tag = TagFactory.create(is_enabled=True)
         data = TagSerializer(tag).data
-        self.assertTrue(data["is_enabled"])
+        assert data["is_enabled"]
 
-    def test_serializes_is_enabled_false(self):
+    def test_serializes_is_enabled_false(self) -> None:
         tag = TagFactory.create(is_enabled=False)
         data = TagSerializer(tag).data
-        self.assertFalse(data["is_enabled"])
+        assert not data["is_enabled"]
 
-    def test_serializes_url_correctly(self):
+    def test_serializes_url_correctly(self) -> None:
         tag = TagFactory.create(url="https://example.com/genre")
         data = TagSerializer(tag).data
-        self.assertEqual(data["url"], "https://example.com/genre")
+        assert data["url"] == "https://example.com/genre"
 
-    def test_type_is_string(self):
+    def test_type_is_string(self) -> None:
         tag = TagFactory.create(type="genre")
         data = TagSerializer(tag).data
-        self.assertIsInstance(data["type"], str)
+        assert isinstance(data["type"], str)
 
-    def test_is_external_is_bool(self):
+    def test_is_external_is_bool(self) -> None:
         tag = TagFactory.create()
         data = TagSerializer(tag).data
-        self.assertIsInstance(data["is_external"], bool)
+        assert isinstance(data["is_external"], bool)
 
-    def test_is_enabled_is_bool(self):
+    def test_is_enabled_is_bool(self) -> None:
         tag = TagFactory.create()
         data = TagSerializer(tag).data
-        self.assertIsInstance(data["is_enabled"], bool)
+        assert isinstance(data["is_enabled"], bool)
 
 
 # ---------------------------------------------------------------------------
@@ -142,12 +142,12 @@ class TestTagSerializerScalarFields(TestCase):
 class TestTagSerializerTranslatedFields(TestCase):
     """name / short_description / url_title are returned as language-keyed dicts."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.tag = TagFactory.create()
         self.nl = LanguageFactory.create(code="nl", name="Dutch")
         self.en = LanguageFactory.create(code="en", name="English")
 
-    def test_name_is_dict(self):
+    def test_name_is_dict(self) -> None:
         TagTranslationFactory.create(
             tag=self.tag,
             language=self.nl,
@@ -155,9 +155,9 @@ class TestTagSerializerTranslatedFields(TestCase):
             url_title="genre",
         )
         data = TagSerializer(self.tag).data
-        self.assertIsInstance(data["name"], dict)
+        assert isinstance(data["name"], dict)
 
-    def test_name_contains_correct_language_keys(self):
+    def test_name_contains_correct_language_keys(self) -> None:
         TagTranslationFactory.create(
             tag=self.tag,
             language=self.nl,
@@ -171,10 +171,10 @@ class TestTagSerializerTranslatedFields(TestCase):
             url_title="genre-en",
         )
         data = TagSerializer(self.tag).data
-        self.assertIn("nl", data["name"])
-        self.assertIn("en", data["name"])
+        assert "nl" in data["name"]
+        assert "en" in data["name"]
 
-    def test_name_contains_correct_values(self):
+    def test_name_contains_correct_values(self) -> None:
         TagTranslationFactory.create(
             tag=self.tag,
             language=self.nl,
@@ -182,9 +182,9 @@ class TestTagSerializerTranslatedFields(TestCase):
             url_title="genre",
         )
         data = TagSerializer(self.tag).data
-        self.assertEqual(data["name"]["nl"], "Muziekgenre")
+        assert data["name"]["nl"] == "Muziekgenre"
 
-    def test_short_description_is_dict(self):
+    def test_short_description_is_dict(self) -> None:
         TagTranslationFactory.create(
             tag=self.tag,
             language=self.nl,
@@ -193,9 +193,9 @@ class TestTagSerializerTranslatedFields(TestCase):
             url_title="genre",
         )
         data = TagSerializer(self.tag).data
-        self.assertIsInstance(data["short_description"], dict)
+        assert isinstance(data["short_description"], dict)
 
-    def test_short_description_contains_correct_value(self):
+    def test_short_description_contains_correct_value(self) -> None:
         TagTranslationFactory.create(
             tag=self.tag,
             language=self.nl,
@@ -204,9 +204,9 @@ class TestTagSerializerTranslatedFields(TestCase):
             url_title="genre",
         )
         data = TagSerializer(self.tag).data
-        self.assertEqual(data["short_description"]["nl"], "Een muziekgenre")
+        assert data["short_description"]["nl"] == "Een muziekgenre"
 
-    def test_url_title_is_dict(self):
+    def test_url_title_is_dict(self) -> None:
         TagTranslationFactory.create(
             tag=self.tag,
             language=self.nl,
@@ -214,9 +214,9 @@ class TestTagSerializerTranslatedFields(TestCase):
             url_title="muziek-genre",
         )
         data = TagSerializer(self.tag).data
-        self.assertIsInstance(data["url_title"], dict)
+        assert isinstance(data["url_title"], dict)
 
-    def test_url_title_contains_correct_value(self):
+    def test_url_title_contains_correct_value(self) -> None:
         TagTranslationFactory.create(
             tag=self.tag,
             language=self.nl,
@@ -224,21 +224,21 @@ class TestTagSerializerTranslatedFields(TestCase):
             url_title="muziek-genre",
         )
         data = TagSerializer(self.tag).data
-        self.assertEqual(data["url_title"]["nl"], "muziek-genre")
+        assert data["url_title"]["nl"] == "muziek-genre"
 
-    def test_name_is_empty_dict_when_no_translations(self):
+    def test_name_is_empty_dict_when_no_translations(self) -> None:
         data = TagSerializer(self.tag).data
-        self.assertEqual(data["name"], {})
+        assert data["name"] == {}
 
-    def test_short_description_is_empty_dict_when_no_translations(self):
+    def test_short_description_is_empty_dict_when_no_translations(self) -> None:
         data = TagSerializer(self.tag).data
-        self.assertEqual(data["short_description"], {})
+        assert data["short_description"] == {}
 
-    def test_url_title_is_empty_dict_when_no_translations(self):
+    def test_url_title_is_empty_dict_when_no_translations(self) -> None:
         data = TagSerializer(self.tag).data
-        self.assertEqual(data["url_title"], {})
+        assert data["url_title"] == {}
 
-    def test_blank_short_description_is_excluded_from_dict(self):
+    def test_blank_short_description_is_excluded_from_dict(self) -> None:
         """Translations with blank short_description should not appear as a key."""
         TagTranslationFactory.create(
             tag=self.tag,
@@ -248,9 +248,9 @@ class TestTagSerializerTranslatedFields(TestCase):
             url_title="genre",
         )
         data = TagSerializer(self.tag).data
-        self.assertNotIn("nl", data["short_description"])
+        assert "nl" not in data["short_description"]
 
-    def test_multiple_translations_all_included(self):
+    def test_multiple_translations_all_included(self) -> None:
         TagTranslationFactory.create(
             tag=self.tag,
             language=self.nl,
@@ -264,7 +264,7 @@ class TestTagSerializerTranslatedFields(TestCase):
             url_title="genre-en",
         )
         data = TagSerializer(self.tag).data
-        self.assertEqual(len(data["name"]), 2)
+        assert len(data["name"]) == 2
 
 
 # ---------------------------------------------------------------------------
@@ -273,13 +273,13 @@ class TestTagSerializerTranslatedFields(TestCase):
 
 
 class TestTagSerializerQueryset(TestCase):
-    def test_serializes_queryset_of_tags(self):
+    def test_serializes_queryset_of_tags(self) -> None:
         TagFactory.create(type="genre")
         TagFactory.create(type="mood")
         serializer = TagSerializer(Tag.objects.all(), many=True)
         types = [item["type"] for item in serializer.data]
-        self.assertIn("genre", types)
-        self.assertIn("mood", types)
+        assert "genre" in types
+        assert "mood" in types
 
 
 # ---------------------------------------------------------------------------
@@ -301,52 +301,52 @@ class TestTagSerializerDeserialization(TestCase):
         payload.update(overrides)
         return payload
 
-    def test_valid_data_is_valid(self):
+    def test_valid_data_is_valid(self) -> None:
         serializer = TagSerializer(data=self._valid_payload())
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        assert serializer.is_valid(), serializer.errors
 
-    def test_valid_data_saves_to_db(self):
+    def test_valid_data_saves_to_db(self) -> None:
         serializer = TagSerializer(data=self._valid_payload(type="mood"))
-        self.assertTrue(serializer.is_valid())
+        assert serializer.is_valid()
         tag = serializer.save()
-        self.assertTrue(Tag.objects.filter(id=tag.id).exists())
+        assert Tag.objects.filter(id=tag.id).exists()
 
-    def test_saved_tag_has_correct_type(self):
+    def test_saved_tag_has_correct_type(self) -> None:
         serializer = TagSerializer(data=self._valid_payload(type="theme"))
-        self.assertTrue(serializer.is_valid())
+        assert serializer.is_valid()
         tag = serializer.save()
-        self.assertEqual(tag.type, "theme")
+        assert tag.type == "theme"
 
-    def test_is_enabled_false_is_saved_correctly(self):
+    def test_is_enabled_false_is_saved_correctly(self) -> None:
         serializer = TagSerializer(data=self._valid_payload(is_enabled=False))
-        self.assertTrue(serializer.is_valid())
+        assert serializer.is_valid()
         tag = serializer.save()
-        self.assertFalse(tag.is_enabled)
+        assert not tag.is_enabled
 
-    def test_optional_url_field_can_be_omitted(self):
+    def test_optional_url_field_can_be_omitted(self) -> None:
         payload = self._valid_payload()
         payload.pop("url", None)
         serializer = TagSerializer(data=payload)
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        assert serializer.is_valid(), serializer.errors
 
-    def test_optional_url_field_can_be_provided(self):
+    def test_optional_url_field_can_be_provided(self) -> None:
         payload = self._valid_payload(url="https://example.com/genre")
         serializer = TagSerializer(data=payload)
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        assert serializer.is_valid(), serializer.errors
 
-    def test_partial_update_with_single_field(self):
+    def test_partial_update_with_single_field(self) -> None:
         tag = TagFactory.create(type="genre", is_enabled=True)
         serializer = TagSerializer(tag, data={"is_enabled": False}, partial=True)
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        assert serializer.is_valid(), serializer.errors
         updated = serializer.save()
-        self.assertFalse(updated.is_enabled)
+        assert not updated.is_enabled
 
-    def test_partial_update_does_not_touch_other_fields(self):
+    def test_partial_update_does_not_touch_other_fields(self) -> None:
         tag = TagFactory.create(type="genre", source="manual")
         serializer = TagSerializer(tag, data={"is_enabled": False}, partial=True)
-        self.assertTrue(serializer.is_valid())
+        assert serializer.is_valid()
         updated = serializer.save()
-        self.assertEqual(updated.source, "manual")
+        assert updated.source == "manual"
 
 
 def _display_ctx():
@@ -359,7 +359,7 @@ class TestTagDisplayNameBaseLanguage:
 
     @pytest.mark.django_db
     @override_settings(LANGUAGE_CODE="en-us")
-    def test_uses_base_language_when_present(self):
+    def test_uses_base_language_when_present(self) -> None:
         en = Language.objects.create(code="en", name="English")
         nl = Language.objects.create(code="nl", name="Dutch")
 
@@ -379,7 +379,7 @@ class TestTagDisplayNameBaseLanguage:
 
     @pytest.mark.django_db
     @override_settings(LANGUAGE_CODE="en-us")
-    def test_falls_back_when_base_language_missing(self):
+    def test_falls_back_when_base_language_missing(self) -> None:
         nl = Language.objects.create(code="nl", name="Dutch")
 
         tag = Tag.objects.create(

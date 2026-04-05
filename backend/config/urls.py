@@ -1,5 +1,4 @@
-"""
-Root URL configuration for the viernulvier_archive project.
+"""Root URL configuration for the viernulvier_archive project.
 
 All API routes are delegated to ``api.urls``. The health check endpoint
 sits at the root level so it is always reachable, even when the API

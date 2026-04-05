@@ -89,7 +89,7 @@ describe('productions service', () => {
 
       const result = await getProduction(42)
 
-      expect(mockedGet).toHaveBeenCalledWith('/productions/42/')
+      expect(mockedGet).toHaveBeenCalledWith('/productions/42/', { params: {} })
       expect(result).toEqual(mockProduction)
     })
 
@@ -98,6 +98,30 @@ describe('productions service', () => {
       mockedGet.mockRejectedValue(error)
 
       await expect(getProduction(42)).rejects.toBe(error)
+    })
+
+    it('fetches a production with events using include array', async () => {
+      const productionWithEvents = {
+        ...mockProduction,
+        events: [
+          {
+            id: 101,
+            production: 42,
+            production_display: 'Hamlet',
+            hall: null,
+            hall_display: null,
+            starts_at: '2026-03-22T20:00:00Z',
+            ends_at: '2026-03-22T22:00:00Z',
+            prices: [],
+          },
+        ],
+      }
+      mockedGet.mockResolvedValue({ data: productionWithEvents })
+
+      const result = await getProduction(42, ['events'])
+
+      expect(mockedGet).toHaveBeenCalledWith('/productions/42/', { params: { include: 'events' } })
+      expect(result).toEqual(productionWithEvents)
     })
   })
 

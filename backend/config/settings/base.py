@@ -1,5 +1,4 @@
-"""
-Base settings for the viernulvier_archive project.
+"""Base settings for the viernulvier_archive project.
 
 Environment-specific settings files (dev, prod, test) import everything
 from here and override only what differs. Never run the application with
@@ -13,8 +12,8 @@ hard-coded fallback in this file.
 """
 
 import os
-import textwrap
 from pathlib import Path
+import textwrap
 
 from dotenv import load_dotenv
 

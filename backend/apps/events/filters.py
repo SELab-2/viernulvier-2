@@ -1,6 +1,4 @@
-"""
-Filters for the Events app.
-"""
+"""Filters for the Events app."""
 
 import django_filters
 
@@ -10,8 +8,7 @@ from .models import Event
 
 
 class EventFilter(BaseModelFilter):
-    """
-    FilterSet for Event list queries.
+    """FilterSet for Event list queries.
 
     Supported query parameters
     --------------------------

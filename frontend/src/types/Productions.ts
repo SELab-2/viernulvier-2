@@ -1,4 +1,6 @@
+import type { Event } from './Events'
 import type { Genre } from './Genres'
+import type { MediaGallery } from './Media'
 import type { Tag } from './Tags'
 
 /** Valid attendance mode values. */
@@ -33,6 +35,10 @@ export interface Production {
   description: Record<string, string>
   tags: Tag[]
   genres: Genre[]
+  media_gallery: MediaGallery
+  events?: Event[]
+  first_event_start: string | null
+  last_event_end: string | null
 }
 
 /**

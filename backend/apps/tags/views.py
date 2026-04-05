@@ -1,5 +1,4 @@
-"""
-ViewSets for the Tags app.
+"""ViewSets for the Tags app.
 
 Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
@@ -31,8 +30,7 @@ _TAG = "Tags"
 @extend_schema(tags=[_TAG])
 @tag_schema
 class TagViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Tag objects.
+    """CRUD endpoints for Tag objects.
 
     Tags are classification labels attached to productions. They support
     localised names and descriptions via the ``TagTranslation`` model.

@@ -1,5 +1,4 @@
-"""
-ViewSets for the Locations app.
+"""ViewSets for the Locations app.
 
 Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
@@ -20,8 +19,7 @@ _TAG = "Locations"
 @extend_schema(tags=[_TAG])
 @location_schema
 class LocationViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Location objects.
+    """CRUD endpoints for Location objects.
 
     A location represents a physical venue or address. It is the top of the
     three-level hierarchy: Location -> Space -> Hall.
@@ -74,8 +72,7 @@ class LocationViewSet(ApiModelViewSet):
 @extend_schema(tags=[_TAG])
 @space_schema
 class SpaceViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Space objects.
+    """CRUD endpoints for Space objects.
 
     A space is a distinct physical area (building, wing, …) within a location.
     It groups one or more halls.
@@ -123,8 +120,7 @@ class SpaceViewSet(ApiModelViewSet):
 @extend_schema(tags=[_TAG])
 @hall_schema
 class HallViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Hall objects.
+    """CRUD endpoints for Hall objects.
 
     A hall is a specific room or auditorium within a space. It carries
     seating configuration flags and supports localised ``name`` and

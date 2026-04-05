@@ -7,3 +7,9 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+declare namespace NodeJS {
+  interface ProcessEnv {
+    VITE_PUBLIC_API_KEY?: string
+  }
+}

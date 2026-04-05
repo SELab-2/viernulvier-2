@@ -1,5 +1,4 @@
-"""
-API key authentication for the core app.
+"""API key authentication for the core app.
 
 ``ApiKeyAuthentication`` is the sole authentication class used across the
 entire project. It is registered as the global default in
@@ -29,18 +28,23 @@ character.
 """
 
 import secrets
-from typing import Optional, Tuple
+from typing import Any
 
 from django.conf import settings
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 
-class ApiKeyAuthentication(BaseAuthentication):
-    """
-    DRF authentication class that validates ``X-API-Key`` request headers.
+class ApiKeyUser:
+    """Minimal user-like object so DRF treats API key requests as authenticated."""
 
-    On success, returns ``(None, "internal")`` or ``(None, "public")``.
+    is_authenticated = True
+
+
+class ApiKeyAuthentication(BaseAuthentication):
+    """DRF authentication class that validates ``X-API-Key`` request headers.
+
+    On success, returns ``(ApiKeyUser(), "internal")`` or ``(ApiKeyUser(), "public")``.
     The second element of the tuple becomes ``request.auth`` and is used
     by :class:`~apps.core.permissions.ApiKeyPermission` to determine what
     actions the caller is allowed to perform.
@@ -55,9 +59,8 @@ class ApiKeyAuthentication(BaseAuthentication):
     header_name = "HTTP_X_API_KEY"
     www_authenticate_realm = "X-API-Key"
 
-    def authenticate(self, request) -> Optional[Tuple[None, str]]:
-        """
-        Read the ``X-API-Key`` header and validate the API key.
+    def authenticate(self, request: Any) -> tuple[ApiKeyUser, str] | None:
+        """Read the ``X-API-Key`` header and validate the API key.
 
         Steps
         -----
@@ -71,15 +74,14 @@ class ApiKeyAuthentication(BaseAuthentication):
         5. Raise ``AuthenticationFailed`` if neither key matches.
 
         Returns:
-            ``(None, "internal")`` for a valid internal key.
-            ``(None, "public")`` for a valid public key.
+            ``(ApiKeyUser(), "internal")`` for a valid internal key.
+            ``(ApiKeyUser(), "public")`` for a valid public key.
             ``None`` if no ``X-API-Key`` header is present.
 
         Raises:
             :exc:`~rest_framework.exceptions.AuthenticationFailed`:
                 On invalid header bytes or invalid keys (-> HTTP 401).
         """
-
         # Django exposes request headers through request.META using the
         # HTTP_<HEADER_NAME> convention.
         raw_key = request.META.get(self.header_name)
@@ -91,8 +93,8 @@ class ApiKeyAuthentication(BaseAuthentication):
         if isinstance(raw_key, bytes):
             try:
                 raw_key.decode("utf-8")
-            except UnicodeDecodeError:
-                raise AuthenticationFailed("Invalid characters in API key.")
+            except UnicodeDecodeError as err:
+                raise AuthenticationFailed("Invalid characters in API key.") from err
             key_bytes = raw_key
         else:
             key_bytes = str(raw_key).encode("utf-8")
@@ -103,18 +105,17 @@ class ApiKeyAuthentication(BaseAuthentication):
 
         # Check against INTERNAL_API_KEY first (grants full access).
         if internal_key and secrets.compare_digest(key_bytes, internal_key.encode("utf-8")):
-            return (None, "internal")
+            return (ApiKeyUser(), "internal")
 
         # Check against PUBLIC_API_KEY (grants read-only access).
         if public_key and secrets.compare_digest(key_bytes, public_key.encode("utf-8")):
-            return (None, "public")
+            return (ApiKeyUser(), "public")
 
         # No match - reject the request.
         raise AuthenticationFailed("Invalid API key.")
 
-    def authenticate_header(self, request) -> str:
-        """
-        Return the value for the ``WWW-Authenticate`` response header.
+    def authenticate_header(self, _request: Any) -> str:
+        """Return the value for the ``WWW-Authenticate`` response header.
 
         DRF uses this to construct a proper ``HTTP 401 Unauthorized``
         response when authentication fails. Without it, DRF would return

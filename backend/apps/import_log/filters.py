@@ -1,9 +1,7 @@
-"""
-Filters for the Imports app.
-"""
+"""Filters for the Imports app."""
 
+from django.db.models import Q, QuerySet
 import django_filters
-from django.db.models import Q
 
 from apps.core.filters import BaseModelFilter
 
@@ -11,8 +9,7 @@ from .models import ImportLog
 
 
 class ImportLogFilter(BaseModelFilter):
-    """
-    FilterSet for ImportLog list queries.
+    """FilterSet for ImportLog list queries.
 
     Supported query parameters
     --------------------------
@@ -52,7 +49,7 @@ class ImportLogFilter(BaseModelFilter):
         label="Has error message",
     )
 
-    def filter_has_error(self, queryset, name, value):
+    def filter_has_error(self, queryset: QuerySet[ImportLog], _name: str, value: bool) -> QuerySet:
         """Filter by presence of an error message."""
         if value:
             return queryset.exclude(error_message="").exclude(error_message__isnull=True)
