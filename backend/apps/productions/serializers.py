@@ -409,7 +409,6 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             grouped_productions[row.tag_id].append(production)
             seen_production_ids[row.tag_id].add(production.id)
 
-        related_serializer_context = {**self.context}
         result = []
 
         for tag in tags:
@@ -419,7 +418,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
                     "productions": RelatedProductionSerializer(
                         grouped_productions.get(tag.id, []),
                         many=True,
-                        context=related_serializer_context,
+                        context=self.context,
                     ).data,
                 },
             )
