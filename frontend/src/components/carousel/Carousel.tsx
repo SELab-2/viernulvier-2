@@ -104,20 +104,33 @@ function Carousel({
         width: '100%',
         maxWidth,
         mx: maxWidth ? 'auto' : 0,
+        // Provide equal side inset so edge-card hover borders/shadows remain visible on both sides.
+        px: {
+          xs: theme.spacing(0.625),
+          sm: theme.spacing(0.75),
+        },
         ...((typeof sx === 'function' ? sx(theme) : sx) as object),
       })}
     >
-      <Box ref={emblaRef} sx={{ overflow: 'hidden' }}>
+      <Box
+        ref={emblaRef}
+        sx={{
+          overflow: 'hidden',
+          // Avoid tiny edge clipping on fractional viewport widths.
+          px: '2px',
+        }}
+      >
         <Box
           sx={(theme) => ({
             display: 'flex',
             alignItems: 'stretch',
             touchAction: 'pan-y pinch-zoom',
             py: 1,
-            marginLeft: {
-              xs: theme.spacing(-1.25),
-              sm: theme.spacing(-1.5),
-              md: theme.spacing(-1.5),
+            // Keep equal horizontal breathing room on both sides so edge-card hover styles are not clipped.
+            marginX: {
+              xs: theme.spacing(-0.625),
+              sm: theme.spacing(-0.75),
+              md: theme.spacing(-0.75),
             },
           })}
         >
@@ -127,22 +140,22 @@ function Carousel({
               sx={(theme) => ({
                 flex: '0 0 100%',
                 minWidth: 0,
-                paddingLeft: theme.spacing(1.25),
+                paddingX: theme.spacing(0.625),
                 [theme.breakpoints.up('sm')]: {
                   flexBasis: '50%',
-                  paddingLeft: theme.spacing(1.5),
+                  paddingX: theme.spacing(0.75),
                 },
                 [theme.breakpoints.up('md')]: {
                   flexBasis: '33.3333%',
-                  paddingLeft: theme.spacing(1.5),
+                  paddingX: theme.spacing(0.75),
                 },
                 [theme.breakpoints.up('lg')]: {
                   flexBasis: '33.3333%',
-                  paddingLeft: theme.spacing(1.5),
+                  paddingX: theme.spacing(0.75),
                 },
                 [theme.breakpoints.up('xl')]: {
                   flexBasis: '25%',
-                  paddingLeft: theme.spacing(1.5),
+                  paddingX: theme.spacing(0.75),
                 },
               })}
             >
