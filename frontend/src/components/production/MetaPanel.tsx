@@ -3,10 +3,16 @@ import { useTranslation } from 'react-i18next'
 import { formatDate } from '../../utils/dateUtils'
 import { getHallDisplayName } from '../../utils/hall'
 import { getLocalizedValue } from '../../utils/localization'
-import Tag from '../Tag'
+import GenreAndTagChip from '../GenreAndTagChip'
 
 import type { CSSProperties } from 'react'
 import { Production } from '../../types/Productions'
+import type {
+  ChipLabels,
+  GenreAndTagChipContext,
+  GenreAndTagChipId,
+  GenreAndTagChipType,
+} from '../../types/GenreAndTagChip'
 
 /**
  * Format an event list into a human-readable date range for production metadata.
@@ -56,7 +62,10 @@ interface ResolvedTag {
   /**
    * Optional localized labels by language code, e.g. { nl: 'Drama', en: 'Drama' }.
    */
-  labels?: Record<string, string>
+  labels: ChipLabels
+  context: GenreAndTagChipContext
+  chipType: GenreAndTagChipType
+  value: GenreAndTagChipId
 }
 
 /**
@@ -73,7 +82,10 @@ function formatAllTags(production: Production, lang: string): ResolvedTag[] {
   const genreTags = (production.genres || [])
     .map((g) => ({
       tagName: g.display_name || getLocalizedValue(g.name || {}, lang),
-      labels: g.name || undefined,
+      labels: g.name || {},
+      chipType: 'genre' as const,
+      value: g.id,
+      context: 'description' as const,
     }))
     .filter((tag) => tag.tagName)
 
@@ -85,12 +97,23 @@ function formatAllTags(production: Production, lang: string): ResolvedTag[] {
         getLocalizedValue(t.url_title || {}, lang) ||
         t.type ||
         '',
-      labels: t.name || t.url_title || undefined,
+      labels: t.name || t.url_title || {},
+      chipType: 'seriesTag' as const,
+      value: t.id,
+      context: 'series' as const,
     }))
     .filter((tag) => tag.tagName)
 
   const typeTag = production.uit_database_type?.name
-    ? [{ tagName: production.uit_database_type.name }]
+    ? [
+        {
+          tagName: production.uit_database_type.name,
+          labels: {},
+          chipType: 'genre' as const,
+          value: production.uit_database_type.name,
+          context: 'description' as const,
+        },
+      ]
     : []
 
   return [...explicitTags, ...typeTag, ...genreTags]
@@ -265,11 +288,13 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
           }}
         >
           {resolvedTags.map((tag, i) => (
-            <Tag
+            <GenreAndTagChip
               key={`${tag.tagName}-${i}`}
-              tagName={tag.tagName}
+              name={tag.tagName}
               labels={tag.labels}
-              context="description"
+              chipType={tag.chipType}
+              id={tag.value}
+              context={tag.context}
             />
           ))}
         </div>

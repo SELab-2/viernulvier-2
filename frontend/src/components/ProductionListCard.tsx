@@ -6,7 +6,7 @@ import { Link as RouterLink } from 'react-router-dom'
 import type { Production } from '../types/Productions'
 import { getProductionDateLabel } from '../utils/dateUtils'
 import { getTranslatedRecord } from '../utils/translations'
-import GenreChip from './GenreChip'
+import GenreAndTagChip from './GenreAndTagChip'
 import ImageWithFallback from './ImageWithFallback'
 
 export interface ListCardProps {
@@ -40,7 +40,12 @@ const ProductionListCard = ({ production, selectedGenreIds, onGenreClick }: List
     production.display_artist_name,
   )
   const dateLabel = getProductionDateLabel(production.events, language)
-  const genres = production.genres.filter((genre) => genre.display_name)
+  const genres = production.genres
+    .map((genre) => ({
+      id: genre.id,
+      label: getTranslatedRecord(genre.name, language, genre.display_name),
+    }))
+    .filter((genre) => Boolean(genre.label))
 
   return (
     <Stack
@@ -103,11 +108,19 @@ const ProductionListCard = ({ production, selectedGenreIds, onGenreClick }: List
           {genres.length > 0 ? (
             <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24} overflow="hidden">
               {genres.map((genre) => (
-                <GenreChip
+                <GenreAndTagChip
                   key={genre.id}
-                  genre={genre}
-                  selectedIds={selectedGenreIds}
-                  onClick={onGenreClick}
+                  name={genre.label}
+                  labels={{}}
+                  chipType="genre"
+                  context="static"
+                  id={genre.id}
+                  selected={selectedGenreIds.includes(genre.id)}
+                  onToggle={(value) => {
+                    if (typeof value === 'number') {
+                      onGenreClick(value)
+                    }
+                  }}
                 />
               ))}
             </Stack>
