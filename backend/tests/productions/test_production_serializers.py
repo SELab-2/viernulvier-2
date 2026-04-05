@@ -17,6 +17,8 @@ Covers:
 """
 
 from datetime import UTC, datetime
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from django.db.models import Max, Min
 from django.test import TestCase
@@ -26,6 +28,8 @@ from apps.productions.models import Production
 from apps.productions.serializers import (
     ProductionSerializer,
     ProductionTagSerializer,
+    RelatedProductionSerializer,
+    RelatedTagSerializer,
     UitDatabaseThemeSerializer,
     UitDatabaseTypeSerializer,
 )
@@ -152,6 +156,98 @@ class TestProductionSerializerFields(TestCase):
             "display_artist_name",
         }
         assert set(data.keys()) == expected
+
+
+class TestRelatedProductionSerializerFields(TestCase):
+    """Verify the compact serializer used for related productions."""
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        self.language = LanguageFactory.create(code="nl", name="Dutch")
+        ProductionTranslationFactory.create(
+            production=self.production,
+            language=self.language,
+            title="Related productie",
+            artist_name="Related maker",
+        )
+
+    def test_expected_fields_are_present(self) -> None:
+        data = RelatedProductionSerializer(self.production).data
+        assert set(data.keys()) == {"id", "title", "display_title", "artist_name", "display_artist_name", "media_gallery"}
+
+    def test_display_title_uses_base_language_fallback(self) -> None:
+        data = RelatedProductionSerializer(self.production).data
+        assert data["display_title"] == "Related productie"
+
+
+class TestRelatedTagSerializerFields(TestCase):
+    """Verify the compact tag serializer used for related productions."""
+
+    def setUp(self) -> None:
+        self.tag = TagFactory.create(type="theme")
+
+    def test_expected_fields_are_present(self) -> None:
+        data = RelatedTagSerializer(self.tag).data
+        assert set(data.keys()) == {"id", "name", "display_name"}
+
+
+class TestProductionSerializerRelated(TestCase):
+    """Cover the related-production fallback and deduplication logic."""
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        self.language = LanguageFactory.create(code="nl", name="Dutch")
+        ProductionTranslationFactory.create(
+            production=self.production,
+            language=self.language,
+            title="Hoofdproductie",
+            artist_name="Hoofdmaker",
+        )
+        self.tag = TagFactory.create(type="theme")
+        self.production.tags.add(self.tag)
+
+        self.related_production = ProductionFactory.create()
+        ProductionTranslationFactory.create(
+            production=self.related_production,
+            language=self.language,
+            title="Gerelateerde productie",
+            artist_name="Gerelateerde maker",
+        )
+        self.related_production.tags.add(self.tag)
+
+    def test_related_falls_back_to_live_tags_and_deduplicates_rows(self) -> None:
+        class FakeQueryset:
+            def __init__(self, rows):
+                self.rows = rows
+
+            def exclude(self, **_kwargs):
+                return self
+
+            def select_related(self, *_args, **_kwargs):
+                return self
+
+            def prefetch_related(self, *_args, **_kwargs):
+                return self
+
+            def order_by(self, *_args, **_kwargs):
+                return self
+
+            def __iter__(self):
+                return iter(self.rows)
+
+        duplicate_rows = [
+            SimpleNamespace(production=self.related_production, tag_id=self.tag.id),
+            SimpleNamespace(production=self.related_production, tag_id=self.tag.id),
+        ]
+
+        with patch("apps.productions.serializers.ProductionTag.objects.filter", return_value=FakeQueryset(duplicate_rows)):
+            data = ProductionSerializer(self.production, context={"include": {"related"}}).data
+
+        assert "related" in data
+        assert len(data["related"]) == 1
+        assert data["related"][0]["tag"]["id"] == self.tag.id
+        assert len(data["related"][0]["productions"]) == 1
+        assert data["related"][0]["productions"][0]["id"] == self.related_production.id
 
 
 # ---------------------------------------------------------------------------
