@@ -1,9 +1,10 @@
 import { getTranslatedRecord } from '../../utils/translations'
+import type { ChipLabels, GenreAndTagChipType } from '../../types/GenreAndTagChip'
 
 /**
  * Maps chip type to the query key used by filter URLs.
  */
-export const getQueryKeyForChipType = (chipType: 'genre' | 'seriesTag'): 'g' | 't' => {
+export const getQueryKeyForChipType = (chipType: GenreAndTagChipType): 'g' | 't' => {
   if (chipType === 'genre') {
     return 'g'
   }
@@ -21,7 +22,7 @@ export const resolveChipLabel = ({
   language,
 }: {
   fallback: string
-  labels?: Record<string, string>
+  labels: ChipLabels
   language: string
 }): string => {
   return getTranslatedRecord(labels, language, fallback)

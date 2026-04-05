@@ -33,7 +33,7 @@ const parseTokenList = (value: string | null): string[] => {
 /**
  * Converts array tokens to number IDs and removes invalid values.
  */
-const parseGenres = (values: string[]): number[] => {
+const parseNumericIds = (values: string[]): number[] => {
   return values.map((part) => Number(part)).filter((part) => Number.isFinite(part))
 }
 
@@ -138,7 +138,7 @@ type UpdateSearchParamsInput = {
   sortDirection?: SearchSortDirection
   view?: SearchViewMode
   genres?: number[]
-  tags?: string[]
+  tags?: number[]
 }
 
 type UseSearchBarUrlStateOptions = {
@@ -151,13 +151,13 @@ export type SearchBarUrlState = {
   sortDirection: SearchSortDirection
   viewMode: SearchViewMode
   selectedGenreIds: number[]
-  selectedSeriesTagIds: string[]
+  selectedSeriesTagIds: number[]
   setSearchValue: (value: string) => void
   setSortTarget: (value: SearchSortTarget) => void
   setSortDirection: (value: SearchSortDirection) => void
   setViewMode: (value: SearchViewMode) => void
   toggleGenreId: (id: number) => void
-  toggleSeriesTagId: (id: string) => void
+  toggleSeriesTagId: (id: number) => void
 }
 
 export const useSearchBarUrlState = ({
@@ -172,8 +172,8 @@ export const useSearchBarUrlState = ({
   const viewMode: SearchViewMode = isMobile ? DEFAULT_SEARCH_VIEW_MODE : parsedViewMode
   const genreParamValues = [...readMultiParamValues(searchParams, PARAM_GENRES)]
   const tagParamValues = [...readMultiParamValues(searchParams, PARAM_TAGS)]
-  const selectedGenreIds = parseGenres(genreParamValues)
-  const selectedSeriesTagIds = tagParamValues
+  const selectedGenreIds = parseNumericIds(genreParamValues)
+  const selectedSeriesTagIds = parseNumericIds(tagParamValues)
 
   const updateSearchParams = useCallback(
     ({
@@ -270,7 +270,7 @@ export const useSearchBarUrlState = ({
     setViewMode: (value: SearchViewMode) => updateSearchParams({ view: value }),
     toggleGenreId: (id: number) =>
       updateSearchParams({ genres: toggleArrayValue(selectedGenreIds, id) }),
-    toggleSeriesTagId: (id: string) =>
+    toggleSeriesTagId: (id: number) =>
       updateSearchParams({ tags: toggleArrayValue(selectedSeriesTagIds, id) }),
   }
 }
