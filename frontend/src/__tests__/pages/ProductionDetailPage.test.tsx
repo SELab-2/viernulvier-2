@@ -191,7 +191,7 @@ describe('ProductionDetailPage', () => {
       first_event_start: null,
       last_event_end: null,
     } as Production
-
+    
     mockedGetProduction.mockResolvedValue(productionData as Production)
 
     renderPage()
@@ -249,6 +249,8 @@ describe('ProductionDetailPage', () => {
       uit_database_type: null,
       performer_type: 'group',
       attendance_mode: 'offline',
+      first_event_start: null,
+      last_event_end: null,
     } as Production
 
     mockedGetProduction.mockResolvedValue(productionData)
