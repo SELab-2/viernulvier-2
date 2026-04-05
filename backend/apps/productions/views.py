@@ -14,7 +14,7 @@ The 'Accept-Language' header is not used for filtering these fields,
 allowing consumers to access all languages in a single request.
 """
 
-from django.db.models import Prefetch
+from django.db.models import Max, Min, Prefetch
 from django.http import HttpRequest
 from drf_spectacular.utils import extend_schema
 
@@ -90,38 +90,45 @@ class ProductionViewSet(ApiModelViewSet):
     """
 
     serializer_class = ProductionSerializer
-    queryset = Production.objects.select_related(
-        "uit_database_theme",
-        "uit_database_type",
-        "media_gallery",
-    ).prefetch_related(
-        "translations__language",
-        Prefetch(
-            "productiongenre_set",
-            queryset=ProductionGenre.objects.select_related("genre").order_by("position"),
-            to_attr="prefetched_production_genres",
-        ),
-        Prefetch(
-            "productiontag_set",
-            queryset=ProductionTag.objects.select_related("tag")
-            .prefetch_related(
-                "translations__language",
-                "tag__translations__language",
-            )
-            .order_by("tag__type", "id"),
-            to_attr="prefetched_production_tags",
-        ),
-        Prefetch(
-            "media_gallery__media_items",
-            queryset=MediaItem.objects.prefetch_related(
-                "translations__language",
-                "crops",
-            ).order_by("position"),
-        ),
+    queryset = (
+        Production.objects.select_related(
+            "uit_database_theme",
+            "uit_database_type",
+            "media_gallery",
+        )
+        .prefetch_related(
+            "translations__language",
+            Prefetch(
+                "productiongenre_set",
+                queryset=ProductionGenre.objects.select_related("genre").order_by("position"),
+                to_attr="prefetched_production_genres",
+            ),
+            Prefetch(
+                "productiontag_set",
+                queryset=ProductionTag.objects.select_related("tag")
+                .prefetch_related(
+                    "translations__language",
+                    "tag__translations__language",
+                )
+                .order_by("tag__type", "id"),
+                to_attr="prefetched_production_tags",
+            ),
+            Prefetch(
+                "media_gallery__media_items",
+                queryset=MediaItem.objects.prefetch_related(
+                    "translations__language",
+                    "crops",
+                ).order_by("position"),
+            ),
+        )
+        .annotate(  # For filtering and ordering by event dates without extra queries
+            first_event_start=Min("events__starts_at"),
+            last_event_end=Max("events__ends_at"),
+        )
     )
 
     filterset_class = ProductionFilter
-    ordering_fields = ["id", "attendance_mode", "performer_type"]
+    ordering_fields = ["id", "attendance_mode", "performer_type", "first_event_start", "last_event_end"]
     ordering = ["-id"]
     search_fields = [
         "translations__title",

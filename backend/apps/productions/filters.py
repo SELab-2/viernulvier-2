@@ -70,6 +70,18 @@ class ProductionFilter(BaseModelFilter):
         label="Translated artist name contains",
         distinct=True,
     )
+    first_event_start_after = django_filters.IsoDateTimeFilter(
+        field_name="events__starts_at",
+        lookup_expr="gte",
+        label="Has an event starting on or after (ISO 8601)",
+        distinct=True,
+    )
+    first_event_start_before = django_filters.IsoDateTimeFilter(
+        field_name="events__starts_at",
+        lookup_expr="lte",
+        label="Has an event starting on or before (ISO 8601)",
+        distinct=True,
+    )
 
     def filter_has_media(self, queryset: Production, _name: str, value: bool) -> Production:
         """Filter productions by whether they have a media gallery assigned."""
@@ -88,4 +100,6 @@ class ProductionFilter(BaseModelFilter):
             "tag",
             "has_media",
             "external_id",
+            "first_event_start_after",
+            "first_event_start_before",
         ]
