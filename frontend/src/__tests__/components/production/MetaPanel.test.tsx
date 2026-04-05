@@ -68,6 +68,8 @@ describe('MetaPanel component', () => {
     uit_database_type: { id: 1, name: 'Type' },
     performer_type: 'group',
     attendance_mode: 'offline',
+    first_event_start: null,
+    last_event_end: null,
   }
 
   it('renders production meta panel with production data', () => {
