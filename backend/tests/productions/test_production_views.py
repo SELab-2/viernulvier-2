@@ -18,6 +18,9 @@ Covers:
 - Translations are prefetched (N+1 guard)
 """
 
+from datetime import UTC, datetime
+
+from django.db.models import Min
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
@@ -116,6 +119,8 @@ class TestProductionViewSetList(TestCase):
             "id",
             "attendance_mode",
             "performer_type",
+            "first_event_start",
+            "last_event_end",
             "media_gallery",
             "uit_database_theme",
             "uit_database_type",
@@ -179,6 +184,33 @@ class TestProductionViewSetDetail(TestCase):
     def test_detail_returns_404_for_nonexistent_id(self) -> None:
         response = self.client.get("/api/v1/productions/99999999/", **pub_headers())
         assert response.status_code == 404
+
+    def test_retrieve_with_include_related_no_n_plus_one(self) -> None:
+        """Related productions + hun translations mogen geen N+1 veroorzaken."""
+        nl = LanguageFactory.create(code="nl", name="Dutch")
+        tag = TagFactory.create(type="theme")
+        ProductionTagFactory.create(production=self.production, tag=tag)
+
+        for _ in range(5):
+            related = ProductionFactory.create()
+            ProductionTranslationFactory.create(
+                production=related,
+                language=nl,
+                title="Gerelateerde titel",
+                artist_name="",
+                tagline="",
+                teaser="",
+                description="",
+            )
+            ProductionTagFactory.create(production=related, tag=tag)
+
+        with self.assertNumQueries(11):
+            response = self.client.get(
+                f"/api/v1/productions/{self.production.id}/?include=related",
+                **pub_headers(),
+            )
+        assert response.status_code == 200
+        assert len(response.data["related"][0]["productions"]) == 5
 
 
 # ---------------------------------------------------------------------------
@@ -434,6 +466,54 @@ class TestProductionViewSetResponseStructure(TestCase):
         assert "production_id" not in nested_event
         assert "production_display" not in nested_event
 
+    def test_retrieve_with_include_related_contains_related_field(self) -> None:
+        """related field is present in response when ?include=related is set."""
+        response = self.client.get(
+            f"/api/v1/productions/{self.production.id}/?include=related",
+            **pub_headers(),
+        )
+        assert response.status_code == 200
+        assert "related" in response.data
+
+    def test_retrieve_without_include_excludes_related_field(self) -> None:
+        """related field is absent from response when ?include=related is not set."""
+        response = self.client.get(f"/api/v1/productions/{self.production.id}/", **pub_headers())
+        assert response.status_code == 200
+        assert "related" not in response.data
+
+    def test_retrieve_with_include_related_groups_productions_by_tag(self) -> None:
+        """related groups productions per tag and excludes the current production."""
+        tag = TagFactory.create(type="theme")
+        other_a = ProductionFactory.create()
+        other_b = ProductionFactory.create()
+        ProductionTagFactory.create(production=self.production, tag=tag)
+        ProductionTagFactory.create(production=other_a, tag=tag)
+        ProductionTagFactory.create(production=other_b, tag=tag)
+
+        response = self.client.get(
+            f"/api/v1/productions/{self.production.id}/?include=related",
+            **pub_headers(),
+        )
+
+        assert response.status_code == 200
+        assert len(response.data["related"]) == 1
+
+        related_group = response.data["related"][0]
+        assert set(related_group["tag"].keys()) == {"id", "name", "display_name"}
+        assert related_group["tag"]["id"] == tag.id
+        related_ids = [item["id"] for item in related_group["productions"]]
+        assert self.production.id not in related_ids
+        assert other_a.id in related_ids
+        assert other_b.id in related_ids
+        assert set(related_group["productions"][0].keys()) == {
+            "id",
+            "title",
+            "display_title",
+            "artist_name",
+            "display_artist_name",
+            "media_gallery",
+        }
+
 
 # ---------------------------------------------------------------------------
 # N+1 guard - prefetch translations
@@ -551,3 +631,151 @@ class TestProductionViewSetTagTranslationPrefetch(TestCase):
             for tag in item["tags"]:
                 assert "nl" in tag["description"]
                 assert "en" in tag["description"]
+
+
+def _dt(year, month, day, hour=0):
+    return datetime(year, month, day, hour, tzinfo=UTC)
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestProductionEventDateFieldsInResponse(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        Production.objects.all().delete()
+        self.production = ProductionFactory.create()
+        EventFactory.create(production=self.production, starts_at=_dt(2025, 9, 15), ends_at=_dt(2025, 9, 15, 22))
+
+    def test_list_contains_first_event_start(self) -> None:
+        response = self.client.get("/api/v1/productions/", **pub_headers())
+        assert "first_event_start" in response.data["results"][0]
+
+    def test_list_contains_last_event_end(self) -> None:
+        response = self.client.get("/api/v1/productions/", **pub_headers())
+        assert "last_event_end" in response.data["results"][0]
+
+    def test_detail_contains_first_event_start(self) -> None:
+        response = self.client.get(f"/api/v1/productions/{self.production.pk}/", **pub_headers())
+        assert "first_event_start" in response.data
+
+    def test_detail_contains_last_event_end(self) -> None:
+        response = self.client.get(f"/api/v1/productions/{self.production.pk}/", **pub_headers())
+        assert "last_event_end" in response.data
+
+    def test_list_first_event_start_value_is_correct(self) -> None:
+        item = self.client.get("/api/v1/productions/", **pub_headers()).data["results"][0]
+        parsed = datetime.fromisoformat(item["first_event_start"])
+        assert parsed == _dt(2025, 9, 15)
+
+    def test_list_last_event_end_value_is_correct(self) -> None:
+        item = self.client.get("/api/v1/productions/", **pub_headers()).data["results"][0]
+        parsed = datetime.fromisoformat(item["last_event_end"])
+        assert parsed == _dt(2025, 9, 15, 22)
+
+    def test_list_fields_are_null_without_events(self) -> None:
+        Production.objects.all().delete()
+        ProductionFactory.create()
+        item = self.client.get("/api/v1/productions/", **pub_headers()).data["results"][0]
+        assert item["first_event_start"] is None
+        assert item["last_event_end"] is None
+
+    def test_patch_with_first_event_start_is_ignored(self) -> None:
+        self.client.patch(
+            f"/api/v1/productions/{self.production.pk}/",
+            {"first_event_start": "2099-01-01T00:00:00Z"},
+            **int_headers(),
+        )
+
+        val = (
+            Production.objects.annotate(first_event_start=Min("events__starts_at"))
+            .get(pk=self.production.pk)
+            .first_event_start
+        )
+        assert val == _dt(2025, 9, 15)  # onveranderd
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestProductionEventDateOrdering(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        Production.objects.all().delete()
+        self.p1 = ProductionFactory.create()
+        self.p2 = ProductionFactory.create()
+        self.p3 = ProductionFactory.create()
+        EventFactory.create(production=self.p1, starts_at=_dt(2025, 3, 1), ends_at=_dt(2025, 3, 1, 20))
+        EventFactory.create(production=self.p2, starts_at=_dt(2025, 1, 1), ends_at=_dt(2025, 12, 31, 23))
+        EventFactory.create(production=self.p3, starts_at=_dt(2025, 6, 1), ends_at=_dt(2025, 6, 1, 18))
+
+    def _ids(self, ordering):
+        response = self.client.get("/api/v1/productions/", {"ordering": ordering}, **pub_headers())
+        return [r["id"] for r in response.data["results"]]
+
+    def test_order_by_first_event_start_ascending(self) -> None:
+        assert self._ids("first_event_start") == [self.p2.pk, self.p1.pk, self.p3.pk]
+
+    def test_order_by_first_event_start_descending(self) -> None:
+        assert self._ids("-first_event_start") == [self.p3.pk, self.p1.pk, self.p2.pk]
+
+    def test_order_by_last_event_end_ascending(self) -> None:
+        assert self._ids("last_event_end") == [self.p1.pk, self.p3.pk, self.p2.pk]
+
+    def test_order_by_last_event_end_descending(self) -> None:
+        assert self._ids("-last_event_end") == [self.p2.pk, self.p3.pk, self.p1.pk]
+
+    def test_ordering_returns_200(self) -> None:
+        assert self.client.get("/api/v1/productions/", {"ordering": "first_event_start"}, **pub_headers()).status_code == 200
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestProductionEventDateFilterViaApi(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        Production.objects.all().delete()
+        self.early = ProductionFactory.create()
+        self.late = ProductionFactory.create()
+        EventFactory.create(production=self.early, starts_at=_dt(2025, 1, 10), ends_at=_dt(2025, 1, 10, 22))
+        EventFactory.create(production=self.late, starts_at=_dt(2025, 10, 10), ends_at=_dt(2025, 10, 10, 22))
+
+    def _results(self, params):
+        return self.client.get("/api/v1/productions/", params, **pub_headers()).data["results"]
+
+    def test_after_filter_returns_one_result(self) -> None:
+        assert len(self._results({"first_event_start_after": "2025-06-01T00:00:00Z"})) == 1
+
+    def test_after_filter_returns_correct_production(self) -> None:
+        assert self._results({"first_event_start_after": "2025-06-01T00:00:00Z"})[0]["id"] == self.late.pk
+
+    def test_before_filter_returns_one_result(self) -> None:
+        assert len(self._results({"first_event_start_before": "2025-06-01T00:00:00Z"})) == 1
+
+    def test_before_filter_returns_correct_production(self) -> None:
+        assert self._results({"first_event_start_before": "2025-06-01T00:00:00Z"})[0]["id"] == self.early.pk
+
+    def test_impossible_range_returns_empty(self) -> None:
+        assert (
+            self._results(
+                {
+                    "first_event_start_after": "2025-08-01T00:00:00Z",
+                    "first_event_start_before": "2025-04-01T00:00:00Z",
+                }
+            )
+            == []
+        )
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestProductionEventDateAnnotationNPlusOne(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        Production.objects.all().delete()
+        for _ in range(5):
+            p = ProductionFactory.create()
+            EventFactory.create(production=p, starts_at=_dt(2025, 1, 1), ends_at=_dt(2025, 6, 1))
+            EventFactory.create(production=p, starts_at=_dt(2025, 3, 1), ends_at=_dt(2025, 9, 1))
+
+    def test_annotation_does_not_add_queries(self) -> None:
+        with self.assertNumQueries(6):
+            response = self.client.get("/api/v1/productions/", **pub_headers())
+        assert response.status_code == 200
+        for item in response.data["results"]:
+            assert item["first_event_start"] is not None
+            assert item["last_event_end"] is not None

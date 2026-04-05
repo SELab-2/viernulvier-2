@@ -16,15 +16,24 @@ Covers:
 - ProductionSerializer inherits from TranslatableSerializerMixin
 """
 
+from datetime import UTC, datetime
+from types import SimpleNamespace
+from unittest.mock import patch
+
+from django.db.models import Max, Min
 from django.test import TestCase
 
 from apps.core.serializers import TranslatableSerializerMixin
+from apps.productions.models import Production
 from apps.productions.serializers import (
     ProductionSerializer,
     ProductionTagSerializer,
+    RelatedProductionSerializer,
+    RelatedTagSerializer,
     UitDatabaseThemeSerializer,
     UitDatabaseTypeSerializer,
 )
+from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.media_library import MediaGalleryFactory
 from tests.factories.production import (
@@ -131,6 +140,8 @@ class TestProductionSerializerFields(TestCase):
             "id",
             "attendance_mode",
             "performer_type",
+            "first_event_start",
+            "last_event_end",
             "media_gallery",
             "uit_database_theme",
             "uit_database_type",
@@ -145,6 +156,98 @@ class TestProductionSerializerFields(TestCase):
             "display_artist_name",
         }
         assert set(data.keys()) == expected
+
+
+class TestRelatedProductionSerializerFields(TestCase):
+    """Verify the compact serializer used for related productions."""
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        self.language = LanguageFactory.create(code="nl", name="Dutch")
+        ProductionTranslationFactory.create(
+            production=self.production,
+            language=self.language,
+            title="Related productie",
+            artist_name="Related maker",
+        )
+
+    def test_expected_fields_are_present(self) -> None:
+        data = RelatedProductionSerializer(self.production).data
+        assert set(data.keys()) == {"id", "title", "display_title", "artist_name", "display_artist_name", "media_gallery"}
+
+    def test_display_title_uses_base_language_fallback(self) -> None:
+        data = RelatedProductionSerializer(self.production).data
+        assert data["display_title"] == "Related productie"
+
+
+class TestRelatedTagSerializerFields(TestCase):
+    """Verify the compact tag serializer used for related productions."""
+
+    def setUp(self) -> None:
+        self.tag = TagFactory.create(type="theme")
+
+    def test_expected_fields_are_present(self) -> None:
+        data = RelatedTagSerializer(self.tag).data
+        assert set(data.keys()) == {"id", "name", "display_name"}
+
+
+class TestProductionSerializerRelated(TestCase):
+    """Cover the related-production fallback and deduplication logic."""
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        self.language = LanguageFactory.create(code="nl", name="Dutch")
+        ProductionTranslationFactory.create(
+            production=self.production,
+            language=self.language,
+            title="Hoofdproductie",
+            artist_name="Hoofdmaker",
+        )
+        self.tag = TagFactory.create(type="theme")
+        self.production.tags.add(self.tag)
+
+        self.related_production = ProductionFactory.create()
+        ProductionTranslationFactory.create(
+            production=self.related_production,
+            language=self.language,
+            title="Gerelateerde productie",
+            artist_name="Gerelateerde maker",
+        )
+        self.related_production.tags.add(self.tag)
+
+    def test_related_falls_back_to_live_tags_and_deduplicates_rows(self) -> None:
+        class FakeQueryset:
+            def __init__(self, rows):
+                self.rows = rows
+
+            def exclude(self, **_kwargs):
+                return self
+
+            def select_related(self, *_args, **_kwargs):
+                return self
+
+            def prefetch_related(self, *_args, **_kwargs):
+                return self
+
+            def order_by(self, *_args, **_kwargs):
+                return self
+
+            def __iter__(self):
+                return iter(self.rows)
+
+        duplicate_rows = [
+            SimpleNamespace(production=self.related_production, tag_id=self.tag.id),
+            SimpleNamespace(production=self.related_production, tag_id=self.tag.id),
+        ]
+
+        with patch("apps.productions.serializers.ProductionTag.objects.filter", return_value=FakeQueryset(duplicate_rows)):
+            data = ProductionSerializer(self.production, context={"include": {"related"}}).data
+
+        assert "related" in data
+        assert len(data["related"]) == 1
+        assert data["related"][0]["tag"]["id"] == self.tag.id
+        assert len(data["related"][0]["productions"]) == 1
+        assert data["related"][0]["productions"][0]["id"] == self.related_production.id
 
 
 # ---------------------------------------------------------------------------
@@ -565,3 +668,69 @@ class TestProductionSerializerTagsMultipleTags(TestCase):
 
         assert tags_data[tag_a.id]["description"]["nl"] == "Beschrijving A."
         assert tags_data[tag_b.id]["description"] == {}
+
+
+# ---------------------------------------------------------------------------
+# ProductionSerializer - first_event_start / last_event_end
+# ---------------------------------------------------------------------------
+
+
+def _dt(year, month, day, hour=0):
+    return datetime(year, month, day, hour, tzinfo=UTC)
+
+
+def _annotated(production):
+    qs = Production.objects.annotate(
+        first_event_start=Min("events__starts_at"),
+        last_event_end=Max("events__ends_at"),
+    )
+    return ProductionSerializer(qs.get(pk=production.pk)).data
+
+
+class TestProductionSerializerEventDateFieldsEmpty(TestCase):
+    """Both fields are null when the production has no linked events."""
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+
+    def test_first_event_start_is_null_without_events(self) -> None:
+        assert _annotated(self.production)["first_event_start"] is None
+
+    def test_last_event_end_is_null_without_events(self) -> None:
+        assert _annotated(self.production)["last_event_end"] is None
+
+    def test_first_event_start_key_is_present(self) -> None:
+        assert "first_event_start" in _annotated(self.production)
+
+    def test_last_event_end_key_is_present(self) -> None:
+        assert "last_event_end" in _annotated(self.production)
+
+
+class TestProductionSerializerEventDateFieldsPopulated(TestCase):
+    """Fields reflect min(starts_at) and max(ends_at) over all linked events."""
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        EventFactory.create(production=self.production, starts_at=_dt(2025, 9, 20), ends_at=_dt(2025, 9, 20, 22))
+        EventFactory.create(production=self.production, starts_at=_dt(2025, 9, 15), ends_at=_dt(2025, 9, 15, 21))
+        EventFactory.create(production=self.production, starts_at=_dt(2025, 11, 1), ends_at=_dt(2025, 11, 1, 23))
+        self.data = _annotated(self.production)
+
+    def _parse(self, value):
+        return datetime.fromisoformat(value)
+
+    def test_first_event_start_is_the_earliest_starts_at(self) -> None:
+        assert self._parse(self.data["first_event_start"]) == _dt(2025, 9, 15)
+
+    def test_last_event_end_is_the_latest_ends_at(self) -> None:
+        assert self._parse(self.data["last_event_end"]) == _dt(2025, 11, 1, 23)
+
+    def test_first_event_start_is_not_the_last_inserted(self) -> None:
+        assert self._parse(self.data["first_event_start"]) != _dt(2025, 11, 1)
+
+    def test_timestamps_are_iso8601_strings(self) -> None:
+        for field in ("first_event_start", "last_event_end"):
+            value = self.data[field]
+            assert isinstance(value, str)
+            parsed = datetime.fromisoformat(value)
+            assert parsed.tzinfo is not None

@@ -35,10 +35,16 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 
+class ApiKeyUser:
+    """Minimal user-like object so DRF treats API key requests as authenticated."""
+
+    is_authenticated = True
+
+
 class ApiKeyAuthentication(BaseAuthentication):
     """DRF authentication class that validates ``X-API-Key`` request headers.
 
-    On success, returns ``(None, "internal")`` or ``(None, "public")``.
+    On success, returns ``(ApiKeyUser(), "internal")`` or ``(ApiKeyUser(), "public")``.
     The second element of the tuple becomes ``request.auth`` and is used
     by :class:`~apps.core.permissions.ApiKeyPermission` to determine what
     actions the caller is allowed to perform.
@@ -53,7 +59,7 @@ class ApiKeyAuthentication(BaseAuthentication):
     header_name = "HTTP_X_API_KEY"
     www_authenticate_realm = "X-API-Key"
 
-    def authenticate(self, request: Any) -> tuple[None, str] | None:
+    def authenticate(self, request: Any) -> tuple[ApiKeyUser, str] | None:
         """Read the ``X-API-Key`` header and validate the API key.
 
         Steps
@@ -68,8 +74,8 @@ class ApiKeyAuthentication(BaseAuthentication):
         5. Raise ``AuthenticationFailed`` if neither key matches.
 
         Returns:
-            ``(None, "internal")`` for a valid internal key.
-            ``(None, "public")`` for a valid public key.
+            ``(ApiKeyUser(), "internal")`` for a valid internal key.
+            ``(ApiKeyUser(), "public")`` for a valid public key.
             ``None`` if no ``X-API-Key`` header is present.
 
         Raises:
@@ -99,11 +105,11 @@ class ApiKeyAuthentication(BaseAuthentication):
 
         # Check against INTERNAL_API_KEY first (grants full access).
         if internal_key and secrets.compare_digest(key_bytes, internal_key.encode("utf-8")):
-            return (None, "internal")
+            return (ApiKeyUser(), "internal")
 
         # Check against PUBLIC_API_KEY (grants read-only access).
         if public_key and secrets.compare_digest(key_bytes, public_key.encode("utf-8")):
-            return (None, "public")
+            return (ApiKeyUser(), "public")
 
         # No match - reject the request.
         raise AuthenticationFailed("Invalid API key.")

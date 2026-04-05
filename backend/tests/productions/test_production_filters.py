@@ -2,6 +2,8 @@
 Tests for apps/productions/filters.py and apps/productions/views.py.
 """
 
+from datetime import UTC, datetime
+
 from django.test import TestCase, override_settings
 from django.urls import reverse
 import pytest
@@ -9,6 +11,7 @@ from rest_framework.test import APIClient
 
 from apps.productions.filters import ProductionFilter
 from apps.productions.models import Production
+from tests.factories.event import EventFactory
 from tests.factories.genre import GenreFactory, GenreUseAsFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.media_library import MediaGalleryFactory
@@ -296,3 +299,106 @@ class TestProductionViewSet(TestCase):
         response = self.client.get(self.list_url(), {"search": "Toneelschuur"}, **pub_headers())
         results = response.data.get("results", response.data)
         assert len(results) == 1
+
+
+def _dt(year, month, day, hour=0):
+    return datetime(year, month, day, hour, tzinfo=UTC)
+
+
+class TestProductionFilterFirstEventStartAfter:
+    """First event start date filters for ProductionFilter."""
+
+    def _qs(self, params):
+        return ProductionFilter(params, queryset=Production.objects.all()).qs
+
+    def setup_method(self):
+        Production.objects.all().delete()
+        self.early = ProductionFactory()
+        self.late = ProductionFactory()
+        EventFactory(production=self.early, starts_at=_dt(2025, 1, 1), ends_at=_dt(2025, 1, 1, 22))
+        EventFactory(production=self.late, starts_at=_dt(2025, 9, 1), ends_at=_dt(2025, 9, 1, 22))
+
+    def test_after_cutoff_excludes_early_production(self) -> None:
+        assert self.early not in self._qs({"first_event_start_after": "2025-06-01T00:00:00Z"})
+
+    def test_after_cutoff_includes_late_production(self) -> None:
+        assert self.late in self._qs({"first_event_start_after": "2025-06-01T00:00:00Z"})
+
+    def test_exact_boundary_is_inclusive(self) -> None:
+        assert self.late in self._qs({"first_event_start_after": "2025-09-01T00:00:00Z"})
+
+    def test_future_cutoff_returns_empty(self) -> None:
+        assert self._qs({"first_event_start_after": "2030-01-01T00:00:00Z"}).count() == 0
+
+    def test_past_cutoff_returns_both(self) -> None:
+        assert self._qs({"first_event_start_after": "2020-01-01T00:00:00Z"}).count() == 2
+
+    def test_production_without_events_is_excluded(self) -> None:
+        no_event = ProductionFactory()
+        assert no_event not in self._qs({"first_event_start_after": "2020-01-01T00:00:00Z"})
+
+
+class TestProductionFilterFirstEventStartBefore:
+    """First_event_start_before must hold only productions with an event on or before the timestamp."""
+
+    def _qs(self, params):
+        return ProductionFilter(params, queryset=Production.objects.all()).qs
+
+    def setup_method(self):
+        Production.objects.all().delete()
+        self.early = ProductionFactory()
+        self.late = ProductionFactory()
+        EventFactory(production=self.early, starts_at=_dt(2025, 1, 1), ends_at=_dt(2025, 1, 1, 22))
+        EventFactory(production=self.late, starts_at=_dt(2025, 9, 1), ends_at=_dt(2025, 9, 1, 22))
+
+    def test_before_cutoff_excludes_late_production(self) -> None:
+        assert self.late not in self._qs({"first_event_start_before": "2025-06-01T00:00:00Z"})
+
+    def test_before_cutoff_includes_early_production(self) -> None:
+        assert self.early in self._qs({"first_event_start_before": "2025-06-01T00:00:00Z"})
+
+    def test_exact_boundary_is_inclusive(self) -> None:
+        assert self.early in self._qs({"first_event_start_before": "2025-01-01T00:00:00Z"})
+
+    def test_very_old_cutoff_returns_empty(self) -> None:
+        assert self._qs({"first_event_start_before": "2000-01-01T00:00:00Z"}).count() == 0
+
+    def test_future_cutoff_returns_both(self) -> None:
+        assert self._qs({"first_event_start_before": "2030-01-01T00:00:00Z"}).count() == 2
+
+    def test_production_without_events_is_excluded(self) -> None:
+        no_event = ProductionFactory()
+        assert no_event not in self._qs({"first_event_start_before": "2030-01-01T00:00:00Z"})
+
+
+class TestProductionFilterEventDateRange:
+    """After/before filters should work together to return productions with an event in the specified date range."""
+
+    def _qs(self, params):
+        return ProductionFilter(params, queryset=Production.objects.all()).qs
+
+    def setup_method(self):
+        Production.objects.all().delete()
+        self.jan = ProductionFactory()
+        self.may = ProductionFactory()
+        self.sep = ProductionFactory()
+        for prod, month in ((self.jan, 1), (self.may, 5), (self.sep, 9)):
+            EventFactory(production=prod, starts_at=_dt(2025, month, 1), ends_at=_dt(2025, month, 1, 22))
+
+    def test_range_returns_only_production_inside_window(self) -> None:
+        qs = self._qs(
+            {
+                "first_event_start_after": "2025-03-01T00:00:00Z",
+                "first_event_start_before": "2025-07-01T00:00:00Z",
+            }
+        )
+        assert list(qs) == [self.may]
+
+    def test_impossible_range_returns_empty(self) -> None:
+        qs = self._qs(
+            {
+                "first_event_start_after": "2025-08-01T00:00:00Z",
+                "first_event_start_before": "2025-04-01T00:00:00Z",
+            }
+        )
+        assert qs.count() == 0

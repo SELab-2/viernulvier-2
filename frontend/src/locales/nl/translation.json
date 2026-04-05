@@ -13,10 +13,6 @@
     "switchToLightMode": "Donkere modus",
     "switchToDarkMode": "Lichte modus"
   },
-  "listCard": {
-    "view": "Bekijk",
-    "imageAlt": "Afbeelding voor {{title}}"
-  },
   "genreChip": {
     "filterByGenre": "Filter op {{genre}}"
   },
@@ -84,6 +80,25 @@
     },
     "newsletter": {
       "cta": "blijf op de hoogte"
+    }
+  },
+  "series": {
+    "backToSeries": "Terug naar reeksen",
+    "allEditions": "Alle edities",
+    "allEditionsSubtitle": "Chronologisch overzicht van de producties binnen deze reeks.",
+    "breadcrumb": "Archief / Reeksen / {{name}}",
+    "noDescription": "Geen beschrijving beschikbaar.",
+    "noProductions": "Er zijn geen producties gekoppeld aan deze reeks.",
+    "loading": "Reeks wordt geladen...",
+    "notFound": "Reeks niet gevonden.",
+    "invalidId": "Ongeldig reeks-ID.",
+    "fetchError": "Kon de reeks niet ophalen.",
+    "untitled": "Naamloze reeks",
+    "untitledProduction": "Naamloze productie",
+    "stats": {
+      "editions": "Edities",
+      "period": "Periode",
+      "type": "Type"
     }
   }
 }

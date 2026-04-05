@@ -37,6 +37,8 @@ export interface Production {
   genres: Genre[]
   media_gallery: MediaGallery
   events?: Event[]
+  first_event_start: string | null
+  last_event_end: string | null
 }
 
 /**
