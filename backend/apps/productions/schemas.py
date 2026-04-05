@@ -142,6 +142,59 @@ _PRODUCTION_RESPONSE_WITH_EVENTS = OpenApiExample(
     response_only=True,
 )
 
+_PRODUCTION_RESPONSE_WITH_RELATED = OpenApiExample(
+    "Production - response - related",
+    summary="A production including related productions grouped by tag",
+    value={
+        "id": 1,
+        "attendance_mode": "offline",
+        "performer_type": "group",
+        "media_gallery": {"id": 706, "name": "home", "media_items": []},
+        "uit_database_theme": {"id": 3, "name": "Theater"},
+        "uit_database_type": {"id": 7, "name": "Voorstelling"},
+        "title": "De Laatste Avond",
+        "artist_name": "Collectief Morgen",
+        "tagline": "Een ode aan vergankelijkheid",
+        "teaser": "Een indringende voorstelling over verlies en hoop.",
+        "description": "Volledige beschrijving van de productie...",
+        "tags": [
+            {
+                "id": 12,
+                "type": "theme",
+                "name": "Hedendaags",
+                "url": "",
+                "source": "",
+                "source_type": "",
+                "is_external": False,
+                "is_enabled": True,
+                "short_description": None,
+                "url_title": "",
+                "description": {"nl": "Eigentijdse dans- en theaterwerken."},
+            }
+        ],
+        "genres": [{"id": 2, "type": "theater", "name": "Theater"}],
+        "related": [
+            {
+                "tag": {
+                    "id": 12,
+                    "name": "Hedendaags",
+                    "display_name": "Hedendaags",
+                },
+                "productions": [
+                    {
+                        "id": 2,
+                        "title": {"nl": "Andere productie"},
+                        "display_name": "Andere productie",
+                        "artist_name": {"nl": "Andere maker"},
+                        "media_gallery": {"id": 800, "name": "gallery-2", "media_items": []},
+                    }
+                ],
+            }
+        ],
+    },
+    response_only=True,
+)
+
 _PRODUCTION_INPUT = OpenApiExample(
     "Production - request body",
     summary="Payload for creating a new production",
@@ -193,7 +246,10 @@ _PRODUCTION_RETRIEVE = extend_schema(
         "Genres are ordered by their `position` value. "
         "Each tag exposes a `description` dictionary with per-production context notes "
         "per language; the dictionary is empty when no descriptions have been added. "
-        "Use `?include=events` to include all related events in the response."
+        "`include=related` returns productions grouped by tag, where each related tag "
+        "is compact and only exposes `id`, `name`, and `display_name`. "
+        "Use `?include=events` to include all related events in the response, or "
+        "`?include=related` to include related productions grouped by tag."
     ),
     parameters=[
         OpenApiParameter(
@@ -201,15 +257,16 @@ _PRODUCTION_RETRIEVE = extend_schema(
             type=OpenApiTypes.STR,
             location=OpenApiParameter.QUERY,
             required=False,
-            description="Comma-separated list of relations to include. Accepted values: `events`.",
+            description="Comma-separated list of relations to include. Accepted values: `events`, `related`.",
             examples=[
                 OpenApiExample("No includes", value=""),
                 OpenApiExample("Include events", value="events"),
+                OpenApiExample("Include related", value="related"),
             ],
         )
     ],
     responses={200: ProductionSerializer, **ITEM_ERRORS},
-    examples=[_PRODUCTION_RESPONSE, _PRODUCTION_RESPONSE_WITH_EVENTS],
+    examples=[_PRODUCTION_RESPONSE, _PRODUCTION_RESPONSE_WITH_EVENTS, _PRODUCTION_RESPONSE_WITH_RELATED],
 )
 
 _PRODUCTION_CREATE = extend_schema(
