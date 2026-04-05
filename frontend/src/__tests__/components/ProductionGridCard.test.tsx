@@ -339,7 +339,7 @@ describe('ProductionGridCard', () => {
     expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
   })
 
-  it('does not render a genre row when every genre has display_name null', () => {
+  it('renders a genre chip when display_name is null but translated name exists', () => {
     const production = baseProduction({
       genres: [
         {
@@ -354,7 +354,7 @@ describe('ProductionGridCard', () => {
     })
     renderGridCard({ production })
 
-    expect(screen.queryByRole('button', { name: /Filter op/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filter op Zonder display' })).toBeInTheDocument()
   })
 
   it('fires onGenreClick once per chip and for each distinct genre', () => {
