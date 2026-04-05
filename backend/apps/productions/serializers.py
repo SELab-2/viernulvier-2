@@ -404,12 +404,10 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
         for row in related_rows:
             production = row.production
-            seen_for_tag = seen_production_ids.setdefault(row.tag_id, set())
-            if production.id in seen_for_tag:
+            if production.id in seen_production_ids[row.tag_id]:
                 continue
-
-            grouped_productions.setdefault(row.tag_id, []).append(production)
-            seen_for_tag.add(production.id)
+            grouped_productions[row.tag_id].append(production)
+            seen_production_ids[row.tag_id].add(production.id)
 
         related_serializer_context = {**self.context}
         result = []
