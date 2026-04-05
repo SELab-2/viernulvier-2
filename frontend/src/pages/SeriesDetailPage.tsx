@@ -5,9 +5,8 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Alert, Box, Container, Divider, Stack, Typography } from '@mui/material'
+import { Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 import SeriesHeader from '../components/series_details/SeriesHeader'
@@ -83,7 +82,6 @@ function buildProductionDescription(production: Production, language: string): s
 
 const SeriesDetailPage = () => {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const { t, i18n } = useTranslation()
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
