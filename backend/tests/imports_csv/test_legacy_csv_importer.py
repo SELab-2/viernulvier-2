@@ -1,0 +1,147 @@
+from __future__ import annotations
+
+import csv
+from datetime import UTC, datetime
+from io import StringIO
+
+from django.core.management import call_command
+import pytest
+
+from apps.events.models import Event
+from apps.import_log.models import ImportLog
+from apps.imports.csv_importer import import_legacy_csv_file
+from apps.imports.management.commands import import_legacy_csv as import_legacy_csv_command
+from apps.languages.models import Language
+from apps.locations.models import Hall
+from apps.productions.models import Production, ProductionGenre
+from tests.factories.production import ProductionFactory
+
+pytestmark = pytest.mark.django_db(transaction=True)
+
+
+def _write_csv(path, header: list[str], rows: list[list[str]]) -> None:
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(header)
+        writer.writerows(rows)
+
+
+def test_import_legacy_productions_creates_translations_and_genres(tmp_path) -> None:
+    csv_path = tmp_path / "Productions - output.csv"
+    _write_csv(
+        csv_path,
+        ["Titel", "Ondertitel", "Description1", "Description2", "Genre", "ID", "Planning ID"],
+        [
+            [
+                "Rosas",
+                "Elena's Aria",
+                "\\\n    First line\n\\\nSecond line",
+                "Credits, with comma",
+                "Party,Feest",
+                "199",
+                "legacy-3175",
+            ],
+        ],
+    )
+
+    imported = import_legacy_csv_file(csv_path)
+
+    assert imported == 1
+    log = ImportLog.objects.get(source=f"legacy_csv:{csv_path.name}")
+    assert log.status == ImportLog.Status.SUCCESS
+    assert log.records_total == 1
+    assert log.records_imported == 1
+    assert log.records_failed == 0
+
+    production = Production.objects.get(external_id="199")
+    translation = production.translations.get(language__code="nl")
+    assert translation.title == "Elena's Aria"
+    assert translation.artist_name == "Rosas"
+    assert "First line" in translation.description
+    assert "Second line" in translation.description
+    assert translation.description_extra == "Credits, with comma"
+
+    assert production.genres.count() == 2
+    assert list(
+        ProductionGenre.objects.filter(production=production).order_by("position").values_list("position", flat=True)
+    ) == [0, 1]
+
+
+def test_import_legacy_events_creates_events_and_normalizes_end_time(tmp_path) -> None:
+    production = ProductionFactory.create(external_id="5831")
+    csv_path = tmp_path / "Events - voorstellingen.csv"
+    _write_csv(
+        csv_path,
+        ["Starttime", "Endtime", "Hall", "Production"],
+        [
+            ["2006-07-01 23:00:00", "2006-07-01 06:00:00", "ICC, Van Rysselberghedreef 2", production.external_id],
+            ["2006-07-01 22:00:00", "0000-00-00 00:00:00", "Balzaal", production.external_id],
+        ],
+    )
+
+    imported = import_legacy_csv_file(csv_path)
+
+    assert imported == 2
+    log = ImportLog.objects.get(source=f"legacy_csv:{csv_path.name}")
+    assert log.status == ImportLog.Status.SUCCESS
+    assert log.records_total == 2
+    assert log.records_imported == 2
+    assert log.records_failed == 0
+
+    overnight_event = Event.objects.get(hall__translations__name="ICC, Van Rysselberghedreef 2")
+    assert overnight_event.production == production
+    assert overnight_event.starts_at == datetime(2006, 7, 1, 23, 0, tzinfo=UTC)
+    assert overnight_event.ends_at == datetime(2006, 7, 2, 6, 0, tzinfo=UTC)
+
+    open_ended_event = Event.objects.get(hall__translations__name="Balzaal")
+    assert open_ended_event.ends_at is None
+
+
+def test_import_legacy_csv_file_rejects_unknown_headers(tmp_path) -> None:
+    csv_path = tmp_path / "mystery.csv"
+    _write_csv(csv_path, ["foo", "bar"], [["1", "2"]])
+
+    with pytest.raises(ValueError, match="Unsupported legacy CSV headers"):
+        import_legacy_csv_file(csv_path)
+
+
+def test_import_legacy_csv_dry_run_has_no_side_effect_writes(tmp_path) -> None:
+    csv_path = tmp_path / "Productions - output.csv"
+    _write_csv(
+        csv_path,
+        ["Titel", "Ondertitel", "Description1", "Description2", "Genre", "ID", "Planning ID"],
+        [["Artist", "Title", "Body", "Credits", "Theater", "9001", "legacy-9001"]],
+    )
+
+    before_productions = Production.objects.count()
+    before_languages = Language.objects.count()
+    before_halls = Hall.objects.count()
+
+    imported = import_legacy_csv_file(csv_path, dry_run=True)
+
+    assert imported == 1
+    assert Production.objects.count() == before_productions
+    assert Language.objects.count() == before_languages
+    assert Hall.objects.count() == before_halls
+
+    log = ImportLog.objects.get(source=f"legacy_csv:{csv_path.name}")
+    assert log.status == ImportLog.Status.SUCCESS
+    assert log.records_total == 1
+    assert log.records_imported == 1
+    assert log.records_failed == 0
+
+
+def test_import_legacy_csv_management_command_uses_importer(monkeypatch) -> None:
+    call_args = {}
+
+    def _fake_import(*, dry_run: bool) -> int:
+        call_args["dry_run"] = dry_run
+        return 12
+
+    monkeypatch.setattr(import_legacy_csv_command, "import_bundled_legacy_csv_files", _fake_import)
+    output = StringIO()
+
+    call_command("import_legacy_csv", "--dry-run", stdout=output)
+
+    assert call_args == {"dry_run": True}
+    assert "Imported 12 legacy CSV records [DRY RUN]" in output.getvalue()
