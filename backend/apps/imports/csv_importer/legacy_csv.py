@@ -308,9 +308,13 @@ def import_legacy_csv_file(csv_path: Path | str, *, dry_run: bool = False) -> in
     raise ValueError(f"Unsupported CSV kind: {kind}")
 
 
-def import_bundled_legacy_csv_files(*, dry_run: bool = False, base_dir: Path | None = None) -> int:
+def import_bundled_legacy_csv_files(*, dry_run: bool = False, base_dir: Path | None = None, only: str | None = None) -> int:
     """Import the legacy CSV files bundled with the backend package."""
     root = base_dir or PACKAGE_ROOT
+    if only == "productions":
+        return import_legacy_csv_file(root / "Productions - output.csv", dry_run=dry_run)
+    if only == "events":
+        return import_legacy_csv_file(root / "Events - voorstellingen.csv", dry_run=dry_run)
     return sum(
         import_legacy_csv_file(root / file_name, dry_run=dry_run)
         for file_name in ("Productions - output.csv", "Events - voorstellingen.csv")
