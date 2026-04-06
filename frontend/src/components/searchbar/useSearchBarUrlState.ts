@@ -116,9 +116,8 @@ export const useSearchBarUrlState = ({
           const nextParams = new URLSearchParams(currentParams)
 
           if (q !== undefined) {
-            const normalizedQ = q.trim()
-            if (normalizedQ) {
-              nextParams.set(PARAM_QUERY, normalizedQ)
+            if (q.trim()) {
+              nextParams.set(PARAM_QUERY, q)
             } else {
               nextParams.delete(PARAM_QUERY)
             }
