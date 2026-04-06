@@ -113,7 +113,16 @@ function Carousel({
         ...((typeof sx === 'function' ? sx(theme) : sx) as object),
       })}
     >
-      <Box sx={{ position: 'relative', overflow: 'visible' }}>
+      <Box
+        sx={{
+          position: 'relative',
+          overflow: 'visible',
+          '&:hover .carousel-nav, &:focus-within .carousel-nav': {
+            opacity: 1,
+            pointerEvents: 'auto',
+          },
+        }}
+      >
         <Box
           ref={emblaRef}
           sx={{
@@ -173,6 +182,7 @@ function Carousel({
               type="button"
               aria-label={previousLabel}
               onClick={scrollPrev}
+              onPointerUp={() => (document.activeElement as HTMLElement | null)?.blur()}
               disabled={!canScrollPrev && !loop}
               className="carousel-nav"
               sx={(theme) => ({
@@ -183,20 +193,20 @@ function Carousel({
                 zIndex: 2,
                 border: `1px solid ${theme.palette.divider}`,
                 backgroundColor: theme.palette.background.paper,
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+                boxShadow: '0 0 18px rgba(0, 0, 0, 0.06)',
                 opacity: 0,
                 pointerEvents: 'none',
                 transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
                 '&:hover': {
                   backgroundColor: theme.palette.background.paper,
-                  boxShadow: '0 12px 28px rgba(0, 0, 0, 0.12)',
+                  boxShadow: '0 0 24px rgba(0, 0, 0, 0.10)',
                   transform: 'translate(-56%, -50%)',
                 },
                 '@media (hover: none)': {
                   opacity: 1,
                   pointerEvents: 'auto',
                 },
-                '.MuiBox-root:hover &,&:focus-visible': {
+                '&:focus-visible': {
                   opacity: 1,
                   pointerEvents: 'auto',
                 },
@@ -209,6 +219,7 @@ function Carousel({
               type="button"
               aria-label={nextLabel}
               onClick={scrollNext}
+              onPointerUp={() => (document.activeElement as HTMLElement | null)?.blur()}
               disabled={!canScrollNext && !loop}
               className="carousel-nav"
               sx={(theme) => ({
@@ -219,20 +230,20 @@ function Carousel({
                 zIndex: 2,
                 border: `1px solid ${theme.palette.divider}`,
                 backgroundColor: theme.palette.background.paper,
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+                boxShadow: '0 0 18px rgba(0, 0, 0, 0.06)',
                 opacity: 0,
                 pointerEvents: 'none',
                 transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
                 '&:hover': {
                   backgroundColor: theme.palette.background.paper,
-                  boxShadow: '0 12px 28px rgba(0, 0, 0, 0.12)',
+                  boxShadow: '0 0 24px rgba(0, 0, 0, 0.10)',
                   transform: 'translate(56%, -50%)',
                 },
                 '@media (hover: none)': {
                   opacity: 1,
                   pointerEvents: 'auto',
                 },
-                '.MuiBox-root:hover &,&:focus-visible': {
+                '&:focus-visible': {
                   opacity: 1,
                   pointerEvents: 'auto',
                 },
