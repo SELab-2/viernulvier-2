@@ -62,6 +62,13 @@ Dry-run mode is available:
 python manage.py import_legacy_csv --dry-run
 ```
 
+To import only one legacy dataset, use `--only`:
+
+```bash
+python manage.py import_legacy_csv --only productions
+python manage.py import_legacy_csv --only events
+```
+
 ### Sync a Specific Step
 
 To synchronize only a specific model type:

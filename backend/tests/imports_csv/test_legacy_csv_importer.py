@@ -8,8 +8,9 @@ from django.core.management import call_command
 import pytest
 
 from apps.events.models import Event
+from apps.genres.models import Genre, GenreTranslation, GenreUseAs
 from apps.import_log.models import ImportLog
-from apps.imports.csv_importer import import_legacy_csv_file
+from apps.imports.csv_importer import import_bundled_legacy_csv_files, import_legacy_csv_file
 from apps.imports.management.commands import import_legacy_csv as import_legacy_csv_command
 from apps.languages.models import Language
 from apps.locations.models import Hall
@@ -24,6 +25,10 @@ def _write_csv(path, header: list[str], rows: list[list[str]]) -> None:
         writer = csv.writer(handle)
         writer.writerow(header)
         writer.writerows(rows)
+
+
+def _write_raw_csv(path, content: str) -> None:
+    path.write_text(content, encoding="utf-8")
 
 
 def test_import_legacy_productions_creates_translations_and_genres(tmp_path) -> None:
@@ -65,6 +70,52 @@ def test_import_legacy_productions_creates_translations_and_genres(tmp_path) -> 
     assert list(
         ProductionGenre.objects.filter(production=production).order_by("position").values_list("position", flat=True)
     ) == [0, 1]
+
+
+def test_import_legacy_productions_reuses_duplicate_genres(tmp_path) -> None:
+    language, _ = Language.objects.get_or_create(code="nl", defaults={"name": "Dutch", "is_active": True})
+    genre_use_as, _ = GenreUseAs.objects.get_or_create(name="genre")
+    first_genre = Genre.objects.create(type="theater", use_as=genre_use_as)
+    GenreTranslation.objects.create(genre=first_genre, language=language, name="Theater")
+    Genre.objects.create(type="theater", use_as=genre_use_as)
+
+    csv_path = tmp_path / "Productions - output.csv"
+    _write_csv(
+        csv_path,
+        ["Titel", "Ondertitel", "Description1", "Description2", "Genre", "ID", "Planning ID"],
+        [["Rosas", "Elena's Aria", "Body", "Credits", "Theater", "200", "legacy-200"]],
+    )
+
+    imported = import_legacy_csv_file(csv_path)
+
+    assert imported == 1
+    assert Genre.objects.filter(type="theater", use_as=genre_use_as).count() == 2
+    production = Production.objects.get(external_id="200")
+    assert production.genres.count() == 1
+    assert production.genres.first().id == first_genre.id
+
+
+def test_import_legacy_productions_fails_with_missing_id(tmp_path) -> None:
+    csv_path = tmp_path / "Productions - output.csv"
+    _write_csv(
+        csv_path,
+        ["Titel", "Ondertitel", "Description1", "Description2", "Genre", "ID", "Planning ID"],
+        [
+            ["Rosas", "Valid", "Body", "Credits", "Theater", "201", "legacy-201"],
+            ["Broken", "Missing ID", "Body", "Credits", "Theater", "", ""],
+        ],
+    )
+
+    imported = import_legacy_csv_file(csv_path)
+
+    assert imported == 1
+    log = ImportLog.objects.get(source=f"legacy_csv:{csv_path.name}")
+    assert log.status == ImportLog.Status.PARTIAL_SUCCESS
+    assert log.records_total == 2
+    assert log.records_imported == 1
+    assert log.records_failed == 1
+    assert Production.objects.filter(external_id="201").exists()
+    assert not Production.objects.filter(external_id="").exists()
 
 
 def test_import_legacy_events_creates_events_and_normalizes_end_time(tmp_path) -> None:
@@ -134,8 +185,9 @@ def test_import_legacy_csv_dry_run_has_no_side_effect_writes(tmp_path) -> None:
 def test_import_legacy_csv_management_command_uses_importer(monkeypatch) -> None:
     call_args = {}
 
-    def _fake_import(*, dry_run: bool) -> int:
+    def _fake_import(*, dry_run: bool, only: str | None = None) -> int:
         call_args["dry_run"] = dry_run
+        call_args["only"] = only
         return 12
 
     monkeypatch.setattr(import_legacy_csv_command, "import_bundled_legacy_csv_files", _fake_import)
@@ -143,5 +195,80 @@ def test_import_legacy_csv_management_command_uses_importer(monkeypatch) -> None
 
     call_command("import_legacy_csv", "--dry-run", stdout=output)
 
-    assert call_args == {"dry_run": True}
+    assert call_args == {"dry_run": True, "only": None}
     assert "Imported 12 legacy CSV records [DRY RUN]" in output.getvalue()
+
+
+def test_import_legacy_csv_management_command_supports_only_productions(monkeypatch) -> None:
+    call_args = {}
+
+    def _fake_import(*, dry_run: bool, only: str | None = None) -> int:
+        call_args["dry_run"] = dry_run
+        call_args["only"] = only
+        return 7
+
+    monkeypatch.setattr(import_legacy_csv_command, "import_bundled_legacy_csv_files", _fake_import)
+    output = StringIO()
+
+    call_command("import_legacy_csv", "--only", "productions", stdout=output)
+
+    assert call_args == {"dry_run": False, "only": "productions"}
+    assert "Imported 7 legacy CSV records" in output.getvalue()
+
+
+def test_import_bundled_legacy_csv_converts_original_production_file(tmp_path) -> None:
+    original_path = tmp_path / "Productions - output-orig.csv"
+    events_path = tmp_path / "Events - voorstellingen.csv"
+
+    _write_raw_csv(
+        original_path,
+        "\n".join(
+            [
+                "Titel,Ondertitel,Description1,Description2,Genre,ID,Planning ID",
+                "Artist,Title,Body line one,Credits,Theater,301,legacy-301",
+                "\\,,,,,,",
+            ]
+        )
+        + "\n",
+    )
+    _write_csv(events_path, ["Starttime", "Endtime", "Hall", "Production"], [])
+
+    imported = import_bundled_legacy_csv_files(base_dir=tmp_path, only="productions")
+
+    assert imported == 1
+    formatted_path = tmp_path / "Productions - output.csv"
+    assert formatted_path.exists()
+
+    log = ImportLog.objects.get(source="legacy_csv:Productions - output.csv")
+    assert log.status == ImportLog.Status.SUCCESS
+    assert log.records_total == 1
+    assert log.records_imported == 1
+    assert log.records_failed == 0
+
+    production = Production.objects.get(external_id="301")
+    translation = production.translations.get(language__code="nl")
+    assert "Body line one" in translation.description
+
+
+def test_import_bundled_legacy_csv_converts_original_before_detecting_kind(tmp_path) -> None:
+    original_path = tmp_path / "Productions - output-orig.csv"
+    events_path = tmp_path / "Events - voorstellingen.csv"
+
+    _write_raw_csv(
+        original_path,
+        "\n".join(
+            [
+                "Titel,Ondertitel,Description1,Description2,Genre,ID,Planning ID",
+                "Artist,Title,Body,Credits,Theater,302,legacy-302",
+            ]
+        )
+        + "\n",
+    )
+    _write_csv(events_path, ["Starttime", "Endtime", "Hall", "Production"], [])
+
+    imported = import_bundled_legacy_csv_files(base_dir=tmp_path, only="productions", dry_run=True)
+
+    assert imported == 1
+    assert (tmp_path / "Productions - output.csv").exists()
+
+

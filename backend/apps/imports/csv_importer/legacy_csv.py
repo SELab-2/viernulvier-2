@@ -26,20 +26,14 @@ from apps.productions.models import Production, ProductionGenre, ProductionTrans
 logger = logging.getLogger(__name__)
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+LEGACY_PRODUCTION_ORIGINAL_CSV = PACKAGE_ROOT / "Productions - output-orig.csv"
 LEGACY_PRODUCTION_CSV = PACKAGE_ROOT / "Productions - output.csv"
 LEGACY_EVENT_CSV = PACKAGE_ROOT / "Events - voorstellingen.csv"
 LEGACY_LANGUAGE_CODE = "nl"
 LEGACY_LANGUAGE_NAME = "Dutch"
 LEGACY_LANGUAGE_ACTIVE = True
-LEGACY_PRODUCTION_HEADERS = {
-    "Titel",
-    "Ondertitel",
-    "Description1",
-    "Description2",
-    "Genre",
-    "ID",
-    "Planning ID",
-}
+LEGACY_PRODUCTION_FIELDNAMES = ["Titel", "Ondertitel", "Description1", "Description2", "Genre", "ID", "Planning ID"]
+LEGACY_PRODUCTION_HEADERS = set(LEGACY_PRODUCTION_FIELDNAMES)
 LEGACY_EVENT_HEADERS = {"Starttime", "Endtime", "Hall", "Production"}
 
 
@@ -84,6 +78,62 @@ def _parse_legacy_datetime(value: Any) -> Any | None:
     return parsed
 
 
+def _append_legacy_production_continuation(current_row: dict[str, Any], continuation_row: dict[str, Any]) -> None:
+    """Merge a malformed continuation row into the previous production row."""
+    chunks = [
+        _normalise_multiline_text(continuation_row.get("Titel")),
+        _normalise_multiline_text(continuation_row.get("Ondertitel")),
+        _normalise_multiline_text(continuation_row.get("Description1")),
+        _normalise_multiline_text(continuation_row.get("Description2")),
+    ]
+    continuation_text = "\n".join(chunk for chunk in chunks if chunk).strip()
+    if not continuation_text:
+        return
+
+    base = _normalise_multiline_text(current_row.get("Description1"))
+    current_row["Description1"] = f"{base}\n{continuation_text}".strip() if base else continuation_text
+
+
+def _convert_legacy_production_csv(source_path: Path, destination_path: Path) -> None:
+    """Convert the original production export into a clean CSV that can be imported directly."""
+    with source_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if not reader.fieldnames:
+            raise ValueError(f"Missing headers in {source_path.name}")
+
+        cleaned_rows: list[dict[str, Any]] = []
+        current_row: dict[str, Any] | None = None
+        for raw_row in reader:
+            row = {field: raw_row.get(field, "") for field in LEGACY_PRODUCTION_FIELDNAMES}
+            production_id = _normalise_cell(row.get("ID"))
+            if production_id:
+                if current_row is not None:
+                    cleaned_rows.append(current_row)
+                current_row = row
+                continue
+
+            if current_row is not None:
+                _append_legacy_production_continuation(current_row, row)
+
+        if current_row is not None:
+            cleaned_rows.append(current_row)
+
+    with destination_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=LEGACY_PRODUCTION_FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(cleaned_rows)
+
+
+def _resolve_production_csv_path(root: Path) -> Path:
+    """Resolve the production CSV path, converting the original raw export when available."""
+    original_path = root / LEGACY_PRODUCTION_ORIGINAL_CSV.name
+    formatted_path = root / LEGACY_PRODUCTION_CSV.name
+    if original_path.exists():
+        _convert_legacy_production_csv(original_path, formatted_path)
+        return formatted_path
+    return formatted_path
+
+
 def _ensure_language() -> Language:
     language, _ = Language.objects.get_or_create(
         code=LEGACY_LANGUAGE_CODE,
@@ -95,7 +145,20 @@ def _ensure_language() -> Language:
 def _ensure_genre(label: str, language: Language) -> Genre:
     genre_use_as, _ = GenreUseAs.objects.get_or_create(name="genre")
     genre_type = slugify(label)[:50] or label.strip().lower().replace(" ", "_")[:50] or "genre"
-    genre, _ = Genre.objects.update_or_create(type=genre_type, defaults={"use_as": genre_use_as})
+
+    translation = (
+        GenreTranslation.objects.select_related("genre")
+        .filter(language=language, name=label[:50], genre__use_as=genre_use_as)
+        .order_by("genre_id")
+        .first()
+    )
+    if translation:
+        return translation.genre
+
+    genre = Genre.objects.filter(type=genre_type, use_as=genre_use_as).order_by("id").first()
+    if genre is None:
+        genre = Genre.objects.create(type=genre_type, use_as=genre_use_as)
+
     GenreTranslation.objects.update_or_create(genre=genre, language=language, defaults={"name": label[:50]})
     return genre
 
@@ -135,10 +198,10 @@ def _event_external_id(production_id: str, starts_at: Any | None, ends_at: Any |
     return f"legacy-event:{sha256(payload.encode('utf-8')).hexdigest()}"
 
 
-def _import_legacy_production_row(row: dict[str, Any], *, dry_run: bool) -> None:
+def _import_legacy_production_row(row: dict[str, Any], *, dry_run: bool) -> bool:
     external_id = _normalise_cell(row.get("ID"))
     if not external_id:
-        raise ValueError("Missing production ID")
+        raise ValueError(f"Missing production ID in legacy CSV row: {row}")
 
     title = _normalise_cell(row.get("Ondertitel"))
     artist_name = _normalise_cell(row.get("Titel"))
@@ -147,7 +210,7 @@ def _import_legacy_production_row(row: dict[str, Any], *, dry_run: bool) -> None
     genres = _split_genres(row.get("Genre"))
 
     if dry_run:
-        return
+        return True
 
     language = _ensure_language()
     production, _ = Production.objects.update_or_create(
@@ -182,16 +245,17 @@ def _import_legacy_production_row(row: dict[str, Any], *, dry_run: bool) -> None
     )
 
     _sync_production_genres(production, genres, language)
+    return True
 
 
-def _import_legacy_event_row(row: dict[str, Any], *, dry_run: bool) -> None:
+def _import_legacy_event_row(row: dict[str, Any], *, dry_run: bool) -> bool:
     production_external_id = _normalise_cell(row.get("Production"))
     if not production_external_id:
-        raise ValueError("Missing production reference")
+        raise ValueError(f"Missing production reference in legacy event CSV row: {row}")
 
     production = Production.objects.filter(external_id=production_external_id).first()
     if production is None:
-        raise LookupError(f"Production not found for external_id={production_external_id}")
+        raise ValueError(f"Production external_id={production_external_id} not found for legacy event CSV row: {row}")
 
     starts_at = _parse_legacy_datetime(row.get("Starttime"))
     ends_at = _parse_legacy_datetime(row.get("Endtime"))
@@ -201,7 +265,7 @@ def _import_legacy_event_row(row: dict[str, Any], *, dry_run: bool) -> None:
     hall_name = _normalise_cell(row.get("Hall"))
 
     if dry_run:
-        return
+        return True
 
     language = _ensure_language()
     hall = _hall_for_name(hall_name, language)
@@ -216,6 +280,7 @@ def _import_legacy_event_row(row: dict[str, Any], *, dry_run: bool) -> None:
             "ends_at": ends_at,
         },
     )
+    return True
 
 
 def detect_legacy_csv_kind(csv_path: Path | str) -> str:
@@ -264,13 +329,14 @@ def _import_legacy_csv_file(
     for row in rows:
         try:
             with transaction.atomic():
-                row_handler(row, dry_run=dry_run)
+                saved_row = row_handler(row, dry_run=dry_run)
         except Exception as exc:  # pragma: no cover - exercised through import log assertions in tests
             errors += 1
             append_limited_error(error_messages, str(exc))
             logger.exception("Legacy CSV row import failed for %s", csv_path.name)
         else:
-            saved += 1
+            if saved_row:
+                saved += 1
 
     finalize_import_log(
         import_log=import_log,
@@ -311,11 +377,13 @@ def import_legacy_csv_file(csv_path: Path | str, *, dry_run: bool = False) -> in
 def import_bundled_legacy_csv_files(*, dry_run: bool = False, base_dir: Path | None = None, only: str | None = None) -> int:
     """Import the legacy CSV files bundled with the backend package."""
     root = base_dir or PACKAGE_ROOT
+    productions_path = _resolve_production_csv_path(root)
+
     if only == "productions":
-        return import_legacy_csv_file(root / "Productions - output.csv", dry_run=dry_run)
+        return import_legacy_csv_file(productions_path, dry_run=dry_run)
     if only == "events":
         return import_legacy_csv_file(root / "Events - voorstellingen.csv", dry_run=dry_run)
     return sum(
-        import_legacy_csv_file(root / file_name, dry_run=dry_run)
-        for file_name in ("Productions - output.csv", "Events - voorstellingen.csv")
+        import_legacy_csv_file(csv_path, dry_run=dry_run)
+        for csv_path in (productions_path, root / "Events - voorstellingen.csv")
     )
