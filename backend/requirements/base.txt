@@ -5,8 +5,8 @@ django-filter==25.2
 django-cors-headers==4.9.0
 psycopg2-binary==2.9.11
 python-dotenv==1.2.2
-requests==2.33.0
+requests==2.33.1
 bleach==6.3.0
 tqdm==4.67.3
-Pillow==12.1.1
+Pillow==12.2.0
 django-cors-headers==4.9.0
