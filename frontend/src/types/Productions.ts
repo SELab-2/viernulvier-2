@@ -39,8 +39,6 @@ export interface Production {
   tags: Tag[]
   genres: Genre[]
   events?: Event[]
-  first_event_start: string | null
-  last_event_end: string | null
 }
 
 /**
