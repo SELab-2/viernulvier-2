@@ -39,7 +39,11 @@ const ProductionListCard = ({ production, selectedGenreIds, onGenreClick }: List
     language,
     production.display_artist_name,
   )
-  const dateLabel = getProductionDateLabel(production.events, language)
+  const dateLabel = getProductionDateLabel(
+    production.first_event_start,
+    production.last_event_end,
+    language,
+  )
   const genres = production.genres.filter((genre) => genre.display_name)
 
   return (
