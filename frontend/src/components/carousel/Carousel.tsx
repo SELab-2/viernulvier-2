@@ -113,57 +113,135 @@ function Carousel({
         ...((typeof sx === 'function' ? sx(theme) : sx) as object),
       })}
     >
-      <Box
-        ref={emblaRef}
-        sx={{
-          overflow: 'hidden',
-          // Avoid tiny edge clipping on fractional viewport widths.
-          px: '2px',
-        }}
-      >
+      <Box sx={{ position: 'relative', overflow: 'visible' }}>
         <Box
-          sx={(theme) => ({
-            display: 'flex',
-            alignItems: 'stretch',
-            touchAction: 'pan-y pinch-zoom',
-            py: 1,
-            // Keep equal horizontal breathing room on both sides so edge-card hover styles are not clipped.
-            marginX: {
-              xs: theme.spacing(-0.625),
-              sm: theme.spacing(-0.75),
-              md: theme.spacing(-0.75),
-            },
-          })}
+          ref={emblaRef}
+          sx={{
+            overflow: 'hidden',
+            // Avoid tiny edge clipping on fractional viewport widths.
+            px: '2px',
+          }}
         >
-          {slides.map((slide, index) => (
-            <Box
-              key={index}
+          <Box
+            sx={(theme) => ({
+              display: 'flex',
+              alignItems: 'stretch',
+              touchAction: 'pan-y pinch-zoom',
+              py: 1,
+              // Keep equal horizontal breathing room on both sides so edge-card hover styles are not clipped.
+              marginX: {
+                xs: theme.spacing(-0.625),
+                sm: theme.spacing(-0.75),
+                md: theme.spacing(-0.75),
+              },
+            })}
+          >
+            {slides.map((slide, index) => (
+              <Box
+                key={index}
+                sx={(theme) => ({
+                  flex: '0 0 100%',
+                  minWidth: 0,
+                  paddingX: theme.spacing(0.625),
+                  [theme.breakpoints.up('sm')]: {
+                    flexBasis: '50%',
+                    paddingX: theme.spacing(0.75),
+                  },
+                  [theme.breakpoints.up('md')]: {
+                    flexBasis: '33.3333%',
+                    paddingX: theme.spacing(0.75),
+                  },
+                  [theme.breakpoints.up('lg')]: {
+                    flexBasis: '33.3333%',
+                    paddingX: theme.spacing(0.75),
+                  },
+                  [theme.breakpoints.up('xl')]: {
+                    flexBasis: '25%',
+                    paddingX: theme.spacing(0.75),
+                  },
+                })}
+              >
+                {slide}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        {showArrows ? (
+          <>
+            <IconButton
+              type="button"
+              aria-label={previousLabel}
+              onClick={scrollPrev}
+              disabled={!canScrollPrev && !loop}
+              className="carousel-nav"
               sx={(theme) => ({
-                flex: '0 0 100%',
-                minWidth: 0,
-                paddingX: theme.spacing(0.625),
-                [theme.breakpoints.up('sm')]: {
-                  flexBasis: '50%',
-                  paddingX: theme.spacing(0.75),
+                position: 'absolute',
+                top: '50%',
+                left: 0,
+                transform: 'translate(-50%, -50%)',
+                zIndex: 2,
+                border: `1px solid ${theme.palette.divider}`,
+                backgroundColor: theme.palette.background.paper,
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+                opacity: 0,
+                pointerEvents: 'none',
+                transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
+                '&:hover': {
+                  backgroundColor: theme.palette.background.paper,
+                  boxShadow: '0 12px 28px rgba(0, 0, 0, 0.12)',
+                  transform: 'translate(-56%, -50%)',
                 },
-                [theme.breakpoints.up('md')]: {
-                  flexBasis: '33.3333%',
-                  paddingX: theme.spacing(0.75),
+                '@media (hover: none)': {
+                  opacity: 1,
+                  pointerEvents: 'auto',
                 },
-                [theme.breakpoints.up('lg')]: {
-                  flexBasis: '33.3333%',
-                  paddingX: theme.spacing(0.75),
-                },
-                [theme.breakpoints.up('xl')]: {
-                  flexBasis: '25%',
-                  paddingX: theme.spacing(0.75),
+                '.MuiBox-root:hover &,&:focus-visible': {
+                  opacity: 1,
+                  pointerEvents: 'auto',
                 },
               })}
             >
-              {slide}
-            </Box>
-          ))}
-        </Box>
+              <ChevronLeftRoundedIcon />
+            </IconButton>
+
+            <IconButton
+              type="button"
+              aria-label={nextLabel}
+              onClick={scrollNext}
+              disabled={!canScrollNext && !loop}
+              className="carousel-nav"
+              sx={(theme) => ({
+                position: 'absolute',
+                top: '50%',
+                right: 0,
+                transform: 'translate(50%, -50%)',
+                zIndex: 2,
+                border: `1px solid ${theme.palette.divider}`,
+                backgroundColor: theme.palette.background.paper,
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+                opacity: 0,
+                pointerEvents: 'none',
+                transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
+                '&:hover': {
+                  backgroundColor: theme.palette.background.paper,
+                  boxShadow: '0 12px 28px rgba(0, 0, 0, 0.12)',
+                  transform: 'translate(56%, -50%)',
+                },
+                '@media (hover: none)': {
+                  opacity: 1,
+                  pointerEvents: 'auto',
+                },
+                '.MuiBox-root:hover &,&:focus-visible': {
+                  opacity: 1,
+                  pointerEvents: 'auto',
+                },
+              })}
+            >
+              <ChevronRightRoundedIcon />
+            </IconButton>
+          </>
+        ) : null}
       </Box>
 
       {hasMultipleSlides && (showArrows || showDots) ? (
@@ -218,81 +296,7 @@ function Carousel({
         </Stack>
       ) : null}
 
-      {showArrows ? (
-        <>
-          <IconButton
-            type="button"
-            aria-label={previousLabel}
-            onClick={scrollPrev}
-            disabled={!canScrollPrev && !loop}
-            className="carousel-nav"
-            sx={(theme) => ({
-              position: 'absolute',
-              top: '50%',
-              left: 0,
-              transform: 'translate(-50%, -50%)',
-              zIndex: 2,
-              border: `1px solid ${theme.palette.divider}`,
-              backgroundColor: theme.palette.background.paper,
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
-              opacity: 0,
-              pointerEvents: 'none',
-              transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
-              '&:hover': {
-                backgroundColor: theme.palette.background.paper,
-                boxShadow: '0 12px 28px rgba(0, 0, 0, 0.12)',
-                transform: 'translate(-56%, -50%)',
-              },
-              '@media (hover: none)': {
-                opacity: 1,
-                pointerEvents: 'auto',
-              },
-              '.MuiBox-root:hover &,&:focus-visible': {
-                opacity: 1,
-                pointerEvents: 'auto',
-              },
-            })}
-          >
-            <ChevronLeftRoundedIcon />
-          </IconButton>
-
-          <IconButton
-            type="button"
-            aria-label={nextLabel}
-            onClick={scrollNext}
-            disabled={!canScrollNext && !loop}
-            className="carousel-nav"
-            sx={(theme) => ({
-              position: 'absolute',
-              top: '50%',
-              right: 0,
-              transform: 'translate(50%, -50%)',
-              zIndex: 2,
-              border: `1px solid ${theme.palette.divider}`,
-              backgroundColor: theme.palette.background.paper,
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
-              opacity: 0,
-              pointerEvents: 'none',
-              transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
-              '&:hover': {
-                backgroundColor: theme.palette.background.paper,
-                boxShadow: '0 12px 28px rgba(0, 0, 0, 0.12)',
-                transform: 'translate(56%, -50%)',
-              },
-              '@media (hover: none)': {
-                opacity: 1,
-                pointerEvents: 'auto',
-              },
-              '.MuiBox-root:hover &,&:focus-visible': {
-                opacity: 1,
-                pointerEvents: 'auto',
-              },
-            })}
-          >
-            <ChevronRightRoundedIcon />
-          </IconButton>
-        </>
-      ) : null}
+      
     </Box>
   )
 }

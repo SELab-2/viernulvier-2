@@ -61,38 +61,26 @@ function getProductionHeroImageUrl(production: Production): string | null {
  *   - breadcrumb, hero image, description
  *   - metadata panel (with MetaPanel component)
  *   - events list, media gallery
- *
- * Important: no business transformations here; MetaPanel handles production meta resolution.
  */
 const ProductionDetailsPage = () => {
-  const { id } = useParams()
+  const { id } = useParams() // Get the id from the URL params (e.g. /productions/123 -> id = 123)
   const navigate = useNavigate()
   const theme = useTheme()
   const { i18n, t } = useTranslation()
   const lang = i18n.language
-  const translatorRef = useRef(t)
 
   const [prod, setProd] = useState<Production | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Keep a mutable reference to the latest translator so the data fetch effect remains id-driven.
-  useEffect(() => {
-    translatorRef.current = t
-  }, [t])
-
   // useEffect to fetch the production given the id in the URL.
   useEffect(() => {
     if (!id) return
-
     setLoading(true)
 
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
-      const errMsg = translatorRef.current(
-        'productions.detail.error.invalidId',
-        'Invalid production ID',
-      )
+      const errMsg = t('productions.detail.error.invalidId', 'Invalid production ID')
       navigate('/', {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
@@ -106,11 +94,7 @@ const ProductionDetailsPage = () => {
         const data = await getProduction(parsed, ['events', 'related'])
         setProd(data)
       } catch {
-        // The visible error message is localized, but changing locale does not retrigger the fetch.
-        const errMsg = translatorRef.current(
-          'productions.detail.error.loadFailed',
-          'Could not load production',
-        )
+        const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
         navigate('/', {
           state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
         })
