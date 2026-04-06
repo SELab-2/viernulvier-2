@@ -62,7 +62,6 @@ function Carousel({
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
   const dotsRef = useRef<HTMLDivElement | null>(null)
-  const measureRef = useRef<HTMLDivElement | null>(null)
   const [usePageCounter, setUsePageCounter] = useState(false)
 
   // Embla reports snaps per page, which keeps the dots aligned with the visible slide groups.
@@ -89,9 +88,28 @@ function Carousel({
     emblaApi.on('reInit', updateControls)
     updateControls()
 
+    const handleResize = () => {
+      const width = window.innerWidth
+      const newSlidesToScroll =
+        width >= theme.breakpoints.values.xl
+          ? 4
+          : width >= theme.breakpoints.values.lg
+          ? 3
+          : width >= theme.breakpoints.values.md
+          ? 3
+          : width >= theme.breakpoints.values.sm
+          ? 2
+          : 1
+
+      emblaApi.reInit({ align: 'start', loop, skipSnaps: true, slidesToScroll: newSlidesToScroll })
+      updateControls()
+    }
+    window.addEventListener('resize', handleResize)
+
     return () => {
       emblaApi.off('select', updateControls)
       emblaApi.off('reInit', updateControls)
+      window.removeEventListener('resize', handleResize)
     }
   }, [emblaApi, loop, slidesToScroll, updateControls])
 
@@ -100,34 +118,50 @@ function Carousel({
   const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi])
 
   useEffect(() => {
-    const measureNode = measureRef.current
+    const dotsNode = dotsRef.current
 
-    if (!measureNode || !showDots || snapCount <= 1) {
+    if (!dotsNode || !showDots || snapCount <= 1) {
       setUsePageCounter(false)
       return
     }
 
-    const evaluateWrapping = () => {
-      const buttons = Array.from(measureNode.querySelectorAll<HTMLButtonElement>('button'))
-      if (buttons.length <= 1) {
-        setUsePageCounter(false)
-        return
-      }
+    let animationFrame = 0
 
-      const firstRowTop = buttons[0].offsetTop
-      const wrapped = buttons.some((button) => button.offsetTop > firstRowTop)
-      setUsePageCounter(wrapped)
+    const evaluateWrapping = () => {
+      const containerWidth = dotsNode.clientWidth
+      const dotWidth = 11
+      const gap = 8
+      const requiredWidth = snapCount * dotWidth + Math.max(0, snapCount - 1) * gap
+      setUsePageCounter(requiredWidth > containerWidth)
     }
 
-    evaluateWrapping()
+    const scheduleEvaluate = () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame)
+      }
+      animationFrame = requestAnimationFrame(() => {
+        evaluateWrapping()
+      })
+    }
+
+    scheduleEvaluate()
 
     const observer = new ResizeObserver(() => {
-      evaluateWrapping()
+      scheduleEvaluate()
     })
-    observer.observe(measureNode)
+    observer.observe(dotsNode)
+
+    const handleResize = () => {
+      scheduleEvaluate()
+    }
+    window.addEventListener('resize', handleResize)
 
     return () => {
       observer.disconnect()
+      window.removeEventListener('resize', handleResize)
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame)
+      }
     }
   }, [showDots, snapCount, slides.length])
 
@@ -297,44 +331,6 @@ function Carousel({
           </>
         ) : null}
 
-        <Box
-          ref={measureRef}
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            visibility: 'hidden',
-            pointerEvents: 'none',
-            overflow: 'hidden',
-            width: '100%',
-          }}
-        >
-          <Box
-            component="div"
-            sx={(theme) => ({
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: theme.spacing(1),
-              alignItems: 'center',
-              width: '100%',
-            })}
-          >
-            {Array.from({ length: snapCount }).map((_, index) => (
-              <Box
-                key={index}
-                component="button"
-                type="button"
-                sx={(theme) => ({
-                  width: 11,
-                  height: 11,
-                  p: 0,
-                  border: 'none',
-                  borderRadius: 999,
-                  backgroundColor: theme.palette.divider,
-                })}
-              />
-            ))}
-          </Box>
-        </Box>
       </Box>
 
       {hasMultipleSlides && (showArrows || showDots) ? (
