@@ -1,4 +1,5 @@
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Link, Stack, Typography } from '@mui/material'
+import { Link as RouterLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { ProductionRelated, RelatedProduction, RelatedTag } from '../../types/Productions'
 import Carousel from '../carousel/Carousel'
@@ -69,9 +70,21 @@ function RelatedProductions({ lang = 'nl', related }: RelatedProductionsProps) {
 
         return (
           <Box key={entry.tag.id}>
-            <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
+            <Link
+              component={RouterLink}
+              to={`/series/${entry.tag.id}`}
+              variant="subtitle2"
+              underline="hover"
+              color="primary"
+              sx={{
+                mb: 1.5,
+                display: 'inline-flex',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
               {tagName}
-            </Typography>
+            </Link>
             <Carousel
               ariaLabel={`${t('productions.detail.related', 'Related productions')} for ${tagName}`}
               maxWidth="100%"
