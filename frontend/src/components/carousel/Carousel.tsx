@@ -4,7 +4,15 @@ import { Box, IconButton, Stack, type SxProps, type Theme } from '@mui/material'
 import { useMediaQuery, useTheme } from '@mui/material'
 import useEmblaCarousel from 'embla-carousel-react'
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
-import { Children, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  Children,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 
 export interface CarouselProps {
   children: ReactNode
@@ -53,6 +61,9 @@ function Carousel({
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
+  const dotsRef = useRef<HTMLDivElement | null>(null)
+  const measureRef = useRef<HTMLDivElement | null>(null)
+  const [usePageCounter, setUsePageCounter] = useState(false)
 
   // Embla reports snaps per page, which keeps the dots aligned with the visible slide groups.
   const snapCount =
@@ -87,6 +98,38 @@ function Carousel({
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
   const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi])
+
+  useEffect(() => {
+    const measureNode = measureRef.current
+
+    if (!measureNode || !showDots || snapCount <= 1) {
+      setUsePageCounter(false)
+      return
+    }
+
+    const evaluateWrapping = () => {
+      const buttons = Array.from(measureNode.querySelectorAll<HTMLButtonElement>('button'))
+      if (buttons.length <= 1) {
+        setUsePageCounter(false)
+        return
+      }
+
+      const firstRowTop = buttons[0].offsetTop
+      const wrapped = buttons.some((button) => button.offsetTop > firstRowTop)
+      setUsePageCounter(wrapped)
+    }
+
+    evaluateWrapping()
+
+    const observer = new ResizeObserver(() => {
+      evaluateWrapping()
+    })
+    observer.observe(measureNode)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [showDots, snapCount, slides.length])
 
   if (slides.length === 0) {
     return null
@@ -253,6 +296,45 @@ function Carousel({
             </IconButton>
           </>
         ) : null}
+
+        <Box
+          ref={measureRef}
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            visibility: 'hidden',
+            pointerEvents: 'none',
+            overflow: 'hidden',
+            width: '100%',
+          }}
+        >
+          <Box
+            component="div"
+            sx={(theme) => ({
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: theme.spacing(1),
+              alignItems: 'center',
+              width: '100%',
+            })}
+          >
+            {Array.from({ length: snapCount }).map((_, index) => (
+              <Box
+                key={index}
+                component="button"
+                type="button"
+                sx={(theme) => ({
+                  width: 11,
+                  height: 11,
+                  p: 0,
+                  border: 'none',
+                  borderRadius: 999,
+                  backgroundColor: theme.palette.divider,
+                })}
+              />
+            ))}
+          </Box>
+        </Box>
       </Box>
 
       {hasMultipleSlides && (showArrows || showDots) ? (
@@ -265,6 +347,7 @@ function Carousel({
         >
           {showDots ? (
             <Stack
+              ref={dotsRef}
               component="div"
               direction="row"
               spacing={1}
@@ -272,36 +355,53 @@ function Carousel({
               flexWrap="wrap"
               sx={{ flex: 1, minWidth: 0 }}
             >
-              {Array.from({ length: snapCount }).map((_, index) => {
-                const active = index === selectedIndex
+              {usePageCounter ? (
+                <Box
+                  component="span"
+                  aria-live="polite"
+                  sx={(theme) => ({
+                    color: theme.palette.text.secondary,
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.01em',
+                    lineHeight: 1.3,
+                  })}
+                >
+                  {selectedIndex + 1}/{snapCount}
+                </Box>
+              ) : (
+                Array.from({ length: snapCount }).map((_, index) => {
+                  const active = index === selectedIndex
 
-                return (
-                  <Box
-                    key={index}
-                    component="button"
-                    type="button"
-                    aria-label={`${slideLabel} ${index + 1}`}
-                    aria-current={active ? 'true' : undefined}
-                    onClick={() => scrollTo(index)}
-                    sx={(theme) => ({
-                      width: 11,
-                      height: 11,
-                      p: 0,
-                      border: 'none',
-                      borderRadius: 999,
-                      backgroundColor: active ? theme.palette.text.primary : theme.palette.divider,
-                      cursor: 'pointer',
-                      opacity: active ? 1 : 0.55,
-                      transition:
-                        'transform 160ms ease, opacity 160ms ease, background-color 160ms ease',
-                      '&:hover': {
-                        transform: 'scale(1.12)',
-                        opacity: 1,
-                      },
-                    })}
-                  />
-                )
-              })}
+                  return (
+                    <Box
+                      key={index}
+                      component="button"
+                      type="button"
+                      aria-label={`${slideLabel} ${index + 1}`}
+                      aria-current={active ? 'true' : undefined}
+                      onClick={() => scrollTo(index)}
+                      sx={(theme) => ({
+                        width: 11,
+                        height: 11,
+                        p: 0,
+                        border: 'none',
+                        borderRadius: 999,
+                        backgroundColor:
+                          active ? theme.palette.text.primary : theme.palette.divider,
+                        cursor: 'pointer',
+                        opacity: active ? 1 : 0.55,
+                        transition:
+                          'transform 160ms ease, opacity 160ms ease, background-color 160ms ease',
+                        '&:hover': {
+                          transform: 'scale(1.12)',
+                          opacity: 1,
+                        },
+                      })}
+                    />
+                  )
+                })
+              )}
             </Stack>
           ) : null}
         </Stack>
