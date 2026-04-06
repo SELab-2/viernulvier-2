@@ -48,6 +48,8 @@ const baseProductionStub: Production = {
   genres: [],
   media_gallery: { id: 0, name: null, media_items: [] },
   events: [],
+  first_event_start: null,
+  last_event_end: null,
 }
 
 const eventFactory = (overrides: Partial<Event>): Event => ({

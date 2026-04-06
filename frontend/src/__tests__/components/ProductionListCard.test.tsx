@@ -58,6 +58,8 @@ const baseProduction = (overrides: Partial<Production> = {}): Production => ({
   tags: [],
   genres: [],
   events: [],
+  first_event_start: null,
+  last_event_end: null,
   ...overrides,
 })
 
