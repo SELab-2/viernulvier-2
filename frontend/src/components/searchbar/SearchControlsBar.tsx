@@ -1,5 +1,3 @@
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import GridViewIcon from '@mui/icons-material/GridView'
 import ViewListIcon from '@mui/icons-material/ViewList'
 import {
@@ -14,6 +12,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material'
+import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import SearchBar from './SearchBar'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
@@ -114,7 +113,6 @@ const SearchControlsBar = ({
                 ? t('searchbar.sort.switchToAscending')
                 : t('searchbar.sort.switchToDescending')
             }
-
           >
             <ToggleButton
               value={sortDirection}
@@ -131,9 +129,9 @@ const SearchControlsBar = ({
               }}
             >
               {sortDirection === 'asc' ? (
-                <ArrowUpwardIcon fontSize="small" />
+                <FaSortAmountUp size={16} />
               ) : (
-                <ArrowDownwardIcon fontSize="small" />
+                <FaSortAmountDown size={16} />
               )}
             </ToggleButton>
           </Tooltip>
