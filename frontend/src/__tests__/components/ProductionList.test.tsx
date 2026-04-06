@@ -23,25 +23,29 @@ const minimalGenre = (id: number, nlName: string): Genre => ({
   vendor_id: null,
 })
 
-const baseProduction = (overrides: Partial<Production> = {}): Production => ({
-  id: 1,
-  attendance_mode: 'offline',
-  performer_type: 'solo',
-  media_gallery: { id: 0, name: null, media_items: [] },
-  uit_database_theme: null,
-  uit_database_type: null,
-  display_title: null,
-  display_artist_name: null,
-  title: { nl: 'Voorstelling', en: 'Production' },
-  artist_name: { nl: 'Artiest', en: 'Artist' },
-  tagline: {},
-  teaser: {},
-  description: {},
-  tags: [],
-  genres: [],
-  events: [],
-  ...overrides,
-})
+const baseProduction = (overrides: Partial<Production> = {}): Production => {
+  return {
+    id: 1,
+    attendance_mode: 'offline',
+    performer_type: 'solo',
+    media_gallery: { id: 0, name: null, media_items: [] },
+    uit_database_theme: null,
+    uit_database_type: null,
+    display_title: null,
+    display_artist_name: null,
+    title: { nl: 'Voorstelling', en: 'Production' },
+    artist_name: { nl: 'Artiest', en: 'Artist' },
+    tagline: {},
+    teaser: {},
+    description: {},
+    tags: [],
+    genres: [],
+    events: [],
+    ...overrides,
+    first_event_start: overrides.first_event_start ?? null,
+    last_event_end: overrides.last_event_end ?? null,
+  }
+}
 
 const renderList = (props: {
   productions?: Production[]
