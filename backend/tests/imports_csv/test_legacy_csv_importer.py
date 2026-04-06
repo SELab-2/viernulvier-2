@@ -148,6 +148,48 @@ def test_import_legacy_events_creates_events_and_normalizes_end_time(tmp_path) -
     assert open_ended_event.ends_at is None
 
 
+def test_import_legacy_events_treats_year_zero_endtime_as_missing(tmp_path) -> None:
+    production = ProductionFactory.create(external_id="7001")
+    csv_path = tmp_path / "Events - voorstellingen.csv"
+    _write_csv(
+        csv_path,
+        ["Starttime", "Endtime", "Hall", "Production"],
+        [["2013-05-10 19:00:00", "0000-00-10 21:00:00", "Balzaal", production.external_id]],
+    )
+
+    imported = import_legacy_csv_file(csv_path)
+
+    assert imported == 1
+    log = ImportLog.objects.get(source=f"legacy_csv:{csv_path.name}")
+    assert log.status == ImportLog.Status.SUCCESS
+    assert log.records_failed == 0
+
+    event = Event.objects.get(hall__translations__name="Balzaal")
+    assert event.starts_at == datetime(2013, 5, 10, 19, 0, tzinfo=UTC)
+    assert event.ends_at is None
+
+
+def test_import_legacy_events_drops_irrecoverable_end_before_start(tmp_path) -> None:
+    production = ProductionFactory.create(external_id="7002")
+    csv_path = tmp_path / "Events - voorstellingen.csv"
+    _write_csv(
+        csv_path,
+        ["Starttime", "Endtime", "Hall", "Production"],
+        [["2010-06-01 10:00:00", "2010-05-01 18:00:00", "Domzaal", production.external_id]],
+    )
+
+    imported = import_legacy_csv_file(csv_path)
+
+    assert imported == 1
+    log = ImportLog.objects.get(source=f"legacy_csv:{csv_path.name}")
+    assert log.status == ImportLog.Status.SUCCESS
+    assert log.records_failed == 0
+
+    event = Event.objects.get(hall__translations__name="Domzaal")
+    assert event.starts_at == datetime(2010, 6, 1, 10, 0, tzinfo=UTC)
+    assert event.ends_at is None
+
+
 def test_import_legacy_csv_file_rejects_unknown_headers(tmp_path) -> None:
     csv_path = tmp_path / "mystery.csv"
     _write_csv(csv_path, ["foo", "bar"], [["1", "2"]])
@@ -222,14 +264,8 @@ def test_import_bundled_legacy_csv_converts_original_production_file(tmp_path) -
 
     _write_raw_csv(
         original_path,
-        "\n".join(
-            [
-                "Titel,Ondertitel,Description1,Description2,Genre,ID,Planning ID",
-                "Artist,Title,Body line one,Credits,Theater,301,legacy-301",
-                "\\,,,,,,",
-            ]
-        )
-        + "\n",
+        "Titel,Ondertitel,Description1,Description2,Genre,ID,Planning ID\nArtist,Title,Body line one,Credits,Theater,301,legacy-301\n\\,,,,,,"
+        "\n",
     )
     _write_csv(events_path, ["Starttime", "Endtime", "Hall", "Production"], [])
 
@@ -256,13 +292,8 @@ def test_import_bundled_legacy_csv_converts_original_before_detecting_kind(tmp_p
 
     _write_raw_csv(
         original_path,
-        "\n".join(
-            [
-                "Titel,Ondertitel,Description1,Description2,Genre,ID,Planning ID",
-                "Artist,Title,Body,Credits,Theater,302,legacy-302",
-            ]
-        )
-        + "\n",
+        "Titel,Ondertitel,Description1,Description2,Genre,ID,Planning ID\nArtist,Title,Body,Credits,Theater,302,legacy-302"
+        "\n",
     )
     _write_csv(events_path, ["Starttime", "Endtime", "Hall", "Production"], [])
 
@@ -270,5 +301,3 @@ def test_import_bundled_legacy_csv_converts_original_before_detecting_kind(tmp_p
 
     assert imported == 1
     assert (tmp_path / "Productions - output.csv").exists()
-
-

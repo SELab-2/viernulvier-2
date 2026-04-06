@@ -26,8 +26,8 @@ from apps.productions.models import Production, ProductionGenre, ProductionTrans
 logger = logging.getLogger(__name__)
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
-LEGACY_PRODUCTION_ORIGINAL_CSV = PACKAGE_ROOT / "Productions - output-orig.csv"
-LEGACY_PRODUCTION_CSV = PACKAGE_ROOT / "Productions - output.csv"
+LEGACY_PRODUCTION_ORIGINAL_CSV = PACKAGE_ROOT / "Productions - output.csv"
+LEGACY_PRODUCTION_CSV = PACKAGE_ROOT / "Productions - converted.csv"
 LEGACY_EVENT_CSV = PACKAGE_ROOT / "Events - voorstellingen.csv"
 LEGACY_LANGUAGE_CODE = "nl"
 LEGACY_LANGUAGE_NAME = "Dutch"
@@ -67,10 +67,13 @@ def _split_genres(value: Any) -> list[str]:
 
 def _parse_legacy_datetime(value: Any) -> Any | None:
     text = _normalise_cell(value)
-    if not text or text in {"0000-00-00 00:00:00", "1970-01-01 00:00:00"}:
+    if not text or text.startswith("0000-") or text == "1970-01-01 00:00:00":
         return None
 
-    parsed = parse_datetime(text)
+    try:
+        parsed = parse_datetime(text)
+    except (TypeError, ValueError):
+        return None
     if parsed is None:
         return None
     if timezone.is_naive(parsed):
@@ -94,8 +97,28 @@ def _append_legacy_production_continuation(current_row: dict[str, Any], continua
     current_row["Description1"] = f"{base}\n{continuation_text}".strip() if base else continuation_text
 
 
+def _find_production_id_in_row(raw_row: dict[str, Any]) -> str:
+    """Extract production ID from a CSV row, searching across fields if needed for malformed data."""
+    production_id = _normalise_cell(raw_row.get("ID"))
+    if production_id:
+        return production_id
+
+    # Some malformed rows have the ID in the wrong column; search for numeric IDs in other fields
+    for field_name in LEGACY_PRODUCTION_FIELDNAMES:
+        value = _normalise_cell(raw_row.get(field_name, ""))
+        # Check if this field contains a standalone numeric ID (possibly with non-breaking space prefix)
+        cleaned = value.strip().replace("\xa0", "").replace("\n", " ").strip()
+        if cleaned and cleaned.isdigit() and len(cleaned) >= 4:
+            return cleaned
+    return ""
+
+
 def _convert_legacy_production_csv(source_path: Path, destination_path: Path) -> None:
-    """Convert the original production export into a clean CSV that can be imported directly."""
+    """Convert the original production export into a clean CSV that can be imported directly.
+
+    Rows without valid production IDs are treated as continuations of the previous row
+    and merged into the description. Empty continuation rows are discarded entirely.
+    """
     with source_path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
         if not reader.fieldnames:
@@ -105,15 +128,19 @@ def _convert_legacy_production_csv(source_path: Path, destination_path: Path) ->
         current_row: dict[str, Any] | None = None
         for raw_row in reader:
             row = {field: raw_row.get(field, "") for field in LEGACY_PRODUCTION_FIELDNAMES}
-            production_id = _normalise_cell(row.get("ID"))
+            production_id = _find_production_id_in_row(row)
+
             if production_id:
+                # This row has a valid production ID - it's a new production row
                 if current_row is not None:
                     cleaned_rows.append(current_row)
+                # Ensure the ID is in the correct field
+                row["ID"] = production_id
                 current_row = row
-                continue
-
-            if current_row is not None:
+            elif current_row is not None:
+                # This row has no ID - it's a continuation of the previous production
                 _append_legacy_production_continuation(current_row, row)
+            # else: no ID and no current row = orphaned continuation row, skip it entirely
 
         if current_row is not None:
             cleaned_rows.append(current_row)
@@ -130,7 +157,6 @@ def _resolve_production_csv_path(root: Path) -> Path:
     formatted_path = root / LEGACY_PRODUCTION_CSV.name
     if original_path.exists():
         _convert_legacy_production_csv(original_path, formatted_path)
-        return formatted_path
     return formatted_path
 
 
@@ -255,12 +281,17 @@ def _import_legacy_event_row(row: dict[str, Any], *, dry_run: bool) -> bool:
 
     production = Production.objects.filter(external_id=production_external_id).first()
     if production is None:
-        raise ValueError(f"Production external_id={production_external_id} not found for legacy event CSV row: {row}")
+        raise ValueError(
+            f"Production external_id={production_external_id} not found (legacy data may be incomplete or from a different era)"
+        )
 
     starts_at = _parse_legacy_datetime(row.get("Starttime"))
     ends_at = _parse_legacy_datetime(row.get("Endtime"))
     if starts_at and ends_at and ends_at < starts_at:
         ends_at += timedelta(days=1)
+    if starts_at and ends_at and ends_at < starts_at:
+        # Legacy rows sometimes contain corrupted end dates; keep the event with an open end.
+        ends_at = None
 
     hall_name = _normalise_cell(row.get("Hall"))
 
