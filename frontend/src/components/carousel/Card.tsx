@@ -54,15 +54,16 @@ function Card({ title, subtitle, imageSrc, imageAlt, href, children }: CardProps
           src={imageSrc}
           alt={imageAlt}
           sx={{
-            display: 'block',
             width: '100%',
             aspectRatio: '5 / 3',
-            objectFit: 'cover',
-            transition: 'transform 220ms ease',
-            '&:hover': {
-              transform: 'scale(1.02)',
+            '& img[aria-hidden="true"]': {
+              display: 'block',
+              margin: '0 auto',
+              maxWidth: '60%',
+              maxHeight: '60%',
             },
           }}
+          style={{ display: 'block', objectFit: 'cover', transition: 'transform 220ms ease' }}
         />
       </Box>
 
