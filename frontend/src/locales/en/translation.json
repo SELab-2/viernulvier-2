@@ -19,7 +19,6 @@
     "search": "Search",
     "resultsFound": "{{count}} results found",
     "sort": {
-      "label": "Sort by",
       "targetLabel": "Sort by",
       "directionLabel": "Sort direction",
       "name": "Name",
