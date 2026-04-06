@@ -72,6 +72,8 @@ const ProductionDetailsPage = () => {
   const [prod, setProd] = useState<Production | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const tRef = useRef(t)
+  tRef.current = t
 
   // useEffect to fetch the production given the id in the URL.
   useEffect(() => {
@@ -80,7 +82,7 @@ const ProductionDetailsPage = () => {
 
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
-      const errMsg = t('productions.detail.error.invalidId', 'Invalid production ID')
+      const errMsg = tRef.current('productions.detail.error.invalidId', 'Invalid production ID')
       navigate('/', {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
@@ -94,7 +96,10 @@ const ProductionDetailsPage = () => {
         const data = await getProduction(parsed, ['events', 'related'])
         setProd(data)
       } catch {
-        const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
+        const errMsg = tRef.current(
+          'productions.detail.error.loadFailed',
+          'Could not load production',
+        )
         navigate('/', {
           state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
         })
@@ -117,7 +122,7 @@ const ProductionDetailsPage = () => {
         {error ? (
           <div>{error}</div>
         ) : (
-          <div>{t('productions.detail.notFound', 'Productie niet gevonden.')}</div>
+          <div>{tRef.current('productions.detail.notFound', 'Productie niet gevonden.')}</div>
         )}
       </div>
     )

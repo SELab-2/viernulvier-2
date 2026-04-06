@@ -4,15 +4,7 @@ import { Box, IconButton, Stack, type SxProps, type Theme } from '@mui/material'
 import { useMediaQuery, useTheme } from '@mui/material'
 import useEmblaCarousel from 'embla-carousel-react'
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
-import {
-  Children,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { Children, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 export interface CarouselProps {
   children: ReactNode
@@ -94,12 +86,12 @@ function Carousel({
         width >= theme.breakpoints.values.xl
           ? 4
           : width >= theme.breakpoints.values.lg
-          ? 3
-          : width >= theme.breakpoints.values.md
-          ? 3
-          : width >= theme.breakpoints.values.sm
-          ? 2
-          : 1
+            ? 3
+            : width >= theme.breakpoints.values.md
+              ? 3
+              : width >= theme.breakpoints.values.sm
+                ? 2
+                : 1
 
       emblaApi.reInit({ align: 'start', loop, skipSnaps: true, slidesToScroll: newSlidesToScroll })
       updateControls()
@@ -111,7 +103,16 @@ function Carousel({
       emblaApi.off('reInit', updateControls)
       window.removeEventListener('resize', handleResize)
     }
-  }, [emblaApi, loop, slidesToScroll, updateControls])
+  }, [
+    emblaApi,
+    loop,
+    slidesToScroll,
+    updateControls,
+    theme.breakpoints.values.sm,
+    theme.breakpoints.values.md,
+    theme.breakpoints.values.lg,
+    theme.breakpoints.values.xl,
+  ])
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
@@ -129,6 +130,11 @@ function Carousel({
 
     const evaluateWrapping = () => {
       const containerWidth = dotsNode.clientWidth
+      if (containerWidth <= 0) {
+        setUsePageCounter(false)
+        return
+      }
+
       const dotWidth = 11
       const gap = 8
       const requiredWidth = snapCount * dotWidth + Math.max(0, snapCount - 1) * gap
@@ -330,7 +336,6 @@ function Carousel({
             </IconButton>
           </>
         ) : null}
-
       </Box>
 
       {hasMultipleSlides && (showArrows || showDots) ? (
@@ -383,8 +388,9 @@ function Carousel({
                         p: 0,
                         border: 'none',
                         borderRadius: 999,
-                        backgroundColor:
-                          active ? theme.palette.text.primary : theme.palette.divider,
+                        backgroundColor: active
+                          ? theme.palette.text.primary
+                          : theme.palette.divider,
                         cursor: 'pointer',
                         opacity: active ? 1 : 0.55,
                         transition:
@@ -402,8 +408,6 @@ function Carousel({
           ) : null}
         </Stack>
       ) : null}
-
-      
     </Box>
   )
 }

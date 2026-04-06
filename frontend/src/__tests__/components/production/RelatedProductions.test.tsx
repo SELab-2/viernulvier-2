@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom'
 import { render, screen, waitFor } from '@testing-library/react'
 import RelatedProductions from '../../../components/production/RelatedProductions'
 import type { ProductionRelated, RelatedProduction } from '../../../types/Productions'
@@ -68,7 +69,11 @@ describe('RelatedProductions', () => {
       },
     ]
 
-    const { rerender } = render(<RelatedProductions related={related} />)
+    const { rerender } = render(
+      <MemoryRouter>
+        <RelatedProductions related={related} />
+      </MemoryRouter>,
+    )
 
     await waitFor(() => {
       expect(screen.getByText('Gerelateerde producties')).toBeInTheDocument()
@@ -77,7 +82,11 @@ describe('RelatedProductions', () => {
     })
 
     languageState.current = 'en'
-    rerender(<RelatedProductions related={related} />)
+    rerender(
+      <MemoryRouter>
+        <RelatedProductions related={related} />
+      </MemoryRouter>,
+    )
 
     await waitFor(() => {
       expect(screen.getByText('Related productions')).toBeInTheDocument()
