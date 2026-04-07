@@ -50,17 +50,13 @@ const renderList = (props: {
   selectedGenreIds?: number[]
   onGenreClick?: (id: number) => void
 }) => {
-  const { productions = [], selectedGenreIds = [], onGenreClick = jest.fn() } = props
+  const { productions = [], selectedGenreIds = [] } = props
 
   return render(
     <MemoryRouter>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={accentTheme}>
-          <ProductionList
-            productions={productions}
-            selectedGenreIds={selectedGenreIds}
-            onGenreClick={onGenreClick}
-          />
+          <ProductionList productions={productions} selectedGenreIds={selectedGenreIds} />
         </ThemeProvider>
       </I18nextProvider>
     </MemoryRouter>,
