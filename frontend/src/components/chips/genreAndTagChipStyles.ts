@@ -70,17 +70,7 @@ export const getGenreAndTagChipStyles = ({
     }
   }
 
-  if (theme.palette.mode === 'light') {
-    return {
-      ...base,
-      backgroundColor: theme.palette.background.paper,
-      color: theme.palette.text.primary,
-      borderColor: theme.palette.text.primary,
-      ...unselectedHoverStyles,
-    }
-  }
-
-  return {
+return {
     ...base,
     backgroundColor: theme.palette.background.paper,
     color: theme.palette.text.primary,
