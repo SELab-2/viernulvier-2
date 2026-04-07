@@ -1,6 +1,5 @@
-import { Box, Container, Paper, Stack, Typography } from '@mui/material'
+import { Box, Container, Paper, Stack, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { useTheme, useMediaQuery } from '@mui/material'
 import SearchControlsBar from '../components/searchbar/SearchControlsBar'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 

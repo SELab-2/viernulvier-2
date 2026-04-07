@@ -6,7 +6,7 @@ import { getLocalizedValue } from '../../utils/localization'
 import GenreAndTagChip from '../GenreAndTagChip'
 
 import type { CSSProperties } from 'react'
-import { Production } from '../../types/Productions'
+import type { Production } from '../../types/Productions'
 import type {
   ChipLabels,
   GenreAndTagChipContext,
