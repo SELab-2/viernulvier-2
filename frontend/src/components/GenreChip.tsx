@@ -5,8 +5,8 @@ import { getTranslatedRecord } from '../utils/translations'
 
 export interface GenreChipProps {
   genre: Genre
-  selectedIds: number[]
-  onClick: (genreId: number) => void
+  selectedIds?: number[]
+  onClick?: (genreId: number) => void
 }
 
 /**
@@ -23,13 +23,15 @@ const GenreChip = ({ genre, selectedIds, onClick }: GenreChipProps) => {
   const language = i18n.language
 
   const name = getTranslatedRecord(genre.name, language, genre.display_name)
-  const isActive = selectedIds.includes(genre.id)
+  const isActive = selectedIds?.includes(genre.id)
 
   return (
     <Button
       onClick={(event) => {
         event.stopPropagation()
-        onClick(genre.id)
+        if (onClick) {
+          onClick(genre.id)
+        }
       }}
       aria-pressed={isActive}
       aria-label={t('genreChip.filterByGenre', { genre: name })}
