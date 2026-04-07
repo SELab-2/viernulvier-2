@@ -1,136 +1,63 @@
-import { Container, Paper, Stack, Typography, Box } from '@mui/material'
+import { Box, Container, Paper, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import FilteredSearchBar from '../components/searchbar/FilteredSearchBar'
-import Tag from '../components/Tag'
-import FloatingAlert from '../components/FloatingAlert'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { useCallback, useEffect, useState } from 'react'
-
-const TAGS = [
-  { display_name: 'theater', name: { nl: 'Theater', en: 'THEATER' } },
-  { display_name: 'concert', name: { nl: 'Concert', en: 'CONCERT' } },
-  { display_name: 'expo', name: { nl: 'Expo', en: 'EXPO' } },
-  { display_name: 'film', name: { nl: 'Film', en: 'FILM' } },
-  { display_name: 'workshop', name: { nl: 'Workshop', en: 'WORKSHOP' } },
-  { display_name: 'music', name: { nl: 'Muziek', en: 'MUSIC' } },
-  { display_name: 'Festival', name: { nl: 'Festival', en: 'FESTIVAL' } },
-]
-
-// TODO: Fetch tags from API in the future
-
-/**
- * Parse selected tags from the URL query string.
- * @param search - The URL search string (e.g. '?tags=theater,concert')
- * @returns Array of tag names
- */
-function parseTagsFromQuery(search: string): string[] {
-  const params = new URLSearchParams(search)
-  const tags = params.get('tags')
-  return tags ? tags.split(',').filter(Boolean) : []
-}
+import { useTheme, useMediaQuery } from '@mui/material'
+import SearchControlsBar from '../components/searchbar/SearchControlsBar'
+import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 
 const HomePage = () => {
   const { t } = useTranslation()
-  const location = useLocation()
-  const navigate = useNavigate()
-  const selectedTags = parseTagsFromQuery(location.search)
-
-  const locationState = location.state as
-    | {
-        floatingAlert?: {
-          open: boolean
-          message: string
-          severity: 'error' | 'warning' | 'info' | 'success'
-        }
-      }
-    | null
-    | undefined
-
-  // toast message when redirected from detail error
-  const [toastOpen, setToastOpen] = useState(locationState?.floatingAlert?.open ?? false)
-  const [toastMessage] = useState(locationState?.floatingAlert?.message ?? '')
-  const [toastSeverity] = useState<'error' | 'warning' | 'info' | 'success'>(
-    locationState?.floatingAlert?.severity ?? 'info',
-  )
-
-  // Local state for search input
-  const [searchValue, setSearchValue] = useState('')
-  // Demo: no filters or layout options
-  const filters: import('../components/searchbar/filters/DropDownFilter').DropDownFilterProps[] = []
-  const layoutOptions: { name: string; displayName: string }[] = []
-  const currentLayout = ''
-
-  /**
-   * Toggle a tag's selection and update the URL.
-   * @param tag - The tag name to toggle
-   */
-  useEffect(() => {
-    if (locationState?.floatingAlert?.open) {
-      navigate(location.pathname, { replace: true, state: {} })
-    }
-  }, [location.pathname, locationState, navigate])
-
-  const handleTagToggle = useCallback(
-    (tag: string) => {
-      // Get current tags from URL and toggle the clicked tag
-      const tags = parseTagsFromQuery(location.search)
-      let newTags
-      if (tags.includes(tag)) {
-        newTags = tags.filter((t) => t !== tag)
-      } else {
-        newTags = [...tags, tag]
-      }
-      // Update URL with new tags
-      const params = new URLSearchParams(location.search)
-      if (newTags.length > 0) {
-        params.set('tags', newTags.join(','))
-      } else {
-        params.delete('tags')
-      }
-      navigate({ search: params.toString() }, { replace: false })
-    },
-    [location.search, navigate],
-  )
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const {
+    searchValue,
+    sortTarget,
+    sortDirection,
+    viewMode,
+    setSearchValue,
+    setSortTarget,
+    setSortDirection,
+    setViewMode,
+  } = useSearchBarUrlState({ isMobile })
 
   return (
-    <Container maxWidth="md" sx={{ py: 6 }}>
-      <FloatingAlert
-        open={toastOpen}
-        onClose={() => setToastOpen(false)}
-        message={toastMessage}
-        severity={toastSeverity}
-      />
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Stack spacing={3}>
-          <Typography variant="h3" component="h1">
-            {t('title')}
-          </Typography>
-          <Typography variant="subtitle1">{t('subtitle')}</Typography>
-        </Stack>
-        <Box sx={{ mt: 4 }}>
-          <FilteredSearchBar
-            placeholder="Search..."
+    <Box>
+      <Container maxWidth="md" sx={{ py: 6 }}>
+        <Paper elevation={3} sx={{ p: 4 }}>
+          <Stack spacing={3}>
+            <Typography variant="h3" component="h1">
+              {t('title')}
+            </Typography>
+            <Typography variant="subtitle1">{t('subtitle')}</Typography>
+          </Stack>
+        </Paper>
+      </Container>
+      <Box
+        sx={{
+          backgroundColor: theme.palette.mode === 'light' ? '#f8f8f8' : '#1e1e1e',
+          pt: 4,
+          pb: 6,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+        }}
+      >
+        <Box sx={{ width: '75%', mx: 'auto' }}>
+          <SearchControlsBar
+            placeholder={
+              isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
+            }
             searchValue={searchValue}
             onSearchChange={setSearchValue}
-            tags={TAGS}
-            selectedTags={selectedTags}
-            onTagToggle={handleTagToggle}
-            filters={filters}
-            layoutOptions={layoutOptions}
-            currentLayout={currentLayout}
-            onLayoutChange={() => {}}
+            onSearchSubmit={setSearchValue}
+            sortTarget={sortTarget}
+            onSortTargetChange={setSortTarget}
+            sortDirection={sortDirection}
+            onSortDirectionChange={setSortDirection}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            showViewModeToggle={!isMobile}
           />
         </Box>
-
-        {/* Test tags for description and reeks context */}
-        <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
-          {/* Description tag example */}
-          <Tag tagName="Festival" context="description" />
-          {/* Reeks tag example */}
-          <Tag tagName="VIDEODROOM" context="series" />
-        </Box>
-      </Paper>
-    </Container>
+      </Box>
+    </Box>
   )
 }
 

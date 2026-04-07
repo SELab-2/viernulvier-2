@@ -13,6 +13,39 @@
     "switchToLightMode": "Dark mode",
     "switchToDarkMode": "Light mode"
   },
+  "searchbar": {
+    "searchPlaceholder": "Search for events, artists, or venues...",
+    "searchPlaceholderMobile": "Search events, artists...",
+    "search": "Search",
+    "resultsFound": "{{count}} results found",
+    "sort": {
+      "targetLabel": "Sort by",
+      "directionLabel": "Sort direction",
+      "name": "Name",
+      "date": "Date",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "switchToAscending": "Switch to ascending",
+      "switchToDescending": "Switch to descending"
+    },
+    "period": {
+      "label": "Period",
+      "from_x": "From {{date}} on",
+      "to_x": "Up to {{date}}",
+      "from_label": "From",
+      "to_label": "To",
+      "all": "All"
+    },
+    "layout": {
+      "label": "View mode",
+      "list": "List",
+      "grid": "Grid"
+    }
+  },
+  "listCard": {
+    "view": "View",
+    "imageAlt": "Image for {{title}}"
+  },
   "genreChip": {
     "filterByGenre": "Filter by {{genre}}"
   },
