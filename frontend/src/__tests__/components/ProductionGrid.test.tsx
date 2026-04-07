@@ -32,6 +32,8 @@ const baseProduction = (overrides: Partial<Production> = {}): Production => ({
   uit_database_type: null,
   display_title: null,
   display_artist_name: null,
+  first_event_start: null,
+  last_event_end: null,
   title: { nl: 'Voorstelling', en: 'Production' },
   artist_name: { nl: 'Artiest', en: 'Artist' },
   tagline: {},
