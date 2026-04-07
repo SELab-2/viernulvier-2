@@ -62,7 +62,7 @@ const GenreAndTagChip = ({
     }
 
     if (context === 'series') {
-      navigate(`/series/${name}`)
+      navigate(`/series/${String(id)}`)
       return
     }
 
