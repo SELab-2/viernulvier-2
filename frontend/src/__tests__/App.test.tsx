@@ -71,10 +71,10 @@ describe('App', () => {
     expect(themeToggleButton).toBeDefined()
     fireEvent.click(themeToggleButton!)
     await waitFor(() => {
-        // After toggle, the theme should be saved to localStorage
-        const savedTheme = localStorage.getItem('vnv-theme-mode')
-        expect(['light', 'dark']).toContain(savedTheme)
-      })
+      // After toggle, the theme should be saved to localStorage
+      const savedTheme = localStorage.getItem('vnv-theme-mode')
+      expect(['light', 'dark']).toContain(savedTheme)
+    })
   })
 
   it('renders footer', () => {
