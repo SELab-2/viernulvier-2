@@ -161,7 +161,9 @@ def test_run_crops_exception_logged_as_failed() -> None:
 
     with (
         patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0),
-        patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_crops", side_effect=RuntimeError("crops boom")),
+        patch(
+            "apps.imports.management.commands.sync_viernulvier.sync_media_item_crops", side_effect=RuntimeError("crops boom")
+        ),
     ):
         cmd.handle()
 
@@ -212,13 +214,14 @@ def test_run_crops_only_mode_behavior(only, crops_called, sync_called) -> None:
     assert mock_sync.called is sync_called
 
 
-
 def test_command_exception_handlers_catch_and_log_all_failures() -> None:
     """Verify all step-specific exception handlers report failures and command still finishes."""
     cmd1 = Command()
     cmd1.stdout = OutputWrapper(StringIO())
 
-    with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", side_effect=ValueError("Network error")):
+    with patch(
+        "apps.imports.management.commands.sync_viernulvier.sync_viernulvier", side_effect=ValueError("Network error")
+    ):
         cmd1.handle(only="genres", dry_run=False)
 
     output1 = cmd1.stdout.getvalue()
@@ -259,4 +262,3 @@ def test_command_exception_handlers_catch_and_log_all_failures() -> None:
     assert "DB lost" in output3
     assert "media_item_crops" in output3
     assert "Done" in output3
-

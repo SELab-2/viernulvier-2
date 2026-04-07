@@ -1,17 +1,17 @@
 """Management command argument/filter and main loop coverage tests."""
 
 from io import StringIO
+from unittest.mock import patch
 
 from django.core.management.base import CommandParser, OutputWrapper
 import pytest
 
-from apps.imports.management.commands.sync_viernulvier import Command, SYNC_STEPS
+from apps.imports.management.commands.sync_viernulvier import SYNC_STEPS, Command
 
 
 @pytest.fixture(autouse=True)
 def _mock_media_item_gallery_link_step():
     """Keep command tests deterministic by stubbing custom gallery-link syncing."""
-    from unittest.mock import patch
 
     with patch("apps.imports.management.commands.sync_viernulvier.sync_media_item_gallery_links", return_value=0):
         yield
@@ -40,7 +40,6 @@ def test_add_arguments_registers_only_and_all_filter_variants() -> None:
 
 
 def test_handle_builds_expected_filter_params_and_respects_only() -> None:
-    from unittest.mock import patch
 
     command = _make_command()
     options = {
@@ -62,7 +61,6 @@ def test_handle_builds_expected_filter_params_and_respects_only() -> None:
 
 
 def test_handle_reports_unknown_step_without_syncing() -> None:
-    from unittest.mock import patch
 
     command = _make_command()
 
@@ -83,7 +81,6 @@ def test_handle_reports_unknown_step_without_syncing() -> None:
     ],
 )
 def test_handle_single_filter_mappings(options, expected_params) -> None:
-    from unittest.mock import patch
 
     cmd = _make_command()
     with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0) as mock_sync:
@@ -92,7 +89,6 @@ def test_handle_single_filter_mappings(options, expected_params) -> None:
 
 
 def test_handle_combined_filters() -> None:
-    from unittest.mock import patch
 
     cmd = _make_command()
     with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0) as mock_sync:
@@ -108,7 +104,6 @@ def test_handle_combined_filters() -> None:
 
 
 def test_dry_run_warning_written_to_stdout() -> None:
-    from unittest.mock import patch
 
     cmd = _make_command()
     with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0):
@@ -117,7 +112,6 @@ def test_dry_run_warning_written_to_stdout() -> None:
 
 
 def test_exception_in_step_logged_as_failed() -> None:
-    from unittest.mock import patch
 
     cmd = _make_command()
     with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", side_effect=RuntimeError("API boom")):
@@ -128,7 +122,6 @@ def test_exception_in_step_logged_as_failed() -> None:
 
 
 def test_handle_no_only_runs_all_steps() -> None:
-    from unittest.mock import patch
 
     cmd = _make_command()
     with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=5) as mock_sync:
@@ -138,7 +131,6 @@ def test_handle_no_only_runs_all_steps() -> None:
 
 
 def test_etag_cache_shared_across_steps() -> None:
-    from unittest.mock import patch
 
     cmd = _make_command()
     received_caches = []
@@ -154,11 +146,9 @@ def test_etag_cache_shared_across_steps() -> None:
 
 
 def test_total_saved_count_in_summary() -> None:
-    from unittest.mock import patch
 
     cmd = _make_command()
     with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=42):
         cmd.handle(only="events")
 
     assert "42" in cmd.stdout.getvalue()
-

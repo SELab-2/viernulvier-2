@@ -91,4 +91,3 @@ def test_resolve_genre_use_as_handles_none() -> None:
 def test_is_not_longterm(payload, expected) -> None:
     """_is_not_longterm should only reject payloads pointing to /longterm/ productions."""
     assert _is_not_longterm(payload) is expected
-

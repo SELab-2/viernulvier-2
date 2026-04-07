@@ -31,9 +31,7 @@ from apps.tags.models import Tag
 def get_model_field_names(model):
     """Get concrete, non-auto Django model field names."""
     return {
-        field.name
-        for field in model._meta.get_fields()
-        if isinstance(field, django_models.Field) and not field.auto_created
+        field.name for field in model._meta.get_fields() if isinstance(field, django_models.Field) and not field.auto_created
     }
 
 

@@ -141,4 +141,3 @@ def test_lookup_field_exists_in_all_models() -> None:
         assert config.lookup_field in model_fields, (
             f"Model {model.__name__} doesn't have lookup_field '{config.lookup_field}'"
         )
-
