@@ -24,6 +24,9 @@ export interface Production {
   id: number
   attendance_mode: AttendanceMode | ''
   performer_type: PerformerType | ''
+  first_event_start: string | null
+  last_event_end: string | null
+  media_gallery: MediaGallery
   uit_database_theme: ProductionClassification | null
   uit_database_type: ProductionClassification | null
   display_title: string | null
@@ -35,10 +38,7 @@ export interface Production {
   description: Record<string, string>
   tags: Tag[]
   genres: Genre[]
-  media_gallery: MediaGallery
   events?: Event[]
-  first_event_start: string | null
-  last_event_end: string | null
 }
 
 /**

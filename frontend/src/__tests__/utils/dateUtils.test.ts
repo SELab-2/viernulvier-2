@@ -1,14 +1,9 @@
-import type { Event } from '../../types/Events'
 import {
   formatDate,
   formatDateTime,
   formatTime,
   getProductionDateLabel,
 } from '../../utils/dateUtils'
-
-function eventWithStartsAt(starts_at: string | null): Event {
-  return { starts_at } as Event
-}
 
 describe('formatDate', () => {
   it('returns empty string for null', () => {
@@ -70,44 +65,35 @@ describe('formatDate', () => {
 })
 
 describe('getProductionDateLabel', () => {
-  it('returns empty string when events is undefined', () => {
-    expect(getProductionDateLabel(undefined, 'en-US')).toBe('')
+  it('returns empty string when firstEventStart is null', () => {
+    expect(getProductionDateLabel(null, null, 'en-US')).toBe('')
   })
 
-  it('returns empty string when events is empty', () => {
-    expect(getProductionDateLabel([], 'en-US')).toBe('')
+  it('returns empty string when lastEventEnd is null', () => {
+    expect(getProductionDateLabel('2025-06-15T12:00:00.000Z', null, 'en-US')).toBe('')
   })
 
-  it('returns empty string when no event has starts_at', () => {
-    expect(getProductionDateLabel([eventWithStartsAt(null)], 'en-US')).toBe('')
+  it('returns empty string when firstEventStart is null but lastEventEnd is set', () => {
+    expect(getProductionDateLabel(null, '2025-06-15T12:00:00.000Z', 'en-US')).toBe('')
   })
 
-  it('returns a single formatted date for one event', () => {
-    const label = getProductionDateLabel([eventWithStartsAt('2025-06-15T12:00:00.000Z')], 'en-US')
+  it('returns a single formatted date when first and last fall on the same calendar day', () => {
+    const label = getProductionDateLabel(
+      '2025-06-15T12:00:00.000Z',
+      '2025-06-15T14:00:00.000Z',
+      'en-US',
+    )
     expect(label).toMatch(/2025/)
     expect(label).not.toContain(' - ')
   })
 
-  it('returns a range when first and last events differ by calendar day', () => {
+  it('returns a range when first and last fall on different calendar days', () => {
     const label = getProductionDateLabel(
-      [
-        eventWithStartsAt('2025-06-15T12:00:00.000Z'),
-        eventWithStartsAt('2025-06-20T12:00:00.000Z'),
-      ],
+      '2025-06-15T12:00:00.000Z',
+      '2025-06-20T12:00:00.000Z',
       'en-US',
     )
     expect(label).toContain(' - ')
     expect(label).toMatch(/2025/)
-  })
-
-  it('uses earliest and latest by starts_at when events are out of order', () => {
-    const label = getProductionDateLabel(
-      [
-        eventWithStartsAt('2025-06-20T12:00:00.000Z'),
-        eventWithStartsAt('2025-06-15T12:00:00.000Z'),
-      ],
-      'en-US',
-    )
-    expect(label).toContain(' - ')
   })
 })
