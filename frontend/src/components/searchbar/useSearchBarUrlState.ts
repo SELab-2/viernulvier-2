@@ -31,10 +31,10 @@ const parseTokenList = (value: string | null): string[] => {
 }
 
 /**
- * Converts array tokens to number IDs and removes invalid values.
+ * Converts array tokens to integer IDs and removes invalid values.
  */
 const parseNumericIds = (values: string[]): number[] => {
-  return values.map((part) => Number(part)).filter((part) => Number.isFinite(part))
+  return values.map((part) => Number(part)).filter((part) => Number.isInteger(part))
 }
 
 /**

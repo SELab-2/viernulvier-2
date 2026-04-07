@@ -119,8 +119,7 @@ const GenreAndTagChip = ({
       tabIndex={isClickable ? 0 : -1}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      component={linkTo ? RouterLink : 'div'}
-      to={linkTo}
+      {...(linkTo ? { component: RouterLink, to: linkTo } : { component: 'div' })}
     />
   )
 }
