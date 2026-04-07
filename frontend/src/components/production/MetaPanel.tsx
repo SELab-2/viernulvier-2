@@ -288,6 +288,7 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
           }}
         >
           {resolvedTags.map((tag, i) => (
+            /* TODO: fix this to use the tag correctly instead of just the name */
             <GenreAndTagChip
               key={`${tag.tagName}-${i}`}
               name={tag.tagName}

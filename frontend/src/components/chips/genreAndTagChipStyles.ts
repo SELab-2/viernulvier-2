@@ -10,9 +10,6 @@ type GetGenreAndTagChipStylesInput = {
   chipType: 'genre' | 'seriesTag'
 }
 
-const FALLBACK_ACCENT_MAIN = '#9333ea'
-const FALLBACK_ACCENT_HOVER = '#7c22d6'
-
 /**
  * Returns CSS styles for a genre or series-tag chip, depending on the selected context,
  * chip type, and whether the chip is selected or not.
@@ -26,8 +23,8 @@ export const getGenreAndTagChipStyles = ({
   context,
   chipType,
 }: GetGenreAndTagChipStylesInput): SxProps<Theme> => {
-  const accentMain = FALLBACK_ACCENT_MAIN
-  const accentHover = FALLBACK_ACCENT_HOVER
+  const accentMain = theme.palette.accent?.main ?? theme.palette.primary.main
+  const accentHover = theme.palette.accent?.dark ?? accentMain
   const seriesMain = theme.palette.primary.main
   const seriesHover = theme.palette.primary.dark
   const selectedBg = chipType === 'genre' ? accentMain : seriesMain

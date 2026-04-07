@@ -19,7 +19,6 @@
     "search": "Zoeken",
     "resultsFound": "{{count}} resultaten gevonden",
     "sort": {
-      "label": "Sorteer op",
       "targetLabel": "Sorteer op",
       "directionLabel": "Sorteerrichting",
       "name": "Naam",

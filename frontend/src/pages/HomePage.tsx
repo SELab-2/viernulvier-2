@@ -4,6 +4,8 @@ import { useTheme, useMediaQuery } from '@mui/material'
 import SearchControlsBar from '../components/searchbar/SearchControlsBar'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 
+// TODO: use the floatingAlerts when needed
+
 const HomePage = () => {
   const { t } = useTranslation()
   const theme = useTheme()

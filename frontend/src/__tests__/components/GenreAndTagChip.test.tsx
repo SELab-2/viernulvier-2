@@ -287,6 +287,6 @@ describe('GenreAndTagChip in series tag mode', () => {
     )
 
     fireEvent.click(screen.getByRole('button'))
-    expect(mockNavigate).toHaveBeenCalledWith('/series/reekstag')
+    expect(mockNavigate).toHaveBeenCalledWith('/series/12')
   })
 })

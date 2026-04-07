@@ -1,5 +1,3 @@
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import GridViewIcon from '@mui/icons-material/GridView'
 import ViewListIcon from '@mui/icons-material/ViewList'
 import {
@@ -10,9 +8,11 @@ import {
   Select,
   ToggleButton,
   ToggleButtonGroup,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material'
+import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import SearchBar from './SearchBar'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
@@ -107,26 +107,34 @@ const SearchControlsBar = ({
             </Select>
           </FormControl>
 
-          <ToggleButton
-            value={sortDirection}
-            aria-label={
+          <Tooltip
+            title={
               nextSortDirection === 'asc'
                 ? t('searchbar.sort.switchToAscending')
                 : t('searchbar.sort.switchToDescending')
             }
-            onClick={() => onSortDirectionChange(nextSortDirection)}
-            sx={{
-              height: 40,
-              px: 1.2,
-              backgroundColor: theme.palette.background.default,
-            }}
           >
-            {sortDirection === 'asc' ? (
-              <ArrowUpwardIcon fontSize="small" />
-            ) : (
-              <ArrowDownwardIcon fontSize="small" />
-            )}
-          </ToggleButton>
+            <ToggleButton
+              value={sortDirection}
+              aria-label={
+                nextSortDirection === 'asc'
+                  ? t('searchbar.sort.switchToAscending')
+                  : t('searchbar.sort.switchToDescending')
+              }
+              onClick={() => onSortDirectionChange(nextSortDirection)}
+              sx={{
+                height: 40,
+                px: 1.2,
+                backgroundColor: theme.palette.background.default,
+              }}
+            >
+              {sortDirection === 'asc' ? (
+                <FaSortAmountUp size={16} />
+              ) : (
+                <FaSortAmountDown size={16} />
+              )}
+            </ToggleButton>
+          </Tooltip>
 
           {showViewModeToggle ? (
             <ToggleButtonGroup
@@ -147,12 +155,16 @@ const SearchControlsBar = ({
                 },
               }}
             >
-              <ToggleButton value="grid" aria-label={t('searchbar.layout.grid')}>
-                <GridViewIcon fontSize="small" />
-              </ToggleButton>
-              <ToggleButton value="list" aria-label={t('searchbar.layout.list')}>
-                <ViewListIcon fontSize="small" />
-              </ToggleButton>
+              <Tooltip title={t('searchbar.layout.grid')}>
+                <ToggleButton value="grid" aria-label={t('searchbar.layout.grid')}>
+                  <GridViewIcon fontSize="small" />
+                </ToggleButton>
+              </Tooltip>
+              <Tooltip title={t('searchbar.layout.list')}>
+                <ToggleButton value="list" aria-label={t('searchbar.layout.list')}>
+                  <ViewListIcon fontSize="small" />
+                </ToggleButton>
+              </Tooltip>
             </ToggleButtonGroup>
           ) : null}
         </Box>
