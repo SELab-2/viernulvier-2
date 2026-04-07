@@ -192,4 +192,3 @@ def test_sync_crops_dry_run_summary_has_dry_run_suffix(monkeypatch, caplog) -> N
     sync_media_item_crops(dry_run=True)
 
     assert any("[DRY RUN]" in r.message and "Crop sync complete" in r.message for r in caplog.records)
-

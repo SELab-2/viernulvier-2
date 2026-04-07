@@ -211,4 +211,3 @@ def test_sync_crops_missing_media_item_upsert_exception_is_logged_and_recorded(m
 
     log = ImportLog.objects.latest("started_at")
     assert "Missing MediaItem upsert failed for /api/v1/media/items/321" in (log.error_message or "")
-

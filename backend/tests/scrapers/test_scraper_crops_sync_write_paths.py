@@ -189,4 +189,3 @@ def test_sync_crops_update_or_create_receives_correct_kwargs(monkeypatch) -> Non
     assert call_kw["media_item_id"] == 42
     assert call_kw["name"] == "hd_ready"
     assert call_kw["defaults"] == {"image": "saved/path.jpg"}
-

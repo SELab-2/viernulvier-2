@@ -225,4 +225,3 @@ def test_shared_helper_fixtures_are_callable(
     through(parent_id=1, related_id=2)
     assert rows
     assert rows[0]["parent_id"] == 1
-

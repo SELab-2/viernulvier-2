@@ -3,8 +3,9 @@
 import pytest
 
 from apps.genres.models import GenreUseAs
-from apps.imports.management.commands.sync_viernulvier import PRODUCTION_CONFIG, SYNC_STEPS
 from apps.imports.management.commands.sync_viernulvier import (
+    PRODUCTION_CONFIG,
+    SYNC_STEPS,
     _is_not_longterm,
     _resolve_genre_use_as,
     nee_ja_to_bool,
@@ -232,4 +233,3 @@ def test_resolve_genre_use_as_handles_none() -> None:
 def test_is_not_longterm(payload, expected) -> None:
     """_is_not_longterm should only reject payloads pointing to /longterm/ productions."""
     assert _is_not_longterm(payload) is expected
-

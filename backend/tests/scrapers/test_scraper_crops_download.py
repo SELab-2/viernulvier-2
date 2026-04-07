@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 from unittest.mock import Mock
 
-import requests
 import pytest
+import requests
 
 from apps.imports.scrapers import viernulvier
 from apps.imports.scrapers.viernulvier import _derive_crop_filename, _download_image
@@ -244,4 +244,3 @@ def test_derive_crop_filename_external_id_and_crop_are_embedded() -> None:
     assert not result.startswith("_")
     assert "/" not in result
     assert "FE3_header" in result
-

@@ -359,5 +359,3 @@ def test_on_progress_covers_all_four_early_exit_branches_in_one_run(monkeypatch)
     sync_media_item_crops(on_progress=lambda idx, total: calls.append((idx, total)))
 
     assert calls == [(1, 4), (2, 4), (3, 4), (4, 4)]
-
-
