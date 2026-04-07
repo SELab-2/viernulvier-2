@@ -11,9 +11,7 @@ from django.test.utils import isolate_apps
 import pytest
 
 from apps.imports.scrapers import viernulvier
-from apps.imports.scrapers.viernulvier import sync_viernulvier
-
-from tests.scrapers.conftest import _temp_viernulvier_model, _PassThroughConfig
+from tests.scrapers.conftest import _PassThroughConfig, _temp_viernulvier_model
 
 
 @isolate_apps("tests")
@@ -307,4 +305,3 @@ def test_sync_without_params_still_works(monkeypatch) -> None:
 
         assert count == 1
         assert ViernulvierItem.objects.count() == 1
-

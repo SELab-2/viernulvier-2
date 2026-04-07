@@ -4,12 +4,8 @@ Tests for Viernulvier pagination discovery and execution.
 
 from __future__ import annotations
 
-import pytest
-
 from apps.imports.scrapers.viernulvier import _discover_extra_pages
-
-from tests.scrapers.conftest import _mock_session, _make_ok_response, _make_status_response
-
+from tests.scrapers.conftest import _make_ok_response, _make_status_response, _mock_session
 
 # ---------------------------------------------------------------------------
 # _discover_extra_pages
@@ -54,7 +50,6 @@ class TestDiscoverExtraPages:
 
 class TestConcurrentPagination:
     def test_fetches_all_pages_concurrently(self, monkeypatch) -> None:
-        import logging
         from apps.imports.scrapers import viernulvier
 
         monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
@@ -79,6 +74,7 @@ class TestConcurrentPagination:
 
     def test_page_fetch_error_logged_and_other_pages_returned(self, monkeypatch, caplog) -> None:
         import logging
+
         from apps.imports.scrapers import viernulvier
         from apps.imports.scrapers.viernulvier import ScraperError
 
@@ -195,4 +191,3 @@ class TestSequentialFallback:
         _mock_session(monkeypatch, responses)
         result = viernulvier.fetch_viernulvier(endpoint="/events")
         assert len(result) == 3
-

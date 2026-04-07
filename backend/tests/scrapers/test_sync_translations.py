@@ -7,18 +7,16 @@ from __future__ import annotations
 import logging
 from types import SimpleNamespace
 from typing import Never
+from unittest.mock import Mock
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
-from unittest.mock import Mock
-import pytest
 
+from apps.imports.scrapers import viernulvier
 from apps.imports.scrapers.viernulvier import (
     TranslationConfig,
     _sync_all_translations,
 )
-from apps.imports.scrapers import viernulvier
-
 from tests.scrapers.conftest import _fake_trans_model
 
 
@@ -266,4 +264,3 @@ class TestSyncAllTranslations:
         assert len(calls) == 1
         assert "title" in calls[0]["defaults"]
         assert "subtitle" not in calls[0]["defaults"]
-

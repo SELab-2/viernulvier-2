@@ -4,7 +4,6 @@ Tests for Viernulvier ImportLog integration, sync options (dry_run, on_progress,
 
 from __future__ import annotations
 
-import logging
 from typing import Never
 
 from django.core.exceptions import ValidationError
@@ -12,7 +11,6 @@ from django.db import IntegrityError
 from django.test.utils import isolate_apps
 import pytest
 
-from apps.events.models import Event, EventPrice
 from apps.import_log.models import ImportLog
 from apps.imports.scrapers import viernulvier
 from apps.imports.scrapers.viernulvier import (
@@ -20,15 +18,9 @@ from apps.imports.scrapers.viernulvier import (
     M2MConfig,
     ModelSyncConfig,
     TranslationConfig,
-    _sync_m2m,
-    _sync_all_translations,
     sync_viernulvier,
 )
-from apps.pricing.models import PriceRank
-from apps.productions.models import Production
-
-from tests.scrapers.conftest import _temp_viernulvier_model, _PassThroughConfig
-
+from tests.scrapers.conftest import _PassThroughConfig, _temp_viernulvier_model
 
 # ---------------------------------------------------------------------------
 # sync_viernulvier - dry_run / on_progress / item_filter / MAX_ERROR_MESSAGES
@@ -531,7 +523,7 @@ def test_sync_executes_translations(monkeypatch) -> None:
 def test_sync_caches_external_id_after_create(monkeypatch) -> None:
     """After update_or_create, the object's external_id is stored in fk_cache."""
 
-    from django.db import models, connection
+    from django.db import connection, models
 
     class CachedModel(models.Model):
         external_id = models.CharField(max_length=255, unique=True)
@@ -567,4 +559,3 @@ def test_sync_caches_external_id_after_create(monkeypatch) -> None:
     finally:
         with connection.schema_editor() as se:
             se.delete_model(CachedModel)
-

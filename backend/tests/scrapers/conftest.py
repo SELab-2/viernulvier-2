@@ -4,20 +4,15 @@ Shared fixtures and helpers for scraper tests.
 
 from __future__ import annotations
 
-import builtins
 from contextlib import contextmanager
-from decimal import Decimal
-import datetime
 from types import SimpleNamespace
-from typing import Never
 from unittest.mock import Mock
 
 from django.db import connection, models
 import pytest
 
 from apps.imports.scrapers import viernulvier
-from apps.imports.scrapers.viernulvier import FKCache, ModelSyncConfig
-
+from apps.imports.scrapers.viernulvier import ModelSyncConfig
 
 # ---------------------------------------------------------------------------
 # Mock Session Helpers
@@ -226,4 +221,3 @@ def fake_trans_model_fixture():
 def m2m_setup_fixture():
     """Fixture for M2M test setup."""
     return _make_m2m_setup
-

@@ -8,17 +8,13 @@ import logging
 from types import SimpleNamespace
 from typing import Never
 
-import pytest
-
+from apps.imports.scrapers import viernulvier
 from apps.imports.scrapers.viernulvier import (
     FKCache,
     ModelSyncConfig,
-    _extract_external_id_from_url,
     _extract_lookup_value,
     _resolve_fk,
 )
-from apps.imports.scrapers import viernulvier
-
 
 # ---------------------------------------------------------------------------
 # _extract_external_id_from_url
@@ -323,4 +319,3 @@ class TestFKCache:
 
         cache._loaded[M] = True
         assert cache.get(M, "nonexistent") is None
-

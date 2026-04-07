@@ -7,17 +7,14 @@ from __future__ import annotations
 import logging
 from types import SimpleNamespace
 from typing import Never
-
 from unittest.mock import Mock
-import pytest
 
+from apps.imports.scrapers import viernulvier
 from apps.imports.scrapers.viernulvier import (
     FKCache,
     M2MConfig,
     _sync_m2m,
 )
-from apps.imports.scrapers import viernulvier
-
 from tests.scrapers.conftest import _make_m2m_setup
 
 
@@ -237,4 +234,3 @@ class TestSyncM2M:
         )
         _sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-miss"]}, cfg, cache)
         assert created_rows
-

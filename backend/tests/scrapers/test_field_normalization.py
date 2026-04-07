@@ -14,13 +14,12 @@ import pytest
 
 from apps.imports.scrapers import viernulvier
 from apps.imports.scrapers.viernulvier import (
+    _parse_field_value,
     clean_string,
     clean_vendor_id,
     normalize_performer_type,
     normalize_url,
-    _parse_field_value,
 )
-
 
 # ---------------------------------------------------------------------------
 # clean_string
@@ -261,4 +260,3 @@ def test_parse_field_value_urlfield_branch(monkeypatch) -> None:
 
     assert viernulvier._parse_field_value(url_field, "https://example.com") == "https://example.com"
     assert viernulvier._parse_field_value(url_field, "not-a-url") == ""
-

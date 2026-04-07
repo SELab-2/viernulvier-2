@@ -4,8 +4,8 @@ Tests for Viernulvier HTTP retry logic, backoff, and rate limiting.
 
 from __future__ import annotations
 
-import requests
 import pytest
+import requests
 
 from apps.imports.scrapers import viernulvier
 from apps.imports.scrapers.viernulvier import (
@@ -14,9 +14,7 @@ from apps.imports.scrapers.viernulvier import (
     _backoff_seconds,
     _parse_retry_after,
 )
-
-from tests.scrapers.conftest import _mock_session, _make_ok_response, _make_status_response
-
+from tests.scrapers.conftest import _make_ok_response, _make_status_response, _mock_session
 
 # ---------------------------------------------------------------------------
 # _parse_retry_after
@@ -25,6 +23,7 @@ from tests.scrapers.conftest import _mock_session, _make_ok_response, _make_stat
 
 def test_parse_retry_after_integer_header() -> None:
     from unittest.mock import Mock
+
     r = Mock()
     r.headers = Mock()
     r.headers.get = Mock(return_value="30")
@@ -33,6 +32,7 @@ def test_parse_retry_after_integer_header() -> None:
 
 def test_parse_retry_after_non_integer_returns_none() -> None:
     from unittest.mock import Mock
+
     r = Mock()
     r.headers = Mock()
     r.headers.get = Mock(return_value="Wed, 21 Oct 2015 07:28:00 GMT")
@@ -41,6 +41,7 @@ def test_parse_retry_after_non_integer_returns_none() -> None:
 
 def test_parse_retry_after_missing_returns_none() -> None:
     from unittest.mock import Mock
+
     r = Mock()
     r.headers = Mock()
     r.headers.get = Mock(return_value=None)
@@ -49,6 +50,7 @@ def test_parse_retry_after_missing_returns_none() -> None:
 
 def test_fetch_viernulvier_impl_returns_empty_list_when_fetch_returns_none(monkeypatch) -> None:
     from types import SimpleNamespace
+
     monkeypatch.setattr(viernulvier, "_build_session", SimpleNamespace)
     monkeypatch.setattr(viernulvier, "_fetch_with_retry", lambda *_args, **_kwargs: (None, None))
 
@@ -217,6 +219,7 @@ def test_connection_error_retries_then_succeeds(monkeypatch) -> None:
 def test_connection_error_all_retries_exhausted(monkeypatch) -> None:
     """ScraperError raised after all ConnectionError retries exhausted."""
     from typing import Never
+
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
     def responses(url, n) -> Never:
@@ -343,6 +346,7 @@ def test_list_payload_returned_directly(monkeypatch) -> None:
 def test_fetch_retries_exhausted_fallthrough(monkeypatch) -> None:
     """Setting MAX_RETRIES=-1 empties the retry loop, hitting the unreachable raise."""
     from unittest.mock import Mock
+
     monkeypatch.setattr(viernulvier, "MAX_RETRIES", -1)
     monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)
 
@@ -367,5 +371,3 @@ def test_fetch_raises_immediately_on_non_retryable_http_error(monkeypatch) -> No
         viernulvier.fetch_viernulvier(endpoint="/events")
 
     assert call_count[0] == 1  # no retries
-
-

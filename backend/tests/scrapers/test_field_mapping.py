@@ -20,9 +20,7 @@ from apps.imports.scrapers.viernulvier import (
 )
 from apps.pricing.models import PriceRank
 from apps.productions.models import Production
-
 from tests.scrapers.conftest import _PassThroughConfig
-
 
 # ---------------------------------------------------------------------------
 # Flexible Field Mapping and Parsing
@@ -379,4 +377,3 @@ def test_build_defaults_logs_warning_for_nonexistent_field(caplog) -> None:
     finally:
         with connection.schema_editor() as se:
             se.delete_model(SimpleModel)
-
