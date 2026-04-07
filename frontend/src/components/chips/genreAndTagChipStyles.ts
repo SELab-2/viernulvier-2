@@ -43,8 +43,8 @@ export const getGenreAndTagChipStyles = ({
       : {}
 
   const base: SxProps<Theme> = {
-    borderRadius: '9999px',
-    fontWeight: 500,
+    borderRadius: tokens.borderRadius.full,
+    fontWeight: tokens.typography.weights.medium,
     fontSize: '0.95rem',
     px: 0.1,
     py: 0.3,

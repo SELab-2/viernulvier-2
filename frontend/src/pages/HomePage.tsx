@@ -2,6 +2,7 @@ import { Box, Container, Paper, Stack, Typography, useMediaQuery, useTheme } fro
 import { useTranslation } from 'react-i18next'
 import SearchControlsBar from '../components/searchbar/SearchControlsBar'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
+import { tokens } from '../theme/tokens'
 
 // TODO: use the floatingAlerts when needed
 
@@ -34,7 +35,8 @@ const HomePage = () => {
       </Container>
       <Box
         sx={{
-          backgroundColor: theme.palette.mode === 'light' ? '#f8f8f8' : '#1e1e1e',
+          backgroundColor:
+            theme.palette.mode === 'light' ? tokens.colors.light.hover : tokens.colors.dark.hover,
           pt: 4,
           pb: 6,
           borderBottom: `1px solid ${theme.palette.divider}`,
