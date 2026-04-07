@@ -5,6 +5,7 @@ Tests for Viernulvier basic sync persistence and item handling.
 from __future__ import annotations
 
 import logging
+from typing import Never
 
 from django.db import IntegrityError
 from django.test.utils import isolate_apps
@@ -197,7 +198,6 @@ def test_sync_continues_on_database_errors(monkeypatch, caplog) -> None:
 @pytest.mark.django_db(transaction=True)
 def test_sync_all_items_fail_returns_zero(monkeypatch) -> None:
     """All items failing returns 0 saved."""
-    from typing import Never
 
     with _temp_viernulvier_model() as ViernulvierItem:
         monkeypatch.setattr(

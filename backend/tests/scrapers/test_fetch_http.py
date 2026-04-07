@@ -4,10 +4,13 @@ Tests for Viernulvier scraper HTTP layer basics and error handling.
 
 from __future__ import annotations
 
+from unittest.mock import Mock
+
 import pytest
 import requests
 
 from apps.imports.scrapers import viernulvier
+from apps.imports.scrapers.viernulvier import _build_session
 from apps.imports.scrapers.viernulvier_http import _collect_page_members
 from tests.scrapers.conftest import _mock_build_session
 
@@ -112,7 +115,6 @@ def test_fetch_allows_different_endpoint_paths(monkeypatch) -> None:
     captured_url = {}
 
     def fake_build_session():
-        from unittest.mock import Mock
 
         session = Mock()
         mock_response = Mock(status_code=200, ok=True)
@@ -181,8 +183,6 @@ def test_fetch_collects_single_item_dict_with_context(monkeypatch) -> None:
 def test_build_session_mounts_https_and_http_adapters(monkeypatch) -> None:
     """_build_session attaches HTTPAdapter to both https:// and http://."""
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
-
-    from apps.imports.scrapers.viernulvier import _build_session
 
     session = _build_session()
     assert any(p == "https://" for p in session.adapters)

@@ -5,6 +5,7 @@ Tests for field mapping, defaults building, and flexible configuration.
 from __future__ import annotations
 
 import datetime
+import logging
 
 from django.db import connection, models
 from django.test.utils import isolate_apps
@@ -344,8 +345,6 @@ def test_build_defaults_skips_field_map_key_missing_from_item() -> None:
 @pytest.mark.django_db(transaction=True)
 def test_build_defaults_logs_warning_for_nonexistent_field(caplog) -> None:
     """FieldDoesNotExist in field_map logs a warning and skips that entry."""
-
-    import logging
 
     class SimpleModel(models.Model):
         title = models.CharField(max_length=100, null=True)

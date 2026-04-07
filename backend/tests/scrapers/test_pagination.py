@@ -4,7 +4,10 @@ Tests for Viernulvier pagination discovery and execution.
 
 from __future__ import annotations
 
-from apps.imports.scrapers.viernulvier import _discover_extra_pages
+import logging
+
+from apps.imports.scrapers import viernulvier
+from apps.imports.scrapers.viernulvier import ScraperError, _discover_extra_pages
 from tests.scrapers.conftest import _make_ok_response, _make_status_response, _mock_session
 
 # ---------------------------------------------------------------------------
@@ -50,7 +53,6 @@ class TestDiscoverExtraPages:
 
 class TestConcurrentPagination:
     def test_fetches_all_pages_concurrently(self, monkeypatch) -> None:
-        from apps.imports.scrapers import viernulvier
 
         monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
@@ -73,10 +75,6 @@ class TestConcurrentPagination:
         assert len(result) == 3
 
     def test_page_fetch_error_logged_and_other_pages_returned(self, monkeypatch, caplog) -> None:
-        import logging
-
-        from apps.imports.scrapers import viernulvier
-        from apps.imports.scrapers.viernulvier import ScraperError
 
         monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
@@ -99,7 +97,6 @@ class TestConcurrentPagination:
         assert any("Page fetch failed" in r.message for r in caplog.records)
 
     def test_304_on_concurrent_page_silently_skipped(self, monkeypatch) -> None:
-        from apps.imports.scrapers import viernulvier
 
         monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
@@ -127,7 +124,6 @@ class TestConcurrentPagination:
 
 class TestSequentialFallback:
     def test_304_on_next_page_breaks_loop(self, monkeypatch) -> None:
-        from apps.imports.scrapers import viernulvier
 
         monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
         call_count = [0]
@@ -149,7 +145,6 @@ class TestSequentialFallback:
         assert len(result) == 1
 
     def test_relative_next_url_made_absolute(self, monkeypatch) -> None:
-        from apps.imports.scrapers import viernulvier
 
         monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
         captured_urls = []
@@ -171,7 +166,6 @@ class TestSequentialFallback:
         assert captured_urls[1].startswith("http")
 
     def test_list_response_on_next_page_appended(self, monkeypatch) -> None:
-        from apps.imports.scrapers import viernulvier
 
         monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
         call_count = [0]

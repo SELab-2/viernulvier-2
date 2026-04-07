@@ -4,6 +4,10 @@ Tests for Viernulvier HTTP retry logic, backoff, and rate limiting.
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+from typing import Never
+from unittest.mock import Mock
+
 import pytest
 import requests
 
@@ -22,7 +26,6 @@ from tests.scrapers.conftest import _make_ok_response, _make_status_response, _m
 
 
 def test_parse_retry_after_integer_header() -> None:
-    from unittest.mock import Mock
 
     r = Mock()
     r.headers = Mock()
@@ -31,7 +34,6 @@ def test_parse_retry_after_integer_header() -> None:
 
 
 def test_parse_retry_after_non_integer_returns_none() -> None:
-    from unittest.mock import Mock
 
     r = Mock()
     r.headers = Mock()
@@ -40,7 +42,6 @@ def test_parse_retry_after_non_integer_returns_none() -> None:
 
 
 def test_parse_retry_after_missing_returns_none() -> None:
-    from unittest.mock import Mock
 
     r = Mock()
     r.headers = Mock()
@@ -49,7 +50,6 @@ def test_parse_retry_after_missing_returns_none() -> None:
 
 
 def test_fetch_viernulvier_impl_returns_empty_list_when_fetch_returns_none(monkeypatch) -> None:
-    from types import SimpleNamespace
 
     monkeypatch.setattr(viernulvier, "_build_session", SimpleNamespace)
     monkeypatch.setattr(viernulvier, "_fetch_with_retry", lambda *_args, **_kwargs: (None, None))
@@ -218,7 +218,6 @@ def test_connection_error_retries_then_succeeds(monkeypatch) -> None:
 
 def test_connection_error_all_retries_exhausted(monkeypatch) -> None:
     """ScraperError raised after all ConnectionError retries exhausted."""
-    from typing import Never
 
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
@@ -345,7 +344,6 @@ def test_list_payload_returned_directly(monkeypatch) -> None:
 
 def test_fetch_retries_exhausted_fallthrough(monkeypatch) -> None:
     """Setting MAX_RETRIES=-1 empties the retry loop, hitting the unreachable raise."""
-    from unittest.mock import Mock
 
     monkeypatch.setattr(viernulvier, "MAX_RETRIES", -1)
     monkeypatch.setattr(viernulvier.time, "sleep", lambda *_: None)

@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Never
 
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, connection, models
 from django.test.utils import isolate_apps
 import pytest
 
@@ -522,8 +522,6 @@ def test_sync_executes_translations(monkeypatch) -> None:
 @pytest.mark.django_db(transaction=True)
 def test_sync_caches_external_id_after_create(monkeypatch) -> None:
     """After update_or_create, the object's external_id is stored in fk_cache."""
-
-    from django.db import connection, models
 
     class CachedModel(models.Model):
         external_id = models.CharField(max_length=255, unique=True)

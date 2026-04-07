@@ -4,12 +4,13 @@ Tests for Viernulvier query parameter handling.
 
 from __future__ import annotations
 
+from unittest.mock import Mock
+
 from apps.imports.scrapers import viernulvier
 
 
 def test_fetch_accepts_query_params(monkeypatch) -> None:
     """Params dict is forwarded to the first HTTP request."""
-    from unittest.mock import Mock
 
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
@@ -38,7 +39,6 @@ def test_fetch_accepts_query_params(monkeypatch) -> None:
 
 def test_fetch_params_applied_to_initial_request_only(monkeypatch) -> None:
     """Query params are passed on page 1 only; sequential 'next' pages have no params."""
-    from unittest.mock import Mock
 
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
 
@@ -82,7 +82,6 @@ def test_fetch_params_applied_to_initial_request_only(monkeypatch) -> None:
 
 def test_fetch_with_multiple_query_params(monkeypatch) -> None:
     """Multiple query parameters are all forwarded correctly."""
-    from unittest.mock import Mock
 
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
     captured = {}
@@ -114,7 +113,6 @@ def test_fetch_with_multiple_query_params(monkeypatch) -> None:
 
 def test_fetch_without_params_sends_none(monkeypatch) -> None:
     """Calling fetch without params passes None to the HTTP layer."""
-    from unittest.mock import Mock
 
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
     captured = {}
@@ -142,7 +140,6 @@ def test_fetch_without_params_sends_none(monkeypatch) -> None:
 
 def test_fetch_preserves_timestamp_format(monkeypatch) -> None:
     """ISO 8601 timestamp strings in params are not modified."""
-    from unittest.mock import Mock
 
     monkeypatch.setenv("VIERNULVIER_API_KEY", "test-key")
     captured = {}
