@@ -112,7 +112,7 @@ describe('theme/tokens - Design System Tokens', () => {
 
   describe('borderRadius', () => {
     it('should have border radius values', () => {
-      expect(tokens.borderRadius.none).toBe(0)
+      expect(tokens.borderRadius.none).toBe('0px')
       expect(tokens.borderRadius.md).toBe('8px')
       expect(tokens.borderRadius.full).toBe('9999px')
     })
