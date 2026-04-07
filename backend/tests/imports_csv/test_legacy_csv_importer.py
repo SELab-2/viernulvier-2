@@ -311,7 +311,7 @@ def test_import_legacy_csv_management_command_updates_tqdm(monkeypatch) -> None:
 
     created: dict[str, _FakeBar] = {}
 
-    def _fake_tqdm(*, total, unit, desc, leave):  # noqa: ANN001
+    def _fake_tqdm(*, total, unit, desc, leave):
         assert unit == "rows"
         assert desc == "Importing legacy CSV"
         assert leave is False
