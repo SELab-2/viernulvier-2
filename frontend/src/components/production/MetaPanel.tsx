@@ -176,7 +176,7 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
   const resolvedAttendanceMode = production.attendance_mode || ''
 
   const resolvedTags = formatAllTags(production, language)
-
+  // TODO: use GenreChip for the genres now that the component is available?
   return (
     <div
       className="meta-panel"
