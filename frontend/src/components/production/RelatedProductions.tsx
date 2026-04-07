@@ -1,7 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material'
-import { Link as RouterLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import type { ProductionRelated, RelatedProduction, RelatedTag } from '../../types/Productions'
+import type { ProductionRelated, RelatedTag } from '../../types/Productions'
 import Carousel from '../carousel/Carousel'
 import ProductionGridCard from '../ProductionGridCard'
 import Tag from '../Tag'
@@ -59,14 +58,14 @@ function RelatedProductions({ lang = 'nl', related }: RelatedProductionsProps) {
 
         return (
           <Box key={entry.tag.id}>
-              <Box sx={{ mb: 1.5, display: 'inline-flex', fontWeight: 600 }}>
-                <Tag
-                  tagName={String(entry.tag.id)}
-                  labels={entry.tag.name as Record<string, string>}
-                  context="series"
-                  className="related-productions-tag"
-                />
-              </Box>
+            <Box sx={{ mb: 1.5, display: 'inline-flex', fontWeight: 600 }}>
+              <Tag
+                tagName={String(entry.tag.id)}
+                labels={entry.tag.name as Record<string, string>}
+                context="series"
+                className="related-productions-tag"
+              />
+            </Box>
             <Carousel
               ariaLabel={`${t('productions.detail.related', 'Related productions')} for ${tagName}`}
               maxWidth="100%"
