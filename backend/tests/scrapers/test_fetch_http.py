@@ -1,6 +1,4 @@
-"""
-Tests for Viernulvier scraper HTTP layer basics and error handling.
-"""
+"""Tests for Viernulvier scraper HTTP behavior and shared test helper fixtures."""
 
 from __future__ import annotations
 
@@ -188,3 +186,43 @@ def test_build_session_mounts_https_and_http_adapters(monkeypatch) -> None:
     assert any(p == "https://" for p in session.adapters)
     assert any(p == "http://" for p in session.adapters)
     assert session.headers.get("X-AUTH-TOKEN") == "test-key"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_shared_helper_fixtures_are_callable(
+    monkeypatch,
+    mock_build_session_helper,
+    mock_session_helper,
+    temp_viernulvier_model,
+    fake_trans_model_fixture,
+    m2m_setup_fixture,
+) -> None:
+    """Exercise wrapper fixtures so conftest helper return branches stay covered."""
+    mock_build_session_helper([(200, [])])
+    assert viernulvier._build_session is not None
+
+    def responses(_url, _n):
+        response = Mock(status_code=200, ok=True)
+        response.json.return_value = []
+        return response
+
+    call_count = mock_session_helper(responses)
+    assert call_count == [0]
+    session = viernulvier._build_session()
+    assert session.get("https://example.com").json() == []
+
+    with temp_viernulvier_model() as model:
+        obj = model.objects.create(id="x")
+        assert obj.id == "x"
+
+    calls = []
+    fake_trans_model = fake_trans_model_fixture(calls)
+    fake_trans_model.objects.update_or_create(language_id="nl", defaults={"title": "Hallo"})
+    assert calls[0]["language_id"] == "nl"
+
+    related, through, rows = m2m_setup_fixture()
+    _ = related(pk=1)
+    through(parent_id=1, related_id=2)
+    assert rows
+    assert rows[0]["parent_id"] == 1
+
