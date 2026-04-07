@@ -68,15 +68,13 @@ describe('App', () => {
         btn.getAttribute('data-testid') === 'theme-toggle-inline',
     )
 
-    if (themeToggleButton) {
-      fireEvent.click(themeToggleButton)
-
-      await waitFor(() => {
+    expect(themeToggleButton).toBeDefined()
+    fireEvent.click(themeToggleButton!)
+    await waitFor(() => {
         // After toggle, the theme should be saved to localStorage
         const savedTheme = localStorage.getItem('vnv-theme-mode')
         expect(['light', 'dark']).toContain(savedTheme)
       })
-    }
   })
 
   it('renders footer', () => {
