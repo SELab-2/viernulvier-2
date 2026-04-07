@@ -1,51 +1,57 @@
-import React from 'react'
-import { TextField, useTheme } from '@mui/material'
+import SearchIcon from '@mui/icons-material/Search'
+import { IconButton, InputAdornment, TextField, useTheme } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 
-/**
- * Props for the SearchBar component.
- * - tags: list of available tags
- * - selectedTags: currently selected tag names
- * - onTagToggle: callback to toggle tag selection
- * - searchValue: search input value
- * - onSearchChange: callback for search input changes
- * - placeholder: input placeholder text
- */
-interface SearchBarProps {
+export interface SearchBarProps {
   placeholder?: string
   searchValue: string
   onSearchChange: (value: string) => void
+  onSearchSubmit?: (value: string) => void
 }
 
-/**
- * SearchBar component: renders a search input and tag chips.
- * - Tag selection is controlled via props.
- * - Tag chips call onTagToggle when clicked.
- */
-const SearchBar: React.FC<SearchBarProps> = ({
+const SearchBar = ({
   placeholder = 'Search...',
   searchValue,
   onSearchChange,
-}) => {
+  onSearchSubmit,
+}: SearchBarProps) => {
   const theme = useTheme()
+  const t = useTranslation().t
+
+  const handleSearchSubmit = () => {
+    onSearchSubmit?.(searchValue.trim())
+  }
+
   return (
-    <>
-      {/* Search input field */}
-      <TextField
-        fullWidth
-        variant="outlined"
-        placeholder={placeholder}
-        value={searchValue}
-        onChange={(e) => onSearchChange(e.target.value)}
-        sx={{
-          flex: 1,
-          '& .MuiInputBase-root': {
-            height: 40,
-            backgroundColor: theme.palette.background.default,
-          },
-        }}
-        className="search-bar-textfield"
-      />
-    </>
+    <TextField
+      fullWidth
+      variant="outlined"
+      placeholder={placeholder}
+      value={searchValue}
+      onChange={(e) => onSearchChange(e.target.value)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          handleSearchSubmit()
+        }
+      }}
+      InputProps={{
+        endAdornment: (
+          <InputAdornment position="end">
+            <IconButton aria-label={t('searchbar.search')} edge="end" onClick={handleSearchSubmit}>
+              <SearchIcon fontSize="small" />
+            </IconButton>
+          </InputAdornment>
+        ),
+      }}
+      sx={{
+        flex: 1,
+        '& .MuiInputBase-root': {
+          height: 40,
+          backgroundColor: theme.palette.background.default,
+        },
+      }}
+      className="search-bar-textfield"
+    />
   )
 }
 

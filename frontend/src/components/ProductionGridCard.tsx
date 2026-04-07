@@ -8,10 +8,10 @@ import { getTranslatedRecord } from '../utils/translations'
 import GenreChip from './GenreChip'
 import ImageWithFallback from './ImageWithFallback'
 
-export interface GridCardProps {
+export interface ProductionGridCardProps {
   production: Production
-  selectedGenreIds: number[]
-  onGenreClick: (genreId: number) => void
+  selectedGenreIds?: number[]
+  onGenreClick?: (genreId: number) => void
 }
 
 /**
@@ -27,7 +27,11 @@ export interface GridCardProps {
  * @param props.onGenreClick Called with a genre id when that chip is pressed.
  * @returns The grid card element.
  */
-const ProductionGridCard = ({ production, selectedGenreIds, onGenreClick }: GridCardProps) => {
+const ProductionGridCard = ({
+  production,
+  selectedGenreIds,
+  onGenreClick,
+}: ProductionGridCardProps) => {
   const { i18n } = useTranslation()
   const language = i18n.language
 
@@ -38,7 +42,11 @@ const ProductionGridCard = ({ production, selectedGenreIds, onGenreClick }: Grid
     language,
     production.display_artist_name,
   )
-  const dateLabel = getProductionDateLabel(production.events, language)
+  const dateLabel = getProductionDateLabel(
+    production.first_event_start,
+    production.last_event_end,
+    language,
+  )
   const genres = production.genres.filter((genre) => genre.display_name)
 
   return (

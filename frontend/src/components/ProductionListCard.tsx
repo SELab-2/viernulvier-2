@@ -9,10 +9,10 @@ import { getTranslatedRecord } from '../utils/translations'
 import GenreChip from './GenreChip'
 import ImageWithFallback from './ImageWithFallback'
 
-export interface ListCardProps {
+export interface ProductionListCardProps {
   production: Production
-  selectedGenreIds: number[]
-  onGenreClick: (genreId: number) => void
+  selectedGenreIds?: number[]
+  onGenreClick?: (genreId: number) => void
 }
 
 /**
@@ -28,7 +28,11 @@ export interface ListCardProps {
  * @param props.onGenreClick Called with a genre id when that chip is pressed.
  * @returns The list row element.
  */
-const ProductionListCard = ({ production, selectedGenreIds, onGenreClick }: ListCardProps) => {
+const ProductionListCard = ({
+  production,
+  selectedGenreIds,
+  onGenreClick,
+}: ProductionListCardProps) => {
   const { i18n } = useTranslation()
   const language = i18n.language
 
@@ -39,7 +43,11 @@ const ProductionListCard = ({ production, selectedGenreIds, onGenreClick }: List
     language,
     production.display_artist_name,
   )
-  const dateLabel = getProductionDateLabel(production.events, language)
+  const dateLabel = getProductionDateLabel(
+    production.first_event_start,
+    production.last_event_end,
+    language,
+  )
   const genres = production.genres.filter((genre) => genre.display_name)
 
   return (
