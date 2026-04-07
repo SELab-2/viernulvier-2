@@ -13,6 +13,3 @@ db.sqlite3
 .media/
 staticfiles/
 static/
-
-/apps/imports/*.csv
-.coverage
