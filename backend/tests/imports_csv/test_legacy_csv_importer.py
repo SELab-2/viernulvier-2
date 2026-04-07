@@ -259,7 +259,7 @@ def test_import_legacy_csv_management_command_supports_only_productions(monkeypa
 
 
 def test_import_bundled_legacy_csv_converts_original_production_file(tmp_path) -> None:
-    original_path = tmp_path / "Productions - output-orig.csv"
+    original_path = tmp_path / "Productions - output.csv"
     events_path = tmp_path / "Events - voorstellingen.csv"
 
     _write_raw_csv(
@@ -272,8 +272,7 @@ def test_import_bundled_legacy_csv_converts_original_production_file(tmp_path) -
     imported = import_bundled_legacy_csv_files(base_dir=tmp_path, only="productions")
 
     assert imported == 1
-    formatted_path = tmp_path / "Productions - output.csv"
-    assert formatted_path.exists()
+    assert not (tmp_path / "Productions - converted.csv").exists()
 
     log = ImportLog.objects.get(source="legacy_csv:Productions - output.csv")
     assert log.status == ImportLog.Status.SUCCESS
@@ -287,7 +286,7 @@ def test_import_bundled_legacy_csv_converts_original_production_file(tmp_path) -
 
 
 def test_import_bundled_legacy_csv_converts_original_before_detecting_kind(tmp_path) -> None:
-    original_path = tmp_path / "Productions - output-orig.csv"
+    original_path = tmp_path / "Productions - output.csv"
     events_path = tmp_path / "Events - voorstellingen.csv"
 
     _write_raw_csv(
@@ -300,4 +299,4 @@ def test_import_bundled_legacy_csv_converts_original_before_detecting_kind(tmp_p
     imported = import_bundled_legacy_csv_files(base_dir=tmp_path, only="productions", dry_run=True)
 
     assert imported == 1
-    assert (tmp_path / "Productions - output.csv").exists()
+    assert not (tmp_path / "Productions - converted.csv").exists()
