@@ -3,7 +3,7 @@ import { Chip, useTheme } from '@mui/material'
 import { useState } from 'react'
 import type { MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { Link as RouterLink } from 'react-router-dom'
 import type { GenreAndTagChipProps } from '../types/GenreAndTagChip'
 import { getGenreAndTagChipStyles } from './chips/genreAndTagChipStyles'
 import { getQueryKeyForChipType, resolveChipLabel } from './chips/genreAndTagChipUtils'
@@ -31,7 +31,6 @@ const GenreAndTagChip = ({
   ariaLabel,
 }: GenreAndTagChipProps) => {
   const theme = useTheme()
-  const navigate = useNavigate()
   const { i18n, t } = useTranslation()
   const [hovered, setHovered] = useState(false)
 
@@ -42,6 +41,13 @@ const GenreAndTagChip = ({
   })
 
   const isClickable = context !== 'static'
+  const isSearchContext = context === 'search'
+  const linkTo =
+    context === 'series'
+      ? `/series/${String(id)}`
+      : context === 'description'
+        ? `/?${getQueryKeyForChipType(chipType)}=${encodeURIComponent(String(id))}`
+        : undefined
   const showSelectedIcon = context === 'search' && selected
   const selectedChipColor =
     chipType === 'genre' ? (theme.palette.accent?.main ?? '#9333ea') : theme.palette.primary.main
@@ -53,28 +59,10 @@ const GenreAndTagChip = ({
       ? t('genreChip.filterByGenre', { genre: label })
       : undefined)
 
-  /** Handles click behavior based on the selected context. */
-  const handleClick = (event: MouseEvent) => {
+  /** Handles click behavior for search context */
+  const handleSearchClick = (event: MouseEvent) => {
     event.stopPropagation()
-
-    if (!isClickable) {
-      return
-    }
-
-    if (context === 'series') {
-      navigate(`/series/${String(id)}`)
-      return
-    }
-
-    if (context === 'search') {
-      onToggle?.(id, chipType)
-      return
-    }
-
-    if (context === 'description') {
-      const queryKey = getQueryKeyForChipType(chipType)
-      navigate(`/?${queryKey}=${encodeURIComponent(String(id))}`)
-    }
+    onToggle?.(id, chipType)
   }
 
   return (
@@ -124,13 +112,15 @@ const GenreAndTagChip = ({
         </span>
       }
       clickable={isClickable}
-      onClick={handleClick}
+      onClick={isSearchContext ? handleSearchClick : undefined}
       sx={getGenreAndTagChipStyles({ theme, selected, context, chipType })}
       aria-pressed={context === 'search' ? selected : undefined}
       aria-label={resolvedAriaLabel}
       tabIndex={isClickable ? 0 : -1}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      component={linkTo ? RouterLink : 'div'}
+      to={linkTo}
     />
   )
 }

@@ -8,12 +8,6 @@ import GenreAndTagChip from '../../components/GenreAndTagChip'
 import i18n from '../../i18n'
 import { getTranslatedRecord } from '../../utils/translations'
 
-const mockNavigate = jest.fn()
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => mockNavigate,
-}))
-
 const accentTheme = createTheme({
   palette: {
     mode: 'light',
@@ -55,7 +49,6 @@ const renderChip = (ui: ReactElement) =>
 
 beforeEach(() => {
   void i18n.changeLanguage('nl')
-  mockNavigate.mockReset()
 })
 
 afterEach(() => {
@@ -220,8 +213,7 @@ describe('GenreAndTagChip in genre mode', () => {
       <GenreAndTagChip name="Dans" labels={{}} chipType="genre" id={7} context="description" />,
     )
 
-    fireEvent.click(screen.getByRole('button'))
-    expect(mockNavigate).toHaveBeenCalledWith('/?g=7')
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/?g=7')
   })
 
   it('renders static context as non-clickable', () => {
@@ -277,8 +269,7 @@ describe('GenreAndTagChip in series tag mode', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button'))
-    expect(mockNavigate).toHaveBeenCalledWith('/?t=12')
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/?t=12')
   })
 
   it('navigates to the series page in series context', () => {
@@ -286,7 +277,6 @@ describe('GenreAndTagChip in series tag mode', () => {
       <GenreAndTagChip name="reekstag" labels={{}} chipType="seriesTag" id={12} context="series" />,
     )
 
-    fireEvent.click(screen.getByRole('button'))
-    expect(mockNavigate).toHaveBeenCalledWith('/series/12')
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/series/12')
   })
 })
