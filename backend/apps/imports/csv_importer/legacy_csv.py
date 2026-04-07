@@ -7,7 +7,10 @@ from datetime import UTC, timedelta
 from hashlib import sha256
 import logging
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
 
 from django.db import transaction
 from django.utils import timezone
@@ -18,7 +21,7 @@ from apps.events.models import Event
 from apps.genres.models import Genre, GenreTranslation, GenreUseAs
 from apps.import_log.models import ImportLog
 from apps.imports.scrapers.viernulvier import clean_string
-from apps.imports.scrapers.viernulvier_import_log import append_limited_error, finalize_import_log
+from apps.imports.scrapers.viernulvier_import_log import finalize_import_log
 from apps.languages.models import Language
 from apps.locations.models import Hall, HallTranslation
 from apps.productions.models import Production, ProductionGenre, ProductionTranslation
@@ -81,60 +84,20 @@ def _parse_legacy_datetime(value: Any) -> Any | None:
     return parsed
 
 
-def _append_legacy_production_continuation(current_row: dict[str, Any], continuation_row: dict[str, Any]) -> None:
-    """Merge a malformed continuation row into the previous production row."""
-    chunks = [
-        _normalise_multiline_text(continuation_row.get("Titel")),
-        _normalise_multiline_text(continuation_row.get("Ondertitel")),
-        _normalise_multiline_text(continuation_row.get("Description1")),
-        _normalise_multiline_text(continuation_row.get("Description2")),
-    ]
-    continuation_text = "\n".join(chunk for chunk in chunks if chunk).strip()
-    if not continuation_text:
-        return
-
-    base = _normalise_multiline_text(current_row.get("Description1"))
-    current_row["Description1"] = f"{base}\n{continuation_text}".strip() if base else continuation_text
-
-
-def _find_production_id_in_row(raw_row: dict[str, Any]) -> str:
-    """Extract production ID from a CSV row, searching across fields if needed for malformed data."""
-    production_id = _normalise_cell(raw_row.get("ID"))
-    if production_id:
-        return production_id
-
-    # Some malformed rows have the ID in the wrong column; search for numeric IDs in other fields
-    for field_name in LEGACY_PRODUCTION_FIELDNAMES:
-        value = _normalise_cell(raw_row.get(field_name, ""))
-        # Check if this field contains a standalone numeric ID (possibly with non-breaking space prefix)
-        cleaned = value.strip().replace("\xa0", "").replace("\n", " ").strip()
-        if cleaned and cleaned.isdigit() and len(cleaned) >= 4:
-            return cleaned
-    return ""
-
-
-def _iter_legacy_production_rows(csv_path: Path) -> Any:
-    """Yield cleaned production rows while merging malformed continuation lines on the fly."""
+def _iter_csv_rows(csv_path: Path) -> Iterable[dict[str, Any]]:
     with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
         if not reader.fieldnames:
             raise ValueError(f"Missing headers in {csv_path.name}")
+        yield from reader
 
-        current_row: dict[str, Any] | None = None
-        for raw_row in reader:
-            row = {field: raw_row.get(field, "") for field in LEGACY_PRODUCTION_FIELDNAMES}
-            production_id = _find_production_id_in_row(row)
 
-            if production_id:
-                if current_row is not None:
-                    yield current_row
-                row["ID"] = production_id
-                current_row = row
-            elif current_row is not None:
-                _append_legacy_production_continuation(current_row, row)
-
-        if current_row is not None:
-            yield current_row
+def _count_csv_rows(csv_path: Path) -> int:
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if not reader.fieldnames:
+            raise ValueError(f"Missing headers in {csv_path.name}")
+        return sum(1 for _ in reader)
 
 
 def _ensure_language() -> Language:
@@ -267,7 +230,6 @@ def _import_legacy_event_row(row: dict[str, Any], *, dry_run: bool) -> bool:
     if starts_at and ends_at and ends_at < starts_at:
         ends_at += timedelta(days=1)
     if starts_at and ends_at and ends_at < starts_at:
-        # Legacy rows sometimes contain corrupted end dates; keep the event with an open end.
         ends_at = None
 
     hall_name = _normalise_cell(row.get("Hall"))
@@ -308,11 +270,13 @@ def detect_legacy_csv_kind(csv_path: Path | str) -> str:
 def _import_legacy_csv_rows(
     *,
     source_name: str,
-    rows: Any,
+    rows: Iterable[dict[str, Any]],
     row_handler: Any,
     partial_error_label: str,
     failed_error_label: str,
     dry_run: bool,
+    total_rows: int | None = None,
+    progress_callback: Callable[[int, int | None], None] | None = None,
 ) -> int:
     import_log = ImportLog.objects.create(
         source=f"legacy_csv:{source_name}",
@@ -322,35 +286,44 @@ def _import_legacy_csv_rows(
 
     saved = 0
     total = 0
-    errors = 0
-    error_messages: list[str] = []
-
     try:
         for row in rows:
             total += 1
             try:
                 with transaction.atomic():
                     saved_row = row_handler(row, dry_run=dry_run)
-            except Exception as exc:  # pragma: no cover - exercised through import log assertions in tests
-                errors += 1
-                append_limited_error(error_messages, str(exc))
-                logger.exception("Legacy CSV row import failed for %s", source_name)
-            else:
-                if saved_row:
-                    saved += 1
+            except Exception as exc:
+                logger.exception("Legacy CSV row import failed for %s at row %s", source_name, total)
+                import_log.status = ImportLog.Status.FAILED
+                import_log.finished_at = timezone.now()
+                import_log.records_total = total
+                import_log.records_imported = saved
+                import_log.records_failed = 1
+                import_log.error_message = f"Row {total}: {exc}"
+                import_log.save()
+                raise
+
+            if saved_row:
+                saved += 1
+            if progress_callback:
+                progress_callback(total, total_rows)
     except Exception as exc:
-        import_log.status = ImportLog.Status.FAILED
-        import_log.finished_at = timezone.now()
-        import_log.error_message = str(exc)
-        import_log.save()
+        if import_log.status != ImportLog.Status.FAILED:
+            import_log.status = ImportLog.Status.FAILED
+            import_log.finished_at = timezone.now()
+            import_log.records_total = total
+            import_log.records_imported = saved
+            import_log.records_failed = 0
+            import_log.error_message = str(exc)
+            import_log.save()
         raise
 
     finalize_import_log(
         import_log=import_log,
         total=total,
         imported=saved,
-        errors=errors,
-        error_messages=error_messages,
+        errors=0,
+        error_messages=[],
         timezone_module=timezone,
         partial_error_label=partial_error_label,
         failed_error_label=failed_error_label,
@@ -365,31 +338,27 @@ def _import_legacy_csv_file(
     partial_error_label: str,
     failed_error_label: str,
     dry_run: bool,
+    progress_callback: Callable[[int, int | None], None] | None = None,
 ) -> int:
-    with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle)
-        return _import_legacy_csv_rows(
-            source_name=csv_path.name,
-            rows=reader,
-            row_handler=row_handler,
-            partial_error_label=partial_error_label,
-            failed_error_label=failed_error_label,
-            dry_run=dry_run,
-        )
-
-
-def _import_legacy_productions_stream(csv_path: Path, *, dry_run: bool) -> int:
+    total_rows = _count_csv_rows(csv_path) if progress_callback else None
     return _import_legacy_csv_rows(
         source_name=csv_path.name,
-        rows=_iter_legacy_production_rows(csv_path),
-        row_handler=_import_legacy_production_row,
-        partial_error_label="production rows failed",
-        failed_error_label="production rows failed",
+        rows=_iter_csv_rows(csv_path),
+        row_handler=row_handler,
+        partial_error_label=partial_error_label,
+        failed_error_label=failed_error_label,
         dry_run=dry_run,
+        total_rows=total_rows,
+        progress_callback=progress_callback,
     )
 
 
-def import_legacy_csv_file(csv_path: Path | str, *, dry_run: bool = False) -> int:
+def import_legacy_csv_file(
+    csv_path: Path | str,
+    *,
+    dry_run: bool = False,
+    progress_callback: Callable[[int, int | None], None] | None = None,
+) -> int:
     """Import a single legacy CSV export into the Django database."""
     path = Path(csv_path)
     kind = detect_legacy_csv_kind(path)
@@ -400,6 +369,7 @@ def import_legacy_csv_file(csv_path: Path | str, *, dry_run: bool = False) -> in
             partial_error_label="production rows failed",
             failed_error_label="production rows failed",
             dry_run=dry_run,
+            progress_callback=progress_callback,
         )
     if kind == "events":
         return _import_legacy_csv_file(
@@ -408,27 +378,51 @@ def import_legacy_csv_file(csv_path: Path | str, *, dry_run: bool = False) -> in
             partial_error_label="event rows failed",
             failed_error_label="event rows failed",
             dry_run=dry_run,
+            progress_callback=progress_callback,
         )
     raise ValueError(f"Unsupported CSV kind: {kind}")
 
 
-def import_bundled_legacy_csv_files(*, dry_run: bool = False, base_dir: Path | None = None, only: str | None = None) -> int:
+def import_bundled_legacy_csv_files(
+    *,
+    dry_run: bool = False,
+    base_dir: Path | None = None,
+    only: str | None = None,
+    progress_callback: Callable[[int, int | None], None] | None = None,
+) -> int:
     """Import the legacy CSV files bundled with the backend package."""
     root = base_dir or PACKAGE_ROOT
     productions_original_path = root / LEGACY_PRODUCTION_ORIGINAL_CSV.name
     productions_fallback_path = root / LEGACY_PRODUCTION_CSV.name
+    productions_path = productions_original_path if productions_original_path.exists() else productions_fallback_path
     events_path = root / LEGACY_EVENT_CSV.name
 
+    csv_paths: list[Path]
     if only == "productions":
-        if productions_original_path.exists():
-            return _import_legacy_productions_stream(productions_original_path, dry_run=dry_run)
-        return import_legacy_csv_file(productions_fallback_path, dry_run=dry_run)
-    if only == "events":
-        return import_legacy_csv_file(events_path, dry_run=dry_run)
-
-    if productions_original_path.exists():
-        imported_productions = _import_legacy_productions_stream(productions_original_path, dry_run=dry_run)
+        csv_paths = [productions_path]
+    elif only == "events":
+        csv_paths = [events_path]
     else:
-        imported_productions = import_legacy_csv_file(productions_fallback_path, dry_run=dry_run)
+        csv_paths = [productions_path, events_path]
 
-    return imported_productions + import_legacy_csv_file(events_path, dry_run=dry_run)
+    total_rows = sum(_count_csv_rows(csv_path) for csv_path in csv_paths) if progress_callback else None
+    processed_offset = 0
+    imported_total = 0
+
+    for csv_path in csv_paths:
+        file_processed = 0
+
+        def _file_progress(processed: int, _total: int | None, *, offset: int = processed_offset) -> None:
+            nonlocal file_processed
+            file_processed = processed
+            if progress_callback:
+                progress_callback(offset + processed, total_rows)
+
+        imported_total += import_legacy_csv_file(
+            csv_path,
+            dry_run=dry_run,
+            progress_callback=_file_progress if progress_callback else None,
+        )
+        processed_offset += file_processed
+
+    return imported_total

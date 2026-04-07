@@ -106,11 +106,11 @@ def test_import_legacy_productions_fails_with_missing_id(tmp_path) -> None:
         ],
     )
 
-    imported = import_legacy_csv_file(csv_path)
+    with pytest.raises(ValueError, match="Missing production ID"):
+        import_legacy_csv_file(csv_path)
 
-    assert imported == 1
     log = ImportLog.objects.get(source=f"legacy_csv:{csv_path.name}")
-    assert log.status == ImportLog.Status.PARTIAL_SUCCESS
+    assert log.status == ImportLog.Status.FAILED
     assert log.records_total == 2
     assert log.records_imported == 1
     assert log.records_failed == 1
@@ -227,9 +227,10 @@ def test_import_legacy_csv_dry_run_has_no_side_effect_writes(tmp_path) -> None:
 def test_import_legacy_csv_management_command_uses_importer(monkeypatch) -> None:
     call_args = {}
 
-    def _fake_import(*, dry_run: bool, only: str | None = None) -> int:
+    def _fake_import(*, dry_run: bool, only: str | None = None, progress_callback=None) -> int:
         call_args["dry_run"] = dry_run
         call_args["only"] = only
+        call_args["has_progress_callback"] = progress_callback is not None
         return 12
 
     monkeypatch.setattr(import_legacy_csv_command, "import_bundled_legacy_csv_files", _fake_import)
@@ -237,16 +238,17 @@ def test_import_legacy_csv_management_command_uses_importer(monkeypatch) -> None
 
     call_command("import_legacy_csv", "--dry-run", stdout=output)
 
-    assert call_args == {"dry_run": True, "only": None}
+    assert call_args == {"dry_run": True, "only": None, "has_progress_callback": True}
     assert "Imported 12 legacy CSV records [DRY RUN]" in output.getvalue()
 
 
 def test_import_legacy_csv_management_command_supports_only_productions(monkeypatch) -> None:
     call_args = {}
 
-    def _fake_import(*, dry_run: bool, only: str | None = None) -> int:
+    def _fake_import(*, dry_run: bool, only: str | None = None, progress_callback=None) -> int:
         call_args["dry_run"] = dry_run
         call_args["only"] = only
+        call_args["has_progress_callback"] = progress_callback is not None
         return 7
 
     monkeypatch.setattr(import_legacy_csv_command, "import_bundled_legacy_csv_files", _fake_import)
@@ -254,7 +256,7 @@ def test_import_legacy_csv_management_command_supports_only_productions(monkeypa
 
     call_command("import_legacy_csv", "--only", "productions", stdout=output)
 
-    assert call_args == {"dry_run": False, "only": "productions"}
+    assert call_args == {"dry_run": False, "only": "productions", "has_progress_callback": True}
     assert "Imported 7 legacy CSV records" in output.getvalue()
 
 
@@ -264,8 +266,8 @@ def test_import_bundled_legacy_csv_converts_original_production_file(tmp_path) -
 
     _write_raw_csv(
         original_path,
-        "Titel,Ondertitel,Description1,Description2,Genre,ID,Planning ID\nArtist,Title,Body line one,Credits,Theater,301,legacy-301\n\\,,,,,,"
-        "\n",
+        "Titel,Ondertitel,Description1,Description2,Genre,ID,Planning ID\n"
+        'Artist,Title,"Body line one\nBody line two",Credits,Theater,301,legacy-301\n',
     )
     _write_csv(events_path, ["Starttime", "Endtime", "Hall", "Production"], [])
 
@@ -283,6 +285,7 @@ def test_import_bundled_legacy_csv_converts_original_production_file(tmp_path) -
     production = Production.objects.get(external_id="301")
     translation = production.translations.get(language__code="nl")
     assert "Body line one" in translation.description
+    assert "Body line two" in translation.description
 
 
 def test_import_bundled_legacy_csv_converts_original_before_detecting_kind(tmp_path) -> None:
