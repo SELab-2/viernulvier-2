@@ -3,7 +3,7 @@ import { Link as RouterLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { ProductionRelated, RelatedProduction, RelatedTag } from '../../types/Productions'
 import Carousel from '../carousel/Carousel'
-import Card from '../carousel/Card'
+import ProductionGridCard from '../ProductionGridCard'
 import { getTranslatedRecord } from '../../utils/translations'
 
 /**
@@ -94,26 +94,28 @@ function RelatedProductions({ lang = 'nl', related }: RelatedProductionsProps) {
               sx={{ width: '100%' }}
             >
               {entry.productions.map((production) => {
-                const title = getTranslatedRecord(
+                const normalizedTitle = getTranslatedRecord(
                   production.title,
                   language,
                   production.display_title,
                 )
-                const subtitle =
+
+                const normalizedArtist =
                   getTranslatedRecord(
                     production.artist_name,
                     language,
                     production.display_artist_name,
-                  ) || undefined
+                  ) || ''
 
                 return (
-                  <Card
+                  <ProductionGridCard
                     key={production.id}
-                    href={`/productions/${production.id}`}
-                    title={title}
-                    subtitle={subtitle}
-                    imageSrc={getBestImageUrl(production)}
-                    imageAlt={title}
+                    production={{
+                      ...production,
+                      genres: production.genres ?? [],
+                      display_title: normalizedTitle,
+                      display_artist_name: normalizedArtist,
+                    }}
                   />
                 )
               })}

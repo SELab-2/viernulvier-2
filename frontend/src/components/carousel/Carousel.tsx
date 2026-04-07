@@ -151,23 +151,13 @@ function Carousel({
               <Box
                 key={index}
                 sx={(theme) => ({
-                  flex: '0 0 100%',
+                  // Let each slide keep its natural width (e.g. the card's fixed width)
+                  // so it can't overflow or overlap neighbours. Embla will group slides
+                  // automatically via `slidesToScroll: 'auto'`.
+                  flex: '0 0 auto',
                   minWidth: 0,
                   paddingX: theme.spacing(0.625),
                   [theme.breakpoints.up('sm')]: {
-                    flexBasis: '50%',
-                    paddingX: theme.spacing(0.75),
-                  },
-                  [theme.breakpoints.up('md')]: {
-                    flexBasis: '33.3333%',
-                    paddingX: theme.spacing(0.75),
-                  },
-                  [theme.breakpoints.up('lg')]: {
-                    flexBasis: '33.3333%',
-                    paddingX: theme.spacing(0.75),
-                  },
-                  [theme.breakpoints.up('xl')]: {
-                    flexBasis: '25%',
                     paddingX: theme.spacing(0.75),
                   },
                 })}
