@@ -70,7 +70,7 @@ export const getGenreAndTagChipStyles = ({
     }
   }
 
-return {
+  return {
     ...base,
     backgroundColor: theme.palette.background.paper,
     color: theme.palette.text.primary,
