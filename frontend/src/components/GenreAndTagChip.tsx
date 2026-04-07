@@ -16,9 +16,16 @@ import { getQueryKeyForChipType, resolveChipLabel } from './chips/genreAndTagChi
  * - `description`: routes to homepage with the chip value in URL query
  * - `series`: routes to the series detail page `/series/:id`
  * - `static`: visual-only non-clickable chip
- */
-/**
- * Unified chip that replaces separate tag and genre chips.
+ *
+ * Chip label resolution priority:
+ * 1. `display_name` (if present)
+ * 2. Localized `name` or `url_title` based on active i18n language
+ * 3. Fallback to `type` for tags or empty string for genres
+ *
+ * The selected state and click behavior are only relevant in the 'search' context,
+ * where chips act as filters.
+ * In 'description' and 'series' contexts, chips function as navigation links.
+ * The 'static' context renders a non-interactive chip for display purposes.
  */
 const GenreAndTagChip = ({
   name,
