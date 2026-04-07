@@ -5,7 +5,6 @@ import ProductionListCard from './ProductionListCard'
 export interface ProductionListProps {
   productions: Production[]
   selectedGenreIds?: number[]
-  onGenreClick?: (genreId: number) => void
 }
 
 /**
@@ -16,10 +15,9 @@ export interface ProductionListProps {
  *
  * @param props.productions List of productions to display.
  * @param props.selectedGenreIds Genre ids currently active in the parent filter state.
- * @param props.onGenreClick Forwarded to every card; called with the clicked genre id.
  * @returns The list container element.
  */
-const ProductionList = ({ productions, selectedGenreIds, onGenreClick }: ProductionListProps) => {
+const ProductionList = ({ productions, selectedGenreIds }: ProductionListProps) => {
   return (
     <Stack spacing={2}>
       {productions.map((production) => (
@@ -27,7 +25,6 @@ const ProductionList = ({ productions, selectedGenreIds, onGenreClick }: Product
           key={production.id}
           production={production}
           selectedGenreIds={selectedGenreIds}
-          onGenreClick={onGenreClick}
         />
       ))}
     </Stack>
