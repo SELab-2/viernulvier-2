@@ -1,6 +1,7 @@
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import { Box, IconButton, Stack, type SxProps, type Theme } from '@mui/material'
+import { useMediaQuery, useTheme } from '@mui/material'
 import useEmblaCarousel from 'embla-carousel-react'
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
 import { Children, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
@@ -36,22 +37,28 @@ function Carousel({
   slideLabel = 'Go to slide',
   sx,
 }: CarouselProps) {
-  const DOT_SIZE = 11
-  const DOT_GAP = 8
-
   const slides = useMemo(() => Children.toArray(children), [children])
+  const theme = useTheme()
 
+  // Group more items per view on larger screens so the dots represent pages instead of individual slides.
+  const isXlUp = useMediaQuery(theme.breakpoints.up('xl'))
+  const isLgUp = useMediaQuery(theme.breakpoints.up('lg'))
+  const isMdUp = useMediaQuery(theme.breakpoints.up('md'))
+  const isSmUp = useMediaQuery(theme.breakpoints.up('sm'))
+  const slidesToScroll = isXlUp ? 4 : isLgUp ? 3 : isMdUp ? 3 : isSmUp ? 2 : 1
   const [emblaRef, emblaApi] = useEmblaCarousel(
-    { align: 'start', loop, skipSnaps: true, slidesToScroll: 'auto' },
+    { align: 'start', loop, skipSnaps: true, slidesToScroll },
     [WheelGesturesPlugin()],
   )
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
-  const activeDotRef = useRef<HTMLButtonElement | null>(null)
+  const dotsRef = useRef<HTMLDivElement | null>(null)
+  const [usePageCounter, setUsePageCounter] = useState(false)
 
   // Embla reports snaps per page, which keeps the dots aligned with the visible slide groups.
-  const snapCount = emblaApi?.scrollSnapList().length ?? Math.max(1, slides.length)
+  const snapCount =
+    emblaApi?.scrollSnapList().length ?? Math.max(1, Math.ceil(slides.length / slidesToScroll))
 
   /**
    * Syncs the arrow state and the active dot with the current Embla snap.
@@ -67,28 +74,102 @@ function Carousel({
   useEffect(() => {
     if (!emblaApi) return
 
-    emblaApi.reInit({ align: 'start', loop, skipSnaps: true, slidesToScroll: 'auto' })
+    // Reinitialize when the responsive grouping changes so the snap count stays correct.
+    emblaApi.reInit({ align: 'start', loop, skipSnaps: true, slidesToScroll })
     emblaApi.on('select', updateControls)
     emblaApi.on('reInit', updateControls)
     updateControls()
 
+    const handleResize = () => {
+      const width = window.innerWidth
+      const newSlidesToScroll =
+        width >= theme.breakpoints.values.xl
+          ? 4
+          : width >= theme.breakpoints.values.lg
+            ? 3
+            : width >= theme.breakpoints.values.md
+              ? 3
+              : width >= theme.breakpoints.values.sm
+                ? 2
+                : 1
+
+      emblaApi.reInit({ align: 'start', loop, skipSnaps: true, slidesToScroll: newSlidesToScroll })
+      updateControls()
+    }
+    window.addEventListener('resize', handleResize)
+
     return () => {
       emblaApi.off('select', updateControls)
       emblaApi.off('reInit', updateControls)
+      window.removeEventListener('resize', handleResize)
     }
-  }, [emblaApi, loop, updateControls])
+  }, [
+    emblaApi,
+    loop,
+    slidesToScroll,
+    updateControls,
+    theme.breakpoints.values.sm,
+    theme.breakpoints.values.md,
+    theme.breakpoints.values.lg,
+    theme.breakpoints.values.xl,
+  ])
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
   const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi])
 
   useEffect(() => {
-    activeDotRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline: 'center',
+    const dotsNode = dotsRef.current
+
+    if (!dotsNode || !showDots || snapCount <= 1) {
+      setUsePageCounter(false)
+      return
+    }
+
+    let animationFrame = 0
+
+    const evaluateWrapping = () => {
+      const containerWidth = dotsNode.clientWidth
+      if (containerWidth <= 0) {
+        setUsePageCounter(false)
+        return
+      }
+
+      const dotWidth = 11
+      const gap = 8
+      const requiredWidth = snapCount * dotWidth + Math.max(0, snapCount - 1) * gap
+      setUsePageCounter(requiredWidth > containerWidth)
+    }
+
+    const scheduleEvaluate = () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame)
+      }
+      animationFrame = requestAnimationFrame(() => {
+        evaluateWrapping()
+      })
+    }
+
+    scheduleEvaluate()
+
+    const observer = new ResizeObserver(() => {
+      scheduleEvaluate()
     })
-  }, [selectedIndex])
+    observer.observe(dotsNode)
+
+    const handleResize = () => {
+      scheduleEvaluate()
+    }
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', handleResize)
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame)
+      }
+    }
+  }, [showDots, snapCount, slides.length])
 
   if (slides.length === 0) {
     return null
@@ -151,13 +232,23 @@ function Carousel({
               <Box
                 key={index}
                 sx={(theme) => ({
-                  // Let each slide keep its natural width (e.g. the card's fixed width)
-                  // so it can't overflow or overlap neighbours. Embla will group slides
-                  // automatically via `slidesToScroll: 'auto'`.
-                  flex: '0 0 auto',
+                  flex: '0 0 100%',
                   minWidth: 0,
                   paddingX: theme.spacing(0.625),
                   [theme.breakpoints.up('sm')]: {
+                    flexBasis: '50%',
+                    paddingX: theme.spacing(0.75),
+                  },
+                  [theme.breakpoints.up('md')]: {
+                    flexBasis: '33.3333%',
+                    paddingX: theme.spacing(0.75),
+                  },
+                  [theme.breakpoints.up('lg')]: {
+                    flexBasis: '33.3333%',
+                    paddingX: theme.spacing(0.75),
+                  },
+                  [theme.breakpoints.up('xl')]: {
+                    flexBasis: '25%',
                     paddingX: theme.spacing(0.75),
                   },
                 })}
@@ -256,45 +347,44 @@ function Carousel({
           sx={{ mt: 1.5, px: 0.5 }}
         >
           {showDots ? (
-            <Box
-              sx={{
-                minWidth: 0,
-                width: '100%',
-                overflowX: 'auto',
-                overflowY: 'hidden',
-                WebkitOverflowScrolling: 'touch',
-                scrollbarWidth: 'none',
-                '&::-webkit-scrollbar': {
-                  display: 'none',
-                },
-              }}
+            <Stack
+              ref={dotsRef}
+              component="div"
+              direction="row"
+              spacing={1}
+              justifyContent="center"
+              flexWrap="wrap"
+              sx={{ flex: 1, minWidth: 0 }}
             >
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: `${DOT_GAP}px`,
-                  justifyContent: 'center',
-                  width: 'max-content',
-                  minWidth: '100%',
-                  mx: 'auto',
-                  py: 0.25,
-                }}
-              >
-                {Array.from({ length: snapCount }).map((_, index) => {
+              {usePageCounter ? (
+                <Box
+                  component="span"
+                  aria-live="polite"
+                  sx={(theme) => ({
+                    color: theme.palette.text.secondary,
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.01em',
+                    lineHeight: 1.3,
+                  })}
+                >
+                  {selectedIndex + 1}/{snapCount}
+                </Box>
+              ) : (
+                Array.from({ length: snapCount }).map((_, index) => {
                   const active = index === selectedIndex
 
                   return (
                     <Box
                       key={index}
                       component="button"
-                      ref={active ? activeDotRef : undefined}
                       type="button"
                       aria-label={`${slideLabel} ${index + 1}`}
                       aria-current={active ? 'true' : undefined}
                       onClick={() => scrollTo(index)}
                       sx={(theme) => ({
-                        width: DOT_SIZE,
-                        height: DOT_SIZE,
+                        width: 11,
+                        height: 11,
                         p: 0,
                         border: 'none',
                         borderRadius: 999,
@@ -312,9 +402,9 @@ function Carousel({
                       })}
                     />
                   )
-                })}
-              </Box>
-            </Box>
+                })
+              )}
+            </Stack>
           ) : null}
         </Stack>
       ) : null}

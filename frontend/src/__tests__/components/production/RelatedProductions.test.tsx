@@ -11,16 +11,6 @@ jest.mock('../../../components/carousel/Carousel', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
-jest.mock('../../../components/carousel/Card', () => ({
-  __esModule: true,
-  default: ({ title, subtitle }: { title: string; subtitle?: string }) => (
-    <article>
-      <h3>{title}</h3>
-      {subtitle ? <p>{subtitle}</p> : null}
-    </article>
-  ),
-}))
-
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: languageState.current },
