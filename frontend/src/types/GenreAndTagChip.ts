@@ -1,3 +1,5 @@
+import { Theme } from '@mui/material/styles'
+
 export type ChipLabels = Record<string, string>
 
 export type GenreAndTagChipContext = 'search' | 'description' | 'series' | 'static'
@@ -32,4 +34,14 @@ export interface SearchChipOption {
   id: number
   name: string
   labels: ChipLabels
+}
+
+/**
+ * Input for `getGenreAndTagChipStyles`.
+ */
+export type GetGenreAndTagChipStylesInput = {
+  theme: Theme
+  selected: boolean
+  context: GenreAndTagChipContext
+  chipType: GenreAndTagChipType
 }
