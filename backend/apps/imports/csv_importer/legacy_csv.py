@@ -21,7 +21,7 @@ from apps.events.models import Event
 from apps.genres.models import Genre, GenreTranslation, GenreUseAs
 from apps.import_log.models import ImportLog
 from apps.imports.scrapers.viernulvier import clean_string
-from apps.imports.scrapers.viernulvier_import_log import finalize_import_log
+from apps.imports.scrapers.viernulvier_import_log import append_limited_error, finalize_import_log
 from apps.languages.models import Language
 from apps.locations.models import Hall, HallTranslation
 from apps.productions.models import Production, ProductionGenre, ProductionTranslation
@@ -167,7 +167,9 @@ def _event_external_id(production_id: str, starts_at: Any | None, ends_at: Any |
 def _import_legacy_production_row(row: dict[str, Any], *, dry_run: bool) -> bool:
     external_id = _normalise_cell(row.get("ID"))
     if not external_id:
-        raise ValueError(f"Missing production ID in legacy CSV row: {row}")
+        message = f"Missing production ID in legacy CSV row: {row}"
+        logger.warning(message)
+        raise ValueError(message)
 
     title = _normalise_cell(row.get("Ondertitel"))
     artist_name = _normalise_cell(row.get("Titel"))
@@ -286,6 +288,8 @@ def _import_legacy_csv_rows(
 
     saved = 0
     total = 0
+    errors = 0
+    error_messages: list[str] = []
     try:
         for row in rows:
             total += 1
@@ -294,17 +298,11 @@ def _import_legacy_csv_rows(
                     saved_row = row_handler(row, dry_run=dry_run)
             except Exception as exc:
                 logger.exception("Legacy CSV row import failed for %s at row %s", source_name, total)
-                import_log.status = ImportLog.Status.FAILED
-                import_log.finished_at = timezone.now()
-                import_log.records_total = total
-                import_log.records_imported = saved
-                import_log.records_failed = 1
-                import_log.error_message = f"Row {total}: {exc}"
-                import_log.save()
-                raise
-
-            if saved_row:
-                saved += 1
+                errors += 1
+                append_limited_error(error_messages, f"Row {total}: {exc}")
+            else:
+                if saved_row:
+                    saved += 1
             if progress_callback:
                 progress_callback(total, total_rows)
     except Exception as exc:
@@ -322,8 +320,8 @@ def _import_legacy_csv_rows(
         import_log=import_log,
         total=total,
         imported=saved,
-        errors=0,
-        error_messages=[],
+        errors=errors,
+        error_messages=error_messages,
         timezone_module=timezone,
         partial_error_label=partial_error_label,
         failed_error_label=failed_error_label,

@@ -103,18 +103,22 @@ def test_import_legacy_productions_fails_with_missing_id(tmp_path) -> None:
         [
             ["Rosas", "Valid", "Body", "Credits", "Theater", "201", "legacy-201"],
             ["Broken", "Missing ID", "Body", "Credits", "Theater", "", ""],
+            ["Later", "Should Not Import", "Body", "Credits", "Theater", "202", "legacy-202"],
         ],
     )
 
-    with pytest.raises(ValueError, match="Missing production ID"):
-        import_legacy_csv_file(csv_path)
+    imported = import_legacy_csv_file(csv_path)
+
+    assert imported == 2
 
     log = ImportLog.objects.get(source=f"legacy_csv:{csv_path.name}")
-    assert log.status == ImportLog.Status.FAILED
-    assert log.records_total == 2
-    assert log.records_imported == 1
+    assert log.status == ImportLog.Status.PARTIAL_SUCCESS
+    assert log.records_total == 3
+    assert log.records_imported == 2
     assert log.records_failed == 1
+    assert "Missing production ID in legacy CSV row" in (log.error_message or "")
     assert Production.objects.filter(external_id="201").exists()
+    assert Production.objects.filter(external_id="202").exists()
     assert not Production.objects.filter(external_id="").exists()
 
 
@@ -258,6 +262,102 @@ def test_import_legacy_csv_management_command_supports_only_productions(monkeypa
 
     assert call_args == {"dry_run": False, "only": "productions", "has_progress_callback": True}
     assert "Imported 7 legacy CSV records" in output.getvalue()
+
+
+def test_import_bundled_legacy_csv_files_reports_cumulative_progress(tmp_path) -> None:
+    productions_path = tmp_path / "Productions - output.csv"
+    events_path = tmp_path / "Events - voorstellingen.csv"
+
+    _write_csv(
+        productions_path,
+        ["Titel", "Ondertitel", "Description1", "Description2", "Genre", "ID", "Planning ID"],
+        [["Artist", "Title", "Body", "Credits", "Theater", "400", "legacy-400"]],
+    )
+    _write_csv(
+        events_path,
+        ["Starttime", "Endtime", "Hall", "Production"],
+        [["2010-05-10 20:00:00", "2010-05-10 22:00:00", "Balzaal", "400"]],
+    )
+
+    progress_updates: list[tuple[int, int | None]] = []
+
+    imported = import_bundled_legacy_csv_files(
+        base_dir=tmp_path,
+        progress_callback=lambda processed, total: progress_updates.append((processed, total)),
+    )
+
+    assert imported == 2
+    assert progress_updates == [(1, 2), (2, 2)]
+
+
+def test_import_legacy_csv_management_command_updates_tqdm(monkeypatch) -> None:
+    class _FakeBar:
+        def __init__(self, total):
+            self.total = total
+            self.n = 0
+            self.updates: list[int] = []
+            self.closed = False
+            self.refresh_count = 0
+
+        def update(self, value: int) -> None:
+            self.n += value
+            self.updates.append(value)
+
+        def refresh(self) -> None:
+            self.refresh_count += 1
+
+        def close(self) -> None:
+            self.closed = True
+
+    created: dict[str, _FakeBar] = {}
+
+    def _fake_tqdm(*, total, unit, desc, leave):  # noqa: ANN001
+        assert unit == "rows"
+        assert desc == "Importing legacy CSV"
+        assert leave is False
+        bar = _FakeBar(total)
+        created["bar"] = bar
+        return bar
+
+    def _fake_import(*, dry_run: bool, only: str | None = None, progress_callback=None) -> int:
+        assert dry_run is False
+        assert only is None
+        assert progress_callback is not None
+        progress_callback(1, 3)
+        progress_callback(3, 3)
+        return 3
+
+    monkeypatch.setattr(import_legacy_csv_command, "_tqdm", _fake_tqdm)
+    monkeypatch.setattr(import_legacy_csv_command, "import_bundled_legacy_csv_files", _fake_import)
+    output = StringIO()
+
+    call_command("import_legacy_csv", stdout=output)
+
+    bar = created["bar"]
+    assert bar.updates == [1, 2]
+    assert bar.closed is True
+    assert "Imported 3 legacy CSV records" in output.getvalue()
+
+
+def test_import_legacy_csv_management_command_works_without_tqdm(monkeypatch) -> None:
+    callback_observed = {"called": False}
+
+    def _fake_import(*, dry_run: bool, only: str | None = None, progress_callback=None) -> int:
+        assert dry_run is True
+        assert only is None
+        assert progress_callback is not None
+        callback_observed["called"] = True
+        progress_callback(1, 1)
+        return 1
+
+    monkeypatch.setattr(import_legacy_csv_command, "_tqdm", None)
+    monkeypatch.setattr(import_legacy_csv_command, "import_bundled_legacy_csv_files", _fake_import)
+    output = StringIO()
+
+    call_command("import_legacy_csv", "--dry-run", stdout=output)
+
+    assert callback_observed["called"] is True
+    assert "Imported 1 legacy CSV records [DRY RUN]" in output.getvalue()
 
 
 def test_import_bundled_legacy_csv_converts_original_production_file(tmp_path) -> None:
