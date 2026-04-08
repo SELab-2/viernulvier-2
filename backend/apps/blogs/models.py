@@ -53,7 +53,6 @@ class Blog(BaseModel):
         related_name="blogs",
         blank=True,
         help_text="Productions linked to this blog post.",
-        db_comment="M2M relationship to Production.",
     )
 
     class Meta(BaseModel.Meta):
