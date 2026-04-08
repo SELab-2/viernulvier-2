@@ -15,6 +15,7 @@ from apps.genres.views import GenreUseAsViewSet, GenreViewSet
 from apps.import_log.views import ImportLogViewSet
 from apps.languages.views import LanguageViewSet
 from apps.locations.views import HallViewSet, LocationViewSet, SpaceViewSet
+from apps.media_files.views import MediaFileViewSet
 from apps.media_library.views import MediaGalleryViewSet, MediaItemViewSet
 from apps.pricing.views import PriceRankViewSet, PriceViewSet
 from apps.productions.views import ProductionViewSet
@@ -40,6 +41,7 @@ router.register(r"productions", ProductionViewSet, basename="production")
 router.register(r"events", EventViewSet, basename="event")
 
 # Media
+router.register(r"media", MediaFileViewSet, basename="media-file")
 router.register(r"media-galleries", MediaGalleryViewSet, basename="media-gallery")
 router.register(r"media-items", MediaItemViewSet, basename="media-item")
 
