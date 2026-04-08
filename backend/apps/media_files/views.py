@@ -1,6 +1,9 @@
 """ViewSets for the Media Files app."""
 
+from typing import type
+
 from drf_spectacular.utils import extend_schema
+from rest_framework.serializers import BaseSerializer
 
 from apps.core.views import ApiModelViewSet
 
@@ -15,6 +18,8 @@ _MEDIA = "Media Files"
 @extend_schema(tags=[_MEDIA])
 @media_file_schema
 class MediaFileViewSet(ApiModelViewSet):
+    """CRUD endpoints for uploaded media files."""
+
     queryset = MediaFile.objects.select_related("uploaded_by").order_by("-created_at")
     serializer_class = MediaFileSerializer
     filterset_class = MediaFileFilter
@@ -22,7 +27,8 @@ class MediaFileViewSet(ApiModelViewSet):
     ordering = ["-created_at"]
     search_fields = ["original_name", "mime_type"]
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> type[BaseSerializer]:
+        """Return the upload serializer for create and the read serializer otherwise."""
         if getattr(self, "action", None) == "create":
             return MediaFileUploadSerializer
         return MediaFileSerializer

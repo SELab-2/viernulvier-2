@@ -19,6 +19,7 @@ Covers:
 
 import tempfile
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
@@ -47,9 +48,11 @@ def results_list(response):
     return response.data.get("results", response.data)
 
 
-def make_file(name="test.pdf", content=b"dummy", content_type="application/pdf"):
-    from django.core.files.uploadedfile import SimpleUploadedFile
-
+def make_file(
+    name: str = "test.pdf",
+    content: bytes = b"dummy",
+    content_type: str = "application/pdf",
+) -> SimpleUploadedFile:
     return SimpleUploadedFile(name, content, content_type=content_type)
 
 

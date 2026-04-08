@@ -1,6 +1,7 @@
-"""Serializers for the Media Files app."""
+from typing import Any
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import UploadedFile
 from rest_framework import serializers
 
 from .models import MediaFile
@@ -22,39 +23,15 @@ class MediaFileSerializer(serializers.ModelSerializer):
             "uploaded_by",
             "created_at",
         ]
-        read_only_fields = [
-            "id",
-            "external_id",
-            "file",
-            "original_name",
-            "mime_type",
-            "size_bytes",
-            "file_type",
-            "uploaded_by",
-            "created_at",
-        ]
+        read_only_fields = fields
         extra_kwargs = {
-            "file": {
-                "help_text": "Stored file location/URL.",
-            },
-            "original_name": {
-                "help_text": "Original filename as uploaded by the user.",
-            },
-            "mime_type": {
-                "help_text": "Detected MIME type of the uploaded file.",
-            },
-            "size_bytes": {
-                "help_text": "File size in bytes.",
-            },
-            "file_type": {
-                "help_text": "Normalized internal file category (e.g. image, pdf, other).",
-            },
-            "uploaded_by": {
-                "help_text": "User who uploaded the file.",
-            },
-            "created_at": {
-                "help_text": "Timestamp when the file was uploaded.",
-            },
+            "file": {"help_text": "Stored file location/URL."},
+            "original_name": {"help_text": "Original filename as uploaded by the user."},
+            "mime_type": {"help_text": "Detected MIME type of the uploaded file."},
+            "size_bytes": {"help_text": "File size in bytes."},
+            "file_type": {"help_text": "Normalized internal file category (e.g. image, pdf, other)."},
+            "uploaded_by": {"help_text": "User who uploaded the file."},
+            "created_at": {"help_text": "Timestamp when the file was uploaded."},
         }
 
 
@@ -99,7 +76,7 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
 
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
-    def validate_file(self, value):
+    def validate_file(self, value: UploadedFile) -> UploadedFile:
         """Validate uploaded file type and size."""
         if not value:
             raise serializers.ValidationError("No file was uploaded.")
@@ -113,7 +90,7 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
 
         return value
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict[str, Any]) -> MediaFile:
         """Populate derived metadata fields from the uploaded file."""
         uploaded_file = validated_data["file"]
         mime_type = getattr(uploaded_file, "content_type", None)
@@ -121,9 +98,8 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         user = getattr(request, "user", None)
 
-        User = get_user_model()
-
-        uploaded_by = user if isinstance(user, User) else None
+        user_model = get_user_model()
+        uploaded_by = user if isinstance(user, user_model) else None
 
         instance = MediaFile(
             file=uploaded_file,
@@ -133,6 +109,5 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
             file_type=self.ALLOWED_MIME_TYPES.get(mime_type, MediaFile.FileType.OTHER),
             uploaded_by=uploaded_by,
         )
-
         instance.save()
         return instance

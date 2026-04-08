@@ -260,7 +260,7 @@ class TestMediaFileUploadSerializerValidation(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# MediaFileUploadSerializer - create()
+# Upload serializer creation tests
 # ---------------------------------------------------------------------------
 
 

@@ -124,7 +124,7 @@ class TestMediaFileFilterDefinition:
 
 
 class TestMediaFileFilterFileType:
-    def test_filters_pdf_file_type(self, pdf_file, png_file, jpg_file) -> None:
+    def test_filters_pdf_file_type(self, pdf_file) -> None:
         qs = MediaFileFilter(
             data={"file_type": "pdf"},
             queryset=MediaFile.objects.all(),
@@ -132,7 +132,7 @@ class TestMediaFileFilterFileType:
 
         assert list(qs) == [pdf_file]
 
-    def test_filters_image_file_type(self, pdf_file, png_file, jpg_file) -> None:
+    def test_filters_image_file_type(self, png_file, jpg_file) -> None:
         qs = MediaFileFilter(
             data={"file_type": "image"},
             queryset=MediaFile.objects.all(),
@@ -140,7 +140,7 @@ class TestMediaFileFilterFileType:
 
         assert set(qs) == {png_file, jpg_file}
 
-    def test_file_type_is_case_insensitive_exact(self, pdf_file, png_file, jpg_file) -> None:
+    def test_file_type_is_case_insensitive_exact(self, pdf_file) -> None:
         qs = MediaFileFilter(
             data={"file_type": "PDF"},
             queryset=MediaFile.objects.all(),
@@ -148,7 +148,7 @@ class TestMediaFileFilterFileType:
 
         assert list(qs) == [pdf_file]
 
-    def test_file_type_exact_match_does_not_match_partial_value(self, pdf_file, png_file, jpg_file) -> None:
+    def test_file_type_exact_match_does_not_match_partial_value(self) -> None:
         qs = MediaFileFilter(
             data={"file_type": "pd"},
             queryset=MediaFile.objects.all(),
@@ -163,7 +163,7 @@ class TestMediaFileFilterFileType:
 
 
 class TestMediaFileFilterMimeType:
-    def test_filters_mime_type_exactly(self, pdf_file, png_file, jpg_file) -> None:
+    def test_filters_mime_type_exactly(self, pdf_file) -> None:
         qs = MediaFileFilter(
             data={"mime_type": "application/pdf"},
             queryset=MediaFile.objects.all(),
@@ -171,7 +171,7 @@ class TestMediaFileFilterMimeType:
 
         assert list(qs) == [pdf_file]
 
-    def test_mime_type_is_case_insensitive_exact(self, pdf_file, png_file, jpg_file) -> None:
+    def test_mime_type_is_case_insensitive_exact(self, png_file) -> None:
         qs = MediaFileFilter(
             data={"mime_type": "IMAGE/PNG"},
             queryset=MediaFile.objects.all(),
@@ -179,7 +179,7 @@ class TestMediaFileFilterMimeType:
 
         assert list(qs) == [png_file]
 
-    def test_mime_type_exact_match_does_not_match_partial_value(self, pdf_file, png_file, jpg_file) -> None:
+    def test_mime_type_exact_match_does_not_match_partial_value(self) -> None:
         qs = MediaFileFilter(
             data={"mime_type": "image"},
             queryset=MediaFile.objects.all(),
@@ -194,7 +194,7 @@ class TestMediaFileFilterMimeType:
 
 
 class TestMediaFileFilterOriginalName:
-    def test_filters_by_original_name_contains(self, pdf_file, png_file, jpg_file) -> None:
+    def test_filters_by_original_name_contains(self, png_file) -> None:
         qs = MediaFileFilter(
             data={"original_name": "poster"},
             queryset=MediaFile.objects.all(),
@@ -202,7 +202,7 @@ class TestMediaFileFilterOriginalName:
 
         assert list(qs) == [png_file]
 
-    def test_original_name_filter_is_case_insensitive(self, pdf_file, png_file, jpg_file) -> None:
+    def test_original_name_filter_is_case_insensitive(self, png_file) -> None:
         qs = MediaFileFilter(
             data={"original_name": "mainposter"},
             queryset=MediaFile.objects.all(),
@@ -240,7 +240,7 @@ class TestMediaFileFilterOriginalName:
 
         assert set(qs) == {first, second}
 
-    def test_original_name_filter_returns_empty_when_no_match(self, pdf_file, png_file, jpg_file) -> None:
+    def test_original_name_filter_returns_empty_when_no_match(self) -> None:
         qs = MediaFileFilter(
             data={"original_name": "nonexistent"},
             queryset=MediaFile.objects.all(),
@@ -255,7 +255,7 @@ class TestMediaFileFilterOriginalName:
 
 
 class TestMediaFileFilterUploadedBy:
-    def test_filters_by_uploaded_by_id(self, pdf_file, png_file, jpg_file, user_one) -> None:
+    def test_filters_by_uploaded_by_id(self, pdf_file, png_file, user_one) -> None:
         qs = MediaFileFilter(
             data={"uploaded_by": user_one.id},
             queryset=MediaFile.objects.all(),
@@ -263,7 +263,7 @@ class TestMediaFileFilterUploadedBy:
 
         assert set(qs) == {pdf_file, png_file}
 
-    def test_uploaded_by_returns_empty_when_no_match(self, pdf_file, png_file, jpg_file) -> None:
+    def test_uploaded_by_returns_empty_when_no_match(self) -> None:
         qs = MediaFileFilter(
             data={"uploaded_by": 999999},
             queryset=MediaFile.objects.all(),
@@ -271,7 +271,7 @@ class TestMediaFileFilterUploadedBy:
 
         assert list(qs) == []
 
-    def test_uploaded_by_only_matches_exact_user_id(self, pdf_file, png_file, jpg_file, user_two) -> None:
+    def test_uploaded_by_only_matches_exact_user_id(self, jpg_file, user_two) -> None:
         qs = MediaFileFilter(
             data={"uploaded_by": user_two.id},
             queryset=MediaFile.objects.all(),
@@ -286,7 +286,7 @@ class TestMediaFileFilterUploadedBy:
 
 
 class TestMediaFileFilterExternalId:
-    def test_filters_by_external_id(self, pdf_file, png_file, jpg_file) -> None:
+    def test_filters_by_external_id(self, pdf_file) -> None:
         qs = MediaFileFilter(
             data={"external_id": "ext-pdf-001"},
             queryset=MediaFile.objects.all(),
@@ -294,7 +294,7 @@ class TestMediaFileFilterExternalId:
 
         assert list(qs) == [pdf_file]
 
-    def test_external_id_filter_is_case_insensitive_exact(self, pdf_file, png_file, jpg_file) -> None:
+    def test_external_id_filter_is_case_insensitive_exact(self, png_file) -> None:
         qs = MediaFileFilter(
             data={"external_id": "EXT-IMG-001"},
             queryset=MediaFile.objects.all(),
@@ -302,7 +302,7 @@ class TestMediaFileFilterExternalId:
 
         assert list(qs) == [png_file]
 
-    def test_external_id_exact_match_does_not_match_partial_value(self, pdf_file, png_file, jpg_file) -> None:
+    def test_external_id_exact_match_does_not_match_partial_value(self) -> None:
         qs = MediaFileFilter(
             data={"external_id": "ext-img"},
             queryset=MediaFile.objects.all(),
@@ -317,7 +317,7 @@ class TestMediaFileFilterExternalId:
 
 
 class TestMediaFileFilterCombined:
-    def test_combines_multiple_filters(self, pdf_file, png_file, jpg_file, user_one) -> None:
+    def test_combines_multiple_filters(self, png_file, user_one) -> None:
         qs = MediaFileFilter(
             data={
                 "file_type": "image",
