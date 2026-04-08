@@ -4,7 +4,7 @@
  */
 
 import { Card, CardContent, Stack, Typography } from '@mui/material'
-import Tag from '../Tag'
+import GenreAndTagChip from '../chips/GenreAndTagChip'
 
 type Props = {
   title: string
@@ -44,8 +44,16 @@ const ProductionCard = ({ title, meta, description, tags }: Props) => {
 
           {/* Tags */}
           <Stack direction="row" spacing={1} flexWrap="wrap">
+            {/* TODO: fix this to use the tag correctly instead of just the name */}
             {tags.map((tag) => (
-              <Tag key={tag} tagName={tag} context="series" />
+              <GenreAndTagChip
+                key={tag}
+                name={tag}
+                labels={{}}
+                id={tag}
+                chipType="seriesTag"
+                context="series"
+              />
             ))}
           </Stack>
         </Stack>
