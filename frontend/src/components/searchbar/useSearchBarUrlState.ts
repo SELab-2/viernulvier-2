@@ -18,32 +18,7 @@ export const PARAM_GENRES = 'g'
 export const PARAM_TAGS = 't'
 const FILTER_SEPARATOR = '-'
 
-/**
- * Parses compact filter text into tokens.
- * Supports `~` as a separator for multiple values, and trims whitespace.
- * Returns an empty array for null or empty input.
- */
-const parseTokenList = (value: string | null): string[] => {
-  if (!value) {
-    return []
-  }
-
-  return value
-    .split(FILTER_SEPARATOR)
-    .map((part) => part.trim())
-    .filter(Boolean)
-}
-
-/**
- * Converts array tokens to integer IDs and removes invalid values.
- */
-const parseNumericIds = (values: string[]): number[] => {
-  return values.map((part) => Number(part)).filter((part) => Number.isInteger(part))
-}
-
-/**
- * Reads query params and supports both single and repeated encodings.
- */
+// Reads query parameters and supports both single value and repeated encodings.
 const readMultiParamValues = (searchParams: URLSearchParams, paramName: string): string[] => {
   const repeatedValues = searchParams.getAll(paramName)
   if (repeatedValues.length > 0) {
@@ -54,20 +29,7 @@ const readMultiParamValues = (searchParams: URLSearchParams, paramName: string):
   return parseTokenList(serialized)
 }
 
-/**
- * Encodes list values into one compact query value.
- */
-const encodeTokenList = (values: Array<string | number>): string | null => {
-  if (!values.length) {
-    return null
-  }
-
-  return values.join(FILTER_SEPARATOR)
-}
-
-/**
- * Toggles a value in an array for URL-based multi-select state.
- */
+// Toggles a value in an array for URL-based multi-select state.
 const toggleArrayValue = <T extends string | number>(values: T[], value: T): T[] => {
   if (values.includes(value)) {
     return values.filter((item) => item !== value)
@@ -129,6 +91,23 @@ const parsePage = (value: string | null): number => {
   return parsed
 }
 
+// Parses a string of tokens separated by FILTER_SEPARATOR into an array of trimmed, non-empty strings.
+const parseTokenList = (value: string | null): string[] => {
+  if (!value) {
+    return []
+  }
+
+  return value
+    .split(FILTER_SEPARATOR)
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
+// Converts array tokens to integer IDs and removes invalid values. 
+const parseNumericIds = (values: string[]): number[] => {
+  return values.map((part) => Number(part)).filter((part) => Number.isInteger(part))
+}
+
 // Encode search sort target for URL query parameter, omit if default
 const encodeSortTarget = (value: SearchSortTarget): string | null => {
   if (value === DEFAULT_SEARCH_SORT_TARGET) {
@@ -169,6 +148,16 @@ const encodePage = (value: number): string | null => {
 
   return String(normalized)
 }
+
+// Encodes list values into one compact query value.
+const encodeTokenList = (values: Array<string | number>): string | null => {
+  if (!values.length) {
+    return null
+  }
+
+  return values.join(FILTER_SEPARATOR)
+}
+
 
 type UpdateSearchParamsInput = {
   q?: string
@@ -277,6 +266,9 @@ export const useSearchBarUrlState = ({
               nextParams.set(PARAM_PAGE, encodedPage)
             } else {
               nextParams.delete(PARAM_PAGE)
+            }
+          }
+          
           if (genres !== undefined) {
             const encodedGenres = encodeTokenList(genres)
             if (encodedGenres) {

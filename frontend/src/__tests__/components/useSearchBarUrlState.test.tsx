@@ -94,7 +94,7 @@ describe('useSearchBarUrlState pagination sync', () => {
     renderHarness('/?p=4')
 
     fireEvent.click(screen.getByText('set-query-whitespace'))
-  
+
     expect(screen.getByTestId('query')).toHaveTextContent('romeo')
     expect(screen.getByTestId('url-search')).toHaveTextContent('?q=romeo')
   })
