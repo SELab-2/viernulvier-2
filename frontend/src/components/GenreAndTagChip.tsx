@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import type { GenreAndTagChipProps } from '../types/GenreAndTagChip'
 import { getGenreAndTagChipStyles } from './chips/genreAndTagChipStyles'
-import { getQueryKeyForChipType, resolveChipLabel } from './chips/genreAndTagChipUtils'
+import { getQueryKeyForChipType } from './chips/genreAndTagChipUtils'
+import { getTranslatedRecord } from '../utils/translations'
 
 /**
  * Generic chip component that supports both genre and series-tag scenarios.
@@ -41,11 +42,7 @@ const GenreAndTagChip = ({
   const { i18n, t } = useTranslation()
   const [hovered, setHovered] = useState(false)
 
-  const label = resolveChipLabel({
-    fallback: name,
-    labels,
-    language: i18n.language,
-  })
+  const label = getTranslatedRecord(labels, i18n.language, name)
 
   const isClickable = context !== 'static'
   const isSearchContext = context === 'search'
