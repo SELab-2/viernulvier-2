@@ -88,7 +88,17 @@ function Carousel({
       position="relative"
       maxWidth={maxWidth}
       gap={2}
-      sx={sx}
+      sx={[
+        {
+          '@media (hover: hover)': {
+            '&:hover .carousel-nav': {
+              opacity: 1,
+              pointerEvents: 'auto',
+            },
+          },
+        },
+        ...(Array.isArray(sx) ? sx : sx != null ? [sx] : []),
+      ]}
     >
       <Box
         ref={emblaRef}
