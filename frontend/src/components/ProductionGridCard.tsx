@@ -5,13 +5,12 @@ import { Link as RouterLink } from 'react-router-dom'
 import type { Production } from '../types/Productions'
 import { getProductionDateLabel } from '../utils/dateUtils'
 import { getTranslatedRecord } from '../utils/translations'
-import GenreChip from './GenreChip'
+import GenreAndTagChip from './chips/GenreAndTagChip'
 import ImageWithFallback from './ImageWithFallback'
 
 export interface ProductionGridCardProps {
   production: Production
   selectedGenreIds?: number[]
-  onGenreClick?: (genreId: number) => void
 }
 
 /**
@@ -24,14 +23,9 @@ export interface ProductionGridCardProps {
  *
  * @param props.production Full API payload (title, artist, media gallery, genres, events, etc.).
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
- * @param props.onGenreClick Called with a genre id when that chip is pressed.
  * @returns The grid card element.
  */
-const ProductionGridCard = ({
-  production,
-  selectedGenreIds,
-  onGenreClick,
-}: ProductionGridCardProps) => {
+const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCardProps) => {
   const { i18n } = useTranslation()
   const language = i18n.language
 
@@ -94,11 +88,14 @@ const ProductionGridCard = ({
           {genres.length > 0 ? (
             <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24} overflow="hidden">
               {genres.map((genre) => (
-                <GenreChip
+                <GenreAndTagChip
                   key={genre.id}
-                  genre={genre}
-                  selectedIds={selectedGenreIds}
-                  onClick={onGenreClick}
+                  name={genre.display_name || ''} // TODO: resolve so there is always a fallback
+                  labels={{}}
+                  chipType="genre"
+                  context="static"
+                  id={genre.id}
+                  selected={selectedGenreIds?.includes(genre.id)} // TODO: resolve so this is never undefined
                 />
               ))}
             </Stack>
