@@ -65,12 +65,12 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
         padding={tokens.spacing.numericLg}
       >
         <Stack>
-          <Typography component="h2" variant="h5" color="textPrimary" fontWeight="bold">
+          <Typography component="h2" variant="h6" color="textPrimary" fontWeight="bold" noWrap>
             {title}
           </Typography>
 
           {artistName ? (
-            <Typography component="p" color="textSecondary">
+            <Typography component="p" color="textSecondary" noWrap>
               {artistName}
             </Typography>
           ) : null}
