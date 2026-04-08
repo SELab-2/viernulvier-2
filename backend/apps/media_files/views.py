@@ -1,7 +1,5 @@
 """ViewSets for the Media Files app."""
 
-from typing import type
-
 from drf_spectacular.utils import extend_schema
 from rest_framework.serializers import BaseSerializer
 
