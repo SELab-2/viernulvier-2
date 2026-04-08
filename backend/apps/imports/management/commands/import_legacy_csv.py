@@ -5,7 +5,7 @@ from typing import Any
 
 from django.core.management.base import BaseCommand
 
-from apps.imports.csv_importer import import_bundled_legacy_csv_files
+from apps.imports.csv_importer.legacy_csv_sync import import_bundled_legacy_csv_files
 
 try:
     from tqdm import tqdm as _tqdm

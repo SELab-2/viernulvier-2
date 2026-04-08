@@ -6,7 +6,7 @@ import pytest
 
 from apps.events.models import Event
 from apps.import_log.models import ImportLog
-from apps.imports.csv_importer import import_legacy_csv_file
+from apps.imports.csv_importer.legacy_csv_sync import import_legacy_csv_file
 from apps.languages.models import Language
 from apps.locations.models import Hall, HallTranslation
 from tests.factories.production import ProductionFactory

@@ -5,7 +5,7 @@ from io import StringIO
 from django.core.management import call_command
 import pytest
 
-from apps.imports.management.commands import import_legacy_csv as import_legacy_csv_command
+import apps.imports.management.commands.import_legacy_csv as import_legacy_csv_command
 
 pytestmark = pytest.mark.django_db(transaction=True)
 

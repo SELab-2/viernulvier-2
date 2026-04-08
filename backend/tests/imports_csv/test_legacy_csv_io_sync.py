@@ -3,8 +3,15 @@ from __future__ import annotations
 import pytest
 
 from apps.import_log.models import ImportLog
-from apps.imports.csv_importer import import_legacy_csv_file, legacy_csv_normalize, legacy_csv_sync
+from apps.imports.csv_importer import legacy_csv_io, legacy_csv_normalize
+from apps.imports.csv_importer.legacy_csv_handlers import _import_legacy_production_row
 from apps.imports.csv_importer.legacy_csv_io import _count_csv_rows, _iter_csv_rows
+from apps.imports.csv_importer.legacy_csv_normalize import _parse_legacy_datetime
+from apps.imports.csv_importer.legacy_csv_sync import (
+    _import_legacy_csv_file,
+    _import_legacy_csv_rows,
+    import_legacy_csv_file,
+)
 from tests.imports_csv.helpers import write_csv
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -37,9 +44,9 @@ def test_import_legacy_csv_rows_exception_during_processing(tmp_path) -> None:
         [["Artist", "Title", "Body", "Credits", "Theater", "900", "legacy-900"]],
     )
 
-    rows = list(legacy_csv_sync._io._iter_csv_rows(csv_path))
+    rows = list(_iter_csv_rows(csv_path))
 
-    imported = legacy_csv_sync._import_legacy_csv_rows(
+    imported = _import_legacy_csv_rows(
         source_name="test.csv",
         rows=rows,
         row_handler=_failing_handler,
@@ -70,9 +77,9 @@ def test_import_legacy_csv_rows_with_progress_callback(tmp_path) -> None:
     def _progress_callback(processed, total):
         progress_updates.append((processed, total))
 
-    imported = legacy_csv_sync._import_legacy_csv_file(
+    imported = _import_legacy_csv_file(
         csv_path,
-        row_handler=legacy_csv_sync._handlers._import_legacy_production_row,
+        row_handler=_import_legacy_production_row,
         partial_error_label="test failed",
         failed_error_label="test failed",
         dry_run=False,
@@ -108,9 +115,9 @@ def test_import_csv_without_progress_callback_no_count(tmp_path) -> None:
         [["Artist", "Title", "Body", "Credits", "Theater", "1110", "legacy-1110"]],
     )
 
-    imported = legacy_csv_sync._import_legacy_csv_file(
+    imported = _import_legacy_csv_file(
         csv_path,
-        row_handler=legacy_csv_sync._handlers._import_legacy_production_row,
+        row_handler=_import_legacy_production_row,
         partial_error_label="test failed",
         failed_error_label="test failed",
         dry_run=False,
@@ -134,7 +141,7 @@ def test_parse_legacy_datetime_returns_none_when_parser_raises(monkeypatch) -> N
 
     monkeypatch.setattr(legacy_csv_normalize, "parse_datetime", _boom)
 
-    assert legacy_csv_normalize._parse_legacy_datetime("2010-01-01 10:00:00") is None
+    assert _parse_legacy_datetime("2010-01-01 10:00:00") is None
 
 
 def test_import_legacy_csv_rows_marks_log_failed_when_row_iteration_crashes() -> None:
@@ -154,7 +161,7 @@ def test_import_legacy_csv_rows_marks_log_failed_when_row_iteration_crashes() ->
         return True
 
     with pytest.raises(RuntimeError, match="iterator exploded"):
-        legacy_csv_sync._import_legacy_csv_rows(
+        _import_legacy_csv_rows(
             source_name="iter-fail.csv",
             rows=_rows(),
             row_handler=_ok_handler,
@@ -180,7 +187,7 @@ def test_import_legacy_csv_file_rejects_unsupported_detected_kind(monkeypatch, t
         [["Artist", "Title", "Body", "Credits", "Theater", "1141", "legacy-1141"]],
     )
 
-    monkeypatch.setattr(legacy_csv_sync._io, "detect_legacy_csv_kind", lambda _path: "mystery")
+    monkeypatch.setattr(legacy_csv_io, "detect_legacy_csv_kind", lambda _path: "mystery")
 
     with pytest.raises(ValueError, match="Unsupported CSV kind: mystery"):
-        legacy_csv_sync.import_legacy_csv_file(csv_path)
+        import_legacy_csv_file(csv_path)

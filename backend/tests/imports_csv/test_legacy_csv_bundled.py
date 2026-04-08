@@ -4,7 +4,7 @@ import pytest
 
 from apps.events.models import Event
 from apps.import_log.models import ImportLog
-from apps.imports.csv_importer import import_bundled_legacy_csv_files
+from apps.imports.csv_importer.legacy_csv_sync import import_bundled_legacy_csv_files
 from apps.productions.models import Production
 from tests.factories.production import ProductionFactory
 from tests.imports_csv.helpers import write_csv, write_raw_csv
