@@ -3,7 +3,16 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import { Box, IconButton, Stack, type SxProps, type Theme } from '@mui/material'
 import useEmblaCarousel from 'embla-carousel-react'
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
-import { Children, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  Children,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 
 export interface CarouselProps {
   children: ReactNode
@@ -48,6 +57,9 @@ function Carousel({
 
   const snapCount = emblaApi?.scrollSnapList().length ?? Math.max(1, slides.length)
 
+  const dotRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const dotsScrollRef = useRef<HTMLDivElement | null>(null)
+
   const updateControls = useCallback(() => {
     if (!emblaApi) return
 
@@ -68,6 +80,16 @@ function Carousel({
       emblaApi.off('reInit', updateControls)
     }
   }, [emblaApi, updateControls])
+
+  useLayoutEffect(() => {
+    const el = dotRefs.current[selectedIndex]
+    const container = dotsScrollRef.current
+    if (!el || !container) {
+      return
+    }
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }, [selectedIndex, snapCount])
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
@@ -200,45 +222,70 @@ function Carousel({
           sx={{ mt: 1.5, px: 0.5 }}
         >
           {showDots ? (
-            <Stack
-              component="div"
-              direction="row"
-              spacing={1}
-              justifyContent="center"
-              flexWrap="wrap"
-              sx={{ flex: 1, minWidth: 0 }}
+            <Box
+              ref={dotsScrollRef}
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                '&::-webkit-scrollbar': { display: 'none' },
+              }}
             >
-              {Array.from({ length: snapCount }).map((_, index) => {
-                const active = index === selectedIndex
+              <Stack
+                component="div"
+                direction="row"
+                spacing={1}
+                flexWrap="nowrap"
+                sx={{
+                  width: 'max-content',
+                  minWidth: '100%',
+                  justifyContent: 'center',
+                  boxSizing: 'border-box',
+                  pl: 'calc(50% - 5.5px)',
+                  pr: 'calc(50% - 5.5px)',
+                  py: 0.25,
+                }}
+              >
+                {Array.from({ length: snapCount }).map((_, index) => {
+                  const active = index === selectedIndex
 
-                return (
-                  <Box
-                    key={index}
-                    component="button"
-                    type="button"
-                    aria-label={`${slideLabel} ${index + 1}`}
-                    aria-current={active ? 'true' : undefined}
-                    onClick={() => scrollTo(index)}
-                    sx={(theme) => ({
-                      width: 11,
-                      height: 11,
-                      p: 0,
-                      border: 'none',
-                      borderRadius: 999,
-                      backgroundColor: active ? theme.palette.text.primary : theme.palette.divider,
-                      cursor: 'pointer',
-                      opacity: active ? 1 : 0.55,
-                      transition:
-                        'transform 160ms ease, opacity 160ms ease, background-color 160ms ease',
-                      '&:hover': {
-                        transform: 'scale(1.12)',
-                        opacity: 1,
-                      },
-                    })}
-                  />
-                )
-              })}
-            </Stack>
+                  return (
+                    <Box
+                      key={index}
+                      ref={(node) => {
+                        dotRefs.current[index] = node as HTMLButtonElement | null
+                      }}
+                      component="button"
+                      type="button"
+                      aria-label={`${slideLabel} ${index + 1}`}
+                      aria-current={active ? 'true' : undefined}
+                      onClick={() => scrollTo(index)}
+                      sx={(theme) => ({
+                        width: 11,
+                        height: 11,
+                        p: 0,
+                        border: 'none',
+                        borderRadius: 999,
+                        backgroundColor: active
+                          ? theme.palette.text.primary
+                          : theme.palette.divider,
+                        cursor: 'pointer',
+                        opacity: active ? 1 : 0.55,
+                        transition:
+                          'transform 160ms ease, opacity 160ms ease, background-color 160ms ease',
+                        '&:hover': {
+                          transform: 'scale(1.12)',
+                          opacity: 1,
+                        },
+                      })}
+                    />
+                  )
+                })}
+              </Stack>
+            </Box>
           ) : null}
         </Stack>
       ) : null}
