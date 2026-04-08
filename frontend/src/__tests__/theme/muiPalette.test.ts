@@ -35,9 +35,19 @@ describe('muiPalette - createAppTheme', () => {
   it('should include accent color in palette', () => {
     const theme = createAppTheme('light')
 
-    expect(theme.palette.primary.main).toBe(tokens.colors.accent.main)
+    expect(theme.palette.primary.main).toBe(tokens.colors.neutral.black)
+    expect(theme.palette.primary.light).toBe(tokens.colors.neutral.black)
+    expect(theme.palette.primary.dark).toBe(tokens.colors.neutral.black)
     expect(theme.palette.accent?.main).toBe(tokens.colors.accent.main)
     expect(theme.palette.accent?.contrastText).toBe(tokens.colors.accent.contrastText)
+  })
+
+  it('should use white as primary in dark mode', () => {
+    const theme = createAppTheme('dark')
+
+    expect(theme.palette.primary.main).toBe(tokens.colors.neutral.white)
+    expect(theme.palette.primary.light).toBe(tokens.colors.neutral.white)
+    expect(theme.palette.primary.dark).toBe(tokens.colors.neutral.white)
   })
 
   it('should have correct typography configuration', () => {

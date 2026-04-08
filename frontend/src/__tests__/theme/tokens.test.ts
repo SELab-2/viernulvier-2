@@ -27,6 +27,11 @@ describe('theme/tokens - Design System Tokens', () => {
       expect(tokens.colors.accent.contrastText).toBe('#ffffff')
     })
 
+    it('should have series colors for primary interactions', () => {
+      expect(tokens.colors.series.main).toBe('#1976d2')
+      expect(tokens.colors.series.contrastText).toBe('#ffffff')
+    })
+
     it('should have light mode colors', () => {
       expect(tokens.colors.light.background).toBeDefined()
       expect(tokens.colors.light.surface).toBeDefined()
@@ -34,9 +39,9 @@ describe('theme/tokens - Design System Tokens', () => {
     })
 
     it('should have dark mode colors', () => {
-      expect(tokens.colors.dark.background).toBeDefined()
-      expect(tokens.colors.dark.surface).toBeDefined()
-      expect(tokens.colors.dark.text).toBeDefined()
+      expect(tokens.colors.dark.background).toBe('#111111')
+      expect(tokens.colors.dark.surface).toBe('#1a1a1a')
+      expect(tokens.colors.dark.text).toBe('#f5f5f5')
     })
 
     it('should have neutral colors', () => {
