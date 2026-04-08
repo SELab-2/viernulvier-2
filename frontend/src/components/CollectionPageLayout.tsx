@@ -39,6 +39,47 @@ export interface CollectionPageLayoutProps {
   paginationI18nKeyPrefix?: string
 }
 
+/**
+ * Reusable layout component for collection pages that includes a search bar, sidebar, results area, and pagination.
+ * Handles common UI states such as loading, error, and empty results. The layout is responsive and adapts to mobile screens.
+ *
+ * Uses {@link SearchControlsBar} for the search and sorting controls, uses {@link Pagination} for pagination controls,
+ * uses {@link ProductionView} for displaying production results.
+ *
+ * @param props.isMobile Boolean indicating if the layout is being rendered on a mobile device.
+ * @param props.searchPlaceholder Placeholder text for the search input.
+ * @param props.searchValue Current value of the search input.
+ * @param props.onSearchChange Callback function to update the search value.
+ * @param props.onSearchSubmit Callback function when the search is submitted.
+ * @param props.sortTarget Current sort target (e.g. 'date' or 'name').
+ * @param props.onSortTargetChange Callback function to update the sort target.
+ * @param props.sortDirection Current sort direction ('asc' or 'desc').
+ * @param props.onSortDirectionChange Callback function to update the sort direction.
+ * @param props.viewMode Current view mode ('list' or 'grid').
+ * @param props.onViewModeChange Callback function to update the view mode.
+ * @param props.resultCount Number of results found, used for display in the search controls bar.
+ * @param props.sidebarAriaLabel ARIA label for the sidebar region for accessibility.
+ * @param props.sidebarTitle Title text displayed in the sidebar area.
+ * @param props.sidebarDescription Description text displayed in the sidebar area.
+ * @param props.resultsRegionAriaLabel ARIA label for the results region for accessibility.
+ * @param props.isLoading Boolean indicating if the data is currently loading, used to show loading state.
+ * @param props.loadingLabel Label text to display in the loading spinner.
+ * @param props.errorMessage Error message to display if there was an error loading the data. If null, no error is shown.
+ * @param props.retryLabel Label for the retry button shown when there is an error.
+ * @param props.onRetry Callback function to call when the retry button is clicked.
+ * @param props.emptyTitle Title text to display when there are no results.
+ * @param props.emptyDescription Description text to display when there are no results.
+ * @param props.hasResults Boolean indicating if there are results to display, used to determine whether to show results or empty state.
+ * @param props.resultsContent ReactNode containing the content to display in the results area when there are results.
+ * @param props.page Current page number for pagination.
+ * @param props.pageSize Number of items per page for pagination.
+ * @param props.totalItems Total number of items across all pages for pagination.
+ * @param props.onPageChange Callback function to call when the page is changed, receives the new page number.
+ * @param props.paginationI18nKeyPrefix Optional prefix for internationalization keys used in the Pagination component.
+ *
+ * @returns A React component that renders the collection page layout with the specified props.
+ */
+
 const CollectionPageLayout = ({
   isMobile,
   searchPlaceholder,
@@ -111,6 +152,7 @@ const CollectionPageLayout = ({
                 border: `1px dashed ${theme.palette.divider}`,
               }}
             >
+              {/* Sidebar content placeholder */}
               <Stack spacing={1}>
                 <Typography variant="subtitle1" component="h2">
                   {sidebarTitle}
@@ -121,6 +163,8 @@ const CollectionPageLayout = ({
               </Stack>
             </Paper>
 
+            {/* Main content area */}
+            {/* Loading */}
             <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ flex: 1 }}>
               {isLoading ? (
                 <Box py={8}>
@@ -128,6 +172,7 @@ const CollectionPageLayout = ({
                 </Box>
               ) : null}
 
+              {/* Error */}
               {!isLoading && errorMessage ? (
                 <Alert
                   severity="error"
@@ -141,6 +186,7 @@ const CollectionPageLayout = ({
                 </Alert>
               ) : null}
 
+              {/* Empty */}
               {isEmpty ? (
                 <Paper variant="outlined" sx={{ p: 4, borderRadius: 2 }}>
                   <Stack spacing={1}>
@@ -154,10 +200,12 @@ const CollectionPageLayout = ({
                 </Paper>
               ) : null}
 
+              {/* Results */}
               {!isLoading && !errorMessage && hasResults ? resultsContent : null}
             </Box>
           </Box>
 
+          {/* Pagination */}
           <Pagination
             page={page}
             pageSize={pageSize}

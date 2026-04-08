@@ -2,17 +2,20 @@ import { useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
 
+// Default values for search parameters when they are not present in the URL
 const DEFAULT_SEARCH_SORT_TARGET: SearchSortTarget = 'date'
 const DEFAULT_SEARCH_SORT_DIRECTION: SearchSortDirection = 'desc'
 const DEFAULT_SEARCH_VIEW_MODE: SearchViewMode = 'grid'
 const DEFAULT_PAGE = 1
 
+// Custom hook to manage the search bar state synchronized with URL query parameters.
 const PARAM_QUERY = 'q'
 const PARAM_SORT_TARGET = 'st'
 const PARAM_SORT_DIRECTION = 'sd'
 const PARAM_VIEW = 'v'
 const PARAM_PAGE = 'p'
 
+// Parses the search sort target from the URL query parameter
 const parseSearchSortTarget = (value: string | null): SearchSortTarget => {
   if (value === 'n') {
     return 'name'
@@ -25,6 +28,7 @@ const parseSearchSortTarget = (value: string | null): SearchSortTarget => {
   return DEFAULT_SEARCH_SORT_TARGET
 }
 
+// Parses the search sort direction from the URL query parameter
 const parseSearchSortDirection = (value: string | null): SearchSortDirection => {
   if (value === 'a') {
     return 'asc'
@@ -37,6 +41,7 @@ const parseSearchSortDirection = (value: string | null): SearchSortDirection => 
   return DEFAULT_SEARCH_SORT_DIRECTION
 }
 
+// Parses the search view mode from the URL query parameter
 const parseSearchViewMode = (value: string | null): SearchViewMode => {
   if (value === 'l') {
     return 'list'
@@ -49,6 +54,7 @@ const parseSearchViewMode = (value: string | null): SearchViewMode => {
   return DEFAULT_SEARCH_VIEW_MODE
 }
 
+// Parses the page number from the URL query parameter, ensuring it is a valid positive integer
 const parsePage = (value: string | null): number => {
   if (!value) {
     return DEFAULT_PAGE
@@ -62,6 +68,7 @@ const parsePage = (value: string | null): number => {
   return parsed
 }
 
+// Encode search sort target for URL query parameter, omit if default
 const encodeSortTarget = (value: SearchSortTarget): string | null => {
   if (value === DEFAULT_SEARCH_SORT_TARGET) {
     return null
@@ -70,6 +77,7 @@ const encodeSortTarget = (value: SearchSortTarget): string | null => {
   return value === 'name' ? 'n' : 'd'
 }
 
+// Encode search sort direction for URL query parameter, omit if default
 const encodeSortDirection = (value: SearchSortDirection): string | null => {
   if (value === DEFAULT_SEARCH_SORT_DIRECTION) {
     return null
@@ -78,6 +86,7 @@ const encodeSortDirection = (value: SearchSortDirection): string | null => {
   return value === 'asc' ? 'a' : 'd'
 }
 
+// Encode search view mode for URL query parameter, omit if default
 const encodeViewMode = (value: SearchViewMode): string | null => {
   if (value === DEFAULT_SEARCH_VIEW_MODE) {
     return null
@@ -86,6 +95,7 @@ const encodeViewMode = (value: SearchViewMode): string | null => {
   return value === 'list' ? 'l' : 'g'
 }
 
+// Encode page number for URL query parameter, omit if default (1) or invalid
 const encodePage = (value: number): string | null => {
   if (!Number.isFinite(value)) {
     return null
@@ -124,6 +134,9 @@ export type SearchBarUrlState = {
   setPage: (value: number) => void
 }
 
+// Custom hook to manage the search bar state synchronized with URL query parameters.
+// Provides the current search value, sort target, sort direction, view mode, and page number
+// along with setter functions that update the URL query parameters accordingly.
 export const useSearchBarUrlState = ({
   isMobile,
 }: UseSearchBarUrlStateOptions): SearchBarUrlState => {
@@ -202,6 +215,7 @@ export const useSearchBarUrlState = ({
     [isMobile, setSearchParams],
   )
 
+  // Ensure view mode is always 'grid' on mobile, clean URL if necessary
   useEffect(() => {
     if (isMobile && searchParams.get(PARAM_VIEW) !== null) {
       updateSearchParams({ view: DEFAULT_SEARCH_VIEW_MODE })
@@ -214,7 +228,8 @@ export const useSearchBarUrlState = ({
     sortDirection,
     viewMode,
     page,
-    // Any search/sort/layout change can affect result ordering, so we reset to page 1.
+    // Any search/sort change can affect result ordering, so we reset to page 1.
+    // View mode changes do not affect ordering, so we do not reset the page in that case.
     setSearchValue: (value: string) => updateSearchParams({ q: value.trim(), page: DEFAULT_PAGE }),
     setSortTarget: (value: SearchSortTarget) =>
       updateSearchParams({ sortTarget: value, page: DEFAULT_PAGE }),

@@ -2,21 +2,13 @@ import { Box, Pagination as MuiPagination, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
 export interface PaginationProps {
-  // The current page number (1-based index)
   page: number
-  // The number of items per page (must be >= 1)
   pageSize: number
-  // The total number of items across all pages (must be >= 0)
   totalItems: number
-  // Callback function that receives the newly selected page number (1-based index)
   onPageChange: (page: number) => void
-  // Optional: whether the pagination controls are disabled
   disabled?: boolean
-  // Optional: number of sibling pages to show around the current page (default: 1)
   siblingCount?: number
-  // Optional: number of boundary pages to show at the start and end (default: 1)
   boundaryCount?: number
-  // Optional i18n key prefix (default: productions.pagination)
   i18nKeyPrefix?: string
 }
 
@@ -25,6 +17,16 @@ export interface PaginationProps {
  *
  * It hides itself when there is 1 page or less and emits the newly selected
  * page number through `onPageChange`.
+ *
+ * @param props.page Current page number (1-based index).
+ * @param props.pageSize Number of items per page (must be >= 1).
+ * @param props.totalItems Total number of items across all pages (must be >= 0).
+ * @param props.onPageChange Callback function that receives the newly selected page number (1-based index).
+ * @param props.disabled Optional boolean to disable the pagination controls.
+ * @param props.siblingCount Optional number of sibling pages to show around the current page (default: 1).
+ * @param props.boundaryCount Optional number of boundary pages to show at the start and end (default: 1).
+ * @param props.i18nKeyPrefix Optional prefix for internationalization keys used in the Pagination component (default: 'productions.pagination').
+ * @returns A React component that renders pagination controls based on the provided props. *
  */
 const Pagination = ({
   page,
