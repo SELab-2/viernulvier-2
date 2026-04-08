@@ -101,7 +101,7 @@ const HomePage = () => {
   }
 
   const onSearchSubmit = (value: string) => {
-    setSearchValue(value)
+    setSearchValue(value.trim())
   }
 
   return (

@@ -87,11 +87,16 @@ const encodeViewMode = (value: SearchViewMode): string | null => {
 }
 
 const encodePage = (value: number): string | null => {
-  if (!Number.isFinite(value) || value <= DEFAULT_PAGE) {
+  if (!Number.isFinite(value)) {
     return null
   }
 
-  return String(Math.floor(value))
+  const normalized = Math.floor(value)
+  if (normalized <= DEFAULT_PAGE) {
+    return null
+  }
+
+  return String(normalized)
 }
 
 type UpdateSearchParamsInput = {
@@ -144,8 +149,9 @@ export const useSearchBarUrlState = ({
           const nextParams = new URLSearchParams(currentParams)
 
           if (q !== undefined) {
-            if (q.trim()) {
-              nextParams.set(PARAM_QUERY, q)
+            const normalizedQuery = q.trim()
+            if (normalizedQuery) {
+              nextParams.set(PARAM_QUERY, normalizedQuery)
             } else {
               nextParams.delete(PARAM_QUERY)
             }
@@ -209,12 +215,12 @@ export const useSearchBarUrlState = ({
     viewMode,
     page,
     // Any search/sort/layout change can affect result ordering, so we reset to page 1.
-    setSearchValue: (value: string) => updateSearchParams({ q: value, page: DEFAULT_PAGE }),
+    setSearchValue: (value: string) => updateSearchParams({ q: value.trim(), page: DEFAULT_PAGE }),
     setSortTarget: (value: SearchSortTarget) =>
       updateSearchParams({ sortTarget: value, page: DEFAULT_PAGE }),
     setSortDirection: (value: SearchSortDirection) =>
       updateSearchParams({ sortDirection: value, page: DEFAULT_PAGE }),
-    setViewMode: (value: SearchViewMode) => updateSearchParams({ view: value, page: DEFAULT_PAGE }),
+    setViewMode: (value: SearchViewMode) => updateSearchParams({ view: value }),
     setPage: (value: number) => updateSearchParams({ page: value }),
   }
 }

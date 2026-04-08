@@ -26,7 +26,9 @@ const Harness = ({ isMobile = false }: HarnessProps) => {
 
       <button onClick={() => setPage(3)}>set-page-3</button>
       <button onClick={() => setPage(1)}>set-page-1</button>
+      <button onClick={() => setPage(1.5)}>set-page-1-5</button>
       <button onClick={() => setSearchValue('romeo')}>set-query</button>
+      <button onClick={() => setSearchValue('  romeo  ')}>set-query-whitespace</button>
       <button onClick={() => setSortTarget('name')}>sort-name</button>
       <button onClick={() => setSortDirection('asc')}>sort-asc</button>
       <button onClick={() => setViewMode('list')}>view-list</button>
@@ -88,8 +90,17 @@ describe('useSearchBarUrlState pagination sync', () => {
     expect(screen.getByTestId('page')).toHaveTextContent('1')
   })
 
-  it('resets to page 1 when sort or view changes', () => {
-    renderHarness('/?p=6')
+  it('trims whitespace in search query values', () => {
+    renderHarness('/?p=4')
+
+    fireEvent.click(screen.getByText('set-query-whitespace'))
+
+    expect(screen.getByTestId('query')).toHaveTextContent('romeo')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('?q=romeo')
+  })
+
+  it('resets to page 1 when sort changes and keeps page when view changes', () => {
+    const { unmount } = renderHarness('/?p=6')
 
     fireEvent.click(screen.getByText('sort-name'))
     expect(screen.getByTestId('url-search')).not.toHaveTextContent('p=')
@@ -99,7 +110,19 @@ describe('useSearchBarUrlState pagination sync', () => {
     expect(screen.getByTestId('url-search')).not.toHaveTextContent('p=')
     expect(screen.getByTestId('page')).toHaveTextContent('1')
 
+    unmount()
+    renderHarness('/?p=6')
     fireEvent.click(screen.getByText('view-list'))
+    expect(screen.getByTestId('url-search')).toHaveTextContent('p=6')
+    expect(screen.getByTestId('page')).toHaveTextContent('6')
+  })
+
+  it('does not encode p=1 when setting a non-integer page close to 1', () => {
+    renderHarness('/?q=hamlet&p=3')
+
+    fireEvent.click(screen.getByText('set-page-1-5'))
+
+    expect(screen.getByTestId('url-search')).toHaveTextContent('?q=hamlet')
     expect(screen.getByTestId('url-search')).not.toHaveTextContent('p=')
     expect(screen.getByTestId('page')).toHaveTextContent('1')
   })
