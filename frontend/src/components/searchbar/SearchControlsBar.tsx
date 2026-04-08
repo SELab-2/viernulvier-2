@@ -16,6 +16,7 @@ import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import SearchBar from './SearchBar'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
+import { tokens } from '../../theme/tokens'
 
 export interface SearchControlsBarProps {
   placeholder?: string
@@ -60,7 +61,7 @@ const SearchControlsBar = ({
 }: SearchControlsBarProps) => {
   const { t } = useTranslation()
   const theme = useTheme()
-const interactionColor =
+  const interactionColor =
     theme.palette.mode === 'dark' ? tokens.colors.neutral.white : tokens.colors.neutral.black
   const interactionHoverBackground =
     theme.palette.mode === 'dark' ? tokens.colors.overlay.white05 : tokens.colors.overlay.black05
