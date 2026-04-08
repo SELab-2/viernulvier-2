@@ -14,7 +14,6 @@ import {
 } from '@mui/material'
 import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
-import type { SearchChipOption } from '../../types/GenreAndTagChip'
 import SearchBar from './SearchBar'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
 
