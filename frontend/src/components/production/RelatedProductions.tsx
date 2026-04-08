@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { ProductionRelated, RelatedTag } from '../../types/Productions'
 import Carousel from '../carousel/Carousel'
 import ProductionGridCard from '../ProductionGridCard'
-import Tag from '../Tag'
+import GenreAndTagChip from '../chips/GenreAndTagChip'
 import { getTranslatedRecord } from '../../utils/translations'
 
 /**
@@ -59,11 +59,11 @@ function RelatedProductions({ lang = 'nl', related }: RelatedProductionsProps) {
         return (
           <Box key={entry.tag.id}>
             <Box sx={{ mb: 1.5, display: 'inline-flex', fontWeight: 600 }}>
-              <Tag
-                tagName={String(entry.tag.id)}
+              <GenreAndTagChip
+                name={String(entry.tag.id)}
                 labels={entry.tag.name as Record<string, string>}
                 context="series"
-                className="related-productions-tag"
+                id={entry.tag.id}
               />
             </Box>
             <Carousel
