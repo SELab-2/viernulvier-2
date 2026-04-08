@@ -4,10 +4,10 @@ import { useState } from 'react'
 import type { MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
-import type { GenreAndTagChipProps } from '../types/GenreAndTagChip'
-import { getGenreAndTagChipStyles } from './chips/genreAndTagChipStyles'
-import { getQueryKeyForChipType } from './chips/genreAndTagChipUtils'
-import { getTranslatedRecord } from '../utils/translations'
+import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
+import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
+import { getQueryKeyForChipType } from './genreAndTagChipUtils'
+import { getTranslatedRecord } from '../../utils/translations'
 
 /**
  * Generic chip component that supports both genre and series-tag scenarios.

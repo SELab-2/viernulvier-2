@@ -5,7 +5,7 @@ import { Link as RouterLink } from 'react-router-dom'
 import type { Production } from '../types/Productions'
 import { getProductionDateLabel } from '../utils/dateUtils'
 import { getTranslatedRecord } from '../utils/translations'
-import GenreAndTagChip from './GenreAndTagChip'
+import GenreAndTagChip from './chips/GenreAndTagChip'
 import ImageWithFallback from './ImageWithFallback'
 
 export interface ProductionGridCardProps {

@@ -4,7 +4,7 @@
  */
 
 import { Card, CardContent, Stack, Typography } from '@mui/material'
-import GenreAndTagChip from '../GenreAndTagChip'
+import GenreAndTagChip from '../chips/GenreAndTagChip'
 
 type Props = {
   title: string
