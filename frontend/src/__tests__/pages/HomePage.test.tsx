@@ -96,7 +96,7 @@ describe('HomePage (ProductionPage)', () => {
 
     expect(await screen.findByText('Geen producties gevonden')).toBeInTheDocument()
     expect(
-      screen.getByText('Pas je zoekopdracht of sortering aan en probeer opnieuw.'),
+      screen.getByText('Pas je zoekopdracht aan en probeer opnieuw.'),
     ).toBeInTheDocument()
   })
 

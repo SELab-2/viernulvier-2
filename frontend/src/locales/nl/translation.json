@@ -74,7 +74,7 @@
       "filterPanelPlaceholder": "Geavanceerde filters worden in dit paneel toegevoegd.",
       "empty": {
         "title": "Geen producties gevonden",
-        "description": "Pas je zoekopdracht of sortering aan en probeer opnieuw."
+        "description": "Pas je zoekopdracht aan en probeer opnieuw."
       },
       "error": {
         "retry": "Opnieuw proberen",

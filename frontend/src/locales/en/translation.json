@@ -74,7 +74,7 @@
       "filterPanelPlaceholder": "Advanced filters will be available in this panel.",
       "empty": {
         "title": "No productions found",
-        "description": "Try adjusting your search or sorting options."
+        "description": "Adjust your search and try again."
       },
       "error": {
         "retry": "Retry",
