@@ -123,17 +123,20 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         user = getattr(request, "user", None)
 
-        django_user_model = get_user_model()
-        uploaded_by = user if isinstance(user, django_user_model) else None
+        User = get_user_model()
+
+        uploaded_by = user if isinstance(user, User) else None
 
         instance = MediaFile(
             file=uploaded_file,
             original_name=uploaded_file.name,
             mime_type=mime_type or "",
             size_bytes=uploaded_file.size,
-            file_type=self.ALLOWED_MIME_TYPES.get(mime_type, MediaFile.FileType.OTHER),
+            file_type=self.ALLOWED_MIME_TYPES.get(
+                mime_type, MediaFile.FileType.OTHER
+            ),
             uploaded_by=uploaded_by,
         )
+
         instance.save()
         return instance
-    

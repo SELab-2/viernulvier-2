@@ -5,6 +5,7 @@ from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_v
 from apps.core.openapi import (
     DELETE_ERRORS,
     ITEM_ERRORS,
+    MUTATE_ERRORS,
     READ_ERRORS,
     RESPONSE_204_DELETED,
     WRITE_ERRORS,
@@ -27,8 +28,8 @@ _MEDIA_FILE_RESPONSE = OpenApiExample(
         "mime_type": "application/pdf",
         "size_bytes": 2843921,
         "file_type": "pdf",
-        "uploaded_by": 7,
-        "created_at": "2026-04-08T10:12:00Z",
+        "uploaded_by": None,
+        "created_at": "2026-04-08T10:12:00.000000Z",
     },
     response_only=True,
 )
@@ -44,8 +45,8 @@ _MEDIA_FILE_IMAGE_RESPONSE = OpenApiExample(
         "mime_type": "image/png",
         "size_bytes": 918273,
         "file_type": "image",
-        "uploaded_by": 7,
-        "created_at": "2026-04-08T10:18:00Z",
+        "uploaded_by": None,
+        "created_at": "2026-04-08T10:18:00.000000Z",
     },
     response_only=True,
 )
@@ -59,6 +60,23 @@ _MEDIA_FILE_INPUT = OpenApiExample(
     request_only=True,
 )
 
+_MEDIA_FILE_PARTIAL_INPUT = OpenApiExample(
+    "Media file - partial request body",
+    summary="Only the fields you want to change",
+    value={
+        "external_id": "print-archive-2026-001",
+    },
+    request_only=True,
+)
+
+_MEDIA_FILE_PUT_INPUT = OpenApiExample(
+    "Media file - full request body",
+    summary="Full replacement payload for a media file",
+    value={
+        "file": "<binary file>",
+    },
+    request_only=True,
+)
 
 # ===========================================================================
 # MediaFile - per-action schemas
@@ -103,6 +121,33 @@ _MEDIA_FILE_CREATE = extend_schema(
     examples=[_MEDIA_FILE_INPUT, _MEDIA_FILE_RESPONSE],
 )
 
+_MEDIA_FILE_UPDATE = extend_schema(
+    summary="Replace a media file",
+    description=(
+        "Fully replaces an existing **MediaFile**.\n\n"
+        "Use this endpoint when you want to replace the stored file and overwrite "
+        "the writable fields of the resource in a single request.\n\n"
+        "> **Requires an internal API key.**"
+    ),
+    request=MediaFileUploadSerializer,
+    responses={200: MediaFileSerializer, **MUTATE_ERRORS},
+    examples=[_MEDIA_FILE_PUT_INPUT, _MEDIA_FILE_RESPONSE],
+)
+
+_MEDIA_FILE_PARTIAL_UPDATE = extend_schema(
+    summary="Partially update a media file",
+    description=(
+        "Updates one or more writable fields of an existing **MediaFile** without "
+        "requiring a full payload.\n\n"
+        "Use this endpoint for small metadata changes such as setting or updating "
+        "`external_id`.\n\n"
+        "> **Requires an internal API key.**"
+    ),
+    request=MediaFileUploadSerializer,
+    responses={200: MediaFileSerializer, **MUTATE_ERRORS},
+    examples=[_MEDIA_FILE_PARTIAL_INPUT, _MEDIA_FILE_RESPONSE],
+)
+
 _MEDIA_FILE_DESTROY = extend_schema(
     summary="Delete a media file",
     description=(
@@ -114,7 +159,6 @@ _MEDIA_FILE_DESTROY = extend_schema(
     responses={204: RESPONSE_204_DELETED, **DELETE_ERRORS},
 )
 
-
 # ===========================================================================
 # Assembled decorator - imported and applied in views.py
 # ===========================================================================
@@ -123,5 +167,7 @@ media_file_schema = extend_schema_view(
     list=_MEDIA_FILE_LIST,
     retrieve=_MEDIA_FILE_RETRIEVE,
     create=_MEDIA_FILE_CREATE,
+    update=_MEDIA_FILE_UPDATE,
+    partial_update=_MEDIA_FILE_PARTIAL_UPDATE,
     destroy=_MEDIA_FILE_DESTROY,
 )
