@@ -14,7 +14,6 @@ import {
 } from '@mui/material'
 import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
-import GenreAndTagChip from '../chips/GenreAndTagChip'
 import type { SearchChipOption } from '../../types/GenreAndTagChip'
 import SearchBar from './SearchBar'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
@@ -32,12 +31,6 @@ export interface SearchControlsBarProps {
   viewMode?: SearchViewMode
   onViewModeChange?: (viewMode: SearchViewMode) => void
   showViewModeToggle?: boolean
-  genreChips?: SearchChipOption[]
-  seriesTagChips?: SearchChipOption[]
-  selectedGenreIds?: number[]
-  selectedSeriesTagIds?: number[]
-  onGenreChipToggle?: (id: number) => void
-  onSeriesTagChipToggle?: (id: number) => void
 }
 
 const SORT_TARGET_OPTIONS: Array<{ value: SearchSortTarget; labelKey: string }> = [
@@ -65,12 +58,6 @@ const SearchControlsBar = ({
   viewMode = 'grid',
   onViewModeChange = NOOP_VIEW_MODE_CHANGE,
   showViewModeToggle = true,
-  genreChips = [],
-  seriesTagChips = [],
-  selectedGenreIds = [],
-  selectedSeriesTagIds = [],
-  onGenreChipToggle,
-  onSeriesTagChipToggle,
 }: SearchControlsBarProps) => {
   const { t } = useTranslation()
   const theme = useTheme()
@@ -183,52 +170,6 @@ const SearchControlsBar = ({
           ) : null}
         </Box>
       </Box>
-
-      {(genreChips.length > 0 || seriesTagChips.length > 0) && (
-        <Box display="flex" flexDirection="column" gap={1}>
-          {genreChips.length > 0 ? (
-            <Box display="flex" flexWrap="wrap" gap={1}>
-              {genreChips.map((genreChip) => (
-                <GenreAndTagChip
-                  key={`genre-${genreChip.id}`}
-                  name={genreChip.name}
-                  labels={genreChip.labels}
-                  chipType="genre"
-                  context="search"
-                  id={genreChip.id}
-                  selected={selectedGenreIds.includes(genreChip.id)}
-                  onToggle={(value: string | number) => {
-                    if (typeof value === 'number') {
-                      onGenreChipToggle?.(value)
-                    }
-                  }}
-                />
-              ))}
-            </Box>
-          ) : null}
-
-          {seriesTagChips.length > 0 ? (
-            <Box display="flex" flexWrap="wrap" gap={1}>
-              {seriesTagChips.map((seriesTag) => (
-                <GenreAndTagChip
-                  key={`tag-${seriesTag.id}`}
-                  name={seriesTag.name}
-                  labels={seriesTag.labels}
-                  chipType="seriesTag"
-                  context="search"
-                  id={seriesTag.id}
-                  selected={selectedSeriesTagIds.includes(seriesTag.id)}
-                  onToggle={(value: string | number) => {
-                    if (typeof value === 'number') {
-                      onSeriesTagChipToggle?.(value)
-                    }
-                  }}
-                />
-              ))}
-            </Box>
-          ) : null}
-        </Box>
-      )}
     </Box>
   )
 }
