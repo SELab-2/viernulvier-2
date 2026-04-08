@@ -231,4 +231,3 @@ class TestMediaFile:
             size_bytes=123,
         )
         assert obj.created_at is not None
-        

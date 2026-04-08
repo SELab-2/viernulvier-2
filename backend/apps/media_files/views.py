@@ -26,4 +26,3 @@ class MediaFileViewSet(ApiModelViewSet):
         if getattr(self, "action", None) == "create":
             return MediaFileUploadSerializer
         return MediaFileSerializer
-    

@@ -109,9 +109,7 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
 
         content_type = getattr(value, "content_type", None)
         if content_type not in self.ALLOWED_MIME_TYPES:
-            raise serializers.ValidationError(
-                "Unsupported file type. Allowed types are JPEG, PNG, WEBP, and PDF."
-            )
+            raise serializers.ValidationError("Unsupported file type. Allowed types are JPEG, PNG, WEBP, and PDF.")
 
         return value
 
@@ -132,9 +130,7 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
             original_name=uploaded_file.name,
             mime_type=mime_type or "",
             size_bytes=uploaded_file.size,
-            file_type=self.ALLOWED_MIME_TYPES.get(
-                mime_type, MediaFile.FileType.OTHER
-            ),
+            file_type=self.ALLOWED_MIME_TYPES.get(mime_type, MediaFile.FileType.OTHER),
             uploaded_by=uploaded_by,
         )
 

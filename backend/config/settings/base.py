@@ -72,7 +72,7 @@ LOCAL_APPS = [
     "apps.pricing",
     "apps.locations",
     "apps.media_library",
-    "apps.media_files"
+    "apps.media_files",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

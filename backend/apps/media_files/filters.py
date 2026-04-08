@@ -41,4 +41,3 @@ class MediaFileFilter(BaseModelFilter):
             "uploaded_by",
             "external_id",
         ]
-        

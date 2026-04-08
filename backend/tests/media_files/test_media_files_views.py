@@ -27,7 +27,6 @@ from apps.media_files.models import MediaFile
 from apps.media_files.serializers import MediaFileSerializer, MediaFileUploadSerializer
 from apps.media_files.views import MediaFileViewSet
 
-
 PUB_KEY = "pub-media-files-view-test-key"
 INT_KEY = "int-media-files-view-test-key"
 
@@ -317,4 +316,3 @@ class TestMediaFileViewSetSearch(TestCase):
     def test_search_by_mime_type(self) -> None:
         response = self.client.get("/api/v1/media/?search=image", **pub_headers())
         assert len(results_list(response)) >= 1
-        

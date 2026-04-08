@@ -345,4 +345,3 @@ class TestMediaFileFilterCombined:
         ).qs
 
         assert set(qs) == {pdf_file, png_file, jpg_file}
-        

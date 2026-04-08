@@ -194,7 +194,9 @@ class TestMediaFileAdminQueryset:
         rows = list(qs)
         assert media_file in rows
 
-    def test_get_queryset_includes_uploaded_by_relation(self, media_file_admin, request_factory, admin_user, media_file) -> None:
+    def test_get_queryset_includes_uploaded_by_relation(
+        self, media_file_admin, request_factory, admin_user, media_file
+    ) -> None:
         request = request_factory.get("/admin/apps/media_files/mediafile/")
         request.user = admin_user
 
@@ -236,4 +238,3 @@ class TestMediaFileAdminFileLink:
 
     def test_file_link_description_is_file(self, media_file_admin) -> None:
         assert media_file_admin.file_link.short_description == "File"
-        

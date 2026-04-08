@@ -86,4 +86,3 @@ class MediaFileAdmin(BaseAdmin):
             return "-"
 
         return format_html('<a href="{}" target="_blank" rel="noopener noreferrer">Open file</a>', obj.file.url)
-    
