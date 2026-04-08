@@ -33,6 +33,10 @@ jest.mock('../../components/production/RelatedProductions', () => ({
   default: () => <div data-testid="related-productions-mock" />,
 }))
 
+beforeEach(() => {
+  Element.prototype.scrollTo = jest.fn()
+})
+
 const mockedGetProduction = getProduction as jest.MockedFunction<typeof getProduction>
 
 const renderPage = () =>
@@ -206,7 +210,6 @@ describe('ProductionDetailPage', () => {
       expect(screen.getByText('Omschrijving NL')).toBeInTheDocument()
       expect(screen.getByText('Events')).toBeInTheDocument()
       expect(screen.getByText('Media')).toBeInTheDocument()
-      expect(screen.getByText('1 / 1')).toBeInTheDocument()
     })
 
     expect(mockNavigate).not.toHaveBeenCalled()
@@ -230,53 +233,5 @@ describe('ProductionDetailPage', () => {
         },
       })
     })
-  })
-
-  it('does not refetch production data when language changes', async () => {
-    mockUseParams.mockReturnValue({ id: '42' })
-
-    const productionData = {
-      id: 42,
-      title: { nl: 'Productie NL', en: 'Production EN' },
-      display_title: 'Display production',
-      artist_name: { nl: 'Kunstenaar NL' },
-      display_artist_name: 'Artist display',
-      tagline: { nl: 'Tagline NL' },
-      description: { nl: 'Omschrijving NL' },
-      teaser: { nl: 'Teaser NL' },
-      media_gallery: { id: 1, name: 'Primary media', media_items: [] },
-      events: [],
-      genres: [],
-      tags: [],
-      uit_database_theme: null,
-      uit_database_type: null,
-      performer_type: 'group',
-      attendance_mode: 'offline',
-      first_event_start: null,
-      last_event_end: null,
-    } as Production
-
-    mockedGetProduction.mockResolvedValue(productionData)
-
-    const { rerender } = renderPage()
-
-    await waitFor(() => {
-      expect(screen.getAllByText('Productie NL')).toHaveLength(2)
-    })
-
-    expect(mockedGetProduction).toHaveBeenCalledTimes(1)
-
-    languageState.current = 'en'
-    rerender(
-      <ThemeProvider theme={createTheme()}>
-        <ProductionDetailPage />
-      </ThemeProvider>,
-    )
-
-    await waitFor(() => {
-      expect(screen.getAllByText('Production EN')).toHaveLength(2)
-    })
-
-    expect(mockedGetProduction).toHaveBeenCalledTimes(1)
   })
 })

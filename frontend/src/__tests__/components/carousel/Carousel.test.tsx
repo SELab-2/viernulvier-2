@@ -48,6 +48,10 @@ jest.mock('embla-carousel-react', () => ({
   ],
 }))
 
+beforeEach(() => {
+  Element.prototype.scrollTo = jest.fn()
+})
+
 describe('Carousel', () => {
   beforeEach(() => {
     selectedIndex = 0

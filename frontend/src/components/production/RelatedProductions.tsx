@@ -88,11 +88,28 @@ function RelatedProductions({ lang = 'nl', related }: RelatedProductionsProps) {
                     production.display_artist_name,
                   ) || ''
 
+                // TODO:
+                // Related productions don't have all the values of a production
+                // It only contains the values required for the frontend to show the cards
+                // We could change the API to return complete productions to avoid this normalization
+                // Or we could make the ProductionGridCard work with the related production types
+                // For now just use normalization, but maybe this should be looked at again?
                 return (
                   <ProductionGridCard
                     key={production.id}
                     production={{
                       ...production,
+                      attendance_mode: '',
+                      performer_type: '',
+                      first_event_start: null,
+                      last_event_end: null,
+                      uit_database_theme: null,
+                      uit_database_type: null,
+                      artist_name: production.artist_name ?? {},
+                      tagline: {},
+                      teaser: {},
+                      description: {},
+                      tags: [],
                       genres: [],
                       display_title: normalizedTitle,
                       display_artist_name: normalizedArtist,
