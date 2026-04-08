@@ -1,3 +1,5 @@
+"""Models for the Media Files app."""
+
 import os
 import uuid
 

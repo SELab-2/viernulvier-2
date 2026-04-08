@@ -1,3 +1,6 @@
+"""Serializers for the Media Files app."""
+
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from .models import MediaFile
@@ -102,7 +105,7 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("No file was uploaded.")
 
         if value.size > self.MAX_FILE_SIZE:
-            raise serializers.ValidationError("File is too large (max " + self.MAX_FILE_SIZE / (1024 * 1024) + " MB).")
+            raise serializers.ValidationError(f"File is too large (max {self.MAX_FILE_SIZE // (1024 * 1024)} MB).")
 
         content_type = getattr(value, "content_type", None)
         if content_type not in self.ALLOWED_MIME_TYPES:
@@ -120,13 +123,16 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         user = getattr(request, "user", None)
 
+        django_user_model = get_user_model()
+        uploaded_by = user if isinstance(user, django_user_model) else None
+
         instance = MediaFile(
             file=uploaded_file,
             original_name=uploaded_file.name,
             mime_type=mime_type or "",
             size_bytes=uploaded_file.size,
             file_type=self.ALLOWED_MIME_TYPES.get(mime_type, MediaFile.FileType.OTHER),
-            uploaded_by=user if getattr(user, "is_authenticated", False) else None,
+            uploaded_by=uploaded_by,
         )
         instance.save()
         return instance
