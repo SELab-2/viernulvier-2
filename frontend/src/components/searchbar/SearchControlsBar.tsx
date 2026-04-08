@@ -60,6 +60,10 @@ const SearchControlsBar = ({
 }: SearchControlsBarProps) => {
   const { t } = useTranslation()
   const theme = useTheme()
+const interactionColor =
+    theme.palette.mode === 'dark' ? tokens.colors.neutral.white : tokens.colors.neutral.black
+  const interactionHoverBackground =
+    theme.palette.mode === 'dark' ? tokens.colors.overlay.white05 : tokens.colors.overlay.black05
   const nextSortDirection: SearchSortDirection = sortDirection === 'asc' ? 'desc' : 'asc'
 
   return (
@@ -126,6 +130,10 @@ const SearchControlsBar = ({
                 height: 40,
                 px: 1.2,
                 backgroundColor: theme.palette.background.default,
+                '&:hover': {
+                  borderColor: interactionColor,
+                  backgroundColor: interactionHoverBackground,
+                },
               }}
             >
               {sortDirection === 'asc' ? (
@@ -152,6 +160,16 @@ const SearchControlsBar = ({
                 '& .MuiToggleButton-root': {
                   px: 1.2,
                   backgroundColor: theme.palette.background.default,
+                  color: theme.palette.text.primary,
+                  borderColor: theme.palette.divider,
+                  '&:hover': {
+                    borderColor: interactionColor,
+                    backgroundColor: interactionHoverBackground,
+                  },
+                  '&.Mui-selected': {
+                    color: theme.palette.text.primary,
+                    backgroundColor: interactionHoverBackground,
+                  },
                 },
               }}
             >

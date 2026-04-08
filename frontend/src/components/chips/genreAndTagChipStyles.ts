@@ -17,8 +17,8 @@ export const getGenreAndTagChipStyles = ({
 }: GetGenreAndTagChipStylesInput): SxProps<Theme> => {
   const accentMain = theme.palette.accent?.main ?? theme.palette.primary.main
   const accentHover = theme.palette.accent?.dark ?? accentMain
-  const seriesMain = theme.palette.primary.main
-  const seriesHover = theme.palette.primary.dark
+  const seriesMain = tokens.colors.series.main
+  const seriesHover = tokens.colors.series.dark
   const selectedBg = chipType === 'genre' ? accentMain : seriesMain
   const selectedHoverBg = chipType === 'genre' ? accentHover : seriesHover
   const selectedHoverStyles =

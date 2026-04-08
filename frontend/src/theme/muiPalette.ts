@@ -35,15 +35,18 @@ declare module '@mui/material/Button' {
 export const createAppTheme = (mode: 'light' | 'dark' = 'light') => {
   const isDark = mode === 'dark'
   const colorSet = isDark ? tokens.colors.dark : tokens.colors.light
+  const primaryMain = isDark ? tokens.colors.neutral.white : tokens.colors.neutral.black
+  const primaryContrastText = isDark ? tokens.colors.neutral.black : tokens.colors.neutral.white
+  const typography = tokens.typography
 
   const themeOptions: ThemeOptions = {
     palette: {
       mode,
       primary: {
-        main: tokens.colors.accent.main,
-        light: tokens.colors.accent.light,
-        dark: tokens.colors.accent.dark,
-        contrastText: tokens.colors.accent.contrastText,
+        main: primaryMain,
+        light: primaryMain,
+        dark: primaryMain,
+        contrastText: primaryContrastText,
       },
       accent: {
         main: tokens.colors.accent.main,
@@ -69,48 +72,48 @@ export const createAppTheme = (mode: 'light' | 'dark' = 'light') => {
       }),
     },
     typography: {
-      fontFamily: tokens.typography.fontFamily,
+      fontFamily: typography.fontFamily,
       h1: {
-        fontSize: tokens.typography.sizes['5xl'],
-        fontWeight: tokens.typography.weights.bold,
-        lineHeight: tokens.typography.lineHeights.tight,
+        fontSize: typography.sizes['5xl'],
+        fontWeight: typography.weights.bold,
+        lineHeight: typography.lineHeights.tight,
       },
       h2: {
-        fontSize: tokens.typography.sizes['4xl'],
-        fontWeight: tokens.typography.weights.bold,
-        lineHeight: tokens.typography.lineHeights.tight,
+        fontSize: typography.sizes['4xl'],
+        fontWeight: typography.weights.bold,
+        lineHeight: typography.lineHeights.tight,
       },
       h3: {
-        fontSize: tokens.typography.sizes['3xl'],
-        fontWeight: tokens.typography.weights.bold,
-        lineHeight: tokens.typography.lineHeights.tight,
+        fontSize: typography.sizes['3xl'],
+        fontWeight: typography.weights.bold,
+        lineHeight: typography.lineHeights.tight,
       },
       h4: {
-        fontSize: tokens.typography.sizes['2xl'],
-        fontWeight: tokens.typography.weights.bold,
-        lineHeight: tokens.typography.lineHeights.tight,
+        fontSize: typography.sizes['2xl'],
+        fontWeight: typography.weights.bold,
+        lineHeight: typography.lineHeights.tight,
       },
       h5: {
-        fontSize: tokens.typography.sizes.xl,
-        fontWeight: tokens.typography.weights.bold,
-        lineHeight: tokens.typography.lineHeights.normal,
+        fontSize: typography.sizes.xl,
+        fontWeight: typography.weights.bold,
+        lineHeight: typography.lineHeights.normal,
       },
       h6: {
-        fontSize: tokens.typography.sizes.lg,
-        fontWeight: tokens.typography.weights.bold,
-        lineHeight: tokens.typography.lineHeights.normal,
+        fontSize: typography.sizes.lg,
+        fontWeight: typography.weights.bold,
+        lineHeight: typography.lineHeights.normal,
       },
       body1: {
-        fontSize: tokens.typography.sizes.base,
-        lineHeight: tokens.typography.lineHeights.normal,
+        fontSize: typography.sizes.base,
+        lineHeight: typography.lineHeights.normal,
       },
       body2: {
-        fontSize: tokens.typography.sizes.sm,
-        lineHeight: tokens.typography.lineHeights.normal,
+        fontSize: typography.sizes.sm,
+        lineHeight: typography.lineHeights.normal,
       },
       button: {
-        fontFamily: tokens.typography.fontFamily,
-        fontWeight: tokens.typography.weights.medium,
+        fontFamily: typography.fontFamily,
+        fontWeight: typography.weights.medium,
       },
     },
     breakpoints: {

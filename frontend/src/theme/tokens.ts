@@ -19,6 +19,14 @@ export const tokens = {
       dark: '#6a1ac7',
     },
 
+    // Series colors
+    series: {
+      main: '#1976d2',
+      contrastText: '#ffffff',
+      light: '#42a5f5',
+      dark: '#1565c0',
+    },
+
     // Light Mode Colors
     light: {
       background: '#f4f5f7',
@@ -32,13 +40,13 @@ export const tokens = {
 
     // Dark Mode Colors
     dark: {
-      background: '#0e1021',
-      surface: '#181b2f',
-      text: '#e6e9fb',
-      textMuted: '#b8bed8',
-      border: '#2c2f52',
-      divider: '#3a3e5c',
-      hover: '#1a1f3b',
+      background: '#111111',
+      surface: '#1a1a1a',
+      text: '#f5f5f5',
+      textMuted: '#b3b3b3',
+      border: '#2a2a2a',
+      divider: '#3a3a3a',
+      hover: '#1f1f1f',
     },
 
     // Neutral Colors (used in both themes)
@@ -60,6 +68,7 @@ export const tokens = {
     // Overlay and surface-specific colors
     overlay: {
       black05: 'rgba(0,0,0,0.05)',
+      white05: 'rgba(255,255,255,0.05)',
       footerBorder: 'rgba(255,255,255,0.12)',
       mediaNavDark: 'rgba(10, 14, 40, 0.65)',
       mediaNavLight: 'rgba(255,255,255,0.8)',

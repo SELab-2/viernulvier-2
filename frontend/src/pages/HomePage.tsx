@@ -36,7 +36,9 @@ const HomePage = () => {
       <Box
         sx={{
           backgroundColor:
-            theme.palette.mode === 'light' ? tokens.colors.light.hover : tokens.colors.dark.hover,
+            theme.palette.mode === 'light'
+              ? tokens.colors.light.surface
+              : tokens.colors.dark.surface,
           pt: 4,
           pb: 6,
           borderBottom: `1px solid ${theme.palette.divider}`,
