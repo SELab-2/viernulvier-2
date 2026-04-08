@@ -33,6 +33,26 @@ def _import_legacy_csv_rows(
     total_rows: int | None = None,
     progress_callback: Callable[[int, int | None], None] | None = None,
 ) -> int:
+    """Import a collection of CSV rows with error handling and progress tracking.
+
+    Creates an import log, processes each row with the provided handler, and finalizes the log.
+
+    Args:
+        source_name: Name of the CSV source for logging.
+        rows: Iterable of dictionaries representing CSV rows.
+        row_handler: Callable that processes individual rows.
+        partial_error_label: Label used when some rows fail.
+        failed_error_label: Label used when all rows fail.
+        dry_run: If True, validate rows without saving to database.
+        total_rows: Total number of rows expected (for progress tracking).
+        progress_callback: Optional callback for progress updates (processed_count, total_count).
+
+    Returns:
+        Number of successfully imported rows.
+
+    Raises:
+        Exception: If a critical error occurs during import.
+    """
     import_log = ImportLog.objects.create(
         source=f"legacy_csv:{source_name}",
         status=ImportLog.Status.IN_PROGRESS,
@@ -91,6 +111,21 @@ def _import_legacy_csv_file(
     dry_run: bool,
     progress_callback: Callable[[int, int | None], None] | None = None,
 ) -> int:
+    """Import all rows from a single legacy CSV file.
+
+    Counts rows if a progress callback is provided, then delegates to _import_legacy_csv_rows.
+
+    Args:
+        csv_path: Path to the CSV file to import.
+        row_handler: Callable that processes individual rows.
+        partial_error_label: Label used when some rows fail.
+        failed_error_label: Label used when all rows fail.
+        dry_run: If True, validate rows without saving to database.
+        progress_callback: Optional callback for progress updates (processed_count, total_count).
+
+    Returns:
+        Number of successfully imported rows.
+    """
     total_rows = _io._count_csv_rows(csv_path) if progress_callback else None
     return _import_legacy_csv_rows(
         source_name=csv_path.name,
@@ -164,6 +199,13 @@ def import_bundled_legacy_csv_files(
         file_processed = 0
 
         def _file_progress(processed: int, _total: int | None, *, offset: int = processed_offset) -> None:
+            """Update progress for the current CSV file being processed.
+
+            Args:
+                processed: Number of rows processed in the current file.
+                _total: Total number of rows (unused for nested call).
+                offset: Offset of rows processed from previous files.
+            """
             nonlocal file_processed
             file_processed = processed
             if progress_callback:

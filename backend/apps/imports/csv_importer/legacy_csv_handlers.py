@@ -22,6 +22,18 @@ logger = logging.getLogger(__name__)
 
 
 def _import_legacy_production_row(row: dict[str, Any], *, dry_run: bool) -> bool:
+    """Import a single production row from legacy CSV data.
+
+    Args:
+        row: Dictionary containing the CSV row data.
+        dry_run: If True, validate the row without saving to the database.
+
+    Returns:
+        True if the row was successfully imported or validated, False otherwise.
+
+    Raises:
+        ValueError: If required fields are missing or invalid.
+    """
     external_id = _normalise_cell(row.get("ID"))
     if not external_id:
         message = f"Missing production ID in legacy CSV row: {row}"
@@ -74,6 +86,18 @@ def _import_legacy_production_row(row: dict[str, Any], *, dry_run: bool) -> bool
 
 
 def _import_legacy_event_row(row: dict[str, Any], *, dry_run: bool) -> bool:
+    """Import a single event row from legacy CSV data.
+
+    Args:
+        row: Dictionary containing the CSV row data.
+        dry_run: If True, validate the row without saving to the database.
+
+    Returns:
+        True if the row was successfully imported or validated, False otherwise.
+
+    Raises:
+        ValueError: If required fields are missing, invalid, or related production not found.
+    """
     production_external_id = _normalise_cell(row.get("Production"))
     if not production_external_id:
         raise ValueError(f"Missing production reference in legacy event CSV row: {row}")

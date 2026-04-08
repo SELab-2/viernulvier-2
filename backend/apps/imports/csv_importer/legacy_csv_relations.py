@@ -18,6 +18,11 @@ if TYPE_CHECKING:
 
 
 def _ensure_language() -> Language:
+    """Get or create the language used for legacy CSV imports.
+
+    Returns:
+        The Language object for the legacy CSV language.
+    """
     language, _ = Language.objects.get_or_create(
         code=LEGACY_LANGUAGE_CODE,
         defaults={"name": LEGACY_LANGUAGE_NAME, "is_active": LEGACY_LANGUAGE_ACTIVE},
@@ -26,6 +31,15 @@ def _ensure_language() -> Language:
 
 
 def _ensure_genre(label: str, language: Language) -> Genre:
+    """Get or create a genre with a translation for the given language.
+
+    Args:
+        label: The name or label of the genre.
+        language: The Language object to associate with the genre translation.
+
+    Returns:
+        The Genre object, either existing or newly created.
+    """
     genre_use_as, _ = GenreUseAs.objects.get_or_create(name="genre")
     genre_type = slugify(label)[:50] or label.strip().lower().replace(" ", "_")[:50] or "genre"
 
@@ -47,6 +61,13 @@ def _ensure_genre(label: str, language: Language) -> Genre:
 
 
 def _sync_production_genres(production: Production, genre_labels: list[str], language: Language) -> None:
+    """Synchronize genres for a production, replacing existing genre associations.
+
+    Args:
+        production: The Production object to update.
+        genre_labels: List of genre labels to associate with the production.
+        language: The Language object for genre translations.
+    """
     ProductionGenre.objects.filter(production=production).delete()
     links = []
     for position, label in enumerate(genre_labels):
@@ -57,6 +78,15 @@ def _sync_production_genres(production: Production, genre_labels: list[str], lan
 
 
 def _hall_for_name(name: str, language: Language) -> Hall | None:
+    """Get or create a hall for the given name in the specified language.
+
+    Args:
+        name: The name of the hall.
+        language: The Language object for the hall translation.
+
+    Returns:
+        The Hall object if name is not empty, None otherwise.
+    """
     if not name:
         return None
 

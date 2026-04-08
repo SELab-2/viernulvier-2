@@ -12,6 +12,17 @@ from .legacy_csv_constants import LEGACY_EVENT_HEADERS, LEGACY_PRODUCTION_HEADER
 
 
 def _iter_csv_rows(csv_path: Path) -> list[dict[str, Any]]:
+    """Read and return all rows from a CSV file.
+
+    Args:
+        csv_path: Path to the CSV file to read.
+
+    Returns:
+        List of dictionaries, where each dictionary represents a row with column names as keys.
+
+    Raises:
+        ValueError: If the CSV file has no headers.
+    """
     with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
         if not reader.fieldnames:
@@ -20,6 +31,17 @@ def _iter_csv_rows(csv_path: Path) -> list[dict[str, Any]]:
 
 
 def _count_csv_rows(csv_path: Path) -> int:
+    """Count the number of rows in a CSV file, excluding the header.
+
+    Args:
+        csv_path: Path to the CSV file to count.
+
+    Returns:
+        The number of data rows in the CSV file.
+
+    Raises:
+        ValueError: If the CSV file has no headers.
+    """
     with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
         if not reader.fieldnames:
