@@ -1,29 +1,13 @@
-import { getTranslatedRecord } from '../../utils/translations'
-import type { ChipLabels, GenreAndTagChipType } from '../../types/GenreAndTagChip'
+import type { GenreAndTagChipType } from '../../types/GenreAndTagChip'
+import { PARAM_GENRES, PARAM_TAGS } from '../searchbar/useSearchBarUrlState'
 
 /**
- * Maps chip type to the query key used by filter URLs.
+ * Maps chip types to their corresponding URL query keys.
  */
-export const getQueryKeyForChipType = (chipType: GenreAndTagChipType): 'g' | 't' => {
+export const getQueryKeyForChipType = (chipType: GenreAndTagChipType): string => {
   if (chipType === 'genre') {
-    return 'g'
+    return PARAM_GENRES
   }
 
-  return 't'
-}
-
-/**
- * Resolves a translated string for a chip label given a fallback,
- * record of localized labels, and the active language.
- */
-export const resolveChipLabel = ({
-  fallback,
-  labels,
-  language,
-}: {
-  fallback: string
-  labels: ChipLabels
-  language: string
-}): string => {
-  return getTranslatedRecord(labels, language, fallback)
+  return PARAM_TAGS
 }

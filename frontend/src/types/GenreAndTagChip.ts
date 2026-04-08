@@ -12,11 +12,11 @@ export type GenreAndTagChipToggle = (
 ) => void
 
 export interface GenreAndTagChipProps {
-  /** Fallback label and unique identifier. */
+  /** Fallback label. */
   name: string
-  /** Translated labels by locale code; pass {} to use fallback label. */
+  /** Translated labels by locale code. */
   labels: ChipLabels
-  /** Drives selected styling and selected icon visibility in search context. */
+  /** Is the chip selected? */
   selected?: boolean
   /** Identifier used for URL state and callback payloads. */
   id: GenreAndTagChipId

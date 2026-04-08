@@ -4,7 +4,7 @@ import { tokens } from '../../theme/tokens'
 import { formatDate } from '../../utils/dateUtils'
 import { getHallDisplayName } from '../../utils/hall'
 import { getLocalizedValue } from '../../utils/localization'
-import GenreAndTagChip from '../GenreAndTagChip'
+import GenreAndTagChip from '../chips/GenreAndTagChip'
 
 import type { CSSProperties } from 'react'
 import type { Production } from '../../types/Productions'

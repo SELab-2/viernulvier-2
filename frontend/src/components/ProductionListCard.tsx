@@ -7,7 +7,7 @@ import type { Production } from '../types/Productions'
 import { tokens } from '../theme/tokens'
 import { getProductionDateLabel } from '../utils/dateUtils'
 import { getTranslatedRecord } from '../utils/translations'
-import GenreAndTagChip from './GenreAndTagChip'
+import GenreAndTagChip from './chips/GenreAndTagChip'
 import ImageWithFallback from './ImageWithFallback'
 
 export interface ProductionListCardProps {

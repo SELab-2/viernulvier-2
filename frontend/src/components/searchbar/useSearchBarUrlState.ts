@@ -10,8 +10,8 @@ const PARAM_QUERY = 'q'
 const PARAM_SORT_TARGET = 'st'
 const PARAM_SORT_DIRECTION = 'sd'
 const PARAM_VIEW = 'v'
-const PARAM_GENRES = 'g'
-const PARAM_TAGS = 't'
+export const PARAM_GENRES = 'g'
+export const PARAM_TAGS = 't'
 const FILTER_SEPARATOR = '~'
 
 /**
