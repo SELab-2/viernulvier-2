@@ -12,7 +12,7 @@ const PARAM_SORT_DIRECTION = 'sd'
 const PARAM_VIEW = 'v'
 export const PARAM_GENRES = 'g'
 export const PARAM_TAGS = 't'
-const FILTER_SEPARATOR = '~'
+const FILTER_SEPARATOR = '-'
 
 /**
  * Parses compact filter text into tokens.
