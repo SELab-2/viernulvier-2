@@ -1,0 +1,13 @@
+import type { GenreAndTagChipType } from '../../types/GenreAndTagChip'
+import { PARAM_GENRES, PARAM_TAGS } from '../searchbar/useSearchBarUrlState'
+
+/**
+ * Maps chip types to their corresponding URL query keys.
+ */
+export const getQueryKeyForChipType = (chipType: GenreAndTagChipType): string => {
+  if (chipType === 'genre') {
+    return PARAM_GENRES
+  }
+
+  return PARAM_TAGS
+}

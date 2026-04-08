@@ -5,7 +5,6 @@ import ProductionGridCard from './ProductionGridCard'
 export interface ProductionGridProps {
   productions: Production[]
   selectedGenreIds?: number[]
-  onGenreClick?: (genreId: number) => void
 }
 
 /**
@@ -17,10 +16,9 @@ export interface ProductionGridProps {
  *
  * @param props.productions List of productions to display.
  * @param props.selectedGenreIds Genre ids currently active in the parent filter state.
- * @param props.onGenreClick Forwarded to every card; called with the clicked genre id.
  * @returns The grid container element.
  */
-const ProductionGrid = ({ productions, selectedGenreIds, onGenreClick }: ProductionGridProps) => {
+const ProductionGrid = ({ productions, selectedGenreIds }: ProductionGridProps) => {
   return (
     <Box display="flex" flexWrap="wrap" gap={3} justifyContent="center">
       {productions.map((production) => (
@@ -28,7 +26,6 @@ const ProductionGrid = ({ productions, selectedGenreIds, onGenreClick }: Product
           key={production.id}
           production={production}
           selectedGenreIds={selectedGenreIds}
-          onGenreClick={onGenreClick}
         />
       ))}
     </Box>

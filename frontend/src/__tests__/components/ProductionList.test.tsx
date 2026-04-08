@@ -50,17 +50,13 @@ const renderList = (props: {
   selectedGenreIds?: number[]
   onGenreClick?: (id: number) => void
 }) => {
-  const { productions = [], selectedGenreIds = [], onGenreClick = jest.fn() } = props
+  const { productions = [], selectedGenreIds = [] } = props
 
   return render(
     <MemoryRouter>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={accentTheme}>
-          <ProductionList
-            productions={productions}
-            selectedGenreIds={selectedGenreIds}
-            onGenreClick={onGenreClick}
-          />
+          <ProductionList productions={productions} selectedGenreIds={selectedGenreIds} />
         </ThemeProvider>
       </I18nextProvider>
     </MemoryRouter>,
@@ -118,9 +114,8 @@ describe('ProductionList', () => {
 
     renderList({ productions, selectedGenreIds: [1] })
 
-    const chips = screen.getAllByRole('button', { name: 'Filter op Dans' })
-    expect(chips).toHaveLength(2)
-    chips.forEach((chip) => expect(chip).toHaveAttribute('aria-pressed', 'true'))
+    expect(screen.getAllByText('Dans')).toHaveLength(2)
+    expect(screen.queryByRole('button', { name: 'Filter op Dans' })).not.toBeInTheDocument()
   })
 
   it('forwards onGenreClick to every card', () => {
@@ -132,12 +127,10 @@ describe('ProductionList', () => {
 
     renderList({ productions, onGenreClick })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Filter op Dans' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Filter op Muziek' }))
+    fireEvent.click(screen.getByText('Dans'))
+    fireEvent.click(screen.getByText('Muziek'))
 
-    expect(onGenreClick).toHaveBeenCalledTimes(2)
-    expect(onGenreClick).toHaveBeenCalledWith(1)
-    expect(onGenreClick).toHaveBeenCalledWith(2)
+    expect(onGenreClick).not.toHaveBeenCalled()
   })
 
   it('renders without error when selectedGenreIds and onGenreClick are omitted', () => {
