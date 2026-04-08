@@ -86,7 +86,7 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
           ) : null}
 
           {genres.length > 0 ? (
-            <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24} overflow="hidden">
+            <Stack direction="row" flexWrap="wrap" spacing={0.75} height={32} overflow="hidden">
               {genres.map((genre) => (
                 <GenreAndTagChip
                   key={genre.id}
