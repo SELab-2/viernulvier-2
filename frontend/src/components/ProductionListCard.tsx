@@ -50,7 +50,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
       to={`/productions/${production.id}`}
       direction="row"
       gap={3}
-      height={175}
+      height={170}
       padding={3}
       borderRadius="4px"
       overflow="hidden"
@@ -81,7 +81,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
         overflow="hidden"
       >
         <Stack>
-          <Typography component="h2" variant="h5" color="textPrimary" fontWeight="bold" noWrap>
+          <Typography component="h2" variant="h6" color="textPrimary" fontWeight="bold" noWrap>
             {title}
           </Typography>
 

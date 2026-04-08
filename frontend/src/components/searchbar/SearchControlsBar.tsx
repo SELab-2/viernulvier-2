@@ -81,12 +81,6 @@ const SearchControlsBar = ({
         </Box>
 
         <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-          {typeof resultCount === 'number' ? (
-            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-              {t('searchbar.resultsFound', { count: resultCount })}
-            </Typography>
-          ) : null}
-
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel id={SORT_TARGET_LABEL_ID}>{t('searchbar.sort.targetLabel')}</InputLabel>
             <Select
@@ -166,6 +160,12 @@ const SearchControlsBar = ({
                 </ToggleButton>
               </Tooltip>
             </ToggleButtonGroup>
+          ) : null}
+
+          {typeof resultCount === 'number' ? (
+            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+              {t('searchbar.resultsFound', { count: resultCount })}
+            </Typography>
           ) : null}
         </Box>
       </Box>
