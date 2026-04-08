@@ -105,10 +105,14 @@ viernulvier_archive/
 │   |        
 │   └── imports/                        # Scraping logic
 │       ├── __init__.py
+│       ├── csv_importer/
+│       │   ├── __init__.py
+│       │   └── legacy_csv.py              # Legacy pre-API CSV importer (productions/events)
 │       ├── management/
 │       |   ├── __init__.py
 │       |   └── commands/
 │       |       ├── __init__.py
+│       |       ├── import_legacy_csv.py   # Imports bundled legacy CSV exports
 │       |       └── sync_viernulvier.py
 |       |
 │       └── scrapers/
@@ -191,6 +195,8 @@ viernulvier_archive/
 │   │   ├── __init__.py
 │   │   ├── test_sync_configs.py
 │   │   └── test_viernulvier.py
+│   ├── imports_csv/
+│   │   └── test_legacy_csv_importer.py
 │   └── tags/
 │       ├── test_tag_admin.py
 │       ├── test_tag_models.py

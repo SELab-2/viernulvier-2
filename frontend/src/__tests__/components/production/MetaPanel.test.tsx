@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import type { Production } from '../../../types/Productions'
 import MetaPanel from '../../../components/production/MetaPanel'
 
@@ -11,6 +12,13 @@ jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   useNavigate: () => mockNavigate,
 }))
+
+const renderMetaPanel = (production: Production) =>
+  render(
+    <MemoryRouter>
+      <MetaPanel production={production} />
+    </MemoryRouter>,
+  )
 
 afterEach(() => jest.clearAllMocks())
 
@@ -73,7 +81,7 @@ describe('MetaPanel component', () => {
   }
 
   it('renders production meta panel with production data', () => {
-    render(<MetaPanel production={productionStub} />)
+    renderMetaPanel(productionStub)
 
     expect(screen.getByText('Titel')).toBeInTheDocument()
     expect(screen.getByText('Tag')).toBeInTheDocument()
@@ -87,24 +95,20 @@ describe('MetaPanel component', () => {
   })
 
   it('does not render empty fields and no tags section for empty production', () => {
-    render(
-      <MetaPanel
-        production={{
-          ...productionStub,
-          title: {},
-          display_title: 'Titel',
-          tagline: {},
-          artist_name: {},
-          display_artist_name: '',
-          events: [],
-          genres: [],
-          tags: [],
-          uit_database_type: null,
-          performer_type: '',
-          attendance_mode: '',
-        }}
-      />,
-    )
+    renderMetaPanel({
+      ...productionStub,
+      title: {},
+      display_title: 'Titel',
+      tagline: {},
+      artist_name: {},
+      display_artist_name: '',
+      events: [],
+      genres: [],
+      tags: [],
+      uit_database_type: null,
+      performer_type: '',
+      attendance_mode: '',
+    })
 
     expect(screen.getByText('Titel')).toBeInTheDocument()
     expect(screen.queryByText('Periode')).not.toBeInTheDocument()
@@ -116,24 +120,20 @@ describe('MetaPanel component', () => {
   })
 
   it('renders solo/online labels when production has performer/attendance', () => {
-    render(
-      <MetaPanel
-        production={{
-          ...productionStub,
-          title: {},
-          display_title: 'Titel',
-          artist_name: {},
-          display_artist_name: '',
-          tagline: {},
-          performer_type: 'solo',
-          attendance_mode: 'online',
-          events: [],
-          genres: [],
-          tags: [],
-          uit_database_type: null,
-        }}
-      />,
-    )
+    renderMetaPanel({
+      ...productionStub,
+      title: {},
+      display_title: 'Titel',
+      artist_name: {},
+      display_artist_name: '',
+      tagline: {},
+      performer_type: 'solo',
+      attendance_mode: 'online',
+      events: [],
+      genres: [],
+      tags: [],
+      uit_database_type: null,
+    })
 
     expect(screen.getByText('Titel')).toBeInTheDocument()
     expect(screen.getByText('Solo')).toBeInTheDocument()
