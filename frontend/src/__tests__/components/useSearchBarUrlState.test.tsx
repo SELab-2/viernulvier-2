@@ -21,7 +21,20 @@ const UrlStateHarness = () => {
 describe('useSearchBarUrlState', () => {
   it('parses compact params using the configured separator', () => {
     render(
-      <MemoryRouter initialEntries={['/?g=7~8&t=12~13']}>
+      <MemoryRouter initialEntries={['/?g=7-8&t=12-13']}>
+        <Routes>
+          <Route path="/" element={<UrlStateHarness />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByTestId('selected-genres').textContent).toBe('7,8')
+    expect(screen.getByTestId('selected-tags').textContent).toBe('12,13')
+  })
+
+  it('parses initial genres and tags from URL', () => {
+    render(
+      <MemoryRouter initialEntries={['/?g=7-8&t=12-13']}>
         <Routes>
           <Route path="/" element={<UrlStateHarness />} />
         </Routes>
