@@ -64,7 +64,7 @@ def _import_legacy_csv_rows(
             import_log.finished_at = timezone.now()
             import_log.records_total = total
             import_log.records_imported = saved
-            import_log.records_failed = 0
+            import_log.records_failed = errors
             import_log.error_message = str(exc)
             import_log.save()
         raise
