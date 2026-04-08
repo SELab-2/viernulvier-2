@@ -14,6 +14,67 @@ const PARAM_SORT_TARGET = 'st'
 const PARAM_SORT_DIRECTION = 'sd'
 const PARAM_VIEW = 'v'
 const PARAM_PAGE = 'p'
+export const PARAM_GENRES = 'g'
+export const PARAM_TAGS = 't'
+const FILTER_SEPARATOR = '-'
+
+/**
+ * Parses compact filter text into tokens.
+ * Supports `~` as a separator for multiple values, and trims whitespace.
+ * Returns an empty array for null or empty input.
+ */
+const parseTokenList = (value: string | null): string[] => {
+  if (!value) {
+    return []
+  }
+
+  return value
+    .split(FILTER_SEPARATOR)
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
+/**
+ * Converts array tokens to integer IDs and removes invalid values.
+ */
+const parseNumericIds = (values: string[]): number[] => {
+  return values.map((part) => Number(part)).filter((part) => Number.isInteger(part))
+}
+
+/**
+ * Reads query params and supports both single and repeated encodings.
+ */
+const readMultiParamValues = (searchParams: URLSearchParams, paramName: string): string[] => {
+  const repeatedValues = searchParams.getAll(paramName)
+  if (repeatedValues.length > 0) {
+    return repeatedValues.flatMap((value) => parseTokenList(value))
+  }
+
+  const serialized = searchParams.get(paramName)
+  return parseTokenList(serialized)
+}
+
+/**
+ * Encodes list values into one compact query value.
+ */
+const encodeTokenList = (values: Array<string | number>): string | null => {
+  if (!values.length) {
+    return null
+  }
+
+  return values.join(FILTER_SEPARATOR)
+}
+
+/**
+ * Toggles a value in an array for URL-based multi-select state.
+ */
+const toggleArrayValue = <T extends string | number>(values: T[], value: T): T[] => {
+  if (values.includes(value)) {
+    return values.filter((item) => item !== value)
+  }
+
+  return [...values, value]
+}
 
 // Parses the search sort target from the URL query parameter
 const parseSearchSortTarget = (value: string | null): SearchSortTarget => {
@@ -115,6 +176,8 @@ type UpdateSearchParamsInput = {
   sortDirection?: SearchSortDirection
   view?: SearchViewMode
   page?: number
+  genres?: number[]
+  tags?: number[]
 }
 
 type UseSearchBarUrlStateOptions = {
@@ -127,11 +190,15 @@ export type SearchBarUrlState = {
   sortDirection: SearchSortDirection
   viewMode: SearchViewMode
   page: number
+  selectedGenreIds: number[]
+  selectedSeriesTagIds: number[]
   setSearchValue: (value: string) => void
   setSortTarget: (value: SearchSortTarget) => void
   setSortDirection: (value: SearchSortDirection) => void
   setViewMode: (value: SearchViewMode) => void
   setPage: (value: number) => void
+  toggleGenreId: (id: number) => void
+  toggleSeriesTagId: (id: number) => void
 }
 
 // Custom hook to manage the search bar state synchronized with URL query parameters.
@@ -148,6 +215,10 @@ export const useSearchBarUrlState = ({
   const parsedViewMode = parseSearchViewMode(searchParams.get(PARAM_VIEW))
   const page = parsePage(searchParams.get(PARAM_PAGE))
   const viewMode: SearchViewMode = isMobile ? DEFAULT_SEARCH_VIEW_MODE : parsedViewMode
+  const genreParamValues = [...readMultiParamValues(searchParams, PARAM_GENRES)]
+  const tagParamValues = [...readMultiParamValues(searchParams, PARAM_TAGS)]
+  const selectedGenreIds = parseNumericIds(genreParamValues)
+  const selectedSeriesTagIds = parseNumericIds(tagParamValues)
 
   const updateSearchParams = useCallback(
     ({
@@ -156,6 +227,8 @@ export const useSearchBarUrlState = ({
       sortDirection: nextSortDirection,
       view,
       page: nextPage,
+      genres,
+      tags,
     }: UpdateSearchParamsInput) => {
       setSearchParams(
         (currentParams) => {
@@ -204,6 +277,21 @@ export const useSearchBarUrlState = ({
               nextParams.set(PARAM_PAGE, encodedPage)
             } else {
               nextParams.delete(PARAM_PAGE)
+          if (genres !== undefined) {
+            const encodedGenres = encodeTokenList(genres)
+            if (encodedGenres) {
+              nextParams.set(PARAM_GENRES, encodedGenres)
+            } else {
+              nextParams.delete(PARAM_GENRES)
+            }
+          }
+
+          if (tags !== undefined) {
+            const encodedTags = encodeTokenList(tags)
+            if (encodedTags) {
+              nextParams.set(PARAM_TAGS, encodedTags)
+            } else {
+              nextParams.delete(PARAM_TAGS)
             }
           }
 
@@ -228,6 +316,8 @@ export const useSearchBarUrlState = ({
     sortDirection,
     viewMode,
     page,
+    selectedGenreIds,
+    selectedSeriesTagIds,
     // Any search/sort change can affect result ordering, so we reset to page 1.
     // View mode changes do not affect ordering, so we do not reset the page in that case.
     setSearchValue: (value: string) => updateSearchParams({ q: value.trim(), page: DEFAULT_PAGE }),
@@ -237,5 +327,9 @@ export const useSearchBarUrlState = ({
       updateSearchParams({ sortDirection: value, page: DEFAULT_PAGE }),
     setViewMode: (value: SearchViewMode) => updateSearchParams({ view: value }),
     setPage: (value: number) => updateSearchParams({ page: value }),
+    toggleGenreId: (id: number) =>
+      updateSearchParams({ genres: toggleArrayValue(selectedGenreIds, id), page: DEFAULT_PAGE }),
+    toggleSeriesTagId: (id: number) =>
+      updateSearchParams({ tags: toggleArrayValue(selectedSeriesTagIds, id), page: DEFAULT_PAGE }),
   }
 }

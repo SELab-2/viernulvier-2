@@ -19,6 +19,8 @@ const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'd
   return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 
+// TODO: use the floatingAlerts when needed
+
 // Home page component that displays a list of productions with search, sorting, and pagination functionality.
 const HomePage = () => {
   const { t } = useTranslation()
