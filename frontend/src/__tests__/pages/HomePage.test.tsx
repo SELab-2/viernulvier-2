@@ -95,9 +95,7 @@ describe('HomePage (ProductionPage)', () => {
     renderPage()
 
     expect(await screen.findByText('Geen producties gevonden')).toBeInTheDocument()
-    expect(
-      screen.getByText('Pas je zoekopdracht aan en probeer opnieuw.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Pas je zoekopdracht aan en probeer opnieuw.')).toBeInTheDocument()
   })
 
   it('shows error state and retries after failure', async () => {
