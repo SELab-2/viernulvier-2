@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import i18n from '../../i18n'
@@ -82,6 +82,26 @@ describe('HomePage (ProductionPage)', () => {
 
     expect(await screen.findByRole('heading', { name: 'Productie 1' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Productie 2' })).toBeInTheDocument()
+  })
+
+  it('does not refetch productions when the language changes', async () => {
+    mockedGetProductions.mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildProduction(1)],
+    })
+
+    renderPage()
+
+    await screen.findByRole('heading', { name: 'Productie 1' })
+    expect(mockedGetProductions).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      await i18n.changeLanguage('en')
+    })
+
+    expect(mockedGetProductions).toHaveBeenCalledTimes(1)
   })
 
   it('shows empty state when API returns no productions', async () => {

@@ -146,6 +146,7 @@ const CollectionPageLayout = ({
               aria-label={sidebarAriaLabel}
               sx={{
                 width: { xs: '100%', md: 280 },
+                flexShrink: 0,
                 minHeight: 160,
                 p: 2.5,
                 borderRadius: 2,
@@ -165,7 +166,11 @@ const CollectionPageLayout = ({
 
             {/* Main content area */}
             {/* Loading */}
-            <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ flex: 1 }}>
+            <Box
+              component="section"
+              aria-label={resultsRegionAriaLabel}
+              sx={{ flex: 1, minWidth: 0 }}
+            >
               {isLoading ? (
                 <Box py={8}>
                   <LoadingSpinner label={loadingLabel} />

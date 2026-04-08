@@ -78,7 +78,8 @@
       },
       "error": {
         "retry": "Opnieuw proberen",
-        "fallback": "Kon producties niet laden."
+        "fallback": "Kon producties niet laden.",
+        "notification": "Er ging iets mis bij het laden van producties."
       }
     },
     "pagination": {

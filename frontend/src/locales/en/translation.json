@@ -78,7 +78,8 @@
       },
       "error": {
         "retry": "Retry",
-        "fallback": "Could not load productions."
+        "fallback": "Could not load productions.",
+        "notification": "Something went wrong while loading productions."
       }
     },
     "pagination": {

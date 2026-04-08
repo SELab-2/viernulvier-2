@@ -103,7 +103,7 @@ const parseTokenList = (value: string | null): string[] => {
     .filter(Boolean)
 }
 
-// Converts array tokens to integer IDs and removes invalid values. 
+// Converts array tokens to integer IDs and removes invalid values.
 const parseNumericIds = (values: string[]): number[] => {
   return values.map((part) => Number(part)).filter((part) => Number.isInteger(part))
 }
@@ -157,7 +157,6 @@ const encodeTokenList = (values: Array<string | number>): string | null => {
 
   return values.join(FILTER_SEPARATOR)
 }
-
 
 type UpdateSearchParamsInput = {
   q?: string
@@ -268,7 +267,7 @@ export const useSearchBarUrlState = ({
               nextParams.delete(PARAM_PAGE)
             }
           }
-          
+
           if (genres !== undefined) {
             const encodedGenres = encodeTokenList(genres)
             if (encodedGenres) {
