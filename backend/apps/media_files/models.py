@@ -8,7 +8,7 @@ from django.db import models
 from apps.core.models import BaseModel
 
 
-def upload_to_media(_instance: Any, filename: str) -> str:
+def upload_to_media(instance: Any, filename: str) -> str:  # noqa: ARG001
     """Return a unique upload path for a media file."""
     ext = os.path.splitext(filename)[1]
     return f"media/uploads/{uuid.uuid4()}{ext}"
