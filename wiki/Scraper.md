@@ -12,6 +12,11 @@ The scraper implementation has been refactored into focused, single-responsibili
 - **`viernulvier_media.py`** - Media gallery and crop synchronization
 - **`viernulvier.py`** - Compatibility facade maintaining legacy API
 
+For pre-API historical data, a dedicated CSV importer is available in `backend/apps/imports/csv_importer/`:
+
+- **`legacy_csv.py`** - Imports the bundled legacy production/event CSV exports into current models
+- **`management/commands/import_legacy_csv.py`** - CLI entrypoint for running the legacy CSV import
+
 This modular design improves maintainability, testability, and separation of concerns.
 
 **Benefits of the refactoring**:
@@ -42,6 +47,27 @@ python manage.py sync_viernulvier
 ```
 
 This will process all sync steps in the correct order (respecting foreign key dependencies).
+
+### Import Historical CSV Data
+
+To import the older pre-API archive data from the bundled CSV files:
+
+```bash
+python manage.py import_legacy_csv
+```
+
+Dry-run mode is available:
+
+```bash
+python manage.py import_legacy_csv --dry-run
+```
+
+To import only one legacy dataset, use `--only`:
+
+```bash
+python manage.py import_legacy_csv --only productions
+python manage.py import_legacy_csv --only events
+```
 
 ### Sync a Specific Step
 

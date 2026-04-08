@@ -109,6 +109,7 @@ class TestImportLogSerializerFields(TestCase):
             "finished_at",
             "duration",
             "error_message",
+            "warning",
         }
         assert set(self.data.keys()) == expected
 
