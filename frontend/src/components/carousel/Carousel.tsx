@@ -84,11 +84,16 @@ function Carousel({
   useLayoutEffect(() => {
     const el = dotRefs.current[selectedIndex]
     const container = dotsScrollRef.current
-    if (!el || !container) {
-      return
-    }
+    if (!el || !container) return
 
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    // Calculate the scroll position so that the dot is centered in the container
+    // Doing it this way won't force a scroll towards the caroussel on a refresh
+    const elLeft = el.offsetLeft
+    const elWidth = el.offsetWidth
+    const containerWidth = container.offsetWidth
+    const targetScroll = elLeft - containerWidth / 2 + elWidth / 2
+
+    container.scrollTo({ left: targetScroll, behavior: 'smooth' })
   }, [selectedIndex, snapCount])
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
@@ -128,9 +133,11 @@ function Carousel({
           overflow: 'hidden',
         }}
       >
-        <Box display="flex" gap={2}>
+        <Box display="flex" gap={0} mx={-1}>
           {slides.map((slide, index) => (
-            <Box key={index}>{slide}</Box>
+            <Box key={index} px={1} boxSizing="border-box">
+              {slide}
+            </Box>
           ))}
         </Box>
       </Box>

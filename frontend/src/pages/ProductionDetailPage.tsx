@@ -70,7 +70,7 @@ const ProductionDetailsPage = () => {
   const lang = i18n.language
 
   const [prod, setProd] = useState<Production | null>(null)
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const tRef = useRef(t)
   tRef.current = t
@@ -113,7 +113,7 @@ const ProductionDetailsPage = () => {
   }, [id, navigate])
 
   // If the page is still loading, show the spinner.
-  if (loading && !prod) return <LoadingSpinner fullScreen />
+  if (loading) return <LoadingSpinner fullScreen />
 
   // If there was an error or no production was found, show an error message.
   if (!prod) {

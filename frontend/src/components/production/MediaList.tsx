@@ -1,15 +1,13 @@
-import { useMediaQuery, useTheme } from '@mui/material'
-import useEmblaCarousel from 'embla-carousel-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
+import { Box, IconButton, Modal, useTheme } from '@mui/material'
+import { useState, type KeyboardEvent } from 'react'
+import Carousel from '../carousel/Carousel'
 import type { MediaItem } from '../../types/Media'
 
 interface MediaListProps {
   mediaItems: MediaItem[]
 }
 
-// TODO: code duplicatie met functie in ProductionDetailPage
-// TODO: arrow niet zo nice
-// TODO: vergoot afbeelding bij klick
 /**
  * Pick the most suitable image URL from crop metadata.
  *
@@ -44,54 +42,23 @@ function getBestImageUrl(item: MediaItem): string | null {
  */
 export default function MediaList({ mediaItems }: MediaListProps) {
   const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'))
-  const slidesToScroll = isMobile ? 1 : isTablet ? 2 : 3
+  const [activeImage, setActiveImage] = useState<{ src: string; alt: string } | null>(null)
 
-  const navButtonBackground =
-    theme.palette.mode === 'dark' ? 'rgba(10, 14, 40, 0.65)' : 'rgba(255,255,255,0.8)'
+  const mediaWithImage = mediaItems
+    .map((item) => ({ item, imageUrl: getBestImageUrl(item) }))
+    .filter((entry) => entry.imageUrl)
 
-  const slides = useMemo(
-    () =>
-      mediaItems
-        .map((item) => ({ ...item, imageUrl: getBestImageUrl(item) }))
-        .filter((item) => item.imageUrl),
-    [mediaItems],
-  )
+  if (!mediaWithImage.length) return null
 
-  const total = slides.length
+  const openPreview = (src: string, alt: string) => setActiveImage({ src, alt })
+  const closePreview = () => setActiveImage(null)
 
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: true,
-    slidesToScroll,
-    align: 'start',
-  })
-
-  const [currentIndex, setCurrentIndex] = useState(0)
-
-  useEffect(() => {
-    if (!emblaApi) return
-    const onSelect = () => setCurrentIndex(emblaApi.selectedScrollSnap())
-    emblaApi.on('select', onSelect)
-    onSelect()
-    return () => {
-      emblaApi.off('select', onSelect)
+  const handleKeyOpen = (event: KeyboardEvent<HTMLDivElement>, src: string, alt: string) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      openPreview(src, alt)
     }
-  }, [emblaApi])
-
-  useEffect(() => {
-    if (!emblaApi) return
-    emblaApi.reInit({ loop: true, slidesToScroll, align: 'start' })
-  }, [emblaApi, slidesToScroll])
-
-  const goPrevious = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
-  const goNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
-
-  if (!slides.length) {
-    return null
   }
-
-  const displayIndex = currentIndex * slidesToScroll + 1
 
   return (
     <section
@@ -101,11 +68,10 @@ export default function MediaList({ mediaItems }: MediaListProps) {
         width: '100%',
         maxWidth: '1250px',
         margin: '24px auto 0',
-        padding: '16px',
+        padding: '0 16px',
         borderRadius: '8px',
-        background: theme.palette.background.paper,
+        background: 'transparent',
         color: theme.palette.text.primary,
-        border: `1px solid ${theme.palette.divider}`,
       }}
     >
       <h2
@@ -121,109 +87,139 @@ export default function MediaList({ mediaItems }: MediaListProps) {
 
       <div
         style={{
-          position: 'relative',
-          borderRadius: '8px',
-          background: theme.palette.background.paper,
-          border: `1px solid ${theme.palette.divider}`,
-          padding: '8px',
+          borderRadius: '10px',
+          background: 'transparent',
+          padding: 0,
         }}
       >
-        <div ref={emblaRef} style={{ overflow: 'hidden' }}>
-          <div
-            style={{
-              display: 'flex',
-              marginLeft: '-8px',
-            }}
-          >
-            {slides.map((item) => (
+        <Carousel
+          ariaLabel="Production media carousel"
+          maxWidth="100%"
+          loop
+          showDots
+          showArrows
+          previousLabel="Previous media"
+          nextLabel="Next media"
+          sx={{ width: '100%' }}
+        >
+          {mediaWithImage.map(({ item, imageUrl }) => (
+            <div
+              key={item.id}
+              style={{
+                width: '350px',
+                maxWidth: 'calc(100vw - 80px)',
+              }}
+            >
               <div
-                key={item.id}
+                role="button"
+                tabIndex={0}
+                onClick={() =>
+                  openPreview(
+                    imageUrl as string,
+                    item.display_title || item.original_filename || 'Media item',
+                  )
+                }
+                onKeyDown={(event) =>
+                  handleKeyOpen(
+                    event,
+                    imageUrl as string,
+                    item.display_title || item.original_filename || 'Media item',
+                  )
+                }
                 style={{
-                  flex: `0 0 calc(${100 / slidesToScroll}%)`,
-                  minWidth: 0,
-                  paddingLeft: '8px',
-                  boxSizing: 'border-box',
+                  width: '100%',
+                  aspectRatio: '16/9',
+                  overflow: 'hidden',
+                  borderRadius: '8px',
+                  background: theme.palette.mode === 'dark' ? '#101436' : '#f7f7f7',
+                  border: `1px solid ${theme.palette.divider}`,
+                  cursor: 'pointer',
+                  transition: 'transform 180ms ease, box-shadow 180ms ease',
+                }}
+                onMouseEnter={(event) => {
+                  event.currentTarget.style.transform = 'translateY(-2px)'
+                  event.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18)'
+                }}
+                onMouseLeave={(event) => {
+                  event.currentTarget.style.transform = 'translateY(0)'
+                  event.currentTarget.style.boxShadow = 'none'
                 }}
               >
-                <div
-                  style={{
-                    width: '100%',
-                    aspectRatio: '16/9',
-                    overflow: 'hidden',
-                    borderRadius: '6px',
-                    background: theme.palette.mode === 'dark' ? '#101436' : '#f7f7f7',
-                  }}
-                >
-                  <img
-                    src={item.imageUrl as string}
-                    alt={item.display_title || item.original_filename || 'Media item'}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  />
-                </div>
+                <img
+                  src={imageUrl as string}
+                  alt={item.display_title || item.original_filename || 'Media item'}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
               </div>
-            ))}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={goPrevious}
-          aria-label="Previous media"
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '12px',
-            transform: 'translateY(-50%)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '36px',
-            height: '36px',
-            background: navButtonBackground,
-            color: theme.palette.text.primary,
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.24)',
-            display: 'grid',
-            placeItems: 'center',
-          }}
-        >
-          ‹
-        </button>
-
-        <button
-          type="button"
-          onClick={goNext}
-          aria-label="Next media"
-          style={{
-            position: 'absolute',
-            top: '50%',
-            right: '12px',
-            transform: 'translateY(-50%)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '36px',
-            height: '36px',
-            background: navButtonBackground,
-            color: theme.palette.text.primary,
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.24)',
-            display: 'grid',
-            placeItems: 'center',
-          }}
-        >
-          ›
-        </button>
+            </div>
+          ))}
+        </Carousel>
       </div>
 
-      <div
-        style={{
-          marginTop: '12px',
-          textAlign: 'center',
-          color: theme.palette.text.secondary,
-          fontSize: '0.9rem',
+      <Modal
+        open={Boolean(activeImage)}
+        onClose={closePreview}
+        slotProps={{
+          backdrop: {
+            sx: {
+              backgroundColor: 'rgba(35, 35, 35, 0.72)',
+            },
+          },
         }}
       >
-        {`${displayIndex} / ${total}`}
-      </div>
+        <Box
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            display: 'grid',
+            placeItems: 'center',
+            p: { xs: 2, md: 4 },
+          }}
+        >
+          <Box
+            sx={{
+              position: 'relative',
+              width: 'min(1200px, 96vw)',
+              maxHeight: '90vh',
+              borderRadius: 1.5,
+              overflow: 'hidden',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
+            }}
+          >
+            <IconButton
+              aria-label="Close preview"
+              onClick={closePreview}
+              sx={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                zIndex: 2,
+                color: '#fff',
+                backgroundColor: 'rgba(0, 0, 0, 0.45)',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.62)',
+                },
+              }}
+            >
+              <CloseRoundedIcon />
+            </IconButton>
+
+            {activeImage ? (
+              <img
+                src={activeImage.src}
+                alt={activeImage.alt}
+                style={{
+                  width: '100%',
+                  maxHeight: '90vh',
+                  objectFit: 'contain',
+                  background: '#111',
+                  display: 'block',
+                }}
+              />
+            ) : null}
+          </Box>
+        </Box>
+      </Modal>
     </section>
   )
 }

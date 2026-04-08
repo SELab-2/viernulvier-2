@@ -93,7 +93,7 @@ function RelatedProductions({ lang = 'nl', related }: RelatedProductionsProps) {
                     key={production.id}
                     production={{
                       ...production,
-                      genres: production.genres ?? [],
+                      genres: [],
                       display_title: normalizedTitle,
                       display_artist_name: normalizedArtist,
                     }}
