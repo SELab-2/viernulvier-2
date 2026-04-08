@@ -67,6 +67,7 @@ class Blog(BaseModel):
         name = self.get_base_display_name(
             related_name="translations",
             fallback=None,
+            name_field="title",
         )
 
         if name:

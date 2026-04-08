@@ -76,7 +76,7 @@ class BlogAdmin(BaseAdmin):
         """Show the number of linked productions."""
         count = obj.productions.count()
         if count == 0:
-            return format_html('<span style="color: #999;">None</span>')
+            return format_html('<span style="color: #999;">{}</span>', "None")
         return str(count)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Blog]:

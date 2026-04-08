@@ -13,9 +13,9 @@ from .models import Blog, BlogTranslation
 class BlogTranslationInlineSerializer(serializers.ModelSerializer):
     """Inline serializer for creating/updating blog translations."""
 
-    language_id = serializers.IntegerField(
-        source="language.id",
-        help_text="Language ID for this translation",
+    language_id = serializers.CharField(
+        source="language.pk",
+        help_text="Language primary key for this translation (ISO code, e.g. `en`, `nl`).",
     )
 
     class Meta:
@@ -172,7 +172,7 @@ class BlogSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     def _create_translations(self, blog: Blog, translations_data: list[dict]) -> None:
         """Helper method to create translations for a blog."""
         for trans_data in translations_data:
-            language_id = trans_data.pop("language")["id"]
-            language = Language.objects.get(id=language_id)
+            language_id = trans_data.pop("language")["pk"]
+            language = Language.objects.get(pk=language_id)
 
             BlogTranslation.objects.create(blog=blog, language=language, **trans_data)
