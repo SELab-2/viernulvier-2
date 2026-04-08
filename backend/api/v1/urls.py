@@ -19,6 +19,7 @@ from apps.media_library.views import MediaGalleryViewSet, MediaItemViewSet
 from apps.pricing.views import PriceRankViewSet, PriceViewSet
 from apps.productions.views import ProductionViewSet
 from apps.tags.views import TagViewSet
+from apps.blogs.views import BlogViewSet
 
 router = DefaultRouter()
 
@@ -42,6 +43,9 @@ router.register(r"events", EventViewSet, basename="event")
 # Media
 router.register(r"media-galleries", MediaGalleryViewSet, basename="media-gallery")
 router.register(r"media-items", MediaItemViewSet, basename="media-item")
+
+# Blogs
+router.register(r"blogs", BlogViewSet, basename="blog")
 
 # Import pipeline
 router.register(r"import-logs", ImportLogViewSet, basename="import-log")
