@@ -10,6 +10,7 @@ this module, and register only the new/changed ones on a fresh router.
 
 from rest_framework.routers import DefaultRouter
 
+from apps.blogs.views import BlogViewSet
 from apps.events.views import EventViewSet
 from apps.genres.views import GenreUseAsViewSet, GenreViewSet
 from apps.import_log.views import ImportLogViewSet
@@ -19,7 +20,6 @@ from apps.media_library.views import MediaGalleryViewSet, MediaItemViewSet
 from apps.pricing.views import PriceRankViewSet, PriceViewSet
 from apps.productions.views import ProductionViewSet
 from apps.tags.views import TagViewSet
-from apps.blogs.views import BlogViewSet
 
 router = DefaultRouter()
 

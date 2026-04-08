@@ -56,13 +56,10 @@ class BlogViewSet(ApiModelViewSet):
     Production links are returned as full nested production objects.
     """
 
-    queryset = (
-        Blog.objects.prefetch_related(
-            "translations__language",
-            Prefetch("productions", queryset=ProductionViewSet.queryset),
-        )
-        .order_by("-published_at", "-id")
-    )
+    queryset = Blog.objects.prefetch_related(
+        "translations__language",
+        Prefetch("productions", queryset=ProductionViewSet.queryset),
+    ).order_by("-published_at", "-id")
     serializer_class = BlogSerializer
 
     filterset_class = BlogFilter

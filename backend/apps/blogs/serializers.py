@@ -3,6 +3,7 @@
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
+from apps.languages.models import Language
 from apps.productions.models import Production
 from apps.productions.serializers import ProductionSerializer
 
@@ -114,14 +115,10 @@ class BlogSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ]
         extra_kwargs = {
             "slug": {
-                "help_text": (
-                    "URL-friendly identifier in `kebab-case` (e.g. `i-love-techno-2024`, `vooruit-100-years`)."
-                ),
+                "help_text": ("URL-friendly identifier in `kebab-case` (e.g. `i-love-techno-2024`, `vooruit-100-years`)."),
             },
             "published_at": {
-                "help_text": (
-                    "Publication timestamp (ISO 8601 format). If null, the post is considered a draft."
-                ),
+                "help_text": ("Publication timestamp (ISO 8601 format). If null, the post is considered a draft."),
             },
             "cover_image": {
                 "help_text": (
@@ -150,7 +147,7 @@ class BlogSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         """Return the blog excerpt in the project's base language."""
         return self.get_base_translated_value(obj, "excerpt")
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> Blog:
         """Create a blog with inline translations."""
         translations_data = validated_data.pop("translations_data", [])
         blog = super().create(validated_data)
@@ -160,7 +157,7 @@ class BlogSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
 
         return blog
 
-    def update(self, instance, validated_data):
+    def update(self, instance: Blog, validated_data: dict) -> Blog:
         """Update a blog and optionally update/replace translations."""
         translations_data = validated_data.pop("translations_data", None)
         blog = super().update(instance, validated_data)
@@ -172,16 +169,10 @@ class BlogSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
 
         return blog
 
-    def _create_translations(self, blog, translations_data):
+    def _create_translations(self, blog: Blog, translations_data: list[dict]) -> None:
         """Helper method to create translations for a blog."""
-        from apps.languages.models import Language
-
         for trans_data in translations_data:
             language_id = trans_data.pop("language")["id"]
             language = Language.objects.get(id=language_id)
 
-            BlogTranslation.objects.create(
-                blog=blog,
-                language=language,
-                **trans_data
-            )
+            BlogTranslation.objects.create(blog=blog, language=language, **trans_data)

@@ -1,6 +1,6 @@
 """Filters for the Blog app."""
 
-import django_filters
+from django_filters import BooleanFilter, CharFilter, FilterSet, NumberFilter
 
 from apps.core.filters import BaseModelFilter
 
@@ -26,21 +26,21 @@ class BlogFilter(BaseModelFilter):
         Filter by linked production ID (e.g. ``?production=42``).
     """
 
-    slug = django_filters.CharFilter(lookup_expr="icontains")
-    
-    title = django_filters.CharFilter(
+    slug = CharFilter(lookup_expr="icontains")
+
+    title = CharFilter(
         field_name="translations__title",
         lookup_expr="icontains",
         label="Translated title contains",
         distinct=True,
     )
-    
-    published = django_filters.BooleanFilter(
+
+    published = BooleanFilter(
         method="filter_published",
         label="Published status (true=published, false=draft)",
     )
-    
-    production = django_filters.NumberFilter(
+
+    production = NumberFilter(
         field_name="productions__id",
         label="Production ID",
         distinct=True,
@@ -50,14 +50,14 @@ class BlogFilter(BaseModelFilter):
         model = Blog
         fields = ["slug", "external_id"]
 
-    def filter_published(self, queryset, name, value):
+    def filter_published(self, queryset: FilterSet, _name: str, value: bool) -> FilterSet:
         """Filter by published status.
-        
+
         - True: only published posts (published_at is not null)
         - False: only drafts (published_at is null)
         """
         if value is True:
             return queryset.filter(published_at__isnull=False)
-        elif value is False:
+        if value is False:
             return queryset.filter(published_at__isnull=True)
         return queryset

@@ -44,7 +44,7 @@ class BlogAdmin(BaseAdmin):
     ordering = ("-published_at", "-id")
     autocomplete_fields = ("productions",)
     inlines = [BlogTranslationInline]
-    
+
     fieldsets = (
         (
             "Basic Information",
@@ -81,11 +81,7 @@ class BlogAdmin(BaseAdmin):
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Blog]:
         """Prefetch translations and productions to avoid N+1 queries."""
-        return (
-            super()
-            .get_queryset(request)
-            .prefetch_related("translations__language", "productions")
-        )
+        return super().get_queryset(request).prefetch_related("translations__language", "productions")
 
 
 @admin.register(BlogTranslation)
@@ -97,7 +93,7 @@ class BlogTranslationAdmin(BaseAdmin):
     search_fields = ("title", "body", "excerpt")
     ordering = ("id",)
     autocomplete_fields = ("language", "blog")
-    
+
     fieldsets = (
         (
             "Translation",
