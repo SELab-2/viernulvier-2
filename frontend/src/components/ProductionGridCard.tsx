@@ -70,12 +70,12 @@ const ProductionGridCard = ({
 
       <Stack flex={1} justifyContent="space-between" gap={1} padding={3}>
         <Stack>
-          <Typography component="h2" variant="h5" color="textPrimary" fontWeight="bold">
+          <Typography component="h2" variant="h6" color="textPrimary" fontWeight="bold" noWrap>
             {title}
           </Typography>
 
           {artistName ? (
-            <Typography component="p" color="textSecondary">
+            <Typography component="p" color="textSecondary" noWrap>
               {artistName}
             </Typography>
           ) : null}
