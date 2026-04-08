@@ -2,13 +2,13 @@ import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
+import { createCommonStyles } from '../theme/styles'
+import { tokens } from '../theme/tokens'
 import type { Production } from '../types/Productions'
 import { getProductionDateLabel } from '../utils/dateUtils'
 import { getTranslatedRecord } from '../utils/translations'
 import GenreAndTagChip from './chips/GenreAndTagChip'
 import ImageWithFallback from './ImageWithFallback'
-import { createCommonStyles } from '../theme/styles'
-import { tokens } from '../theme/tokens'
 
 export interface ProductionGridCardProps {
   production: Production
@@ -87,7 +87,7 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
           ) : null}
 
           {genres.length > 0 ? (
-            <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24} overflow="hidden">
+            <Stack direction="row" flexWrap="wrap" spacing={0.75} height={32} overflow="hidden">
               {genres.map((genre) => (
                 <GenreAndTagChip
                   key={genre.id}

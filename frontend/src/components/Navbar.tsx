@@ -234,7 +234,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                     <DarkModeOutlinedIcon
                       sx={{
                         fontSize: { xs: '1.15rem', sm: '1.5rem' },
-                        color: theme.palette.primary.contrastText,
+                        color: theme.palette.primary.light,
                         transition: tokens.transitions.fast,
                       }}
                     />

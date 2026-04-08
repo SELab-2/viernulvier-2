@@ -206,7 +206,7 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
       className="meta-panel"
       style={{
         paddingTop: '32px',
-        background: theme.palette.background.paper,
+        background: theme.palette.background.default,
         color: theme.palette.text.primary,
         ...style,
       }}
