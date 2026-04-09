@@ -172,7 +172,7 @@ function Carousel({
               left: 0,
               transform: 'translate(-50%, -50%)',
               zIndex: 2,
-              border: `1px solid ${theme.palette.divider}`,
+      {showArrows && hasMultipleSlides ? (
               backgroundColor: theme.palette.background.paper,
               boxShadow: '0 0 18px rgba(0, 0, 0, 0.06)',
               opacity: 0,
