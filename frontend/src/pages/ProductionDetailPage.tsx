@@ -157,7 +157,7 @@ const ProductionDetailsPage = () => {
         {/* LEFT: Breadcrumb + Hero + Description */}
         <div
           className="production-details-left"
-          style={{ backgroundColor: theme.palette.background.paper }}
+          style={{ backgroundColor: theme.palette.background.default }}
         >
           <Breadcrumbs
             items={[
@@ -189,7 +189,7 @@ const ProductionDetailsPage = () => {
         <div
           className="production-details-right"
           style={{
-            backgroundColor: theme.palette.background.paper,
+            backgroundColor: theme.palette.background.default,
             borderLeft: `1px solid ${theme.palette.divider}`,
           }}
         >
@@ -199,6 +199,7 @@ const ProductionDetailsPage = () => {
               mt: 3,
               p: 2,
               border: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
               borderRadius: '4px',
             })}
           >

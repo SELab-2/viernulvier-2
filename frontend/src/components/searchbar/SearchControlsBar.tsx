@@ -16,6 +16,7 @@ import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import SearchBar from './SearchBar'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
+import { tokens } from '../../theme/tokens'
 
 export interface SearchControlsBarProps {
   placeholder?: string
@@ -60,6 +61,10 @@ const SearchControlsBar = ({
 }: SearchControlsBarProps) => {
   const { t } = useTranslation()
   const theme = useTheme()
+  const interactionColor =
+    theme.palette.mode === 'dark' ? tokens.colors.neutral.white : tokens.colors.neutral.black
+  const interactionHoverBackground =
+    theme.palette.mode === 'dark' ? tokens.colors.overlay.white05 : tokens.colors.overlay.black05
   const nextSortDirection: SearchSortDirection = sortDirection === 'asc' ? 'desc' : 'asc'
 
   return (
@@ -81,12 +86,6 @@ const SearchControlsBar = ({
         </Box>
 
         <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-          {typeof resultCount === 'number' ? (
-            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-              {t('searchbar.resultsFound', { count: resultCount })}
-            </Typography>
-          ) : null}
-
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel id={SORT_TARGET_LABEL_ID}>{t('searchbar.sort.targetLabel')}</InputLabel>
             <Select
@@ -126,6 +125,10 @@ const SearchControlsBar = ({
                 height: 40,
                 px: 1.2,
                 backgroundColor: theme.palette.background.default,
+                '&:hover': {
+                  borderColor: interactionColor,
+                  backgroundColor: interactionHoverBackground,
+                },
               }}
             >
               {sortDirection === 'asc' ? (
@@ -152,6 +155,16 @@ const SearchControlsBar = ({
                 '& .MuiToggleButton-root': {
                   px: 1.2,
                   backgroundColor: theme.palette.background.default,
+                  color: theme.palette.text.primary,
+                  borderColor: theme.palette.divider,
+                  '&:hover': {
+                    borderColor: interactionColor,
+                    backgroundColor: interactionHoverBackground,
+                  },
+                  '&.Mui-selected': {
+                    color: theme.palette.text.primary,
+                    backgroundColor: interactionHoverBackground,
+                  },
                 },
               }}
             >
@@ -166,6 +179,12 @@ const SearchControlsBar = ({
                 </ToggleButton>
               </Tooltip>
             </ToggleButtonGroup>
+          ) : null}
+
+          {typeof resultCount === 'number' ? (
+            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+              {t('searchbar.resultsFound', { count: resultCount })}
+            </Typography>
           ) : null}
         </Box>
       </Box>

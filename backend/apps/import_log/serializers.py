@@ -32,12 +32,24 @@ class ImportLogSerializer(serializers.ModelSerializer):
         Total wall-clock time of the import run, formatted as ``HH:MM:SS``.
         ``null`` when either ``started_at`` or ``finished_at`` is not yet set
         (i.e. the run has not started or has not finished).
+    ``warning``
+        Warning message if ``imported + failed != total``, indicating that
+        some records were skipped (e.g., filtered or duplicates).
+        ``null`` when the counts are consistent.
     """
 
     duration = serializers.SerializerMethodField(
         help_text=(
             "Total wall-clock time of the import run, formatted as `HH:MM:SS`. "
             "`null` when the run has not started or has not finished yet."
+        ),
+    )
+
+    warning = serializers.SerializerMethodField(
+        help_text=(
+            "Warning message if imported + failed does not equal total. "
+            "This indicates records were skipped (e.g., filtered or duplicates). "
+            "`null` when the counts are consistent."
         ),
     )
 
@@ -53,6 +65,7 @@ class ImportLogSerializer(serializers.ModelSerializer):
             "started_at",
             "finished_at",
             "duration",
+            "warning",
             "error_message",
         ]
         read_only_fields = fields
@@ -104,6 +117,21 @@ class ImportLogSerializer(serializers.ModelSerializer):
         if obj.started_at and obj.finished_at:
             delta = obj.finished_at - obj.started_at
             return str(delta).split(".")[0]  # Strip microseconds -> HH:MM:SS
+        return None
+
+    def get_warning(self, obj: ImportLog) -> str | None:
+        """Return a warning if imported + failed != total.
+
+        This indicates that some records were skipped (e.g., filtered or
+        duplicates). Returns ``None`` when the counts are consistent.
+        """
+        accounted = obj.records_imported + obj.records_failed
+        if accounted != obj.records_total:
+            skipped = obj.records_total - accounted
+            return (
+                f"{skipped} record(s) were skipped (not imported or failed). "
+                f"This typically indicates filtered or duplicate records."
+            )
         return None
 
     # ---------------------------------------------------------------------------

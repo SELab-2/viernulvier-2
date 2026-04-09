@@ -66,6 +66,32 @@
     "detailTitle": "Production Detail",
     "detailPlaceholder": "Production details for ID {{id}} will be displayed here.",
     "backToProductions": "Back to Productions",
+    "home": {
+      "loading": "Loading productions",
+      "resultsRegionLabel": "Production results",
+      "filterPanelLabel": "Advanced filters",
+      "filterPanelTitle": "Filters",
+      "filterPanelPlaceholder": "Advanced filters will be available in this panel.",
+      "empty": {
+        "title": "No productions found",
+        "description": "Adjust your search and try again."
+      },
+      "error": {
+        "retry": "Retry",
+        "fallback": "Could not load productions.",
+        "notification": "Something went wrong while loading productions."
+      }
+    },
+    "pagination": {
+      "navigationLabel": "Production pagination",
+      "pageXofY": "Page {{page}} of {{totalPages}}",
+      "firstPage": "Go to first page",
+      "lastPage": "Go to last page",
+      "nextPage": "Go to next page",
+      "previousPage": "Go to previous page",
+      "currentPage": "Current page, page {{page}}",
+      "goToPage": "Go to page {{page}}"
+    },
     "detail": {
       "related": "Related productions",
       "meta": {

@@ -1,7 +1,9 @@
-import { Box, Container, Link as MuiLink, Stack, Typography } from '@mui/material'
+import { Box, Container, Link as MuiLink, Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import { siFacebook, siInstagram, siTiktok, siYoutube } from 'simple-icons'
+import { createCommonStyles } from '../theme/styles'
+import { tokens } from '../theme/tokens'
 
 const FOOTER_NAV_LINKS = [
   { labelKey: 'footer.nav.home', to: '/' },
@@ -38,24 +40,15 @@ const SOCIAL_LINKS: ReadonlyArray<SocialLink> = [
 ]
 
 const Footer = () => {
+  const theme = useTheme()
+  const commonStyles = createCommonStyles(theme)
   const { t } = useTranslation()
 
   const email = t('footer.address.email')
   const phone = t('footer.address.phone')
 
   return (
-    <Box
-      component="footer"
-      sx={{
-        bgcolor: '#111111',
-        color: '#ffffff',
-        borderTop: '1px solid rgba(255,255,255,0.12)',
-        mt: 6,
-        fontStyle: 'normal',
-        lineHeight: 1.7,
-        whiteSpace: 'nowrap',
-      }}
-    >
+    <Box component="footer" sx={commonStyles.footer}>
       <Container
         maxWidth="xl"
         sx={{
@@ -64,11 +57,11 @@ const Footer = () => {
           justifyContent: 'center',
           alignItems: { xs: 'center', md: 'flex-start' },
           textAlign: { xs: 'center', md: 'left' },
-          lineHeight: 1.7,
+          lineHeight: tokens.typography.lineHeights.relaxed,
           whiteSpace: 'nowrap',
-          rowGap: 6,
-          columnGap: 12,
-          p: 6,
+          rowGap: tokens.spacing.numericLg,
+          columnGap: tokens.spacing.numeric2xl,
+          p: tokens.spacing.numericXl,
         }}
       >
         <Stack
@@ -85,9 +78,7 @@ const Footer = () => {
             href={`tel:${phone.replace(/[^+\d]/g, '')}`}
             color="inherit"
             underline="none"
-            sx={{
-              '&:hover': { opacity: 0.7 },
-            }}
+            sx={commonStyles.linkHover}
           >
             {phone}
           </MuiLink>
@@ -95,9 +86,7 @@ const Footer = () => {
             href={`mailto:${email}`}
             color="inherit"
             underline="none"
-            sx={{
-              '&:hover': { opacity: 0.7 },
-            }}
+            sx={commonStyles.linkHover}
           >
             {email}
           </MuiLink>
@@ -112,18 +101,15 @@ const Footer = () => {
               to={to}
               color="inherit"
               underline="none"
-              sx={{
-                transition: 'opacity 0.15s ease',
-                '&:hover': { opacity: 0.7 },
-              }}
+              sx={commonStyles.linkHover}
             >
               {t(labelKey)}
             </MuiLink>
           ))}
         </Stack>
 
-        <Stack spacing={2} sx={{ alignItems: 'center' }}>
-          <Stack direction="row" spacing={1}>
+        <Stack spacing={tokens.spacing.numericMd} sx={{ alignItems: 'center' }}>
+          <Stack direction="row" spacing={tokens.spacing.numericSm}>
             {SOCIAL_LINKS.map(({ label, href, icon, viewBox }) => (
               <MuiLink
                 key={label}
@@ -138,11 +124,11 @@ const Footer = () => {
                   justifyContent: 'center',
                   width: 36,
                   height: 36,
-                  borderRadius: '999px',
-                  bgcolor: '#000000',
-                  color: '#ffffff',
-                  transition: 'background-color 0.15s ease',
-                  '&:hover': { bgcolor: '#333333' },
+                  borderRadius: tokens.borderRadius.full,
+                  bgcolor: tokens.colors.neutral.black,
+                  color: tokens.colors.neutral.white,
+                  transition: tokens.transitions.fast,
+                  '&:hover': { bgcolor: tokens.colors.neutral.gray600 },
                 }}
               >
                 <Box
@@ -167,18 +153,18 @@ const Footer = () => {
             rel="noopener noreferrer"
             underline="none"
             sx={{
-              px: 2,
-              py: 1,
+              px: tokens.spacing.numericMd,
+              py: tokens.spacing.numericSm,
               width: 'fit-content',
-              border: '1.5px solid #ffffff',
-              borderRadius: '999px',
-              color: '#ffffff',
-              fontSize: '0.8rem',
+              border: `1.5px solid ${tokens.colors.neutral.white}`,
+              borderRadius: tokens.borderRadius.full,
+              color: tokens.colors.neutral.white,
+              fontSize: tokens.typography.sizes.sm,
               letterSpacing: '0.02em',
-              transition: 'background-color 0.15s ease, color 0.15s ease',
+              transition: tokens.transitions.fast,
               '&:hover': {
-                bgcolor: '#ffffff',
-                color: '#111111',
+                bgcolor: tokens.colors.neutral.white,
+                color: tokens.colors.neutral.gray900,
               },
             }}
           >

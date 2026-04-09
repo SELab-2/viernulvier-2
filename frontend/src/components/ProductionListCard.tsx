@@ -4,6 +4,7 @@ import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import type { Production } from '../types/Productions'
+import { tokens } from '../theme/tokens'
 import { getProductionDateLabel } from '../utils/dateUtils'
 import { getTranslatedRecord } from '../utils/translations'
 import GenreAndTagChip from './chips/GenreAndTagChip'
@@ -50,9 +51,9 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
       to={`/productions/${production.id}`}
       direction="row"
       gap={3}
-      height={175}
+      height={170}
       padding={3}
-      borderRadius="4px"
+      borderRadius={tokens.borderRadius.sm}
       overflow="hidden"
       sx={(theme) => ({
         backgroundColor: theme.palette.background.paper,
@@ -68,7 +69,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
         src={imageSrc}
         alt={title}
         height="100%"
-        borderRadius="4px"
+        borderRadius={tokens.borderRadius.sm}
         sx={{ aspectRatio: 16 / 9 }}
       />
 
@@ -81,7 +82,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
         overflow="hidden"
       >
         <Stack>
-          <Typography component="h2" variant="h5" color="textPrimary" fontWeight="bold" noWrap>
+          <Typography component="h2" variant="h6" color="textPrimary" fontWeight="bold" noWrap>
             {title}
           </Typography>
 
