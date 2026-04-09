@@ -2,6 +2,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import { Box, IconButton, Modal, useTheme } from '@mui/material'
 import { useState, type KeyboardEvent } from 'react'
 import type { MediaItem } from '../../types/Media'
+import Carousel from '../carousel/Carousel'
 
 interface MediaListProps {
   mediaItems: MediaItem[]
