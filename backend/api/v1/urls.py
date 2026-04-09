@@ -10,6 +10,7 @@ this module, and register only the new/changed ones on a fresh router.
 
 from rest_framework.routers import DefaultRouter
 
+from apps.blogs.views import BlogViewSet
 from apps.events.views import EventViewSet
 from apps.genres.views import GenreUseAsViewSet, GenreViewSet
 from apps.import_log.views import ImportLogViewSet
@@ -44,6 +45,9 @@ router.register(r"events", EventViewSet, basename="event")
 router.register(r"media", MediaFileViewSet, basename="media-file")
 router.register(r"media-galleries", MediaGalleryViewSet, basename="media-gallery")
 router.register(r"media-items", MediaItemViewSet, basename="media-item")
+
+# Blogs
+router.register(r"blogs", BlogViewSet, basename="blog")
 
 # Import pipeline
 router.register(r"import-logs", ImportLogViewSet, basename="import-log")

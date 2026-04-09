@@ -1,4 +1,5 @@
 ## Mockups (Figma)
+
 [![Figma Design](https://img.shields.io/badge/Bekijk%20in-Figma-F24E1E?logo=figma)](https://www.figma.com/proto/NO5K1na6jzQBVNDxNWuFHu/selab?node-id=0-1&t=s3LbIfzwLgKREpvT-1)
 
 ## Overview
@@ -9,10 +10,14 @@ The frontend is built with modern React tooling and follows best practices for t
 frontend/
 ├── src/
 │   ├── components/      # Reusable UI components
-│   ├── pages/           # Page-level components
 │   ├── locales/         # i18n translation files
 │   │   ├── en/          # English translations
 │   │   └── nl/          # Dutch translations
+│   ├── pages/           # Page-level components
+│   ├── services/        # API calls ??
+│   ├── theme/           # Centralized styling
+│   ├── types/           # interfaces and types
+│   ├── utils/           # Utility functions 
 │   ├── router.tsx       # Route definitions
 │   ├── i18n.ts          # i18next configuration
 │   ├── main.tsx         # App entry point
@@ -32,26 +37,93 @@ This structure ensures clear separation of concerns, easy navigation, and mainta
 ## Tech Stack
 
 ### Core
+
 - **Vite** → Fast development server and build tool
 - **React 19** → UI library with latest features
 - **TypeScript** → Type safety and better DX
 
 ### UI & Styling
+
 - **Material UI (MUI)** → Component library implementing Material Design
 - **Emotion** → CSS-in-JS (MUI peer dependency)
 
+---
+
+## Styling System (Tokens + Shared Styles)
+
+To keep styling consistent and easy to maintain, we use a layered approach:
+
+### 1. Tokens for shared visual values
+
+Use design tokens as the single source of truth for values like:
+
+- colors
+- spacing
+- typography
+- border radius
+- shadows
+- transitions
+
+**File:** `frontend/src/theme/tokens.ts`
+
+If a style value should be reused across components, add it to tokens instead of hardcoding it.
+
+### 2. Theme for MUI integration
+
+MUI theme creation is centralized and built from tokens.
+
+**File:** `frontend/src/theme/muiPalette.ts`
+
+`createAppTheme` is used at the app root so light/dark mode and component defaults stay consistent.
+
+### 3. Shared style patterns for repeated UI
+
+Common `sx` patterns live in a shared helper.
+
+**File:** `frontend/src/theme/styles.ts`
+
+Use shared patterns for repeated structures (e.g., navbar/footer/card/grid). Add new shared patterns here when multiple components need the same styling structure.
+
+### 4. Component-local style helpers when behavior is component-specific
+
+Keep style logic local when it depends on component context/state and is not broadly reusable.
+
+**Example file:** `frontend/src/components/chips/genreAndTagChipStyles.ts`
+
+### 5. Global CSS only for app-wide/page-wide rules
+
+Global CSS is used for base styles, CSS variables, and layout rules that are not component-specific.
+
+**File:** `frontend/src/index.css`
+
+---
+
+## Practical Rules
+
+When adding or changing styles:
+
+1. First check if a token already exists in `frontend/src/theme/tokens.ts`.
+2. If the style pattern is reused, add/use `frontend/src/theme/styles.ts`.
+3. If the style is specific to one component's behavior, keep it near that component.
+4. Avoid hardcoded colors and repeated magic numbers in components where tokens can be used.
+5. Keep `createAppTheme` as the single theme entry point in `frontend/src/App.tsx`.
+
 ### Routing
+
 - **React Router v7** → Client-side routing with nested routes
 
 ### Internationalization
+
 - **i18next** + **react-i18next** → English/Dutch translations
 
 ### Testing
+
 - **Jest** → Test runner
 - **React Testing Library** → Component testing utilities
 - **jsdom** → Browser environment simulation
 
 ### Code Quality
+
 - **ESLint** → Linting (flat config format)
 - **Prettier** → Code formatting
 - **TypeScript** → Static type checking
@@ -378,6 +450,7 @@ A GitHub Actions workflow runs on every push/PR to `main` or `develop`:
 **File**: `.github/workflows/frontend.yml`
 
 **Steps**:
+
 1. Install dependencies
 2. Run linting
 3. Run tests

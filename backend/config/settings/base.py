@@ -73,6 +73,7 @@ LOCAL_APPS = [
     "apps.locations",
     "apps.media_library",
     "apps.media_files",
+    "apps.blogs",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -295,6 +296,7 @@ SPECTACULAR_SETTINGS = {
         {"name": "Genres", "description": "Genre taxonomy and usage types."},
         {"name": "Tags", "description": "Tag management and production tagging."},
         {"name": "Pricing", "description": "Price ranks and price structures."},
+        {"name": "Blogs", "description": "Blog post management and translations."},
         {"name": "Languages", "description": "Supported languages."},
         {"name": "Imports", "description": "Import pipeline audit logs."},
     ],

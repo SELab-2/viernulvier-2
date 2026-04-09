@@ -9,6 +9,7 @@ import {
   Container,
   Collapse,
   ClickAwayListener,
+  useTheme,
 } from '@mui/material'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
@@ -17,13 +18,14 @@ import CloseIcon from '@mui/icons-material/Close'
 import { useEffect, useRef, useState } from 'react'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { createCommonStyles } from '../theme/styles'
+import { tokens } from '../theme/tokens'
 
 const NAV_LINKS = [
   { labelKey: 'nav.home', to: '/' },
   { labelKey: 'nav.events', to: '/series' },
   { labelKey: 'nav.productions', to: '/artists' },
 ] as const
-const NAVBAR_MIN_HEIGHT_PX = 64
 
 type SupportedLanguage = 'en' | 'nl'
 
@@ -34,6 +36,8 @@ type NavbarProps = {
 
 // Sticky navbar with responsive desktop/mobile navigation.
 const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
+  const theme = useTheme()
+  const commonStyles = createCommonStyles(theme)
   const { t, i18n } = useTranslation()
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -73,7 +77,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
   }
 
   const activeLinkSx = {
-    fontWeight: 700,
+    fontWeight: tokens.typography.weights.bold,
   }
 
   const baseListSx = { listStyle: 'none', m: 0, p: 0 }
@@ -92,7 +96,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
         return
       }
 
-      const safeHeight = Math.max(measuredHeight, NAVBAR_MIN_HEIGHT_PX)
+      const safeHeight = Math.max(measuredHeight, tokens.navbar.minHeight)
       document.documentElement.style.setProperty('--navbar-height', `${safeHeight}px`)
     }
 
@@ -116,14 +120,16 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
   }, [])
 
   return (
-    <AppBar
-      position="sticky"
-      component="nav"
-      sx={{ bgcolor: '#000', boxShadow: '0 1px 0 rgba(255,255,255,0.1)' }}
-    >
+    <AppBar position="sticky" component="nav" sx={commonStyles.navbar}>
       <ClickAwayListener onClickAway={closeMobileMenu}>
         <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3, md: 20 } }}>
-          <Toolbar ref={toolbarRef} disableGutters sx={{ minHeight: NAVBAR_MIN_HEIGHT_PX }}>
+          <Toolbar
+            ref={toolbarRef}
+            disableGutters
+            sx={{
+              minHeight: tokens.navbar.minHeight,
+            }}
+          >
             {/* Brand: logo + "/ Archive" */}
             <Box
               component={RouterLink}
@@ -152,8 +158,8 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                 variant="subtitle1"
                 sx={{
                   display: { xs: 'none', sm: 'block' },
-                  color: '#fff',
-                  fontWeight: 400,
+                  color: theme.palette.primary.contrastText,
+                  fontWeight: tokens.typography.weights.regular,
                   letterSpacing: '0.03em',
                   fontSize: '24px',
                   lineHeight: 1,
@@ -228,16 +234,16 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                     <DarkModeOutlinedIcon
                       sx={{
                         fontSize: { xs: '1.15rem', sm: '1.5rem' },
-                        color: '#fff',
-                        transition: 'color 0.2s',
+                        color: theme.palette.primary.light,
+                        transition: tokens.transitions.fast,
                       }}
                     />
                   ) : (
                     <LightModeOutlinedIcon
                       sx={{
                         fontSize: { xs: '1.15rem', sm: '1.5rem' },
-                        color: '#fff',
-                        transition: 'color 0.2s',
+                        color: theme.palette.primary.contrastText,
+                        transition: tokens.transitions.fast,
                       }}
                     />
                   )}

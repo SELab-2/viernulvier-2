@@ -1,6 +1,7 @@
 import { Snackbar, Box, IconButton } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import { useTheme } from '@mui/material/styles'
+import { tokens } from '../theme/tokens'
 
 type FloatingAlertSeverity = 'error' | 'warning' | 'info' | 'success'
 
@@ -90,15 +91,15 @@ const FloatingAlert = ({
         sx={{
           display: 'flex',
           alignItems: 'flex-start',
-          gap: 1,
-          px: 2,
+          gap: tokens.spacing.numericSm,
+          px: tokens.spacing.numericMd,
           py: 1.5,
-          borderRadius: 1,
+          borderRadius: tokens.borderRadius.sm,
           border: `1px solid ${config.borderColor}`,
           bgcolor: config.bgColor,
           color: config.textColor,
           maxWidth: 400,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          boxShadow: tokens.shadows.md,
         }}
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -132,7 +133,7 @@ const FloatingAlert = ({
             flexShrink: 0,
             p: 0,
             '&:hover': {
-              bgcolor: 'rgba(0,0,0,0.05)',
+              bgcolor: tokens.colors.overlay.black05,
             },
           }}
         >
