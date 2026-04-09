@@ -72,6 +72,21 @@
       "filterPanelLabel": "Advanced filters",
       "filterPanelTitle": "Filters",
       "filterPanelPlaceholder": "Advanced filters will be available in this panel.",
+      "filters": {
+        "clear": "Clear",
+        "any": "All",
+        "attendanceMode": "Attendance",
+        "performerType": "Performer type",
+        "genres": "Genres",
+        "tags": "Tags",
+        "date": "Date",
+        "startAfter": "Starts on or after",
+        "startBefore": "Starts on or before",
+        "showMore": "More",
+        "showLess": "Less",
+        "noGenres": "No genres available.",
+        "noTags": "No tags available."
+      },
       "empty": {
         "title": "No productions found",
         "description": "Adjust your search and try again."

@@ -9,9 +9,22 @@ type HarnessProps = {
 const Harness = ({ isMobile = false }: HarnessProps) => {
   const location = useLocation()
   const {
+    attendanceModes,
+    firstEventStartAfter,
+    firstEventStartBefore,
     page,
+    performerTypes,
+    selectedGenreIds,
+    selectedTagIds,
     searchValue,
+    clearFilters,
+    setAttendanceModes,
+    setFirstEventStartAfter,
+    setFirstEventStartBefore,
     setPage,
+    setPerformerTypes,
+    setSelectedGenreIds,
+    setSelectedTagIds,
     setSearchValue,
     setSortDirection,
     setSortTarget,
@@ -22,6 +35,12 @@ const Harness = ({ isMobile = false }: HarnessProps) => {
     <div>
       <div data-testid="page">{page}</div>
       <div data-testid="query">{searchValue}</div>
+      <div data-testid="attendance-modes">{attendanceModes.join(',')}</div>
+      <div data-testid="performer-types">{performerTypes.join(',')}</div>
+      <div data-testid="start-after">{firstEventStartAfter}</div>
+      <div data-testid="start-before">{firstEventStartBefore}</div>
+      <div data-testid="genres">{selectedGenreIds.join(',')}</div>
+      <div data-testid="tags">{selectedTagIds.join(',')}</div>
       <div data-testid="url-search">{location.search}</div>
 
       <button onClick={() => setPage(3)}>set-page-3</button>
@@ -32,6 +51,15 @@ const Harness = ({ isMobile = false }: HarnessProps) => {
       <button onClick={() => setSortTarget('name')}>sort-name</button>
       <button onClick={() => setSortDirection('asc')}>sort-asc</button>
       <button onClick={() => setViewMode('list')}>view-list</button>
+      <button onClick={() => setAttendanceModes(['online', 'offline'])}>
+        attendance-online-offline
+      </button>
+      <button onClick={() => setPerformerTypes(['group', 'solo'])}>performer-group-solo</button>
+      <button onClick={() => setFirstEventStartAfter('2026-03-01')}>start-after</button>
+      <button onClick={() => setFirstEventStartBefore('2026-03-31')}>start-before</button>
+      <button onClick={() => setSelectedGenreIds([5, 9])}>genre-5-9</button>
+      <button onClick={() => setSelectedTagIds([8, 12])}>tag-8-12</button>
+      <button onClick={() => clearFilters()}>clear-filters</button>
     </div>
   )
 }
@@ -125,5 +153,53 @@ describe('useSearchBarUrlState pagination sync', () => {
     expect(screen.getByTestId('url-search')).toHaveTextContent('?q=hamlet')
     expect(screen.getByTestId('url-search')).not.toHaveTextContent('p=')
     expect(screen.getByTestId('page')).toHaveTextContent('1')
+  })
+
+  it('reads production filter state from URL params', () => {
+    renderHarness('/?am=online-offline&pt=group-solo&fa=2026-03-01&fb=2026-03-31&g=5-9&t=8-12')
+
+    expect(screen.getByTestId('attendance-modes')).toHaveTextContent('online,offline')
+    expect(screen.getByTestId('performer-types')).toHaveTextContent('group,solo')
+    expect(screen.getByTestId('start-after')).toHaveTextContent('2026-03-01')
+    expect(screen.getByTestId('start-before')).toHaveTextContent('2026-03-31')
+    expect(screen.getByTestId('genres')).toHaveTextContent('5,9')
+    expect(screen.getByTestId('tags')).toHaveTextContent('8,12')
+  })
+
+  it('resets page when production filters change and removes them when cleared', () => {
+    renderHarness('/?q=hamlet&p=4')
+
+    fireEvent.click(screen.getByText('attendance-online-offline'))
+    fireEvent.click(screen.getByText('performer-group-solo'))
+    fireEvent.click(screen.getByText('start-after'))
+    fireEvent.click(screen.getByText('start-before'))
+    fireEvent.click(screen.getByText('genre-5-9'))
+    fireEvent.click(screen.getByText('tag-8-12'))
+
+    expect(screen.getByTestId('url-search')).toHaveTextContent('q=hamlet')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('am=online-offline')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('pt=group-solo')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('fa=2026-03-01')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('fb=2026-03-31')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('g=5-9')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('t=8-12')
+    expect(screen.getByTestId('url-search')).not.toHaveTextContent('p=')
+    expect(screen.getByTestId('page')).toHaveTextContent('1')
+
+    fireEvent.click(screen.getByText('clear-filters'))
+
+    expect(screen.getByTestId('attendance-modes')).toHaveTextContent('')
+    expect(screen.getByTestId('performer-types')).toHaveTextContent('')
+    expect(screen.getByTestId('start-after')).toHaveTextContent('')
+    expect(screen.getByTestId('start-before')).toHaveTextContent('')
+    expect(screen.getByTestId('genres')).toHaveTextContent('')
+    expect(screen.getByTestId('tags')).toHaveTextContent('')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('?q=hamlet')
+    expect(screen.getByTestId('url-search')).not.toHaveTextContent('am=')
+    expect(screen.getByTestId('url-search')).not.toHaveTextContent('pt=')
+    expect(screen.getByTestId('url-search')).not.toHaveTextContent('fa=')
+    expect(screen.getByTestId('url-search')).not.toHaveTextContent('fb=')
+    expect(screen.getByTestId('url-search')).not.toHaveTextContent('g=')
+    expect(screen.getByTestId('url-search')).not.toHaveTextContent('t=')
   })
 })

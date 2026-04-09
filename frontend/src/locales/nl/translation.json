@@ -72,6 +72,21 @@
       "filterPanelLabel": "Geavanceerde filters",
       "filterPanelTitle": "Filters",
       "filterPanelPlaceholder": "Geavanceerde filters worden in dit paneel toegevoegd.",
+      "filters": {
+        "clear": "Wissen",
+        "any": "Alles",
+        "attendanceMode": "Aanwezigheid",
+        "performerType": "Uitvoering",
+        "genres": "Genres",
+        "tags": "Tags",
+        "date": "Datum",
+        "startAfter": "Start op of na",
+        "startBefore": "Start op of voor",
+        "showMore": "Meer",
+        "showLess": "Minder",
+        "noGenres": "Geen genres beschikbaar.",
+        "noTags": "Geen tags beschikbaar."
+      },
       "empty": {
         "title": "Geen producties gevonden",
         "description": "Pas je zoekopdracht aan en probeer opnieuw."
