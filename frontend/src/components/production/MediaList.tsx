@@ -178,6 +178,7 @@ export default function MediaList({ mediaItems }: MediaListProps) {
           }}
         >
           <Box
+            onClick={(event) => event.stopPropagation()}
             sx={{
               position: 'relative',
               width: 'min(1200px, 96vw)',
