@@ -1,6 +1,7 @@
 import { useMediaQuery, useTheme } from '@mui/material'
 import useEmblaCarousel from 'embla-carousel-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { tokens } from '../../theme/tokens'
 import type { MediaItem } from '../../types/Media'
 
 interface MediaListProps {
@@ -49,7 +50,9 @@ export default function MediaList({ mediaItems }: MediaListProps) {
   const slidesToScroll = isMobile ? 1 : isTablet ? 2 : 3
 
   const navButtonBackground =
-    theme.palette.mode === 'dark' ? 'rgba(10, 14, 40, 0.65)' : 'rgba(255,255,255,0.8)'
+    theme.palette.mode === 'dark'
+      ? tokens.colors.overlay.mediaNavDark
+      : tokens.colors.overlay.mediaNavLight
 
   const slides = useMemo(
     () =>
@@ -151,7 +154,10 @@ export default function MediaList({ mediaItems }: MediaListProps) {
                     aspectRatio: '16/9',
                     overflow: 'hidden',
                     borderRadius: '6px',
-                    background: theme.palette.mode === 'dark' ? '#101436' : '#f7f7f7',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? tokens.colors.media.darkBackground
+                        : tokens.colors.media.lightBackground,
                   }}
                 >
                   <img
@@ -181,7 +187,7 @@ export default function MediaList({ mediaItems }: MediaListProps) {
             background: navButtonBackground,
             color: theme.palette.text.primary,
             cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.24)',
+            boxShadow: tokens.shadows.mediaControl,
             display: 'grid',
             placeItems: 'center',
           }}
@@ -205,7 +211,7 @@ export default function MediaList({ mediaItems }: MediaListProps) {
             background: navButtonBackground,
             color: theme.palette.text.primary,
             cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.24)',
+            boxShadow: tokens.shadows.mediaControl,
             display: 'grid',
             placeItems: 'center',
           }}

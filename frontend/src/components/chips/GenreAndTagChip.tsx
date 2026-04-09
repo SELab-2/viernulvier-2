@@ -5,6 +5,7 @@ import type { MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
+import { tokens } from '../../theme/tokens'
 import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
 import { getQueryKeyForChipType } from './genreAndTagChipUtils'
 import { getTranslatedRecord } from '../../utils/translations'
@@ -54,8 +55,10 @@ const GenreAndTagChip = ({
         : undefined
   const showSelectedIcon = context === 'search' && selected
   const selectedChipColor =
-    chipType === 'genre' ? (theme.palette.accent?.main ?? '#9333ea') : theme.palette.primary.main
-  const iconHoverBackground = '#fff'
+    chipType === 'genre'
+      ? (theme.palette.accent?.main ?? tokens.colors.accent.main)
+      : theme.palette.primary.main
+  const iconHoverBackground = tokens.colors.neutral.white
 
   const resolvedAriaLabel =
     ariaLabel ??
@@ -102,7 +105,7 @@ const GenreAndTagChip = ({
                 height: 18,
                 borderRadius: '50%',
                 background: hovered ? iconHoverBackground : 'transparent',
-                color: hovered ? selectedChipColor : '#fff',
+                color: hovered ? selectedChipColor : tokens.colors.neutral.white,
                 boxShadow: hovered ? `0 0 0 2px ${iconHoverBackground}` : undefined,
                 cursor: 'pointer',
                 transition: 'background 0.15s, color 0.15s',

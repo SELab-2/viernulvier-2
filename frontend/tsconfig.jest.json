@@ -3,7 +3,16 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "Node",
-    "types": ["jest", "@testing-library/jest-dom"]
+    "types": [
+      "vite/client",
+      "jest",
+      "@testing-library/jest-dom",
+      "node"
+    ]
   },
-  "include": ["src", "src/**/*.test.ts", "src/**/*.test.tsx"]
+  "include": [
+    "src",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
+  ]
 }
