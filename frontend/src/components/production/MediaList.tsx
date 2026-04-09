@@ -168,6 +168,7 @@ export default function MediaList({ mediaItems }: MediaListProps) {
         }}
       >
         <Box
+          onClick={closePreview}
           sx={{
             position: 'fixed',
             inset: 0,
