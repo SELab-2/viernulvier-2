@@ -112,13 +112,13 @@ class TestMediaFileModel:
         obj = MediaFile.objects.create(file=make_uploaded_file(name="poster.jpg", content_type="image/jpeg"))
         assert obj.file_type == MediaFile.FileType.IMAGE
 
-    def test_webp_mime_type_sets_other_file_type(self) -> None:
+    def test_webp_mime_type_sets_image_file_type(self) -> None:
         obj = MediaFile.objects.create(file=make_uploaded_file(name="poster.webp", content_type="image/webp"))
-        assert obj.file_type == MediaFile.FileType.OTHER
-
-    def test_unknown_mime_type_sets_image_file_type(self) -> None:
-        obj = MediaFile.objects.create(file=make_uploaded_file(name="archive.bin", content_type=None))
         assert obj.file_type == MediaFile.FileType.IMAGE
+
+    def test_unknown_mime_type_sets_other_file_type(self) -> None:
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="archive.bin", content_type=None))
+        assert obj.file_type == MediaFile.FileType.OTHER
 
     def test_filename_is_derived_from_uploaded_file(self) -> None:
         obj = MediaFile.objects.create(file=make_uploaded_file(name="poster.png", content_type="image/png"))
