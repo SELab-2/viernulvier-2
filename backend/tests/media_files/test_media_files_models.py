@@ -1,4 +1,4 @@
-"""Tests for apps.media_files.models."""
+"""Tests for apps.media_files.models"""
 
 import os
 from unittest.mock import MagicMock
