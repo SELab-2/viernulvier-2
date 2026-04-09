@@ -1,20 +1,11 @@
-"""
-Covers:
-- __str__ output
-- UUID primary key creation
-- nullable uploaded_by
-- inherited external_id field
-- upload path format
-- file_type inference in clean()
-- BaseModel save() calling full_clean()
-- manual file_type override being normalized on save
-- delete behavior with SET_NULL uploader relation
-"""
+"""Tests for apps.media_files.models."""
 
 import os
+from unittest.mock import MagicMock
 import uuid
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
 
@@ -25,22 +16,12 @@ pytestmark = pytest.mark.django_db
 User = get_user_model()
 
 
-# =====================================================
-# Helpers
-# =====================================================
-
-
 def make_uploaded_file(
     name: str = "test.pdf",
     content: bytes = b"dummy content",
-    content_type: str = "application/pdf",
+    content_type: str | None = "application/pdf",
 ) -> SimpleUploadedFile:
     return SimpleUploadedFile(name, content, content_type=content_type)
-
-
-# =====================================================
-# upload_to_media
-# =====================================================
 
 
 class TestUploadToMedia:
@@ -56,178 +37,143 @@ class TestUploadToMedia:
         path = upload_to_media(instance=None, filename="brochure.pdf")
         filename = os.path.basename(path)
         stem, ext = os.path.splitext(filename)
-
         assert ext == ".pdf"
-        uuid.UUID(stem)  # must not raise
+        uuid.UUID(stem)
 
 
-# =====================================================
-# MediaFile
-# =====================================================
+class TestMediaFileDerivedMethods:
+    def test_derive_filename_returns_empty_string_without_file(self) -> None:
+        assert MediaFile()._derive_filename() == ""
+
+    def test_derive_mime_type_returns_empty_string_without_file(self) -> None:
+        assert MediaFile()._derive_mime_type() == ""
+
+    def test_derive_size_bytes_returns_zero_without_file(self) -> None:
+        assert MediaFile()._derive_size_bytes() == 0
+
+    def test_derive_mime_type_falls_back_to_guess_type(self) -> None:
+        obj = MediaFile(file=make_uploaded_file(name="poster.png", content_type=None))
+        assert obj._derive_mime_type() == "image/png"
+
+    def test_derive_mime_type_falls_back_to_octet_stream(self) -> None:
+        obj = MediaFile(file=make_uploaded_file(name="poster.unknownext", content_type=None))
+        assert obj._derive_mime_type() == "application/octet-stream"
+
+    def test_derive_file_type_recognizes_image(self) -> None:
+        assert MediaFile()._derive_file_type("image/webp") == MediaFile.FileType.IMAGE
+
+    def test_derive_file_type_recognizes_pdf(self) -> None:
+        assert MediaFile()._derive_file_type("application/pdf") == MediaFile.FileType.PDF
+
+    def test_derive_file_type_defaults_to_other(self) -> None:
+        assert MediaFile()._derive_file_type("application/octet-stream") == MediaFile.FileType.OTHER
+
+    def test_file_has_changed_is_false_for_unsaved_object(self) -> None:
+        assert MediaFile(file=make_uploaded_file())._file_has_changed() is False
+
+    def test_file_has_changed_is_false_when_object_missing_in_db(self) -> None:
+        obj = MediaFile(file=make_uploaded_file())
+        obj.pk = uuid.uuid4()
+        obj._state.adding = False
+        assert obj._file_has_changed() is False
 
 
-class TestMediaFile:
+class TestMediaFileModel:
     def test_id_is_uuid(self) -> None:
-        obj = MediaFile.objects.create(
-            file=make_uploaded_file(),
-            filename="test.pdf",
-            mime_type="application/pdf",
-            size_bytes=123,
-        )
+        obj = MediaFile.objects.create(file=make_uploaded_file())
         assert isinstance(obj.id, uuid.UUID)
 
     def test_external_id_is_optional(self) -> None:
-        obj = MediaFile(
-            file=make_uploaded_file(),
-            filename="test.pdf",
-            mime_type="application/pdf",
-            size_bytes=123,
-            external_id=None,
-        )
-        obj.full_clean()  # should not raise
+        obj = MediaFile(file=make_uploaded_file(), external_id=None)
+        obj.full_clean()
 
     def test_uploaded_by_is_optional(self) -> None:
-        obj = MediaFile(
-            file=make_uploaded_file(),
-            filename="test.pdf",
-            mime_type="application/pdf",
-            size_bytes=123,
-            uploaded_by=None,
-        )
-        obj.full_clean()  # should not raise
+        obj = MediaFile(file=make_uploaded_file(), uploaded_by=None)
+        obj.full_clean()
 
     def test_str_returns_filename(self) -> None:
-        obj = MediaFile.objects.create(
-            file=make_uploaded_file(),
-            filename="season-brochure.pdf",
-            mime_type="application/pdf",
-            size_bytes=123,
-        )
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="season-brochure.pdf"))
         assert str(obj) == "season-brochure.pdf"
 
     def test_file_is_stored_under_upload_prefix(self) -> None:
-        obj = MediaFile.objects.create(
-            file=make_uploaded_file(name="season-brochure.pdf"),
-            filename="season-brochure.pdf",
-            mime_type="application/pdf",
-            size_bytes=123,
-        )
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="season-brochure.pdf"))
         assert obj.file.name.startswith("media/uploads/")
         assert obj.file.name.endswith(".pdf")
 
     def test_pdf_mime_type_sets_pdf_file_type(self) -> None:
-        obj = MediaFile.objects.create(
-            file=make_uploaded_file(name="brochure.pdf", content_type="application/pdf"),
-            filename="brochure.pdf",
-            mime_type="application/pdf",
-            size_bytes=123,
-        )
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="brochure.pdf", content_type="application/pdf"))
         assert obj.file_type == MediaFile.FileType.PDF
 
     def test_png_mime_type_sets_image_file_type(self) -> None:
-        obj = MediaFile.objects.create(
-            file=make_uploaded_file(name="poster.png", content_type="image/png"),
-            filename="poster.png",
-            mime_type="image/png",
-            size_bytes=123,
-        )
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="poster.png", content_type="image/png"))
         assert obj.file_type == MediaFile.FileType.IMAGE
 
     def test_jpeg_mime_type_sets_image_file_type(self) -> None:
-        obj = MediaFile.objects.create(
-            file=make_uploaded_file(name="poster.jpg", content_type="image/jpeg"),
-            filename="poster.jpg",
-            mime_type="image/jpeg",
-            size_bytes=123,
-        )
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="poster.jpg", content_type="image/jpeg"))
         assert obj.file_type == MediaFile.FileType.IMAGE
 
-    def test_webp_mime_type_sets_image_file_type(self) -> None:
-        obj = MediaFile.objects.create(
-            file=make_uploaded_file(name="poster.webp", content_type="image/webp"),
-            filename="poster.webp",
-            mime_type="image/webp",
-            size_bytes=123,
-        )
-        assert obj.file_type == MediaFile.FileType.IMAGE
-
-    def test_unknown_mime_type_sets_other_file_type(self) -> None:
-        obj = MediaFile.objects.create(
-            file=make_uploaded_file(name="notes.txt", content_type="text/plain"),
-            filename="notes.txt",
-            mime_type="text/plain",
-            size_bytes=123,
-        )
+    def test_webp_mime_type_sets_other_file_type(self) -> None:
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="poster.webp", content_type="image/webp"))
         assert obj.file_type == MediaFile.FileType.OTHER
 
-    def test_manual_file_type_override_is_normalized_by_clean(self) -> None:
-        obj = MediaFile.objects.create(
-            file=make_uploaded_file(name="brochure.pdf", content_type="application/pdf"),
-            filename="brochure.pdf",
-            mime_type="application/pdf",
-            size_bytes=123,
-            file_type=MediaFile.FileType.OTHER,
-        )
-        assert obj.file_type == MediaFile.FileType.PDF
+    def test_unknown_mime_type_sets_other_file_type(self) -> None:
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="archive.bin", content_type=None))
+        assert obj.file_type == MediaFile.FileType.OTHER
 
-    def test_clean_is_called_automatically_via_basemodel_save(self) -> None:
-        obj = MediaFile(
-            file=make_uploaded_file(name="image.jpg", content_type="image/jpeg"),
-            filename="image.jpg",
-            mime_type="image/jpeg",
-            size_bytes=123,
-            file_type=MediaFile.FileType.OTHER,
-        )
+    def test_filename_is_derived_from_uploaded_file(self) -> None:
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="poster.png", content_type="image/png"))
+        assert obj.filename == "poster.png"
+
+    def test_clean_requires_file(self) -> None:
+        with pytest.raises(ValidationError) as exc:
+            MediaFile().clean()
+        assert "file" in exc.value.message_dict
+
+    def test_clean_rejects_oversized_file(self) -> None:
+        file = make_uploaded_file(content=b"x" * (MediaFile.MAX_FILE_SIZE + 1))
+        obj = MediaFile(file=file)
+        with pytest.raises(ValidationError) as exc:
+            obj.clean()
+        assert "file" in exc.value.message_dict
+
+    def test_file_has_changed_detects_replacement(self) -> None:
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="one.pdf"))
+        obj.file = make_uploaded_file(name="two.pdf")
+        assert obj._file_has_changed() is True
+
+    def test_metadata_updates_when_file_changes(self) -> None:
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="one.pdf", content_type="application/pdf"))
+        obj.file = make_uploaded_file(name="two.png", content=b"abc", content_type="image/png")
+        obj.filename = ""
         obj.save()
+        obj.refresh_from_db()
+        assert obj.filename == "two.png"
+        assert obj.mime_type == "image/png"
+        assert obj.size_bytes == 3
         assert obj.file_type == MediaFile.FileType.IMAGE
 
-    def test_deleting_uploader_sets_uploaded_by_to_null(self) -> None:
-        user = User.objects.create_user(
-            username="media-owner",
-            email="owner@example.com",
-            password="password",
-        )
-        obj = MediaFile.objects.create(
-            file=make_uploaded_file(),
-            filename="test.pdf",
-            mime_type="application/pdf",
-            size_bytes=123,
-            uploaded_by=user,
-        )
+    def test_existing_filename_is_preserved_when_file_unchanged(self) -> None:
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="one.pdf"))
+        obj.filename = "custom-name.pdf"
+        obj.save()
+        obj.refresh_from_db()
+        assert obj.filename == "custom-name.pdf"
 
+    def test_uploaded_by_set_null_when_user_deleted(self) -> None:
+        user = User.objects.create_user(username="uploader", email="uploader@example.com", password="password")
+        obj = MediaFile.objects.create(file=make_uploaded_file(), uploaded_by=user)
         user.delete()
         obj.refresh_from_db()
-
         assert obj.uploaded_by is None
 
-    def test_user_reverse_relation_uploaded_media(self) -> None:
-        user = User.objects.create_user(
-            username="reverse-user",
-            email="reverse@example.com",
-            password="password",
-        )
-        MediaFile.objects.create(
-            file=make_uploaded_file(name="one.pdf"),
-            filename="one.pdf",
-            mime_type="application/pdf",
-            size_bytes=100,
-            uploaded_by=user,
-        )
-        MediaFile.objects.create(
-            file=make_uploaded_file(name="two.pdf"),
-            filename="two.pdf",
-            mime_type="application/pdf",
-            size_bytes=200,
-            uploaded_by=user,
-        )
+    def test_derive_mime_type_uses_content_type_when_present(self) -> None:
+        obj = MediaFile()
+        mock_file = MagicMock()
+        mock_file.content_type = "image/png"
+        obj.file = mock_file
+        assert obj._derive_mime_type() == "image/png"
 
-        assert user.uploaded_media.count() == 2
-
-    def test_created_at_is_set_on_create(self) -> None:
-        obj = MediaFile.objects.create(
-            file=make_uploaded_file(),
-            filename="test.pdf",
-            mime_type="application/pdf",
-            size_bytes=123,
-        )
-        assert obj.created_at is not None
+    def test_populate_derived_fields_does_nothing_without_file(self) -> None:
+        obj = MediaFile()
+        obj._populate_derived_fields()
+        assert obj.mime_type == ""

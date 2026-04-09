@@ -1,21 +1,10 @@
-"""
-Covers:
-- admin registration
-- BaseAdmin inheritance
-- list_display configuration
-- list_filter configuration
-- search_fields configuration
-- readonly_fields configuration
-- fields order/configuration
-- ordering configuration
-- get_queryset behaviour
-- file_link rendering with and without a file
-"""
+"""Tests for apps.media_files.admin."""
 
 from django.contrib import admin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.forms import ModelForm
 from django.test import RequestFactory
 import pytest
 
@@ -28,23 +17,26 @@ pytestmark = pytest.mark.django_db
 User = get_user_model()
 
 
-# =====================================================
-# Fixtures / helpers
-# =====================================================
+def make_uploaded_file(
+    name: str = "poster.pdf",
+    content: bytes = b"dummy content",
+    content_type: str = "application/pdf",
+) -> SimpleUploadedFile:
+    return SimpleUploadedFile(name, content, content_type=content_type)
 
 
 @pytest.fixture
-def admin_site():
+def admin_site() -> AdminSite:
     return AdminSite()
 
 
 @pytest.fixture
-def media_file_admin(admin_site):
+def media_file_admin(admin_site: AdminSite) -> MediaFileAdmin:
     return MediaFileAdmin(MediaFile, admin_site)
 
 
 @pytest.fixture
-def request_factory():
+def request_factory() -> RequestFactory:
     return RequestFactory()
 
 
@@ -68,23 +60,16 @@ def uploader():
 
 @pytest.fixture
 def media_file(uploader):
-    uploaded = SimpleUploadedFile(
-        "poster.pdf",
-        b"dummy content",
-        content_type="application/pdf",
-    )
     return MediaFile.objects.create(
-        file=uploaded,
-        filename="poster.pdf",
-        mime_type="application/pdf",
-        size_bytes=123,
+        file=make_uploaded_file(),
         uploaded_by=uploader,
     )
 
 
-# =====================================================
-# Registration / inheritance
-# =====================================================
+class DummyForm(ModelForm):
+    class Meta:
+        model = MediaFile
+        fields = ["file", "filename", "uploaded_by"]
 
 
 class TestMediaFileAdminRegistration:
@@ -92,20 +77,14 @@ class TestMediaFileAdminRegistration:
         assert MediaFile in admin.site._registry
 
     def test_registered_admin_is_media_file_admin(self) -> None:
-        registered_admin = admin.site._registry[MediaFile]
-        assert isinstance(registered_admin, MediaFileAdmin)
+        assert isinstance(admin.site._registry[MediaFile], MediaFileAdmin)
 
-    def test_admin_inherits_from_base_admin(self, media_file_admin) -> None:
+    def test_admin_inherits_from_base_admin(self, media_file_admin: MediaFileAdmin) -> None:
         assert isinstance(media_file_admin, BaseAdmin)
 
 
-# =====================================================
-# Static admin configuration
-# =====================================================
-
-
 class TestMediaFileAdminConfiguration:
-    def test_list_display_matches_expected_fields(self, media_file_admin) -> None:
+    def test_list_display_matches_expected_fields(self, media_file_admin: MediaFileAdmin) -> None:
         assert media_file_admin.list_display == (
             "id",
             "filename",
@@ -117,14 +96,10 @@ class TestMediaFileAdminConfiguration:
             "file_link",
         )
 
-    def test_list_filter_matches_expected_fields(self, media_file_admin) -> None:
-        assert media_file_admin.list_filter == (
-            "file_type",
-            "mime_type",
-            "created_at",
-        )
+    def test_list_filter_matches_expected_fields(self, media_file_admin: MediaFileAdmin) -> None:
+        assert media_file_admin.list_filter == ("file_type", "mime_type", "created_at")
 
-    def test_search_fields_matches_expected_fields(self, media_file_admin) -> None:
+    def test_search_fields_matches_expected_fields(self, media_file_admin: MediaFileAdmin) -> None:
         assert media_file_admin.search_fields == (
             "filename",
             "mime_type",
@@ -133,7 +108,7 @@ class TestMediaFileAdminConfiguration:
             "uploaded_by__email",
         )
 
-    def test_readonly_fields_matches_expected_fields(self, media_file_admin) -> None:
+    def test_readonly_fields_matches_expected_fields(self, media_file_admin: MediaFileAdmin) -> None:
         assert media_file_admin.readonly_fields == (
             "id",
             "external_id",
@@ -145,7 +120,7 @@ class TestMediaFileAdminConfiguration:
             "file_link",
         )
 
-    def test_fields_matches_expected_fields(self, media_file_admin) -> None:
+    def test_fields_matches_expected_fields(self, media_file_admin: MediaFileAdmin) -> None:
         assert media_file_admin.fields == (
             "id",
             "external_id",
@@ -159,81 +134,110 @@ class TestMediaFileAdminConfiguration:
             "created_at",
         )
 
-    def test_ordering_matches_expected_fields(self, media_file_admin) -> None:
+    def test_ordering_matches_expected_fields(self, media_file_admin: MediaFileAdmin) -> None:
         assert media_file_admin.ordering == ("-created_at",)
 
-    def test_file_link_is_in_list_display(self, media_file_admin) -> None:
-        assert "file_link" in media_file_admin.list_display
-
-    def test_file_field_is_editable_in_form_fields(self, media_file_admin) -> None:
+    def test_file_is_editable(self, media_file_admin: MediaFileAdmin) -> None:
         assert "file" in media_file_admin.fields
         assert "file" not in media_file_admin.readonly_fields
 
+    def test_filename_is_editable(self, media_file_admin: MediaFileAdmin) -> None:
+        assert "filename" in media_file_admin.fields
+        assert "filename" not in media_file_admin.readonly_fields
 
-# =====================================================
-# get_queryset
-# =====================================================
+    def test_file_link_description_is_file(self, media_file_admin: MediaFileAdmin) -> None:
+        assert media_file_admin.file_link.short_description == "File"
 
 
 class TestMediaFileAdminQueryset:
-    def test_get_queryset_returns_queryset(self, media_file_admin, request_factory, admin_user) -> None:
-        request = request_factory.get("/admin/apps/media_files/mediafile/")
+    def test_get_queryset_returns_mediafile_queryset(
+        self,
+        media_file_admin: MediaFileAdmin,
+        request_factory: RequestFactory,
+        admin_user,
+    ) -> None:
+        request = request_factory.get("/admin/media_files/mediafile/")
         request.user = admin_user
 
         qs = media_file_admin.get_queryset(request)
 
         assert qs.model is MediaFile
 
-    def test_get_queryset_evaluates_without_errors(self, media_file_admin, request_factory, admin_user, media_file) -> None:
-        request = request_factory.get("/admin/apps/media_files/mediafile/")
-        request.user = admin_user
-
-        qs = media_file_admin.get_queryset(request)
-
-        rows = list(qs)
-        assert media_file in rows
-
-    def test_get_queryset_includes_uploaded_by_relation(
-        self, media_file_admin, request_factory, admin_user, media_file
+    def test_get_queryset_evaluates_without_errors(
+        self,
+        media_file_admin: MediaFileAdmin,
+        request_factory: RequestFactory,
+        admin_user,
+        media_file: MediaFile,
     ) -> None:
-        request = request_factory.get("/admin/apps/media_files/mediafile/")
+        request = request_factory.get("/admin/media_files/mediafile/")
         request.user = admin_user
 
-        qs = media_file_admin.get_queryset(request)
-        obj = qs.get(pk=media_file.pk)
+        assert media_file in list(media_file_admin.get_queryset(request))
+
+    def test_get_queryset_selects_related_uploaded_by(
+        self,
+        media_file_admin: MediaFileAdmin,
+        request_factory: RequestFactory,
+        admin_user,
+        media_file: MediaFile,
+    ) -> None:
+        request = request_factory.get("/admin/media_files/mediafile/")
+        request.user = admin_user
+
+        obj = media_file_admin.get_queryset(request).get(pk=media_file.pk)
 
         assert obj.uploaded_by is not None
         assert obj.uploaded_by.username == "uploader"
 
 
-# =====================================================
-# file_link
-# =====================================================
+class TestMediaFileAdminSaveModel:
+    def test_save_model_sets_uploaded_by_when_missing(
+        self,
+        media_file_admin: MediaFileAdmin,
+        request_factory: RequestFactory,
+        admin_user,
+    ) -> None:
+        request = request_factory.post("/admin/media_files/mediafile/add/")
+        request.user = admin_user
+        obj = MediaFile(file=make_uploaded_file(), filename="poster.pdf")
+
+        media_file_admin.save_model(request, obj, form=DummyForm(), change=False)
+
+        obj.refresh_from_db()
+        assert obj.uploaded_by == admin_user
+
+    def test_save_model_preserves_existing_uploaded_by(
+        self,
+        media_file_admin: MediaFileAdmin,
+        request_factory: RequestFactory,
+        admin_user,
+        uploader,
+        media_file: MediaFile,
+    ) -> None:
+        request = request_factory.post(f"/admin/media_files/mediafile/{media_file.pk}/change/")
+        request.user = admin_user
+
+        media_file_admin.save_model(request, media_file, form=DummyForm(), change=True)
+
+        media_file.refresh_from_db()
+        assert media_file.uploaded_by == uploader
 
 
 class TestMediaFileAdminFileLink:
-    def test_file_link_returns_dash_when_no_file(self, media_file_admin) -> None:
-        obj = MediaFile(
-            filename="missing-file",
-            mime_type="application/pdf",
-            size_bytes=0,
-            file_type=MediaFile.FileType.PDF,
-        )
-
+    def test_file_link_returns_dash_when_no_file(self, media_file_admin: MediaFileAdmin) -> None:
+        obj = MediaFile(filename="missing-file", mime_type="application/pdf", size_bytes=0)
         assert media_file_admin.file_link(obj) == "-"
 
-    def test_file_link_returns_html_anchor_when_file_exists(self, media_file_admin, media_file) -> None:
+    def test_file_link_returns_html_anchor_when_file_exists(
+        self,
+        media_file_admin: MediaFileAdmin,
+        media_file: MediaFile,
+    ) -> None:
         result = media_file_admin.file_link(media_file)
 
         assert 'href="' in result
         assert "Open file" in result
         assert 'target="_blank"' in result
         assert 'rel="noopener noreferrer"' in result
-
-    def test_file_link_contains_file_url(self, media_file_admin, media_file) -> None:
-        result = media_file_admin.file_link(media_file)
-
         assert media_file.file.url in result
-
-    def test_file_link_description_is_file(self, media_file_admin) -> None:
-        assert media_file_admin.file_link.short_description == "File"

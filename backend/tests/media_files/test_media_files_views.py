@@ -1,21 +1,4 @@
-"""
-Tests for apps/media_files/views.py
-
-Covers:
-- MediaFileViewSet inherits from ApiModelViewSet
-- queryset model is MediaFile
-- default serializer class is MediaFileSerializer
-- create action uses MediaFileUploadSerializer
-- GET  /api/v1/media/       - public key ✓, internal key ✓
-- GET  /api/v1/media/<id>/  - public key ✓, internal key ✓
-- POST /api/v1/media/       - internal key ✓, public key ✗
-- All methods rejected without auth header
-- All methods rejected with a wrong key
-- Response structure on list and detail
-- Filtering
-- Ordering
-- Search
-"""
+"""Tests for apps/media_files/views.py."""
 
 import tempfile
 

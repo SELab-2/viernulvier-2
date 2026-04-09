@@ -108,7 +108,7 @@ class MediaFile(BaseModel):
 
         file_changed = self._file_has_changed()
 
-        if not self.filename:
+        if file_changed or not self.filename:
             self.filename = self._derive_filename()
 
         if file_changed or not self.mime_type:
@@ -135,10 +135,7 @@ class MediaFile(BaseModel):
             raise ValidationError({"file": f"File is too large (max {self.MAX_FILE_SIZE // (1024 * 1024)} MB)."})
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        """Populate derived fields as a defensive fallback.
-
-        This helps when some code path skips full_clean().
-        """
+        """Ensure derived fields are populated before saving."""
         if self.file:
             self._populate_derived_fields()
         super().save(*args, **kwargs)
