@@ -93,7 +93,22 @@ function Carousel({
     const containerWidth = container.offsetWidth
     const targetScroll = elLeft - containerWidth / 2 + elWidth / 2
 
-    container.scrollTo({ left: targetScroll, behavior: 'smooth' })
+    let startTime: number | null = null
+
+    function animateScroll(currentTime: number) {
+      if (!startTime) {
+        startTime = currentTime
+      }
+
+      const progress = Math.min((currentTime - startTime) / 650, 1)
+      const ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress
+      container!.scrollLeft = container!.scrollLeft + (targetScroll - container!.scrollLeft) * ease
+
+      if (progress < 1) {
+        requestAnimationFrame(animateScroll)
+      }
+    }
+    requestAnimationFrame(animateScroll)
   }, [selectedIndex, snapCount])
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
