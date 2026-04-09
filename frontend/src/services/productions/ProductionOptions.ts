@@ -17,6 +17,8 @@ export interface ProductionFilters {
   has_media?: boolean
   title?: string
   artist_name?: string
+  first_event_start_after?: string
+  first_event_start_before?: string
 }
 
 /**
