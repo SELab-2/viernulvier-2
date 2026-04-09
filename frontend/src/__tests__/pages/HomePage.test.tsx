@@ -4,14 +4,80 @@ import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import i18n from '../../i18n'
 import HomePage from '../../pages/HomePage'
+import { getGenres } from '../../services/genres/Genres'
 import { getProductions } from '../../services/productions/Productions'
+import { getTags } from '../../services/tags/Tags'
+import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
+import type { Tag } from '../../types/Tags'
 
 jest.mock('../../services/productions/Productions', () => ({
   getProductions: jest.fn(),
 }))
 
+jest.mock('../../services/genres/Genres', () => ({
+  getGenres: jest.fn(),
+}))
+
+jest.mock('../../services/tags/Tags', () => ({
+  getTags: jest.fn(),
+}))
+
 const mockedGetProductions = getProductions as jest.MockedFunction<typeof getProductions>
+const mockedGetGenres = getGenres as jest.MockedFunction<typeof getGenres>
+const mockedGetTags = getTags as jest.MockedFunction<typeof getTags>
+
+const genreFixtures: Genre[] = [
+  {
+    id: 5,
+    type: 'main',
+    use_as: { id: 1, name: 'production' },
+    name: { nl: 'Theater' },
+    display_name: 'Theater',
+    vendor_id: null,
+  },
+  {
+    id: 9,
+    type: 'main',
+    use_as: { id: 1, name: 'production' },
+    name: { nl: 'Dans' },
+    display_name: 'Dans',
+    vendor_id: null,
+  },
+]
+
+const tagFixtures: Tag[] = [
+  {
+    id: 8,
+    url: '/api/v1/tags/8/',
+    source: 'manual',
+    source_type: 'editorial',
+    type: 'series',
+    is_external: false,
+    is_enabled: true,
+    display_name: 'Premiere',
+    display_short_description: null,
+    display_url_title: null,
+    name: { nl: 'Premiere' },
+    short_description: {},
+    url_title: {},
+  },
+  {
+    id: 12,
+    url: '/api/v1/tags/12/',
+    source: 'manual',
+    source_type: 'editorial',
+    type: 'series',
+    is_external: false,
+    is_enabled: true,
+    display_name: 'Festival',
+    display_short_description: null,
+    display_url_title: null,
+    name: { nl: 'Festival' },
+    short_description: {},
+    url_title: {},
+  },
+]
 
 const LocationProbe = () => {
   const location = useLocation()
@@ -50,6 +116,22 @@ const renderPage = (initialPath = '/') =>
     </MemoryRouter>,
   )
 
+const setMatchMediaMatches = (matches: boolean) => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: jest.fn().mockImplementation((query: string) => ({
+      matches,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  })
+}
+
 describe('HomePage (ProductionPage)', () => {
   afterEach(() => {
     jest.clearAllMocks()
@@ -57,6 +139,19 @@ describe('HomePage (ProductionPage)', () => {
 
   beforeEach(async () => {
     await i18n.changeLanguage('nl')
+    setMatchMediaMatches(false)
+    mockedGetGenres.mockResolvedValue({
+      count: genreFixtures.length,
+      next: null,
+      previous: null,
+      results: genreFixtures,
+    })
+    mockedGetTags.mockResolvedValue({
+      count: tagFixtures.length,
+      next: null,
+      previous: null,
+      results: tagFixtures,
+    })
   })
 
   it('loads productions from API with default params and renders results', async () => {
@@ -153,6 +248,28 @@ describe('HomePage (ProductionPage)', () => {
     expect(screen.getByTestId('url-search')).toHaveTextContent('v=l')
   })
 
+  it('opens filters in a mobile dialog instead of rendering the sidebar inline', async () => {
+    setMatchMediaMatches(true)
+    mockedGetProductions.mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildProduction(11)],
+    })
+
+    renderPage()
+
+    await screen.findByRole('heading', { name: 'Productie 11' })
+    expect(
+      screen.queryByRole('complementary', { name: 'Geavanceerde filters' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Online' })).toBeInTheDocument()
+  })
+
   it('fetches next page when pagination is used', async () => {
     mockedGetProductions
       .mockResolvedValueOnce({
@@ -227,5 +344,52 @@ describe('HomePage (ProductionPage)', () => {
         },
       })
     })
+  })
+
+  it('applies sidebar filters to the URL and forwards only the first selected values to the backend', async () => {
+    mockedGetProductions.mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildProduction(7)],
+    })
+
+    renderPage('/?p=2&fa=2026-03-01&fb=2026-03-31')
+
+    await screen.findByRole('heading', { name: 'Productie 7' })
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Online' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Fysiek' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Groep' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Solo' }))
+    fireEvent.click(screen.getByText('Theater'))
+    fireEvent.click(screen.getByText('Dans'))
+    fireEvent.click(screen.getByText('Premiere'))
+    fireEvent.click(screen.getByText('Festival'))
+
+    await waitFor(() => {
+      expect(mockedGetProductions).toHaveBeenLastCalledWith({
+        page: 1,
+        pageSize: 12,
+        filters: {
+          search: undefined,
+          ordering: '-first_event_start',
+          attendance_mode: 'online',
+          performer_type: 'group',
+          genre: 5,
+          tag: 8,
+          first_event_start_after: '2026-03-01T00:00:00.000Z',
+          first_event_start_before: '2026-03-31T23:59:59.999Z',
+        },
+      })
+    })
+
+    expect(screen.getByTestId('url-search')).toHaveTextContent('am=online-offline')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('pt=group-solo')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('g=5-9')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('t=8-12')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('fa=2026-03-01')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('fb=2026-03-31')
+    expect(screen.getByTestId('url-search')).not.toHaveTextContent('p=')
   })
 })

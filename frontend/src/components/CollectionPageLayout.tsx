@@ -1,6 +1,20 @@
-import { Alert, Box, Button, Container, Paper, Stack, Typography } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import FilterListIcon from '@mui/icons-material/FilterList'
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Paper,
+  Stack,
+  Typography,
+} from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import LoadingSpinner from './LoadingSpinner'
 import Pagination from './Pagination'
 import SearchControlsBar from './searchbar/SearchControlsBar'
@@ -22,6 +36,7 @@ export interface CollectionPageLayoutProps {
   sidebarAriaLabel: string
   sidebarTitle: string
   sidebarDescription: string
+  sidebarContent?: ReactNode
   resultsRegionAriaLabel: string
   isLoading: boolean
   loadingLabel: string
@@ -96,6 +111,7 @@ const CollectionPageLayout = ({
   sidebarAriaLabel,
   sidebarTitle,
   sidebarDescription,
+  sidebarContent,
   resultsRegionAriaLabel,
   isLoading,
   loadingLabel,
@@ -114,6 +130,9 @@ const CollectionPageLayout = ({
 }: CollectionPageLayoutProps) => {
   const theme = useTheme()
   const isEmpty = !isLoading && !errorMessage && !hasResults
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false)
+  const showInlineSidebar = !isMobile
+  const showMobileFilterButton = isMobile && Boolean(sidebarContent)
 
   return (
     <Box sx={{ py: { xs: 3, md: 4 } }}>
@@ -134,35 +153,89 @@ const CollectionPageLayout = ({
             showViewModeToggle={!isMobile}
           />
 
+          {showMobileFilterButton ? (
+            <>
+              <Box>
+                <Button
+                  variant="outlined"
+                  startIcon={<FilterListIcon />}
+                  onClick={() => setIsMobileFiltersOpen(true)}
+                  sx={{
+                    color: 'text.primary',
+                    borderColor: 'text.primary',
+                    '&:hover': {
+                      borderColor: 'text.primary',
+                      backgroundColor: 'action.hover',
+                    },
+                  }}
+                >
+                  {sidebarTitle}
+                </Button>
+              </Box>
+
+              <Dialog
+                open={isMobileFiltersOpen}
+                onClose={() => setIsMobileFiltersOpen(false)}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{
+                  sx: {
+                    backgroundColor: theme.palette.background.paper,
+                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 3,
+                  },
+                }}
+              >
+                <DialogTitle sx={{ pr: 6, backgroundColor: theme.palette.background.paper }}>
+                  {sidebarTitle}
+                </DialogTitle>
+                <IconButton
+                  aria-label={sidebarTitle}
+                  onClick={() => setIsMobileFiltersOpen(false)}
+                  sx={{ position: 'absolute', right: 8, top: 8, color: 'text.primary' }}
+                >
+                  <CloseIcon />
+                </IconButton>
+                <DialogContent dividers sx={{ backgroundColor: theme.palette.background.paper }}>
+                  {sidebarContent}
+                </DialogContent>
+              </Dialog>
+            </>
+          ) : null}
+
           <Box
             display="flex"
             flexDirection={{ xs: 'column', md: 'row' }}
             gap={3}
             alignItems="flex-start"
           >
-            <Paper
-              component="aside"
-              elevation={1}
-              aria-label={sidebarAriaLabel}
-              sx={{
-                width: { xs: '100%', md: 280 },
-                flexShrink: 0,
-                minHeight: 160,
-                p: 2.5,
-                borderRadius: 2,
-                border: `1px dashed ${theme.palette.divider}`,
-              }}
-            >
-              {/* Sidebar content placeholder */}
-              <Stack spacing={1}>
-                <Typography variant="subtitle1" component="h2">
-                  {sidebarTitle}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {sidebarDescription}
-                </Typography>
-              </Stack>
-            </Paper>
+            {showInlineSidebar ? (
+              <Paper
+                component="aside"
+                elevation={0}
+                aria-label={sidebarAriaLabel}
+                sx={{
+                  width: { xs: '100%', md: 320 },
+                  flexShrink: 0,
+                  minHeight: 160,
+                  p: 2.5,
+                  borderRadius: 3,
+                  border: `1px solid ${theme.palette.divider}`,
+                  backgroundColor: theme.palette.background.paper,
+                }}
+              >
+                {sidebarContent ?? (
+                  <Stack spacing={1}>
+                    <Typography variant="subtitle1" component="h2">
+                      {sidebarTitle}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {sidebarDescription}
+                    </Typography>
+                  </Stack>
+                )}
+              </Paper>
+            ) : null}
 
             {/* Main content area */}
             {/* Loading */}

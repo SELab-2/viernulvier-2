@@ -1,13 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
 import { useMediaQuery, useTheme } from '@mui/material'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
 import ProductionView from '../components/ProductionView'
+import ProductionFilterPanel from '../components/production/ProductionFilterPanel'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import { ApiError } from '../services/ApiTypes'
+import { getGenres } from '../services/genres/Genres'
 import { getProductions } from '../services/productions/Productions'
+import { getTags } from '../services/tags/Tags'
+import type { Genre } from '../types/Genres'
 import type { Production } from '../types/Productions'
+import type { Tag } from '../types/Tags'
 
 // Page size for the productions list pagination. This is a constant for now but could be made configurable in the future if needed.
 const PAGE_SIZE = 12
@@ -18,6 +23,15 @@ const PAGE_SIZE = 12
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
   const targetField = sortTarget === 'name' ? 'translations__title' : 'first_event_start'
   return sortDirection === 'desc' ? `-${targetField}` : targetField
+}
+
+const toIsoDateBoundary = (value: string, boundary: 'start' | 'end'): string | undefined => {
+  if (!value) {
+    return undefined
+  }
+
+  const suffix = boundary === 'start' ? 'T00:00:00.000Z' : 'T23:59:59.999Z'
+  return new Date(`${value}${suffix}`).toISOString()
 }
 
 // Home page component that displays a list of productions with search, sorting, and pagination functionality.
@@ -32,16 +46,31 @@ const HomePage = () => {
     sortDirection,
     viewMode,
     page,
+    attendanceModes,
+    performerTypes,
+    firstEventStartAfter,
+    firstEventStartBefore,
+    selectedGenreIds,
+    selectedTagIds,
     setSearchValue,
     setSortTarget,
     setSortDirection,
     setViewMode,
     setPage,
+    toggleAttendanceMode,
+    togglePerformerType,
+    setFirstEventStartAfter,
+    setFirstEventStartBefore,
+    setSelectedGenreIds,
+    setSelectedTagIds,
+    clearFilters,
   } = useSearchBarUrlState({ isMobile })
 
   // Local state for managing the productions data, loading state, error messages, and a retry key to trigger refetching
   const [isLoading, setIsLoading] = useState(true)
   const [productions, setProductions] = useState<Production[]>([])
+  const [genres, setGenres] = useState<Genre[]>([])
+  const [tags, setTags] = useState<Tag[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
@@ -59,11 +88,48 @@ const HomePage = () => {
     () => getOrderingValue(sortTarget, sortDirection),
     [sortDirection, sortTarget],
   )
+  const selectedAttendanceMode = attendanceModes[0]
+  const selectedPerformerType = performerTypes[0]
+  const selectedGenreId = selectedGenreIds[0]
+  const selectedTagId = selectedTagIds[0]
 
   // Effect to synchronize the search draft state with the actual search value from the URL
   useEffect(() => {
     setSearchDraft(searchValue)
   }, [searchValue])
+
+  useEffect(() => {
+    let isActive = true
+
+    const fetchFilterOptions = async () => {
+      try {
+        const [genreResponse, tagResponse] = await Promise.all([
+          getGenres({ page: 1, pageSize: 100 }),
+          getTags({ page: 1, pageSize: 100 }),
+        ])
+
+        if (!isActive) {
+          return
+        }
+
+        setGenres(genreResponse.results)
+        setTags(tagResponse.results)
+      } catch {
+        if (!isActive) {
+          return
+        }
+
+        setGenres([])
+        setTags([])
+      }
+    }
+
+    void fetchFilterOptions()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   // Effect to fetch productions data from the API whenever the ordering, page, retryKey, or searchValue changes.
   useEffect(() => {
@@ -82,6 +148,14 @@ const HomePage = () => {
           filters: {
             search: searchValue.trim() || undefined,
             ordering,
+            attendance_mode: selectedAttendanceMode,
+            performer_type: selectedPerformerType,
+            // TODO: Forward all selected genre ids once the backend supports multi-value filtering.
+            genre: selectedGenreId,
+            // TODO: Forward all selected tag ids once the backend supports multi-value filtering.
+            tag: selectedTagId,
+            first_event_start_after: toIsoDateBoundary(firstEventStartAfter, 'start'),
+            first_event_start_before: toIsoDateBoundary(firstEventStartBefore, 'end'),
           },
         })
 
@@ -118,7 +192,18 @@ const HomePage = () => {
     return () => {
       isActive = false
     }
-  }, [ordering, page, retryKey, searchValue])
+  }, [
+    firstEventStartAfter,
+    firstEventStartBefore,
+    ordering,
+    page,
+    retryKey,
+    searchValue,
+    selectedAttendanceMode,
+    selectedGenreId,
+    selectedPerformerType,
+    selectedTagId,
+  ])
 
   // Function to handle retrying the API call when there is an error
   const onRetry = () => {
@@ -157,6 +242,25 @@ const HomePage = () => {
         sidebarAriaLabel={t('productions.home.filterPanelLabel')}
         sidebarTitle={t('productions.home.filterPanelTitle')}
         sidebarDescription={t('productions.home.filterPanelPlaceholder')}
+        sidebarContent={
+          <ProductionFilterPanel
+            attendanceModes={attendanceModes}
+            performerTypes={performerTypes}
+            firstEventStartAfter={firstEventStartAfter}
+            firstEventStartBefore={firstEventStartBefore}
+            selectedGenreIds={selectedGenreIds}
+            selectedTagIds={selectedTagIds}
+            genres={genres}
+            tags={tags}
+            onAttendanceModeToggle={toggleAttendanceMode}
+            onPerformerTypeToggle={togglePerformerType}
+            onFirstEventStartAfterChange={setFirstEventStartAfter}
+            onFirstEventStartBeforeChange={setFirstEventStartBefore}
+            onGenreSelectionChange={setSelectedGenreIds}
+            onTagSelectionChange={setSelectedTagIds}
+            onClearFilters={clearFilters}
+          />
+        }
         resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('productions.home.loading')}
@@ -166,7 +270,13 @@ const HomePage = () => {
         emptyTitle={t('productions.home.empty.title')}
         emptyDescription={t('productions.home.empty.description')}
         hasResults={productions.length > 0}
-        resultsContent={<ProductionView productions={productions} layout={viewMode} />}
+        resultsContent={
+          <ProductionView
+            productions={productions}
+            layout={viewMode}
+            selectedGenreIds={selectedGenreIds}
+          />
+        }
         page={page}
         pageSize={PAGE_SIZE}
         totalItems={totalCount}
