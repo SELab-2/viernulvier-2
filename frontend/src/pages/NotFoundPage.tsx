@@ -1,25 +1,32 @@
-import { Button, Container, Paper, Stack, Typography } from '@mui/material'
+import { Button, Container, Paper, Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
+import { createCommonStyles } from '../theme/styles'
+import { tokens } from '../theme/tokens'
 
 const NotFoundPage = () => {
+  const theme = useTheme()
+  const commonStyles = createCommonStyles(theme)
   const { t } = useTranslation()
 
   return (
     <Container
       sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        mt: 8,
+        ...commonStyles.centerContent,
+        mt: tokens.spacing.numeric3xl,
       }}
     >
       <Paper
         sx={{
-          p: { xs: 2, sm: 4, md: 6 },
-          borderRadius: 4,
+          p: {
+            xs: tokens.spacing.numericMd,
+            sm: tokens.spacing.numericXl,
+            md: tokens.spacing.numeric2xl,
+          },
+          borderRadius: tokens.card.borderRadius,
         }}
       >
-        <Stack spacing={2} alignItems="flex-start">
+        <Stack spacing={tokens.spacing.numericMd} alignItems="flex-start">
           <Typography variant="h4" fontWeight="bold">
             {t('notFound.title')}
           </Typography>
@@ -33,7 +40,7 @@ const NotFoundPage = () => {
             to="/"
             variant="outlined"
             sx={(theme) => ({
-              px: 3,
+              px: tokens.spacing.numericLg,
               borderColor: theme.palette.text.primary,
               color: theme.palette.text.primary,
               '&:hover': {
