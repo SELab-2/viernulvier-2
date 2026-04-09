@@ -215,7 +215,7 @@ const ProductionDetailsPage = () => {
         </div>
       </div>
 
-      {production.media_gallery.media_items.length > 0 && (
+      {production.media_gallery?.media_items?.length > 0 && (
         <div style={{ padding: '0 16px 32px' }}>
           <MediaList mediaItems={production.media_gallery.media_items} />
         </div>
