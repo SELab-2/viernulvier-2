@@ -63,6 +63,7 @@ function RelatedProductions({ lang = 'nl', related }: RelatedProductionsProps) {
                 name={String(entry.tag.id)}
                 labels={entry.tag.name as Record<string, string>}
                 context="series"
+                chipType="seriesTag"
                 id={entry.tag.id}
               />
             </Box>
