@@ -60,7 +60,7 @@ function RelatedProductions({ lang = 'nl', related }: RelatedProductionsProps) {
           <Box key={entry.tag.id}>
             <Box sx={{ mb: 1.5, display: 'inline-flex', fontWeight: 600 }}>
               <GenreAndTagChip
-                name={String(entry.tag.id)}
+                name={entry.tag.display_name ?? 'unknown tag'}
                 labels={entry.tag.name as Record<string, string>}
                 context="series"
                 chipType="seriesTag"
@@ -96,26 +96,43 @@ function RelatedProductions({ lang = 'nl', related }: RelatedProductionsProps) {
                 // Or we could make the ProductionGridCard work with the related production types
                 // For now just use normalization, but maybe this should be looked at again?
                 return (
-                  <ProductionGridCard
+                  <Box
                     key={production.id}
-                    production={{
-                      ...production,
-                      attendance_mode: '',
-                      performer_type: '',
-                      first_event_start: null,
-                      last_event_end: null,
-                      uit_database_theme: null,
-                      uit_database_type: null,
-                      artist_name: production.artist_name ?? {},
-                      tagline: {},
-                      teaser: {},
-                      description: {},
-                      tags: [],
-                      genres: [],
-                      display_title: normalizedTitle,
-                      display_artist_name: normalizedArtist,
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'stretch',
+                      // make the inner ProductionGridCard fill the slide height
+                      '& > a': {
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '100%',
+                      },
+                      // Ensure the MUI Stack inside the link stretches to full height
+                      '& > a > .MuiStack-root': {
+                        height: '100%',
+                      },
                     }}
-                  />
+                  >
+                    <ProductionGridCard
+                      production={{
+                        ...production,
+                        attendance_mode: '',
+                        performer_type: '',
+                        first_event_start: null,
+                        last_event_end: null,
+                        uit_database_theme: null,
+                        uit_database_type: null,
+                        artist_name: production.artist_name ?? {},
+                        tagline: {},
+                        teaser: {},
+                        description: {},
+                        tags: [],
+                        genres: [],
+                        display_title: normalizedTitle,
+                        display_artist_name: normalizedArtist,
+                      }}
+                    />
+                  </Box>
                 )
               })}
             </Carousel>

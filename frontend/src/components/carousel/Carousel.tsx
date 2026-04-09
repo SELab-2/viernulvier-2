@@ -150,9 +150,9 @@ function Carousel({
           mb: '-4px',
         }}
       >
-        <Box display="flex" gap={0} mx={-1}>
+        <Box display="flex" gap={0} mx={-1} alignItems="stretch">
           {slides.map((slide, index) => (
-            <Box key={index} px={1} boxSizing="border-box">
+            <Box key={index} px={1} boxSizing="border-box" display="flex" alignItems="stretch">
               {slide}
             </Box>
           ))}

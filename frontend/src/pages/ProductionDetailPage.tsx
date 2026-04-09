@@ -24,7 +24,6 @@ import { getLocalizedValue } from '../utils/localization'
  */
 function getProductionHeroImageUrl(production: Production): string | null {
   // Find the first media item of type 'foto'
-  const mediaItems = production.media_gallery.media_items
   const mediaItems = production.media_gallery?.media_items
   const firstPhoto = mediaItems?.find((item) => item.type === 'foto')
 
