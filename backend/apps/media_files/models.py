@@ -30,7 +30,7 @@ class MediaFile(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     file = models.FileField(upload_to=upload_to_media)
 
-    original_name = models.CharField(max_length=255, blank=True)
+    filename = models.CharField(max_length=255, blank=True)
     mime_type = models.CharField(max_length=100, blank=True, editable=False)
     size_bytes = models.PositiveBigIntegerField(blank=True, null=True, editable=False)
 
@@ -52,7 +52,7 @@ class MediaFile(BaseModel):
 
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
-    def _derive_original_name(self) -> str:
+    def _derive_filename(self) -> str:
         """Prefer the client filename over the generated storage path."""
         if not self.file:
             return ""
@@ -108,8 +108,8 @@ class MediaFile(BaseModel):
 
         file_changed = self._file_has_changed()
 
-        if not self.original_name:
-            self.original_name = self._derive_original_name()
+        if not self.filename:
+            self.filename = self._derive_filename()
 
         if file_changed or not self.mime_type:
             self.mime_type = self._derive_mime_type()
@@ -145,4 +145,4 @@ class MediaFile(BaseModel):
 
     def __str__(self) -> str:
         """Return the original uploaded filename."""
-        return self.original_name
+        return self.filename

@@ -4,7 +4,7 @@ Covers:
 - Meta model and fields
 - file_type filtering (case-insensitive exact)
 - mime_type filtering (case-insensitive exact)
-- original_name filtering (case-insensitive contains)
+- filename filtering (case-insensitive contains)
 - uploaded_by filtering by user id
 - external_id filtering inherited from BaseModelFilter
 - combined filters
@@ -64,7 +64,7 @@ def user_two():
 def pdf_file(user_one):
     return MediaFile.objects.create(
         file=make_uploaded_file(name="season-brochure.pdf", content_type="application/pdf"),
-        original_name="season-brochure.pdf",
+        filename="season-brochure.pdf",
         mime_type="application/pdf",
         size_bytes=100,
         uploaded_by=user_one,
@@ -76,7 +76,7 @@ def pdf_file(user_one):
 def png_file(user_one):
     return MediaFile.objects.create(
         file=make_uploaded_file(name="MainPoster.PNG", content_type="image/png"),
-        original_name="MainPoster.PNG",
+        filename="MainPoster.PNG",
         mime_type="image/png",
         size_bytes=200,
         uploaded_by=user_one,
@@ -88,7 +88,7 @@ def png_file(user_one):
 def jpg_file(user_two):
     return MediaFile.objects.create(
         file=make_uploaded_file(name="press-photo.jpg", content_type="image/jpeg"),
-        original_name="press-photo.jpg",
+        filename="press-photo.jpg",
         mime_type="image/jpeg",
         size_bytes=300,
         uploaded_by=user_two,
@@ -112,7 +112,7 @@ class TestMediaFileFilterDefinition:
         assert MediaFileFilter._meta.fields == [
             "file_type",
             "mime_type",
-            "original_name",
+            "filename",
             "uploaded_by",
             "external_id",
         ]
@@ -189,60 +189,60 @@ class TestMediaFileFilterMimeType:
 
 
 # =====================================================
-# original_name
+# filename
 # =====================================================
 
 
 class TestMediaFileFilterOriginalName:
-    def test_filters_by_original_name_contains(self, png_file) -> None:
+    def test_filters_by_filename_contains(self, png_file) -> None:
         qs = MediaFileFilter(
-            data={"original_name": "poster"},
+            data={"filename": "poster"},
             queryset=MediaFile.objects.all(),
         ).qs
 
         assert list(qs) == [png_file]
 
-    def test_original_name_filter_is_case_insensitive(self, png_file) -> None:
+    def test_filename_filter_is_case_insensitive(self, png_file) -> None:
         qs = MediaFileFilter(
-            data={"original_name": "mainposter"},
+            data={"filename": "mainposter"},
             queryset=MediaFile.objects.all(),
         ).qs
 
         assert list(qs) == [png_file]
 
-    def test_original_name_filter_can_match_multiple_rows(self, user_one):
+    def test_filename_filter_can_match_multiple_rows(self, user_one):
         first = MediaFile.objects.create(
             file=make_uploaded_file(name="poster-one.png", content_type="image/png"),
-            original_name="poster-one.png",
+            filename="poster-one.png",
             mime_type="image/png",
             size_bytes=100,
             uploaded_by=user_one,
         )
         second = MediaFile.objects.create(
             file=make_uploaded_file(name="poster-two.jpg", content_type="image/jpeg"),
-            original_name="poster-two.jpg",
+            filename="poster-two.jpg",
             mime_type="image/jpeg",
             size_bytes=100,
             uploaded_by=user_one,
         )
         MediaFile.objects.create(
             file=make_uploaded_file(name="brochure.pdf", content_type="application/pdf"),
-            original_name="brochure.pdf",
+            filename="brochure.pdf",
             mime_type="application/pdf",
             size_bytes=100,
             uploaded_by=user_one,
         )
 
         qs = MediaFileFilter(
-            data={"original_name": "poster"},
+            data={"filename": "poster"},
             queryset=MediaFile.objects.all(),
         ).qs
 
         assert set(qs) == {first, second}
 
-    def test_original_name_filter_returns_empty_when_no_match(self) -> None:
+    def test_filename_filter_returns_empty_when_no_match(self) -> None:
         qs = MediaFileFilter(
-            data={"original_name": "nonexistent"},
+            data={"filename": "nonexistent"},
             queryset=MediaFile.objects.all(),
         ).qs
 
@@ -323,7 +323,7 @@ class TestMediaFileFilterCombined:
                 "file_type": "image",
                 "mime_type": "image/png",
                 "uploaded_by": user_one.id,
-                "original_name": "poster",
+                "filename": "poster",
             },
             queryset=MediaFile.objects.all(),
         ).qs

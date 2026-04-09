@@ -23,7 +23,7 @@ class MediaFileViewSet(ApiModelViewSet):
     filterset_class = MediaFileFilter
     ordering_fields = ["id", "created_at", "size_bytes", "mime_type", "file_type"]
     ordering = ["-created_at"]
-    search_fields = ["original_name", "mime_type"]
+    search_fields = ["filename", "mime_type"]
 
     def get_serializer_class(self) -> type[BaseSerializer]:
         """Return the upload serializer for create and the read serializer otherwise."""

@@ -58,7 +58,7 @@ class TestMediaFileSerializerFields(TestCase):
     def setUp(self) -> None:
         self.media_file = MediaFile.objects.create(
             file=make_uploaded_file(name="season-brochure.pdf", content_type="application/pdf"),
-            original_name="season-brochure.pdf",
+            filename="season-brochure.pdf",
             mime_type="application/pdf",
             size_bytes=123,
         )
@@ -69,7 +69,7 @@ class TestMediaFileSerializerFields(TestCase):
             "id",
             "external_id",
             "file",
-            "original_name",
+            "filename",
             "mime_type",
             "size_bytes",
             "file_type",
@@ -86,7 +86,7 @@ class TestMediaFileSerializerFields(TestCase):
             "id",
             "external_id",
             "file",
-            "original_name",
+            "filename",
             "mime_type",
             "size_bytes",
             "file_type",
@@ -111,7 +111,7 @@ class TestMediaFileSerializerValues(TestCase):
         )
         self.media_file = MediaFile.objects.create(
             file=make_uploaded_file(name="poster.png", content_type="image/png"),
-            original_name="poster.png",
+            filename="poster.png",
             mime_type="image/png",
             size_bytes=456,
             uploaded_by=self.user,
@@ -129,8 +129,8 @@ class TestMediaFileSerializerValues(TestCase):
         assert isinstance(self.data["file"], str)
         assert self.data["file"].endswith(".png")
 
-    def test_original_name_is_correct(self) -> None:
-        assert self.data["original_name"] == "poster.png"
+    def test_filename_is_correct(self) -> None:
+        assert self.data["filename"] == "poster.png"
 
     def test_mime_type_is_correct(self) -> None:
         assert self.data["mime_type"] == "image/png"
@@ -164,7 +164,7 @@ class TestMediaFileUploadSerializerFields(TestCase):
             "id",
             "external_id",
             "file",
-            "original_name",
+            "filename",
             "mime_type",
             "size_bytes",
             "file_type",
@@ -181,7 +181,7 @@ class TestMediaFileUploadSerializerFields(TestCase):
 
         assert serializer.fields["id"].read_only is True
         assert serializer.fields["external_id"].read_only is True
-        assert serializer.fields["original_name"].read_only is True
+        assert serializer.fields["filename"].read_only is True
         assert serializer.fields["mime_type"].read_only is True
         assert serializer.fields["size_bytes"].read_only is True
         assert serializer.fields["file_type"].read_only is True
@@ -272,7 +272,7 @@ class TestMediaFileUploadSerializerCreate(TestCase):
             password="password",
         )
 
-    def test_create_sets_original_name(self) -> None:
+    def test_create_sets_filename(self) -> None:
         request = make_request(user=self.user)
         serializer = MediaFileUploadSerializer(
             data={"file": make_uploaded_file(name="poster.png", content_type="image/png")},
@@ -282,7 +282,7 @@ class TestMediaFileUploadSerializerCreate(TestCase):
         assert serializer.is_valid(), serializer.errors
         obj = serializer.save()
 
-        assert obj.original_name == "poster.png"
+        assert obj.filename == "poster.png"
 
     def test_create_sets_mime_type(self) -> None:
         request = make_request(user=self.user)

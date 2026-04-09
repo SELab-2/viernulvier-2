@@ -25,7 +25,7 @@ class MediaFileAdmin(BaseAdmin):
 
     list_display = (
         "id",
-        "original_name",
+        "filename",
         "file_type",
         "mime_type",
         "size_bytes",
@@ -41,7 +41,7 @@ class MediaFileAdmin(BaseAdmin):
     )
 
     search_fields = (
-        "original_name",
+        "filename",
         "mime_type",
         "external_id",
         "uploaded_by__username",
@@ -66,7 +66,7 @@ class MediaFileAdmin(BaseAdmin):
         "external_id",
         "file",
         "file_link",
-        "original_name",
+        "filename",
         "mime_type",
         "size_bytes",
         "file_type",

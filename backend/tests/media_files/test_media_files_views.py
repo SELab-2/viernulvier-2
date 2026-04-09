@@ -85,13 +85,13 @@ class TestMediaFileViewSetList(TestCase):
 
         self.a = MediaFile.objects.create(
             file=make_file("a.pdf"),
-            original_name="a.pdf",
+            filename="a.pdf",
             mime_type="application/pdf",
             size_bytes=100,
         )
         self.b = MediaFile.objects.create(
             file=make_file("poster.png", content_type="image/png"),
-            original_name="poster.png",
+            filename="poster.png",
             mime_type="image/png",
             size_bytes=200,
         )
@@ -124,7 +124,7 @@ class TestMediaFileViewSetList(TestCase):
             "id",
             "external_id",
             "file",
-            "original_name",
+            "filename",
             "mime_type",
             "size_bytes",
             "file_type",
@@ -141,7 +141,7 @@ class TestMediaFileViewSetDetail(TestCase):
         self.client = APIClient()
         self.obj = MediaFile.objects.create(
             file=make_file("detail.pdf"),
-            original_name="detail.pdf",
+            filename="detail.pdf",
             mime_type="application/pdf",
             size_bytes=111,
         )
@@ -161,7 +161,7 @@ class TestMediaFileViewSetDetail(TestCase):
     def test_detail_returns_correct_object(self) -> None:
         response = self.client.get(f"/api/v1/media/{self.obj.pk}/", **pub_headers())
         assert response.data["id"] == str(self.obj.pk)
-        assert response.data["original_name"] == "detail.pdf"
+        assert response.data["filename"] == "detail.pdf"
 
     def test_detail_unknown_id_returns_404(self) -> None:
         response = self.client.get("/api/v1/media/00000000-0000-0000-0000-000000000000/", **pub_headers())
@@ -214,7 +214,7 @@ class TestMediaFileViewSetCreate(TestCase):
         assert response.status_code == 201, getattr(response, "data", response.content)
 
         obj = MediaFile.objects.get()
-        assert obj.original_name == "poster.png"
+        assert obj.filename == "poster.png"
         assert obj.mime_type == "image/png"
         assert obj.file_type == MediaFile.FileType.IMAGE
 
@@ -244,13 +244,13 @@ class TestMediaFileViewSetFiltering(TestCase):
 
         self.pdf = MediaFile.objects.create(
             file=make_file("brochure.pdf"),
-            original_name="brochure.pdf",
+            filename="brochure.pdf",
             mime_type="application/pdf",
             size_bytes=100,
         )
         self.png = MediaFile.objects.create(
             file=make_file("poster.png", content_type="image/png"),
-            original_name="poster.png",
+            filename="poster.png",
             mime_type="image/png",
             size_bytes=200,
         )
@@ -263,8 +263,8 @@ class TestMediaFileViewSetFiltering(TestCase):
         response = self.client.get("/api/v1/media/?mime_type=image/png", **pub_headers())
         assert len(results_list(response)) == 1
 
-    def test_filter_by_original_name(self) -> None:
-        response = self.client.get("/api/v1/media/?original_name=poster", **pub_headers())
+    def test_filter_by_filename(self) -> None:
+        response = self.client.get("/api/v1/media/?filename=poster", **pub_headers())
         assert len(results_list(response)) == 1
 
 
@@ -276,13 +276,13 @@ class TestMediaFileViewSetOrdering(TestCase):
 
         MediaFile.objects.create(
             file=make_file("large.pdf"),
-            original_name="large.pdf",
+            filename="large.pdf",
             mime_type="application/pdf",
             size_bytes=300,
         )
         MediaFile.objects.create(
             file=make_file("small.pdf"),
-            original_name="small.pdf",
+            filename="small.pdf",
             mime_type="application/pdf",
             size_bytes=100,
         )
@@ -301,13 +301,13 @@ class TestMediaFileViewSetSearch(TestCase):
 
         MediaFile.objects.create(
             file=make_file("poster.png", content_type="image/png"),
-            original_name="poster.png",
+            filename="poster.png",
             mime_type="image/png",
             size_bytes=100,
         )
         MediaFile.objects.create(
             file=make_file("doc.pdf"),
-            original_name="doc.pdf",
+            filename="doc.pdf",
             mime_type="application/pdf",
             size_bytes=100,
         )

@@ -70,7 +70,7 @@ class TestMediaFile:
     def test_id_is_uuid(self) -> None:
         obj = MediaFile.objects.create(
             file=make_uploaded_file(),
-            original_name="test.pdf",
+            filename="test.pdf",
             mime_type="application/pdf",
             size_bytes=123,
         )
@@ -79,7 +79,7 @@ class TestMediaFile:
     def test_external_id_is_optional(self) -> None:
         obj = MediaFile(
             file=make_uploaded_file(),
-            original_name="test.pdf",
+            filename="test.pdf",
             mime_type="application/pdf",
             size_bytes=123,
             external_id=None,
@@ -89,17 +89,17 @@ class TestMediaFile:
     def test_uploaded_by_is_optional(self) -> None:
         obj = MediaFile(
             file=make_uploaded_file(),
-            original_name="test.pdf",
+            filename="test.pdf",
             mime_type="application/pdf",
             size_bytes=123,
             uploaded_by=None,
         )
         obj.full_clean()  # should not raise
 
-    def test_str_returns_original_name(self) -> None:
+    def test_str_returns_filename(self) -> None:
         obj = MediaFile.objects.create(
             file=make_uploaded_file(),
-            original_name="season-brochure.pdf",
+            filename="season-brochure.pdf",
             mime_type="application/pdf",
             size_bytes=123,
         )
@@ -108,7 +108,7 @@ class TestMediaFile:
     def test_file_is_stored_under_upload_prefix(self) -> None:
         obj = MediaFile.objects.create(
             file=make_uploaded_file(name="season-brochure.pdf"),
-            original_name="season-brochure.pdf",
+            filename="season-brochure.pdf",
             mime_type="application/pdf",
             size_bytes=123,
         )
@@ -118,7 +118,7 @@ class TestMediaFile:
     def test_pdf_mime_type_sets_pdf_file_type(self) -> None:
         obj = MediaFile.objects.create(
             file=make_uploaded_file(name="brochure.pdf", content_type="application/pdf"),
-            original_name="brochure.pdf",
+            filename="brochure.pdf",
             mime_type="application/pdf",
             size_bytes=123,
         )
@@ -127,7 +127,7 @@ class TestMediaFile:
     def test_png_mime_type_sets_image_file_type(self) -> None:
         obj = MediaFile.objects.create(
             file=make_uploaded_file(name="poster.png", content_type="image/png"),
-            original_name="poster.png",
+            filename="poster.png",
             mime_type="image/png",
             size_bytes=123,
         )
@@ -136,7 +136,7 @@ class TestMediaFile:
     def test_jpeg_mime_type_sets_image_file_type(self) -> None:
         obj = MediaFile.objects.create(
             file=make_uploaded_file(name="poster.jpg", content_type="image/jpeg"),
-            original_name="poster.jpg",
+            filename="poster.jpg",
             mime_type="image/jpeg",
             size_bytes=123,
         )
@@ -145,7 +145,7 @@ class TestMediaFile:
     def test_webp_mime_type_sets_image_file_type(self) -> None:
         obj = MediaFile.objects.create(
             file=make_uploaded_file(name="poster.webp", content_type="image/webp"),
-            original_name="poster.webp",
+            filename="poster.webp",
             mime_type="image/webp",
             size_bytes=123,
         )
@@ -154,7 +154,7 @@ class TestMediaFile:
     def test_unknown_mime_type_sets_other_file_type(self) -> None:
         obj = MediaFile.objects.create(
             file=make_uploaded_file(name="notes.txt", content_type="text/plain"),
-            original_name="notes.txt",
+            filename="notes.txt",
             mime_type="text/plain",
             size_bytes=123,
         )
@@ -163,7 +163,7 @@ class TestMediaFile:
     def test_manual_file_type_override_is_normalized_by_clean(self) -> None:
         obj = MediaFile.objects.create(
             file=make_uploaded_file(name="brochure.pdf", content_type="application/pdf"),
-            original_name="brochure.pdf",
+            filename="brochure.pdf",
             mime_type="application/pdf",
             size_bytes=123,
             file_type=MediaFile.FileType.OTHER,
@@ -173,7 +173,7 @@ class TestMediaFile:
     def test_clean_is_called_automatically_via_basemodel_save(self) -> None:
         obj = MediaFile(
             file=make_uploaded_file(name="image.jpg", content_type="image/jpeg"),
-            original_name="image.jpg",
+            filename="image.jpg",
             mime_type="image/jpeg",
             size_bytes=123,
             file_type=MediaFile.FileType.OTHER,
@@ -189,7 +189,7 @@ class TestMediaFile:
         )
         obj = MediaFile.objects.create(
             file=make_uploaded_file(),
-            original_name="test.pdf",
+            filename="test.pdf",
             mime_type="application/pdf",
             size_bytes=123,
             uploaded_by=user,
@@ -208,14 +208,14 @@ class TestMediaFile:
         )
         MediaFile.objects.create(
             file=make_uploaded_file(name="one.pdf"),
-            original_name="one.pdf",
+            filename="one.pdf",
             mime_type="application/pdf",
             size_bytes=100,
             uploaded_by=user,
         )
         MediaFile.objects.create(
             file=make_uploaded_file(name="two.pdf"),
-            original_name="two.pdf",
+            filename="two.pdf",
             mime_type="application/pdf",
             size_bytes=200,
             uploaded_by=user,
@@ -226,7 +226,7 @@ class TestMediaFile:
     def test_created_at_is_set_on_create(self) -> None:
         obj = MediaFile.objects.create(
             file=make_uploaded_file(),
-            original_name="test.pdf",
+            filename="test.pdf",
             mime_type="application/pdf",
             size_bytes=123,
         )

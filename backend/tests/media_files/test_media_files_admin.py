@@ -75,7 +75,7 @@ def media_file(uploader):
     )
     return MediaFile.objects.create(
         file=uploaded,
-        original_name="poster.pdf",
+        filename="poster.pdf",
         mime_type="application/pdf",
         size_bytes=123,
         uploaded_by=uploader,
@@ -108,7 +108,7 @@ class TestMediaFileAdminConfiguration:
     def test_list_display_matches_expected_fields(self, media_file_admin) -> None:
         assert media_file_admin.list_display == (
             "id",
-            "original_name",
+            "filename",
             "file_type",
             "mime_type",
             "size_bytes",
@@ -126,7 +126,7 @@ class TestMediaFileAdminConfiguration:
 
     def test_search_fields_matches_expected_fields(self, media_file_admin) -> None:
         assert media_file_admin.search_fields == (
-            "original_name",
+            "filename",
             "mime_type",
             "external_id",
             "uploaded_by__username",
@@ -151,7 +151,7 @@ class TestMediaFileAdminConfiguration:
             "external_id",
             "file",
             "file_link",
-            "original_name",
+            "filename",
             "mime_type",
             "size_bytes",
             "file_type",
@@ -214,7 +214,7 @@ class TestMediaFileAdminQueryset:
 class TestMediaFileAdminFileLink:
     def test_file_link_returns_dash_when_no_file(self, media_file_admin) -> None:
         obj = MediaFile(
-            original_name="missing-file",
+            filename="missing-file",
             mime_type="application/pdf",
             size_bytes=0,
             file_type=MediaFile.FileType.PDF,
