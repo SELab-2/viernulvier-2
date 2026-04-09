@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material'
 import type { MediaItem, MediaItemCrop } from '../../../types/Media'
 import MediaList from '../../../components/production/MediaList'
@@ -169,7 +169,6 @@ describe('MediaList component', () => {
     render(<MediaList mediaItems={items} />)
 
     expect(screen.getByAltText('Imghd')).toHaveAttribute('src', 'https://hd.png')
-    fireEvent.click(screen.getByRole('button', { name: 'Next media' }))
     expect(screen.getByAltText('Imgfallback')).toHaveAttribute('src', 'https://fallback.png')
   })
 
