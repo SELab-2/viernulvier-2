@@ -1,3 +1,5 @@
+"""Serializers for Media Files."""
+
 from typing import Any
 
 from django.contrib.auth import get_user_model
@@ -24,19 +26,18 @@ class MediaFileSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = fields
-        extra_kwargs = {
-            "file": {"help_text": "Stored file location/URL."},
-            "original_name": {"help_text": "Original filename as uploaded by the user."},
-            "mime_type": {"help_text": "Detected MIME type of the uploaded file."},
-            "size_bytes": {"help_text": "File size in bytes."},
-            "file_type": {"help_text": "Normalized internal file category (e.g. image, pdf, other)."},
-            "uploaded_by": {"help_text": "User who uploaded the file."},
-            "created_at": {"help_text": "Timestamp when the file was uploaded."},
-        }
 
 
 class MediaFileUploadSerializer(serializers.ModelSerializer):
     """Write serializer for uploading a new media file."""
+
+    ALLOWED_MIME_TYPES = {
+        "image/jpeg": MediaFile.FileType.IMAGE,
+        "image/png": MediaFile.FileType.IMAGE,
+        "image/webp": MediaFile.FileType.IMAGE,
+        "application/pdf": MediaFile.FileType.PDF,
+    }
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
     file = serializers.FileField(
         write_only=True,
@@ -67,17 +68,8 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
-    ALLOWED_MIME_TYPES = {
-        "image/jpeg": MediaFile.FileType.IMAGE,
-        "image/png": MediaFile.FileType.IMAGE,
-        "image/webp": MediaFile.FileType.IMAGE,
-        "application/pdf": MediaFile.FileType.PDF,
-    }
-
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
-
     def validate_file(self, value: UploadedFile) -> UploadedFile:
-        """Validate uploaded file type and size."""
+        """Validate that the uploaded file is present, supported, and not too large."""
         if not value:
             raise serializers.ValidationError("No file was uploaded.")
 
@@ -91,10 +83,7 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data: dict[str, Any]) -> MediaFile:
-        """Populate derived metadata fields from the uploaded file."""
-        uploaded_file = validated_data["file"]
-        mime_type = getattr(uploaded_file, "content_type", None)
-
+        """Create a media file instance and let the model derive metadata."""
         request = self.context.get("request")
         user = getattr(request, "user", None)
 
@@ -102,12 +91,9 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
         uploaded_by = user if isinstance(user, user_model) else None
 
         instance = MediaFile(
-            file=uploaded_file,
-            original_name=uploaded_file.name,
-            mime_type=mime_type or "",
-            size_bytes=uploaded_file.size,
-            file_type=self.ALLOWED_MIME_TYPES.get(mime_type, MediaFile.FileType.OTHER),
+            file=validated_data["file"],
             uploaded_by=uploaded_by,
         )
+        instance.full_clean()
         instance.save()
         return instance

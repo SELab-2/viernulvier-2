@@ -1,6 +1,4 @@
 """
-Tests for apps/media_files/serializers.py
-
 Covers:
 - MediaFileSerializer field presence and completeness
 - MediaFileSerializer serialization of scalar fields

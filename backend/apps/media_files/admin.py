@@ -51,7 +51,6 @@ class MediaFileAdmin(BaseAdmin):
     readonly_fields = (
         "id",
         "external_id",
-        "original_name",
         "mime_type",
         "size_bytes",
         "file_type",
