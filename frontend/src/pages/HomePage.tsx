@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMediaQuery, useTheme } from '@mui/material'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
@@ -24,6 +25,10 @@ const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'd
 const HomePage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
+  const location = useLocation()
+  // Type for optional navigation state used to show a one-time floating alert when arriving
+  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
+  const nav = location as { state?: NavState }
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
   const {
@@ -135,6 +140,21 @@ const HomePage = () => {
     setSearchValue(value.trim())
   }
 
+  // If a page navigated here with a floatingAlert in location.state, show it once.
+  useEffect(() => {
+    const state = nav.state
+    if (state?.floatingAlert && state.floatingAlert.open) {
+      setErrorMessage(state.floatingAlert.message ?? null)
+      setIsFloatingErrorOpen(true)
+      // Clear the history state so the alert won't reappear on back/refresh
+      try {
+        window.history.replaceState({}, document.title)
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [nav])
+
   // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.
   // It also handles the different UI states such as loading, error, and empty results.
   return (
@@ -177,7 +197,7 @@ const HomePage = () => {
         open={isFloatingErrorOpen}
         onClose={onFloatingErrorClose}
         severity="error"
-        message={floatingErrorMessage}
+        message={errorMessage ?? floatingErrorMessage}
       />
     </>
   )

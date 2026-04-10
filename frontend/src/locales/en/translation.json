@@ -159,5 +159,15 @@
       "period": "Period",
       "type": "Type"
     }
+  },
+  "blogs": {
+    "title": "Blogs",
+    "unknown": "Could not load blog",
+    "couldNotLoad": "Could not load blog",
+    "detail": {
+      "publishedOn": "Published on",
+      "notPublished": "Not published",
+      "related": "Related productions"
+    }
   }
 }
