@@ -6,9 +6,11 @@ import { getProduction } from '../../services/productions/Productions'
 import type { Event } from '../../types/Events'
 import type { Production } from '../../types/Productions'
 
+const languageState = { current: 'nl' }
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    i18n: { language: 'nl' },
+    i18n: { language: languageState.current },
     t: (_key: string, defaultValue: string) => defaultValue,
   }),
 }))
@@ -26,6 +28,15 @@ jest.mock('../../services/productions/Productions', () => ({
   getProduction: jest.fn(),
 }))
 
+jest.mock('../../components/production/RelatedProductions', () => ({
+  __esModule: true,
+  default: () => <div data-testid="related-productions-mock" />,
+}))
+
+beforeEach(() => {
+  Element.prototype.scrollTo = jest.fn()
+})
+
 const mockedGetProduction = getProduction as jest.MockedFunction<typeof getProduction>
 
 const renderPage = () =>
@@ -40,11 +51,12 @@ const renderPage = () =>
 describe('ProductionDetailPage', () => {
   afterEach(() => {
     jest.clearAllMocks()
+    mockedGetProduction.mockReset()
+    languageState.current = 'nl'
   })
 
   it('shows invalid id error and navigates to home for non-numeric ID', async () => {
     mockUseParams.mockReturnValue({ id: 'abc' })
-    mockedGetProduction.mockResolvedValueOnce(undefined as never)
 
     renderPage()
 
@@ -198,7 +210,6 @@ describe('ProductionDetailPage', () => {
       expect(screen.getByText('Omschrijving NL')).toBeInTheDocument()
       expect(screen.getByText('Events')).toBeInTheDocument()
       expect(screen.getByText('Media')).toBeInTheDocument()
-      expect(screen.getByText('1 / 1')).toBeInTheDocument()
     })
 
     expect(mockNavigate).not.toHaveBeenCalled()

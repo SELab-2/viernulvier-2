@@ -93,6 +93,7 @@
       "goToPage": "Ga naar pagina {{page}}"
     },
     "detail": {
+      "related": "Gerelateerde producties",
       "meta": {
         "period": "Periode",
         "venues": "Locaties",
