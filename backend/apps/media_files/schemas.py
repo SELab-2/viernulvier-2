@@ -112,6 +112,15 @@ _MEDIA_FILE_LIST = extend_schema(
     examples=[_MEDIA_FILE_RESPONSE, _MEDIA_FILE_IMAGE_RESPONSE],
 )
 
+_MEDIA_FILE_RETRIEVE = extend_schema(
+    summary="Retrieve a media file",
+    description=(
+        "Returns the full representation of a single **MediaFile** object, including its stored file URL and metadata."
+    ),
+    responses={200: MediaFileSerializer, **ITEM_ERRORS},
+    examples=[_MEDIA_FILE_RESPONSE],
+)
+
 _MEDIA_FILE_CREATE = extend_schema(
     summary="Upload a media file",
     description=(
