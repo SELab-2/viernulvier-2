@@ -8,7 +8,7 @@ export interface Blog {
   slug: string
   published_at: string | null
   cover_image: string | null
-  title: string
+  title: Record<string, string>
   body: Record<string, string>
   excerpt: Record<string, string>
   display_title: string
