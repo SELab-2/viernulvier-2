@@ -29,7 +29,8 @@ const Router = ({ mode, onToggleMode }: RouterProps) => {
             <Route path="/artists" element={<ArtistsPage />} />
             <Route path="/artists/:id" element={<ArtistDetailPage />} />
             <Route path="/blogs" element={<BlogsPage />} />
-            <Route path="/blogs/:id" element={<Navigate to="/blogs" replace />} /> # TODO : implement blog detail page
+            <Route path="/blogs/:id" element={<Navigate to="/blogs" replace />} /> # TODO :
+            implement blog detail page
             <Route path="/events" element={<Navigate to="/series" replace />} />
             <Route path="/events/:id" element={<Navigate to="/series" replace />} />
             <Route path="/productions" element={<Navigate to="/artists" replace />} />
