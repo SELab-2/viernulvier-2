@@ -11,7 +11,7 @@ from .models import MediaFile
 
 class MediaFileSerializer(serializers.ModelSerializer):
     """Read serializer for media files."""
-    
+
     uploaded_by = serializers.CharField(source="uploaded_by.username", read_only=True, allow_null=True)
 
     class Meta:
