@@ -94,8 +94,12 @@ class TestMediaFileFilterWorkingFields:
         qs = MediaFileFilter(data={"filename": "Poster"}, queryset=MediaFile.objects.all()).qs
         assert list(qs) == [png_file]
 
-    def test_filters_by_uploaded_by(self, user_two, jpg_file: MediaFile) -> None:
-        qs = MediaFileFilter(data={"uploaded_by": user_two.pk}, queryset=MediaFile.objects.all()).qs
+    def test_filters_by_uploaded_by_username(self, user_two, jpg_file: MediaFile) -> None:
+        qs = MediaFileFilter(data={"uploaded_by": user_two.username}, queryset=MediaFile.objects.all()).qs
+        assert list(qs) == [jpg_file]
+
+    def test_uploaded_by_username_is_case_insensitive_exact(self, user_two, jpg_file: MediaFile) -> None:
+        qs = MediaFileFilter(data={"uploaded_by": user_two.username.upper()}, queryset=MediaFile.objects.all()).qs
         assert list(qs) == [jpg_file]
 
     def test_combined_filters_narrow_results(self, user_one, pdf_file: MediaFile) -> None:

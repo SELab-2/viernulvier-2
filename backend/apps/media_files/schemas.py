@@ -1,6 +1,7 @@
 """OpenAPI schema decorators for the Media Files app."""
 
-from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema, extend_schema_view
 
 from apps.core.openapi import (
     DELETE_ERRORS,
@@ -11,6 +12,7 @@ from apps.core.openapi import (
     WRITE_ERRORS,
 )
 
+from .models import MediaFile
 from .serializers import MediaFileSerializer, MediaFileUploadSerializer
 
 # ===========================================================================
@@ -28,7 +30,7 @@ _MEDIA_FILE_RESPONSE = OpenApiExample(
         "mime_type": "application/pdf",
         "size_bytes": 2843921,
         "file_type": "pdf",
-        "uploaded_by": None,
+        "uploaded_by": "editor1",
         "created_at": "2026-04-08T10:12:00.000000Z",
     },
     response_only=True,
@@ -45,7 +47,7 @@ _MEDIA_FILE_IMAGE_RESPONSE = OpenApiExample(
         "mime_type": "image/png",
         "size_bytes": 918273,
         "file_type": "image",
-        "uploaded_by": None,
+        "uploaded_by": "editor2",
         "created_at": "2026-04-08T10:18:00.000000Z",
     },
     response_only=True,
@@ -87,19 +89,27 @@ _MEDIA_FILE_LIST = extend_schema(
     description=(
         "Returns a paginated list of all **MediaFile** objects ordered by newest first.\n\n"
         "Use this endpoint to populate the media overview page for posters, brochures, "
-        "and other print materials."
+        "and other print materials.\n\n"
+        "Filtering examples:\n"
+        "- `?uploaded_by=editor1` (exact username, case-insensitive)\n"
+        "- `?file_type=pdf`\n"
+        "- `?filename=poster`\n\n"
+        "Search examples:\n"
+        "- `?search=editor1` (matches uploader username)\n"
+        "- `?search=poster`"
     ),
+    parameters=[
+        OpenApiParameter(
+            name="file_type",
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            required=False,
+            enum=[choice.value for choice in MediaFile.FileType],
+            description="Filter by normalized media type.",
+        ),
+    ],
     responses={200: MediaFileSerializer, **READ_ERRORS},
     examples=[_MEDIA_FILE_RESPONSE, _MEDIA_FILE_IMAGE_RESPONSE],
-)
-
-_MEDIA_FILE_RETRIEVE = extend_schema(
-    summary="Retrieve a media file",
-    description=(
-        "Returns the full representation of a single **MediaFile** object, including its stored file URL and metadata."
-    ),
-    responses={200: MediaFileSerializer, **ITEM_ERRORS},
-    examples=[_MEDIA_FILE_RESPONSE],
 )
 
 _MEDIA_FILE_CREATE = extend_schema(

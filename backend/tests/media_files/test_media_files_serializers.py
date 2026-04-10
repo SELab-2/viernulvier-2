@@ -73,7 +73,7 @@ class TestMediaFileSerializerValues(TestCase):
         assert self.data["mime_type"] == "image/png"
         assert self.data["size_bytes"] == len(b"dummy content")
         assert self.data["file_type"] == MediaFile.FileType.IMAGE
-        assert self.data["uploaded_by"] == self.user.pk
+        assert self.data["uploaded_by"] == self.user.username
         assert self.data["created_at"] is not None
         assert self.data["file"].endswith(".png")
 

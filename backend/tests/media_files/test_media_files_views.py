@@ -2,6 +2,7 @@
 
 import tempfile
 
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
@@ -13,6 +14,7 @@ from apps.media_files.views import MediaFileViewSet
 
 PUB_KEY = "pub-media-files-view-test-key"
 INT_KEY = "int-media-files-view-test-key"
+User = get_user_model()
 
 
 def int_headers():
@@ -224,18 +226,22 @@ class TestMediaFileViewSetFiltering(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         MediaFile.objects.all().delete()
+        self.user_one = User.objects.create_user(username="editor1", email="editor1@example.com", password="pw")
+        self.user_two = User.objects.create_user(username="editor2", email="editor2@example.com", password="pw")
 
         self.pdf = MediaFile.objects.create(
             file=make_file("brochure.pdf"),
             filename="brochure.pdf",
             mime_type="application/pdf",
             size_bytes=100,
+            uploaded_by=self.user_one,
         )
         self.png = MediaFile.objects.create(
             file=make_file("poster.png", content_type="image/png"),
             filename="poster.png",
             mime_type="image/png",
             size_bytes=200,
+            uploaded_by=self.user_two,
         )
 
     def test_filter_by_file_type(self) -> None:
@@ -249,6 +255,12 @@ class TestMediaFileViewSetFiltering(TestCase):
     def test_filter_by_filename(self) -> None:
         response = self.client.get("/api/v1/media/?filename=poster", **pub_headers())
         assert len(results_list(response)) == 1
+
+    def test_filter_by_uploaded_by_username(self) -> None:
+        response = self.client.get("/api/v1/media/?uploaded_by=editor1", **pub_headers())
+        items = results_list(response)
+        assert len(items) == 1
+        assert items[0]["id"] == str(self.pdf.pk)
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
@@ -281,12 +293,14 @@ class TestMediaFileViewSetSearch(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         MediaFile.objects.all().delete()
+        self.user = User.objects.create_user(username="searchuser", email="searchuser@example.com", password="pw")
 
         MediaFile.objects.create(
             file=make_file("poster.png", content_type="image/png"),
             filename="poster.png",
             mime_type="image/png",
             size_bytes=100,
+            uploaded_by=self.user,
         )
         MediaFile.objects.create(
             file=make_file("doc.pdf"),
@@ -302,3 +316,7 @@ class TestMediaFileViewSetSearch(TestCase):
     def test_search_by_mime_type(self) -> None:
         response = self.client.get("/api/v1/media/?search=image", **pub_headers())
         assert len(results_list(response)) >= 1
+
+    def test_search_by_uploaded_by_username(self) -> None:
+        response = self.client.get("/api/v1/media/?search=searchuser", **pub_headers())
+        assert len(results_list(response)) == 1
