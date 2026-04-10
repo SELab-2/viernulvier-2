@@ -4,6 +4,7 @@ import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import i18n from '../../i18n'
 import BlogsPage from '../../pages/BlogsPage'
+import { ApiError } from '../../services/ApiTypes'
 import { getBlogs } from '../../services/blogs/Blogs'
 import type { Blog } from '../../types/Blogs'
 
@@ -111,6 +112,15 @@ describe('BlogsPage', () => {
     expect(await screen.findByRole('heading', { name: 'Verhaal 3' })).toBeInTheDocument()
   })
 
+  it('shows localized fallback copy when API returns a non-localized error message', async () => {
+    mockedGetBlogs.mockRejectedValueOnce(new ApiError(500, 'Something failed on server'))
+
+    renderPage()
+
+    expect(await screen.findByText('Kon verhalen niet laden.')).toBeInTheDocument()
+    expect(screen.queryByText('Something failed on server')).not.toBeInTheDocument()
+  })
+
   it('updates URL state when list view is selected', async () => {
     mockedGetBlogs.mockResolvedValue({
       count: 1,
@@ -167,5 +177,28 @@ describe('BlogsPage', () => {
         },
       })
     })
+  })
+
+  it('retries fetch when submitting the same query after an error', async () => {
+    mockedGetBlogs.mockRejectedValueOnce(new Error('network down')).mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildBlog(9)],
+    })
+
+    renderPage('/blogs?q=vooruit')
+
+    expect(await screen.findByText('Kon verhalen niet laden.')).toBeInTheDocument()
+
+    fireEvent.keyDown(screen.getByPlaceholderText('Zoek verhalen op titel of samenvatting...'), {
+      key: 'Enter',
+      code: 'Enter',
+    })
+
+    await waitFor(() => {
+      expect(mockedGetBlogs).toHaveBeenCalledTimes(2)
+    })
+    expect(await screen.findByRole('heading', { name: 'Verhaal 9' })).toBeInTheDocument()
   })
 })

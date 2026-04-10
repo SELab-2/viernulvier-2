@@ -183,13 +183,21 @@ class Production(BaseModel):
         ordering = ["-id"]
 
     def __str__(self) -> str:
-        """String representation of the production, showing the title in the default language or a fallback."""
+        """String representation used in admin lists and autocomplete widgets.
+
+        Include the numeric id so records with identical titles can still be
+        distinguished quickly in CMS selectors.
+        """
         title = self.get_base_display_name(
             related_name="translations",
             name_field="title",
             fallback=None,
         )
-        return title or f"Production {self.id}"
+
+        if title:
+            return f"{title} (#{self.id})"
+
+        return f"Production #{self.id}"
 
 
 class ProductionTranslation(BaseModel):

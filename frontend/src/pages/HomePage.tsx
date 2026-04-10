@@ -97,8 +97,10 @@ const HomePage = () => {
         }
 
         if (error instanceof ApiError) {
-          setErrorMessage(error.message)
-          setShowFallbackError(false)
+          // Backend error payloads are not guaranteed to be localized,
+          // so we always show the translated fallback copy in the UI.
+          setErrorMessage(null)
+          setShowFallbackError(true)
         } else {
           setErrorMessage(null)
           setShowFallbackError(true)
@@ -132,7 +134,13 @@ const HomePage = () => {
 
   // Function to handle search submission, which updates the search value
   const onSearchSubmit = (value: string) => {
-    setSearchValue(value.trim())
+    const nextQuery = value.trim()
+    if (nextQuery === searchValue.trim()) {
+      setRetryKey((current) => current + 1)
+      return
+    }
+
+    setSearchValue(nextQuery)
   }
 
   // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.

@@ -18,7 +18,8 @@
     "searchPlaceholder": "Search for events, artists, or venues...",
     "searchPlaceholderMobile": "Search events, artists...",
     "search": "Search",
-    "resultsFound": "{{count}} results found",
+    "resultsFound_one": "{{count}} result found",
+    "resultsFound_other": "{{count}} results found",
     "sort": {
       "targetLabel": "Sort by",
       "directionLabel": "Sort direction",

@@ -86,8 +86,10 @@ const BlogsPage = () => {
         }
 
         if (error instanceof ApiError) {
-          setErrorMessage(error.message)
-          setShowFallbackError(false)
+          // Backend error payloads are not guaranteed to be localized,
+          // so we always show the translated fallback copy in the UI.
+          setErrorMessage(null)
+          setShowFallbackError(true)
         } else {
           setErrorMessage(null)
           setShowFallbackError(true)
@@ -119,7 +121,13 @@ const BlogsPage = () => {
   }
 
   const onSearchSubmit = (value: string) => {
-    setSearchValue(value.trim())
+    const nextQuery = value.trim()
+    if (nextQuery === searchValue.trim()) {
+      setRetryKey((current) => current + 1)
+      return
+    }
+
+    setSearchValue(nextQuery)
   }
 
   return (

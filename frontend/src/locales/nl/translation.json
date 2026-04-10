@@ -18,7 +18,8 @@
     "searchPlaceholder": "Zoek naar evenementen, artiesten of locaties...",
     "searchPlaceholderMobile": "Zoek evenementen, artiesten...",
     "search": "Zoeken",
-    "resultsFound": "{{count}} resultaten gevonden",
+    "resultsFound_one": "{{count}} resultaat gevonden",
+    "resultsFound_other": "{{count}} resultaten gevonden",
     "sort": {
       "targetLabel": "Sorteer op",
       "directionLabel": "Sorteerrichting",
