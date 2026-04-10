@@ -7,6 +7,7 @@
     "home": "Archive",
     "events": "Series",
     "productions": "Artists",
+    "blogs": "Stories",
     "mainNav": "Main navigation",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
@@ -116,6 +117,39 @@
       "events": "Events"
     }
   },
+  "blogs": {
+    "home": {
+      "loading": "Loading stories",
+      "resultsRegionLabel": "Blog results",
+      "searchPlaceholder": "Search stories by title or excerpt...",
+      "searchPlaceholderMobile": "Search stories...",
+      "sidebarLabel": "Story context",
+      "sidebarTitle": "Stories",
+      "sidebarDescription": "Browse editorial stories from the VIERNULVIER archive.",
+      "coverAltFallback": "Blog cover image",
+      "noExcerpt": "No excerpt available.",
+      "unpublished": "Unpublished",
+      "empty": {
+        "title": "No stories found",
+        "description": "Adjust your search and try again."
+      },
+      "error": {
+        "retry": "Retry",
+        "fallback": "Could not load stories.",
+        "notification": "Something went wrong while loading stories."
+      }
+    },
+    "pagination": {
+      "navigationLabel": "Story pagination",
+      "pageXofY": "Page {{page}} of {{totalPages}}",
+      "firstPage": "Go to first page",
+      "lastPage": "Go to last page",
+      "nextPage": "Go to next page",
+      "previousPage": "Go to previous page",
+      "currentPage": "Current page, page {{page}}",
+      "goToPage": "Go to page {{page}}"
+    }
+  },
   "notFound": {
     "code": "404",
     "title": "Page not found",
@@ -135,7 +169,8 @@
       "ariaLabel": "Navigation",
       "home": "Archive",
       "series": "Series",
-      "events": "Events"
+      "events": "Events",
+      "blogs": "Stories"
     },
     "newsletter": {
       "cta": "stay up to date"

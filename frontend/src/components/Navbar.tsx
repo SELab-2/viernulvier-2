@@ -25,6 +25,7 @@ const NAV_LINKS = [
   { labelKey: 'nav.home', to: '/' },
   { labelKey: 'nav.events', to: '/series' },
   { labelKey: 'nav.productions', to: '/artists' },
+  { labelKey: 'nav.blogs', to: '/blogs' },
 ] as const
 
 type SupportedLanguage = 'en' | 'nl'
