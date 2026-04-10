@@ -72,6 +72,7 @@ LOCAL_APPS = [
     "apps.pricing",
     "apps.locations",
     "apps.media_library",
+    "apps.media_files",
     "apps.blogs",
 ]
 
@@ -163,7 +164,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ---------------------------------------------------------------------------
@@ -290,6 +291,7 @@ SPECTACULAR_SETTINGS = {
         {"name": "Productions", "description": "Production management and translations."},
         {"name": "Events", "description": "Event instances and pricing information."},
         {"name": "Media", "description": "Media galleries, items and crops."},
+        {"name": "Media Files", "description": "Uploaded posters, brochures, PDFs, and other print materials."},
         {"name": "Locations", "description": "Locations, halls and spaces."},
         {"name": "Genres", "description": "Genre taxonomy and usage types."},
         {"name": "Tags", "description": "Tag management and production tagging."},
