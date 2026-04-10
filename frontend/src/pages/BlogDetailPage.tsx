@@ -3,11 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import type { Blog } from '../types/Blogs'
-import LoadingSpinner from '../components/LoadingSpinner'
 import Breadcrumbs from '../components/production/Breadcrumbs'
 import ImageWithFallback from '../components/ImageWithFallback'
 import Description from '../components/production/Description'
 import RelatedProductions from '../components/production/RelatedProductions'
+import BlogDetailPageSkeleton from './BlogDetailPageSkeleton'
 import { getBlog } from '../services/blogs/Blogs'
 import { getLocalizedValue } from '../utils/localization'
 
@@ -82,7 +82,7 @@ const BlogDetailPage = () => {
     fetchBlog()
   }, [id, navigate])
 
-  if (loading) return <LoadingSpinner fullScreen />
+  if (loading) return <BlogDetailPageSkeleton />
 
   if (!blog) {
     return (
