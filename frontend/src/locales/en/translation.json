@@ -93,6 +93,7 @@
       "goToPage": "Go to page {{page}}"
     },
     "detail": {
+      "related": "Related productions",
       "meta": {
         "period": "Period",
         "venues": "Venues",
