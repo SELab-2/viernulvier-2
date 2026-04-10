@@ -104,7 +104,7 @@ class TestMediaFileFilterWorkingFields:
 
     def test_combined_filters_narrow_results(self, user_one, pdf_file: MediaFile) -> None:
         qs = MediaFileFilter(
-            data={"file_type": "pdf", "uploaded_by": user_one.pk},
+            data={"file_type": "pdf", "uploaded_by": user_one.username},
             queryset=MediaFile.objects.all(),
         ).qs
         assert list(qs) == [pdf_file]
