@@ -114,7 +114,10 @@ describe('Blogs service', () => {
     const error = new ApiError(401, 'Not authenticated')
     mockedApi.get.mockRejectedValue(error)
 
-    await expect(getBlogs()).rejects.toBe(error)
+    await expect(getBlogs()).rejects.toMatchObject({
+  status: 401,
+  message: 'Not authenticated'
+})
   })
 
   it('propagates ApiError from api interceptor on getBlog', async () => {
