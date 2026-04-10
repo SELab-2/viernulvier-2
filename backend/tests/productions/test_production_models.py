@@ -132,6 +132,21 @@ class TestProduction:
 
         assert production.media_gallery is None
 
+    def test_str_includes_title_and_id_for_disambiguation(self) -> None:
+        production = ProductionFactory.create()
+        ProductionTranslationFactory.create(
+            production=production,
+            language=LanguageFactory.create(code="en", name="English"),
+            title="Hamlet",
+        )
+
+        assert str(production) == f"Hamlet (#{production.id})"
+
+    def test_str_falls_back_to_id_when_no_title(self) -> None:
+        production = ProductionFactory.create()
+
+        assert str(production) == f"Production #{production.id}"
+
 
 class TestProductionTranslation:
     """Tests for ProductionTranslation model behavior and constraints."""

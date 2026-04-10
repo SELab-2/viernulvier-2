@@ -1,6 +1,6 @@
-import { Stack } from '@mui/material'
 import type { Production } from '../types/Productions'
 import ProductionListCard from './ProductionListCard'
+import GenericList from './GenericList'
 
 export interface ProductionListProps {
   productions: Production[]
@@ -19,15 +19,13 @@ export interface ProductionListProps {
  */
 const ProductionList = ({ productions, selectedGenreIds }: ProductionListProps) => {
   return (
-    <Stack spacing={2}>
-      {productions.map((production) => (
-        <ProductionListCard
-          key={production.id}
-          production={production}
-          selectedGenreIds={selectedGenreIds}
-        />
-      ))}
-    </Stack>
+    <GenericList
+      items={productions}
+      getKey={(production) => production.id}
+      renderItem={(production) => (
+        <ProductionListCard production={production} selectedGenreIds={selectedGenreIds} />
+      )}
+    />
   )
 }
 

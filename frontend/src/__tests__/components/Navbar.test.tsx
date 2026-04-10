@@ -29,6 +29,7 @@ describe('Navbar', () => {
     expect(screen.getByRole('link', { name: 'Archief' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Reeksen' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Artiesten' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Verhalen' })).toBeInTheDocument()
   })
 
   it('marks the active route with aria-current="page"', () => {

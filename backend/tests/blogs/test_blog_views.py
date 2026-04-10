@@ -163,6 +163,14 @@ class TestBlogViewSet(TestCase):
         assert len(items) == 1
         assert items[0]["id"] == self.blog.id
 
+    def test_search_on_translated_excerpt(self) -> None:
+        response = self.client.get("/api/v1/blogs/", {"search": "Excerpt EN"}, **pub_headers())
+
+        assert response.status_code == 200
+        items = results_list(response)
+        assert len(items) == 1
+        assert items[0]["id"] == self.blog.id
+
     def test_ordering_by_slug(self) -> None:
         second_blog = BlogFactory(slug="aaa-blog")
         BlogTranslationFactory(blog=second_blog, language=self.language)
