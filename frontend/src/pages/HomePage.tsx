@@ -13,10 +13,8 @@ import type { Production } from '../types/Productions'
 const PAGE_SIZE = 12
 
 // Function to determine the ordering parameter for the API based on the current sort target and direction.
-// Currently broken because the backend has no field for translations__title
-// TODO fix
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
-  const targetField = sortTarget === 'name' ? 'translations__title' : 'first_event_start'
+  const targetField = sortTarget === 'name' ? 'title_sort' : 'first_event_start'
   return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 

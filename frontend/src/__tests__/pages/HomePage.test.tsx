@@ -228,4 +228,38 @@ describe('HomePage (ProductionPage)', () => {
       })
     })
   })
+
+  it('uses title_sort ordering when sorting by name', async () => {
+    mockedGetProductions
+      .mockResolvedValueOnce({
+        count: 1,
+        next: null,
+        previous: null,
+        results: [buildProduction(7)],
+      })
+      .mockResolvedValueOnce({
+        count: 1,
+        next: null,
+        previous: null,
+        results: [buildProduction(7)],
+      })
+
+    renderPage()
+
+    await screen.findByRole('heading', { name: 'Productie 7' })
+
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Sorteer op' }))
+    fireEvent.click(await screen.findByRole('option', { name: 'Naam' }))
+
+    await waitFor(() => {
+      expect(mockedGetProductions).toHaveBeenLastCalledWith({
+        page: 1,
+        pageSize: 12,
+        filters: {
+          search: undefined,
+          ordering: '-title_sort',
+        },
+      })
+    })
+  })
 })

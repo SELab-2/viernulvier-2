@@ -75,6 +75,8 @@ class ProductionViewSet(ApiModelViewSet):
         Group by attendance mode.
     ``?ordering=performer_type``
         Group by performer type.
+    ``?ordering=title_sort``
+        Sort alphabetically by translated title.
 
     Search
     ------
@@ -121,14 +123,22 @@ class ProductionViewSet(ApiModelViewSet):
                 ).order_by("position"),
             ),
         )
-        .annotate(  # For filtering and ordering by event dates without extra queries
+        .annotate(  # For filtering and ordering by event dates/title without extra queries
             first_event_start=Min("events__starts_at"),
             last_event_end=Max("events__ends_at"),
+            title_sort=Min("translations__title"),
         )
     )
 
     filterset_class = ProductionFilter
-    ordering_fields = ["id", "attendance_mode", "performer_type", "first_event_start", "last_event_end"]
+    ordering_fields = [
+        "id",
+        "attendance_mode",
+        "performer_type",
+        "first_event_start",
+        "last_event_end",
+        "title_sort",
+    ]
     ordering = ["-id"]
     search_fields = [
         "translations__title",
