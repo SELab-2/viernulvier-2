@@ -126,29 +126,18 @@ const BlogDetailPage = () => {
             items={[
               { label: 'Home', translationKey: 'nav.home', to: '/' },
               { label: 'Blogs', translationKey: 'blogs.title', to: '/blogs' },
-              { label: title },
+              { label: blog.slug },
             ]}
           />
 
-          <div
-            className="hero-image"
-            style={{
-              width: '100%',
-              aspectRatio: '16/7',
-              backgroundColor: 'transparent',
-              borderRadius: '4px',
-              overflow: 'hidden',
-              marginBottom: '32px',
+          <Box
+            sx={{
+              mt: 1,
+              mb: 3,
+              pb: 1.5,
+              borderBottom: `1px solid ${theme.palette.divider}`,
             }}
           >
-            <ImageWithFallback
-              src={cover}
-              alt={title}
-              sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          </div>
-
-          <Box sx={{ mb: 2 }}>
             {published ? (
               <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
                 {t('blogs.detail.publishedOn', 'Published on')}: {published}
@@ -158,9 +147,30 @@ const BlogDetailPage = () => {
                 {t('blogs.detail.notPublished', 'Not published')}
               </Typography>
             )}
+          </Box>
+
+          <div
+            className="hero-image"
+            style={{
+              width: '100%',
+              aspectRatio: '16/7',
+              backgroundColor: 'transparent',
+              borderRadius: '4px',
+              overflow: 'hidden',
+              marginBottom: '40px',
+            }}
+          >
+            <ImageWithFallback
+              src={cover}
+              alt={title}
+              sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          </div>
+
+          <Box sx={{ mb: 3 }}>
             <Typography
               variant="h4"
-              sx={{ fontWeight: 700, color: theme.palette.text.primary, mb: 0.5 }}
+              sx={{ fontWeight: 700, color: theme.palette.text.primary, mb: 1.5 }}
             >
               {title}
             </Typography>
