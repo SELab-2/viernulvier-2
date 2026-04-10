@@ -1,22 +1,18 @@
-import { Box, useTheme } from '@mui/material'
-import { createCommonStyles } from '../theme/styles'
 import type { Blog } from '../types/Blogs'
 import BlogGridCard from './BlogGridCard'
+import GenericGrid from './GenericGrid'
 
 export interface BlogGridProps {
   blogs: Blog[]
 }
 
 const BlogGrid = ({ blogs }: BlogGridProps) => {
-  const theme = useTheme()
-  const commonStyles = createCommonStyles(theme)
-
   return (
-    <Box sx={commonStyles.gridContainer}>
-      {blogs.map((blog) => (
-        <BlogGridCard key={blog.id} blog={blog} />
-      ))}
-    </Box>
+    <GenericGrid
+      items={blogs}
+      getKey={(blog) => blog.id}
+      renderItem={(blog) => <BlogGridCard blog={blog} />}
+    />
   )
 }
 

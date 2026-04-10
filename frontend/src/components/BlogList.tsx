@@ -1,6 +1,6 @@
-import { Stack } from '@mui/material'
 import type { Blog } from '../types/Blogs'
 import BlogListCard from './BlogListCard'
+import GenericList from './GenericList'
 
 export interface BlogListProps {
   blogs: Blog[]
@@ -8,11 +8,11 @@ export interface BlogListProps {
 
 const BlogList = ({ blogs }: BlogListProps) => {
   return (
-    <Stack spacing={2}>
-      {blogs.map((blog) => (
-        <BlogListCard key={blog.id} blog={blog} />
-      ))}
-    </Stack>
+    <GenericList
+      items={blogs}
+      getKey={(blog) => blog.id}
+      renderItem={(blog) => <BlogListCard blog={blog} />}
+    />
   )
 }
 

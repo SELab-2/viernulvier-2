@@ -1,7 +1,6 @@
-import { Box, useTheme } from '@mui/material'
 import type { Production } from '../types/Productions'
 import ProductionGridCard from './ProductionGridCard'
-import { createCommonStyles } from '../theme/styles'
+import GenericGrid from './GenericGrid'
 
 export interface ProductionGridProps {
   productions: Production[]
@@ -20,19 +19,14 @@ export interface ProductionGridProps {
  * @returns The grid container element.
  */
 const ProductionGrid = ({ productions, selectedGenreIds }: ProductionGridProps) => {
-  const theme = useTheme()
-  const commonStyles = createCommonStyles(theme)
-
   return (
-    <Box sx={commonStyles.gridContainer}>
-      {productions.map((production) => (
-        <ProductionGridCard
-          key={production.id}
-          production={production}
-          selectedGenreIds={selectedGenreIds}
-        />
-      ))}
-    </Box>
+    <GenericGrid
+      items={productions}
+      getKey={(production) => production.id}
+      renderItem={(production) => (
+        <ProductionGridCard production={production} selectedGenreIds={selectedGenreIds} />
+      )}
+    />
   )
 }
 
