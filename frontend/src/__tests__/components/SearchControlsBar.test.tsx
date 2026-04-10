@@ -48,6 +48,12 @@ describe('SearchControlsBar', () => {
     expect(screen.getByText('12 resultaten gevonden')).toBeInTheDocument()
   })
 
+  it('uses singular copy when there is exactly one result', () => {
+    renderSearchBar({ ...props, resultCount: 1 })
+
+    expect(screen.getByText('1 resultaat gevonden')).toBeInTheDocument()
+  })
+
   it('calls onSearchChange when input value changes', () => {
     renderSearchBar({ ...props, searchValue: '' })
     const input = screen.getByPlaceholderText('Search...')

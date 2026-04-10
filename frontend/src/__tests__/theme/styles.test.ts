@@ -64,7 +64,7 @@ describe('theme/styles - createCommonStyles', () => {
     expect(gridContainerRecord.display).toBe('flex')
     expect(gridContainerRecord.flexWrap).toBe('wrap')
     expect(gridContainerRecord.gap).toBe(tokens.spacing.numericLg)
-    expect(gridContainerRecord.justifyContent).toBe('center')
+    expect(gridContainerRecord.justifyContent).toBe('flex-start')
   })
 
   it('navbar should have sticky positioning with dark background', () => {
