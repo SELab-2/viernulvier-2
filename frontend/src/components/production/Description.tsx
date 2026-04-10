@@ -1,5 +1,6 @@
 import { Box, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { tokens } from '../../theme/tokens'
 import sanitizeHtml from '../../utils/SanitizeHtml'
 
 interface DescriptionProps {
@@ -59,9 +60,9 @@ export default function Description({ teaser, description }: DescriptionProps) {
         <p
           style={{
             fontSize: '0.9rem',
-            color: '#bbb',
+            color: tokens.colors.neutral.gray400,
             fontStyle: 'italic',
-            fontFamily: 'sans-serif',
+            fontFamily: tokens.typography.fontFamily,
           }}
         >
           {t('productions.detail.noDescription', 'No description available.')}

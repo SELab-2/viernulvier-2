@@ -1,11 +1,11 @@
-import { Box } from '@mui/material'
+import { Box, useTheme } from '@mui/material'
 import type { Production } from '../types/Productions'
 import ProductionGridCard from './ProductionGridCard'
+import { createCommonStyles } from '../theme/styles'
 
 export interface ProductionGridProps {
   productions: Production[]
   selectedGenreIds?: number[]
-  onGenreClick?: (genreId: number) => void
 }
 
 /**
@@ -17,18 +17,19 @@ export interface ProductionGridProps {
  *
  * @param props.productions List of productions to display.
  * @param props.selectedGenreIds Genre ids currently active in the parent filter state.
- * @param props.onGenreClick Forwarded to every card; called with the clicked genre id.
  * @returns The grid container element.
  */
-const ProductionGrid = ({ productions, selectedGenreIds, onGenreClick }: ProductionGridProps) => {
+const ProductionGrid = ({ productions, selectedGenreIds }: ProductionGridProps) => {
+  const theme = useTheme()
+  const commonStyles = createCommonStyles(theme)
+
   return (
-    <Box display="flex" flexWrap="wrap" gap={3} justifyContent="center">
+    <Box sx={commonStyles.gridContainer}>
       {productions.map((production) => (
         <ProductionGridCard
           key={production.id}
           production={production}
           selectedGenreIds={selectedGenreIds}
-          onGenreClick={onGenreClick}
         />
       ))}
     </Box>

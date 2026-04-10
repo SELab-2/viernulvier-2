@@ -13,6 +13,39 @@
     "switchToLightMode": "Donkere modus",
     "switchToDarkMode": "Lichte modus"
   },
+  "searchbar": {
+    "searchPlaceholder": "Zoek naar evenementen, artiesten of locaties...",
+    "searchPlaceholderMobile": "Zoek evenementen, artiesten...",
+    "search": "Zoeken",
+    "resultsFound": "{{count}} resultaten gevonden",
+    "sort": {
+      "targetLabel": "Sorteer op",
+      "directionLabel": "Sorteerrichting",
+      "name": "Naam",
+      "date": "Datum",
+      "ascending": "Oplopend",
+      "descending": "Aflopend",
+      "switchToAscending": "Schakel naar oplopend",
+      "switchToDescending": "Schakel naar aflopend"
+    },
+    "period": {
+      "label": "Periode",
+      "from_x": "Vanaf {{date}}",
+      "to_x": "Tot en met {{date}}",
+      "from_label": "Van",
+      "to_label": "Tot",
+      "all": "Alles"
+    },
+    "layout": {
+      "label": "Weergave",
+      "list": "Lijst",
+      "grid": "Raster"
+    }
+  },
+  "listCard": {
+    "view": "Bekijk",
+    "imageAlt": "Afbeelding voor {{title}}"
+  },
   "genreChip": {
     "filterByGenre": "Filter op {{genre}}"
   },
@@ -33,7 +66,34 @@
     "detailTitle": "Productie Detail",
     "detailPlaceholder": "Details van productie met ID {{id}} worden hier weergegeven.",
     "backToProductions": "Terug naar Producties",
+    "home": {
+      "loading": "Producties laden",
+      "resultsRegionLabel": "Resultaten van producties",
+      "filterPanelLabel": "Geavanceerde filters",
+      "filterPanelTitle": "Filters",
+      "filterPanelPlaceholder": "Geavanceerde filters worden in dit paneel toegevoegd.",
+      "empty": {
+        "title": "Geen producties gevonden",
+        "description": "Pas je zoekopdracht aan en probeer opnieuw."
+      },
+      "error": {
+        "retry": "Opnieuw proberen",
+        "fallback": "Kon producties niet laden.",
+        "notification": "Er ging iets mis bij het laden van producties."
+      }
+    },
+    "pagination": {
+      "navigationLabel": "Paginering van producties",
+      "pageXofY": "Pagina {{page}} van {{totalPages}}",
+      "firstPage": "Ga naar eerste pagina",
+      "lastPage": "Ga naar laatste pagina",
+      "nextPage": "Ga naar volgende pagina",
+      "previousPage": "Ga naar vorige pagina",
+      "currentPage": "Huidige pagina, pagina {{page}}",
+      "goToPage": "Ga naar pagina {{page}}"
+    },
     "detail": {
+      "related": "Gerelateerde producties",
       "meta": {
         "period": "Periode",
         "venues": "Locaties",

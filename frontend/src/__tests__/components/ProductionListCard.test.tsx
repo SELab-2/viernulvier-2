@@ -1,12 +1,10 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { fireEvent, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
 import ProductionListCard from '../../components/ProductionListCard'
 import i18n from '../../i18n'
-import type { Event } from '../../types/Events'
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
 
@@ -29,22 +27,12 @@ const minimalGenre = (id: number, nlName: string): Genre => ({
   vendor_id: null,
 })
 
-const makeEvent = (overrides: Partial<Event> = {}): Event => ({
-  id: 1,
-  production: {} as Production,
-  production_display: null,
-  hall: null,
-  hall_display: null,
-  starts_at: null,
-  ends_at: null,
-  prices: [],
-  ...overrides,
-})
-
 const baseProduction = (overrides: Partial<Production> = {}): Production => ({
   id: 1,
   attendance_mode: 'offline',
   performer_type: 'solo',
+  first_event_start: null,
+  last_event_end: null,
   media_gallery: { id: 0, name: null, media_items: [] },
   uit_database_theme: null,
   uit_database_type: null,
@@ -58,8 +46,6 @@ const baseProduction = (overrides: Partial<Production> = {}): Production => ({
   tags: [],
   genres: [],
   events: [],
-  first_event_start: null,
-  last_event_end: null,
   ...overrides,
 })
 
@@ -68,14 +54,10 @@ const renderListCard = (props: {
   selectedGenreIds?: number[]
   onGenreClick?: (id: number) => void
 }) => {
-  const { production, selectedGenreIds = [], onGenreClick = jest.fn() } = props
+  const { production, selectedGenreIds = [] } = props
 
   const ui: ReactElement = (
-    <ProductionListCard
-      production={production}
-      selectedGenreIds={selectedGenreIds}
-      onGenreClick={onGenreClick}
-    />
+    <ProductionListCard production={production} selectedGenreIds={selectedGenreIds} />
   )
 
   return render(
@@ -203,7 +185,8 @@ describe('ProductionListCard', () => {
 
   it('shows formatted date range when events have start dates', () => {
     const production = baseProduction({
-      events: [makeEvent({ id: 1, starts_at: '2026-03-20T18:30:00.000Z' })],
+      first_event_start: '2026-03-20T18:30:00.000Z',
+      last_event_end: '2026-03-20T20:00:00.000Z',
     })
     renderListCard({ production })
 
@@ -211,26 +194,27 @@ describe('ProductionListCard', () => {
     expect(screen.getByText(/2026/)).toBeInTheDocument()
   })
 
-  it('does not show the date row when events is empty', () => {
-    const production = baseProduction({ events: [] })
+  it('does not show the date row when first_event_start is null', () => {
+    const production = baseProduction({ first_event_start: null, last_event_end: null })
     renderListCard({ production })
 
     expect(screen.queryByText(/2026/)).not.toBeInTheDocument()
   })
 
-  it('does not show the date row when events is undefined', () => {
-    const production = baseProduction({ events: undefined })
+  it('does not show the date row when last_event_end is null', () => {
+    const production = baseProduction({
+      first_event_start: '2026-03-20T18:30:00.000Z',
+      last_event_end: null,
+    })
     renderListCard({ production })
 
     expect(screen.queryByText(/mrt|Mar/)).not.toBeInTheDocument()
   })
 
-  it('shows a date range when there are multiple events on different dates', () => {
+  it('shows a date range when first and last event fall on different dates', () => {
     const production = baseProduction({
-      events: [
-        makeEvent({ id: 1, starts_at: '2026-03-20T18:30:00.000Z' }),
-        makeEvent({ id: 2, starts_at: '2026-03-25T20:00:00.000Z' }),
-      ],
+      first_event_start: '2026-03-20T18:30:00.000Z',
+      last_event_end: '2026-03-25T20:00:00.000Z',
     })
     renderListCard({ production })
 
@@ -238,12 +222,10 @@ describe('ProductionListCard', () => {
     expect(screen.getByText(/ - /)).toBeInTheDocument()
   })
 
-  it('shows a single date when all events fall on the same day', () => {
+  it('shows a single date when first and last event fall on the same day', () => {
     const production = baseProduction({
-      events: [
-        makeEvent({ id: 1, starts_at: '2026-06-01T18:00:00.000Z' }),
-        makeEvent({ id: 2, starts_at: '2026-06-01T20:00:00.000Z' }),
-      ],
+      first_event_start: '2026-06-01T18:00:00.000Z',
+      last_event_end: '2026-06-01T20:00:00.000Z',
     })
     renderListCard({ production })
 
@@ -251,7 +233,7 @@ describe('ProductionListCard', () => {
     expect(screen.queryByText(/ - /)).not.toBeInTheDocument()
   })
 
-  it('renders genre chips and forwards clicks', () => {
+  it('renders static genre chips without interactive filter behavior', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(1, 'Dans'), minimalGenre(2, 'Muziek')],
@@ -259,17 +241,10 @@ describe('ProductionListCard', () => {
 
     renderListCard({ production, onGenreClick, selectedGenreIds: [1] })
 
-    expect(screen.getByRole('button', { name: 'Filter op Dans' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    expect(screen.getByRole('button', { name: 'Filter op Muziek' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: 'Filter op Muziek' }))
-    expect(onGenreClick).toHaveBeenCalledWith(2)
+    expect(screen.getByText('Dans')).toBeInTheDocument()
+    expect(screen.getByText('Muziek')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
+    expect(onGenreClick).not.toHaveBeenCalled()
   })
 
   it('does not render a genre row when there are no genres', () => {
@@ -279,7 +254,7 @@ describe('ProductionListCard', () => {
     expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
   })
 
-  it('does not render a genre row when every genre has display_name null', () => {
+  it('renders a genre chip when display_name is null but translated name exists', () => {
     const production = baseProduction({
       genres: [
         {
@@ -294,7 +269,8 @@ describe('ProductionListCard', () => {
     })
     renderListCard({ production })
 
-    expect(screen.queryByRole('button', { name: /Filter op/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('Zonder display')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
   })
 
   it('links the full card to the production detail route', () => {
@@ -324,21 +300,13 @@ describe('ProductionListCard', () => {
   it('formats the date range for the active locale (en)', async () => {
     await i18n.changeLanguage('en')
     const production = baseProduction({
-      events: [makeEvent({ id: 1, starts_at: '2026-03-20T18:30:00.000Z' })],
+      first_event_start: '2026-03-20T18:30:00.000Z',
+      last_event_end: '2026-03-20T20:00:00.000Z',
     })
     renderListCard({ production })
 
     expect(screen.getByText(/Mar/)).toBeInTheDocument()
     expect(screen.getByText(/2026/)).toBeInTheDocument()
-  })
-
-  it('does not show the date row when all events have null starts_at', () => {
-    const production = baseProduction({
-      events: [makeEvent({ id: 1, starts_at: null })],
-    })
-    renderListCard({ production })
-
-    expect(screen.queryByText(/2026/)).not.toBeInTheDocument()
   })
 
   it('shows the image fallback when media_gallery has no media items', () => {
@@ -380,30 +348,28 @@ describe('ProductionListCard', () => {
     expect(screen.getByAltText('Fallback image')).toBeInTheDocument()
   })
 
-  it('fires onGenreClick once per chip and for each distinct genre', () => {
+  it('does not fire onGenreClick for static chips', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(1, 'A'), minimalGenre(2, 'B')],
     })
     renderListCard({ production, onGenreClick })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Filter op A' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Filter op B' }))
-    expect(onGenreClick).toHaveBeenCalledTimes(2)
-    expect(onGenreClick).toHaveBeenNthCalledWith(1, 1)
-    expect(onGenreClick).toHaveBeenNthCalledWith(2, 2)
+    expect(screen.getByText('A')).toBeInTheDocument()
+    expect(screen.getByText('B')).toBeInTheDocument()
+    expect(onGenreClick).not.toHaveBeenCalled()
   })
 
-  it('does not navigate when interacting with a genre chip (link remains separate)', async () => {
-    const user = userEvent.setup()
+  it('keeps only the card link interactive when genres are static', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(5, 'Chip')],
     })
     renderListCard({ production, onGenreClick })
 
-    await user.click(screen.getByRole('button', { name: 'Filter op Chip' }))
-    expect(onGenreClick).toHaveBeenCalledWith(5)
+    expect(screen.getByText('Chip')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
+    expect(onGenreClick).not.toHaveBeenCalled()
 
     const cardLink = screen.getByRole('link', { name: /Voorstelling/ })
     expect(cardLink).toHaveAttribute('href', '/productions/1')
