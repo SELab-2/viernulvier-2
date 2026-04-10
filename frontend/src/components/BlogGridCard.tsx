@@ -1,6 +1,7 @@
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { Link as RouterLink } from 'react-router-dom'
 import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
 import type { Blog } from '../types/Blogs'
@@ -24,6 +25,8 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
 
   return (
     <Stack
+      component={RouterLink}
+      to={`/blogs/${blog.id}`}
       width={350}
       borderRadius={tokens.card.borderRadius}
       overflow="hidden"

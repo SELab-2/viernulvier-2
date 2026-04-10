@@ -2,6 +2,7 @@ import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { Link as RouterLink } from 'react-router-dom'
 import { tokens } from '../theme/tokens'
 import type { Blog } from '../types/Blogs'
 import { formatBlogPublishedDate } from '../utils/blogs'
@@ -22,6 +23,8 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
 
   return (
     <Stack
+      component={RouterLink}
+      to={`/blogs/${blog.id}`}
       direction="row"
       gap={3}
       height={170}
@@ -31,6 +34,7 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
       sx={(theme) => ({
         backgroundColor: theme.palette.background.paper,
         border: `1px solid ${theme.palette.divider}`,
+        textDecoration: 'none',
         transition: 'box-shadow 0.2s ease',
         '&:hover': {
           boxShadow: theme.shadows[3],
