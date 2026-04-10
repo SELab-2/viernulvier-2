@@ -177,3 +177,18 @@ class TestMediaFileModel:
         obj = MediaFile()
         obj._populate_derived_fields()
         assert obj.mime_type == ""
+
+    def test_populate_derived_fields_handles_missing_previous_filename_record(self) -> None:
+        obj = MediaFile(
+            file=make_uploaded_file(name="poster.png", content=b"abc", content_type="image/png"),
+            filename="custom-name.png",
+        )
+        obj.pk = uuid.uuid4()
+        obj._state.adding = False
+
+        obj._populate_derived_fields()
+
+        assert obj.filename == "custom-name.png"
+        assert obj.mime_type == "image/png"
+        assert obj.size_bytes == 3
+        assert obj.file_type == MediaFile.FileType.IMAGE

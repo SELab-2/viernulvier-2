@@ -108,8 +108,18 @@ class MediaFile(BaseModel):
 
         file_changed = self._file_has_changed()
 
-        if file_changed or not self.filename:
-            self.filename = self._derive_filename()
+        previous_filename = None
+        if not self._state.adding and self.pk:
+            try:
+                previous = type(self).objects.only("filename").get(pk=self.pk)
+                previous_filename = previous.filename
+            except type(self).DoesNotExist:
+                previous_filename = None
+
+        derived_filename = self._derive_filename()
+
+        if not self.filename or (file_changed and self.filename == (previous_filename or "")):
+            self.filename = derived_filename
 
         if file_changed or not self.mime_type:
             self.mime_type = self._derive_mime_type()
