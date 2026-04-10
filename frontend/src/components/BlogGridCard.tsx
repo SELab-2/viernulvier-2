@@ -28,6 +28,7 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
       component={RouterLink}
       to={`/blogs/${blog.id}`}
       width={350}
+      height="100%"
       borderRadius={tokens.card.borderRadius}
       overflow="hidden"
       sx={commonStyles.cardBase}

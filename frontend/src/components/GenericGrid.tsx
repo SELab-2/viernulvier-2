@@ -15,7 +15,9 @@ const GenericGrid = <T,>({ items, getKey, renderItem }: GenericGridProps<T>) => 
   return (
     <Box sx={commonStyles.gridContainer}>
       {items.map((item) => (
-        <Box key={getKey(item)}>{renderItem(item)}</Box>
+        <Box key={getKey(item)} sx={{ display: 'flex' }}>
+          {renderItem(item)}
+        </Box>
       ))}
     </Box>
   )
