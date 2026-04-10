@@ -207,10 +207,11 @@
       "type": "Type"
     }
   },
-  "blogs": {
+  "blog": {
     "title": "Blogs",
     "unknown": "Onbekende blog",
     "couldNotLoad": "Kon de blog niet laden",
+    "invalidId": "Ongeldig blog ID",
     "detail": {
       "publishedOn": "Gepubliceerd op",
       "notPublished": "Niet gepubliceerd",

@@ -39,9 +39,13 @@ const buildProduction = (id: number): Production => ({
   genres: [],
 })
 
-const renderPage = (initialPath = '/') =>
+const renderPage = (
+  initialEntry:
+    | string
+    | { pathname: string; state?: { floatingAlert?: { open?: boolean; message?: string } } } = '/',
+) =>
   render(
-    <MemoryRouter initialEntries={[initialPath]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={createTheme()}>
           <HomePage />
@@ -145,6 +149,28 @@ describe('HomePage (ProductionPage)', () => {
 
     expect(await screen.findByText('Kon producties niet laden.')).toBeInTheDocument()
     expect(screen.queryByText('Something failed on server')).not.toBeInTheDocument()
+  })
+
+  it('shows floating alert message passed through navigation state without inline error', async () => {
+    mockedGetProductions.mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildProduction(10)],
+    })
+
+    renderPage({
+      pathname: '/',
+      state: {
+        floatingAlert: {
+          open: true,
+          message: 'Kon productie niet laden',
+        },
+      },
+    })
+
+    expect(await screen.findByText('Kon productie niet laden')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Opnieuw proberen' })).not.toBeInTheDocument()
   })
 
   it('updates URL state when list view is selected', async () => {

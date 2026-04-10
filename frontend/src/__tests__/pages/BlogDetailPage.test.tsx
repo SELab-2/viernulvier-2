@@ -50,14 +50,13 @@ describe('BlogDetailPage', () => {
     languageState.current = 'nl'
   })
 
-  it('shows invalid id error and navigates to home for non-numeric ID', async () => {
+  it('shows invalid id error and navigates to blogs for non-numeric ID', async () => {
     mockUseParams.mockReturnValue({ id: 'abc' })
 
     renderPage()
 
     await waitFor(() => {
-      expect(screen.getByText('Invalid blog ID')).toBeInTheDocument()
-      expect(mockNavigate).toHaveBeenCalledWith('/', {
+      expect(mockNavigate).toHaveBeenCalledWith('/blogs', {
         state: {
           floatingAlert: {
             open: true,
@@ -101,7 +100,7 @@ describe('BlogDetailPage', () => {
     })
   })
 
-  it('handles unpublished blog by navigating to home with error', async () => {
+  it('handles unpublished blog by navigating to blogs with error', async () => {
     mockUseParams.mockReturnValue({ id: '13' })
 
     const blogData = {
@@ -122,7 +121,7 @@ describe('BlogDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/', {
+      expect(mockNavigate).toHaveBeenCalledWith('/blogs', {
         state: {
           floatingAlert: {
             open: true,
@@ -134,14 +133,14 @@ describe('BlogDetailPage', () => {
     })
   })
 
-  it('handles fetch error by navigating to home with error', async () => {
+  it('handles fetch error by navigating to blogs with error', async () => {
     mockUseParams.mockReturnValue({ id: '12' })
     mockedGetBlog.mockRejectedValue(new Error('network error'))
 
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/', {
+      expect(mockNavigate).toHaveBeenCalledWith('/blogs', {
         state: {
           floatingAlert: {
             open: true,

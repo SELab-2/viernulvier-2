@@ -29,14 +29,13 @@ const BlogDetailPage = () => {
 
   const [blog, setBlog] = useState<Blog | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
   const tRef = useRef(t)
   tRef.current = t
 
   /**
    * Effect: fetch blog by id when the route param changes.
-   * - Validates that `id` is numeric, otherwise navigates back to home with an error.
-   * - On fetch error navigates back to home and displays a floating alert.
+   * - Validates that `id` is numeric, otherwise navigates back to the blogs listing with an error.
+   * - On fetch error navigates back to the blogs listing and displays a floating alert.
    */
   useEffect(() => {
     if (!id) return
@@ -44,21 +43,19 @@ const BlogDetailPage = () => {
 
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
-      const errMsg = tRef.current('blogs.detail.error.invalidId', 'Invalid blog ID')
-      navigate('/', {
+      const errMsg = tRef.current('blog.invalidId', 'Invalid blog ID')
+      navigate('/blogs', {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
-      setError(errMsg)
       setLoading(false)
       return
     }
 
     const handleError = () => {
-      const errMsg = tRef.current('blogs.detail.couldNotLoad', 'Could not load blog')
-      navigate('/', {
+      const errMsg = tRef.current('blog.couldNotLoad', 'Could not load blog')
+      navigate('/blogs', {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
-      setError(errMsg)
     }
 
     const fetchBlog = async () => {
@@ -85,15 +82,7 @@ const BlogDetailPage = () => {
   if (loading) return <BlogDetailPageSkeleton />
 
   if (!blog) {
-    return (
-      <div style={{ padding: 40 }}>
-        {error ? (
-          <div>{error}</div>
-        ) : (
-          <div>{tRef.current('blogs.detail.notFound', 'Blog niet gevonden.')}</div>
-        )}
-      </div>
-    )
+    return
   }
 
   // Localized text values: prefer language-specific record, fall back to display fields.

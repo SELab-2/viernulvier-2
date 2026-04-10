@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMediaQuery, useTheme } from '@mui/material'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import BlogView from '../components/BlogView'
 import CollectionPageLayout from '../components/CollectionPageLayout'
@@ -19,6 +20,9 @@ const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'd
 const BlogsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
+  const location = useLocation()
+  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
+  const nav = location as { state?: NavState }
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const {
     searchValue,
@@ -39,6 +43,7 @@ const BlogsPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
   const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
+  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(null)
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
@@ -62,6 +67,7 @@ const BlogsPage = () => {
       setErrorMessage(null)
       setShowFallbackError(false)
       setIsFloatingErrorOpen(false)
+      setFloatingAlertMessage(null)
 
       try {
         const response = await getBlogs({
@@ -95,6 +101,7 @@ const BlogsPage = () => {
           setShowFallbackError(true)
         }
         setIsFloatingErrorOpen(true)
+        setFloatingAlertMessage(null)
         setBlogs([])
         setTotalCount(0)
       } finally {
@@ -111,13 +118,32 @@ const BlogsPage = () => {
     }
   }, [ordering, page, retryKey, searchValue])
 
+  // If a page navigated here with a floatingAlert in location.state, show it once.
+  useEffect(() => {
+    const state = nav.state
+    if (state?.floatingAlert && state.floatingAlert.open) {
+      setErrorMessage(null)
+      setShowFallbackError(false)
+      setFloatingAlertMessage(state.floatingAlert.message ?? null)
+      setIsFloatingErrorOpen(true)
+      // Clear the history state so the alert won't reappear on back/refresh
+      try {
+        window.history.replaceState({}, document.title)
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [nav])
+
   const onRetry = () => {
     setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
     setRetryKey((value) => value + 1)
   }
 
   const onFloatingErrorClose = () => {
     setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
   }
 
   const onSearchSubmit = (value: string) => {
@@ -169,7 +195,7 @@ const BlogsPage = () => {
         open={isFloatingErrorOpen}
         onClose={onFloatingErrorClose}
         severity="error"
-        message={floatingErrorMessage}
+        message={floatingAlertMessage ?? floatingErrorMessage}
       />
     </>
   )

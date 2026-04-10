@@ -207,10 +207,11 @@
       "type": "Type"
     }
   },
-  "blogs": {
-    "title": "Blogs",
+  "blog": {
+    "title": "Blog",
     "unknown": "Could not load blog",
     "couldNotLoad": "Could not load blog",
+    "invalidId": "Invalid blog ID",
     "detail": {
       "publishedOn": "Published on",
       "notPublished": "Not published",

@@ -51,6 +51,7 @@ const HomePage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
   const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
+  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(null)
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
@@ -79,6 +80,7 @@ const HomePage = () => {
       setErrorMessage(null)
       setShowFallbackError(false)
       setIsFloatingErrorOpen(false)
+      setFloatingAlertMessage(null)
 
       try {
         const response = await getProductions({
@@ -111,6 +113,7 @@ const HomePage = () => {
           setShowFallbackError(true)
         }
         setIsFloatingErrorOpen(true)
+        setFloatingAlertMessage(null)
         setProductions([])
         setTotalCount(0)
       } finally {
@@ -130,11 +133,13 @@ const HomePage = () => {
   // Function to handle retrying the API call when there is an error
   const onRetry = () => {
     setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
     setRetryKey((value) => value + 1)
   }
 
   const onFloatingErrorClose = () => {
     setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
   }
 
   // Function to handle search submission, which updates the search value
@@ -152,7 +157,9 @@ const HomePage = () => {
   useEffect(() => {
     const state = nav.state
     if (state?.floatingAlert && state.floatingAlert.open) {
-      setErrorMessage(state.floatingAlert.message ?? null)
+      setErrorMessage(null)
+      setShowFallbackError(false)
+      setFloatingAlertMessage(state.floatingAlert.message ?? null)
       setIsFloatingErrorOpen(true)
       // Clear the history state so the alert won't reappear on back/refresh
       try {
@@ -205,7 +212,7 @@ const HomePage = () => {
         open={isFloatingErrorOpen}
         onClose={onFloatingErrorClose}
         severity="error"
-        message={errorMessage ?? floatingErrorMessage}
+        message={floatingAlertMessage ?? floatingErrorMessage}
       />
     </>
   )
