@@ -109,7 +109,11 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
             {genres.map((genre) => (
               <GenreAndTagChip
                 key={genre.id}
-                name={getTranslatedRecord(genre.name, language, genre.display_name ?? String(genre.id))}
+                name={getTranslatedRecord(
+                  genre.name,
+                  language,
+                  genre.display_name ?? String(genre.id),
+                )}
                 labels={genre.name || {}}
                 chipType="genre"
                 context="static"
