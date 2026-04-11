@@ -63,6 +63,14 @@ def make_uploaded_file(
 class TestExtractSafeFilename:
     """Tests for extract_safe_filename()."""
 
+    def test_make_uploaded_file_uses_defaults(self) -> None:
+        """Helper should build a file with the expected default metadata."""
+        uploaded_file = make_uploaded_file()
+
+        assert uploaded_file.name == "test.pdf"
+        assert uploaded_file.content_type == "application/pdf"
+        assert uploaded_file.size == len(b"dummy content")
+
     def test_returns_basename_from_relative_path(self) -> None:
         result = extract_safe_filename("path/to/file.pdf")
         assert result == "file.pdf"
