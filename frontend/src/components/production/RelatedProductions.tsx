@@ -62,7 +62,7 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
             {showTag && (
               <Box sx={{ mb: 1.5, display: 'inline-flex', fontWeight: 600 }}>
                 <GenreAndTagChip
-                  name={entry.tag.display_name ?? 'unknown tag'}
+                  name={tagName}
                   labels={entry.tag.name as Record<string, string>}
                   context="series"
                   chipType="seriesTag"

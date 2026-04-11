@@ -5,15 +5,18 @@
 
 import { Card, CardContent, Stack, Typography } from '@mui/material'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
+import { getTranslatedRecord } from '../../utils/translations'
+import { Tag } from '../../types/Tags'
 
 type Props = {
   title: string
   meta: string
   description: string
-  tags: string[]
+  tags: Tag[]
+  lang?: string
 }
 
-const ProductionCard = ({ title, meta, description, tags }: Props) => {
+const ProductionCard = ({ title, meta, description, tags, lang = 'nl' }: Props) => {
   return (
     <Card
       elevation={0}
@@ -42,20 +45,16 @@ const ProductionCard = ({ title, meta, description, tags }: Props) => {
             {description}
           </Typography>
 
-          {/* Tags */}
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            {/* TODO: fix this to use the tag correctly instead of just the name */}
-            {tags.map((tag) => (
-              <GenreAndTagChip
-                key={tag}
-                name={tag}
-                labels={{}}
-                id={tag}
-                chipType="seriesTag"
-                context="series"
-              />
-            ))}
-          </Stack>
+          {tags.map((tag) => (
+            <GenreAndTagChip
+              key={tag.id}
+              name={getTranslatedRecord(tag.name, lang, tag.display_name ?? String(tag.id))}
+              labels={(tag.name as Record<string, string>) ?? {}}
+              id={tag.id}
+              chipType="seriesTag"
+              context="series"
+            />
+          ))}
         </Stack>
       </CardContent>
     </Card>
