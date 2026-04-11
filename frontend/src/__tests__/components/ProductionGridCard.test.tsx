@@ -322,29 +322,8 @@ describe('ProductionGridCard', () => {
     })
     renderGridCard({ production })
 
-    expect(screen.getByText('Zonder display')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
-  })
-
-  it('renders translated genre name from record in English when display_name is null', async () => {
-    await i18n.changeLanguage('en')
-    const production = baseProduction({
-      genres: [
-        {
-          id: 1,
-          type: 'primary',
-          use_as: { id: 1, name: 'cat' },
-          name: { nl: 'Zonder display', en: 'No display' },
-          display_name: null,
-          vendor_id: null,
-        },
-      ],
-    })
-
-    renderGridCard({ production })
-
-    expect(screen.getByText('No display')).toBeInTheDocument()
     expect(screen.queryByText('Zonder display')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
   })
 
   it('does not fire onGenreClick for static chips', () => {

@@ -30,14 +30,6 @@ export interface ProductionListCardProps {
 const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCardProps) => {
   const { i18n } = useTranslation()
   const language = i18n.language
-  const normalizedLanguage = language.split('-')[0]
-
-  const getGenreLabel = (genre: Production['genres'][number]): string =>
-    getTranslatedRecord(
-      genre.name,
-      language,
-      getTranslatedRecord(genre.name, normalizedLanguage, ''),
-    )
 
   const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url
   const title = getTranslatedRecord(production.title, language, production.display_title)
@@ -51,7 +43,14 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
     production.last_event_end,
     language,
   )
-  const genres = production.genres.filter((genre) => getGenreLabel(genre) || genre.display_name)
+  const genres = production.genres.map((genre) => ({
+    ...genre,
+    translatedName: getTranslatedRecord(
+      genre.name,
+      language,
+      genre.display_name
+    ),
+  }));
 
   return (
     <Stack
@@ -117,12 +116,12 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
             {genres.map((genre) => (
               <GenreAndTagChip
                 key={genre.id}
-                name={genre.display_name || getGenreLabel(genre)}
-                labels={genre.name || {}}
+                name={genre.translatedName || ''} 
+                labels={{}}
                 chipType="genre"
                 context="static"
                 id={genre.id}
-                selected={selectedGenreIds?.includes(genre.id)}
+                selected={selectedGenreIds?.includes(genre.id) || false}
               />
             ))}
           </Stack>

@@ -9,6 +9,7 @@ import { getProductionDateLabel } from '../utils/dateUtils'
 import { getTranslatedRecord } from '../utils/translations'
 import GenreAndTagChip from './chips/GenreAndTagChip'
 import ImageWithFallback from './ImageWithFallback'
+import { get } from 'node:http'
 
 export interface ProductionGridCardProps {
   production: Production
@@ -32,14 +33,6 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
   const commonStyles = createCommonStyles(theme)
   const { i18n } = useTranslation()
   const language = i18n.language
-  const normalizedLanguage = language.split('-')[0]
-
-  const getGenreLabel = (genre: Production['genres'][number]): string =>
-    getTranslatedRecord(
-      genre.name,
-      language,
-      getTranslatedRecord(genre.name, normalizedLanguage, ''),
-    )
 
   const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url
   const title = getTranslatedRecord(production.title, language, production.display_title)
@@ -53,7 +46,14 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
     production.last_event_end,
     language,
   )
-  const genres = production.genres.filter((genre) => getGenreLabel(genre) || genre.display_name)
+  const genres = production.genres.map((genre) => ({
+    ...genre,
+    translatedName: getTranslatedRecord(
+      genre.name,
+      language,
+      genre.display_name
+    ),
+  }));
 
   return (
     <Stack
@@ -101,12 +101,12 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
             {genres.map((genre) => (
               <GenreAndTagChip
                 key={genre.id}
-                name={genre.display_name || getGenreLabel(genre)}
-                labels={genre.name || {}}
+                name={genre.translatedName || ''} 
+                labels={{}}
                 chipType="genre"
                 context="static"
                 id={genre.id}
-                selected={selectedGenreIds?.includes(genre.id)}
+                selected={selectedGenreIds?.includes(genre.id) || false}
               />
             ))}
           </Stack>
