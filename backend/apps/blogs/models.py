@@ -4,8 +4,15 @@ Blogs are content pages that can be linked to productions and displayed
 on the frontend as standalone pages or linked from production detail pages.
 """
 
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 
+from apps.core.media_validation import (
+    ALLOWED_IMAGE_MIME_TYPES,
+    MAX_MEDIA_FILE_SIZE_BYTES,
+    validate_media_file,
+)
 from apps.core.models import BaseModel
 from apps.languages.models import Language
 from apps.productions.models import Production
@@ -60,6 +67,21 @@ class Blog(BaseModel):
         verbose_name = "Blog Post"
         verbose_name_plural = "Blog Posts"
         ordering = ["-published_at", "-id"]
+
+    def clean(self) -> None:
+        """Validate uploaded cover images across all save paths."""
+        super().clean()
+
+        uploaded_cover = getattr(self.cover_image, "_file", None)
+        if isinstance(uploaded_cover, UploadedFile):
+            try:
+                validate_media_file(
+                    uploaded_cover,
+                    allowed_mime_types=ALLOWED_IMAGE_MIME_TYPES,
+                    max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
+                )
+            except ValueError as exc:
+                raise ValidationError({"cover_image": str(exc)}) from exc
 
     def __str__(self) -> str:
         """Return a human-readable representation, preferring the base display name, then slug."""

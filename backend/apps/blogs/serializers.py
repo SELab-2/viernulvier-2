@@ -1,7 +1,14 @@
 """Serializers for the Blog app."""
 
+from typing import Any
+
 from rest_framework import serializers
 
+from apps.core.media_validation import (
+    ALLOWED_IMAGE_MIME_TYPES,
+    MAX_MEDIA_FILE_SIZE_BYTES,
+    validate_media_file,
+)
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.languages.models import Language
 from apps.productions.models import Production
@@ -122,10 +129,28 @@ class BlogSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             },
             "cover_image": {
                 "help_text": (
-                    "Upload a cover image for this blog post. Accepts an image file or a URL to an existing image."
+                    "Upload a cover image for this blog post (JPEG, PNG, WEBP only). "
+                    "Validation: max 10 MB, binary signature verification via Pillow, "
+                    "content-type vs declared MIME mismatch detection, extension-MIME consistency check."
                 ),
             },
         }
+
+    def validate_cover_image(self, value: Any) -> Any:
+        """Validate uploaded cover images with the same strict rules as media uploads."""
+        if not value:
+            return value
+
+        try:
+            validate_media_file(
+                value,
+                allowed_mime_types=ALLOWED_IMAGE_MIME_TYPES,
+                max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
+            )
+        except ValueError as exc:
+            raise serializers.ValidationError(str(exc)) from exc
+
+        return value
 
     def get_title(self, obj: Blog) -> dict[str, str] | None:
         """Return all available title translations as a language-code dictionary."""

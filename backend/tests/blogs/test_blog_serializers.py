@@ -1,3 +1,4 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 import pytest
 
@@ -122,3 +123,14 @@ class TestBlogSerializer(TestCase):
         assert serializer.is_valid(), serializer.errors
         with pytest.raises(Language.DoesNotExist):
             serializer.save()
+
+    def test_create_rejects_non_image_cover_upload(self) -> None:
+        payload = {
+            "slug": "invalid-cover",
+            "cover_image": SimpleUploadedFile("brochure.pdf", b"%PDF-1.7", content_type="application/pdf"),
+        }
+
+        serializer = BlogSerializer(data=payload)
+
+        assert not serializer.is_valid()
+        assert "cover_image" in serializer.errors
