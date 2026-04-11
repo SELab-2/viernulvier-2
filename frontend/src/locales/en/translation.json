@@ -97,7 +97,6 @@
     },
     "pagination": {
       "navigationLabel": "Production pagination",
-      "pageXofY": "Page {{page}} of {{totalPages}}",
       "firstPage": "Go to first page",
       "lastPage": "Go to last page",
       "nextPage": "Go to next page",
@@ -153,7 +152,6 @@
     },
     "pagination": {
       "navigationLabel": "Story pagination",
-      "pageXofY": "Page {{page}} of {{totalPages}}",
       "firstPage": "Go to first page",
       "lastPage": "Go to last page",
       "nextPage": "Go to next page",

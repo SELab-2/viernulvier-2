@@ -82,7 +82,7 @@ const BlogDetailPage = () => {
   if (loading) return <BlogDetailPageSkeleton />
 
   if (!blog) {
-    return
+    return null
   }
 
   // Localized text values: prefer language-specific record, fall back to display fields.

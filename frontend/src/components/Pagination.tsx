@@ -1,4 +1,4 @@
-import { Box, Pagination as MuiPagination, Typography } from '@mui/material'
+import { Box, Pagination as MuiPagination } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
 export interface PaginationProps {
@@ -54,15 +54,11 @@ const Pagination = ({
       display="flex"
       flexDirection={{ xs: 'column', sm: 'row' }}
       alignItems="center"
-      justifyContent="space-between"
+      justifyContent="flex-end"
       gap={2}
       role="navigation"
       aria-label={t(`${i18nKeyPrefix}.navigationLabel`)}
     >
-      <Typography variant="body2" color="text.secondary">
-        {t(`${i18nKeyPrefix}.pageXofY`, { page: activePage, totalPages })}
-      </Typography>
-
       <MuiPagination
         color="primary"
         shape="rounded"

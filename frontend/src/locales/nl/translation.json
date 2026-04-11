@@ -97,7 +97,6 @@
     },
     "pagination": {
       "navigationLabel": "Paginering van producties",
-      "pageXofY": "Pagina {{page}} van {{totalPages}}",
       "firstPage": "Ga naar eerste pagina",
       "lastPage": "Ga naar laatste pagina",
       "nextPage": "Ga naar volgende pagina",
@@ -153,7 +152,6 @@
     },
     "pagination": {
       "navigationLabel": "Paginering van verhalen",
-      "pageXofY": "Pagina {{page}} van {{totalPages}}",
       "firstPage": "Ga naar eerste pagina",
       "lastPage": "Ga naar laatste pagina",
       "nextPage": "Ga naar volgende pagina",
