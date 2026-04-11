@@ -45,16 +45,18 @@ const ProductionCard = ({ title, meta, description, tags, lang = 'nl' }: Props) 
             {description}
           </Typography>
 
-          {tags.map((tag) => (
-            <GenreAndTagChip
-              key={tag.id}
-              name={getTranslatedRecord(tag.name, lang, tag.display_name ?? String(tag.id))}
-              labels={(tag.name as Record<string, string>) ?? {}}
-              id={tag.id}
-              chipType="seriesTag"
-              context="series"
-            />
-          ))}
+          <Stack direction="row" spacing={1} flexWrap="wrap">
+            {tags.map((tag) => (
+              <GenreAndTagChip
+                key={tag.id}
+                name={getTranslatedRecord(tag.name, lang, tag.display_name ?? String(tag.id))}
+                labels={(tag.name as Record<string, string>) ?? {}}
+                id={tag.id}
+                chipType="seriesTag"
+                context="series"
+              />
+            ))}
+          </Stack>
         </Stack>
       </CardContent>
     </Card>
