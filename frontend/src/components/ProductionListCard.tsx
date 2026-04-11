@@ -45,12 +45,8 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
   )
   const genres = production.genres.map((genre) => ({
     ...genre,
-    translatedName: getTranslatedRecord(
-      genre.name,
-      language,
-      genre.display_name
-    ),
-  }));
+    translatedName: getTranslatedRecord(genre.name, language, genre.display_name),
+  }))
 
   return (
     <Stack
@@ -116,7 +112,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
             {genres.map((genre) => (
               <GenreAndTagChip
                 key={genre.id}
-                name={genre.translatedName || ''} 
+                name={genre.translatedName || ''}
                 labels={{}}
                 chipType="genre"
                 context="static"
