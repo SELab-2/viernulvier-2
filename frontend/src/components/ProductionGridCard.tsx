@@ -9,7 +9,6 @@ import { getProductionDateLabel } from '../utils/dateUtils'
 import { getTranslatedRecord } from '../utils/translations'
 import GenreAndTagChip from './chips/GenreAndTagChip'
 import ImageWithFallback from './ImageWithFallback'
-import { get } from 'node:http'
 
 export interface ProductionGridCardProps {
   production: Production
