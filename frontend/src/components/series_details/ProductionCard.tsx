@@ -3,7 +3,8 @@
  * Designed to be reusable across different pages (lists, search, etc.).
  */
 
-import { Card, CardContent, Stack, Typography } from '@mui/material'
+import { Box, Card, CardContent, Stack, Typography } from '@mui/material'
+import DOMPurify from 'dompurify'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
 
 type ProductionTag = {
@@ -41,9 +42,29 @@ const ProductionCard = ({ title, meta, description, tags }: Props) => {
             {meta}
           </Typography>
 
-          <Typography variant="body2" color="text.secondary">
-            {description}
-          </Typography>
+          <Box
+            sx={{
+              fontSize: '0.95rem',
+              lineHeight: 1.8,
+              color: 'text.secondary',
+              '& img': {
+                maxWidth: '100%',
+                height: 'auto',
+              },
+              '& p': {
+                m: 0,
+              },
+              '& p:not(:last-child)': {
+                mb: 1,
+              },
+              '& a': {
+                color: 'primary.main',
+              },
+            }}
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(description || ''),
+            }}
+          />
 
           <Stack direction="row" spacing={1} flexWrap="wrap">
             {tags.map((tag) => (
