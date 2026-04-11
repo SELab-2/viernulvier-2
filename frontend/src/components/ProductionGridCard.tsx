@@ -93,7 +93,7 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
             {genres.map((genre) => (
               <GenreAndTagChip
                 key={genre.id}
-                name={genre.display_name || ""}
+                name={getTranslatedRecord(genre.name, language, genre.display_name ?? String(genre.id))}
                 labels={genre.name || {}}
                 chipType="genre"
                 context="static"
