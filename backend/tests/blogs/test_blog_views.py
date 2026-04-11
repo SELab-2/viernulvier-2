@@ -181,6 +181,112 @@ class TestBlogViewSet(TestCase):
         items = results_list(response)
         assert items[0]["slug"] == "aaa-blog"
 
+    def test_ordering_by_title_sort_uses_accept_language(self) -> None:
+        language_nl = LanguageFactory(code="nl", name="Dutch")
+
+        blog_a = BlogFactory(slug="title-a")
+        BlogTranslationFactory(
+            blog=blog_a,
+            language=language_nl,
+            title="Alpha",
+            body="NL body",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=blog_a,
+            language=self.language,
+            title="Zulu",
+            body="EN body",
+            excerpt="",
+        )
+
+        blog_b = BlogFactory(slug="title-b")
+        BlogTranslationFactory(
+            blog=blog_b,
+            language=language_nl,
+            title="Zulu",
+            body="NL body",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=blog_b,
+            language=self.language,
+            title="Alpha",
+            body="EN body",
+            excerpt="",
+        )
+
+        response_nl = self.client.get(
+            "/api/v1/blogs/",
+            {"ordering": "title_sort"},
+            HTTP_ACCEPT_LANGUAGE="nl",
+            **pub_headers(),
+        )
+        ids_nl = [item["id"] for item in results_list(response_nl)]
+        assert ids_nl.index(blog_a.id) < ids_nl.index(blog_b.id)
+
+        response_en = self.client.get(
+            "/api/v1/blogs/",
+            {"ordering": "title_sort"},
+            HTTP_ACCEPT_LANGUAGE="en",
+            **pub_headers(),
+        )
+        ids_en = [item["id"] for item in results_list(response_en)]
+        assert ids_en.index(blog_b.id) < ids_en.index(blog_a.id)
+
+    def test_search_prefers_accept_language_translation(self) -> None:
+        language_nl = LanguageFactory(code="nl", name="Dutch")
+
+        blog_nl = BlogFactory(slug="search-nl")
+        BlogTranslationFactory(
+            blog=blog_nl,
+            language=language_nl,
+            title="Alpha",
+            body="NL body",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=blog_nl,
+            language=self.language,
+            title="Zulu",
+            body="EN body",
+            excerpt="",
+        )
+
+        blog_en = BlogFactory(slug="search-en")
+        BlogTranslationFactory(
+            blog=blog_en,
+            language=language_nl,
+            title="Zulu",
+            body="NL body",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=blog_en,
+            language=self.language,
+            title="Alpha",
+            body="EN body",
+            excerpt="",
+        )
+
+        response_nl = self.client.get(
+            "/api/v1/blogs/",
+            {"search": "Alpha"},
+            HTTP_ACCEPT_LANGUAGE="nl",
+            **pub_headers(),
+        )
+        ids_nl = [item["id"] for item in results_list(response_nl)]
+        assert ids_nl == [blog_nl.id]
+
+        response_en = self.client.get(
+            "/api/v1/blogs/",
+            {"search": "Alpha"},
+            HTTP_ACCEPT_LANGUAGE="en",
+            **pub_headers(),
+        )
+        ids_en = [item["id"] for item in results_list(response_en)]
+        assert ids_en == [blog_en.id]
+
     def test_patch_internal_updates_slug(self) -> None:
         response = self.client.patch(
             f"/api/v1/blogs/{self.blog.id}/",

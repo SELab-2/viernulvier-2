@@ -779,3 +779,91 @@ class TestProductionEventDateAnnotationNPlusOne(TestCase):
         for item in response.data["results"]:
             assert item["first_event_start"] is not None
             assert item["last_event_end"] is not None
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestProductionLanguageAwareOrderingAndSearch(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        Production.objects.all().delete()
+
+        nl = LanguageFactory.create(code="nl", name="Dutch")
+        en = LanguageFactory.create(code="en", name="English")
+
+        self.prod_alpha_nl = ProductionFactory.create()
+        ProductionTranslationFactory.create(
+            production=self.prod_alpha_nl,
+            language=nl,
+            title="Alpha",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+        ProductionTranslationFactory.create(
+            production=self.prod_alpha_nl,
+            language=en,
+            title="Zulu",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+
+        self.prod_alpha_en = ProductionFactory.create()
+        ProductionTranslationFactory.create(
+            production=self.prod_alpha_en,
+            language=nl,
+            title="Zulu",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+        ProductionTranslationFactory.create(
+            production=self.prod_alpha_en,
+            language=en,
+            title="Alpha",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+
+    def test_ordering_by_title_sort_uses_accept_language(self) -> None:
+        response_nl = self.client.get(
+            "/api/v1/productions/",
+            {"ordering": "title_sort"},
+            HTTP_ACCEPT_LANGUAGE="nl",
+            **pub_headers(),
+        )
+        ids_nl = [row["id"] for row in response_nl.data["results"]]
+        assert ids_nl[:2] == [self.prod_alpha_nl.id, self.prod_alpha_en.id]
+
+        response_en = self.client.get(
+            "/api/v1/productions/",
+            {"ordering": "title_sort"},
+            HTTP_ACCEPT_LANGUAGE="en",
+            **pub_headers(),
+        )
+        ids_en = [row["id"] for row in response_en.data["results"]]
+        assert ids_en[:2] == [self.prod_alpha_en.id, self.prod_alpha_nl.id]
+
+    def test_search_uses_accept_language_preferred_translation(self) -> None:
+        response_nl = self.client.get(
+            "/api/v1/productions/",
+            {"search": "Alpha"},
+            HTTP_ACCEPT_LANGUAGE="nl",
+            **pub_headers(),
+        )
+        ids_nl = [row["id"] for row in response_nl.data["results"]]
+        assert ids_nl == [self.prod_alpha_nl.id]
+
+        response_en = self.client.get(
+            "/api/v1/productions/",
+            {"search": "Alpha"},
+            HTTP_ACCEPT_LANGUAGE="en",
+            **pub_headers(),
+        )
+        ids_en = [row["id"] for row in response_en.data["results"]]
+        assert ids_en == [self.prod_alpha_en.id]

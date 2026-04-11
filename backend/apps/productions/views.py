@@ -10,11 +10,13 @@ Translation Format
 ------------------
 Metadata fields (title, description, etc.) are returned as dictionaries
 containing all available translations (e.g., {"nl": "...", "en": "..."}).
-The 'Accept-Language' header is not used for filtering these fields,
-allowing consumers to access all languages in a single request.
+`Accept-Language` influences ordering/search preference only, while
+responses still include all translations in a single payload.
 """
 
-from django.db.models import Max, Min, Prefetch
+from django.conf import settings
+from django.db.models import Max, Min, Prefetch, Q, QuerySet
+from django.db.models.functions import Coalesce
 from django.http import HttpRequest
 from drf_spectacular.utils import extend_schema
 
@@ -76,13 +78,15 @@ class ProductionViewSet(ApiModelViewSet):
     ``?ordering=performer_type``
         Group by performer type.
     ``?ordering=title_sort``
-        Sort alphabetically by translated title.
+        Sort alphabetically by title in the preferred request language,
+        with fallback to any available translation.
 
     Search
     ------
     ``?search=hamlet``
-        Full-text search across translated ``title``, ``artist_name``,
-        and ``tagline`` fields.
+        Full-text search across preferred-language ``title``,
+        ``artist_name``, and ``tagline`` values, with fallback to any
+        available translation.
 
     Queryset strategy
     -----------------
@@ -123,10 +127,9 @@ class ProductionViewSet(ApiModelViewSet):
                 ).order_by("position"),
             ),
         )
-        .annotate(  # For filtering and ordering by event dates/title without extra queries
+        .annotate(  # For filtering and ordering by event dates without extra queries
             first_event_start=Min("events__starts_at"),
             last_event_end=Max("events__ends_at"),
-            title_sort=Min("translations__title"),
         )
     )
 
@@ -141,10 +144,42 @@ class ProductionViewSet(ApiModelViewSet):
     ]
     ordering = ["-id"]
     search_fields = [
-        "translations__title",
-        "translations__artist_name",
-        "translations__tagline",
+        "title_search",
+        "artist_name_search",
+        "tagline_search",
     ]
+
+    def _get_request_language_code(self) -> str:
+        """Resolve the preferred language from query params/header with sane fallback."""
+        raw = self.request.query_params.get("lang") or self.request.headers.get("Accept-Language", "")
+        candidate = raw.split(",", 1)[0].split(";", 1)[0].strip().lower()
+        if candidate:
+            return candidate.split("-", 1)[0]
+        return (getattr(settings, "LANGUAGE_CODE", "en") or "en").split("-", 1)[0].lower()
+
+    def get_queryset(self) -> QuerySet[Production]:
+        """Annotate language-aware sorting and search fields for this request."""
+        language_code = self._get_request_language_code()
+        queryset = super().get_queryset()
+
+        return queryset.annotate(
+            title_sort=Coalesce(
+                Min("translations__title", filter=Q(translations__language__code=language_code)),
+                Min("translations__title"),
+            ),
+            title_search=Coalesce(
+                Min("translations__title", filter=Q(translations__language__code=language_code)),
+                Min("translations__title"),
+            ),
+            artist_name_search=Coalesce(
+                Min("translations__artist_name", filter=Q(translations__language__code=language_code)),
+                Min("translations__artist_name"),
+            ),
+            tagline_search=Coalesce(
+                Min("translations__tagline", filter=Q(translations__language__code=language_code)),
+                Min("translations__tagline"),
+            ),
+        )
 
     @property
     def includes(self) -> set[str]:

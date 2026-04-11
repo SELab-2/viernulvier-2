@@ -4,7 +4,9 @@ Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
 """
 
-from django.db.models import Prefetch
+from django.conf import settings
+from django.db.models import Min, Prefetch, Q, QuerySet
+from django.db.models.functions import Coalesce
 
 from apps.core.views import ApiModelViewSet
 from apps.productions.views import ProductionViewSet
@@ -44,6 +46,9 @@ class BlogViewSet(ApiModelViewSet):
     --------
     ``?ordering=published_at`` / ``?ordering=-published_at``
         By publication date (default: newest first).
+    ``?ordering=title_sort`` / ``?ordering=-title_sort``
+        Alphabetical by title in the preferred request language,
+        with fallback to any available translation.
     ``?ordering=slug`` / ``?ordering=-slug``
         Alphabetical by slug.
     ``?ordering=id`` / ``?ordering=-id``
@@ -52,7 +57,9 @@ class BlogViewSet(ApiModelViewSet):
     Search
     ------
     ``?search=techno``
-        Full-text search across ``slug``, translated ``title``, and translated ``excerpt`` fields.
+        Full-text search across ``slug`` plus preferred-language
+        ``title`` and ``excerpt`` values, with fallback to any
+        available translation.
     Production links are returned as full nested production objects.
     """
 
@@ -63,6 +70,34 @@ class BlogViewSet(ApiModelViewSet):
     serializer_class = BlogSerializer
 
     filterset_class = BlogFilter
-    ordering_fields = ["id", "slug", "published_at"]
+    ordering_fields = ["id", "slug", "published_at", "title_sort"]
     ordering = ["-published_at", "-id"]
-    search_fields = ["slug", "translations__title", "translations__excerpt"]
+    search_fields = ["slug", "title_search", "excerpt_search"]
+
+    def _get_request_language_code(self) -> str:
+        """Resolve the preferred language from query params/header with sane fallback."""
+        raw = self.request.query_params.get("lang") or self.request.headers.get("Accept-Language", "")
+        candidate = raw.split(",", 1)[0].split(";", 1)[0].strip().lower()
+        if candidate:
+            return candidate.split("-", 1)[0]
+        return (getattr(settings, "LANGUAGE_CODE", "en") or "en").split("-", 1)[0].lower()
+
+    def get_queryset(self) -> QuerySet[Blog]:
+        """Annotate language-aware title/search fields for this request."""
+        language_code = self._get_request_language_code()
+        queryset = super().get_queryset()
+
+        return queryset.annotate(
+            title_sort=Coalesce(
+                Min("translations__title", filter=Q(translations__language__code=language_code)),
+                Min("translations__title"),
+            ),
+            title_search=Coalesce(
+                Min("translations__title", filter=Q(translations__language__code=language_code)),
+                Min("translations__title"),
+            ),
+            excerpt_search=Coalesce(
+                Min("translations__excerpt", filter=Q(translations__language__code=language_code)),
+                Min("translations__excerpt"),
+            ),
+        )
