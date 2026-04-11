@@ -32,9 +32,16 @@ const buildBlog = (id: number): Blog => ({
   productions: [],
 })
 
-const renderPage = (initialPath = '/blogs') =>
+const renderPage = (
+  initialEntry:
+    | string
+    | {
+        pathname: string
+        state?: { floatingAlert?: { open?: boolean; message?: string } }
+      } = '/blogs',
+) =>
   render(
-    <MemoryRouter initialEntries={[initialPath]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={createTheme()}>
           <BlogsPage />
@@ -119,6 +126,28 @@ describe('BlogsPage', () => {
 
     expect(await screen.findByText('Kon verhalen niet laden.')).toBeInTheDocument()
     expect(screen.queryByText('Something failed on server')).not.toBeInTheDocument()
+  })
+
+  it('shows floating alert message passed through navigation state', async () => {
+    mockedGetBlogs.mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildBlog(10)],
+    })
+
+    renderPage({
+      pathname: '/blogs',
+      state: {
+        floatingAlert: {
+          open: true,
+          message: 'Kon blog niet laden',
+        },
+      },
+    })
+
+    expect(await screen.findByText('Kon blog niet laden')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Opnieuw proberen' })).not.toBeInTheDocument()
   })
 
   it('updates URL state when list view is selected', async () => {
