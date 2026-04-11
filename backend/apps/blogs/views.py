@@ -52,7 +52,7 @@ class BlogViewSet(ApiModelViewSet):
     Search
     ------
     ``?search=techno``
-        Full-text search across ``slug`` and translated ``title`` fields.
+        Full-text search across ``slug``, translated ``title``, and translated ``excerpt`` fields.
     Production links are returned as full nested production objects.
     """
 
@@ -65,4 +65,4 @@ class BlogViewSet(ApiModelViewSet):
     filterset_class = BlogFilter
     ordering_fields = ["id", "slug", "published_at"]
     ordering = ["-published_at", "-id"]
-    search_fields = ["slug", "translations__title"]
+    search_fields = ["slug", "translations__title", "translations__excerpt"]

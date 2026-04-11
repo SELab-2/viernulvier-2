@@ -93,31 +93,31 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
           ) : null}
         </Stack>
 
-        <Stack color="text.secondary" spacing={1}>
-          {dateLabel ? (
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <DateRangeOutlinedIcon fontSize="inherit" />
-              <Typography variant="body2" noWrap>
-                {dateLabel}
-              </Typography>
-            </Stack>
-          ) : null}
+        <Stack color="text.secondary" spacing={1} minHeight={48}>
+          <Stack direction="row" alignItems="center" spacing={1} minHeight={20}>
+            {dateLabel ? (
+              <>
+                <DateRangeOutlinedIcon fontSize="inherit" />
+                <Typography variant="body2" noWrap>
+                  {dateLabel}
+                </Typography>
+              </>
+            ) : null}
+          </Stack>
 
-          {genres.length > 0 ? (
-            <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24} overflow="hidden">
-              {genres.map((genre) => (
-                <GenreAndTagChip
-                  key={genre.id}
-                  name={genre.display_name || ''} // TODO: resolve so there is always a fallback
-                  labels={{}}
-                  chipType="genre"
-                  context="static"
-                  id={genre.id}
-                  selected={selectedGenreIds?.includes(genre.id)} // TODO: fix this so selected is never undefined
-                />
-              ))}
-            </Stack>
-          ) : null}
+          <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24} overflow="hidden">
+            {genres.map((genre) => (
+              <GenreAndTagChip
+                key={genre.id}
+                name={genre.display_name || ''} // TODO: resolve so there is always a fallback
+                labels={{}}
+                chipType="genre"
+                context="static"
+                id={genre.id}
+                selected={selectedGenreIds?.includes(genre.id)} // TODO: fix this so selected is never undefined
+              />
+            ))}
+          </Stack>
         </Stack>
       </Stack>
 

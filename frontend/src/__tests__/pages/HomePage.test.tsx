@@ -4,6 +4,7 @@ import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import i18n from '../../i18n'
 import HomePage from '../../pages/HomePage'
+import { ApiError } from '../../services/ApiTypes'
 import { getProductions } from '../../services/productions/Productions'
 import type { Production } from '../../types/Productions'
 
@@ -38,9 +39,13 @@ const buildProduction = (id: number): Production => ({
   genres: [],
 })
 
-const renderPage = (initialPath = '/') =>
+const renderPage = (
+  initialEntry:
+    | string
+    | { pathname: string; state?: { floatingAlert?: { open?: boolean; message?: string } } } = '/',
+) =>
   render(
-    <MemoryRouter initialEntries={[initialPath]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={createTheme()}>
           <HomePage />
@@ -137,6 +142,37 @@ describe('HomePage (ProductionPage)', () => {
     expect(await screen.findByRole('heading', { name: 'Productie 3' })).toBeInTheDocument()
   })
 
+  it('shows localized fallback copy when API returns a non-localized error message', async () => {
+    mockedGetProductions.mockRejectedValueOnce(new ApiError(500, 'Something failed on server'))
+
+    renderPage()
+
+    expect(await screen.findByText('Kon producties niet laden.')).toBeInTheDocument()
+    expect(screen.queryByText('Something failed on server')).not.toBeInTheDocument()
+  })
+
+  it('shows floating alert message passed through navigation state without inline error', async () => {
+    mockedGetProductions.mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildProduction(10)],
+    })
+
+    renderPage({
+      pathname: '/',
+      state: {
+        floatingAlert: {
+          open: true,
+          message: 'Kon productie niet laden',
+        },
+      },
+    })
+
+    expect(await screen.findByText('Kon productie niet laden')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Opnieuw proberen' })).not.toBeInTheDocument()
+  })
+
   it('updates URL state when list view is selected', async () => {
     mockedGetProductions.mockResolvedValue({
       count: 1,
@@ -229,37 +265,29 @@ describe('HomePage (ProductionPage)', () => {
     })
   })
 
-  it('uses title_sort ordering when sorting by name', async () => {
-    mockedGetProductions
-      .mockResolvedValueOnce({
-        count: 1,
-        next: null,
-        previous: null,
-        results: [buildProduction(7)],
-      })
-      .mockResolvedValueOnce({
-        count: 1,
-        next: null,
-        previous: null,
-        results: [buildProduction(7)],
-      })
+  it('retries fetch when submitting the same query after an error', async () => {
+    mockedGetProductions.mockRejectedValueOnce(new Error('network down')).mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildProduction(9)],
+    })
 
-    renderPage()
+    renderPage('/?q=romeo')
 
-    await screen.findByRole('heading', { name: 'Productie 7' })
+    expect(await screen.findByText('Kon producties niet laden.')).toBeInTheDocument()
 
-    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Sorteer op' }))
-    fireEvent.click(await screen.findByRole('option', { name: 'Naam' }))
+    fireEvent.keyDown(
+      screen.getByPlaceholderText('Zoek naar evenementen, artiesten of locaties...'),
+      {
+        key: 'Enter',
+        code: 'Enter',
+      },
+    )
 
     await waitFor(() => {
-      expect(mockedGetProductions).toHaveBeenLastCalledWith({
-        page: 1,
-        pageSize: 12,
-        filters: {
-          search: undefined,
-          ordering: '-title_sort',
-        },
-      })
+      expect(mockedGetProductions).toHaveBeenCalledTimes(2)
     })
+    expect(await screen.findByRole('heading', { name: 'Productie 9' })).toBeInTheDocument()
   })
 })

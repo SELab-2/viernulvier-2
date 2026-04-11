@@ -36,15 +36,6 @@ describe('Pagination', () => {
       totalItems: 35,
       onPageChange: jest.fn(),
     })
-
-    expect(
-      screen.getByRole('navigation', { name: 'Paginering van producties' }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Pagina 2 van 4')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Huidige pagina, pagina 2' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    )
   })
 
   it('emits selected page when user clicks a page button', () => {

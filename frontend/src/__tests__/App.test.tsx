@@ -21,6 +21,7 @@ describe('App', () => {
     expect(within(mainNav).getByRole('link', { name: 'Archief' })).toBeInTheDocument()
     expect(within(mainNav).getByRole('link', { name: 'Reeksen' })).toBeInTheDocument()
     expect(within(mainNav).getByRole('link', { name: 'Artiesten' })).toBeInTheDocument()
+    expect(within(mainNav).getByRole('link', { name: 'Verhalen' })).toBeInTheDocument()
   })
 
   it('renders not found page on unknown route', () => {
