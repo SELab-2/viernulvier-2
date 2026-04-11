@@ -45,10 +45,7 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
     production.last_event_end,
     language,
   )
-  const genres = production.genres.map((genre) => ({
-    ...genre,
-    translatedName: getTranslatedRecord(genre.name, language, genre.display_name),
-  }))
+  const genres = production.genres.filter((genre) => genre.display_name)
 
   return (
     <Stack
@@ -96,8 +93,8 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
             {genres.map((genre) => (
               <GenreAndTagChip
                 key={genre.id}
-                name={genre.translatedName || ''}
-                labels={{}}
+                name={genre.display_name || ""}
+                labels={genre.name || {}}
                 chipType="genre"
                 context="static"
                 id={genre.id}
