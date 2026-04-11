@@ -113,6 +113,7 @@ class TestRewindFile:
     def test_handles_file_without_seek(self) -> None:
         """Handle file-like objects without seek capability."""
         mock_file = MagicMock(spec=[])  # No tell/seek methods
+
         def callback():
             return "result"
 
@@ -342,8 +343,9 @@ class TestDetectBestMimeType:
         mock_file = MagicMock(spec=["content_type"])
         mock_file.content_type = None
 
-        with patch("apps.core.media_validation.detect_content_mime_type", return_value=None), patch(
-            "apps.core.media_validation.mimetypes.guess_type", return_value=(None, None)
+        with (
+            patch("apps.core.media_validation.detect_content_mime_type", return_value=None),
+            patch("apps.core.media_validation.mimetypes.guess_type", return_value=(None, None)),
         ):
             mime = detect_best_mime_type(mock_file)
             assert mime == "application/octet-stream"
