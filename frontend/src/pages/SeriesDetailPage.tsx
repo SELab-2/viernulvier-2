@@ -76,9 +76,9 @@ function buildProductionDescription(production: Production, language: string): s
 }
 
 // TODO: use production images in production cards. This is just a placeholder for the moment.
-//function buildProductionImage(_production: Production): string {
-//  return ''
-//}
+// function buildProductionImage(_production: Production): string {
+//   return ''
+// }
 
 const SeriesDetailPage = () => {
   const { id } = useParams<{ id: string }>()
@@ -245,10 +245,15 @@ const SeriesDetailPage = () => {
                   }
                   meta={buildProductionMeta(production, i18n.language)}
                   description={buildProductionDescription(production, i18n.language)}
-                  tags={production.tags.map(
-                    (tag) => tag.display_name || getLocalizedRecordValue(tag.name, i18n.language),
-                  )}
-                  //image={buildProductionImage(production)}
+                  tags={production.tags.map((tag) => ({
+                    id: tag.id,
+                    name:
+                      tag.display_name ||
+                      getLocalizedRecordValue(tag.name, i18n.language) ||
+                      t('series.untitled'),
+                    labels: tag.name ?? {},
+                  }))}
+                  // image={buildProductionImage(production)}
                 />
               </TimelineItem>
             ))}

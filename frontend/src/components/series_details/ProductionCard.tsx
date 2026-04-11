@@ -6,11 +6,17 @@
 import { Card, CardContent, Stack, Typography } from '@mui/material'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
 
+type ProductionTag = {
+  id: number | string
+  name: string
+  labels?: Record<string, string>
+}
+
 type Props = {
   title: string
   meta: string
   description: string
-  tags: string[]
+  tags: ProductionTag[]
 }
 
 const ProductionCard = ({ title, meta, description, tags }: Props) => {
@@ -27,30 +33,25 @@ const ProductionCard = ({ title, meta, description, tags }: Props) => {
     >
       <CardContent sx={{ p: 2.5 }}>
         <Stack spacing={1.25}>
-          {/* Title */}
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
             {title}
           </Typography>
 
-          {/* Metadata */}
           <Typography variant="body2" color="text.secondary">
             {meta}
           </Typography>
 
-          {/* Description */}
           <Typography variant="body2" color="text.secondary">
             {description}
           </Typography>
 
-          {/* Tags */}
           <Stack direction="row" spacing={1} flexWrap="wrap">
-            {/* TODO: fix this to use the tag correctly instead of just the name */}
             {tags.map((tag) => (
               <GenreAndTagChip
-                key={tag}
-                name={tag}
-                labels={{}}
-                id={tag}
+                key={tag.id}
+                name={tag.name}
+                labels={tag.labels ?? {}}
+                id={tag.id}
                 chipType="seriesTag"
                 context="series"
               />
