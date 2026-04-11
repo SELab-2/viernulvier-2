@@ -50,7 +50,7 @@ const ProductionCard = ({ title, meta, description, tags, lang = 'nl' }: Props) 
               <GenreAndTagChip
                 key={tag.id}
                 name={getTranslatedRecord(tag.name, lang, tag.display_name ?? String(tag.id))}
-                labels={(tag.name as Record<string, string>) ?? {}}
+                labels={{}}
                 id={tag.id}
                 chipType="seriesTag"
                 context="series"
