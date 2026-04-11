@@ -152,9 +152,6 @@ class MediaFile(BaseModel):
 
         self._populate_derived_fields()
 
-        if (self.size_bytes or 0) > self.MAX_FILE_SIZE:
-            raise ValidationError({"file": f"File is too large (max {self.MAX_FILE_SIZE // (1024 * 1024)} MB)."})
-
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Ensure derived fields are populated before saving."""
         if self.file:

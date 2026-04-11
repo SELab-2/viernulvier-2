@@ -95,17 +95,24 @@ def _detect_pdf_mime(file_obj: Any) -> str | None:
 
 
 def _detect_image_mime(file_obj: Any) -> str | None:
-    """Detect image MIME type from binary content using Pillow."""
+    """Detect image MIME type from binary content using Pillow.
+
+    Note: We capture the format BEFORE calling verify(), because verify()
+    modifies the image state and makes further operations unsafe.
+    """
 
     def _reader() -> str | None:
-        with Image.open(file_obj) as image:
-            image.verify()
-            return IMAGE_FORMAT_TO_MIME.get((image.format or "").upper())
+        try:
+            with Image.open(file_obj) as image:
+                # Get format BEFORE verify() to avoid state corruption
+                image_format = (image.format or "").upper()
+                # Verify integrity
+                image.verify()
+                return IMAGE_FORMAT_TO_MIME.get(image_format)
+        except (OSError, UnidentifiedImageError, ValueError, RuntimeError):
+            return None
 
-    try:
-        return _rewind_file(file_obj, _reader)
-    except (OSError, UnidentifiedImageError, ValueError):
-        return None
+    return _rewind_file(file_obj, _reader)
 
 
 def detect_content_mime_type(file_obj: Any) -> str | None:
