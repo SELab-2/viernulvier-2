@@ -14,12 +14,13 @@ import { getTranslatedRecord } from '../../utils/translations'
 interface RelatedProductionsProps {
   related: ProductionRelated[]
   lang?: string
+  showTag?: boolean
 }
 
 /**
  * Renders related productions grouped by tag from the production detail payload.
  */
-function RelatedProductions({ lang = 'nl', related }: RelatedProductionsProps) {
+function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedProductionsProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.language || lang
 
@@ -58,17 +59,23 @@ function RelatedProductions({ lang = 'nl', related }: RelatedProductionsProps) {
 
         return (
           <Box key={entry.tag.id}>
-            <Box sx={{ mb: 1.5, display: 'inline-flex', fontWeight: 600 }}>
-              <GenreAndTagChip
-                name={entry.tag.display_name ?? 'unknown tag'}
-                labels={entry.tag.name as Record<string, string>}
-                context="series"
-                chipType="seriesTag"
-                id={entry.tag.id}
-              />
-            </Box>
+            {showTag && (
+              <Box sx={{ mb: 1.5, display: 'inline-flex', fontWeight: 600 }}>
+                <GenreAndTagChip
+                  name={entry.tag.display_name ?? 'unknown tag'}
+                  labels={entry.tag.name as Record<string, string>}
+                  context="series"
+                  chipType="seriesTag"
+                  id={entry.tag.id}
+                />
+              </Box>
+            )}
             <Carousel
-              ariaLabel={`${t('productions.detail.related', 'Related productions')} for ${tagName}`}
+              ariaLabel={
+                showTag
+                  ? `${t('productions.detail.related', 'Related productions')} for ${tagName}`
+                  : t('productions.detail.related', 'Related productions')
+              }
               maxWidth="100%"
               previousLabel={t('carousel.previousSlide', 'Previous slide')}
               nextLabel={t('carousel.nextSlide', 'Next slide')}

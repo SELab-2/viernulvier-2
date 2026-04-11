@@ -35,7 +35,8 @@ export const createCommonStyles = (theme: Theme) => {
       display: 'flex',
       flexWrap: 'wrap',
       gap: tokens.spacing.numericLg,
-      justifyContent: 'center',
+      alignItems: 'stretch',
+      justifyContent: 'flex-start',
     } as SxProps<Theme>,
 
     /**

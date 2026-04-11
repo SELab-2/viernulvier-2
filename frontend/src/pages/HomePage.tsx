@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMediaQuery, useTheme } from '@mui/material'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
@@ -24,6 +25,10 @@ const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'd
 const HomePage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
+  const location = useLocation()
+  // Type for optional navigation state used to show a one-time floating alert when arriving
+  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
+  const nav = location as { state?: NavState }
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
   const {
@@ -46,6 +51,7 @@ const HomePage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
   const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
+  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(null)
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
@@ -74,6 +80,7 @@ const HomePage = () => {
       setErrorMessage(null)
       setShowFallbackError(false)
       setIsFloatingErrorOpen(false)
+      setFloatingAlertMessage(null)
 
       try {
         const response = await getProductions({
@@ -97,13 +104,16 @@ const HomePage = () => {
         }
 
         if (error instanceof ApiError) {
-          setErrorMessage(error.message)
-          setShowFallbackError(false)
+          // Backend error payloads are not guaranteed to be localized,
+          // so we always show the translated fallback copy in the UI.
+          setErrorMessage(null)
+          setShowFallbackError(true)
         } else {
           setErrorMessage(null)
           setShowFallbackError(true)
         }
         setIsFloatingErrorOpen(true)
+        setFloatingAlertMessage(null)
         setProductions([])
         setTotalCount(0)
       } finally {
@@ -123,17 +133,42 @@ const HomePage = () => {
   // Function to handle retrying the API call when there is an error
   const onRetry = () => {
     setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
     setRetryKey((value) => value + 1)
   }
 
   const onFloatingErrorClose = () => {
     setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
   }
 
   // Function to handle search submission, which updates the search value
   const onSearchSubmit = (value: string) => {
-    setSearchValue(value.trim())
+    const nextQuery = value.trim()
+    if (nextQuery === searchValue.trim()) {
+      setRetryKey((current) => current + 1)
+      return
+    }
+
+    setSearchValue(nextQuery)
   }
+
+  // If a page navigated here with a floatingAlert in location.state, show it once.
+  useEffect(() => {
+    const state = nav.state
+    if (state?.floatingAlert && state.floatingAlert.open) {
+      setErrorMessage(null)
+      setShowFallbackError(false)
+      setFloatingAlertMessage(state.floatingAlert.message ?? null)
+      setIsFloatingErrorOpen(true)
+      // Clear the history state so the alert won't reappear on back/refresh
+      try {
+        window.history.replaceState({}, document.title)
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [nav])
 
   // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.
   // It also handles the different UI states such as loading, error, and empty results.
@@ -177,7 +212,7 @@ const HomePage = () => {
         open={isFloatingErrorOpen}
         onClose={onFloatingErrorClose}
         severity="error"
-        message={floatingErrorMessage}
+        message={floatingAlertMessage ?? floatingErrorMessage}
       />
     </>
   )

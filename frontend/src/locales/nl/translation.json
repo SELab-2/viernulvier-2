@@ -7,6 +7,7 @@
     "home": "Archief",
     "events": "Reeksen",
     "productions": "Artiesten",
+    "blogs": "Verhalen",
     "mainNav": "Hoofdnavigatie",
     "openMenu": "Menu openen",
     "closeMenu": "Menu sluiten",
@@ -17,7 +18,8 @@
     "searchPlaceholder": "Zoek naar evenementen, artiesten of locaties...",
     "searchPlaceholderMobile": "Zoek evenementen, artiesten...",
     "search": "Zoeken",
-    "resultsFound": "{{count}} resultaten gevonden",
+    "resultsFound_one": "{{count}} resultaat gevonden",
+    "resultsFound_other": "{{count}} resultaten gevonden",
     "sort": {
       "targetLabel": "Sorteer op",
       "directionLabel": "Sorteerrichting",
@@ -40,6 +42,17 @@
       "label": "Weergave",
       "list": "Lijst",
       "grid": "Raster"
+    }
+  },
+  "apiErrors": {
+    "network": "Er is een netwerkfout opgetreden. Controleer je verbinding.",
+    "status": {
+      "400": "Ongeldige aanvraagparameters.",
+      "401": "Niet geauthenticeerd. Log in om verder te gaan.",
+      "403": "Je hebt geen toestemming om deze actie uit te voeren.",
+      "404": "De gevraagde resource werd niet gevonden.",
+      "500": "Er trad een interne serverfout op. Probeer later opnieuw.",
+      "genericWithCode": "Aanvraag mislukt met status {{status}}."
     }
   },
   "listCard": {
@@ -84,7 +97,6 @@
     },
     "pagination": {
       "navigationLabel": "Paginering van producties",
-      "pageXofY": "Pagina {{page}} van {{totalPages}}",
       "firstPage": "Ga naar eerste pagina",
       "lastPage": "Ga naar laatste pagina",
       "nextPage": "Ga naar volgende pagina",
@@ -116,6 +128,38 @@
       "events": "Evenementen"
     }
   },
+  "blogs": {
+    "home": {
+      "loading": "Verhalen laden",
+      "resultsRegionLabel": "Resultaten van verhalen",
+      "searchPlaceholder": "Zoek verhalen op titel of samenvatting...",
+      "searchPlaceholderMobile": "Zoek verhalen...",
+      "sidebarLabel": "Context van verhalen",
+      "sidebarTitle": "Verhalen",
+      "sidebarDescription": "Blader door redactionele verhalen uit het VIERNULVIER-archief.",
+      "coverAltFallback": "Omslagafbeelding van blog",
+      "noExcerpt": "Geen samenvatting beschikbaar.",
+      "unpublished": "Niet gepubliceerd",
+      "empty": {
+        "title": "Geen verhalen gevonden",
+        "description": "Pas je zoekopdracht aan en probeer opnieuw."
+      },
+      "error": {
+        "retry": "Opnieuw proberen",
+        "fallback": "Kon verhalen niet laden.",
+        "notification": "Er ging iets mis bij het laden van verhalen."
+      }
+    },
+    "pagination": {
+      "navigationLabel": "Paginering van verhalen",
+      "firstPage": "Ga naar eerste pagina",
+      "lastPage": "Ga naar laatste pagina",
+      "nextPage": "Ga naar volgende pagina",
+      "previousPage": "Ga naar vorige pagina",
+      "currentPage": "Huidige pagina, pagina {{page}}",
+      "goToPage": "Ga naar pagina {{page}}"
+    }
+  },
   "notFound": {
     "code": "404",
     "title": "Pagina niet gevonden",
@@ -135,7 +179,8 @@
       "ariaLabel": "Navigatie",
       "home": "Archief",
       "series": "Reeksen",
-      "events": "Evenementen"
+      "events": "Evenementen",
+      "blogs": "Verhalen"
     },
     "newsletter": {
       "cta": "blijf op de hoogte"
@@ -158,6 +203,17 @@
       "editions": "Edities",
       "period": "Periode",
       "type": "Type"
+    }
+  },
+  "blog": {
+    "title": "Blogs",
+    "unknown": "Onbekende blog",
+    "couldNotLoad": "Kon de blog niet laden",
+    "invalidId": "Ongeldig blog ID",
+    "detail": {
+      "publishedOn": "Gepubliceerd op",
+      "notPublished": "Niet gepubliceerd",
+      "related": "Gerelateerde producties"
     }
   }
 }

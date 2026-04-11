@@ -72,7 +72,9 @@ import './index.css'
   <Navbar />
   <Routes>
     <Route path="/" element={<HomePage />} />
-    <Route path="/events" element={<EventsPage />} />
+    <Route path="/series" element={<SeriesPage />} />
+    <Route path="/artists" element={<ArtistsPage />} />
+    <Route path="/blogs" element={<BlogsPage />} />
     {/* ... */}
   </Routes>
 </BrowserRouter>
@@ -127,9 +129,10 @@ components/
 
 **Current pages**:
 - `HomePage.tsx` - Landing page (`/`)
-- `EventsPage.tsx` - Events list (`/events`)
-- `EventDetailPage.tsx` - Single event (`/events/:id`)
-- `ProductionsPage.tsx` - Productions list (`/productions`)
+- `SeriesPage.tsx` - Series list (`/series`)
+- `SeriesDetailPage.tsx` - Single series (`/series/:id`)
+- `ArtistsPage.tsx` - Artists list (`/artists`)
+- `BlogsPage.tsx` - Blogs list (`/blogs`)
 - `ProductionDetailPage.tsx` - Single production (`/productions/:id`)
 
 **Naming convention**: PascalCase with "Page" suffix (e.g., `EventsPage.tsx`)
