@@ -93,12 +93,12 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
             {genres.map((genre) => (
               <GenreAndTagChip
                 key={genre.id}
-                name={genre.display_name || ''} // TODO: resolve so there is always a fallback
-                labels={{}}
+                name={genre.display_name || ''}
+                labels={genre.name || {}}
                 chipType="genre"
                 context="static"
                 id={genre.id}
-                selected={selectedGenreIds?.includes(genre.id)} // TODO: resolve so this is never undefined
+                selected={selectedGenreIds?.includes(genre.id)}
               />
             ))}
           </Stack>

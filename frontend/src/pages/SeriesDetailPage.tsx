@@ -245,9 +245,7 @@ const SeriesDetailPage = () => {
                   }
                   meta={buildProductionMeta(production, i18n.language)}
                   description={buildProductionDescription(production, i18n.language)}
-                  tags={production.tags.map(
-                    (tag) => tag.display_name || getLocalizedRecordValue(tag.name, i18n.language),
-                  )}
+                  tags={production.tags}
                   //image={buildProductionImage(production)}
                 />
               </TimelineItem>

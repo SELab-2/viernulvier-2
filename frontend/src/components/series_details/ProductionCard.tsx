@@ -4,16 +4,21 @@
  */
 
 import { Card, CardContent, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
+import type { Tag } from '../../types/Tags'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
+import { getTranslatedRecord } from '../../utils/translations'
 
 type Props = {
   title: string
   meta: string
   description: string
-  tags: string[]
+  tags: Tag[]
 }
 
 const ProductionCard = ({ title, meta, description, tags }: Props) => {
+  const { i18n } = useTranslation()
+
   return (
     <Card
       elevation={0}
@@ -44,17 +49,19 @@ const ProductionCard = ({ title, meta, description, tags }: Props) => {
 
           {/* Tags */}
           <Stack direction="row" spacing={1} flexWrap="wrap">
-            {/* TODO: fix this to use the tag correctly instead of just the name */}
-            {tags.map((tag) => (
-              <GenreAndTagChip
-                key={tag}
-                name={tag}
-                labels={{}}
-                id={tag}
-                chipType="seriesTag"
-                context="series"
-              />
-            ))}
+            {tags.map((tag) => {
+              const tagLabel = getTranslatedRecord(tag.name, i18n.language, tag.display_name || '')
+              return (
+                <GenreAndTagChip
+                  key={tag.id}
+                  name={tagLabel}
+                  labels={tag.name || {}}
+                  id={tag.id}
+                  chipType="seriesTag"
+                  context="series"
+                />
+              )
+            })}
           </Stack>
         </Stack>
       </CardContent>
