@@ -20,18 +20,35 @@ type Props = {
   meta: string
   description: string
   tags: ProductionTag[]
+  onClick?: (event: MouseEvent<HTMLDivElement>) => void
 }
 
-const ProductionCard = ({ title, meta, description, tags }: Props) => {
+const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
+  const isInteractive = typeof onClick === 'function'
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!isInteractive) return
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onClick(event as unknown as MouseEvent<HTMLDivElement>)
+    }
+  }
+
   return (
     <Card
       elevation={0}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
       sx={{
         flex: 1,
         width: '100%',
         border: 1,
         borderColor: 'divider',
         borderRadius: 2,
+        cursor: isInteractive ? 'pointer' : 'default',
       }}
     >
       <CardContent sx={{ p: 2.5 }}>

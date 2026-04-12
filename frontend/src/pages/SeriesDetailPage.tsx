@@ -193,21 +193,14 @@ const SeriesDetailPage = () => {
     >
       <Stack spacing={4}>
         <Stack spacing={2}>
-          <SeriesDetailBreadcrumbs
+          <Breadcrumbs
             items={[
               { label: t('nav.home'), to: '/' },
               { label: t('footer.nav.series'), to: '/series' },
               { label: seriesName },
             ]}
           />
-<Breadcrumbs
-          items={[
-            { label: t('nav.home'), to: '/' },
-            { label: t('footer.nav.series'), to: '/series' },
-            { label: seriesName },
-          ]}
-        />
-
+        </Stack>
         <SeriesHeader name={seriesName} description={seriesDescription} />
 
         <SeriesStats stats={stats} />

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import SeriesDetailPage from '../../pages/SeriesDetailPage'
@@ -56,6 +56,7 @@ describe('SeriesDetailPage', () => {
       <MemoryRouter initialEntries={[`/series/${id}`]}>
         <Routes>
           <Route path="/series/:id" element={<SeriesDetailPage />} />
+          <Route path="/productions/:id" element={<div>PRODUCTION DETAIL</div>} />
           <Route path="/404" element={<div>404 PAGE</div>} />
         </Routes>
       </MemoryRouter>,
@@ -102,7 +103,7 @@ describe('SeriesDetailPage', () => {
     expect(screen.getByText('Alle edities')).toBeInTheDocument()
   })
 
-  it('renders breadcrumb links to archive and series overview', async () => {
+  it('renders breadcrumb buttons to archive and series overview', async () => {
     mockedGetTag.mockResolvedValue({
       id: 1,
       name: { nl: 'VIDEODROOM' },
@@ -118,8 +119,8 @@ describe('SeriesDetailPage', () => {
 
     await screen.findByRole('heading', { name: 'VIDEODROOM' })
 
-    expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'Reeksen' })).toHaveAttribute('href', '/series')
+    expect(screen.getByRole('button', { name: 'Archief' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Reeksen' })).toBeInTheDocument()
   })
 
   it('redirects to /404 when tag is not found', async () => {
@@ -165,5 +166,35 @@ describe('SeriesDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('404 PAGE')).toBeInTheDocument()
     })
+  })
+
+  it('navigates to production detail when a production card is clicked', async () => {
+    mockedGetTag.mockResolvedValue({
+      id: 1,
+      name: { nl: 'VIDEODROOM' },
+      short_description: { nl: 'Beschrijving van de reeks' },
+      type: 'festival',
+    })
+
+    mockedGetProductions.mockResolvedValue({
+      results: [
+        {
+          id: 42,
+          display_title: 'VIDEODROOM 2024',
+          title: { nl: 'VIDEODROOM 2024' },
+          teaser: { nl: 'Beschrijving productie' },
+          description: { nl: 'Beschrijving productie' },
+          artist_name: { nl: 'Artiest' },
+          tags: [],
+        },
+      ],
+    })
+
+    renderPage()
+
+    const productionCard = await screen.findByRole('button', { name: /videodroom 2024/i })
+    fireEvent.click(productionCard)
+
+    expect(await screen.findByText('PRODUCTION DETAIL')).toBeInTheDocument()
   })
 })
