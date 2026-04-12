@@ -167,7 +167,6 @@ class TestNormalizeMime:
         assert result == "application/pdf"
 
 
-
 class TestRewindFile:
     """Tests for _rewind_file()."""
 
