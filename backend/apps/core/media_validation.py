@@ -115,6 +115,24 @@ def _detect_image_mime(file_obj: Any) -> str | None:
     return _rewind_file(file_obj, _reader)
 
 
+def _normalize_mime(value: Any) -> str | None:
+    """Normalize MIME type by removing parameters and lowercasing.
+
+    Handles MIME types with optional parameters like "image/jpeg; charset=binary".
+    Strips whitespace, removes parameters (after semicolon), and converts to lowercase.
+
+    Args:
+        value: A MIME type string (possibly with parameters) or None.
+
+    Returns:
+        Normalized MIME type (lowercase, no parameters) or None if empty.
+    """
+    if not value:
+        return None
+    normalized = str(value).split(";", 1)[0].strip().lower()
+    return normalized or None
+
+
 def detect_content_mime_type(file_obj: Any) -> str | None:
     """Detect MIME type from binary signature when possible."""
     return _detect_pdf_mime(file_obj) or _detect_image_mime(file_obj)
@@ -159,6 +177,8 @@ def validate_media_file(file_obj: Any, *, allowed_mime_types: set[str], max_file
         raise MediaValidationError("No file was uploaded.")
 
     size = int(getattr(file_obj, "size", 0) or 0)
+    if size <= 0:
+        raise MediaValidationError("Uploaded file is empty.")
     if size > max_file_size:
         max_size_mb = max_file_size // (1024 * 1024)
         raise MediaValidationError(f"File is too large (max {max_size_mb} MB).")
@@ -167,7 +187,11 @@ def validate_media_file(file_obj: Any, *, allowed_mime_types: set[str], max_file
     declared_mime = getattr(file_obj, "content_type", None)
     guessed_mime, _ = mimetypes.guess_type(getattr(file_obj, "name", ""))
 
-    if content_mime and declared_mime and content_mime != declared_mime:
+    # Normalize MIME types before comparison to handle parameters and casing variations
+    normalized_content_mime = _normalize_mime(content_mime)
+    normalized_declared_mime = _normalize_mime(declared_mime)
+
+    if normalized_content_mime and normalized_declared_mime and normalized_content_mime != normalized_declared_mime:
         raise MediaValidationError("Uploaded file content does not match the declared file type.")
 
     resolved_mime = content_mime or declared_mime or guessed_mime

@@ -15,6 +15,7 @@ from apps.core.media_validation import (
     MediaValidationResult,
     _detect_image_mime,
     _detect_pdf_mime,
+    _normalize_mime,
     _read_header,
     _rewind_file,
     _validate_extension_for_mime,
@@ -100,6 +101,71 @@ class TestExtractSafeFilename:
     def test_preserves_filename_with_multiple_dots(self) -> None:
         result = extract_safe_filename("path/to/file.name.pdf")
         assert result == "file.name.pdf"
+
+
+class TestNormalizeMime:
+    """Tests for _normalize_mime()."""
+
+    def test_normalizes_basic_mime_type(self) -> None:
+        """Simple MIME type should be lowercased."""
+        result = _normalize_mime("IMAGE/JPEG")
+        assert result == "image/jpeg"
+
+    def test_removes_mime_parameters(self) -> None:
+        """Parameters after semicolon should be removed."""
+        result = _normalize_mime("image/jpeg; charset=utf-8")
+        assert result == "image/jpeg"
+
+    def test_handles_mime_with_multiple_parameters(self) -> None:
+        """Only the first part before semicolon is kept."""
+        result = _normalize_mime("image/jpeg; charset=binary; boundary=xyz")
+        assert result == "image/jpeg"
+
+    def test_normalizes_with_parameters_and_casing(self) -> None:
+        """Combined test: parameters and casing."""
+        result = _normalize_mime("IMAGE/JPEG; CHARSET=BINARY")
+        assert result == "image/jpeg"
+
+    def test_strips_whitespace_around_mime(self) -> None:
+        """Whitespace should be stripped."""
+        result = _normalize_mime("  image/jpeg  ")
+        assert result == "image/jpeg"
+
+    def test_strips_whitespace_after_parameter(self) -> None:
+        """Whitespace after parameter separator should be stripped."""
+        result = _normalize_mime("image/jpeg  ;  charset=utf-8")
+        assert result == "image/jpeg"
+
+    def test_returns_none_for_none_input(self) -> None:
+        result = _normalize_mime(None)
+        assert result is None
+
+    def test_returns_none_for_empty_string(self) -> None:
+        result = _normalize_mime("")
+        assert result is None
+
+    def test_returns_none_for_whitespace_only(self) -> None:
+        result = _normalize_mime("   ")
+        assert result is None
+
+    def test_returns_none_for_semicolon_only(self) -> None:
+        result = _normalize_mime(";")
+        assert result is None
+
+    def test_returns_none_for_whitespace_and_semicolon(self) -> None:
+        result = _normalize_mime("  ;  ")
+        assert result is None
+
+    def test_handles_complex_real_world_mime_type(self) -> None:
+        """Test with real-world complex MIME type."""
+        result = _normalize_mime("image/jpeg; charset=ISO-8859-1; boundary=something")
+        assert result == "image/jpeg"
+
+    def test_preserves_mime_subtype_separation(self) -> None:
+        """Ensure the slash and subtype are preserved."""
+        result = _normalize_mime("APPLICATION/PDF")
+        assert result == "application/pdf"
+
 
 
 class TestRewindFile:
@@ -438,6 +504,29 @@ class TestValidateMediaFile:
                 max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
             )
 
+    def test_rejects_zero_size_file(self) -> None:
+        """Files with size == 0 should be rejected as empty."""
+        file_obj = SimpleUploadedFile("empty.pdf", b"", content_type="application/pdf")
+        assert file_obj.size == 0
+        with pytest.raises(MediaValidationError, match="Uploaded file is empty"):
+            validate_media_file(
+                file_obj,
+                allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,
+                max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
+            )
+
+    def test_rejects_file_with_negative_size(self) -> None:
+        """Files with negative size should be rejected as empty."""
+        file_obj = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
+        # Manually set a negative size (unusual but should be handled)
+        file_obj.size = -1
+        with pytest.raises(MediaValidationError, match="Uploaded file is empty"):
+            validate_media_file(
+                file_obj,
+                allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,
+                max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
+            )
+
     def test_rejects_oversized_file(self) -> None:
         content = b"x" * (MAX_MEDIA_FILE_SIZE_BYTES + 1)
         file_obj = SimpleUploadedFile(
@@ -458,6 +547,53 @@ class TestValidateMediaFile:
             "fake.pdf",
             make_png_bytes(),  # PNG content
             content_type="application/pdf",  # Declared as PDF
+        )
+        with pytest.raises(
+            MediaValidationError,
+            match="content does not match the declared file type",
+        ):
+            validate_media_file(
+                file_obj,
+                allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,
+                max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
+            )
+
+    def test_accepts_declared_mime_with_parameters_matching_content(self) -> None:
+        """Accept when normalized MIME types match despite parameters and casing."""
+        file_obj = SimpleUploadedFile(
+            "photo.jpg",
+            make_jpeg_bytes(),
+            content_type="image/jpeg; charset=binary",  # Content-type with parameters
+        )
+        # Content detection will return "image/jpeg", declared has parameters
+        # Both should normalize to "image/jpeg" and match
+        result = validate_media_file(
+            file_obj,
+            allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,
+            max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
+        )
+        assert result.mime_type == "image/jpeg"
+
+    def test_accepts_declared_mime_with_different_casing(self) -> None:
+        """Accept when MIME types match after normalizing casing."""
+        file_obj = SimpleUploadedFile(
+            "photo.jpg",
+            make_jpeg_bytes(),
+            content_type="IMAGE/JPEG",  # Different casing
+        )
+        result = validate_media_file(
+            file_obj,
+            allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,
+            max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
+        )
+        assert result.mime_type == "image/jpeg"
+
+    def test_rejects_mismatch_after_normalization(self) -> None:
+        """Reject when MIME types still differ after normalization."""
+        file_obj = SimpleUploadedFile(
+            "fake.jpg",
+            make_png_bytes(),  # PNG content
+            content_type="IMAGE/JPEG; charset=binary",  # Declared JPEG with parameters
         )
         with pytest.raises(
             MediaValidationError,
