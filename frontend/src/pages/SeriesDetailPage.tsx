@@ -6,14 +6,14 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Box, Container, Divider, Stack, Typography } from '@mui/material'
-import { Navigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
 import ProductionCard from '../components/series_details/ProductionCard'
 import TimelineItem from '../components/series_details/TimelineItem'
-import SeriesDetailBreadcrumbs from '../components/series_details/Breadcrumbs'
+import Breadcrumbs from '../components/production/Breadcrumbs'
 
 import { getTag } from '../services/tags/Tags'
 import { getProductions } from '../services/productions/Productions'
@@ -82,6 +82,7 @@ function buildProductionDescription(production: Production, language: string): s
 
 const SeriesDetailPage = () => {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const { t, i18n } = useTranslation()
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
@@ -199,7 +200,13 @@ const SeriesDetailPage = () => {
               { label: seriesName },
             ]}
           />
-        </Stack>
+<Breadcrumbs
+          items={[
+            { label: t('nav.home'), to: '/' },
+            { label: t('footer.nav.series'), to: '/series' },
+            { label: seriesName },
+          ]}
+        />
 
         <SeriesHeader name={seriesName} description={seriesDescription} />
 
@@ -245,6 +252,7 @@ const SeriesDetailPage = () => {
                   }
                   meta={buildProductionMeta(production, i18n.language)}
                   description={buildProductionDescription(production, i18n.language)}
+                  onClick={() => navigate(`/productions/${production.id}`)}
                   tags={production.tags.map((tag) => ({
                     id: tag.id,
                     name:

@@ -5,12 +5,14 @@
 
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material'
 import DOMPurify from 'dompurify'
+import type { KeyboardEvent, MouseEvent } from 'react'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
 
 type ProductionTag = {
   id: number | string
   name: string
   labels?: Record<string, string>
+  onClick?: () => void
 }
 
 type Props = {
