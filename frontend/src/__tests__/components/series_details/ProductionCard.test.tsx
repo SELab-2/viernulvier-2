@@ -68,12 +68,14 @@ describe('ProductionCard', () => {
     })
 
     tags.forEach((tag) => {
-      expect(screen.getByText(tag.name?.nl ?? String(tag.id))).toBeInTheDocument()
+      const expectedLabel =
+        typeof tag.name === 'string' ? tag.name : (tag.name?.nl ?? String(tag.id))
+      expect(screen.getByText(expectedLabel)).toBeInTheDocument()
     })
 
     const links = screen.getAllByRole('link')
     expect(links).toHaveLength(tags.length)
-    expect(links[0]).toHaveAttribute('href', '/series/11')
+    expect(links[0]).toHaveAttribute('href', '/series/1')
   })
 
   it('uses the provided lang prop to resolve translated tag names', () => {

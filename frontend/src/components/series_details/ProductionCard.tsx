@@ -8,11 +8,11 @@ import DOMPurify from 'dompurify'
 import type { KeyboardEvent, MouseEvent } from 'react'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
 import { getTranslatedRecord } from '../../utils/translations'
-import type { Tag } from '../../types/Tags'
 
 type ProductionTag = {
   id: number | string
-  name: string
+  name: string | Record<string, string> | null
+  display_name?: string | null
   labels?: Record<string, string>
   onClick?: () => void
 }
@@ -22,11 +22,32 @@ type Props = {
   meta: string
   description: string
   tags: ProductionTag[]
+  lang?: string
   onClick?: (event: MouseEvent<HTMLDivElement>) => void
 }
 
-const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
+const ProductionCard = ({ title, meta, description, tags, lang = 'nl', onClick }: Props) => {
   const isInteractive = typeof onClick === 'function'
+
+  const getTagLabels = (tag: ProductionTag): Record<string, string> => {
+    if (tag.labels) return tag.labels
+
+    if (tag.name && typeof tag.name === 'object') {
+      return tag.name
+    }
+
+    return {}
+  }
+
+  const getTagName = (tag: ProductionTag): string => {
+    if (typeof tag.name === 'string' && tag.name.trim()) {
+      return tag.name
+    }
+
+    const labels = getTagLabels(tag)
+
+    return getTranslatedRecord(labels, lang, tag.display_name ?? String(tag.id))
+  }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!isInteractive) return
@@ -36,6 +57,16 @@ const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
       onClick(event as unknown as MouseEvent<HTMLDivElement>)
     }
   }
+
+  const resolvedTags = tags.map((tag) => {
+    const resolvedName = getTagName(tag)
+
+    return {
+      id: tag.id,
+      name: resolvedName,
+      labels: { [lang]: resolvedName },
+    }
+  })
 
   return (
     <Card
@@ -88,11 +119,11 @@ const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
           />
 
           <Stack direction="row" spacing={1} flexWrap="wrap">
-            {tags.map((tag) => (
+            {resolvedTags.map((tag) => (
               <GenreAndTagChip
                 key={tag.id}
                 name={tag.name}
-                labels={tag.labels ?? {}}
+                labels={tag.labels}
                 id={tag.id}
                 chipType="seriesTag"
                 context="series"
