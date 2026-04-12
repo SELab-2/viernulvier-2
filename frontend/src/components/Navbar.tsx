@@ -23,9 +23,9 @@ import { tokens } from '../theme/tokens'
 
 const NAV_LINKS = [
   { labelKey: 'nav.home', to: '/' },
-  { labelKey: 'nav.events', to: '/series' },
-  { labelKey: 'nav.productions', to: '/artists' },
+  { labelKey: 'nav.series', to: '/series' },
   { labelKey: 'nav.blogs', to: '/blogs' },
+  { labelKey: 'nav.media', to: '/media' },
 ] as const
 
 type SupportedLanguage = 'en' | 'nl'
