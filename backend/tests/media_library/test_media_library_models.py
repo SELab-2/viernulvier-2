@@ -10,7 +10,11 @@ Covers:
 - cascade delete behavior
 """
 
+from io import BytesIO
+
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 import pytest
 
 from apps.media_library.models import (
@@ -28,6 +32,12 @@ from tests.factories.media_library import (
 )
 
 pytestmark = pytest.mark.django_db
+
+
+def make_png_bytes() -> bytes:
+    buffer = BytesIO()
+    Image.new("RGB", (1, 1), color=(255, 0, 0)).save(buffer, format="PNG")
+    return buffer.getvalue()
 
 
 # =====================================================
@@ -233,3 +243,24 @@ class TestMediaItemCrop:
         MediaItemCropFactory.create_batch(2, media_item=item)
         item.delete()
         assert MediaItemCrop.objects.count() == 0
+
+    def test_rejects_non_image_upload(self) -> None:
+        item = MediaItemFactory()
+        crop = MediaItemCrop(
+            media_item=item,
+            name="thumbnail",
+            image=SimpleUploadedFile("crop.pdf", b"%PDF-1.7", content_type="application/pdf"),
+        )
+
+        with pytest.raises(ValidationError):
+            crop.full_clean()
+
+    def test_accepts_valid_png_upload(self) -> None:
+        item = MediaItemFactory()
+        crop = MediaItemCrop(
+            media_item=item,
+            name="thumbnail",
+            image=SimpleUploadedFile("crop.png", make_png_bytes(), content_type="image/png"),
+        )
+
+        crop.full_clean()

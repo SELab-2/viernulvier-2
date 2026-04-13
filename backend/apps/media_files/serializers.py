@@ -6,6 +6,12 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import UploadedFile
 from rest_framework import serializers
 
+from apps.core.media_validation import (
+    ALLOWED_MEDIA_MIME_TYPES,
+    MAX_MEDIA_FILE_SIZE_BYTES,
+    validate_media_file,
+)
+
 from .models import MediaFile
 
 
@@ -33,17 +39,16 @@ class MediaFileSerializer(serializers.ModelSerializer):
 class MediaFileUploadSerializer(serializers.ModelSerializer):
     """Write serializer for uploading a new media file."""
 
-    ALLOWED_MIME_TYPES = {
-        "image/jpeg": MediaFile.FileType.IMAGE,
-        "image/png": MediaFile.FileType.IMAGE,
-        "image/webp": MediaFile.FileType.IMAGE,
-        "application/pdf": MediaFile.FileType.PDF,
-    }
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+    ALLOWED_MIME_TYPES = ALLOWED_MEDIA_MIME_TYPES
+    MAX_FILE_SIZE = MAX_MEDIA_FILE_SIZE_BYTES
 
     file = serializers.FileField(
         write_only=True,
-        help_text="Binary file upload. Supported types: JPEG, PNG, WEBP, PDF.",
+        help_text=(
+            "Binary file upload. Supported types: JPEG, PNG, WEBP, PDF. "
+            "Validation: max 10 MB, binary signature verification (PDF %25PDF- header, image Pillow verify), "
+            "content-type vs declared MIME mismatch detection, extension-MIME consistency check."
+        ),
     )
     uploaded_by = serializers.CharField(source="uploaded_by.username", read_only=True, allow_null=True)
 
@@ -73,15 +78,14 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
 
     def validate_file(self, value: UploadedFile) -> UploadedFile:
         """Validate that the uploaded file is present, supported, and not too large."""
-        if not value:
-            raise serializers.ValidationError("No file was uploaded.")
-
-        if value.size > self.MAX_FILE_SIZE:
-            raise serializers.ValidationError(f"File is too large (max {self.MAX_FILE_SIZE // (1024 * 1024)} MB).")
-
-        content_type = getattr(value, "content_type", None)
-        if content_type not in self.ALLOWED_MIME_TYPES:
-            raise serializers.ValidationError("Unsupported file type. Allowed types are JPEG, PNG, WEBP, and PDF.")
+        try:
+            validate_media_file(
+                value,
+                allowed_mime_types=self.ALLOWED_MIME_TYPES,
+                max_file_size=self.MAX_FILE_SIZE,
+            )
+        except ValueError as exc:
+            raise serializers.ValidationError(str(exc)) from exc
 
         return value
 

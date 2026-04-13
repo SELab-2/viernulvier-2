@@ -13,8 +13,15 @@ The media hierarchy is two levels deep:
   banner) of a media item together with its URL.
 """
 
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 
+from apps.core.media_validation import (
+    ALLOWED_IMAGE_MIME_TYPES,
+    MAX_MEDIA_FILE_SIZE_BYTES,
+    validate_media_file,
+)
 from apps.core.models import BaseModel
 from apps.languages.models import Language
 
@@ -319,6 +326,21 @@ class MediaItemCrop(BaseModel):
                 name="unique_crop_name_per_media_item",
             )
         ]
+
+    def clean(self) -> None:
+        """Validate uploaded crop images for admin and importer save paths."""
+        super().clean()
+
+        uploaded_image = getattr(self.image, "_file", None)
+        if isinstance(uploaded_image, UploadedFile):
+            try:
+                validate_media_file(
+                    uploaded_image,
+                    allowed_mime_types=ALLOWED_IMAGE_MIME_TYPES,
+                    max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
+                )
+            except ValueError as exc:
+                raise ValidationError({"image": str(exc)}) from exc
 
     def __str__(self) -> str:
         """Return a human-readable representation of the media item crop."""

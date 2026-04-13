@@ -1,8 +1,6 @@
 """Model for Media Files."""
 
-import mimetypes
 import os
-from pathlib import Path
 from typing import Any
 import uuid
 
@@ -10,6 +8,13 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.core.media_validation import (
+    ALLOWED_MEDIA_MIME_TYPES,
+    MAX_MEDIA_FILE_SIZE_BYTES,
+    detect_best_mime_type,
+    extract_safe_filename,
+    validate_media_file,
+)
 from apps.core.models import BaseModel
 
 
@@ -50,26 +55,21 @@ class MediaFile(BaseModel):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+    MAX_FILE_SIZE = MAX_MEDIA_FILE_SIZE_BYTES
 
     def _derive_filename(self) -> str:
         """Prefer the client filename over the generated storage path."""
         if not self.file:
             return ""
         uploaded_name = getattr(self.file, "name", "") or ""
-        return Path(uploaded_name).name
+        return extract_safe_filename(uploaded_name)
 
     def _derive_mime_type(self) -> str:
         """Determine MIME type from uploaded file metadata or filename."""
         if not self.file:
             return ""
 
-        content_type = getattr(self.file, "content_type", None)
-        if content_type:
-            return content_type
-
-        guessed_type, _ = mimetypes.guess_type(getattr(self.file, "name", ""))
-        return guessed_type or "application/octet-stream"
+        return detect_best_mime_type(self.file)
 
     def _derive_size_bytes(self) -> int:
         """Read size from uploaded file object."""
@@ -139,10 +139,18 @@ class MediaFile(BaseModel):
         if not self.file:
             raise ValidationError({"file": "This field is required."})
 
-        self._populate_derived_fields()
+        try:
+            validation = validate_media_file(
+                self.file,
+                allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,
+                max_file_size=self.MAX_FILE_SIZE,
+            )
+            self.mime_type = validation.mime_type
+            self.size_bytes = validation.size_bytes
+        except ValueError as exc:
+            raise ValidationError({"file": str(exc)}) from exc
 
-        if (self.size_bytes or 0) > self.MAX_FILE_SIZE:
-            raise ValidationError({"file": f"File is too large (max {self.MAX_FILE_SIZE // (1024 * 1024)} MB)."})
+        self._populate_derived_fields()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Ensure derived fields are populated before saving."""
