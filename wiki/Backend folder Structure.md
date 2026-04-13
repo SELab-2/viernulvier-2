@@ -28,6 +28,7 @@ viernulvier_archive/
 │   │   ├── openapi.py               # Reusable responses
 │   │   ├── views.py                 # ApiModelViewSet and ApiReadOnlyViewSet
 │   │   ├── models.py                # BaseModel base
+│   │   ├── media_validation.py       # Shared media MIME/signature/size validation helpers
 │   │   ├── spectacular_extensions.py # Defines OpenAPI schema extension for API-key authentication
 │   │   └── throttles.py             # Implements DRF rate-limiting classes for public and internal API keys
 │   │
@@ -82,6 +83,15 @@ viernulvier_archive/
 │   ├── media_library/               # MEDIA_GALLERY + MEDIA_ITEM + CROP tables (+ translations)
 │   │   ├── __init__.py
 │   │   ├── admin.py
+│   │   ├── models.py
+│   │   ├── schemas.py
+│   │   ├── serializers.py
+│   │   └── views.py
+│   │
+│   ├── media_files/                 # Uploaded files (images/PDF) with derived metadata
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── filters.py
 │   │   ├── models.py
 │   │   ├── schemas.py
 │   │   ├── serializers.py

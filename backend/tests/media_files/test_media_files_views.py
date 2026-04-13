@@ -220,6 +220,25 @@ class TestMediaFileViewSetCreate(TestCase):
         )
         assert response.status_code in (401, 403)
 
+    @override_settings(MEDIA_ROOT=None)
+    def test_create_rejects_mismatching_content_signature(self) -> None:
+        with override_settings(MEDIA_ROOT=self.temp_dir.name):
+            response = self.client.post(
+                "/api/v1/media/",
+                {
+                    "file": make_file(
+                        "poster.png",
+                        content=b"%PDF-1.7 fake",
+                        content_type="image/png",
+                    )
+                },
+                format="multipart",
+                **int_headers(),
+            )
+        assert response.status_code == 422
+        pointers = [error["pointer"] for error in response.data.get("errors", [])]
+        assert "/file" in pointers
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestMediaFileViewSetFiltering(TestCase):
