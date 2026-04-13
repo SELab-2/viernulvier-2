@@ -17,7 +17,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.9",
     "@mui/material": "^7.3.9",
-    "@mui/system": "^7.3.9",
+    "@mui/system": "^9.0.0",
     "@types/dompurify": "^3.2.0",
     "axios": "^1.15.0",
     "dompurify": "^3.3.3",
