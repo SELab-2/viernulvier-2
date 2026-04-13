@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import type { Production } from '../types/Productions'
-import LoadingSpinner from '../components/LoadingSpinner'
 import Breadcrumbs from '../components/production/Breadcrumbs'
 import ImageWithFallback from '../components/ImageWithFallback'
 import Description from '../components/production/Description'
@@ -13,6 +12,7 @@ import EventsList from '../components/production/EventList'
 import MediaList from '../components/production/MediaList'
 import RelatedProductions from '../components/production/RelatedProductions'
 import { getLocalizedValue } from '../utils/localization'
+import ProductionDetailPageSkeleton from './ProductionDetailPageSkeleton'
 
 /**
  * Helper function to get the most suitable image URL for the production details page.
@@ -112,8 +112,8 @@ const ProductionDetailsPage = () => {
     fetchProduction()
   }, [id, navigate])
 
-  // If the page is still loading, show the spinner.
-  if (loading) return <LoadingSpinner fullScreen />
+  // If the page is still loading, show a full-page skeleton.
+  if (loading) return <ProductionDetailPageSkeleton />
 
   // If there was an error or no production was found, show an error message.
   if (!prod) {
