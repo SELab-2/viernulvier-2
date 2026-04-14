@@ -1,10 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { MemoryRouter } from 'react-router-dom'
+import type { ComponentProps } from 'react'
 import ProductionCard from '../../../components/series_details/ProductionCard'
 import type { Tag } from '../../../types/Tags'
 
 describe('ProductionCard', () => {
+  type ProductionCardProps = ComponentProps<typeof ProductionCard>
+
   const makeTag = (id: number, nameNl: string, nameEn?: string): Tag => ({
     id,
     url: `/api/v1/tags/${id}/`,
@@ -21,9 +24,9 @@ describe('ProductionCard', () => {
     url_title: null,
   })
 
-  const defaultProps = {
+  const defaultProps: ProductionCardProps = {
     title: 'VIDEODROOM 2024',
-    meta: '11e editie · 3–5 mei 2024',
+    meta: '11e editie · 3-5 mei 2024',
     description: 'Een audiovisuele editie met live visuals en performances.',
     tags: [
       { id: 1, name: 'Festival', labels: { nl: 'Festival', en: 'Festival' } },
@@ -32,7 +35,7 @@ describe('ProductionCard', () => {
     ],
   }
 
-  const renderCard = (props = defaultProps) => {
+  const renderCard = (props: ProductionCardProps = defaultProps) => {
     return render(
       <MemoryRouter>
         <ProductionCard {...props} />
@@ -48,7 +51,12 @@ describe('ProductionCard', () => {
     expect(screen.getByText(defaultProps.description)).toBeInTheDocument()
 
     defaultProps.tags.forEach((tag) => {
-      expect(screen.getByText(tag.name)).toBeInTheDocument()
+      const expectedLabel =
+        typeof tag.name === 'string'
+          ? tag.name
+          : (tag.labels?.nl ?? tag.display_name ?? String(tag.id))
+
+      expect(screen.getByText(expectedLabel)).toBeInTheDocument()
     })
   })
 
@@ -68,8 +76,7 @@ describe('ProductionCard', () => {
     })
 
     tags.forEach((tag) => {
-      const expectedLabel =
-        typeof tag.name === 'string' ? tag.name : (tag.name?.nl ?? String(tag.id))
+      const expectedLabel = tag.name
       expect(screen.getByText(expectedLabel)).toBeInTheDocument()
     })
 
