@@ -175,10 +175,9 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             <Stack
               direction="row"
               spacing={1}
-              alignItems="center"
               component="ul"
               aria-label={t('nav.mainNav', 'Main navigation')}
-              sx={{ ...baseListSx, display: { xs: 'none', lg: 'flex' } }}
+              sx={{ ...baseListSx, display: { xs: 'none', lg: 'flex' }, alignItems: 'center' }}
             >
               {NAV_LINKS.map(({ labelKey, to }) => (
                 <Box component="li" key={to}>
@@ -206,9 +205,8 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             <Stack
               direction="row"
               spacing={0}
-              alignItems="center"
               component="ul"
-              sx={{ ...baseListSx, display: 'flex' }}
+              sx={{ ...baseListSx, display: 'flex', alignItems: 'center' }}
             >
               {/* Theme toggle */}
               <Box
