@@ -20,8 +20,8 @@ describe('App', () => {
     expect(screen.getByAltText('Viernulvier logo')).toBeInTheDocument()
     expect(within(mainNav).getByRole('link', { name: 'Archief' })).toBeInTheDocument()
     expect(within(mainNav).getByRole('link', { name: 'Reeksen' })).toBeInTheDocument()
-    expect(within(mainNav).getByRole('link', { name: 'Artiesten' })).toBeInTheDocument()
-    expect(within(mainNav).getByRole('link', { name: 'Verhalen' })).toBeInTheDocument()
+    expect(within(mainNav).getByRole('link', { name: 'Blogs' })).toBeInTheDocument()
+    expect(within(mainNav).getByRole('link', { name: 'Media' })).toBeInTheDocument()
   })
 
   it('renders not found page on unknown route', () => {
