@@ -61,13 +61,18 @@ const SeriesDetailPageSkeleton = () => {
               key={index}
               direction={{ xs: 'column', md: 'row' }}
               spacing={2}
-              alignItems={{ xs: 'flex-start', md: 'flex-start' }}
+              sx={{
+                alignItems: { xs: 'flex-start', md: 'flex-start' },
+              }}
             >
               <Stack
                 direction={{ xs: 'row', md: 'column' }}
                 spacing={1}
-                alignItems="center"
-                sx={{ width: { xs: 'auto', md: 40 }, flexShrink: 0 }}
+                sx={{
+                  width: { xs: 'auto', md: 40 },
+                  flexShrink: 0,
+                  alignItems: { xs: 'center', md: 'flex-start' },
+                }}
               >
                 <Skeleton
                   variant="circular"
@@ -84,7 +89,7 @@ const SeriesDetailPageSkeleton = () => {
                 <Skeleton variant="text" width="97%" height={26} />
                 <Skeleton variant="text" width="95%" height={26} />
                 <Skeleton variant="text" width="92%" height={26} sx={{ mb: 1.5 }} />
-                <Stack direction="row" spacing={1} flexWrap="wrap">
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
                   <Skeleton variant="rounded" width={78} height={28} />
                 </Stack>
               </Paper>
