@@ -193,7 +193,7 @@
     "breadcrumb": "Archief / Reeksen / {{name}}",
     "noDescription": "Geen beschrijving beschikbaar.",
     "noProductions": "Er zijn geen producties gekoppeld aan deze reeks.",
-    "loading": "Reeks wordt geladen...",
+    "loading": "Reeks laden",
     "notFound": "Reeks niet gevonden.",
     "invalidId": "Ongeldig reeks-ID.",
     "fetchError": "Kon de reeks niet ophalen.",

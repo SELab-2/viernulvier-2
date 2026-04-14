@@ -1,9 +1,3 @@
-/**
- * Displays detailed information about a specific series (tag),
- * including its metadata, statistics and a chronological list
- * of associated productions.
- */
-
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Box, Container, Divider, Stack, Typography } from '@mui/material'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
@@ -26,6 +20,8 @@ type SeriesStat = {
   label: string
 }
 
+type SeriesErrorKey = 'series.invalidId' | 'series.fetchError' | null
+
 function getLocalizedRecordValue(
   value: Record<string, string> | null | undefined,
   language: string,
@@ -45,6 +41,7 @@ function extractYearFromProduction(production: Production): string {
   if (production.last_event_end) {
     return new Date(production.last_event_end).getFullYear().toString()
   }
+
   const candidates = [production.display_title, ...Object.values(production.title ?? {})].filter(
     Boolean,
   ) as string[]
@@ -75,11 +72,6 @@ function buildProductionDescription(production: Production, language: string): s
   )
 }
 
-// TODO: use production images in production cards. This is just a placeholder for the moment.
-// function buildProductionImage(_production: Production): string {
-//   return ''
-// }
-
 const SeriesDetailPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -88,13 +80,13 @@ const SeriesDetailPage = () => {
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<SeriesErrorKey>(null)
 
   useEffect(() => {
     const numericId = Number(id)
 
     if (!numericId || Number.isNaN(numericId)) {
-      setError(t('series.invalidId'))
+      setError('series.invalidId')
       setIsLoading(false)
       return
     }
@@ -117,14 +109,14 @@ const SeriesDetailPage = () => {
         setSeriesTag(tag)
         setProductions(productionsResponse.results)
       } catch {
-        setError(t('series.fetchError'))
+        setError('series.fetchError')
       } finally {
         setIsLoading(false)
       }
     }
 
     void fetchSeries()
-  }, [id, t])
+  }, [id])
 
   const sortedProductions = useMemo(() => {
     return [...productions].sort((a, b) => {
@@ -201,10 +193,9 @@ const SeriesDetailPage = () => {
             ]}
           />
         </Stack>
+
         <SeriesHeader name={seriesName} description={seriesDescription} />
-
         <SeriesStats stats={stats} />
-
         <Divider />
 
         <Stack spacing={1}>
@@ -254,7 +245,6 @@ const SeriesDetailPage = () => {
                       t('series.untitled'),
                     labels: tag.name ?? {},
                   }))}
-                  // image={buildProductionImage(production)}
                 />
               </TimelineItem>
             ))}

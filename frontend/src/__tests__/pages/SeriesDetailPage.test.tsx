@@ -18,12 +18,12 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
-        'series.loading': 'Reeks wordt geladen...',
+        'series.loading': 'Reeks laden',
         'series.backToSeries': 'Terug naar reeksen',
         'series.allEditions': 'Alle edities',
         'series.allEditionsSubtitle':
           'Chronologisch overzicht van de producties binnen deze reeks.',
-        'series.noProductions': 'Er zijn nog geen producties gekoppeld aan deze reeks.',
+        'series.noProductions': 'Er zijn geen producties gekoppeld aan deze reeks.',
         'series.invalidId': 'Ongeldig reeks-ID.',
         'series.fetchError': 'Kon de reeks niet ophalen.',
         'series.noDescription': 'Geen beschrijving beschikbaar.',
@@ -70,7 +70,7 @@ describe('SeriesDetailPage', () => {
     renderPage()
 
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
-    expect(screen.getByText('Reeks wordt geladen...')).toBeInTheDocument()
+    expect(screen.getByText('Reeks laden')).toBeInTheDocument()
   })
 
   it('renders series data when API succeeds', async () => {
@@ -156,7 +156,7 @@ describe('SeriesDetailPage', () => {
     renderPage()
 
     expect(
-      await screen.findByText('Er zijn nog geen producties gekoppeld aan deze reeks.'),
+      await screen.findByText('Er zijn geen producties gekoppeld aan deze reeks.'),
     ).toBeInTheDocument()
   })
 
