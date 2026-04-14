@@ -4,11 +4,11 @@ import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 
+import ImageWithFallback from './ImageWithFallback'
 import { tokens } from '../theme/tokens'
 import { getProductionDateLabel } from '../utils/dateUtils'
 import { getTranslatedRecord } from '../utils/translations'
 import GenreAndTagChip from './chips/GenreAndTagChip'
-import ImageWithFallback from './ImageWithFallback'
 
 import type { Production } from '../types/Productions'
 
