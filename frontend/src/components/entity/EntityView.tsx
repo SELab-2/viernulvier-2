@@ -11,7 +11,7 @@ type EntityViewItemProps<T> = {
   listSpacing?: number
 }
 
-type EntityViewProps<T> = {
+export type EntityViewProps<T> = {
   items: T[]
   layout?: SearchViewMode
 } & EntityViewItemProps<T>
