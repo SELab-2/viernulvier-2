@@ -80,7 +80,7 @@ export const createCommonStyles = (theme: Theme) => {
       backgroundColor: theme.palette.background.paper,
       transition: tokens.transitions.base,
       '&:hover': {
-        boxShadow: theme.shadows[3],
+        boxShadow: tokens.shadows.md,
       },
     } as SxProps<Theme>,
 
