@@ -205,8 +205,7 @@ const ProductionDetailsPage = () => {
           >
             <Typography
               variant="subtitle1"
-              fontWeight={600}
-              sx={{ mb: 1, color: theme.palette.text.primary }}
+              sx={{ mb: 1, color: theme.palette.text.primary, fontWeight: 600 }}
             >
               {t('productions.detail.events', 'Events')}
             </Typography>

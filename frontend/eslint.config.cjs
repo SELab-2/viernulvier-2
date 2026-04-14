@@ -8,6 +8,8 @@ const reactRefresh = require('eslint-plugin-react-refresh')
 const prettier = require('eslint-plugin-prettier')
 const prettierConfig = require('eslint-config-prettier')
 
+const reactRefreshPlugin = reactRefresh.default ?? reactRefresh
+
 module.exports = [
   js.configs.recommended,
   prettierConfig,
@@ -39,7 +41,7 @@ module.exports = [
       '@typescript-eslint': tseslint,
       react,
       'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
+      'react-refresh': reactRefreshPlugin,
       prettier,
     },
     rules: {

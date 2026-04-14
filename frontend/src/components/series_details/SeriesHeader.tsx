@@ -12,7 +12,11 @@ type Props = {
 
 const SeriesHeader = ({ name, description }: Props) => {
   return (
-    <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={3}>
+    <Stack
+      direction={{ xs: 'column', md: 'row' }}
+      spacing={3}
+      sx={{ justifyContent: 'space-between' }}
+    >
       {/* Text container */}
       <Box
         sx={{

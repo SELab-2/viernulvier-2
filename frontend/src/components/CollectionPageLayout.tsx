@@ -180,10 +180,12 @@ const CollectionPageLayout = ({
 
           {shouldRenderSidebar ? (
             <Box
-              display="flex"
-              flexDirection={{ xs: 'column', md: 'row' }}
-              gap={3}
-              alignItems="flex-start"
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                gap: 3,
+                alignItems: 'flex-start',
+              }}
             >
               <Paper
                 component="aside"

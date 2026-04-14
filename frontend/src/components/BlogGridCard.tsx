@@ -27,11 +27,18 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
     <Stack
       component={RouterLink}
       to={`/blogs/${blog.id}`}
-      width={350}
-      height="100%"
-      borderRadius={tokens.card.borderRadius}
-      overflow="hidden"
-      sx={commonStyles.cardBase}
+      sx={{
+        ...commonStyles.cardBase,
+        width: 350,
+        height: '100%',
+        borderRadius: tokens.card.borderRadius,
+        overflow: 'hidden',
+        textDecoration: 'none',
+        color: 'inherit',
+        '&:hover': {
+          textDecoration: 'none',
+        },
+      }}
     >
       <ImageWithFallback
         src={blog.cover_image ?? undefined}
@@ -40,13 +47,21 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
       />
 
       <Stack
-        flex={1}
-        justifyContent="space-between"
-        gap={tokens.spacing.numericSm}
-        padding={tokens.spacing.numericLg}
+        sx={{
+          flex: 1,
+          justifyContent: 'space-between',
+          gap: tokens.spacing.numericSm,
+          p: tokens.spacing.numericLg,
+        }}
       >
         <Stack spacing={1}>
-          <Typography component="h2" variant="h6" color="text.primary" fontWeight="bold" noWrap>
+          <Typography
+            component="h2"
+            variant="h6"
+            color="text.primary"
+            noWrap
+            sx={{ fontWeight: 'bold' }}
+          >
             {title}
           </Typography>
           <Typography
@@ -64,9 +79,17 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
           </Typography>
         </Stack>
 
-        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+        >
           {publishedDate ? (
-            <Stack direction="row" alignItems="center" spacing={1} color="text.secondary">
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: 'center', color: 'text.secondary' }}
+            >
               <DateRangeOutlinedIcon fontSize="inherit" />
               <Typography variant="body2">{publishedDate}</Typography>
             </Stack>

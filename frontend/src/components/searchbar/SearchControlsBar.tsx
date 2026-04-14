@@ -68,13 +68,15 @@ const SearchControlsBar = ({
   const nextSortDirection: SearchSortDirection = sortDirection === 'asc' ? 'desc' : 'asc'
 
   return (
-    <Box display="flex" flexDirection="column" gap={2}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box
-        display="flex"
-        flexWrap="wrap"
-        gap={2}
-        alignItems="center"
-        sx={{ '& > *': { minWidth: 0 } }}
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 2,
+          alignItems: 'center',
+          '& > *': { minWidth: 0 },
+        }}
       >
         <Box sx={{ flex: '1 1 320px', minWidth: 240 }}>
           <SearchBar
@@ -85,7 +87,7 @@ const SearchControlsBar = ({
           />
         </Box>
 
-        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel id={SORT_TARGET_LABEL_ID}>{t('searchbar.sort.targetLabel')}</InputLabel>
             <Select
