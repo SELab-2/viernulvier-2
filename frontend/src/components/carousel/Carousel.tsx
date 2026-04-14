@@ -127,11 +127,11 @@ function Carousel({
       role="region"
       aria-roledescription="carousel"
       aria-label={ariaLabel}
-      position="relative"
-      maxWidth={maxWidth}
-      gap={2}
       sx={[
         {
+          position: 'relative',
+          maxWidth,
+          gap: 2,
           '@media (hover: hover)': {
             '&:hover .carousel-nav': {
               opacity: 1,
@@ -150,9 +150,12 @@ function Carousel({
           mb: '-4px',
         }}
       >
-        <Box display="flex" gap={0} mx={-1} alignItems="stretch">
+        <Box sx={{ display: 'flex', gap: 0, mx: -1, alignItems: 'stretch' }}>
           {slides.map((slide, index) => (
-            <Box key={index} px={1} boxSizing="border-box" display="flex" alignItems="stretch">
+            <Box
+              key={index}
+              sx={{ px: 1, boxSizing: 'border-box', display: 'flex', alignItems: 'stretch' }}
+            >
               {slide}
             </Box>
           ))}
@@ -239,10 +242,7 @@ function Carousel({
       {hasMultipleSlides && (showArrows || showDots) ? (
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="center"
-          gap={2}
-          sx={{ mt: 1.5, px: 0.5 }}
+          sx={{ alignItems: 'center', justifyContent: 'center', gap: 2, mt: 1.5, px: 0.5 }}
         >
           {showDots ? (
             <Box
@@ -261,8 +261,8 @@ function Carousel({
                 component="div"
                 direction="row"
                 spacing={1}
-                flexWrap="nowrap"
                 sx={{
+                  flexWrap: 'nowrap',
                   width: 'max-content',
                   minWidth: '100%',
                   justifyContent: 'center',
