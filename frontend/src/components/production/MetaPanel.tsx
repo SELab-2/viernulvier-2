@@ -16,6 +16,16 @@ import type {
 import type { Production } from '../../types/Productions'
 import type { SxProps, Theme } from '@mui/material/styles'
 
+/**
+ * Format an event list into a human-readable date range for production metadata.
+ *
+ * Rules:
+ * - empty event array => ''
+ * - single-day events (same date) => one formatted date
+ * - multi-day events => first date - last date
+ *
+ * `formatDate` is locale-aware.
+ */
 function getDateRange(events: Production['events'] | null | undefined, lang: string): string {
   const list = (events || []).filter((event) => !!event.starts_at)
 
@@ -36,6 +46,11 @@ function getDateRange(events: Production['events'] | null | undefined, lang: str
   return `${formatDate(first.toISOString(), lang)} - ${formatDate(last.toISOString(), lang)}`
 }
 
+/**
+ * Aggregate unique venue names from all events.
+ * This avoids repeated venue descriptions by using a set.
+ * Note: event.hall_display is expected to be a fallback provided by the API.
+ */
 function getUniqueVenues(events: Production['events'] | null | undefined, lang: string): string {
   const list = events || []
   const venues = [
@@ -48,13 +63,29 @@ function getUniqueVenues(events: Production['events'] | null | undefined, lang: 
 }
 
 interface ResolvedTag {
+  /**
+   * The canonical tag value used for internal ID and tag link generation.
+   */
   tagName: string
+  /**
+   * Optional localized labels by language code, e.g. { nl: 'Drama', en: 'Drama' }.
+   */
   labels: ChipLabels
   context: GenreAndTagChipContext
   chipType: GenreAndTagChipType
   value: GenreAndTagChipId
 }
 
+/**
+ * Build a list of translated tag objects from production data.
+ *
+ * A production can have:
+ * - explicit tags (`production.tags`)
+ * - type (`production.uit_database_type`) as one pseudo-tag
+ * - genres (`production.genres`)
+ *
+ * The output order preserves semantic priority: explicit tags first, then type, then genres.
+ */
 function formatAllTags(production: Production, lang: string): ResolvedTag[] {
   const genreTags = (production.genres || [])
     .map((genre) => ({
@@ -83,14 +114,14 @@ function formatAllTags(production: Production, lang: string): ResolvedTag[] {
 
   const typeTag = production.uit_database_type?.name
     ? [
-        {
-          tagName: production.uit_database_type.name,
-          labels: {},
-          chipType: 'genre' as const,
-          value: production.uit_database_type.name,
-          context: 'description' as const,
-        },
-      ]
+      {
+        tagName: production.uit_database_type.name,
+        labels: {},
+        chipType: 'genre' as const,
+        value: production.uit_database_type.name,
+        context: 'description' as const,
+      },
+    ]
     : []
 
   return [...explicitTags, ...typeTag, ...genreTags]
@@ -143,6 +174,20 @@ function MetaRow({ label, value }: { label: string; value: string }) {
   )
 }
 
+/**
+ * MetaPanel renders production metadata in the right-side details panel.
+ *
+ * Props:
+ * - production: full production object from API response
+ * - language: current UI language (defaults to 'nl')
+ * - style: optional container style overrides
+ *
+ * Data derivation by component:
+ * - title, tagline, artistName are localized from production fields
+ * - date range + venues come from production.events
+ * - genres/type/etc. are derived and displayed in MetaRow
+ * - tags are normalized via formatAllTags and rendered as Tag chips
+ */
 export default function MetaPanel({ production, language = 'nl', sx }: MetaPanelProps) {
   const { t } = useTranslation()
 
@@ -168,6 +213,7 @@ export default function MetaPanel({ production, language = 'nl', sx }: MetaPanel
   const resolvedPerformerType = production.performer_type || ''
   const resolvedAttendanceMode = production.attendance_mode || ''
   const resolvedTags = formatAllTags(production, language)
+  // TODO: use GenreChip for the genres now that the component is available?
 
   return (
     <Box
@@ -261,6 +307,7 @@ export default function MetaPanel({ production, language = 'nl', sx }: MetaPanel
           }}
         >
           {resolvedTags.map((tag, index) => (
+            /* TODO: fix this to use the tag correctly instead of just the name */
             <GenreAndTagChip
               key={`${tag.tagName}-${index}`}
               name={tag.tagName}

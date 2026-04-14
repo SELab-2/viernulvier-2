@@ -1,6 +1,6 @@
 import CloseIcon from '@mui/icons-material/Close'
 import { Snackbar, Box, IconButton } from '@mui/material'
-import { alpha, useTheme } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 
 import { tokens } from '../theme/tokens'
 
@@ -39,27 +39,27 @@ const FloatingAlert = ({
     { bgColor: string; textColor: string; borderColor: string; titleColor: string }
   > = {
     error: {
-      bgColor: alpha(theme.palette.error.main, theme.palette.mode === 'dark' ? 0.22 : 0.12),
-      textColor: theme.palette.text.primary,
-      borderColor: alpha(theme.palette.error.main, theme.palette.mode === 'dark' ? 0.6 : 0.36),
+      bgColor: theme.palette.error.main,
+      textColor: theme.palette.error.contrastText,
+      borderColor: theme.palette.error.dark,
       titleColor: theme.palette.error.main,
     },
     warning: {
-      bgColor: alpha(theme.palette.warning.main, theme.palette.mode === 'dark' ? 0.22 : 0.12),
+      bgColor: theme.palette.warning.main,
       textColor: theme.palette.text.primary,
-      borderColor: alpha(theme.palette.warning.main, theme.palette.mode === 'dark' ? 0.6 : 0.36),
+      borderColor: theme.palette.warning.main,
       titleColor: theme.palette.warning.main,
     },
     info: {
-      bgColor: alpha(theme.palette.info.main, theme.palette.mode === 'dark' ? 0.22 : 0.12),
+      bgColor: theme.palette.info.main,
       textColor: theme.palette.text.primary,
-      borderColor: alpha(theme.palette.info.main, theme.palette.mode === 'dark' ? 0.6 : 0.36),
+      borderColor: theme.palette.info.main,
       titleColor: theme.palette.info.main,
     },
     success: {
-      bgColor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.22 : 0.12),
+      bgColor: theme.palette.success.main,
       textColor: theme.palette.text.primary,
-      borderColor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.6 : 0.36),
+      borderColor: theme.palette.success.main,
       titleColor: theme.palette.success.main,
     },
   }
@@ -75,16 +75,16 @@ const FloatingAlert = ({
       sx={
         position.vertical === 'top'
           ? {
-              '&.MuiSnackbar-anchorOriginTopLeft': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-              '&.MuiSnackbar-anchorOriginTopCenter': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-              '&.MuiSnackbar-anchorOriginTopRight': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-            }
+            '&.MuiSnackbar-anchorOriginTopLeft': {
+              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+            },
+            '&.MuiSnackbar-anchorOriginTopCenter': {
+              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+            },
+            '&.MuiSnackbar-anchorOriginTopRight': {
+              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+            },
+          }
           : undefined
       }
       data-testid="floating-alert"
