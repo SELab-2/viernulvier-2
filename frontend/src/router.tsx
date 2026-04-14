@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
+import BlogDetailPage from './pages/BlogDetailPage'
 import BlogsPage from './pages/BlogsPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'

@@ -8,7 +8,7 @@
 
 import { tokens } from './tokens'
 
-import { SystemStyleObject } from '@mui/system'
+import type { SxProps, SystemStyleObject, Theme } from '@mui/system'
 
 export const createNavbarStyles = (theme: Theme) => {
   return {
