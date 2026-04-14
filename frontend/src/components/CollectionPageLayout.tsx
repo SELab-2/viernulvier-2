@@ -123,7 +123,7 @@ const CollectionPageLayout = ({
   const resultsSection = (
     <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ flex: 1, minWidth: 0 }}>
       {isLoading ? (
-        <Box py={8}>{loadingContent ?? <LoadingSpinner label={loadingLabel} />}</Box>
+        <Box sx={{ py: 8 }}>{loadingContent ?? <LoadingSpinner label={loadingLabel} />}</Box>
       ) : null}
 
       {/* Error */}
