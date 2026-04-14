@@ -1,4 +1,4 @@
-import { useTheme } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
 import { tokens } from '../../theme/tokens'
@@ -14,26 +14,18 @@ import type {
   GenreAndTagChipType,
 } from '../../types/GenreAndTagChip'
 import type { Production } from '../../types/Productions'
-import type { CSSProperties } from 'react'
+import type { SxProps, Theme } from '@mui/material/styles'
 
-/**
- * Format an event list into a human-readable date range for production metadata.
- *
- * Rules:
- * - empty event array => ''
- * - single-day events (same date) => one formatted date
- * - multi-day events => first date - last date
- *
- * `formatDate` is locale-aware.
- */
 function getDateRange(events: Production['events'] | null | undefined, lang: string): string {
-  const list = (events || []).filter((e) => !!e.starts_at)
+  const list = (events || []).filter((event) => !!event.starts_at)
 
   if (!list.length) {
     return ''
   }
 
-  const dates = list.map((e) => new Date(e.starts_at as string).getTime()).sort((a, b) => a - b)
+  const dates = list
+    .map((event) => new Date(event.starts_at as string).getTime())
+    .sort((a, b) => a - b)
   const first = new Date(dates[0])
   const last = new Date(dates[dates.length - 1])
 
@@ -44,66 +36,47 @@ function getDateRange(events: Production['events'] | null | undefined, lang: str
   return `${formatDate(first.toISOString(), lang)} - ${formatDate(last.toISOString(), lang)}`
 }
 
-/**
- * Aggregate unique venue names from all events.
- * This avoids repeated venue descriptions by using a set.
- * Note: event.hall_display is expected to be a fallback provided by the API.
- */
 function getUniqueVenues(events: Production['events'] | null | undefined, lang: string): string {
   const list = events || []
   const venues = [
-    ...new Set(list.map((e) => getHallDisplayName(e, lang) || e.hall_display).filter(Boolean)),
+    ...new Set(
+      list.map((event) => getHallDisplayName(event, lang) || event.hall_display).filter(Boolean),
+    ),
   ] as string[]
 
   return venues.join(', ')
 }
 
 interface ResolvedTag {
-  /**
-   * The canonical tag value used for internal ID and tag link generation.
-   */
   tagName: string
-  /**
-   * Optional localized labels by language code, e.g. { nl: 'Drama', en: 'Drama' }.
-   */
   labels: ChipLabels
   context: GenreAndTagChipContext
   chipType: GenreAndTagChipType
   value: GenreAndTagChipId
 }
 
-/**
- * Build a list of translated tag objects from production data.
- *
- * A production can have:
- * - explicit tags (`production.tags`)
- * - type (`production.uit_database_type`) as one pseudo-tag
- * - genres (`production.genres`)
- *
- * The output order preserves semantic priority: explicit tags first, then type, then genres.
- */
 function formatAllTags(production: Production, lang: string): ResolvedTag[] {
   const genreTags = (production.genres || [])
-    .map((g) => ({
-      tagName: g.display_name || getLocalizedValue(g.name || {}, lang),
-      labels: g.name || {},
+    .map((genre) => ({
+      tagName: genre.display_name || getLocalizedValue(genre.name || {}, lang),
+      labels: genre.name || {},
       chipType: 'genre' as const,
-      value: g.id,
+      value: genre.id,
       context: 'description' as const,
     }))
     .filter((tag) => tag.tagName)
 
   const explicitTags = (production.tags || [])
-    .map((t) => ({
+    .map((tag) => ({
       tagName:
-        t.display_name ||
-        getLocalizedValue(t.name || {}, lang) ||
-        getLocalizedValue(t.url_title || {}, lang) ||
-        t.type ||
+        tag.display_name ||
+        getLocalizedValue(tag.name || {}, lang) ||
+        getLocalizedValue(tag.url_title || {}, lang) ||
+        tag.type ||
         '',
-      labels: t.name || t.url_title || {},
+      labels: tag.name || tag.url_title || {},
       chipType: 'seriesTag' as const,
-      value: t.id,
+      value: tag.id,
       context: 'series' as const,
     }))
     .filter((tag) => tag.tagName)
@@ -126,65 +99,56 @@ function formatAllTags(production: Production, lang: string): ResolvedTag[] {
 interface MetaPanelProps {
   production: Production
   language?: string
-  style?: CSSProperties
+  sx?: SxProps<Theme>
 }
 
 function MetaRow({ label, value }: { label: string; value: string }) {
-  const theme = useTheme()
   if (!value) {
     return null
   }
+
   return (
-    <div
-      style={{
+    <Box
+      sx={(theme) => ({
         display: 'grid',
         gridTemplateColumns: '140px 1fr',
-        gap: '8px',
-        padding: '14px 0',
+        gap: tokens.spacing.numericSm,
+        py: 1.75,
         borderBottom: `1px solid ${theme.palette.divider}`,
         alignItems: 'start',
-      }}
+      })}
     >
-      <span
-        style={{
-          color: theme.palette.text.secondary,
-          fontSize: '0.95rem',
-          paddingTop: '2px',
-          fontWeight: 600,
+      <Typography
+        component="span"
+        sx={{
+          color: 'text.secondary',
+          fontSize: tokens.typography.sizes.sm,
+          pt: 0.25,
+          fontWeight: tokens.typography.weights.bold,
         }}
       >
         {label}
-      </span>
-      <span style={{ fontSize: '0.92rem', color: theme.palette.text.primary, fontWeight: 500 }}>
+      </Typography>
+      <Typography
+        component="span"
+        sx={{
+          fontSize: '0.92rem',
+          color: 'text.primary',
+          fontWeight: tokens.typography.weights.medium,
+        }}
+      >
         {value}
-      </span>
-    </div>
+      </Typography>
+    </Box>
   )
 }
 
-/**
- * MetaPanel renders production metadata in the right-side details panel.
- *
- * Props:
- * - production: full production object from API response
- * - language: current UI language (defaults to 'nl')
- * - style: optional container style overrides
- *
- * Data derivation by component:
- * - title, tagline, artistName are localized from production fields
- * - date range + venues come from production.events
- * - genres/type/etc. are derived and displayed in MetaRow
- * - tags are normalized via formatAllTags and rendered as Tag chips
- */
-export default function MetaPanel({ production, language = 'nl', style }: MetaPanelProps) {
-  const theme = useTheme()
+export default function MetaPanel({ production, language = 'nl', sx }: MetaPanelProps) {
   const { t } = useTranslation()
 
   const resolvedTitle =
     getLocalizedValue(production.title, language) || production.display_title || ''
-
   const resolvedTagline = getLocalizedValue(production.tagline, language)
-
   const resolvedArtistName =
     getLocalizedValue(production.artist_name, language) || production.display_artist_name || ''
 
@@ -192,7 +156,7 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
   const resolvedVenues = getUniqueVenues(production.events, language)
 
   const resolvedGenres = (production.genres || [])
-    .map((g) => getLocalizedValue(g.name || {}, language) || g.display_name || '')
+    .map((genre) => getLocalizedValue(genre.name || {}, language) || genre.display_name || '')
     .filter(Boolean)
     .join(', ')
 
@@ -203,47 +167,50 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
 
   const resolvedPerformerType = production.performer_type || ''
   const resolvedAttendanceMode = production.attendance_mode || ''
-
   const resolvedTags = formatAllTags(production, language)
-  // TODO: use GenreChip for the genres now that the component is available?
+
   return (
-    <div
+    <Box
       className="meta-panel"
-      style={{
-        paddingTop: '32px',
-        background: theme.palette.background.default,
-        color: theme.palette.text.primary,
-        ...style,
-      }}
+      sx={[
+        (theme) => ({
+          pt: 4,
+          background: theme.palette.background.default,
+          color: theme.palette.text.primary,
+        }),
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
     >
-      <h1
-        style={{
-          fontSize: '2rem',
-          fontWeight: 700,
+      <Typography
+        component="h1"
+        sx={{
+          fontSize: tokens.typography.sizes['3xl'],
+          fontWeight: tokens.typography.weights.bold,
           lineHeight: 1.15,
-          margin: '0 0 8px',
+          mb: 1,
           letterSpacing: '-0.02em',
         }}
       >
         {resolvedTitle}
-      </h1>
+      </Typography>
 
       {(resolvedTagline || resolvedArtistName) && (
-        <p
-          style={{
-            fontSize: '0.95rem',
-            color: theme.palette.text.secondary,
-            margin: '0 0 24px',
+        <Typography
+          component="p"
+          sx={{
+            fontSize: tokens.typography.sizes.sm,
+            color: 'text.secondary',
+            mb: 3,
             fontStyle: 'italic',
           }}
         >
           {resolvedTagline || resolvedArtistName}
-        </p>
+        </Typography>
       )}
 
-      <div style={{ borderTop: `1px solid ${theme.palette.divider}`, marginBottom: '4px' }} />
+      <Box sx={(theme) => ({ borderTop: `1px solid ${theme.palette.divider}`, mb: 0.5 })} />
 
-      <div style={{ fontFamily: tokens.typography.fontFamily }}>
+      <Box sx={{ fontFamily: tokens.typography.fontFamily }}>
         {resolvedDateRange && (
           <MetaRow
             label={t('productions.detail.meta.period', 'Periode')}
@@ -282,21 +249,20 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
                 : ''
           }
         />
-      </div>
+      </Box>
 
       {resolvedTags.length > 0 && (
-        <div
-          style={{
+        <Box
+          sx={{
             display: 'flex',
             flexWrap: 'wrap',
-            gap: '8px',
-            marginTop: '28px',
+            gap: tokens.spacing.numericSm,
+            mt: 3.5,
           }}
         >
-          {resolvedTags.map((tag, i) => (
-            /* TODO: fix this to use the tag correctly instead of just the name */
+          {resolvedTags.map((tag, index) => (
             <GenreAndTagChip
-              key={`${tag.tagName}-${i}`}
+              key={`${tag.tagName}-${index}`}
               name={tag.tagName}
               labels={tag.labels}
               chipType={tag.chipType}
@@ -304,8 +270,8 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
               context={tag.context}
             />
           ))}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   )
 }

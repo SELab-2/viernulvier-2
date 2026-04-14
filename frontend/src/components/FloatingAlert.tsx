@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import CloseIcon from '@mui/icons-material/Close'
 import { Snackbar, Box, IconButton } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
@@ -39,24 +40,34 @@ const FloatingAlert = ({
     { bgColor: string; textColor: string; borderColor: string }
   > = {
     error: {
-      bgColor: theme.palette.mode === 'dark' ? '#5f2c2c' : '#ffebee',
-      textColor: theme.palette.mode === 'dark' ? '#ff8a80' : '#c62828',
-      borderColor: theme.palette.mode === 'dark' ? '#ff8a80' : '#d32f2f',
+      bgColor: theme.palette.mode === 'dark' ? theme.palette.error.dark : theme.palette.error.light,
+      textColor: theme.palette.getContrastText(
+        theme.palette.mode === 'dark' ? theme.palette.error.dark : theme.palette.error.light,
+      ),
+      borderColor: theme.palette.error.main,
     },
     warning: {
-      bgColor: theme.palette.mode === 'dark' ? '#5f4c2c' : '#fff8e1',
-      textColor: theme.palette.mode === 'dark' ? '#ffb74d' : '#e65100',
-      borderColor: theme.palette.mode === 'dark' ? '#ffb74d' : '#f57f17',
+      bgColor:
+        theme.palette.mode === 'dark' ? theme.palette.warning.dark : theme.palette.warning.light,
+      textColor: theme.palette.getContrastText(
+        theme.palette.mode === 'dark' ? theme.palette.warning.dark : theme.palette.warning.light,
+      ),
+      borderColor: theme.palette.warning.main,
     },
     info: {
-      bgColor: theme.palette.mode === 'dark' ? '#2c4a5f' : '#e3f2fd',
-      textColor: theme.palette.mode === 'dark' ? '#64b5f6' : '#0d47a1',
-      borderColor: theme.palette.mode === 'dark' ? '#64b5f6' : '#1976d2',
+      bgColor: theme.palette.mode === 'dark' ? theme.palette.info.dark : theme.palette.info.light,
+      textColor: theme.palette.getContrastText(
+        theme.palette.mode === 'dark' ? theme.palette.info.dark : theme.palette.info.light,
+      ),
+      borderColor: theme.palette.info.main,
     },
     success: {
-      bgColor: theme.palette.mode === 'dark' ? '#2c5f3c' : '#e8f5e9',
-      textColor: theme.palette.mode === 'dark' ? '#81c784' : '#1b5e20',
-      borderColor: theme.palette.mode === 'dark' ? '#81c784' : '#388e3c',
+      bgColor:
+        theme.palette.mode === 'dark' ? theme.palette.success.dark : theme.palette.success.light,
+      textColor: theme.palette.getContrastText(
+        theme.palette.mode === 'dark' ? theme.palette.success.dark : theme.palette.success.light,
+      ),
+      borderColor: theme.palette.success.main,
     },
   }
 
@@ -71,16 +82,16 @@ const FloatingAlert = ({
       sx={
         position.vertical === 'top'
           ? {
-              '&.MuiSnackbar-anchorOriginTopLeft': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-              '&.MuiSnackbar-anchorOriginTopCenter': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-              '&.MuiSnackbar-anchorOriginTopRight': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-            }
+            '&.MuiSnackbar-anchorOriginTopLeft': {
+              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+            },
+            '&.MuiSnackbar-anchorOriginTopCenter': {
+              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+            },
+            '&.MuiSnackbar-anchorOriginTopRight': {
+              top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+            },
+          }
           : undefined
       }
       data-testid="floating-alert"

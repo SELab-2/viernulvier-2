@@ -102,6 +102,9 @@ module.exports = [
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
 
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'error',
+
       'react/prop-types': 'off', // TS handles this
       'react/display-name': 'warn',
       'react/no-array-index-key': 'off',
@@ -148,6 +151,13 @@ module.exports = [
       'no-duplicate-imports': 'off', // handled by import/no-duplicates
       'no-shadow': 'off', // use @typescript-eslint/no-shadow instead
       '@typescript-eslint/no-shadow': 'off',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXAttribute[name.name='style']",
+          message: 'Use MUI sx or theme utilities instead of inline style props.',
+        },
+      ],
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-implicit-coercion': ['warn', { boolean: false }],
       'no-nested-ternary': 'off',

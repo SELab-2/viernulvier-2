@@ -1,4 +1,4 @@
-import { Box, Typography, useTheme } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -9,6 +9,7 @@ import Breadcrumbs from '../components/production/Breadcrumbs'
 import Description from '../components/production/Description'
 import RelatedProductions from '../components/production/RelatedProductions'
 import { getBlog } from '../services/blogs/Blogs'
+import { tokens } from '../theme/tokens'
 import { getLocalizedValue } from '../utils/localization'
 
 import type { Blog } from '../types/Blogs'
@@ -25,7 +26,6 @@ import type { Blog } from '../types/Blogs'
 const BlogDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const theme = useTheme()
   const { i18n, t } = useTranslation()
   const lang = i18n.language
 
@@ -102,20 +102,24 @@ const BlogDetailPage = () => {
     : null
 
   return (
-    <div
+    <Box
       className="blog-details-page"
-      style={{
+      sx={(theme) => ({
         backgroundColor: theme.palette.background.default,
         color: theme.palette.text.primary,
-      }}
+      })}
     >
-      <div
+      <Box
         className="production-details-container"
-        style={{ backgroundColor: theme.palette.background.default, gridTemplateColumns: '1fr' }}
+        sx={(theme) => ({
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          backgroundColor: theme.palette.background.default,
+        })}
       >
-        <div
+        <Box
           className="production-details-left"
-          style={{ backgroundColor: theme.palette.background.default }}
+          sx={(theme) => ({ backgroundColor: theme.palette.background.default })}
         >
           <Breadcrumbs
             items={[
@@ -126,33 +130,33 @@ const BlogDetailPage = () => {
           />
 
           <Box
-            sx={{
+            sx={(theme) => ({
               mt: 1,
               mb: 3,
               pb: 1.5,
               borderBottom: `1px solid ${theme.palette.divider}`,
-            }}
+            })}
           >
             {published ? (
-              <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {t('blogs.detail.publishedOn', 'Published on')}: {published}
               </Typography>
             ) : (
-              <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {t('blogs.detail.notPublished', 'Not published')}
               </Typography>
             )}
           </Box>
 
-          <div
+          <Box
             className="hero-image"
-            style={{
+            sx={{
               width: '100%',
-              aspectRatio: '16/7',
+              aspectRatio: '16 / 7',
               backgroundColor: 'transparent',
-              borderRadius: '4px',
+              borderRadius: tokens.borderRadius.sm,
               overflow: 'hidden',
-              marginBottom: '40px',
+              mb: 5,
             }}
           >
             <ImageWithFallback
@@ -160,22 +164,22 @@ const BlogDetailPage = () => {
               alt={title}
               sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
-          </div>
+          </Box>
 
           <Box sx={{ mb: 3 }}>
             <Typography
               variant="h4"
-              sx={{ fontWeight: 700, color: theme.palette.text.primary, mb: 1.5 }}
+              sx={{ fontWeight: tokens.typography.weights.bold, color: 'text.primary', mb: 1.5 }}
             >
               {title}
             </Typography>
           </Box>
 
           <Description teaser={excerpt} description={body} />
-        </div>
-      </div>
+        </Box>
+      </Box>
       {blog.productions && blog.productions.length > 0 && (
-        <div style={{ padding: '0 16px 32px' }}>
+        <Box sx={{ px: 2, pb: 4 }}>
           <RelatedProductions
             related={[
               {
@@ -190,9 +194,9 @@ const BlogDetailPage = () => {
             lang={lang}
             showTag={false}
           />
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   )
 }
 

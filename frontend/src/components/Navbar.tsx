@@ -160,7 +160,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                 variant="subtitle1"
                 sx={{
                   display: { xs: 'none', sm: 'block' },
-                  color: theme.palette.primary.contrastText,
+                  color: 'common.white',
                   fontWeight: tokens.typography.weights.regular,
                   letterSpacing: '0.03em',
                   fontSize: '24px',

@@ -184,13 +184,13 @@ function Carousel({
               transform: 'translate(-50%, -50%)',
               zIndex: 2,
               backgroundColor: theme.palette.background.paper,
-              boxShadow: '0 0 18px rgba(0, 0, 0, 0.06)',
+              boxShadow: theme.shadows[1],
               opacity: 0,
               pointerEvents: 'none',
               transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
               '&:hover': {
                 backgroundColor: theme.palette.background.paper,
-                boxShadow: '0 0 24px rgba(0, 0, 0, 0.10)',
+                boxShadow: theme.shadows[3],
                 transform: 'translate(-56%, -50%)',
               },
               '@media (hover: none)': {
@@ -221,13 +221,13 @@ function Carousel({
               zIndex: 2,
               border: `1px solid ${theme.palette.divider}`,
               backgroundColor: theme.palette.background.paper,
-              boxShadow: '0 0 18px rgba(0, 0, 0, 0.06)',
+              boxShadow: theme.shadows[1],
               opacity: 0,
               pointerEvents: 'none',
               transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
               '&:hover': {
                 backgroundColor: theme.palette.background.paper,
-                boxShadow: '0 0 24px rgba(0, 0, 0, 0.10)',
+                boxShadow: theme.shadows[3],
                 transform: 'translate(56%, -50%)',
               },
               '@media (hover: none)': {

@@ -1,6 +1,7 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
+import { tokens } from '../../theme/tokens'
 import { getTranslatedRecord } from '../../utils/translations'
 import Carousel from '../carousel/Carousel'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
@@ -48,7 +49,7 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
       <Typography
         variant="h5"
         sx={(theme) => ({
-          fontWeight: 700,
+          fontWeight: tokens.typography.weights.bold,
           fontSize: { xs: '1.05rem', sm: '1.25rem' },
           letterSpacing: '-0.01em',
           color: theme.palette.text.primary,
@@ -62,7 +63,9 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
         return (
           <Box key={entry.tag.id}>
             {showTag && (
-              <Box sx={{ mb: 1.5, display: 'inline-flex', fontWeight: 600 }}>
+              <Box
+                sx={{ mb: 1.5, display: 'inline-flex', fontWeight: tokens.typography.weights.bold }}
+              >
                 <GenreAndTagChip
                   name={entry.tag.display_name ?? 'unknown tag'}
                   labels={entry.tag.name as Record<string, string>}

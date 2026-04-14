@@ -1,40 +1,46 @@
 import { Box, Skeleton, useTheme } from '@mui/material'
 
+import { tokens } from '../theme/tokens'
+
 const BlogDetailPageSkeleton = () => {
   const theme = useTheme()
 
   return (
-    <div
+    <Box
       className="blog-details-page"
-      style={{
+      sx={(theme) => ({
         backgroundColor: theme.palette.background.default,
         color: theme.palette.text.primary,
-      }}
+      })}
     >
-      <div
+      <Box
         className="production-details-container"
-        style={{ backgroundColor: theme.palette.background.default, gridTemplateColumns: '1fr' }}
+        sx={(theme) => ({
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          backgroundColor: theme.palette.background.default,
+        })}
       >
-        <div
+        <Box
           className="production-details-left"
-          style={{ backgroundColor: theme.palette.background.default }}
+          sx={(theme) => ({ backgroundColor: theme.palette.background.default })}
         >
           <Box sx={{ borderBottom: `1px solid ${theme.palette.divider}`, pb: 1.5, mb: 3 }}>
             <Skeleton variant="text" width="45%" height={24} />
           </Box>
 
-          <div
+          <Box
             className="hero-image"
-            style={{
+            sx={{
               width: '100%',
-              aspectRatio: '16/7',
-              borderRadius: '4px',
+              aspectRatio: '16 / 7',
+              borderRadius: tokens.borderRadius.sm,
               overflow: 'hidden',
-              marginBottom: '32px',
+              mb: 4,
             }}
           >
             <Skeleton variant="rectangular" width="100%" height="100%" />
-          </div>
+          </Box>
 
           <Box sx={{ mb: 3 }}>
             <Skeleton variant="text" width={180} height={24} />
@@ -48,8 +54,8 @@ const BlogDetailPageSkeleton = () => {
             <Skeleton variant="text" width="93%" height={30} />
             <Skeleton variant="text" width="95%" height={30} />
           </Box>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       <Box sx={{ p: 2, width: '100%', maxWidth: 1250, mx: 'auto', pb: 4 }}>
         <Skeleton variant="text" width={220} height={36} sx={{ mb: 1 }} />
@@ -65,7 +71,7 @@ const BlogDetailPageSkeleton = () => {
           <Skeleton variant="rectangular" height={160} />
         </Box>
       </Box>
-    </div>
+    </Box>
   )
 }
 

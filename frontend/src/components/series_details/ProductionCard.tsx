@@ -6,6 +6,7 @@
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material'
 import DOMPurify from 'dompurify'
 
+import { tokens } from '../../theme/tokens'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
 
 import type { KeyboardEvent, MouseEvent } from 'react'
@@ -57,7 +58,7 @@ const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
     >
       <CardContent sx={{ p: 2.5 }}>
         <Stack spacing={1.25}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ fontWeight: tokens.typography.weights.bold }}>
             {title}
           </Typography>
 

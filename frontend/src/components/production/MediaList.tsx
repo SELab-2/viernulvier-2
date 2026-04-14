@@ -1,7 +1,8 @@
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
-import { Box, IconButton, Modal, useTheme } from '@mui/material'
+import { Box, IconButton, Modal, Typography } from '@mui/material'
 import { useState, type KeyboardEvent } from 'react'
 
+import { tokens } from '../../theme/tokens'
 import Carousel from '../carousel/Carousel'
 
 import type { MediaItem } from '../../types/Media'
@@ -43,7 +44,6 @@ function getBestImageUrl(item: MediaItem): string | null {
  * - Powered by Embla Carousel for smooth, touch-enabled sliding
  */
 export default function MediaList({ mediaItems }: MediaListProps) {
-  const theme = useTheme()
   const [activeImage, setActiveImage] = useState<{ src: string; alt: string } | null>(null)
 
   const mediaWithImage = mediaItems
@@ -65,37 +65,34 @@ export default function MediaList({ mediaItems }: MediaListProps) {
   }
 
   return (
-    <section
+    <Box
       className="media-list"
       aria-label="Production media carousel"
-      style={{
+      component="section"
+      sx={(theme) => ({
         width: '100%',
-        maxWidth: '1250px',
-        margin: '24px auto 0',
-        padding: '0 16px',
-        borderRadius: '8px',
+        maxWidth: 1250,
+        mx: 'auto',
+        mt: 3,
+        px: 2,
+        borderRadius: tokens.borderRadius.md,
         background: 'transparent',
         color: theme.palette.text.primary,
-      }}
+      })}
     >
-      <h2
-        style={{
-          margin: '0 0 12px',
-          fontSize: '1.1rem',
-          fontWeight: 600,
-          color: theme.palette.text.primary,
+      <Typography
+        component="h2"
+        sx={{
+          mb: 1.5,
+          fontSize: tokens.typography.sizes.lg,
+          fontWeight: tokens.typography.weights.bold,
+          color: 'text.primary',
         }}
       >
         Media
-      </h2>
+      </Typography>
 
-      <div
-        style={{
-          borderRadius: '10px',
-          background: 'transparent',
-          padding: 0,
-        }}
-      >
+      <Box sx={{ borderRadius: tokens.borderRadius.md, background: 'transparent', p: 0 }}>
         <Carousel
           ariaLabel="Production media carousel"
           maxWidth="100%"
@@ -107,14 +104,14 @@ export default function MediaList({ mediaItems }: MediaListProps) {
           sx={{ width: '100%' }}
         >
           {mediaWithImage.map(({ item, imageUrl }) => (
-            <div
+            <Box
               key={item.id}
-              style={{
-                width: '350px',
+              sx={{
+                width: { xs: 'calc(100vw - 80px)', sm: 350 },
                 maxWidth: 'calc(100vw - 80px)',
               }}
             >
-              <div
+              <Box
                 role="button"
                 tabIndex={0}
                 onClick={() =>
@@ -130,44 +127,51 @@ export default function MediaList({ mediaItems }: MediaListProps) {
                     item.display_title || item.original_filename || 'Media item',
                   )
                 }
-                style={{
+                sx={(theme) => ({
                   width: '100%',
-                  aspectRatio: '16/9',
+                  aspectRatio: '16 / 9',
                   overflow: 'hidden',
-                  borderRadius: '8px',
-                  background: theme.palette.mode === 'dark' ? '#101436' : '#f7f7f7',
+                  borderRadius: tokens.borderRadius.md,
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? tokens.colors.media.darkBackground
+                      : tokens.colors.media.lightBackground,
                   border: `1px solid ${theme.palette.divider}`,
                   cursor: 'pointer',
                   transition: 'transform 180ms ease, box-shadow 180ms ease',
-                }}
-                onMouseEnter={(event) => {
-                  event.currentTarget.style.transform = 'translateY(-2px)'
-                  event.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18)'
-                }}
-                onMouseLeave={(event) => {
-                  event.currentTarget.style.transform = 'translateY(0)'
-                  event.currentTarget.style.boxShadow = 'none'
-                }}
+                  '&:hover, &:focus-visible': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: tokens.shadows.mediaControl,
+                  },
+                  '&:focus-visible': {
+                    outline: `2px solid ${theme.palette.primary.main}`,
+                    outlineOffset: 2,
+                  },
+                })}
               >
-                <img
+                <Box
+                  component="img"
                   src={imageUrl as string}
                   alt={item.display_title || item.original_filename || 'Media item'}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
-              </div>
-            </div>
+              </Box>
+            </Box>
           ))}
         </Carousel>
-      </div>
+      </Box>
 
       <Modal
         open={Boolean(activeImage)}
         onClose={closePreview}
         slotProps={{
           backdrop: {
-            sx: {
-              backgroundColor: 'rgba(35, 35, 35, 0.72)',
-            },
+            sx: (theme) => ({
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? tokens.colors.overlay.modalBackdropDark
+                  : tokens.colors.overlay.modalBackdropLight,
+            }),
           },
         }}
       >
@@ -189,7 +193,7 @@ export default function MediaList({ mediaItems }: MediaListProps) {
               maxHeight: '90vh',
               borderRadius: 1.5,
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
+              boxShadow: (theme) => theme.shadows[4],
             }}
           >
             <IconButton
@@ -200,10 +204,10 @@ export default function MediaList({ mediaItems }: MediaListProps) {
                 top: 10,
                 right: 10,
                 zIndex: 2,
-                color: '#fff',
-                backgroundColor: 'rgba(0, 0, 0, 0.45)',
+                color: 'common.white',
+                backgroundColor: 'action.hover',
                 '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.62)',
+                  backgroundColor: 'action.selected',
                 },
               }}
             >
@@ -211,14 +215,15 @@ export default function MediaList({ mediaItems }: MediaListProps) {
             </IconButton>
 
             {activeImage ? (
-              <img
+              <Box
+                component="img"
                 src={activeImage.src}
                 alt={activeImage.alt}
-                style={{
+                sx={{
                   width: '100%',
                   maxHeight: '90vh',
                   objectFit: 'contain',
-                  background: '#111',
+                  backgroundColor: tokens.colors.neutral.gray900,
                   display: 'block',
                 }}
               />
@@ -226,6 +231,6 @@ export default function MediaList({ mediaItems }: MediaListProps) {
           </Box>
         </Box>
       </Modal>
-    </section>
+    </Box>
   )
 }
