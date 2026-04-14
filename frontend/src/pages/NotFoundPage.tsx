@@ -26,8 +26,8 @@ const NotFoundPage = () => {
           borderRadius: tokens.card.borderRadius,
         }}
       >
-        <Stack spacing={tokens.spacing.numericMd} alignItems="flex-start">
-          <Typography variant="h4" fontWeight="bold">
+        <Stack spacing={tokens.spacing.numericMd} sx={{ alignItems: 'flex-start' }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
             {t('notFound.title')}
           </Typography>
 

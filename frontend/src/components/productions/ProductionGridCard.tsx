@@ -51,22 +51,32 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
     <Stack
       component={RouterLink}
       to={`/productions/${production.id}`}
-      width={350}
-      height="100%"
-      borderRadius={tokens.card.borderRadius}
-      overflow="hidden"
-      sx={commonStyles.cardBase}
+      sx={{
+        ...commonStyles.cardBase,
+        width: 350,
+        height: '100%',
+        borderRadius: tokens.card.borderRadius,
+        overflow: 'hidden',
+      }}
     >
       <ImageWithFallback src={imageSrc} alt={title} sx={{ aspectRatio: 16 / 9 }} />
 
       <Stack
-        flex={1}
-        justifyContent="space-between"
-        gap={tokens.spacing.numericSm}
-        padding={tokens.spacing.numericLg}
+        sx={{
+          flex: 1,
+          justifyContent: 'space-between',
+          gap: tokens.spacing.numericSm,
+          p: tokens.spacing.numericLg,
+        }}
       >
         <Stack>
-          <Typography component="h2" variant="h6" color="textPrimary" fontWeight="bold" noWrap>
+          <Typography
+            component="h2"
+            variant="h6"
+            color="textPrimary"
+            noWrap
+            sx={{ fontWeight: 'bold' }}
+          >
             {title}
           </Typography>
 
@@ -77,8 +87,8 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
           ) : null}
         </Stack>
 
-        <Stack color="text.secondary" spacing={1} minHeight={56}>
-          <Stack direction="row" alignItems="center" spacing={1} minHeight={20}>
+        <Stack spacing={1} sx={{ color: 'text.secondary', minHeight: 56 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minHeight: 20 }}>
             {dateLabel ? (
               <>
                 <DateRangeOutlinedIcon fontSize="inherit" />
@@ -89,7 +99,11 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
             ) : null}
           </Stack>
 
-          <Stack direction="row" flexWrap="wrap" spacing={0.75} height={32} overflow="hidden">
+          <Stack
+            direction="row"
+            spacing={0.75}
+            sx={{ flexWrap: 'wrap', height: 32, overflow: 'hidden' }}
+          >
             {genres.map((genre) => (
               <GenreAndTagChip
                 key={genre.id}

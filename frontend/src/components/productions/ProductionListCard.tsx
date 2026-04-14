@@ -50,12 +50,12 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
       component={RouterLink}
       to={`/productions/${production.id}`}
       direction="row"
-      gap={3}
-      height={170}
-      padding={3}
-      borderRadius={tokens.borderRadius.sm}
-      overflow="hidden"
       sx={(theme) => ({
+        gap: 3,
+        height: 170,
+        p: 3,
+        borderRadius: tokens.borderRadius.sm,
+        overflow: 'hidden',
         backgroundColor: theme.palette.background.paper,
         border: `1px solid ${theme.palette.divider}`,
         textDecoration: 'none',
@@ -69,20 +69,27 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
         src={imageSrc}
         alt={title}
         height="100%"
-        borderRadius={tokens.borderRadius.sm}
-        sx={{ aspectRatio: 16 / 9 }}
+        sx={{ aspectRatio: 16 / 9, borderRadius: tokens.borderRadius.sm }}
       />
 
       <Stack
-        flex={1}
-        minWidth={0}
-        height="100%"
-        justifyContent="space-between"
-        gap={1}
-        overflow="hidden"
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          height: '100%',
+          justifyContent: 'space-between',
+          gap: 1,
+          overflow: 'hidden',
+        }}
       >
         <Stack>
-          <Typography component="h2" variant="h6" color="textPrimary" fontWeight="bold" noWrap>
+          <Typography
+            component="h2"
+            variant="h6"
+            color="textPrimary"
+            noWrap
+            sx={{ fontWeight: 'bold' }}
+          >
             {title}
           </Typography>
 
@@ -93,8 +100,8 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
           ) : null}
         </Stack>
 
-        <Stack color="text.secondary" spacing={1} minHeight={48}>
-          <Stack direction="row" alignItems="center" spacing={1} minHeight={20}>
+        <Stack spacing={1} sx={{ color: 'text.secondary', minHeight: 48 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minHeight: 20 }}>
             {dateLabel ? (
               <>
                 <DateRangeOutlinedIcon fontSize="inherit" />
@@ -105,7 +112,11 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
             ) : null}
           </Stack>
 
-          <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24} overflow="hidden">
+          <Stack
+            direction="row"
+            spacing={0.75}
+            sx={{ flexWrap: 'wrap', height: 24, overflow: 'hidden' }}
+          >
             {genres.map((genre) => (
               <GenreAndTagChip
                 key={genre.id}
@@ -121,7 +132,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
         </Stack>
       </Stack>
 
-      <Box alignSelf="center" paddingRight={2}>
+      <Box sx={{ alignSelf: 'center', pr: 2 }}>
         <ArrowForwardOutlinedIcon color="action" />
       </Box>
     </Stack>

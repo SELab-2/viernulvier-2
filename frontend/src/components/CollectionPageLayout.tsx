@@ -122,7 +122,7 @@ const CollectionPageLayout = ({
   const resultsSection = (
     <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ flex: 1, minWidth: 0 }}>
       {isLoading ? (
-        <Box py={8}>
+        <Box sx={{ py: 8 }}>
           <LoadingSpinner label={loadingLabel} />
         </Box>
       ) : null}
@@ -183,10 +183,12 @@ const CollectionPageLayout = ({
 
           {shouldRenderSidebar ? (
             <Box
-              display="flex"
-              flexDirection={{ xs: 'column', md: 'row' }}
-              gap={3}
-              alignItems="flex-start"
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                gap: 3,
+                alignItems: 'flex-start',
+              }}
             >
               <Paper
                 component="aside"

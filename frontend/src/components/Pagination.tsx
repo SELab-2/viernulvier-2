@@ -51,15 +51,15 @@ const Pagination = ({
 
   return (
     <Box
-      display="flex"
-      flexDirection={{ xs: 'column', sm: 'row' }}
-      alignItems="center"
-      justifyContent="flex-end"
-      gap={2}
-      width="100%"
-      pr={{ xs: 0, sm: 1 }}
       role="navigation"
       aria-label={t(`${i18nKeyPrefix}.navigationLabel`)}
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 2,
+      }}
     >
       <MuiPagination
         color="primary"
