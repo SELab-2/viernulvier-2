@@ -2,12 +2,14 @@ import '@testing-library/jest-dom'
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
 
 import App from '../App'
-import '../i18n'
+import i18n from '../i18n'
 
 describe('App', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.history.pushState({}, '', '/')
     localStorage.clear()
+    localStorage.setItem('i18nextLng', 'nl')
+    await i18n.changeLanguage('nl')
   })
 
   afterEach(() => {

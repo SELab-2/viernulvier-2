@@ -20,6 +20,10 @@ const renderPagination = (props: ComponentProps<typeof Pagination>) => {
 }
 
 describe('Pagination', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('nl')
+  })
+
   it('renders nothing when only one page is available', () => {
     const { container } = renderPagination({
       page: 1,

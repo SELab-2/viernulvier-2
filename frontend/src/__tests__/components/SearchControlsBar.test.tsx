@@ -25,8 +25,9 @@ describe('SearchControlsBar', () => {
   const mockOnViewModeChange = jest.fn()
   const mockOnSearchSubmit = jest.fn()
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks()
+    await i18n.changeLanguage('nl')
   })
 
   const props = {
