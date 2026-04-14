@@ -64,23 +64,23 @@ export default function EventsList({ events }: EventsListProps) {
         return (
           <Box key={event.id}>
             {/* -- Event row -- */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
                 {/* Date + time */}
-                <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                  <Stack direction="row" spacing={0.75} alignItems="center">
+                <Stack direction="row" spacing={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                     <CalendarTodayOutlinedIcon
                       sx={{ fontSize: '0.95rem', color: 'text.primary' }}
                     />
-                    <Typography variant="body2" fontWeight={600} color="text.primary">
+                    <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
                       {event.starts_at ? formatDate(event.starts_at, lang) : '—'}
                     </Typography>
                   </Stack>
 
                   {event.starts_at && (
-                    <Stack direction="row" spacing={0.75} alignItems="center">
+                    <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                       <ScheduleOutlinedIcon sx={{ fontSize: '0.95rem', color: 'text.primary' }} />
-                      <Typography variant="body2" color="text.primary" fontWeight={500}>
+                      <Typography variant="body2" color="text.primary" sx={{ fontWeight: 500 }}>
                         {formatTime(event.starts_at, lang)}
                         {event.ends_at ? ` - ${formatTime(event.ends_at, lang)}` : ''}
                       </Typography>
@@ -93,7 +93,7 @@ export default function EventsList({ events }: EventsListProps) {
                   const hallName = getHallDisplayName(event, lang)
                   return (
                     hallName && (
-                      <Stack direction="row" spacing={0.75} alignItems="center">
+                      <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                         <RoomOutlinedIcon sx={{ fontSize: '0.9rem', color: 'text.primary' }} />
                         <Typography variant="body2" color="text.primary">
                           {hallName}
@@ -105,7 +105,11 @@ export default function EventsList({ events }: EventsListProps) {
               </Stack>
 
               {/* Expand prices toggle */}
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0, ml: 2 }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ alignItems: 'center', flexShrink: 0, ml: 2 }}
+              >
                 {hasPrices && (
                   <IconButton
                     size="small"
