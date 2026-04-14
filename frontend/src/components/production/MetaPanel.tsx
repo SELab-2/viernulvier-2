@@ -114,14 +114,14 @@ function formatAllTags(production: Production, lang: string): ResolvedTag[] {
 
   const typeTag = production.uit_database_type?.name
     ? [
-      {
-        tagName: production.uit_database_type.name,
-        labels: {},
-        chipType: 'genre' as const,
-        value: production.uit_database_type.name,
-        context: 'description' as const,
-      },
-    ]
+        {
+          tagName: production.uit_database_type.name,
+          labels: {},
+          chipType: 'genre' as const,
+          value: production.uit_database_type.name,
+          context: 'description' as const,
+        },
+      ]
     : []
 
   return [...explicitTags, ...typeTag, ...genreTags]
