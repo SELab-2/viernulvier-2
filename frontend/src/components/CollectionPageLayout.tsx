@@ -16,12 +16,12 @@ export interface CollectionPageLayoutProps {
   onSortTargetChange: (value: SearchSortTarget) => void
   sortDirection: SearchSortDirection
   onSortDirectionChange: (value: SearchSortDirection) => void
+  sortTargetOptions?: Array<{ value: SearchSortTarget; labelKey: string }>
   viewMode: SearchViewMode
   onViewModeChange: (value: SearchViewMode) => void
   resultCount: number
-  sidebarAriaLabel: string
-  sidebarTitle: string
-  sidebarDescription: string
+  sidebarContent?: ReactNode
+  sidebarAriaLabel?: string
   resultsRegionAriaLabel: string
   isLoading: boolean
   loadingLabel: string
@@ -43,8 +43,7 @@ export interface CollectionPageLayoutProps {
  * Reusable layout component for collection pages that includes a search bar, sidebar, results area, and pagination.
  * Handles common UI states such as loading, error, and empty results. The layout is responsive and adapts to mobile screens.
  *
- * Uses {@link SearchControlsBar} for the search and sorting controls, uses {@link Pagination} for pagination controls,
- * uses {@link ProductionView} for displaying production results.
+ * Uses {@link SearchControlsBar} for the search and sorting controls, and {@link Pagination} for page navigation.
  *
  * @param props.isMobile Boolean indicating if the layout is being rendered on a mobile device.
  * @param props.searchPlaceholder Placeholder text for the search input.
@@ -90,12 +89,12 @@ const CollectionPageLayout = ({
   onSortTargetChange,
   sortDirection,
   onSortDirectionChange,
+  sortTargetOptions,
   viewMode,
   onViewModeChange,
   resultCount,
+  sidebarContent,
   sidebarAriaLabel,
-  sidebarTitle,
-  sidebarDescription,
   resultsRegionAriaLabel,
   isLoading,
   loadingLabel,
@@ -119,6 +118,7 @@ const CollectionPageLayout = ({
     <Box sx={{ py: { xs: 3, md: 4 } }}>
       <Container maxWidth="xl">
         <Stack spacing={3}>
+          {/* Search, sort, and view controls. */}
           <SearchControlsBar
             placeholder={searchPlaceholder}
             searchValue={searchValue}
@@ -128,6 +128,7 @@ const CollectionPageLayout = ({
             onSortTargetChange={onSortTargetChange}
             sortDirection={sortDirection}
             onSortDirectionChange={onSortDirectionChange}
+            sortTargetOptions={sortTargetOptions}
             viewMode={viewMode}
             onViewModeChange={onViewModeChange}
             resultCount={resultCount}
@@ -140,44 +141,39 @@ const CollectionPageLayout = ({
             gap={3}
             alignItems="flex-start"
           >
-            <Paper
-              component="aside"
-              elevation={1}
-              aria-label={sidebarAriaLabel}
-              sx={{
-                width: { xs: '100%', md: 280 },
-                flexShrink: 0,
-                minHeight: 160,
-                p: 2.5,
-                borderRadius: 2,
-                border: `1px dashed ${theme.palette.divider}`,
-              }}
-            >
-              {/* Sidebar content placeholder */}
-              <Stack spacing={1}>
-                <Typography variant="subtitle1" component="h2">
-                  {sidebarTitle}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {sidebarDescription}
-                </Typography>
-              </Stack>
-            </Paper>
+            {/* Sidebar and results area. */}
+            {sidebarContent ? (
+              <Paper
+                component="aside"
+                elevation={1}
+                aria-label={sidebarAriaLabel}
+                sx={{
+                  width: { xs: '100%', md: 280 },
+                  flexShrink: 0,
+                  minHeight: 160,
+                  p: 2.5,
+                  borderRadius: 2,
+                  border: `1px dashed ${theme.palette.divider}`,
+                }}
+              >
+                {sidebarContent}
+              </Paper>
+            ) : null}
 
-            {/* Main content area */}
-            {/* Loading */}
+            {/* Main content area. */}
             <Box
               component="section"
               aria-label={resultsRegionAriaLabel}
               sx={{ flex: 1, minWidth: 0 }}
             >
+              {/* Loading state. */}
               {isLoading ? (
                 <Box py={8}>
                   <LoadingSpinner label={loadingLabel} />
                 </Box>
               ) : null}
 
-              {/* Error */}
+              {/* Error state. */}
               {!isLoading && errorMessage ? (
                 <Alert
                   severity="error"
@@ -191,7 +187,7 @@ const CollectionPageLayout = ({
                 </Alert>
               ) : null}
 
-              {/* Empty */}
+              {/* Empty state. */}
               {isEmpty ? (
                 <Paper variant="outlined" sx={{ p: 4, borderRadius: 2 }}>
                   <Stack spacing={1}>
@@ -205,12 +201,12 @@ const CollectionPageLayout = ({
                 </Paper>
               ) : null}
 
-              {/* Results */}
+              {/* Results content. */}
               {!isLoading && !errorMessage && hasResults ? resultsContent : null}
             </Box>
           </Box>
 
-          {/* Pagination */}
+          {/* Pagination controls. */}
           <Pagination
             page={page}
             pageSize={pageSize}

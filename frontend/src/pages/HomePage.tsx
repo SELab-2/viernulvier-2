@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useMediaQuery, useTheme } from '@mui/material'
+import { Stack, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import CollectionPageLayout from '../components/CollectionPageLayout'
+import EntityView from '../components/entity/EntityView'
 import FloatingAlert from '../components/FloatingAlert'
-import ProductionView from '../components/ProductionView'
+import ProductionGridCard from '../components/productions/ProductionGridCard'
+import ProductionListCard from '../components/productions/ProductionListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import { ApiError } from '../services/ApiTypes'
 import { getProductions } from '../services/productions/Productions'
 import type { Production } from '../types/Productions'
 
-// Page size for the productions list pagination. This is a constant for now but could be made configurable in the future if needed.
+// Page size for pagination.
 const PAGE_SIZE = 12
 
 // Function to determine the ordering parameter for the API based on the current sort target and direction.
@@ -20,12 +22,11 @@ const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'd
   return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 
-// Home page component that displays a list of productions with search, sorting, and pagination functionality.
 const HomePage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
+
   const {
     searchValue,
     sortTarget,
@@ -54,22 +55,19 @@ const HomePage = () => {
     : errorMessage
   const floatingErrorMessage = t('productions.home.error.notification')
 
-  // Memoized value for the API ordering parameter to avoid unnecessary recalculations on every render.
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
     [sortDirection, sortTarget],
   )
 
-  // Effect to synchronize the search draft state with the actual search value from the URL
   useEffect(() => {
     setSearchDraft(searchValue)
   }, [searchValue])
 
-  // Effect to fetch productions data from the API whenever the ordering, page, retryKey, or searchValue changes.
   useEffect(() => {
     let isActive = true
 
-    const fetchProductions = async () => {
+    const fetchPageData = async () => {
       setIsLoading(true)
       setErrorMessage(null)
       setShowFallbackError(false)
@@ -113,14 +111,13 @@ const HomePage = () => {
       }
     }
 
-    void fetchProductions()
+    void fetchPageData()
 
     return () => {
       isActive = false
     }
   }, [ordering, page, retryKey, searchValue])
 
-  // Function to handle retrying the API call when there is an error
   const onRetry = () => {
     setIsFloatingErrorOpen(false)
     setRetryKey((value) => value + 1)
@@ -130,13 +127,33 @@ const HomePage = () => {
     setIsFloatingErrorOpen(false)
   }
 
-  // Function to handle search submission, which updates the search value
   const onSearchSubmit = (value: string) => {
     setSearchValue(value.trim())
   }
 
-  // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.
-  // It also handles the different UI states such as loading, error, and empty results.
+  // Sidebar content for the filter panel.
+  const sidebarContent = (
+    <Stack spacing={1}>
+      <Typography variant="subtitle1" component="h2">
+        {t('productions.home.filterPanelTitle')}
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        {t('productions.home.filterPanelPlaceholder')}
+      </Typography>
+    </Stack>
+  )
+
+  // Main results content.
+  const resultsContent = (
+    <EntityView
+      items={productions}
+      layout={viewMode}
+      getKey={(production) => production.id}
+      renderListItem={(production) => <ProductionListCard production={production} />}
+      renderGridItem={(production) => <ProductionGridCard production={production} />}
+    />
+  )
+
   return (
     <>
       <CollectionPageLayout
@@ -154,9 +171,8 @@ const HomePage = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         resultCount={totalCount}
+        sidebarContent={sidebarContent}
         sidebarAriaLabel={t('productions.home.filterPanelLabel')}
-        sidebarTitle={t('productions.home.filterPanelTitle')}
-        sidebarDescription={t('productions.home.filterPanelPlaceholder')}
         resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('productions.home.loading')}
@@ -166,7 +182,7 @@ const HomePage = () => {
         emptyTitle={t('productions.home.empty.title')}
         emptyDescription={t('productions.home.empty.description')}
         hasResults={productions.length > 0}
-        resultsContent={<ProductionView productions={productions} layout={viewMode} />}
+        resultsContent={resultsContent}
         page={page}
         pageSize={PAGE_SIZE}
         totalItems={totalCount}

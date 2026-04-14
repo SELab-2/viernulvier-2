@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
-import ProductionListCard from '../../components/ProductionListCard'
+import ProductionListCard from '../../components/productions/ProductionListCard'
 import i18n from '../../i18n'
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
@@ -201,14 +201,15 @@ describe('ProductionListCard', () => {
     expect(screen.queryByText(/2026/)).not.toBeInTheDocument()
   })
 
-  it('does not show the date row when last_event_end is null', () => {
+  it('shows the start date when last_event_end is null', () => {
     const production = baseProduction({
       first_event_start: '2026-03-20T18:30:00.000Z',
       last_event_end: null,
     })
     renderListCard({ production })
 
-    expect(screen.queryByText(/mrt|Mar/)).not.toBeInTheDocument()
+    expect(screen.getByText(/mrt|Mar/)).toBeInTheDocument()
+    expect(screen.getByText(/2026/)).toBeInTheDocument()
   })
 
   it('shows a date range when first and last event fall on different dates', () => {

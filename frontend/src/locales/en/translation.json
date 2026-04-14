@@ -157,6 +157,36 @@
       "editions": "Editions",
       "period": "Period",
       "type": "Type"
+    },
+    "home": {
+      "loading": "Loading series",
+      "resultsRegionLabel": "Series results",
+      "filterPanelLabel": "Series filter panel",
+      "filterPanelTitle": "Series",
+      "filterPanelDescription": "Select one or multiple series labels to filter bundles.",
+      "tagFilterLabel": "Series filters",
+      "empty": {
+        "title": "No series found",
+        "description": "Adjust your search or filters and try again."
+      },
+      "card": {
+        "productionCount": "{{count}} productions"
+      },
+      "error": {
+        "retry": "Retry",
+        "fallback": "Could not load series.",
+        "notification": "Something went wrong while loading series."
+      }
+    },
+    "pagination": {
+      "navigationLabel": "Series pagination",
+      "pageXofY": "Page {{page}} of {{totalPages}}",
+      "firstPage": "Go to first page",
+      "lastPage": "Go to last page",
+      "nextPage": "Go to next page",
+      "previousPage": "Go to previous page",
+      "currentPage": "Current page, page {{page}}",
+      "goToPage": "Go to page {{page}}"
     }
   }
 }
