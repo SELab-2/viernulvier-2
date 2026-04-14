@@ -21,9 +21,8 @@ import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
  * - `static`: visual-only non-clickable chip
  *
  * Chip label resolution priority:
- * 1. `display_name` (if present)
- * 2. Localized `name` or `url_title` based on active i18n language
- * 3. Fallback to `type` for tags or empty string for genres
+ * 1. The translated value from `labels` based on the active locale
+ * 2. The raw `name` as a fallback
  *
  * The selected state and click behavior are only relevant in the 'search' context,
  * where chips act as filters.

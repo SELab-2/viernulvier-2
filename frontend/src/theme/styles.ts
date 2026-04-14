@@ -8,7 +8,63 @@
 
 import { tokens } from './tokens'
 
-import type { SxProps, Theme } from '@mui/material/styles'
+import { SystemStyleObject } from '@mui/system'
+
+export const createNavbarStyles = (theme: Theme) => {
+  return {
+    activeLink: {
+      borderBottomColor: theme.palette.primary.contrastText,
+    } as SystemStyleObject<Theme>,
+
+    navLink: {
+      textTransform: 'none',
+      fontSize: '1.05rem',
+      letterSpacing: '0.02em',
+      fontWeight: tokens.typography.weights.regular,
+      borderBottom: '2px solid transparent',
+      borderRadius: 0,
+      py: 0.75,
+      '&:hover': { bgcolor: 'transparent' },
+    } as SystemStyleObject<Theme>,
+
+    brandLink: {
+      flex: '0 1 auto',
+      width: 'fit-content',
+      maxWidth: '100%',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: { xs: '0.22em', sm: '0.35em' },
+      minWidth: 0,
+      fontSize: 'clamp(0.06rem, calc((100vw - 280px) / 240 + 0.56rem), 1rem)',
+      lineHeight: 1,
+      textDecoration: 'none',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      pr: { xs: 0, sm: 0.25 },
+      mr: 'auto',
+    } as SystemStyleObject<Theme>,
+
+    brandLogo: {
+      height: '2.45em',
+      width: 'auto',
+      flexShrink: 0,
+      display: 'block',
+      filter: 'brightness(0) invert(1)',
+    } as SystemStyleObject<Theme>,
+
+    brandArchiveText: {
+      display: 'block',
+      color: tokens.colors.neutral.white,
+      fontWeight: tokens.typography.weights.regular,
+      letterSpacing: '0.03em',
+      fontSize: '1.1em',
+      lineHeight: 1,
+      transform: 'translateY(4.5px)',
+      whiteSpace: 'nowrap',
+      minWidth: 0,
+    } as SystemStyleObject<Theme>,
+  }
+}
 
 export const createCommonStyles = (theme: Theme) => {
   return {
