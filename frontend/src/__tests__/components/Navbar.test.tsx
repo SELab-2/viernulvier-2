@@ -1,4 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import '@testing-library/jest-dom/jest-globals'
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { MemoryRouter } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import i18n from '../../i18n'
@@ -28,8 +30,8 @@ describe('Navbar', () => {
     renderNavbar()
     expect(screen.getByRole('link', { name: 'Archief' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Reeksen' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Artiesten' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Verhalen' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Blogs' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Media' })).toBeInTheDocument()
   })
 
   it('marks the active route with aria-current="page"', () => {
@@ -38,11 +40,12 @@ describe('Navbar', () => {
     expect(screen.getByRole('link', { name: 'Archief' })).not.toHaveAttribute('aria-current')
   })
 
-  it('toggles language when clicking the language button', () => {
+  it('shows target language and toggles to it when clicking the language button', () => {
     renderNavbar()
     const langButton = screen.getByTestId('language-toggle-inline')
+    expect(langButton).toHaveTextContent('EN')
     fireEvent.click(langButton)
-    expect(screen.getByTestId('language-toggle-inline')).toHaveTextContent('EN')
+    expect(screen.getByTestId('language-toggle-inline')).toHaveTextContent('NL')
   })
 
   it('calls toggle callback when clicking inline theme switch', () => {

@@ -8,8 +8,8 @@ import { tokens } from '../theme/tokens'
 const FOOTER_NAV_LINKS = [
   { labelKey: 'footer.nav.home', to: '/' },
   { labelKey: 'footer.nav.series', to: '/series' },
-  { labelKey: 'footer.nav.events', to: '/events' },
   { labelKey: 'footer.nav.blogs', to: '/blogs' },
+  { labelKey: 'footer.nav.media', to: '/media' },
 ] as const
 
 const siLinkedIn = {
