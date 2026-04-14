@@ -1,6 +1,7 @@
-import { Snackbar, Box, IconButton } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
+import { Snackbar, Box, IconButton } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+
 import { tokens } from '../theme/tokens'
 
 type FloatingAlertSeverity = 'error' | 'warning' | 'info' | 'success'

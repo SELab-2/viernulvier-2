@@ -1,10 +1,12 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import type { ProductionRelated, RelatedTag } from '../../types/Productions'
-import Carousel from '../carousel/Carousel'
-import ProductionGridCard from '../ProductionGridCard'
-import GenreAndTagChip from '../chips/GenreAndTagChip'
+
 import { getTranslatedRecord } from '../../utils/translations'
+import Carousel from '../carousel/Carousel'
+import GenreAndTagChip from '../chips/GenreAndTagChip'
+import ProductionGridCard from '../ProductionGridCard'
+
+import type { ProductionRelated, RelatedTag } from '../../types/Productions'
 
 /**
  * Define the props for the RelatedProductions component:

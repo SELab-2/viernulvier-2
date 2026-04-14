@@ -57,11 +57,13 @@ function Carousel({
 
   const snapCount = emblaApi?.scrollSnapList().length ?? Math.max(1, slides.length)
 
-  const dotRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const dotRefs = useRef<Array<HTMLButtonElement | null>>([])
   const dotsScrollRef = useRef<HTMLDivElement | null>(null)
 
   const updateControls = useCallback(() => {
-    if (!emblaApi) return
+    if (!emblaApi) {
+      return
+    }
 
     setSelectedIndex(emblaApi.selectedScrollSnap())
     setCanScrollPrev(emblaApi.canScrollPrev())
@@ -69,7 +71,9 @@ function Carousel({
   }, [emblaApi])
 
   useEffect(() => {
-    if (!emblaApi) return
+    if (!emblaApi) {
+      return
+    }
 
     emblaApi.on('select', updateControls)
     emblaApi.on('reInit', updateControls)
@@ -84,7 +88,9 @@ function Carousel({
   useLayoutEffect(() => {
     const el = dotRefs.current[selectedIndex]
     const container = dotsScrollRef.current
-    if (!el || !container) return
+    if (!el || !container) {
+      return
+    }
 
     // Calculate the scroll position so that the dot is centered in the container
     // Doing it this way won't force a scroll towards the caroussel on a refresh

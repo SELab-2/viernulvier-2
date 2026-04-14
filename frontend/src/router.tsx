@@ -1,16 +1,17 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Box } from '@mui/material'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
 import ArtistDetailPage from './pages/ArtistDetailPage'
 import ArtistsPage from './pages/ArtistsPage'
+import BlogDetailPage from './pages/BlogDetailPage'
 import BlogsPage from './pages/BlogsPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
+import ProductionDetailPage from './pages/ProductionDetailPage'
 import SeriesDetailPage from './pages/SeriesDetailPage'
 import SeriesPage from './pages/SeriesPage'
-import ProductionDetailPage from './pages/ProductionDetailPage'
-import BlogDetailPage from './pages/BlogDetailPage'
 
 type RouterProps = {
   mode: 'light' | 'dark'

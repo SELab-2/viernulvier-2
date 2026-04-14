@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
 
 // Default values for search parameters when they are not present in the URL

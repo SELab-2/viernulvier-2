@@ -1,3 +1,7 @@
+import CloseIcon from '@mui/icons-material/Close'
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
+import MenuIcon from '@mui/icons-material/Menu'
 import {
   AppBar,
   Toolbar,
@@ -11,13 +15,10 @@ import {
   ClickAwayListener,
   useTheme,
 } from '@mui/material'
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
-import MenuIcon from '@mui/icons-material/Menu'
-import CloseIcon from '@mui/icons-material/Close'
 import { useEffect, useRef, useState } from 'react'
-import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
+
 import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
 

@@ -1,19 +1,20 @@
 import { useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+
 import { tokens } from '../../theme/tokens'
 import { formatDate } from '../../utils/dateUtils'
 import { getHallDisplayName } from '../../utils/hall'
 import { getLocalizedValue } from '../../utils/localization'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
 
-import type { CSSProperties } from 'react'
-import type { Production } from '../../types/Productions'
 import type {
   ChipLabels,
   GenreAndTagChipContext,
   GenreAndTagChipId,
   GenreAndTagChipType,
 } from '../../types/GenreAndTagChip'
+import type { Production } from '../../types/Productions'
+import type { CSSProperties } from 'react'
 
 /**
  * Format an event list into a human-readable date range for production metadata.
@@ -28,7 +29,9 @@ import type {
 function getDateRange(events: Production['events'] | null | undefined, lang: string): string {
   const list = (events || []).filter((e) => !!e.starts_at)
 
-  if (!list.length) return ''
+  if (!list.length) {
+    return ''
+  }
 
   const dates = list.map((e) => new Date(e.starts_at as string).getTime()).sort((a, b) => a - b)
   const first = new Date(dates[0])
@@ -128,7 +131,9 @@ interface MetaPanelProps {
 
 function MetaRow({ label, value }: { label: string; value: string }) {
   const theme = useTheme()
-  if (!value) return null
+  if (!value) {
+    return null
+  }
   return (
     <div
       style={{

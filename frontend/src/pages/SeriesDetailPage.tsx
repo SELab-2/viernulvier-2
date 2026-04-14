@@ -4,22 +4,22 @@
  * of associated productions.
  */
 
-import { useEffect, useMemo, useState } from 'react'
 import { Alert, Box, Container, Divider, Stack, Typography } from '@mui/material'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 
+import LoadingSpinner from '../components/LoadingSpinner'
+import Breadcrumbs from '../components/production/Breadcrumbs'
+import ProductionCard from '../components/series_details/ProductionCard'
 import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
-import ProductionCard from '../components/series_details/ProductionCard'
 import TimelineItem from '../components/series_details/TimelineItem'
-import Breadcrumbs from '../components/production/Breadcrumbs'
-
-import { getTag } from '../services/tags/Tags'
 import { getProductions } from '../services/productions/Productions'
-import type { Tag } from '../types/Tags'
+import { getTag } from '../services/tags/Tags'
+
 import type { Production } from '../types/Productions'
-import LoadingSpinner from '../components/LoadingSpinner'
+import type { Tag } from '../types/Tags'
 
 type SeriesStat = {
   value: string
@@ -31,7 +31,9 @@ function getLocalizedRecordValue(
   language: string,
   fallback = '',
 ): string {
-  if (!value) return fallback
+  if (!value) {
+    return fallback
+  }
 
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
 
@@ -51,7 +53,9 @@ function extractYearFromProduction(production: Production): string {
 
   for (const candidate of candidates) {
     const match = candidate.match(/\b(19|20)\d{2}\b/)
-    if (match) return match[0]
+    if (match) {
+      return match[0]
+    }
   }
 
   return '—'
@@ -131,9 +135,15 @@ const SeriesDetailPage = () => {
       const yearA = Number(extractYearFromProduction(a))
       const yearB = Number(extractYearFromProduction(b))
 
-      if (Number.isNaN(yearA) && Number.isNaN(yearB)) return b.id - a.id
-      if (Number.isNaN(yearA)) return 1
-      if (Number.isNaN(yearB)) return -1
+      if (Number.isNaN(yearA) && Number.isNaN(yearB)) {
+        return b.id - a.id
+      }
+      if (Number.isNaN(yearA)) {
+        return 1
+      }
+      if (Number.isNaN(yearB)) {
+        return -1
+      }
 
       return yearB - yearA
     })

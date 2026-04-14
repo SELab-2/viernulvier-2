@@ -1,15 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Typography, useTheme } from '@mui/material'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Blog } from '../types/Blogs'
-import Breadcrumbs from '../components/production/Breadcrumbs'
+import { useParams, useNavigate } from 'react-router-dom'
+
+import BlogDetailPageSkeleton from './BlogDetailPageSkeleton'
 import ImageWithFallback from '../components/ImageWithFallback'
+import Breadcrumbs from '../components/production/Breadcrumbs'
 import Description from '../components/production/Description'
 import RelatedProductions from '../components/production/RelatedProductions'
-import BlogDetailPageSkeleton from './BlogDetailPageSkeleton'
 import { getBlog } from '../services/blogs/Blogs'
 import { getLocalizedValue } from '../utils/localization'
+
+import type { Blog } from '../types/Blogs'
 
 /**
  * Blog detail page
@@ -38,7 +40,9 @@ const BlogDetailPage = () => {
    * - On fetch error navigates back to the blogs listing and displays a floating alert.
    */
   useEffect(() => {
-    if (!id) return
+    if (!id) {
+      return
+    }
     setLoading(true)
 
     const parsed = Number(id)
@@ -79,7 +83,9 @@ const BlogDetailPage = () => {
     fetchBlog()
   }, [id, navigate])
 
-  if (loading) return <BlogDetailPageSkeleton />
+  if (loading) {
+    return <BlogDetailPageSkeleton />
+  }
 
   if (!blog) {
     return null

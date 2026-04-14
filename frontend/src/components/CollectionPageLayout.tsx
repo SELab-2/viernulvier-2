@@ -1,10 +1,12 @@
 import { Alert, Box, Button, Container, Paper, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import type { ReactNode } from 'react'
+
 import LoadingSpinner from './LoadingSpinner'
 import Pagination from './Pagination'
 import SearchControlsBar from './searchbar/SearchControlsBar'
+
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './searchbar/types'
+import type { ReactNode } from 'react'
 
 export interface CollectionPageLayoutProps {
   isMobile: boolean

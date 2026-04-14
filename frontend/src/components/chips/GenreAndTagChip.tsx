@@ -1,14 +1,15 @@
 import CloseIcon from '@mui/icons-material/Close'
 import { Chip, useTheme } from '@mui/material'
-import { useState } from 'react'
-import type { MouseEvent } from 'react'
+import { useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
-import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
-import { tokens } from '../../theme/tokens'
+
 import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
 import { getQueryKeyForChipType } from './genreAndTagChipUtils'
+import { tokens } from '../../theme/tokens'
 import { getTranslatedRecord } from '../../utils/translations'
+
+import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
 
 /**
  * Generic chip component that supports both genre and series-tag scenarios.

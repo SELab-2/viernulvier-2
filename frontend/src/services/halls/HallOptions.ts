@@ -1,4 +1,4 @@
-import { FilteredListOptions } from '../ApiTypes'
+import type { FilteredListOptions } from '../ApiTypes'
 
 /**
  * Endpoint-specific filter fields for the `/halls/` list endpoint.

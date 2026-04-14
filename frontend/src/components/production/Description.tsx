@@ -1,5 +1,6 @@
 import { Box, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+
 import { tokens } from '../../theme/tokens'
 import sanitizeHtml from '../../utils/SanitizeHtml'
 

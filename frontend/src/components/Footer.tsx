@@ -2,6 +2,7 @@ import { Box, Container, Link as MuiLink, Stack, Typography, useTheme } from '@m
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import { siFacebook, siInstagram, siTiktok, siYoutube } from 'simple-icons'
+
 import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
 
@@ -23,7 +24,7 @@ type SocialLink = {
   viewBox?: string
 }
 
-const SOCIAL_LINKS: ReadonlyArray<SocialLink> = [
+const SOCIAL_LINKS: readonly SocialLink[] = [
   { label: 'Facebook', href: 'https://www.facebook.com/VIERNULVIER.gent/', icon: siFacebook },
   { label: 'Instagram', href: 'https://www.instagram.com/viernulvier.gent/', icon: siInstagram },
   { label: 'TikTok', href: 'https://www.tiktok.com/@viernulvier.gent', icon: siTiktok },

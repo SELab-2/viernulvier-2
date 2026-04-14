@@ -16,7 +16,7 @@ const SearchBar = ({
   onSearchSubmit,
 }: SearchBarProps) => {
   const theme = useTheme()
-  const t = useTranslation().t
+  const { t } = useTranslation()
 
   const handleSearchSubmit = () => {
     onSearchSubmit?.(searchValue.trim())

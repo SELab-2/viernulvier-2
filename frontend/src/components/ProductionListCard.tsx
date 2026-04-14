@@ -3,12 +3,14 @@ import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
-import type { Production } from '../types/Productions'
+
 import { tokens } from '../theme/tokens'
 import { getProductionDateLabel } from '../utils/dateUtils'
 import { getTranslatedRecord } from '../utils/translations'
 import GenreAndTagChip from './chips/GenreAndTagChip'
 import ImageWithFallback from './ImageWithFallback'
+
+import type { Production } from '../types/Productions'
 
 export interface ProductionListCardProps {
   production: Production
@@ -29,7 +31,7 @@ export interface ProductionListCardProps {
  */
 const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCardProps) => {
   const { i18n } = useTranslation()
-  const language = i18n.language
+  const { language } = i18n
 
   const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url
   const title = getTranslatedRecord(production.title, language, production.display_title)

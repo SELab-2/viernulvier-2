@@ -1,6 +1,7 @@
-import type { Production } from '../types/Productions'
-import ProductionListCard from './ProductionListCard'
 import GenericList from './GenericList'
+import ProductionListCard from './ProductionListCard'
+
+import type { Production } from '../types/Productions'
 
 export interface ProductionListProps {
   productions: Production[]

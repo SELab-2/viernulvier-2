@@ -1,8 +1,10 @@
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import { Box, IconButton, Modal, useTheme } from '@mui/material'
 import { useState, type KeyboardEvent } from 'react'
-import type { MediaItem } from '../../types/Media'
+
 import Carousel from '../carousel/Carousel'
+
+import type { MediaItem } from '../../types/Media'
 
 interface MediaListProps {
   mediaItems: MediaItem[]
@@ -48,7 +50,9 @@ export default function MediaList({ mediaItems }: MediaListProps) {
     .map((item) => ({ item, imageUrl: getBestImageUrl(item) }))
     .filter((entry) => entry.imageUrl)
 
-  if (!mediaWithImage.length) return null
+  if (!mediaWithImage.length) {
+    return null
+  }
 
   const openPreview = (src: string, alt: string) => setActiveImage({ src, alt })
   const closePreview = () => setActiveImage(null)

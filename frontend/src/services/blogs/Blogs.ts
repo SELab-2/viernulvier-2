@@ -1,7 +1,8 @@
-import type { Blog, BlogListResponse } from '../../types/Blogs'
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
+
 import type { GetBlogsOptions } from './BlogOptions'
+import type { Blog, BlogListResponse } from '../../types/Blogs'
 
 /**
  * Retrieve a single blog by its numeric ID.

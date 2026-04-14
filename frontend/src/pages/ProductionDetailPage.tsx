@@ -1,18 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Typography, useTheme } from '@mui/material'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Production } from '../types/Productions'
+import { useParams, useNavigate } from 'react-router-dom'
+
+import ImageWithFallback from '../components/ImageWithFallback'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Breadcrumbs from '../components/production/Breadcrumbs'
-import ImageWithFallback from '../components/ImageWithFallback'
 import Description from '../components/production/Description'
-import MetaPanel from '../components/production/MetaPanel'
-import { getProduction } from '../services/productions/Productions'
 import EventsList from '../components/production/EventList'
 import MediaList from '../components/production/MediaList'
+import MetaPanel from '../components/production/MetaPanel'
 import RelatedProductions from '../components/production/RelatedProductions'
+import { getProduction } from '../services/productions/Productions'
 import { getLocalizedValue } from '../utils/localization'
+
+import type { Production } from '../types/Productions'
 
 /**
  * Helper function to get the most suitable image URL for the production details page.
@@ -77,7 +79,9 @@ const ProductionDetailsPage = () => {
 
   // useEffect to fetch the production given the id in the URL.
   useEffect(() => {
-    if (!id) return
+    if (!id) {
+      return
+    }
     setLoading(true)
 
     const parsed = Number(id)
@@ -113,7 +117,9 @@ const ProductionDetailsPage = () => {
   }, [id, navigate])
 
   // If the page is still loading, show the spinner.
-  if (loading) return <LoadingSpinner fullScreen />
+  if (loading) {
+    return <LoadingSpinner fullScreen />
+  }
 
   // If there was an error or no production was found, show an error message.
   if (!prod) {

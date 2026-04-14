@@ -5,8 +5,10 @@
 
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material'
 import DOMPurify from 'dompurify'
-import type { KeyboardEvent, MouseEvent } from 'react'
+
 import GenreAndTagChip from '../chips/GenreAndTagChip'
+
+import type { KeyboardEvent, MouseEvent } from 'react'
 
 type ProductionTag = {
   id: number | string
@@ -27,7 +29,9 @@ const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
   const isInteractive = typeof onClick === 'function'
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!isInteractive) return
+    if (!isInteractive) {
+      return
+    }
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()

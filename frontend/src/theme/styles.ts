@@ -6,8 +6,9 @@
  * Each function takes a theme and returns an SxProps<Theme> object.
  */
 
-import { SxProps, Theme } from '@mui/material/styles'
 import { tokens } from './tokens'
+
+import type { SxProps, Theme } from '@mui/material/styles'
 
 export const createCommonStyles = (theme: Theme) => {
   return {

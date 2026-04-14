@@ -17,9 +17,11 @@ import {
 } from '@mui/material'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Event } from '../../types/Events'
+
 import { formatDate, formatTime } from '../../utils/dateUtils'
 import { getHallDisplayName } from '../../utils/hall'
+
+import type { Event } from '../../types/Events'
 
 interface EventsListProps {
   events: Event[]

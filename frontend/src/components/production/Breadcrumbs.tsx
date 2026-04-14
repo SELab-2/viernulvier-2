@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router-dom'
 import { useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 
 export interface BreadcrumbItem {
   label: string
@@ -65,7 +65,9 @@ export default function Breadcrumbs({ items, separator = ' / ' }: BreadcrumbsPro
           <span key={`${item.label}-${index}`}>
             <button
               onClick={() => {
-                if (item.to) navigate(item.to)
+                if (item.to) {
+                  navigate(item.to)
+                }
               }}
               disabled={!item.to}
               style={{
