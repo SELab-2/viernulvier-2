@@ -1,5 +1,6 @@
 import { useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { tokens } from '../../theme/tokens'
 import { formatDate } from '../../utils/dateUtils'
 import { getHallDisplayName } from '../../utils/hall'
 import { getLocalizedValue } from '../../utils/localization'
@@ -199,13 +200,13 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
   const resolvedAttendanceMode = production.attendance_mode || ''
 
   const resolvedTags = formatAllTags(production, language)
-
+  // TODO: use GenreChip for the genres now that the component is available?
   return (
     <div
       className="meta-panel"
       style={{
         paddingTop: '32px',
-        background: theme.palette.background.paper,
+        background: theme.palette.background.default,
         color: theme.palette.text.primary,
         ...style,
       }}
@@ -235,9 +236,9 @@ export default function MetaPanel({ production, language = 'nl', style }: MetaPa
         </p>
       )}
 
-      <div style={{ borderTop: '1px solid #ebebeb', marginBottom: '4px' }} />
+      <div style={{ borderTop: `1px solid ${theme.palette.divider}`, marginBottom: '4px' }} />
 
-      <div style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
+      <div style={{ fontFamily: tokens.typography.fontFamily }}>
         {resolvedDateRange && (
           <MetaRow
             label={t('productions.detail.meta.period', 'Periode')}

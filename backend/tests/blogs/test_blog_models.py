@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
 
 from apps.blogs.models import BlogTranslation
@@ -41,6 +42,18 @@ class TestBlog:
         blog.productions.add(production)
 
         assert production.blogs.count() == 1
+
+    def test_cover_image_rejects_non_image_upload(self) -> None:
+        blog = BlogFactory.build(
+            cover_image=SimpleUploadedFile(
+                "brochure.pdf",
+                b"%PDF-1.7",
+                content_type="application/pdf",
+            )
+        )
+
+        with pytest.raises(ValidationError):
+            blog.full_clean()
 
 
 class TestBlogTranslation:

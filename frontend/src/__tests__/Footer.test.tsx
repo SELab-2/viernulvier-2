@@ -26,6 +26,7 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: 'Reeksen' })).toHaveAttribute('href', '/series')
     expect(screen.getByRole('link', { name: 'Evenementen' })).toHaveAttribute('href', '/events')
+    expect(screen.getByRole('link', { name: 'Verhalen' })).toHaveAttribute('href', '/blogs')
     expect(screen.getByText('blijf op de hoogte')).toBeInTheDocument()
   })
 
@@ -36,6 +37,7 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: 'Archive' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Series' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Events' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Stories' })).toHaveAttribute('href', '/blogs')
     expect(screen.getByText('stay up to date')).toBeInTheDocument()
   })
 })

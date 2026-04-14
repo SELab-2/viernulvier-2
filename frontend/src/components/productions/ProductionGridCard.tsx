@@ -1,5 +1,5 @@
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
-import { Stack, Typography } from '@mui/material'
+import { Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import type { Production } from '../../types/Productions'
@@ -7,6 +7,8 @@ import { getProductionDateLabel } from '../../utils/dateUtils'
 import { getTranslatedRecord } from '../../utils/translations'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
 import ImageWithFallback from '../ImageWithFallback'
+import { createCommonStyles } from '../../theme/styles'
+import { tokens } from '../../theme/tokens'
 
 export interface ProductionGridCardProps {
   production: Production
@@ -26,6 +28,8 @@ export interface ProductionGridCardProps {
  * @returns The grid card element.
  */
 const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCardProps) => {
+  const theme = useTheme()
+  const commonStyles = createCommonStyles(theme)
   const { i18n } = useTranslation()
   const language = i18n.language
 
@@ -48,21 +52,19 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
       component={RouterLink}
       to={`/productions/${production.id}`}
       width={350}
-      borderRadius={4}
+      height="100%"
+      borderRadius={tokens.card.borderRadius}
       overflow="hidden"
-      sx={(theme) => ({
-        textDecoration: 'none',
-        border: `1px solid ${theme.palette.divider}`,
-        backgroundColor: theme.palette.background.paper,
-        transition: 'box-shadow 0.2s ease',
-        '&:hover': {
-          boxShadow: theme.shadows[3],
-        },
-      })}
+      sx={commonStyles.cardBase}
     >
       <ImageWithFallback src={imageSrc} alt={title} sx={{ aspectRatio: 16 / 9 }} />
 
-      <Stack flex={1} justifyContent="space-between" gap={1} padding={3}>
+      <Stack
+        flex={1}
+        justifyContent="space-between"
+        gap={tokens.spacing.numericSm}
+        padding={tokens.spacing.numericLg}
+      >
         <Stack>
           <Typography component="h2" variant="h6" color="textPrimary" fontWeight="bold" noWrap>
             {title}
@@ -75,31 +77,31 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
           ) : null}
         </Stack>
 
-        <Stack color="text.secondary" spacing={1}>
-          {dateLabel ? (
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <DateRangeOutlinedIcon fontSize="inherit" />
-              <Typography variant="body2" noWrap>
-                {dateLabel}
-              </Typography>
-            </Stack>
-          ) : null}
+        <Stack color="text.secondary" spacing={1} minHeight={56}>
+          <Stack direction="row" alignItems="center" spacing={1} minHeight={20}>
+            {dateLabel ? (
+              <>
+                <DateRangeOutlinedIcon fontSize="inherit" />
+                <Typography variant="body2" noWrap>
+                  {dateLabel}
+                </Typography>
+              </>
+            ) : null}
+          </Stack>
 
-          {genres.length > 0 ? (
-            <Stack direction="row" flexWrap="wrap" spacing={0.75} height={24} overflow="hidden">
-              {genres.map((genre) => (
-                <GenreAndTagChip
-                  key={genre.id}
-                  name={genre.display_name || ''} // TODO: resolve so there is always a fallback
-                  labels={{}}
-                  chipType="genre"
-                  context="static"
-                  id={genre.id}
-                  selected={selectedGenreIds?.includes(genre.id)} // TODO: resolve so this is never undefined
-                />
-              ))}
-            </Stack>
-          ) : null}
+          <Stack direction="row" flexWrap="wrap" spacing={0.75} height={32} overflow="hidden">
+            {genres.map((genre) => (
+              <GenreAndTagChip
+                key={genre.id}
+                name={genre.display_name || ''} // TODO: resolve so there is always a fallback
+                labels={{}}
+                chipType="genre"
+                context="static"
+                id={genre.id}
+                selected={selectedGenreIds?.includes(genre.id)} // TODO: resolve so this is never undefined
+              />
+            ))}
+          </Stack>
         </Stack>
       </Stack>
     </Stack>

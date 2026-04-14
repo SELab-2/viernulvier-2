@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Stack, Typography, useMediaQuery, useTheme } from '@mui/material'
+import { useMediaQuery, useTheme } from '@mui/material'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import EntityView from '../components/entity/EntityView'
@@ -25,6 +26,10 @@ const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'd
 const HomePage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
+  const location = useLocation()
+  // Type for optional navigation state used to show a one-time floating alert when arriving
+  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
+  const nav = location as { state?: NavState }
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   const {
@@ -47,6 +52,7 @@ const HomePage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
   const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
+  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(null)
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
@@ -72,6 +78,7 @@ const HomePage = () => {
       setErrorMessage(null)
       setShowFallbackError(false)
       setIsFloatingErrorOpen(false)
+      setFloatingAlertMessage(null)
 
       try {
         const response = await getProductions({
@@ -95,13 +102,16 @@ const HomePage = () => {
         }
 
         if (error instanceof ApiError) {
-          setErrorMessage(error.message)
-          setShowFallbackError(false)
+          // Backend error payloads are not guaranteed to be localized,
+          // so we always show the translated fallback copy in the UI.
+          setErrorMessage(null)
+          setShowFallbackError(true)
         } else {
           setErrorMessage(null)
           setShowFallbackError(true)
         }
         setIsFloatingErrorOpen(true)
+        setFloatingAlertMessage(null)
         setProductions([])
         setTotalCount(0)
       } finally {
@@ -120,28 +130,41 @@ const HomePage = () => {
 
   const onRetry = () => {
     setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
     setRetryKey((value) => value + 1)
   }
 
   const onFloatingErrorClose = () => {
     setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
   }
 
   const onSearchSubmit = (value: string) => {
-    setSearchValue(value.trim())
+    const nextQuery = value.trim()
+    if (nextQuery === searchValue.trim()) {
+      setRetryKey((current) => current + 1)
+      return
+    }
+
+    setSearchValue(nextQuery)
   }
 
-  // Sidebar content for the filter panel.
-  const sidebarContent = (
-    <Stack spacing={1}>
-      <Typography variant="subtitle1" component="h2">
-        {t('productions.home.filterPanelTitle')}
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        {t('productions.home.filterPanelPlaceholder')}
-      </Typography>
-    </Stack>
-  )
+  // If a page navigated here with a floatingAlert in location.state, show it once.
+  useEffect(() => {
+    const state = nav.state
+    if (state?.floatingAlert && state.floatingAlert.open) {
+      setErrorMessage(null)
+      setShowFallbackError(false)
+      setFloatingAlertMessage(state.floatingAlert.message ?? null)
+      setIsFloatingErrorOpen(true)
+      // Clear the history state so the alert won't reappear on back/refresh
+      try {
+        window.history.replaceState({}, document.title)
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [nav])
 
   // Main results content.
   const resultsContent = (
@@ -154,6 +177,8 @@ const HomePage = () => {
     />
   )
 
+  // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.
+  // It also handles the different UI states such as loading, error, and empty results.
   return (
     <>
       <CollectionPageLayout
@@ -171,8 +196,9 @@ const HomePage = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         resultCount={totalCount}
-        sidebarContent={sidebarContent}
         sidebarAriaLabel={t('productions.home.filterPanelLabel')}
+        sidebarTitle={t('productions.home.filterPanelTitle')}
+        sidebarDescription={t('productions.home.filterPanelDescription')}
         resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('productions.home.loading')}
@@ -193,7 +219,7 @@ const HomePage = () => {
         open={isFloatingErrorOpen}
         onClose={onFloatingErrorClose}
         severity="error"
-        message={floatingErrorMessage}
+        message={floatingAlertMessage ?? floatingErrorMessage}
       />
     </>
   )

@@ -28,6 +28,7 @@ viernulvier_archive/
 │   │   ├── openapi.py               # Reusable responses
 │   │   ├── views.py                 # ApiModelViewSet and ApiReadOnlyViewSet
 │   │   ├── models.py                # BaseModel base
+│   │   ├── media_validation.py       # Shared media MIME/signature/size validation helpers
 │   │   ├── spectacular_extensions.py # Defines OpenAPI schema extension for API-key authentication
 │   │   └── throttles.py             # Implements DRF rate-limiting classes for public and internal API keys
 │   │
@@ -87,6 +88,15 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
+│   ├── media_files/                 # Uploaded files (images/PDF) with derived metadata
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── filters.py
+│   │   ├── models.py
+│   │   ├── schemas.py
+│   │   ├── serializers.py
+│   │   └── views.py
+│   │
 │   ├── pricing/                     # PRICE + PRICE_RANK + translations 
 │   │   ├── __init__.py
 │   │   ├── admin.py
@@ -105,10 +115,14 @@ viernulvier_archive/
 │   |        
 │   └── imports/                        # Scraping logic
 │       ├── __init__.py
+│       ├── csv_importer/
+│       │   ├── __init__.py
+│       │   └── legacy_csv.py              # Legacy pre-API CSV importer (productions/events)
 │       ├── management/
 │       |   ├── __init__.py
 │       |   └── commands/
 │       |       ├── __init__.py
+│       |       ├── import_legacy_csv.py   # Imports bundled legacy CSV exports
 │       |       └── sync_viernulvier.py
 |       |
 │       └── scrapers/
@@ -191,6 +205,8 @@ viernulvier_archive/
 │   │   ├── __init__.py
 │   │   ├── test_sync_configs.py
 │   │   └── test_viernulvier.py
+│   ├── imports_csv/
+│   │   └── test_legacy_csv_importer.py
 │   └── tags/
 │       ├── test_tag_admin.py
 │       ├── test_tag_models.py

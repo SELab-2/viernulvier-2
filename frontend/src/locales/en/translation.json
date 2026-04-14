@@ -7,6 +7,7 @@
     "home": "Archive",
     "events": "Series",
     "productions": "Artists",
+    "blogs": "Stories",
     "mainNav": "Main navigation",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
@@ -17,7 +18,8 @@
     "searchPlaceholder": "Search for events, artists, or venues...",
     "searchPlaceholderMobile": "Search events, artists...",
     "search": "Search",
-    "resultsFound": "{{count}} results found",
+    "resultsFound_one": "{{count}} result found",
+    "resultsFound_other": "{{count}} results found",
     "sort": {
       "targetLabel": "Sort by",
       "directionLabel": "Sort direction",
@@ -40,6 +42,17 @@
       "label": "View mode",
       "list": "List",
       "grid": "Grid"
+    }
+  },
+  "apiErrors": {
+    "network": "A network error occurred. Please check your connection.",
+    "status": {
+      "400": "Invalid request parameters.",
+      "401": "Not authenticated. Please log in.",
+      "403": "You do not have permission to perform this action.",
+      "404": "The requested resource was not found.",
+      "500": "An internal server error occurred. Please try again later.",
+      "genericWithCode": "Request failed with status {{status}}."
     }
   },
   "listCard": {
@@ -84,7 +97,6 @@
     },
     "pagination": {
       "navigationLabel": "Production pagination",
-      "pageXofY": "Page {{page}} of {{totalPages}}",
       "firstPage": "Go to first page",
       "lastPage": "Go to last page",
       "nextPage": "Go to next page",
@@ -93,6 +105,7 @@
       "goToPage": "Go to page {{page}}"
     },
     "detail": {
+      "related": "Related productions",
       "meta": {
         "period": "Period",
         "venues": "Venues",
@@ -115,6 +128,38 @@
       "events": "Events"
     }
   },
+  "blogs": {
+    "home": {
+      "loading": "Loading stories",
+      "resultsRegionLabel": "Blog results",
+      "searchPlaceholder": "Search stories by title or excerpt...",
+      "searchPlaceholderMobile": "Search stories...",
+      "sidebarLabel": "Story context",
+      "sidebarTitle": "Stories",
+      "sidebarDescription": "Browse editorial stories from the VIERNULVIER archive.",
+      "coverAltFallback": "Blog cover image",
+      "noExcerpt": "No excerpt available.",
+      "unpublished": "Unpublished",
+      "empty": {
+        "title": "No stories found",
+        "description": "Adjust your search and try again."
+      },
+      "error": {
+        "retry": "Retry",
+        "fallback": "Could not load stories.",
+        "notification": "Something went wrong while loading stories."
+      }
+    },
+    "pagination": {
+      "navigationLabel": "Story pagination",
+      "firstPage": "Go to first page",
+      "lastPage": "Go to last page",
+      "nextPage": "Go to next page",
+      "previousPage": "Go to previous page",
+      "currentPage": "Current page, page {{page}}",
+      "goToPage": "Go to page {{page}}"
+    }
+  },
   "notFound": {
     "code": "404",
     "title": "Page not found",
@@ -134,7 +179,8 @@
       "ariaLabel": "Navigation",
       "home": "Archive",
       "series": "Series",
-      "events": "Events"
+      "events": "Events",
+      "blogs": "Stories"
     },
     "newsletter": {
       "cta": "stay up to date"
@@ -187,6 +233,17 @@
       "previousPage": "Go to previous page",
       "currentPage": "Current page, page {{page}}",
       "goToPage": "Go to page {{page}}"
+    }
+  },
+  "blog": {
+    "title": "Blog",
+    "unknown": "Could not load blog",
+    "couldNotLoad": "Could not load blog",
+    "invalidId": "Invalid blog ID",
+    "detail": {
+      "publishedOn": "Published on",
+      "notPublished": "Not published",
+      "related": "Related productions"
     }
   }
 }

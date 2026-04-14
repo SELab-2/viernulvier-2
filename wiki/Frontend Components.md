@@ -10,6 +10,8 @@ The focus is on reusable UI parts in `frontend/src/components` and how they inte
 | Component | File | Responsibility |
 |---|---|---|
 | Navbar | `frontend/src/components/Navbar.tsx` | Main navigation with responsive slide-down mobile panel, branding, theme toggle, and language switch |
+| CollectionPageLayout | `frontend/src/components/CollectionPageLayout.tsx` | Shared search/sort/layout shell for paginated collection pages (productions and blogs) |
+| BlogView | `frontend/src/components/BlogView.tsx` | Responsive list/grid renderer for blog cards |
 
 ---
 
@@ -32,6 +34,40 @@ The focus is on reusable UI parts in `frontend/src/components` and how they inte
 - **`/ Archive` label:** hidden on `xs`/`sm` screens to prevent overflow.
 - **Theme toggle:** single icon button showing the active mode icon (`DarkModeOutlinedIcon` / `LightModeOutlinedIcon`); calls `onToggleMode` on click.
 - **Language toggle:** single button showing the current language code (`NL`/`EN`); switches to the other language on click.
+- **Primary links:** includes Archive, Series, Artists, and Stories (`/blogs`).
+
+---
+
+## BlogView
+
+**File:** `frontend/src/components/BlogView.tsx`
+
+### Props
+
+| Prop | Type | Description |
+|---|---|---|
+| `blogs` | `Blog[]` | Blog list to render |
+| `layout` | `'list' \| 'grid'` | Preferred desktop layout; mobile always falls back to grid |
+
+### Behavior
+
+- Renders `BlogList` for desktop list mode.
+- Renders `BlogGrid` for desktop grid mode.
+- Enforces grid mode below the `md` breakpoint to keep cards readable on narrow screens.
+
+---
+
+## CollectionPageLayout
+
+**File:** `frontend/src/components/CollectionPageLayout.tsx`
+
+### Usage
+
+- Used by `HomePage` and `BlogsPage` to keep a consistent page rhythm:
+	- search + sort + layout controls
+	- sidebar panel
+	- loading/error/empty states
+	- pagination block
 
 ### Mobile panel close triggers
 

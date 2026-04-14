@@ -8,6 +8,7 @@ import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './se
 
 export interface CollectionPageLayoutProps {
   isMobile: boolean
+  showSidebar?: boolean
   searchPlaceholder: string
   searchValue: string
   onSearchChange: (value: string) => void
@@ -20,8 +21,9 @@ export interface CollectionPageLayoutProps {
   viewMode: SearchViewMode
   onViewModeChange: (value: SearchViewMode) => void
   resultCount: number
-  sidebarContent?: ReactNode
   sidebarAriaLabel?: string
+  sidebarTitle?: string
+  sidebarDescription?: string
   resultsRegionAriaLabel: string
   isLoading: boolean
   loadingLabel: string
@@ -81,6 +83,7 @@ export interface CollectionPageLayoutProps {
 
 const CollectionPageLayout = ({
   isMobile,
+  showSidebar = true,
   searchPlaceholder,
   searchValue,
   onSearchChange,
@@ -93,8 +96,9 @@ const CollectionPageLayout = ({
   viewMode,
   onViewModeChange,
   resultCount,
-  sidebarContent,
   sidebarAriaLabel,
+  sidebarTitle,
+  sidebarDescription,
   resultsRegionAriaLabel,
   isLoading,
   loadingLabel,
@@ -113,6 +117,48 @@ const CollectionPageLayout = ({
 }: CollectionPageLayoutProps) => {
   const theme = useTheme()
   const isEmpty = !isLoading && !errorMessage && !hasResults
+  const shouldRenderSidebar = showSidebar && sidebarAriaLabel && sidebarTitle && sidebarDescription
+
+  const resultsSection = (
+    <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ flex: 1, minWidth: 0 }}>
+      {isLoading ? (
+        <Box py={8}>
+          <LoadingSpinner label={loadingLabel} />
+        </Box>
+      ) : null}
+
+      {/* Error */}
+      {!isLoading && errorMessage ? (
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={onRetry}>
+              {retryLabel}
+            </Button>
+          }
+        >
+          {errorMessage}
+        </Alert>
+      ) : null}
+
+      {/* Empty */}
+      {isEmpty ? (
+        <Paper variant="outlined" sx={{ p: 4, borderRadius: 2 }}>
+          <Stack spacing={1}>
+            <Typography variant="h6" component="h2">
+              {emptyTitle}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {emptyDescription}
+            </Typography>
+          </Stack>
+        </Paper>
+      ) : null}
+
+      {/* Results */}
+      {!isLoading && !errorMessage && hasResults ? resultsContent : null}
+    </Box>
+  )
 
   return (
     <Box sx={{ py: { xs: 3, md: 4 } }}>
@@ -135,14 +181,13 @@ const CollectionPageLayout = ({
             showViewModeToggle={!isMobile}
           />
 
-          <Box
-            display="flex"
-            flexDirection={{ xs: 'column', md: 'row' }}
-            gap={3}
-            alignItems="flex-start"
-          >
-            {/* Sidebar and results area. */}
-            {sidebarContent ? (
+          {shouldRenderSidebar ? (
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', md: 'row' }}
+              gap={3}
+              alignItems="flex-start"
+            >
               <Paper
                 component="aside"
                 elevation={1}
@@ -156,55 +201,21 @@ const CollectionPageLayout = ({
                   border: `1px dashed ${theme.palette.divider}`,
                 }}
               >
-                {sidebarContent}
+                <Stack spacing={1}>
+                  <Typography variant="subtitle1" component="h2">
+                    {sidebarTitle}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {sidebarDescription}
+                  </Typography>
+                </Stack>
               </Paper>
-            ) : null}
 
-            {/* Main content area. */}
-            <Box
-              component="section"
-              aria-label={resultsRegionAriaLabel}
-              sx={{ flex: 1, minWidth: 0 }}
-            >
-              {/* Loading state. */}
-              {isLoading ? (
-                <Box py={8}>
-                  <LoadingSpinner label={loadingLabel} />
-                </Box>
-              ) : null}
-
-              {/* Error state. */}
-              {!isLoading && errorMessage ? (
-                <Alert
-                  severity="error"
-                  action={
-                    <Button color="inherit" size="small" onClick={onRetry}>
-                      {retryLabel}
-                    </Button>
-                  }
-                >
-                  {errorMessage}
-                </Alert>
-              ) : null}
-
-              {/* Empty state. */}
-              {isEmpty ? (
-                <Paper variant="outlined" sx={{ p: 4, borderRadius: 2 }}>
-                  <Stack spacing={1}>
-                    <Typography variant="h6" component="h2">
-                      {emptyTitle}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {emptyDescription}
-                    </Typography>
-                  </Stack>
-                </Paper>
-              ) : null}
-
-              {/* Results content. */}
-              {!isLoading && !errorMessage && hasResults ? resultsContent : null}
+              {resultsSection}
             </Box>
-          </Box>
+          ) : (
+            resultsSection
+          )}
 
           {/* Pagination controls. */}
           <Pagination

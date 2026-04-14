@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 import SearchBar from './SearchBar'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
 import { DEFAULT_SORT_TARGET_OPTIONS } from './types'
+import { tokens } from '../../theme/tokens'
 
 export interface SearchControlsBarProps {
   placeholder?: string
@@ -63,6 +64,10 @@ const SearchControlsBar = ({
   const effectiveSortTarget = sortTargetOptions.some((option) => option.value === sortTarget)
     ? sortTarget
     : (sortTargetOptions[0]?.value ?? 'name')
+  const interactionColor =
+    theme.palette.mode === 'dark' ? tokens.colors.neutral.white : tokens.colors.neutral.black
+  const interactionHoverBackground =
+    theme.palette.mode === 'dark' ? tokens.colors.overlay.white05 : tokens.colors.overlay.black05
   const nextSortDirection: SearchSortDirection = sortDirection === 'asc' ? 'desc' : 'asc'
 
   return (
@@ -126,6 +131,10 @@ const SearchControlsBar = ({
                 height: 40,
                 px: 1.2,
                 backgroundColor: theme.palette.background.default,
+                '&:hover': {
+                  borderColor: interactionColor,
+                  backgroundColor: interactionHoverBackground,
+                },
               }}
             >
               {sortDirection === 'asc' ? (
@@ -153,6 +162,16 @@ const SearchControlsBar = ({
                 '& .MuiToggleButton-root': {
                   px: 1.2,
                   backgroundColor: theme.palette.background.default,
+                  color: theme.palette.text.primary,
+                  borderColor: theme.palette.divider,
+                  '&:hover': {
+                    borderColor: interactionColor,
+                    backgroundColor: interactionHoverBackground,
+                  },
+                  '&.Mui-selected': {
+                    color: theme.palette.text.primary,
+                    backgroundColor: interactionHoverBackground,
+                  },
                 },
               }}
             >

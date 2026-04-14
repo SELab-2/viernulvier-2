@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
@@ -11,6 +11,7 @@ import MetaPanel from '../components/production/MetaPanel'
 import { getProduction } from '../services/productions/Productions'
 import EventsList from '../components/production/EventList'
 import MediaList from '../components/production/MediaList'
+import RelatedProductions from '../components/production/RelatedProductions'
 import { getLocalizedValue } from '../utils/localization'
 
 /**
@@ -23,8 +24,8 @@ import { getLocalizedValue } from '../utils/localization'
  */
 function getProductionHeroImageUrl(production: Production): string | null {
   // Find the first media item of type 'foto'
-  const mediaItems = production.media_gallery.media_items
-  const firstPhoto = mediaItems.find((item) => item.type === 'foto')
+  const mediaItems = production.media_gallery?.media_items
+  const firstPhoto = mediaItems?.find((item) => item.type === 'foto')
 
   // return null if there is no item with type 'foto'
   if (!firstPhoto) {
@@ -60,29 +61,28 @@ function getProductionHeroImageUrl(production: Production): string | null {
  *   - breadcrumb, hero image, description
  *   - metadata panel (with MetaPanel component)
  *   - events list, media gallery
- *
- * Important: no business transformations here; MetaPanel handles production meta resolution.
  */
 const ProductionDetailsPage = () => {
-  const { id } = useParams()
+  const { id } = useParams() // Get the id from the URL params (e.g. /productions/123 -> id = 123)
   const navigate = useNavigate()
   const theme = useTheme()
   const { i18n, t } = useTranslation()
   const lang = i18n.language
 
   const [prod, setProd] = useState<Production | null>(null)
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
+  const tRef = useRef(t)
+  tRef.current = t
 
   // useEffect to fetch the production given the id in the URL.
   useEffect(() => {
     if (!id) return
-
     setLoading(true)
 
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
-      const errMsg = t('productions.detail.error.invalidId', 'Invalid production ID')
+      const errMsg = tRef.current('productions.detail.error.invalidId', 'Invalid production ID')
       navigate('/', {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
@@ -93,10 +93,13 @@ const ProductionDetailsPage = () => {
 
     const fetchProduction = async () => {
       try {
-        const data = await getProduction(parsed, ['events'])
+        const data = await getProduction(parsed, ['events', 'related'])
         setProd(data)
       } catch {
-        const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
+        const errMsg = tRef.current(
+          'productions.detail.error.loadFailed',
+          'Could not load production',
+        )
         navigate('/', {
           state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
         })
@@ -107,10 +110,10 @@ const ProductionDetailsPage = () => {
     }
 
     fetchProduction()
-  }, [id, t, navigate])
+  }, [id, navigate])
 
   // If the page is still loading, show the spinner.
-  if (loading && !prod) return <LoadingSpinner fullScreen />
+  if (loading) return <LoadingSpinner fullScreen />
 
   // If there was an error or no production was found, show an error message.
   if (!prod) {
@@ -119,7 +122,7 @@ const ProductionDetailsPage = () => {
         {error ? (
           <div>{error}</div>
         ) : (
-          <div>{t('productions.detail.notFound', 'Productie niet gevonden.')}</div>
+          <div>{tRef.current('productions.detail.notFound', 'Productie niet gevonden.')}</div>
         )}
       </div>
     )
@@ -154,7 +157,7 @@ const ProductionDetailsPage = () => {
         {/* LEFT: Breadcrumb + Hero + Description */}
         <div
           className="production-details-left"
-          style={{ backgroundColor: theme.palette.background.paper }}
+          style={{ backgroundColor: theme.palette.background.default }}
         >
           <Breadcrumbs
             items={[
@@ -186,7 +189,7 @@ const ProductionDetailsPage = () => {
         <div
           className="production-details-right"
           style={{
-            backgroundColor: theme.palette.background.paper,
+            backgroundColor: theme.palette.background.default,
             borderLeft: `1px solid ${theme.palette.divider}`,
           }}
         >
@@ -196,6 +199,7 @@ const ProductionDetailsPage = () => {
               mt: 3,
               p: 2,
               border: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
               borderRadius: '4px',
             })}
           >
@@ -211,12 +215,17 @@ const ProductionDetailsPage = () => {
         </div>
       </div>
 
-      {production.media_gallery.media_items.length > 0 && (
+      {production.media_gallery?.media_items?.length > 0 && (
         <div style={{ padding: '0 16px 32px' }}>
           <MediaList mediaItems={production.media_gallery.media_items} />
         </div>
       )}
-      <p> TODO: related productions tonen </p>
+
+      {production.related && production.related.length > 0 && (
+        <div style={{ padding: '0 16px 32px' }}>
+          <RelatedProductions related={production.related ?? []} lang={lang} />
+        </div>
+      )}
     </div>
   )
 }
