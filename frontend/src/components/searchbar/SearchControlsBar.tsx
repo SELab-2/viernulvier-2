@@ -16,6 +16,7 @@ import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import SearchBar from './SearchBar'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
+import { DEFAULT_SORT_TARGET_OPTIONS } from './types'
 
 export interface SearchControlsBarProps {
   placeholder?: string
@@ -32,12 +33,6 @@ export interface SearchControlsBarProps {
   showViewModeToggle?: boolean
   sortTargetOptions?: Array<{ value: SearchSortTarget; labelKey: string }>
 }
-
-// Default sort target options for the sort target selector in the search controls bar.
-export const DEFAULT_SORT_TARGET_OPTIONS: Array<{ value: SearchSortTarget; labelKey: string }> = [
-  { value: 'date', labelKey: 'searchbar.sort.date' },
-  { value: 'name', labelKey: 'searchbar.sort.name' },
-]
 
 const SORT_TARGET_LABEL_ID = 'searchbar-sort-target-label'
 const NOOP_SORT_TARGET_CHANGE: NonNullable<SearchControlsBarProps['onSortTargetChange']> = () => {}
@@ -67,7 +62,7 @@ const SearchControlsBar = ({
   // Fall back to the first allowed sort target when the current one is no longer valid.
   const effectiveSortTarget = sortTargetOptions.some((option) => option.value === sortTarget)
     ? sortTarget
-    : sortTargetOptions[0]?.value ?? 'name'
+    : (sortTargetOptions[0]?.value ?? 'name')
   const nextSortDirection: SearchSortDirection = sortDirection === 'asc' ? 'desc' : 'asc'
 
   return (

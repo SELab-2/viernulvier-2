@@ -62,7 +62,11 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
         },
       })}
     >
-      <ImageWithFallback src={series.lastProductionImage} alt={title} sx={{ aspectRatio: 16 / 9 }} />
+      <ImageWithFallback
+        src={series.lastProductionImage}
+        alt={title}
+        sx={{ aspectRatio: 16 / 9 }}
+      />
 
       <Stack flex={1} justifyContent="space-between" gap={1} padding={3}>
         <Stack>

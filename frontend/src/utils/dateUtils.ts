@@ -92,11 +92,10 @@ export function getProductionDateLabel(
   const first = formatDate(firstEventStart, language)
   const last = formatDate(lastEventEnd, language)
 
-
   if (!last) {
     return first
   }
-  
+
   if (!first) {
     return last
   }

@@ -1,9 +1,10 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
-import { useLocation, MemoryRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
+import type React from 'react'
 import EntityView from '../../components/entity/EntityView'
 
-const renderView = (props: any, matches = false) => {
+const renderView = (props: React.ComponentProps<typeof EntityView>, matches = false) => {
   window.matchMedia = jest.fn().mockImplementation((query: string) => ({
     matches,
     media: query,

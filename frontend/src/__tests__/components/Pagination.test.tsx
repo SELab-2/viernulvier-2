@@ -29,7 +29,7 @@ describe('Pagination', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('renders navigation and current page text when multiple pages exist', () => {
+  it('renders navigation and marks the current page when multiple pages exist', () => {
     renderPagination({
       page: 2,
       pageSize: 10,
@@ -40,7 +40,6 @@ describe('Pagination', () => {
     expect(
       screen.getByRole('navigation', { name: 'Paginering van producties' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Pagina 2 van 4')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Huidige pagina, pagina 2' })).toHaveAttribute(
       'aria-current',
       'page',

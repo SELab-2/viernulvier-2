@@ -37,13 +37,7 @@ const EntityView = <T,>(props: EntityViewProps<T>) => {
   }
 
   // Render the shared grid wrapper otherwise.
-  return (
-    <EntityGrid
-      items={items}
-      getKey={props.getKey}
-      renderItem={props.renderGridItem}
-    />
-  )
+  return <EntityGrid items={items} getKey={props.getKey} renderItem={props.renderGridItem} />
 }
 
 export default EntityView

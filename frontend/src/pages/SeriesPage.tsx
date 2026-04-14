@@ -34,7 +34,7 @@ const getSeriesSortTimestamp = (series: Series): number => {
   return Date.parse(series.lastProductionEnd ?? '') || Date.parse(series.firstProductionStart ?? '')
 }
 
-// Function to sort the series list based on the selected sort target and direction. 
+// Function to sort the series list based on the selected sort target and direction.
 const sortSeries = ({
   seriesList,
   sortTarget,
