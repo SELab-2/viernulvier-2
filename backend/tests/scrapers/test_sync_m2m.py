@@ -19,19 +19,42 @@ from tests.scrapers.conftest import _make_m2m_setup
 
 
 class TestSyncM2M:
-    def test_returns_early_when_payload_is_not_list(self) -> None:
-        """_sync_m2m does nothing if the API value for the key is not a list."""
-        through_model = Mock()
+    def test_normalizes_scalar_payload_to_single_item(self) -> None:
+        """A non-list payload is treated as a one-item list and processed safely."""
+
+        class FakeRelatedModel:
+            __name__ = "FakeRelated"
+
+            class DoesNotExist(Exception):
+                pass
+
+            class objects:
+                @staticmethod
+                def values_list(*_args, **_kwargs):
+                    return SimpleNamespace(iterator=lambda: iter(()))
+
+                @staticmethod
+                def get(**_kwargs) -> Never:
+                    raise FakeRelatedModel.DoesNotExist
+
+        class FakeThroughModel:
+            __name__ = "FakeThroughModel"
+
+            class objects:
+                filter = Mock(return_value=SimpleNamespace(delete=lambda: None))
+                bulk_create = Mock()
+
         cfg = M2MConfig(
             api_key="genres",
-            related_model=Mock(),
-            through_model=through_model,
+            related_model=FakeRelatedModel,
+            through_model=FakeThroughModel,
             parent_fk="parent",
             related_fk="related",
         )
         fk_cache = FKCache()
         viernulvier._sync_m2m(SimpleNamespace(pk=1), {"genres": "not-a-list"}, cfg, fk_cache)
-        through_model.objects.filter.assert_not_called()
+        FakeThroughModel.objects.filter.assert_called_once()
+        FakeThroughModel.objects.bulk_create.assert_not_called()
 
     def test_warns_when_related_object_not_found(self, caplog) -> None:
         """A missing related object is skipped with a warning."""
@@ -234,3 +257,119 @@ class TestSyncM2M:
         )
         _sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-miss"]}, cfg, cache)
         assert created_rows
+
+
+    def test_sync_m2m_ignores_missing_api_key(db):
+        """If the item does not contain the m2m api key, the function returns early."""
+        from apps.imports.scrapers import viernulvier_relations as rel
+        from apps.imports.scrapers.viernulvier_constants import M2MConfig
+
+        class DummyRelated:
+            pass
+
+        class Through:
+            class objects:
+                @staticmethod
+                def filter(**_):
+                    return None
+
+        cfg = M2MConfig(api_key="missing", related_model=DummyRelated, through_model=Through, parent_fk="p", related_fk="r")
+
+        result = rel.sync_m2m(object(), {}, cfg, rel.FKCache())
+        assert result is None
+
+
+    def test_resolve_related_pk_with_create_fn_sets_cache(db):
+        from apps.imports.scrapers import viernulvier_relations as rel
+
+        fk = rel.FKCache()
+
+        class RelModel:
+            class DoesNotExist(Exception):
+                pass
+
+            class objects:
+                @staticmethod
+                def get(**kwargs):
+                    raise RelModel.DoesNotExist()
+
+        created = {}
+
+        def create_fn(ext_id, raw_item):
+            created['val'] = ext_id
+            return 777
+
+        from apps.imports.scrapers.viernulvier_constants import M2MConfig
+
+        m2m = M2MConfig(api_key="x", related_model=RelModel, through_model=None, parent_fk="p", related_fk="r", create_related_fn=create_fn)
+
+        pk = rel._resolve_related_pk(RelModel, "missing-id", {"name": "x"}, m2m, fk)
+
+        assert pk == 777
+        assert fk.get(RelModel, "missing-id") == 777
+        assert created['val'] == "missing-id"
+
+
+    def test_sync_m2m_bulk_create_fallback_and_save_exception(db, caplog):
+        from apps.imports.scrapers import viernulvier_relations as rel
+
+        fk = rel.FKCache()
+
+        class DummyRelated:
+            def __init__(self, pk=None):
+                self.pk = pk
+
+        # fake through model and manager
+        class FakeManager:
+            def filter(self, **kwargs):
+                class D:
+                    def delete(self):
+                        return None
+
+                return D()
+
+            def bulk_create(self, objs, ignore_conflicts=False):
+                raise Exception("bulk create fail")
+
+        class FakeThrough:
+            objects = FakeManager()
+
+            def __init__(self, **kwargs):
+                self._kwargs = kwargs
+
+            def save(self):
+                raise Exception("save failed")
+
+        class ParentObj:
+            def __init__(self):
+                self.pk = 42
+
+        parent = ParentObj()
+
+        from apps.imports.scrapers.viernulvier_constants import M2MConfig
+
+        m2m = M2MConfig(
+            api_key="things",
+            related_model=DummyRelated,
+            through_model=FakeThrough,
+            parent_fk="parent",
+            related_fk="related",
+            extra_fields={"position": "position"},
+        )
+
+        # prime cache so _resolve_related_pk returns a pk without DB lookup
+        fk.set(DummyRelated, "EXT1", 99)
+
+        item = {"things": [{"@id": "EXT1"}]}
+
+        # ensure logger captures warning/error paths
+        caplog.set_level(logging.WARNING, logger=rel.logger.name)
+
+        # run; should hit bulk_create exception then save exception and log an exception
+        rel.sync_m2m(parent, item, m2m, fk)
+
+        # ensure fallback path logged (warning) or error logged on save failure
+        assert any(
+            ("bulk_create failed" in rec.getMessage()) or ("Error creating" in rec.getMessage())
+            for rec in caplog.records
+        )

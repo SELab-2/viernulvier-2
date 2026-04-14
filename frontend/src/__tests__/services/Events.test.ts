@@ -8,7 +8,6 @@ const nestedProduction = {
   id: 1,
   attendance_mode: 'offline',
   performer_type: 'group',
-  uit_database_theme: { id: 2, name: 'Theater' },
   uit_database_type: { id: 6, name: 'Voorstelling' },
   display_title: 'Hamlet',
   display_artist_name: 'Toneelhuis',

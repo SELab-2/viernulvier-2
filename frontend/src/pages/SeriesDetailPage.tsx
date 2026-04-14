@@ -58,10 +58,11 @@ function extractYearFromProduction(production: Production): string {
 }
 
 function buildProductionMeta(production: Production, language: string): string {
+  const primaryGenre = production.genres[0]?.display_name ?? ''
   const parts = [
     getLocalizedRecordValue(production.artist_name, language),
     production.uit_database_type?.name ?? '',
-    production.uit_database_theme?.name ?? '',
+    primaryGenre,
   ].filter(Boolean)
 
   return parts.join(' · ')

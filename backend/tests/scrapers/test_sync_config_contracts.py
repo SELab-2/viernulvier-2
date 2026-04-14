@@ -2,10 +2,11 @@
 
 import pytest
 
-from apps.genres.models import GenreUseAs
+from apps.genres.models import Genre, GenreUseAs
 from apps.imports.management.commands.sync_viernulvier import (
     PRODUCTION_CONFIG,
     SYNC_STEPS,
+    _create_uitdatabank_theme_genre,
     _is_not_longterm,
     _resolve_genre_use_as,
     nee_ja_to_bool,
@@ -217,6 +218,39 @@ def test_resolve_genre_use_as_handles_none() -> None:
     pk = _resolve_genre_use_as(None)
     assert pk is not None
     assert GenreUseAs.objects.filter(pk=pk, name="unknown").exists()
+
+
+@pytest.mark.django_db
+def test_create_uitdatabank_theme_genre_returns_none_for_empty_external_id() -> None:
+    assert _create_uitdatabank_theme_genre("", {"name": "Theme"}) is None
+
+
+@pytest.mark.django_db
+def test_create_uitdatabank_theme_genre_creates_genre_with_defaults() -> None:
+    pk = _create_uitdatabank_theme_genre("/api/v1/uitdatabank/themes/12", {"name": " Theater "})
+
+    genre = Genre.objects.get(pk=pk)
+    assert genre.external_id == "/api/v1/uitdatabank/themes/12"
+    assert genre.type == "uitdatabank_theme"
+    assert genre.use_as.name == "genre"
+    assert genre.vendor_id == "Theater"
+
+
+@pytest.mark.django_db
+def test_create_uitdatabank_theme_genre_updates_missing_vendor_id() -> None:
+    use_as, _ = GenreUseAs.objects.get_or_create(name="genre")
+    genre = Genre.objects.create(
+        external_id="/api/v1/uitdatabank/themes/34",
+        type="uitdatabank_theme",
+        use_as=use_as,
+        vendor_id="",
+    )
+
+    pk = _create_uitdatabank_theme_genre("/api/v1/uitdatabank/themes/34", {"name": "Dance"})
+    genre.refresh_from_db()
+
+    assert pk == genre.pk
+    assert genre.vendor_id == "Dance"
 
 
 @pytest.mark.parametrize(

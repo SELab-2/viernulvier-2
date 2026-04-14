@@ -10,8 +10,8 @@ translations as language-code dictionaries
 
 Nested relations
 ----------------
-- ``UitDatabaseThemeSerializer`` / ``UitDatabaseTypeSerializer`` - simple
-  read-only nested representations of the classification FK targets.
+- ``UitDatabaseTypeSerializer`` - simple read-only nested representation of
+    the classification FK target.
 - ``GenreSerializer`` - nested per production, ordered by ``position``.
 - ``TagSerializer`` - nested many-to-many, carries its own translated fields.
 """
@@ -25,18 +25,7 @@ from apps.media_library.models import MediaItem
 from apps.media_library.serializers import MediaGallerySerializer
 from apps.tags.serializers import TagSerializer
 
-from .models import Production, ProductionTag, UitDatabaseTheme, UitDatabaseType
-
-
-class UitDatabaseThemeSerializer(serializers.ModelSerializer):
-    """Read-only representation of a UIT Database Theme.
-
-    Used as a nested field inside ``ProductionSerializer``.
-    """
-
-    class Meta:
-        model = UitDatabaseTheme
-        fields = ["id", "name"]
+from .models import Production, ProductionTag, UitDatabaseType
 
 
 class UitDatabaseTypeSerializer(serializers.ModelSerializer):
@@ -123,7 +112,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
     Nested relations
     ----------------
-    - ``uit_database_theme`` / ``uit_database_type`` - nested FK objects.
+    - ``uit_database_type`` - nested FK object.
     - ``tags`` - many-to-many, serialised with ``TagSerializer``.
     - ``genres`` - ordered by ``position`` via ``ProductionGenre.position``.
     """
@@ -202,11 +191,6 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     # Nested relations (read-only)
     # ---------------------------------------------------------------------------
 
-    uit_database_theme = UitDatabaseThemeSerializer(
-        read_only=True,
-        help_text="Nested UIT Database Theme classification. `null` when not assigned.",
-    )
-
     uit_database_type = UitDatabaseTypeSerializer(
         read_only=True,
         help_text="Nested UIT Database Type classification. `null` when not assigned.",
@@ -258,7 +242,6 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "first_event_start",
             "last_event_end",
             "media_gallery",
-            "uit_database_theme",
             "uit_database_type",
             "display_title",
             "display_artist_name",
@@ -276,7 +259,6 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "id",
             "first_event_start",
             "last_event_end",
-            "uit_database_theme",
             "uit_database_type",
             "display_title",
             "display_artist_name",

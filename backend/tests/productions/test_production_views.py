@@ -5,7 +5,7 @@ Covers:
 - ViewSet inherits from ApiModelViewSet
 - Queryset model is Production
 - Serializer class is ProductionSerializer
-- Queryset has prefetch_related for translations, tags, uit_database_theme, uit_database_type
+- Queryset has prefetch_related for translations, tags, uit_database_type
 - GET  /api/v1/productions/        - public key ✓, internal key ✓
 - GET  /api/v1/productions/<id>/   - public key ✓, internal key ✓
 - POST /api/v1/productions/        - internal key ✓, public key ✗
@@ -35,7 +35,6 @@ from tests.factories.production import (
     ProductionTagFactory,
     ProductionTagTranslationFactory,
     ProductionTranslationFactory,
-    UitDatabaseThemeFactory,
     UitDatabaseTypeFactory,
 )
 from tests.factories.tag import TagFactory
@@ -122,7 +121,6 @@ class TestProductionViewSetList(TestCase):
             "first_event_start",
             "last_event_end",
             "media_gallery",
-            "uit_database_theme",
             "uit_database_type",
             "title",
             "description",
@@ -368,10 +366,8 @@ class TestProductionViewSetResponseStructure(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.nl = LanguageFactory.create(code="nl", name="Dutch")
-        self.theme = UitDatabaseThemeFactory.create(name="Drama")
         self.db_type = UitDatabaseTypeFactory.create(name="Theater")
         self.production = ProductionFactory.create(
-            uit_database_theme=self.theme,
             uit_database_type=self.db_type,
             attendance_mode="offline",
         )
@@ -386,10 +382,6 @@ class TestProductionViewSetResponseStructure(TestCase):
             artist_name="",
             tagline="",
         )
-
-    def test_detail_contains_nested_uit_database_theme(self) -> None:
-        response = self.client.get(f"/api/v1/productions/{self.production.pk}/", **pub_headers())
-        assert response.data["uit_database_theme"]["name"] == "Drama"
 
     def test_detail_contains_nested_uit_database_type(self) -> None:
         response = self.client.get(f"/api/v1/productions/{self.production.pk}/", **pub_headers())

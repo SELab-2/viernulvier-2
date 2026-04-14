@@ -281,7 +281,11 @@ def sync_all_translations(
 
 
 def _resolve_related_pk(
-    related_model: type[models.Model], ext_id: str, m2m_config: M2MConfig, fk_cache: FKCache
+    related_model: type[models.Model],
+    ext_id: str,
+    raw_item: Any,
+    m2m_config: M2MConfig,
+    fk_cache: FKCache,
 ) -> Any | None:
     pk = fk_cache.get(related_model, ext_id)
     if pk is not None:
@@ -289,6 +293,11 @@ def _resolve_related_pk(
     try:
         obj = related_model.objects.get(**{m2m_config.related_lookup_field: ext_id})
     except related_model.DoesNotExist:
+        if m2m_config.create_related_fn is not None:
+            created_pk = m2m_config.create_related_fn(ext_id, raw_item)
+            if created_pk is not None:
+                fk_cache.set(related_model, ext_id, created_pk)
+                return created_pk
         logger.warning(
             "%s with %s=%r not found - sync related models first.",
             related_model.__name__,
@@ -328,9 +337,11 @@ def sync_m2m(
     fk_cache: FKCache,
 ) -> None:
     """Sync one M2M relation via through table using bulk_create."""
-    raw_list = item.get(m2m_config.api_key)
-    if not isinstance(raw_list, list):
+    raw_value = item.get(m2m_config.api_key)
+    if raw_value is None:
         return
+
+    raw_list = raw_value if isinstance(raw_value, list) else [raw_value]
 
     through_model = m2m_config.through_model
     related_model = m2m_config.related_model
@@ -344,7 +355,7 @@ def sync_m2m(
         if not ext_id:
             continue
 
-        pk = _resolve_related_pk(related_model, ext_id, m2m_config, fk_cache)
+        pk = _resolve_related_pk(related_model, ext_id, raw_item, m2m_config, fk_cache)
         if pk is None:
             continue
         through_kwargs = _build_through_kwargs(parent_obj, related_model, m2m_config, raw_item, position, pk)

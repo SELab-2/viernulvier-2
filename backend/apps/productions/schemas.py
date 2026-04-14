@@ -35,7 +35,6 @@ _PRODUCTION_RESPONSE = OpenApiExample(
         "first_event_start": "2025-09-15T19:30:00Z",
         "last_event_end": "2025-11-02T21:30:00Z",
         "media_gallery": {"id": 706, "name": "home", "media_items": []},
-        "uit_database_theme": {"id": 3, "name": "Theater"},
         "uit_database_type": {"id": 7, "name": "Voorstelling"},
         "title": "De Laatste Avond",
         "artist_name": "Collectief Morgen",
@@ -72,7 +71,6 @@ _PRODUCTION_RESPONSE_WITH_EVENTS = OpenApiExample(
         "first_event_start": "2025-09-15T19:30:00Z",
         "last_event_end": "2025-09-15T21:30:00Z",
         "media_gallery": {"id": 706, "name": "home", "media_items": []},
-        "uit_database_theme": {"id": 3, "name": "Theater"},
         "uit_database_type": {"id": 7, "name": "Voorstelling"},
         "title": "De Laatste Avond",
         "artist_name": "Collectief Morgen",
@@ -150,7 +148,6 @@ _PRODUCTION_RESPONSE_WITH_RELATED = OpenApiExample(
         "attendance_mode": "offline",
         "performer_type": "group",
         "media_gallery": {"id": 706, "name": "home", "media_items": []},
-        "uit_database_theme": {"id": 3, "name": "Theater"},
         "uit_database_type": {"id": 7, "name": "Voorstelling"},
         "title": "De Laatste Avond",
         "artist_name": "Collectief Morgen",
@@ -201,7 +198,6 @@ _PRODUCTION_INPUT = OpenApiExample(
     value={
         "attendance_mode": "offline",
         "performer_type": "group",
-        "uit_database_theme": 3,
         "uit_database_type": 7,
         "media_gallery": None,
     },
@@ -275,7 +271,7 @@ _PRODUCTION_CREATE = extend_schema(
         "Creates a new **Production**.\n\n"
         "- `attendance_mode` accepts `offline` or `online`.\n"
         "- `performer_type` accepts `group` or `solo`.\n"
-        "- `uit_database_theme` and `uit_database_type` are optional FK references.\n"
+        "- `uit_database_type` is an optional FK reference.\n"
         "- Translated fields (title, description, etc.) are managed via the "
         "**Production Translation** endpoints.\n"
         "- Tags and genres are managed via their dedicated through-table endpoints.\n"

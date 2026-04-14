@@ -20,9 +20,6 @@ class ProductionFilter(BaseModelFilter):
         Exact match on the performer type
         (e.g. ``?performer_type=solo``).
         Accepted values: ``group``, ``solo``.
-    ``uit_database_theme``
-        Exact match on the UIT Database theme FK ID
-        (e.g. ``?uit_database_theme=3``).
     ``uit_database_type``
         Exact match on the UIT Database type FK ID
         (e.g. ``?uit_database_type=7``).
@@ -94,7 +91,6 @@ class ProductionFilter(BaseModelFilter):
         fields = [
             "attendance_mode",
             "performer_type",
-            "uit_database_theme",
             "uit_database_type",
             "genre",
             "tag",

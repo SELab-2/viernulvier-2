@@ -89,7 +89,6 @@ class EventViewSet(ApiModelViewSet):
     queryset = (
         Event.objects.select_related(
             "production",
-            "production__uit_database_theme",
             "production__uit_database_type",
             "hall",
             "hall__space",

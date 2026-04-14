@@ -72,7 +72,6 @@ describe('MetaPanel component', () => {
         url_title: null,
       },
     ],
-    uit_database_theme: null,
     uit_database_type: { id: 1, name: 'Type' },
     performer_type: 'group',
     attendance_mode: 'offline',

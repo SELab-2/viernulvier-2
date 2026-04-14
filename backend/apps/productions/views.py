@@ -49,8 +49,6 @@ class ProductionViewSet(ApiModelViewSet):
         Filter by attendance mode. Accepted values: ``offline``, ``online``.
     ``?performer_type=solo``
         Filter by performer type. Accepted values: ``group``, ``solo``.
-    ``?uit_database_theme=3``
-        Productions belonging to a specific UIT Database theme.
     ``?uit_database_type=7``
         Productions belonging to a specific UIT Database type.
     ``?genre=2``
@@ -92,7 +90,6 @@ class ProductionViewSet(ApiModelViewSet):
     serializer_class = ProductionSerializer
     queryset = (
         Production.objects.select_related(
-            "uit_database_theme",
             "uit_database_type",
             "media_gallery",
         )

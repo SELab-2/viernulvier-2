@@ -32,6 +32,10 @@ def int_headers():
 
 
 class TestGenreUseAsFilter:
+    def setup_method(self) -> None:
+        # Migration 0002 can seed a default "genre" row; keep these unit tests deterministic.
+        GenreUseAs.objects.all().delete()
+
     def _qs(self, params):
         return GenreUseAsFilter(params, queryset=GenreUseAs.objects.all()).qs
 

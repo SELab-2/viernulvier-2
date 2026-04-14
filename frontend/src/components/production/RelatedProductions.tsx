@@ -127,7 +127,6 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                         performer_type: '',
                         first_event_start: null,
                         last_event_end: null,
-                        uit_database_theme: null,
                         uit_database_type: null,
                         artist_name: production.artist_name ?? {},
                         tagline: {},

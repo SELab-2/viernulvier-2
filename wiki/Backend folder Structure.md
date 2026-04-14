@@ -40,7 +40,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── productions/                 # PRODUCTION + PRODUCTION_TRANSLATION + UITDATABANK tables
+│   ├── productions/                 # PRODUCTION + PRODUCTION_TRANSLATION + production classification tables
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── models.py

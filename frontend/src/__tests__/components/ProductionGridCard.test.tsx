@@ -34,7 +34,6 @@ const baseProduction = (overrides: Partial<Production> = {}): Production => ({
   first_event_start: null,
   last_event_end: null,
   media_gallery: { id: 0, name: null, media_items: [] },
-  uit_database_theme: null,
   uit_database_type: null,
   display_title: null,
   display_artist_name: null,

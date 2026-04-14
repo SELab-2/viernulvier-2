@@ -26,34 +26,6 @@ from apps.media_library.models import MediaGallery
 from apps.tags.models import Tag
 
 
-class UitDatabaseTheme(BaseModel):
-    """A theme classification imported from the UIT Database.
-
-    UIT Database themes are used to broadly categorise productions
-    (e.g. "Theater", "Muziek", "Dans"). They are typically synced from an
-    external source and referenced by productions as a read-mostly FK.
-
-    Attributes:
-        name: Human-readable name of the theme.
-    """
-
-    name = models.CharField(
-        max_length=200,
-        help_text="Human-readable name of the UIT Database theme (e.g. `Theater`, `Muziek`).",
-        db_comment="The name of the theme.",
-    )
-
-    class Meta(BaseModel.Meta):
-        db_table = "uit_database_theme"
-        verbose_name = "UIT Database Theme"
-        verbose_name_plural = "UIT Database Themes"
-        ordering = ["name"]
-
-    def __str__(self) -> str:
-        """String representation of the UIT Database theme, showing the name."""
-        return self.name
-
-
 class UitDatabaseType(BaseModel):
     """A type classification imported from the UIT Database.
 
@@ -91,13 +63,13 @@ class Production(BaseModel):
     :class:`ProductionTranslation` to support multiple languages.
 
     Attributes:
-        uit_database_theme: Optional FK to a UIT Database theme classification.
         uit_database_type:  Optional FK to a UIT Database type classification.
         media_gallery:      Optional FK to the associated media gallery.
         attendance_mode:    How the audience attends - ``offline`` or ``online``.
         performer_type:     Whether the act is a ``group`` or ``solo`` artist.
         genres:             Ordered M2M to :class:`~apps.genres.models.Genre`
-                            via :class:`ProductionGenre`.
+                            via :class:`ProductionGenre`. UITdatabank themes
+                            are also represented as genres.
         tags:               Unordered M2M to :class:`~apps.tags.models.Tag`
                             via :class:`ProductionTag`.
     """
@@ -113,16 +85,6 @@ class Production(BaseModel):
 
         GROUP = "group", "Group"
         SOLO = "solo", "Solo"
-
-    uit_database_theme = models.ForeignKey(
-        UitDatabaseTheme,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="productions",
-        help_text="UIT Database theme classification. `null` when not assigned.",
-        db_comment="The theme of the production as defined in the UIT database.",
-    )
 
     uit_database_type = models.ForeignKey(
         UitDatabaseType,

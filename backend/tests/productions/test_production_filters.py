@@ -20,7 +20,6 @@ from tests.factories.production import (
     ProductionGenreFactory,
     ProductionTagFactory,
     ProductionTranslationFactory,
-    UitDatabaseThemeFactory,
     UitDatabaseTypeFactory,
 )
 from tests.factories.tag import TagFactory
@@ -64,14 +63,6 @@ class TestProductionFilter:
         ProductionFactory(performer_type="group")
 
         assert self._qs({"performer_type": "solo"}).count() == 1
-
-    def test_filter_by_uit_database_theme(self) -> None:
-        theme_a = UitDatabaseThemeFactory()
-        theme_b = UitDatabaseThemeFactory()
-        ProductionFactory(uit_database_theme=theme_a)
-        ProductionFactory(uit_database_theme=theme_b)
-
-        assert self._qs({"uit_database_theme": theme_a.id}).count() == 1
 
     def test_filter_by_uit_database_type(self) -> None:
         type_a = UitDatabaseTypeFactory()

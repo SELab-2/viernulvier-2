@@ -8,7 +8,6 @@ from apps.productions.models import (
     ProductionTag,
     ProductionTagTranslation,
     ProductionTranslation,
-    UitDatabaseTheme,
     UitDatabaseType,
 )
 from tests.factories.genre import GenreFactory
@@ -17,15 +16,6 @@ from tests.factories.media_library import MediaGalleryFactory
 from tests.factories.tag import TagFactory
 
 faker = Faker()
-
-
-class UitDatabaseThemeFactory(factory.django.DjangoModelFactory):
-    """Factory for UitDatabaseTheme model."""
-
-    class Meta:
-        model = UitDatabaseTheme
-
-    name = LazyFunction(faker.word)
 
 
 class UitDatabaseTypeFactory(factory.django.DjangoModelFactory):
@@ -43,7 +33,6 @@ class ProductionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Production
 
-    uit_database_theme = SubFactory(UitDatabaseThemeFactory)
     uit_database_type = SubFactory(UitDatabaseTypeFactory)
     media_gallery = SubFactory(MediaGalleryFactory)
     attendance_mode = LazyFunction(lambda: faker.random_element([choice[0] for choice in Production.AttendanceMode.choices]))
