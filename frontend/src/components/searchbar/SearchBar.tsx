@@ -34,14 +34,20 @@ const SearchBar = ({
           handleSearchSubmit()
         }
       }}
-      InputProps={{
-        endAdornment: (
-          <InputAdornment position="end">
-            <IconButton aria-label={t('searchbar.search')} edge="end" onClick={handleSearchSubmit}>
-              <SearchIcon fontSize="small" />
-            </IconButton>
-          </InputAdornment>
-        ),
+      slotProps={{
+        input: {
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label={t('searchbar.search')}
+                edge="end"
+                onClick={handleSearchSubmit}
+              >
+                <SearchIcon fontSize="small" />
+              </IconButton>
+            </InputAdornment>
+          ),
+        },
       }}
       sx={{
         flex: 1,

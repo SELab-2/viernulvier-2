@@ -141,6 +141,20 @@ class TestMediaFileUploadSerializerValidation(TestCase):
         assert not serializer.is_valid()
         assert "file" in serializer.errors
 
+    def test_rejects_mismatching_content_signature(self) -> None:
+        serializer = MediaFileUploadSerializer(
+            data={"file": make_uploaded_file(name="poster.png", content=b"%PDF-1.7 fake", content_type="image/png")}
+        )
+        assert not serializer.is_valid()
+        assert "file" in serializer.errors
+
+    def test_rejects_extension_mismatch(self) -> None:
+        serializer = MediaFileUploadSerializer(
+            data={"file": make_uploaded_file(name="poster.pdf", content_type="image/png")}
+        )
+        assert not serializer.is_valid()
+        assert "file" in serializer.errors
+
     def test_validate_file_returns_value_for_valid_file(self) -> None:
         serializer = MediaFileUploadSerializer()
         uploaded_file = make_uploaded_file(name="ok.pdf", content_type="application/pdf")

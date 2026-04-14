@@ -1,5 +1,6 @@
 """Tests for apps.media_files.models."""
 
+from io import BytesIO
 import os
 from unittest.mock import MagicMock
 import uuid
@@ -7,6 +8,7 @@ import uuid
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 import pytest
 
 from apps.media_files.models import MediaFile, upload_to_media
@@ -22,6 +24,12 @@ def make_uploaded_file(
     content_type: str | None = "application/pdf",
 ) -> SimpleUploadedFile:
     return SimpleUploadedFile(name, content, content_type=content_type)
+
+
+def make_png_bytes() -> bytes:
+    buffer = BytesIO()
+    Image.new("RGB", (1, 1), color=(255, 0, 0)).save(buffer, format="PNG")
+    return buffer.getvalue()
 
 
 class TestUploadToMedia:
@@ -116,9 +124,10 @@ class TestMediaFileModel:
         obj = MediaFile.objects.create(file=make_uploaded_file(name="poster.webp", content_type="image/webp"))
         assert obj.file_type == MediaFile.FileType.IMAGE
 
-    def test_unknown_mime_type_sets_other_file_type(self) -> None:
-        obj = MediaFile.objects.create(file=make_uploaded_file(name="archive.bin", content_type=None))
-        assert obj.file_type == MediaFile.FileType.OTHER
+    def test_unknown_mime_type_is_rejected(self) -> None:
+        with pytest.raises(ValidationError) as exc:
+            MediaFile.objects.create(file=make_uploaded_file(name="archive.bin", content_type=None))
+        assert "file" in exc.value.message_dict
 
     def test_filename_is_derived_from_uploaded_file(self) -> None:
         obj = MediaFile.objects.create(file=make_uploaded_file(name="poster.png", content_type="image/png"))
@@ -132,6 +141,18 @@ class TestMediaFileModel:
     def test_clean_rejects_oversized_file(self) -> None:
         file = make_uploaded_file(content=b"x" * (MediaFile.MAX_FILE_SIZE + 1))
         obj = MediaFile(file=file)
+        with pytest.raises(ValidationError) as exc:
+            obj.clean()
+        assert "file" in exc.value.message_dict
+
+    def test_clean_rejects_mismatching_content_signature(self) -> None:
+        obj = MediaFile(file=make_uploaded_file(name="poster.png", content=b"%PDF-1.7 fake", content_type="image/png"))
+        with pytest.raises(ValidationError) as exc:
+            obj.clean()
+        assert "file" in exc.value.message_dict
+
+    def test_clean_rejects_extension_mismatch(self) -> None:
+        obj = MediaFile(file=make_uploaded_file(name="poster.pdf", content=make_png_bytes(), content_type=None))
         with pytest.raises(ValidationError) as exc:
             obj.clean()
         assert "file" in exc.value.message_dict

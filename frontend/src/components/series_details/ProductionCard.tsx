@@ -119,7 +119,11 @@ const ProductionCard = ({ title, meta, description, tags, lang = 'nl', onClick }
           />
 
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+<<<<<<< 368-bug-tagsgenres-translation-doesnt-work
             {resolvedTags.map((tag) => (
+=======
+            {tags.map((tag) => (
+>>>>>>> dev
               <GenreAndTagChip
                 key={tag.id}
                 name={tag.name}
