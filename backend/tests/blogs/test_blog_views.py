@@ -326,3 +326,71 @@ class TestBlogViewSet(TestCase):
         response = self.client.get("/api/v1/blogs/", **wrong_headers())
 
         assert response.status_code == 401
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestBlogViewSetOrderingEdgeCases(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.en = LanguageFactory(code="en", name="English")
+        self.nl = LanguageFactory(code="nl", name="Dutch")
+
+        self.blog_alpha = BlogFactory(slug="edge-alpha")
+        BlogTranslationFactory(
+            blog=self.blog_alpha,
+            language=self.en,
+            title="Alpha",
+            body="EN",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=self.blog_alpha,
+            language=self.nl,
+            title="Zulu",
+            body="NL",
+            excerpt="",
+        )
+
+        self.blog_zulu = BlogFactory(slug="edge-zulu")
+        BlogTranslationFactory(
+            blog=self.blog_zulu,
+            language=self.en,
+            title="Zulu",
+            body="EN",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=self.blog_zulu,
+            language=self.nl,
+            title="Alpha",
+            body="NL",
+            excerpt="",
+        )
+
+        self.blog_without_translation = BlogFactory(slug="edge-no-translation")
+
+    def _ids(self, params: dict, **headers) -> list[int]:
+        response = self.client.get("/api/v1/blogs/", params, **headers)
+        assert response.status_code == 200
+        return [row["id"] for row in results_list(response)]
+
+    def test_ordering_title_sort_places_missing_translation_last_ascending(self) -> None:
+        ids = self._ids({"ordering": "title_sort", "lang": "en"}, **pub_headers())
+
+        assert ids.index(self.blog_alpha.id) < ids.index(self.blog_zulu.id)
+        assert ids[-1] == self.blog_without_translation.id
+
+    def test_ordering_title_sort_places_missing_translation_last_descending(self) -> None:
+        ids = self._ids({"ordering": "-title_sort", "lang": "en"}, **pub_headers())
+
+        assert ids.index(self.blog_zulu.id) < ids.index(self.blog_alpha.id)
+        assert ids[-1] == self.blog_without_translation.id
+
+    def test_lang_query_param_overrides_accept_language_header(self) -> None:
+        ids = self._ids(
+            {"ordering": "title_sort", "lang": "en"},
+            HTTP_ACCEPT_LANGUAGE="nl",
+            **pub_headers(),
+        )
+
+        assert ids.index(self.blog_alpha.id) < ids.index(self.blog_zulu.id)

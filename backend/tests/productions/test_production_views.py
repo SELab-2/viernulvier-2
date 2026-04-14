@@ -867,3 +867,125 @@ class TestProductionLanguageAwareOrderingAndSearch(TestCase):
         )
         ids_en = [row["id"] for row in response_en.data["results"]]
         assert ids_en == [self.prod_alpha_en.id]
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestProductionOrderingEdgeCases(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        Production.objects.all().delete()
+
+        en = LanguageFactory.create(code="en", name="English")
+        nl = LanguageFactory.create(code="nl", name="Dutch")
+
+        self.prod_alpha = ProductionFactory.create()
+        ProductionTranslationFactory.create(
+            production=self.prod_alpha,
+            language=en,
+            title="Alpha",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+        ProductionTranslationFactory.create(
+            production=self.prod_alpha,
+            language=nl,
+            title="Zulu",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+
+        self.prod_zulu = ProductionFactory.create()
+        ProductionTranslationFactory.create(
+            production=self.prod_zulu,
+            language=en,
+            title="Zulu",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+        ProductionTranslationFactory.create(
+            production=self.prod_zulu,
+            language=nl,
+            title="Alpha",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+
+        self.prod_without_translation = ProductionFactory.create()
+
+        self.prod_early = ProductionFactory.create()
+        self.prod_late = ProductionFactory.create()
+        self.prod_without_events = ProductionFactory.create()
+        EventFactory.create(
+            production=self.prod_early,
+            starts_at=_dt(2025, 1, 1),
+            ends_at=_dt(2025, 1, 1, 20),
+        )
+        EventFactory.create(
+            production=self.prod_late,
+            starts_at=_dt(2025, 9, 1),
+            ends_at=_dt(2025, 9, 1, 23),
+        )
+
+    def _ids(self, params: dict, **headers) -> list[int]:
+        response = self.client.get("/api/v1/productions/", params, **headers)
+        assert response.status_code == 200
+        return [row["id"] for row in response.data["results"]]
+
+    def test_title_sort_places_missing_translation_last_ascending(self) -> None:
+        ids = self._ids({"ordering": "title_sort", "lang": "en"}, **pub_headers())
+
+        assert ids.index(self.prod_alpha.id) < ids.index(self.prod_zulu.id)
+        assert ids.index(self.prod_without_translation.id) > ids.index(self.prod_alpha.id)
+        assert ids.index(self.prod_without_translation.id) > ids.index(self.prod_zulu.id)
+
+    def test_title_sort_places_missing_translation_last_descending(self) -> None:
+        ids = self._ids({"ordering": "-title_sort", "lang": "en"}, **pub_headers())
+
+        assert ids.index(self.prod_zulu.id) < ids.index(self.prod_alpha.id)
+        assert ids.index(self.prod_without_translation.id) > ids.index(self.prod_alpha.id)
+        assert ids.index(self.prod_without_translation.id) > ids.index(self.prod_zulu.id)
+
+    def test_first_event_start_places_missing_date_last_ascending(self) -> None:
+        ids = self._ids({"ordering": "first_event_start"}, **pub_headers())
+
+        assert ids.index(self.prod_early.id) < ids.index(self.prod_late.id)
+        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_early.id)
+        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_late.id)
+
+    def test_first_event_start_places_missing_date_last_descending(self) -> None:
+        ids = self._ids({"ordering": "-first_event_start"}, **pub_headers())
+
+        assert ids.index(self.prod_late.id) < ids.index(self.prod_early.id)
+        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_early.id)
+        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_late.id)
+
+    def test_last_event_end_places_missing_date_last_ascending(self) -> None:
+        ids = self._ids({"ordering": "last_event_end"}, **pub_headers())
+
+        assert ids.index(self.prod_early.id) < ids.index(self.prod_late.id)
+        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_early.id)
+        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_late.id)
+
+    def test_last_event_end_places_missing_date_last_descending(self) -> None:
+        ids = self._ids({"ordering": "-last_event_end"}, **pub_headers())
+
+        assert ids.index(self.prod_late.id) < ids.index(self.prod_early.id)
+        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_early.id)
+        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_late.id)
+
+    def test_lang_query_param_overrides_accept_language_header_for_title_sort(self) -> None:
+        ids = self._ids(
+            {"ordering": "title_sort", "lang": "en"},
+            HTTP_ACCEPT_LANGUAGE="nl",
+            **pub_headers(),
+        )
+
+        assert ids.index(self.prod_alpha.id) < ids.index(self.prod_zulu.id)

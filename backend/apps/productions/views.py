@@ -14,12 +14,12 @@ containing all available translations (e.g., {"nl": "...", "en": "..."}).
 responses still include all translations in a single payload.
 """
 
-from django.conf import settings
 from django.db.models import Max, Min, Prefetch, Q, QuerySet
 from django.db.models.functions import Coalesce
 from django.http import HttpRequest
 from drf_spectacular.utils import extend_schema
 
+from apps.core.mixins import LanguageAwareMixin
 from apps.core.views import ApiModelViewSet
 from apps.events.models import Event, EventPrice
 from apps.locations.models import HallTranslation, LocationTranslation, SpaceTranslation
@@ -36,7 +36,7 @@ _TAG = "Productions"
 
 @extend_schema(tags=[_TAG])
 @production_schema
-class ProductionViewSet(ApiModelViewSet):
+class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
     """CRUD endpoints for Production objects.
 
     A production is the central catalogue record - it groups events and
@@ -77,9 +77,16 @@ class ProductionViewSet(ApiModelViewSet):
         Group by attendance mode.
     ``?ordering=performer_type``
         Group by performer type.
-    ``?ordering=title_sort``
-        Sort alphabetically by title in the preferred request language,
-        with fallback to any available translation.
+    ``?ordering=first_event_start`` / ``?ordering=-first_event_start``
+        By the start date of the earliest linked event. Productions
+        without any events are always sorted last, regardless of direction.
+    ``?ordering=last_event_end`` / ``?ordering=-last_event_end``
+        By the end date of the latest linked event. Productions without
+        any events are always sorted last, regardless of direction.
+    ``?ordering=title_sort`` / ``?ordering=-title_sort``
+        Alphabetical by title in the preferred request language, with
+        fallback to any available translation. Productions without any
+        translation are always sorted last, regardless of direction.
 
     Search
     ------
@@ -127,7 +134,8 @@ class ProductionViewSet(ApiModelViewSet):
                 ).order_by("position"),
             ),
         )
-        .annotate(  # For filtering and ordering by event dates without extra queries
+        .annotate(
+            # Computed once at the queryset level — not language-dependent.
             first_event_start=Min("events__starts_at"),
             last_event_end=Max("events__ends_at"),
         )
@@ -144,30 +152,31 @@ class ProductionViewSet(ApiModelViewSet):
     ]
     ordering = ["-id"]
     search_fields = [
-        "title_search",
+        "title_sort",
         "artist_name_search",
         "tagline_search",
     ]
 
-    def _get_request_language_code(self) -> str:
-        """Resolve the preferred language from query params/header with sane fallback."""
-        raw = self.request.query_params.get("lang") or self.request.headers.get("Accept-Language", "")
-        candidate = raw.split(",", 1)[0].split(";", 1)[0].strip().lower()
-        if candidate:
-            return candidate.split("-", 1)[0]
-        return (getattr(settings, "LANGUAGE_CODE", "en") or "en").split("-", 1)[0].lower()
-
     def get_queryset(self) -> QuerySet[Production]:
-        """Annotate language-aware sorting and search fields for this request."""
+        """Annotate language-aware title and search fields for ordering and search.
+
+        ``title_sort`` is a single annotation reused for both alphabetical
+        ordering (``?ordering=title_sort``) and full-text search
+        (``?search=...``). It resolves to the title in the preferred request
+        language and falls back to any available translation when none exists
+        for that language.
+
+        ``artist_name_search`` and ``tagline_search`` follow the same
+        language-preference logic and are used only for full-text search.
+
+        Items without any translation at all resolve to NULL and are placed
+        last by :class:`~apps.core.ordering.NullsLastOrderingFilter`.
+        """
         language_code = self._get_request_language_code()
         queryset = super().get_queryset()
 
         return queryset.annotate(
             title_sort=Coalesce(
-                Min("translations__title", filter=Q(translations__language__code=language_code)),
-                Min("translations__title"),
-            ),
-            title_search=Coalesce(
                 Min("translations__title", filter=Q(translations__language__code=language_code)),
                 Min("translations__title"),
             ),
@@ -195,23 +204,35 @@ class ProductionViewSet(ApiModelViewSet):
     def retrieve(self, request: HttpRequest, *args: tuple, **kwargs: dict) -> HttpRequest:
         """Retrieve a production by its ID, with optional inclusion of related events.
 
-        When events are included, the queryset is optimized with additional prefetches to avoid N+1 queries.
+        When events are included, the queryset is extended with additional
+        prefetches for prices, hall, space, and location translations to
+        avoid N+1 queries on the detail response.
         """
         if "events" in self.includes:
             self.queryset = self.queryset.prefetch_related(
                 Prefetch(
                     "events",
                     queryset=Event.objects.prefetch_related(
-                        Prefetch("prices", queryset=EventPrice.objects.select_related("price_rank", "price")),
+                        Prefetch(
+                            "prices",
+                            queryset=EventPrice.objects.select_related("price_rank", "price"),
+                        ),
                         Prefetch(
                             "prices__price_rank__translations",
                             queryset=PriceRankTranslation.objects.select_related("language"),
                         ),
                         Prefetch(
-                            "prices__price__translations", queryset=PriceTranslation.objects.select_related("language")
+                            "prices__price__translations",
+                            queryset=PriceTranslation.objects.select_related("language"),
                         ),
-                        Prefetch("hall__translations", queryset=HallTranslation.objects.select_related("language")),
-                        Prefetch("hall__space__translations", queryset=SpaceTranslation.objects.select_related("language")),
+                        Prefetch(
+                            "hall__translations",
+                            queryset=HallTranslation.objects.select_related("language"),
+                        ),
+                        Prefetch(
+                            "hall__space__translations",
+                            queryset=SpaceTranslation.objects.select_related("language"),
+                        ),
                         Prefetch(
                             "hall__space__location__translations",
                             queryset=LocationTranslation.objects.select_related("language"),
