@@ -26,18 +26,20 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
       component={RouterLink}
       to={`/blogs/${blog.id}`}
       direction="row"
-      gap={3}
-      height={170}
-      padding={3}
-      borderRadius={tokens.borderRadius.sm}
-      overflow="hidden"
       sx={(theme) => ({
+        gap: 3,
+        height: 170,
+        p: 3,
+        borderRadius: tokens.borderRadius.sm,
+        overflow: 'hidden',
         backgroundColor: theme.palette.background.paper,
         border: `1px solid ${theme.palette.divider}`,
         textDecoration: 'none',
+        color: 'inherit',
         transition: 'box-shadow 0.2s ease',
         '&:hover': {
           boxShadow: theme.shadows[3],
+          color: 'inherit',
         },
       })}
     >
@@ -45,20 +47,27 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
         src={blog.cover_image ?? undefined}
         alt={title || t('blogs.home.coverAltFallback')}
         height="100%"
-        borderRadius={tokens.borderRadius.sm}
-        sx={{ aspectRatio: 16 / 9 }}
+        sx={{ aspectRatio: 16 / 9, borderRadius: tokens.borderRadius.sm }}
       />
 
       <Stack
-        flex={1}
-        minWidth={0}
-        height="100%"
-        justifyContent="space-between"
-        gap={1}
-        overflow="hidden"
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          height: '100%',
+          justifyContent: 'space-between',
+          gap: 1,
+          overflow: 'hidden',
+        }}
       >
         <Stack spacing={1}>
-          <Typography component="h2" variant="h6" color="text.primary" fontWeight="bold" noWrap>
+          <Typography
+            component="h2"
+            variant="h6"
+            color="text.primary"
+            noWrap
+            sx={{ fontWeight: 'bold' }}
+          >
             {title}
           </Typography>
 
@@ -77,7 +86,7 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
         </Stack>
 
         {publishedDate ? (
-          <Stack direction="row" alignItems="center" spacing={1} color="text.secondary">
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'text.secondary' }}>
             <DateRangeOutlinedIcon fontSize="inherit" />
             <Typography variant="body2" noWrap>
               {publishedDate}
@@ -90,7 +99,7 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
         )}
       </Stack>
 
-      <Box alignSelf="center" paddingRight={2}>
+      <Box sx={{ alignSelf: 'center', pr: 2 }}>
         <ArrowForwardOutlinedIcon color="action" />
       </Box>
     </Stack>
