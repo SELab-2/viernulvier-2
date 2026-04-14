@@ -1,6 +1,6 @@
 import { api } from '../../../src/services/Api'
-import { getBlog, getBlogs } from '../../../src/services/blogs/Blogs'
 import { ApiError } from '../../../src/services/ApiTypes'
+import { getBlog, getBlogs } from '../../../src/services/blogs/Blogs'
 
 jest.mock('../../../src/services/Api', () => ({
   api: {

@@ -1,6 +1,6 @@
 import { api } from '../../services/Api'
-import { getLanguage, getLanguages } from '../../services/languages/Languages'
 import { ApiError } from '../../services/ApiTypes'
+import { getLanguage, getLanguages } from '../../services/languages/Languages'
 
 jest.mock('../../services/Api', () => ({
   api: {

@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import SeriesDetailPage from '../../pages/SeriesDetailPage'
 
-import { getTag } from '../../services/tags/Tags'
+import SeriesDetailPage from '../../pages/SeriesDetailPage'
 import { getProductions } from '../../services/productions/Productions'
+import { getTag } from '../../services/tags/Tags'
 
 jest.mock('../../services/tags/Tags', () => ({
   getTag: jest.fn(),

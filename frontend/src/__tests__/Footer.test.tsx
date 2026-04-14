@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+
 import Footer from '../components/Footer'
 import i18n from '../i18n'
 

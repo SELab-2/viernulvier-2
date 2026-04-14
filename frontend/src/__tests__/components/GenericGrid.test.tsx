@@ -1,7 +1,9 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
-import type { ReactNode } from 'react'
+
 import GenericGrid from '../../components/GenericGrid'
+
+import type { ReactNode } from 'react'
 
 type Item = {
   id: number

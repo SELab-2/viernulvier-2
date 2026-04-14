@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import SearchControlsBar, {
-  SearchControlsBarProps,
-} from '../../components/searchbar/SearchControlsBar'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
+
+import SearchControlsBar, {
+  type SearchControlsBarProps,
+} from '../../components/searchbar/SearchControlsBar'
 import i18n from '../../i18n'
 
 const renderSearchBar = (props: SearchControlsBarProps) => {

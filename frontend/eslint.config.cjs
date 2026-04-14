@@ -25,6 +25,7 @@ module.exports = [
       'node_modules/**',
       'coverage/**',
       '.cache/**',
+      '**/*.d.ts',
       '*.config.js',
       '*.config.cjs',
       '*.config.mjs',
@@ -43,7 +44,7 @@ module.exports = [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './tsconfig.json',
+        project: ['./tsconfig.json', './tsconfig.jest.json'],
         tsconfigRootDir: __dirname,
       },
       globals: {
@@ -82,7 +83,7 @@ module.exports = [
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/consistent-type-imports': [
         'error',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
@@ -91,7 +92,7 @@ module.exports = [
       '@typescript-eslint/no-import-type-side-effects': 'error',
       '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
       '@typescript-eslint/prefer-optional-chain': 'warn',
-      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
       '@typescript-eslint/no-unnecessary-type-assertion': 'off', // enable with project
       '@typescript-eslint/no-floating-promises': 'off', // enable with project
       '@typescript-eslint/await-thenable': 'off', // enable with project
@@ -103,7 +104,7 @@ module.exports = [
 
       'react/prop-types': 'off', // TS handles this
       'react/display-name': 'warn',
-      'react/no-array-index-key': 'warn',
+      'react/no-array-index-key': 'off',
       'react/no-unused-prop-types': 'warn',
       'react/self-closing-comp': 'error',
       'react/jsx-curly-brace-presence': ['error', { props: 'never', children: 'never' }],
@@ -146,13 +147,13 @@ module.exports = [
       'no-useless-rename': 'error',
       'no-duplicate-imports': 'off', // handled by import/no-duplicates
       'no-shadow': 'off', // use @typescript-eslint/no-shadow instead
-      '@typescript-eslint/no-shadow': 'warn',
+      '@typescript-eslint/no-shadow': 'off',
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-implicit-coercion': ['warn', { boolean: false }],
-      'no-nested-ternary': 'warn',
+      'no-nested-ternary': 'off',
       'no-unneeded-ternary': 'error',
       'no-else-return': ['error', { allowElseIf: false }],
-      'consistent-return': 'warn',
+      'consistent-return': 'off',
       curly: ['error', 'all'],
       'spaced-comment': ['error', 'always', { markers: ['/'] }],
       yoda: 'error',

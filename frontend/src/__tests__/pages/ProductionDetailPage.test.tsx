@@ -1,8 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+
 import ProductionDetailPage from '../../pages/ProductionDetailPage'
 import { getProduction } from '../../services/productions/Productions'
+
 import type { Event } from '../../types/Events'
 import type { Production } from '../../types/Productions'
 

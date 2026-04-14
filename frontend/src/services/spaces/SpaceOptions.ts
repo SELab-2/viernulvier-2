@@ -1,3 +1,5 @@
+import type { Hall } from '../../types/Halls'
+import type { Space } from '../../types/Spaces'
 import type { FilteredListOptions } from '../ApiTypes'
 
 /**
@@ -19,9 +21,6 @@ export interface SpaceFilters {
  * `external_id`).
  */
 export type GetSpacesOptions = FilteredListOptions<SpaceFilters>
-
-import type { Hall } from '../../types/Halls'
-import type { Space } from '../../types/Spaces'
 
 /**
  * Internal: shape of a hall as nested in a space response (no `space` field).
