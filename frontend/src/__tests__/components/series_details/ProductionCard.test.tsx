@@ -11,7 +11,7 @@ describe('ProductionCard', () => {
     tags: [
       { id: 1, name: 'Festival', labels: { nl: 'Festival', en: 'Festival' } },
       { id: 2, name: 'Audiovisueel', labels: { nl: 'Audiovisueel', en: 'Audiovisual' } },
-      { id: 3, name: '3 dagen', labels: { nl: '3 dagen', en: '3 days' } },
+      { id: 3, name: 'Performance', labels: { nl: 'Performance', en: 'Performance' } },
     ],
   }
 
@@ -23,39 +23,35 @@ describe('ProductionCard', () => {
     )
   }
 
-  it('renders title, meta, description and tags', () => {
+  it('renders title, meta, description and genres', () => {
     renderCard()
 
     expect(screen.getByText(defaultProps.title)).toBeInTheDocument()
     expect(screen.getByText(defaultProps.meta)).toBeInTheDocument()
     expect(screen.getByText(defaultProps.description)).toBeInTheDocument()
 
-    defaultProps.tags.forEach((tag) => {
-      expect(screen.getByText(tag.name)).toBeInTheDocument()
+    defaultProps.tags.forEach((genre) => {
+      expect(screen.getByText(genre.name)).toBeInTheDocument()
     })
   })
 
-  it('renders all provided tags as clickable chips', () => {
-    const tags = [
+  it('renders all provided genres as chips', () => {
+    const genres = [
       { id: 1, name: 'Festival', labels: { nl: 'Festival', en: 'Festival' } },
       { id: 2, name: 'Live visuals', labels: { nl: 'Live visuals', en: 'Live visuals' } },
-      { id: 3, name: '25 artiesten', labels: { nl: '25 artiesten', en: '25 artists' } },
-      { id: 4, name: '3 dagen', labels: { nl: '3 dagen', en: '3 days' } },
+      { id: 3, name: 'Audiovisueel', labels: { nl: 'Audiovisueel', en: 'Audiovisual' } },
+      { id: 4, name: 'Performance', labels: { nl: 'Performance', en: 'Performance' } },
     ]
 
     renderCard({
       title: 'VIDEODROOM 2023',
       meta: '10e editie',
       description: 'Beschrijving',
-      tags,
+      tags: genres,
     })
 
-    tags.forEach((tag) => {
-      expect(screen.getByText(tag.name)).toBeInTheDocument()
+    genres.forEach((genre) => {
+      expect(screen.getByText(genre.name)).toBeInTheDocument()
     })
-
-    const links = screen.getAllByRole('link')
-    expect(links).toHaveLength(tags.length)
-    expect(links[0]).toHaveAttribute('href', '/series/1')
   })
 })

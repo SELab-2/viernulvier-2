@@ -86,14 +86,14 @@ const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
           />
 
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-            {tags.map((tag) => (
+            {tags.map((genre) => (
               <GenreAndTagChip
-                key={tag.id}
-                name={tag.name}
-                labels={tag.labels ?? {}}
-                id={tag.id}
-                chipType="seriesTag"
-                context="series"
+                key={genre.id}
+                name={genre.name}
+                labels={genre.labels ?? {}}
+                id={genre.id}
+                chipType="genre"
+                context="static"
               />
             ))}
           </Stack>

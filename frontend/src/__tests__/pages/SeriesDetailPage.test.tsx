@@ -90,6 +90,7 @@ describe('SeriesDetailPage', () => {
           teaser: { nl: 'Beschrijving productie' },
           description: { nl: 'Beschrijving productie' },
           artist_name: { nl: 'Artiest' },
+          genres: [],
           tags: [],
         },
       ],
@@ -185,6 +186,7 @@ describe('SeriesDetailPage', () => {
           teaser: { nl: 'Beschrijving productie' },
           description: { nl: 'Beschrijving productie' },
           artist_name: { nl: 'Artiest' },
+          genres: [],
           tags: [],
         },
       ],
@@ -196,5 +198,51 @@ describe('SeriesDetailPage', () => {
     fireEvent.click(productionCard)
 
     expect(await screen.findByText('PRODUCTION DETAIL')).toBeInTheDocument()
+  })
+
+  it('renders production genres in the production card', async () => {
+    mockedGetTag.mockResolvedValue({
+      id: 1,
+      name: { nl: 'VIDEODROOM' },
+      short_description: { nl: 'Beschrijving van de reeks' },
+      type: 'festival',
+    })
+
+    mockedGetProductions.mockResolvedValue({
+      results: [
+        {
+          id: 1,
+          display_title: 'VIDEODROOM 2024',
+          title: { nl: 'VIDEODROOM 2024' },
+          teaser: { nl: 'Beschrijving productie' },
+          description: { nl: 'Beschrijving productie' },
+          artist_name: { nl: 'Artiest' },
+          genres: [
+            {
+              id: 10,
+              type: 'genre',
+              use_as: { id: 1, name: 'genre' },
+              name: { nl: 'Audiovisueel', en: 'Audiovisual' },
+              display_name: null,
+              vendor_id: null,
+            },
+            {
+              id: 11,
+              type: 'genre',
+              use_as: { id: 1, name: 'genre' },
+              name: { nl: 'Performance', en: 'Performance' },
+              display_name: null,
+              vendor_id: null,
+            },
+          ],
+          tags: [],
+        },
+      ],
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('Audiovisueel')).toBeInTheDocument()
+    expect(screen.getByText('Performance')).toBeInTheDocument()
   })
 })
