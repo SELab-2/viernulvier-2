@@ -11,7 +11,7 @@ export interface EntityGridProps<T> {
 const EntityGrid = <T,>({ items, getKey, renderItem }: EntityGridProps<T>) => {
   return (
     // Let cards wrap naturally while keeping the grid centered.
-    <Box display="flex" flexWrap="wrap" gap={3} justifyContent="center">
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'center' }}>
       {items.map((item) => (
         <Fragment key={getKey(item)}>{renderItem(item)}</Fragment>
       ))}

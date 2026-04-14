@@ -51,12 +51,12 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
       component={RouterLink}
       to={`/series/${series.tag.id}`}
       direction="row"
-      gap={3}
-      height={170}
-      padding={3}
-      borderRadius="4px"
-      overflow="hidden"
       sx={(theme) => ({
+        gap: 3,
+        height: 170,
+        p: 3,
+        borderRadius: '4px',
+        overflow: 'hidden',
         backgroundColor: theme.palette.background.paper,
         border: `1px solid ${theme.palette.divider}`,
         textDecoration: 'none',
@@ -70,20 +70,27 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
         src={series.lastProductionImage}
         alt={title}
         height="100%"
-        borderRadius="4px"
-        sx={{ aspectRatio: 16 / 9 }}
+        sx={{ aspectRatio: 16 / 9, borderRadius: '4px' }}
       />
 
       <Stack
-        flex={1}
-        minWidth={0}
-        height="100%"
-        justifyContent="space-between"
-        gap={1}
-        overflow="hidden"
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          height: '100%',
+          justifyContent: 'space-between',
+          gap: 1,
+          overflow: 'hidden',
+        }}
       >
         <Stack>
-          <Typography component="h2" variant="h6" color="textPrimary" fontWeight="bold" noWrap>
+          <Typography
+            component="h2"
+            variant="h6"
+            color="textPrimary"
+            noWrap
+            sx={{ fontWeight: 'bold' }}
+          >
             {title}
           </Typography>
 
@@ -95,7 +102,7 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
         </Stack>
 
         {dateLabel ? (
-          <Stack direction="row" alignItems="center" spacing={1} color="text.secondary">
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'text.secondary' }}>
             <DateRangeOutlinedIcon fontSize="inherit" />
             <Typography variant="body2" noWrap>
               {dateLabel}
@@ -105,7 +112,7 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
       </Stack>
 
       {/* Arrow affordance for the detail link. */}
-      <Box alignSelf="center" paddingRight={2}>
+      <Box sx={{ alignSelf: 'center', pr: 2 }}>
         <ArrowForwardOutlinedIcon color="action" />
       </Box>
     </Stack>

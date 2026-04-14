@@ -49,10 +49,10 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
     <Stack
       component={RouterLink}
       to={`/series/${series.tag.id}`}
-      width={350}
-      borderRadius={4}
-      overflow="hidden"
       sx={(theme) => ({
+        width: 350,
+        borderRadius: 4,
+        overflow: 'hidden',
         textDecoration: 'none',
         border: `1px solid ${theme.palette.divider}`,
         backgroundColor: theme.palette.background.paper,
@@ -68,9 +68,15 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
         sx={{ aspectRatio: 16 / 9 }}
       />
 
-      <Stack flex={1} justifyContent="space-between" gap={1} padding={3}>
+      <Stack sx={{ flex: 1, justifyContent: 'space-between', gap: 1, p: 3 }}>
         <Stack>
-          <Typography component="h2" variant="h6" color="textPrimary" fontWeight="bold" noWrap>
+          <Typography
+            component="h2"
+            variant="h6"
+            color="textPrimary"
+            noWrap
+            sx={{ fontWeight: 'bold' }}
+          >
             {title}
           </Typography>
 
@@ -82,7 +88,7 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
         </Stack>
 
         {dateLabel ? (
-          <Stack direction="row" alignItems="center" spacing={1} color="text.secondary">
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'text.secondary' }}>
             <DateRangeOutlinedIcon fontSize="inherit" />
             <Typography variant="body2" noWrap>
               {dateLabel}
