@@ -5,9 +5,10 @@
   "dutch": "Dutch",
   "nav": {
     "home": "Archive",
-    "events": "Series",
+    "series": "Series",
     "productions": "Artists",
-    "blogs": "Stories",
+    "blogs": "Blogs",
+    "media": "Media",
     "mainNav": "Main navigation",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
@@ -179,8 +180,8 @@
       "ariaLabel": "Navigation",
       "home": "Archive",
       "series": "Series",
-      "events": "Events",
-      "blogs": "Stories"
+      "blogs": "Blogs",
+      "media": "Media"
     },
     "newsletter": {
       "cta": "stay up to date"
@@ -188,6 +189,7 @@
   },
   "series": {
     "backToSeries": "Back to series",
+    "listPlaceholder": "List of series will be displayed here.",
     "allEditions": "All editions",
     "allEditionsSubtitle": "Chronological overview of the productions within this series.",
     "breadcrumb": "Archive / Series / {{name}}",

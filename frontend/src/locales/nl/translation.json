@@ -5,9 +5,10 @@
   "dutch": "Nederlands",
   "nav": {
     "home": "Archief",
-    "events": "Reeksen",
+    "series": "Reeksen",
     "productions": "Artiesten",
-    "blogs": "Verhalen",
+    "blogs": "Blogs",
+    "media": "Media",
     "mainNav": "Hoofdnavigatie",
     "openMenu": "Menu openen",
     "closeMenu": "Menu sluiten",
@@ -179,8 +180,8 @@
       "ariaLabel": "Navigatie",
       "home": "Archief",
       "series": "Reeksen",
-      "events": "Evenementen",
-      "blogs": "Verhalen"
+      "blogs": "Blogs",
+      "media": "Media"
     },
     "newsletter": {
       "cta": "blijf op de hoogte"
@@ -188,6 +189,7 @@
   },
   "series": {
     "backToSeries": "Terug naar reeksen",
+    "listPlaceholder": "Lijst met reeksen wordt hier weergegeven.",
     "allEditions": "Alle edities",
     "allEditionsSubtitle": "Chronologisch overzicht van de producties binnen deze reeks.",
     "breadcrumb": "Archief / Reeksen / {{name}}",
