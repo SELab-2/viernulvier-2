@@ -200,7 +200,7 @@ describe('SeriesDetailPage', () => {
     expect(await screen.findByText('PRODUCTION DETAIL')).toBeInTheDocument()
   })
 
-  it('renders production genres in the production card', async () => {
+  it('renders both production genres and series tags in the production card', async () => {
     mockedGetTag.mockResolvedValue({
       id: 1,
       name: { nl: 'VIDEODROOM' },
@@ -235,7 +235,20 @@ describe('SeriesDetailPage', () => {
               vendor_id: null,
             },
           ],
-          tags: [],
+          tags: [
+            {
+              id: 20,
+              name: { nl: 'Festivalreeks', en: 'Festival series' },
+              display_name: null,
+              type: 'series',
+            },
+            {
+              id: 21,
+              name: { nl: 'Videodroom', en: 'Videodroom' },
+              display_name: null,
+              type: 'series',
+            },
+          ],
         },
       ],
     })
@@ -244,5 +257,13 @@ describe('SeriesDetailPage', () => {
 
     expect(await screen.findByText('Audiovisueel')).toBeInTheDocument()
     expect(screen.getByText('Performance')).toBeInTheDocument()
+    expect(screen.getByText('Festivalreeks')).toBeInTheDocument()
+    expect(screen.getByText('Videodroom')).toBeInTheDocument()
+
+    expect(screen.getByRole('link', { name: 'Festivalreeks' })).toHaveAttribute(
+      'href',
+      '/series/20',
+    )
+    expect(screen.getByRole('link', { name: 'Videodroom' })).toHaveAttribute('href', '/series/21')
   })
 })

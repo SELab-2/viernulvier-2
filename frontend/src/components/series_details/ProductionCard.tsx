@@ -1,5 +1,5 @@
 /*
- * Displays a single production with metadata, description and tags.
+ * Displays a single production with metadata, description, genres and series tags.
  * Designed to be reusable across different pages (lists, search, etc.).
  */
 
@@ -8,7 +8,7 @@ import DOMPurify from 'dompurify'
 import type { KeyboardEvent, MouseEvent } from 'react'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
 
-type ProductionTag = {
+type ProductionChip = {
   id: number | string
   name: string
   labels?: Record<string, string>
@@ -19,11 +19,12 @@ type Props = {
   title: string
   meta: string
   description: string
-  tags: ProductionTag[]
+  genres: ProductionChip[]
+  seriesTags: ProductionChip[]
   onClick?: (event: MouseEvent<HTMLDivElement>) => void
 }
 
-const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
+const ProductionCard = ({ title, meta, description, genres, seriesTags, onClick }: Props) => {
   const isInteractive = typeof onClick === 'function'
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -86,14 +87,25 @@ const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
           />
 
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-            {tags.map((genre) => (
+            {genres.map((genre) => (
               <GenreAndTagChip
-                key={genre.id}
+                key={`genre-${genre.id}`}
                 name={genre.name}
                 labels={genre.labels ?? {}}
                 id={genre.id}
                 chipType="genre"
                 context="static"
+              />
+            ))}
+
+            {seriesTags.map((tag) => (
+              <GenreAndTagChip
+                key={`tag-${tag.id}`}
+                name={tag.name}
+                labels={tag.labels ?? {}}
+                id={tag.id}
+                chipType="seriesTag"
+                context="series"
               />
             ))}
           </Stack>

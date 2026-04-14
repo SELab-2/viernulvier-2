@@ -8,10 +8,13 @@ describe('ProductionCard', () => {
     title: 'VIDEODROOM 2024',
     meta: '11e editie · 3–5 mei 2024',
     description: 'Een audiovisuele editie met live visuals en performances.',
-    tags: [
-      { id: 1, name: 'Festival', labels: { nl: 'Festival', en: 'Festival' } },
-      { id: 2, name: 'Audiovisueel', labels: { nl: 'Audiovisueel', en: 'Audiovisual' } },
-      { id: 3, name: 'Performance', labels: { nl: 'Performance', en: 'Performance' } },
+    genres: [
+      { id: 1, name: 'Audiovisueel', labels: { nl: 'Audiovisueel', en: 'Audiovisual' } },
+      { id: 2, name: 'Performance', labels: { nl: 'Performance', en: 'Performance' } },
+    ],
+    seriesTags: [
+      { id: 10, name: 'VIDEODROOM', labels: { nl: 'VIDEODROOM', en: 'VIDEODROOM' } },
+      { id: 11, name: 'Festivalreeks', labels: { nl: 'Festivalreeks', en: 'Festival series' } },
     ],
   }
 
@@ -23,35 +26,66 @@ describe('ProductionCard', () => {
     )
   }
 
-  it('renders title, meta, description and genres', () => {
+  it('renders title, meta, description, genres and series tags', () => {
     renderCard()
 
     expect(screen.getByText(defaultProps.title)).toBeInTheDocument()
     expect(screen.getByText(defaultProps.meta)).toBeInTheDocument()
     expect(screen.getByText(defaultProps.description)).toBeInTheDocument()
 
-    defaultProps.tags.forEach((genre) => {
+    defaultProps.genres.forEach((genre) => {
       expect(screen.getByText(genre.name)).toBeInTheDocument()
+    })
+
+    defaultProps.seriesTags.forEach((tag) => {
+      expect(screen.getByText(tag.name)).toBeInTheDocument()
     })
   })
 
-  it('renders all provided genres as chips', () => {
-    const genres = [
-      { id: 1, name: 'Festival', labels: { nl: 'Festival', en: 'Festival' } },
-      { id: 2, name: 'Live visuals', labels: { nl: 'Live visuals', en: 'Live visuals' } },
-      { id: 3, name: 'Audiovisueel', labels: { nl: 'Audiovisueel', en: 'Audiovisual' } },
-      { id: 4, name: 'Performance', labels: { nl: 'Performance', en: 'Performance' } },
-    ]
+  it('renders genre chips and clickable series tag chips', () => {
+    renderCard()
 
+    expect(screen.getByText('Audiovisueel')).toBeInTheDocument()
+    expect(screen.getByText('Performance')).toBeInTheDocument()
+
+    const seriesLinks = screen.getAllByRole('link')
+    expect(seriesLinks).toHaveLength(defaultProps.seriesTags.length)
+    expect(seriesLinks[0]).toHaveAttribute('href', '/series/10')
+    expect(seriesLinks[1]).toHaveAttribute('href', '/series/11')
+  })
+
+  it('renders only genres when no series tags are provided', () => {
     renderCard({
       title: 'VIDEODROOM 2023',
       meta: '10e editie',
       description: 'Beschrijving',
-      tags: genres,
+      genres: [
+        { id: 1, name: 'Live visuals', labels: { nl: 'Live visuals', en: 'Live visuals' } },
+        { id: 2, name: 'Experimenteel', labels: { nl: 'Experimenteel', en: 'Experimental' } },
+      ],
+      seriesTags: [],
     })
 
-    genres.forEach((genre) => {
-      expect(screen.getByText(genre.name)).toBeInTheDocument()
+    expect(screen.getByText('Live visuals')).toBeInTheDocument()
+    expect(screen.getByText('Experimenteel')).toBeInTheDocument()
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  })
+
+  it('renders only series tags when no genres are provided', () => {
+    renderCard({
+      title: 'VIDEODROOM 2022',
+      meta: '9e editie',
+      description: 'Beschrijving',
+      genres: [],
+      seriesTags: [
+        { id: 30, name: 'Retrospectieve', labels: { nl: 'Retrospectieve', en: 'Retrospective' } },
+      ],
     })
+
+    expect(screen.getByText('Retrospectieve')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Retrospectieve' })).toHaveAttribute(
+      'href',
+      '/series/30',
+    )
   })
 })
