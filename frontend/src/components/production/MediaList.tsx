@@ -204,7 +204,7 @@ export default function MediaList({ mediaItems }: MediaListProps) {
                 top: 10,
                 right: 10,
                 zIndex: 2,
-                color: 'common.white',
+                color: 'text.primary',
                 backgroundColor: 'action.hover',
                 '&:hover': {
                   backgroundColor: 'action.selected',
@@ -223,7 +223,7 @@ export default function MediaList({ mediaItems }: MediaListProps) {
                   width: '100%',
                   maxHeight: '90vh',
                   objectFit: 'contain',
-                  backgroundColor: tokens.colors.neutral.gray900,
+                  backgroundColor: 'background.paper',
                   display: 'block',
                 }}
               />

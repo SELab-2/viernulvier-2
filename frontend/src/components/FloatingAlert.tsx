@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import CloseIcon from '@mui/icons-material/Close'
 import { Snackbar, Box, IconButton } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import { alpha, useTheme } from '@mui/material/styles'
 
 import { tokens } from '../theme/tokens'
 
@@ -37,37 +37,31 @@ const FloatingAlert = ({
 
   const severityConfig: Record<
     FloatingAlertSeverity,
-    { bgColor: string; textColor: string; borderColor: string }
+    { bgColor: string; textColor: string; borderColor: string; titleColor: string }
   > = {
     error: {
-      bgColor: theme.palette.mode === 'dark' ? theme.palette.error.dark : theme.palette.error.light,
-      textColor: theme.palette.getContrastText(
-        theme.palette.mode === 'dark' ? theme.palette.error.dark : theme.palette.error.light,
-      ),
-      borderColor: theme.palette.error.main,
+      bgColor: alpha(theme.palette.error.main, theme.palette.mode === 'dark' ? 0.22 : 0.12),
+      textColor: theme.palette.text.primary,
+      borderColor: alpha(theme.palette.error.main, theme.palette.mode === 'dark' ? 0.6 : 0.36),
+      titleColor: theme.palette.error.main,
     },
     warning: {
-      bgColor:
-        theme.palette.mode === 'dark' ? theme.palette.warning.dark : theme.palette.warning.light,
-      textColor: theme.palette.getContrastText(
-        theme.palette.mode === 'dark' ? theme.palette.warning.dark : theme.palette.warning.light,
-      ),
-      borderColor: theme.palette.warning.main,
+      bgColor: alpha(theme.palette.warning.main, theme.palette.mode === 'dark' ? 0.22 : 0.12),
+      textColor: theme.palette.text.primary,
+      borderColor: alpha(theme.palette.warning.main, theme.palette.mode === 'dark' ? 0.6 : 0.36),
+      titleColor: theme.palette.warning.main,
     },
     info: {
-      bgColor: theme.palette.mode === 'dark' ? theme.palette.info.dark : theme.palette.info.light,
-      textColor: theme.palette.getContrastText(
-        theme.palette.mode === 'dark' ? theme.palette.info.dark : theme.palette.info.light,
-      ),
-      borderColor: theme.palette.info.main,
+      bgColor: alpha(theme.palette.info.main, theme.palette.mode === 'dark' ? 0.22 : 0.12),
+      textColor: theme.palette.text.primary,
+      borderColor: alpha(theme.palette.info.main, theme.palette.mode === 'dark' ? 0.6 : 0.36),
+      titleColor: theme.palette.info.main,
     },
     success: {
-      bgColor:
-        theme.palette.mode === 'dark' ? theme.palette.success.dark : theme.palette.success.light,
-      textColor: theme.palette.getContrastText(
-        theme.palette.mode === 'dark' ? theme.palette.success.dark : theme.palette.success.light,
-      ),
-      borderColor: theme.palette.success.main,
+      bgColor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.22 : 0.12),
+      textColor: theme.palette.text.primary,
+      borderColor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.6 : 0.36),
+      titleColor: theme.palette.success.main,
     },
   }
 
@@ -108,6 +102,7 @@ const FloatingAlert = ({
           py: 1.5,
           borderRadius: tokens.borderRadius.sm,
           border: `1px solid ${config.borderColor}`,
+          borderLeft: `4px solid ${config.titleColor}`,
           bgcolor: config.bgColor,
           color: config.textColor,
           maxWidth: 400,
@@ -121,6 +116,7 @@ const FloatingAlert = ({
                 fontWeight: 600,
                 fontSize: '0.95rem',
                 mb: 0.25,
+                color: config.titleColor,
               }}
             >
               {title}
@@ -145,7 +141,7 @@ const FloatingAlert = ({
             flexShrink: 0,
             p: 0,
             '&:hover': {
-              bgcolor: tokens.colors.overlay.black05,
+              bgcolor: theme.palette.action.hover,
             },
           }}
         >

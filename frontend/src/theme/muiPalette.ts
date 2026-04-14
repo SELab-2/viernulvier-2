@@ -5,7 +5,7 @@
  * Supports light and dark modes with semantic color mapping.
  */
 
-import { createTheme, type ThemeOptions } from '@mui/material/styles'
+import { alpha, createTheme, type ThemeOptions } from '@mui/material/styles'
 
 import { tokens } from './tokens'
 
@@ -63,13 +63,12 @@ export const createAppTheme = (mode: 'light' | 'dark' = 'light') => {
         secondary: colorSet.textMuted,
       },
       divider: colorSet.divider,
-      ...(isDark && {
-        action: {
-          hover: colorSet.hover,
-          disabled: tokens.colors.dark.textMuted,
-          disabledBackground: tokens.colors.dark.border,
-        },
-      }),
+      action: {
+        hover: alpha(colorSet.text, isDark ? 0.1 : 0.05),
+        selected: alpha(colorSet.text, isDark ? 0.18 : 0.1),
+        disabled: colorSet.textMuted,
+        disabledBackground: colorSet.border,
+      },
     },
     typography: {
       fontFamily: typography.fontFamily,
