@@ -27,6 +27,7 @@ export interface CollectionPageLayoutProps {
   resultsRegionAriaLabel: string
   isLoading: boolean
   loadingLabel: string
+  loadingContent?: ReactNode
   errorMessage: string | null
   retryLabel: string
   onRetry: () => void
@@ -102,6 +103,7 @@ const CollectionPageLayout = ({
   resultsRegionAriaLabel,
   isLoading,
   loadingLabel,
+  loadingContent,
   errorMessage,
   retryLabel,
   onRetry,
@@ -122,9 +124,7 @@ const CollectionPageLayout = ({
   const resultsSection = (
     <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ flex: 1, minWidth: 0 }}>
       {isLoading ? (
-        <Box sx={{ py: 8 }}>
-          <LoadingSpinner label={loadingLabel} />
-        </Box>
+        <Box sx={{ py: 8 }}>{loadingContent ?? <LoadingSpinner label={loadingLabel} />}</Box>
       ) : null}
 
       {/* Error */}
