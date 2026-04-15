@@ -1,5 +1,5 @@
 import axios from 'axios'
-
+import i18n from '../i18n'
 import { normalizeApiError } from './ApiErrorMapper'
 
 // When running Vite, `process.env.PUBLIC_API_KEY` is replaced from envdefs.
@@ -26,6 +26,12 @@ export const api = axios.create({
     'Content-Type': 'application/json',
     'X-API-Key': API_KEY,
   },
+})
+
+api.interceptors.request.use((config) => {
+  const resolvedLanguage = (i18n.resolvedLanguage || i18n.language || 'nl').split('-', 1)[0]
+  config.headers.set('Accept-Language', resolvedLanguage)
+  return config
 })
 
 /**

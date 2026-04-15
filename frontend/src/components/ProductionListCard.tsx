@@ -117,17 +117,21 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
           <Stack
             direction="row"
             spacing={0.75}
-            sx={{ flexWrap: 'wrap', height: 24, overflow: 'hidden' }}
+            sx={{ flexWrap: 'wrap', height: 32, overflow: 'hidden' }}
           >
             {genres.map((genre) => (
               <GenreAndTagChip
                 key={genre.id}
-                name={genre.display_name || ''} // TODO: resolve so there is always a fallback
-                labels={{}}
+                name={getTranslatedRecord(
+                  genre.name,
+                  language,
+                  genre.display_name ?? String(genre.id),
+                )}
+                labels={genre.name || {}}
                 chipType="genre"
                 context="static"
                 id={genre.id}
-                selected={selectedGenreIds?.includes(genre.id)} // TODO: fix this so selected is never undefined
+                selected={selectedGenreIds?.includes(genre.id) || false}
               />
             ))}
           </Stack>
