@@ -12,7 +12,7 @@ from rest_framework.test import APIClient
 from apps.productions.filters import ProductionFilter
 from apps.productions.models import Production
 from tests.factories.event import EventFactory
-from tests.factories.genre import GenreFactory, GenreUseAsFactory
+from tests.factories.genre import GenreFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.media_library import MediaGalleryFactory
 from tests.factories.production import (
@@ -73,9 +73,8 @@ class TestProductionFilter:
         assert self._qs({"uit_database_type": type_a.id}).count() == 1
 
     def test_filter_by_genre(self) -> None:
-        use_as = GenreUseAsFactory()
-        genre_a = GenreFactory(use_as=use_as)
-        genre_b = GenreFactory(use_as=use_as)
+        genre_a = GenreFactory()
+        genre_b = GenreFactory()
         prod_a = ProductionFactory()
         prod_b = ProductionFactory()
         ProductionGenreFactory(production=prod_a, genre=genre_a, position=1)
@@ -87,9 +86,8 @@ class TestProductionFilter:
         assert result.first() == prod_a
 
     def test_filter_by_genre_distinct_no_duplicates(self) -> None:
-        use_as = GenreUseAsFactory()
-        genre_a = GenreFactory(use_as=use_as)
-        genre_b = GenreFactory(use_as=use_as)
+        genre_a = GenreFactory()
+        genre_b = GenreFactory()
         prod = ProductionFactory()
         ProductionGenreFactory(production=prod, genre=genre_a, position=1)
         ProductionGenreFactory(production=prod, genre=genre_b, position=2)
@@ -224,8 +222,7 @@ class TestProductionViewSet(TestCase):
         assert len(results) == 1
 
     def test_filter_by_genre(self) -> None:
-        use_as = GenreUseAsFactory()
-        genre = GenreFactory(use_as=use_as)
+        genre = GenreFactory()
         prod = ProductionFactory()
         ProductionGenreFactory(production=prod, genre=genre, position=1)
         ProductionFactory()

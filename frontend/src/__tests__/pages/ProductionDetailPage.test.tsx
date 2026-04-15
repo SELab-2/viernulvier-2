@@ -166,7 +166,6 @@ describe('ProductionDetailPage', () => {
         {
           id: 1,
           type: 'genre',
-          use_as: { id: 1, name: 'main' },
           name: { nl: 'Drama' },
           display_name: 'Drama',
           vendor_id: null,

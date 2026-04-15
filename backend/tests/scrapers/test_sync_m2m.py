@@ -269,9 +269,7 @@ class TestSyncM2M:
 
         class Through:
             class objects:
-                @staticmethod
-                def filter(**_):
-                    return None
+                filter = staticmethod(lambda **_: None)
 
         cfg = M2MConfig(api_key="missing", related_model=DummyRelated, through_model=Through, parent_fk="p", related_fk="r")
 

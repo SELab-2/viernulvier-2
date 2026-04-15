@@ -2,8 +2,6 @@ import { api } from '../../../src/services/Api'
 import { getEvent, getEvents } from '../../../src/services/events/Events'
 import { ApiError } from '../../../src/services/ApiTypes'
 
-const nestedGenreUseAs = { id: 2, name: 'genre' }
-
 const nestedProduction = {
   id: 1,
   attendance_mode: 'offline',
@@ -21,7 +19,6 @@ const nestedProduction = {
     {
       id: 10,
       type: 'theater',
-      use_as: nestedGenreUseAs,
       name: { en: 'Theatre', nl: 'Theater' },
       display_name: 'Theater',
       vendor_id: 'vendor-42',

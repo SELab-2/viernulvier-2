@@ -37,7 +37,6 @@ describe('buildListParams', () => {
         page: 3,
         pageSize: 10,
         filters: {
-          use_as: 2,
           ordering: '-name',
           external_id: '/genres/123',
         },
@@ -45,7 +44,6 @@ describe('buildListParams', () => {
     ).toEqual({
       page: 3,
       page_size: 10,
-      use_as: 2,
       ordering: '-name',
       external_id: '/genres/123',
     })

@@ -17,7 +17,6 @@ const accentTheme = createTheme({
 const minimalGenre = (id: number, nlName: string): Genre => ({
   id,
   type: 'primary',
-  use_as: { id: 1, name: 'cat' },
   name: { nl: nlName },
   display_name: nlName,
   vendor_id: null,

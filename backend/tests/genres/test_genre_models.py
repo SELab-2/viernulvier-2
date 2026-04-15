@@ -7,29 +7,10 @@ from apps.genres.models import Genre, GenreTranslation
 from tests.factories.genre import (
     GenreFactory,
     GenreTranslationFactory,
-    GenreUseAsFactory,
 )
 from tests.factories.language import LanguageFactory
 
 pytestmark = pytest.mark.django_db
-
-# =====================================================
-# GenreUseAs
-# =====================================================
-
-
-class TestGenreUseAs:
-    def test_requires_name(self) -> None:
-        instance = GenreUseAsFactory.build(name="")
-        with pytest.raises(ValidationError):
-            instance.full_clean()
-
-    def test_reverse_relation_genres(self) -> None:
-        use_as = GenreUseAsFactory()
-        GenreFactory.create_batch(3, use_as=use_as)
-
-        assert use_as.genres.count() == 3
-
 
 # =====================================================
 # Genre
@@ -37,11 +18,6 @@ class TestGenreUseAs:
 
 
 class TestGenre:
-    def test_requires_use_as(self) -> None:
-        genre = GenreFactory.build(use_as=None)
-        with pytest.raises(ValidationError):
-            genre.full_clean()
-
     def test_str_representation_contains_translations(self) -> None:
         genre = GenreFactory(type="Festival")
         GenreTranslationFactory(genre=genre, language__code="en", name="EN Festival")
@@ -99,18 +75,6 @@ class TestGenreTranslation:
 
 
 class TestCascadeBehaviour:
-    def test_deleting_use_as_cascades_to_genres(self) -> None:
-        use_as = GenreUseAsFactory()
-        GenreFactory(use_as=use_as)
-
-        # Check if the setup is correct
-        assert Genre.objects.count() == 1
-
-        use_as.delete()
-
-        # Check if the genre was deleted
-        assert Genre.objects.count() == 0
-
     def test_deleting_language_cascades_to_translations(self) -> None:
         language = LanguageFactory()
         GenreTranslationFactory(language=language)

@@ -24,7 +24,7 @@ from typing import Any
 from django.core.management.base import BaseCommand
 
 from apps.events.models import Event, EventPrice
-from apps.genres.models import Genre, GenreTranslation, GenreUseAs
+from apps.genres.models import Genre, GenreTranslation
 from apps.imports.scrapers.viernulvier import (
     M2MConfig,
     ModelSyncConfig,
@@ -74,18 +74,6 @@ except ImportError:
         return None
 
 
-# ---------------------------------------------------------------------------
-# FK resolvers
-# ---------------------------------------------------------------------------
-
-
-def _resolve_genre_use_as(raw_value: Any) -> int | None:
-    """Resolve the GenreUseAs FK by name, creating the row if needed."""
-    name = str(raw_value).strip() if raw_value else "unknown"
-    obj, _ = GenreUseAs.objects.get_or_create(name=name)
-    return obj.pk
-
-
 def _create_uitdatabank_theme_genre(external_id: str, raw_item: Any) -> int | None:
     """Create a Genre for an uitdatabank theme when missing.
 
@@ -96,11 +84,8 @@ def _create_uitdatabank_theme_genre(external_id: str, raw_item: Any) -> int | No
     if not external_id:
         return None
 
-    use_as_obj, _ = GenreUseAs.objects.get_or_create(name="genre")
-
     defaults: dict[str, Any] = {
         "type": "uitdatabank_theme",
-        "use_as": use_as_obj,
     }
 
     name = raw_item.get("name") if isinstance(raw_item, dict) else None
@@ -128,13 +113,11 @@ GENRE_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
         "type": "type",
-        "use_as": "use_as",
         "vendor_id": "vendor_id",
         "name": None,
         "slug": None,
         "description": None,
     },
-    fk_resolvers={"use_as": _resolve_genre_use_as},
     value_transforms={"vendor_id": clean_vendor_id},
     translations=[
         TranslationConfig("name", GenreTranslation, "genre", "name", "language_id"),

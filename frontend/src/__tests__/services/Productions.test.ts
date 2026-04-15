@@ -70,7 +70,6 @@ describe('productions service', () => {
       {
         id: 3,
         type: 'theater',
-        use_as: 2,
         name: {
           en: 'Theatre',
         },

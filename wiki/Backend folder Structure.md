@@ -48,7 +48,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── genres/                      # GENRE + GENRE_USE_AS + GENRE_TRANSLATION tables
+│   ├── genres/                      # GENRE + GENRE_TRANSLATION tables
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── models.py

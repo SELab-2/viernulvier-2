@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from apps.genres.models import Genre, GenreTranslation, GenreUseAs
+from apps.genres.models import Genre, GenreTranslation
 from apps.import_log.models import ImportLog
 from apps.imports.csv_importer.legacy_csv_sync import import_legacy_csv_file
 from apps.languages.models import Language
@@ -57,10 +57,9 @@ def test_import_legacy_productions_creates_translations_and_genres(tmp_path) -> 
 
 def test_import_legacy_productions_reuses_duplicate_genres(tmp_path) -> None:
     language, _ = Language.objects.get_or_create(code="nl", defaults={"name": "Dutch", "is_active": True})
-    genre_use_as, _ = GenreUseAs.objects.get_or_create(name="genre")
-    first_genre = Genre.objects.create(type="theater", use_as=genre_use_as)
+    first_genre = Genre.objects.create(type="theater")
     GenreTranslation.objects.create(genre=first_genre, language=language, name="Theater")
-    Genre.objects.create(type="theater", use_as=genre_use_as)
+    Genre.objects.create(type="theater")
 
     csv_path = tmp_path / "Productions - output.csv"
     write_csv(
@@ -72,7 +71,7 @@ def test_import_legacy_productions_reuses_duplicate_genres(tmp_path) -> None:
     imported = import_legacy_csv_file(csv_path)
 
     assert imported == 1
-    assert Genre.objects.filter(type="theater", use_as=genre_use_as).count() == 2
+    assert Genre.objects.filter(type="theater").count() == 2
     production = Production.objects.get(external_id="200")
     assert production.genres.count() == 1
     assert production.genres.first().id == first_genre.id

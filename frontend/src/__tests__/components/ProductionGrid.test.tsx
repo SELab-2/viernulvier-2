@@ -13,11 +13,9 @@ const accentTheme = createTheme({
     accent: { main: '#8224E3', contrastText: '#ffffff' },
   },
 })
-
 const minimalGenre = (id: number, nlName: string): Genre => ({
   id,
   type: 'primary',
-  use_as: { id: 1, name: 'cat' },
   name: { nl: nlName },
   display_name: nlName,
   vendor_id: null,
