@@ -261,6 +261,7 @@ class TestSyncM2M:
 
     def test_sync_m2m_ignores_missing_api_key(self):
         """If the item does not contain the m2m api key, the function returns early."""
+
         class DummyRelated:
             pass
 
