@@ -46,10 +46,7 @@ jobs:
       - name: Build and start containers
         run: |
           docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml build
-          docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml up -d || {
-            docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml logs backend --tail=200
-            exit 1
-          }
+          docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml up -d
 
       - name: Verify deployment
         run: |
