@@ -6,3 +6,6 @@ infrastructure/.env.*
 /venv/
 venv/
 ./venv/
+
+# macOS files
+.DS_Store
