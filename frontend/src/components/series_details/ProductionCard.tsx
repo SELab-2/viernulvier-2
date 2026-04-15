@@ -8,6 +8,7 @@ import DOMPurify from 'dompurify'
 
 import { tokens } from '../../theme/tokens'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
+
 import type { KeyboardEvent, MouseEvent } from 'react'
 
 type ProductionChip = {

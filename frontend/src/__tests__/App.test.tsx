@@ -21,6 +21,7 @@ describe('App', () => {
     const mainNav = screen.getByRole('list', { name: 'Hoofdnavigatie' })
 
     expect(screen.getByAltText('Viernulvier logo')).toBeInTheDocument()
+    expect(within(mainNav).getByRole('link', { name: 'Home' })).toBeInTheDocument()
     expect(within(mainNav).getByRole('link', { name: 'Archief' })).toBeInTheDocument()
     expect(within(mainNav).getByRole('link', { name: 'Reeksen' })).toBeInTheDocument()
     expect(within(mainNav).getByRole('link', { name: 'Blogs' })).toBeInTheDocument()
@@ -36,7 +37,7 @@ describe('App', () => {
     expect(
       screen.getByText('De pagina die je zoekt bestaat niet of is verplaatst.'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Terug naar archief' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Terug naar home' })).toHaveAttribute('href', '/')
   })
 
   it('initializes with light theme by default', () => {

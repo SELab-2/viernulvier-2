@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
+import ArchivePage from './pages/ArchivePage'
 import BlogDetailPage from './pages/BlogDetailPage'
 import BlogsPage from './pages/BlogsPage'
 import HomePage from './pages/HomePage'
@@ -24,15 +25,16 @@ const Router = ({ mode, onToggleMode }: RouterProps) => {
         <Box component="main" sx={{ flexGrow: 1 }}>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/productions" element={<Navigate to="/" replace />} />
+            <Route path="/archive" element={<ArchivePage />} />
+            <Route path="/productions" element={<Navigate to="/archive" replace />} />
             <Route path="/productions/:id" element={<ProductionDetailPage />} />
             <Route path="/series" element={<SeriesPage />} />
             <Route path="/series/:id" element={<SeriesDetailPage />} />
             <Route path="/blogs" element={<BlogsPage />} />
             <Route path="/blogs/:id" element={<BlogDetailPage />} />
-            <Route path="/media" element={<Navigate to="/" replace />} />
+            <Route path="/media" element={<Navigate to="/archive" replace />} />
             {/* TODO: Remove after media page is implemented */}
-            <Route path="/media/:id" element={<Navigate to="/" replace />} />
+            <Route path="/media/:id" element={<Navigate to="/archive" replace />} />
             {/* TODO: Remove after media page is implemented */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
