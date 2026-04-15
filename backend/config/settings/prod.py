@@ -24,7 +24,8 @@ from .base import REST_FRAMEWORK
 
 DEBUG = False
 
-ALLOWED_HOSTS = [os.environ["DOMAIN"]]
+DOMAIN = os.environ["DOMAIN"]
+ALLOWED_HOSTS = [DOMAIN, "127.0.0.1", "localhost"]
 
 # ---------------------------------------------------------------------------
 # Security
@@ -53,7 +54,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
 # Trust HTTPS origins for CSRF.
-CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host]
+CSRF_TRUSTED_ORIGINS = [f"https://{DOMAIN}"]
 
 # ---------------------------------------------------------------------------
 # REST Framework - enforce throttling for public API keys
