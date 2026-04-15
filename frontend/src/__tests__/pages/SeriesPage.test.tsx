@@ -171,9 +171,7 @@ describe('SeriesPage', () => {
     renderPage()
 
     expect(await screen.findByText('Geen reeksen gevonden')).toBeInTheDocument()
-    expect(
-      screen.getByText('Pas je zoekopdracht of filters aan en probeer opnieuw.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Pas je zoekopdracht aan en probeer opnieuw.')).toBeInTheDocument()
   })
 
   it('shows error state and retries successfully', async () => {

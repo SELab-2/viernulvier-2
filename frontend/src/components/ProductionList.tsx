@@ -1,5 +1,5 @@
 import GenericList from './GenericList'
-import ProductionListCard from './ProductionListCard'
+import ProductionListCard from './productions/ProductionListCard'
 
 import type { Production } from '../types/Productions'
 

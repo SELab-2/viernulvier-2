@@ -1,5 +1,5 @@
 import GenericGrid from './GenericGrid'
-import ProductionGridCard from './ProductionGridCard'
+import ProductionGridCard from './productions/ProductionGridCard'
 
 import type { Production } from '../types/Productions'
 
