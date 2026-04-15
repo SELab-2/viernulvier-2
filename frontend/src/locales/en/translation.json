@@ -195,7 +195,7 @@
     "breadcrumb": "Archive / Series / {{name}}",
     "noDescription": "No description available.",
     "noProductions": "There are no productions linked to this series.",
-    "loading": "Loading series...",
+    "loading": "Loading series",
     "notFound": "Series not found.",
     "invalidId": "Invalid series ID.",
     "fetchError": "Could not fetch the series.",
