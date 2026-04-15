@@ -57,7 +57,10 @@ services:
   frontend:
     container_name: frontend
     image: viernulvier/frontend:staging
-    build: ../frontend
+    build:
+      context: ../frontend
+      args:
+        PUBLIC_API_KEY: ${PUBLIC_API_KEY}
     restart: "no"
     healthcheck:
       test: ["CMD", "test", "-f", "/frontend_build/index.html"]
