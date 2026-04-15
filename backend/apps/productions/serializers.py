@@ -26,7 +26,7 @@ from apps.media_library.serializers import MediaGallerySerializer
 from apps.tags.models import Tag
 from apps.tags.serializers import TagSerializer
 
-from .models import Production, ProductionTag, UitDatabaseType, UitDatabaseType
+from .models import Production, ProductionTag, UitDatabaseType
 
 
 class ProductionSeriesSerializer(serializers.ModelSerializer):
