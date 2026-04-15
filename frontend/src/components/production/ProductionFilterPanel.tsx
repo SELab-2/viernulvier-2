@@ -18,7 +18,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import dayjs, { type Dayjs } from 'dayjs'
 import 'dayjs/locale/nl'
-import { useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useMemo, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { tokens } from '../../theme/tokens'
@@ -275,15 +275,18 @@ const ProductionFilterPanel = ({
   )
   const [startBeforeHasError, setStartBeforeHasError] = useState(false)
 
-  useEffect(() => {
+  const [prevFirstEventStartAfter, setPrevFirstEventStartAfter] = useState(firstEventStartAfter)
+  if (firstEventStartAfter !== prevFirstEventStartAfter) {
+    setPrevFirstEventStartAfter(firstEventStartAfter)
     setStartAfterDraft(parseDateValue(firstEventStartAfter))
     setStartAfterHasError(false)
-  }, [firstEventStartAfter])
-
-  useEffect(() => {
+  }
+  const [prevFirstEventStartBefore, setPrevFirstEventStartBefore] = useState(firstEventStartBefore)
+  if (firstEventStartBefore !== prevFirstEventStartBefore) {
+    setPrevFirstEventStartBefore(firstEventStartBefore)
     setStartBeforeDraft(parseDateValue(firstEventStartBefore))
     setStartBeforeHasError(false)
-  }, [firstEventStartBefore])
+  }
 
   const applyStartAfterDraft = () => {
     if (startAfterHasError) {
