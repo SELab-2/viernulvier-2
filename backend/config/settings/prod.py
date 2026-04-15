@@ -24,7 +24,7 @@ from .base import REST_FRAMEWORK
 
 DEBUG = False
 
-ALLOWED_HOSTS = [host.strip() for host in os.environ["ALLOWED_HOSTS"].split(",") if host.strip()]
+ALLOWED_HOSTS = [os.environ["DOMAIN"]]
 
 # ---------------------------------------------------------------------------
 # Security
