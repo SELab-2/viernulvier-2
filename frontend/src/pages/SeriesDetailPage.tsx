@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useParams } from 'react-router-dom'
 
+import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 import Breadcrumbs from '../components/production/Breadcrumbs'
 import ProductionGridCard from '../components/productions/ProductionGridCard'
 import ProductionListCard from '../components/productions/ProductionListCard'
@@ -26,7 +27,6 @@ import SeriesStats from '../components/series_details/SeriesStats'
 import TimelineItem, { DOT_CENTER_X } from '../components/series_details/TimelineItem'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
-import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 
 import type { Production } from '../types/Productions'
 import type { Tag } from '../types/Tags'
@@ -236,27 +236,34 @@ const SeriesDetailPage = () => {
             />
 
             <Stack spacing={2}>
-              {sortedProductions.map((production) => (
-                <TimelineItem key={production.id} year={extractYearFromProduction(production)}>
-                  {isSmallViewport ? (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        width: '100%',
-                        '& > a': {
+              {sortedProductions.map((production, index) => {
+                const year = extractYearFromProduction(production)
+                const prevYear =
+                  index > 0 ? extractYearFromProduction(sortedProductions[index - 1]!) : null
+                const showYearLabel = year !== prevYear
+
+                return (
+                  <TimelineItem key={production.id} year={year} showYearLabel={showYearLabel}>
+                    {isSmallViewport ? (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'center',
                           width: '100%',
-                          maxWidth: 350,
-                        },
-                      }}
-                    >
-                      <ProductionGridCard production={production} />
-                    </Box>
-                  ) : (
-                    <ProductionListCard production={production} />
-                  )}
-                </TimelineItem>
-              ))}
+                          '& > a': {
+                            width: '100%',
+                            maxWidth: 350,
+                          },
+                        }}
+                      >
+                        <ProductionGridCard production={production} />
+                      </Box>
+                    ) : (
+                      <ProductionListCard production={production} />
+                    )}
+                  </TimelineItem>
+                )
+              })}
             </Stack>
           </Box>
         )}

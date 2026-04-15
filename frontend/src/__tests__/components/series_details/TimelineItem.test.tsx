@@ -29,4 +29,15 @@ describe('TimelineItem', () => {
     expect(screen.getByText('VIDEODROOM 2023')).toBeInTheDocument()
     expect(screen.getByText('Festival edition')).toBeInTheDocument()
   })
+
+  it('omits year labels when showYearLabel is false', () => {
+    render(
+      <TimelineItem year="2024" showYearLabel={false}>
+        <div>Same year block</div>
+      </TimelineItem>,
+    )
+
+    expect(screen.queryByText('2024')).not.toBeInTheDocument()
+    expect(screen.getByText('Same year block')).toBeInTheDocument()
+  })
 })
