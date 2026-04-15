@@ -5,7 +5,7 @@ import { tokens } from '../../theme/tokens'
 import { getTranslatedRecord } from '../../utils/translations'
 import Carousel from '../carousel/Carousel'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
-import ProductionGridCard from '../ProductionGridCard'
+import ProductionGridCard from '../productions/ProductionGridCard'
 
 import type { ProductionRelated, RelatedTag } from '../../types/Productions'
 
