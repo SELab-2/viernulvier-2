@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
 import ProductionView from '../components/ProductionView'
+import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import { ApiError } from '../services/ApiTypes'
 import { getProductions } from '../services/productions/Productions'
@@ -193,6 +194,9 @@ const HomePage = () => {
         resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('productions.home.loading')}
+        loadingContent={
+          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+        }
         errorMessage={renderedErrorMessage}
         retryLabel={t('productions.home.error.retry')}
         onRetry={onRetry}
