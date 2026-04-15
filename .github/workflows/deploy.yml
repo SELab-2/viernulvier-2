@@ -23,6 +23,15 @@ jobs:
           PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
           INTERNAL_API_KEY: ${{ secrets.INTERNAL_API_KEY }}
         run: |
+          : "${SECRET_KEY:?Missing SECRET_KEY}"
+          : "${DOMAIN:?Missing DOMAIN}"
+          : "${POSTGRES_DB:?Missing POSTGRES_DB}"
+          : "${POSTGRES_USER:?Missing POSTGRES_USER}"
+          : "${POSTGRES_PASSWORD:?Missing POSTGRES_PASSWORD}"
+          : "${VIERNULVIER_API_KEY:?Missing VIERNULVIER_API_KEY}"
+          : "${PUBLIC_API_KEY:?Missing PUBLIC_API_KEY}"
+          : "${INTERNAL_API_KEY:?Missing INTERNAL_API_KEY}"
+
           cat > infrastructure/.env <<EOF
           SECRET_KEY=${SECRET_KEY}
           DOMAIN=${DOMAIN}
@@ -37,7 +46,10 @@ jobs:
       - name: Build and start containers
         run: |
           docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml build
-          docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml up -d
+          docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml up -d || {
+            docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml logs backend --tail=200
+            exit 1
+          }
 
       - name: Verify deployment
         run: |
