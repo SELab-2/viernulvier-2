@@ -91,6 +91,31 @@ describe('SeriesPage', () => {
     expect(screen.getByText('1 jan 2026')).toBeInTheDocument()
   })
 
+  it('renders the collection skeleton while loading', async () => {
+    type SeriesResponse = { count: number; next: null; previous: null; results: Series[] }
+
+    let resolveFetch: ((value: SeriesResponse) => void) | undefined
+
+    mockedGetProductionSeries.mockReturnValueOnce(
+      new Promise<SeriesResponse>((resolve) => {
+        resolveFetch = resolve
+      }),
+    )
+
+    renderPage()
+
+    expect(screen.getByTestId('collection-results-skeleton')).toBeInTheDocument()
+
+    resolveFetch?.({
+      count: 0,
+      next: null,
+      previous: null,
+      results: [] as Series[],
+    })
+
+    expect(await screen.findByText('Geen reeksen gevonden')).toBeInTheDocument()
+  })
+
   it('fetches first and last production for each series card', async () => {
     const seriesTag = buildTag(10, 'Reeks Alpha')
     const secondSeriesTag = buildTag(11, 'Reeks Beta')

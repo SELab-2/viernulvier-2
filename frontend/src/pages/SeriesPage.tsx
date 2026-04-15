@@ -9,6 +9,7 @@ import SeriesListCard from '../components/series/SeriesListCard'
 import type { SearchSortTarget } from '../components/searchbar/types'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import { ApiError } from '../services/ApiTypes'
+import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { getProductionSeries } from '../services/productions/Productions'
 import type { Series } from '../types/Series'
 import type { SearchSortDirection } from '../components/searchbar/types'
@@ -251,6 +252,9 @@ const SeriesPage = () => {
         resultsRegionAriaLabel={t('series.home.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('series.home.loading')}
+        loadingContent={
+          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+        }
         errorMessage={renderedErrorMessage}
         retryLabel={t('series.home.error.retry')}
         onRetry={onRetry}
