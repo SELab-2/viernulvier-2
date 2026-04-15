@@ -199,7 +199,7 @@ const HomePage = () => {
         resultCount={totalCount}
         sidebarAriaLabel={t('productions.home.filterPanelLabel')}
         sidebarTitle={t('productions.home.filterPanelTitle')}
-        sidebarDescription={t('productions.home.filterPanelDescription')}
+        sidebarDescription={t('productions.home.filterPanelPlaceholder')}
         resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('productions.home.loading')}

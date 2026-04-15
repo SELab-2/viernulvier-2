@@ -215,7 +215,7 @@
       "tagFilterLabel": "Series filters",
       "empty": {
         "title": "No series found",
-        "description": "Adjust your search or filters and try again."
+        "description": "Adjust your search and try again."
       },
       "card": {
         "productionCount": "{{count}} productions"

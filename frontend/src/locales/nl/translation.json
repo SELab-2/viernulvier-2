@@ -215,7 +215,7 @@
       "tagFilterLabel": "Reeksfilters",
       "empty": {
         "title": "Geen reeksen gevonden",
-        "description": "Pas je zoekopdracht of filters aan en probeer opnieuw."
+        "description": "Pas je zoekopdracht aan en probeer opnieuw."
       },
       "card": {
         "productionCount": "{{count}} producties"
