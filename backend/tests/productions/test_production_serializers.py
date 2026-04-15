@@ -201,6 +201,22 @@ class TestProductionSeriesSerializer(TestCase):
 
         assert serializer.get_last_production_image(tag) is None
 
+    def test_get_last_production_image_returns_lookup_value_for_last_production_id(self) -> None:
+        tag = TagFactory.create()
+        tag.last_production_id = 123
+        serializer = ProductionSeriesSerializer(
+            context={"last_production_image_by_production_id": {123: "https://img/test.jpg"}}
+        )
+
+        assert serializer.get_last_production_image(tag) == "https://img/test.jpg"
+
+    def test_get_last_production_image_returns_none_when_id_not_in_lookup(self) -> None:
+        tag = TagFactory.create()
+        tag.last_production_id = 456
+        serializer = ProductionSeriesSerializer(context={})
+
+        assert serializer.get_last_production_image(tag) is None
+
 
 class TestProductionSerializerRelated(TestCase):
     """Cover the related-production fallback and deduplication logic."""

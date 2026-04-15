@@ -106,4 +106,3 @@ def test_wsgi_keeps_existing_settings_module(monkeypatch: pytest.MonkeyPatch) ->
         _fresh_import("config.wsgi")
 
     assert os.environ["DJANGO_SETTINGS_MODULE"] == "config.settings.test"
-
