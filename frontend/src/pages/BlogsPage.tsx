@@ -16,7 +16,7 @@ import type { Blog } from '../types/Blogs'
 const PAGE_SIZE = 12
 
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
-  const targetField = sortTarget === 'name' ? 'slug' : 'published_at'
+  const targetField = sortTarget === 'name' ? 'title_sort' : 'published_at'
   return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 

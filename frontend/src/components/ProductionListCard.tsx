@@ -117,7 +117,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
           <Stack
             direction="row"
             spacing={0.75}
-            sx={{ flexWrap: 'wrap', height: 24, overflow: 'hidden' }}
+            sx={{ flexWrap: 'wrap', height: 32, overflow: 'hidden' }}
           >
             {genres.map((genre) => (
               <GenreAndTagChip

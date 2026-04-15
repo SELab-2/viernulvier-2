@@ -181,6 +181,139 @@ class TestBlogViewSet(TestCase):
         items = results_list(response)
         assert items[0]["slug"] == "aaa-blog"
 
+    def test_ordering_by_title_sort_uses_accept_language(self) -> None:
+        language_nl = LanguageFactory(code="nl", name="Dutch")
+
+        blog_a = BlogFactory(slug="title-a")
+        BlogTranslationFactory(
+            blog=blog_a,
+            language=language_nl,
+            title="Alpha",
+            body="NL body",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=blog_a,
+            language=self.language,
+            title="Zulu",
+            body="EN body",
+            excerpt="",
+        )
+
+        blog_b = BlogFactory(slug="title-b")
+        BlogTranslationFactory(
+            blog=blog_b,
+            language=language_nl,
+            title="Zulu",
+            body="NL body",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=blog_b,
+            language=self.language,
+            title="Alpha",
+            body="EN body",
+            excerpt="",
+        )
+
+        response_nl = self.client.get(
+            "/api/v1/blogs/",
+            {"ordering": "title_sort"},
+            HTTP_ACCEPT_LANGUAGE="nl",
+            **pub_headers(),
+        )
+        ids_nl = [item["id"] for item in results_list(response_nl)]
+        assert ids_nl.index(blog_a.id) < ids_nl.index(blog_b.id)
+
+        response_en = self.client.get(
+            "/api/v1/blogs/",
+            {"ordering": "title_sort"},
+            HTTP_ACCEPT_LANGUAGE="en",
+            **pub_headers(),
+        )
+        ids_en = [item["id"] for item in results_list(response_en)]
+        assert ids_en.index(blog_b.id) < ids_en.index(blog_a.id)
+
+    def test_ordering_by_title_sort_is_case_insensitive(self) -> None:
+        blog_lower = BlogFactory(slug="title-case-lower")
+        BlogTranslationFactory(
+            blog=blog_lower,
+            language=self.language,
+            title="alpha",
+            body="EN body",
+            excerpt="",
+        )
+
+        blog_upper = BlogFactory(slug="title-case-upper")
+        BlogTranslationFactory(
+            blog=blog_upper,
+            language=self.language,
+            title="Zulu",
+            body="EN body",
+            excerpt="",
+        )
+
+        response = self.client.get(
+            "/api/v1/blogs/",
+            {"ordering": "title_sort", "lang": "en"},
+            **pub_headers(),
+        )
+        ids = [item["id"] for item in results_list(response)]
+        assert ids.index(blog_lower.id) < ids.index(blog_upper.id)
+
+    def test_search_prefers_accept_language_translation(self) -> None:
+        language_nl = LanguageFactory(code="nl", name="Dutch")
+
+        blog_nl = BlogFactory(slug="search-nl")
+        BlogTranslationFactory(
+            blog=blog_nl,
+            language=language_nl,
+            title="Alpha",
+            body="NL body",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=blog_nl,
+            language=self.language,
+            title="Zulu",
+            body="EN body",
+            excerpt="",
+        )
+
+        blog_en = BlogFactory(slug="search-en")
+        BlogTranslationFactory(
+            blog=blog_en,
+            language=language_nl,
+            title="Zulu",
+            body="NL body",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=blog_en,
+            language=self.language,
+            title="Alpha",
+            body="EN body",
+            excerpt="",
+        )
+
+        response_nl = self.client.get(
+            "/api/v1/blogs/",
+            {"search": "Alpha"},
+            HTTP_ACCEPT_LANGUAGE="nl",
+            **pub_headers(),
+        )
+        ids_nl = [item["id"] for item in results_list(response_nl)]
+        assert ids_nl == [blog_nl.id]
+
+        response_en = self.client.get(
+            "/api/v1/blogs/",
+            {"search": "Alpha"},
+            HTTP_ACCEPT_LANGUAGE="en",
+            **pub_headers(),
+        )
+        ids_en = [item["id"] for item in results_list(response_en)]
+        assert ids_en == [blog_en.id]
+
     def test_patch_internal_updates_slug(self) -> None:
         response = self.client.patch(
             f"/api/v1/blogs/{self.blog.id}/",
@@ -220,3 +353,71 @@ class TestBlogViewSet(TestCase):
         response = self.client.get("/api/v1/blogs/", **wrong_headers())
 
         assert response.status_code == 401
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestBlogViewSetOrderingEdgeCases(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.en = LanguageFactory(code="en", name="English")
+        self.nl = LanguageFactory(code="nl", name="Dutch")
+
+        self.blog_alpha = BlogFactory(slug="edge-alpha")
+        BlogTranslationFactory(
+            blog=self.blog_alpha,
+            language=self.en,
+            title="Alpha",
+            body="EN",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=self.blog_alpha,
+            language=self.nl,
+            title="Zulu",
+            body="NL",
+            excerpt="",
+        )
+
+        self.blog_zulu = BlogFactory(slug="edge-zulu")
+        BlogTranslationFactory(
+            blog=self.blog_zulu,
+            language=self.en,
+            title="Zulu",
+            body="EN",
+            excerpt="",
+        )
+        BlogTranslationFactory(
+            blog=self.blog_zulu,
+            language=self.nl,
+            title="Alpha",
+            body="NL",
+            excerpt="",
+        )
+
+        self.blog_without_translation = BlogFactory(slug="edge-no-translation")
+
+    def _ids(self, params: dict, **headers) -> list[int]:
+        response = self.client.get("/api/v1/blogs/", params, **headers)
+        assert response.status_code == 200
+        return [row["id"] for row in results_list(response)]
+
+    def test_ordering_title_sort_places_missing_translation_last_ascending(self) -> None:
+        ids = self._ids({"ordering": "title_sort", "lang": "en"}, **pub_headers())
+
+        assert ids.index(self.blog_alpha.id) < ids.index(self.blog_zulu.id)
+        assert ids[-1] == self.blog_without_translation.id
+
+    def test_ordering_title_sort_places_missing_translation_last_descending(self) -> None:
+        ids = self._ids({"ordering": "-title_sort", "lang": "en"}, **pub_headers())
+
+        assert ids.index(self.blog_zulu.id) < ids.index(self.blog_alpha.id)
+        assert ids[-1] == self.blog_without_translation.id
+
+    def test_lang_query_param_overrides_accept_language_header(self) -> None:
+        ids = self._ids(
+            {"ordering": "title_sort", "lang": "en"},
+            HTTP_ACCEPT_LANGUAGE="nl",
+            **pub_headers(),
+        )
+
+        assert ids.index(self.blog_alpha.id) < ids.index(self.blog_zulu.id)
