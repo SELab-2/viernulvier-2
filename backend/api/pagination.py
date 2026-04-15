@@ -1,5 +1,4 @@
-"""
-Pagination classes for the viernulvier_archive API.
+"""Pagination classes for the viernulvier_archive API.
 
 Three preset classes cover the full range of response sizes. Select the
 right one per viewset via ``pagination_class``, or rely on the project

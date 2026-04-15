@@ -15,7 +15,8 @@ the list and detail pages free of N+1 queries.
 
 from django import forms
 from django.contrib import admin
-from django.db.models import Max
+from django.db.models import Max, QuerySet
+from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
 from apps.genres.models import Genre
@@ -26,6 +27,7 @@ from .models import (
     Production,
     ProductionGenre,
     ProductionTag,
+    ProductionTagTranslation,
     ProductionTranslation,
     UitDatabaseTheme,
     UitDatabaseType,
@@ -74,7 +76,7 @@ class ProductionTranslationInline(admin.TabularInline):
         "teaser",
     )
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("language")
 
 
@@ -93,7 +95,7 @@ class ProductionGenreInline(admin.TabularInline):
     fields = ("genre", "position")
     ordering = ("position",)
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("genre")
 
 
@@ -108,8 +110,27 @@ class ProductionTagInline(admin.TabularInline):
     autocomplete_fields = ("tag",)
     fields = ("tag",)
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("tag")
+
+
+class ProductionTagTranslationInline(admin.TabularInline):
+    """
+    Inline for editing localised descriptions directly inside the
+    ProductionTag change page.
+
+    Translations are collapsed by default to keep the page readable when
+    many languages are configured.
+    """
+
+    model = ProductionTagTranslation
+    extra = 1
+    autocomplete_fields = ("language",)
+    classes = ("collapse",)
+    fields = ("language", "description")
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).select_related("language")
 
 
 # ===========================================================================
@@ -214,7 +235,7 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         ProductionTagInline,
     ]
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Optimise the queryset with select_related and prefetch_related."""
         return (
             super()
@@ -229,7 +250,7 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
 
     two_step_empty_selection_message = "No productions selected."
 
-    def _apply_add_tag_to_productions(self, selected_qs, cleaned_data):
+    def _apply_add_tag_to_productions(self, selected_qs: QuerySet, cleaned_data: dict) -> str:
         tag = cleaned_data["tag"]
         production_ids = list(selected_qs.values_list("id", flat=True))
         through_model = Production.tags.through
@@ -239,9 +260,9 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
             ignore_conflicts=True,
         )
 
-        return f"Tag '{str(tag)}' added to {len(production_ids)} selected productions."
+        return f"Tag '{tag!s}' added to {len(production_ids)} selected productions."
 
-    def _apply_add_genre_to_productions(self, selected_qs, cleaned_data):
+    def _apply_add_genre_to_productions(self, selected_qs: QuerySet, cleaned_data: dict) -> str:
         genre = cleaned_data["genre"]
         production_ids = list(selected_qs.values_list("id", flat=True))
 
@@ -277,10 +298,10 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         if to_create:
             ProductionGenre.objects.bulk_create(to_create, ignore_conflicts=True)
 
-        return f"Genre '{str(genre)}' added to {len(to_create)} selected productions."
+        return f"Genre '{genre!s}' added to {len(to_create)} selected productions."
 
     @admin.action(description="Add tag to selected productions")
-    def add_tag_to_selected_productions(self, request, queryset):
+    def add_tag_to_selected_productions(self, request: HttpRequest, queryset: QuerySet) -> HttpRequest:
         """Two-step admin action to attach one tag to selected productions."""
 
         return self._run_two_step_bulk_action(
@@ -294,7 +315,7 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         )
 
     @admin.action(description="Add genre to selected productions")
-    def add_genre_to_selected_productions(self, request, queryset):
+    def add_genre_to_selected_productions(self, request: HttpRequest, queryset: QuerySet) -> HttpRequest:
         """Two-step admin action to attach one genre to selected productions."""
 
         return self._run_two_step_bulk_action(
@@ -348,7 +369,7 @@ class ProductionTranslationAdmin(BaseAdmin):
 
     ordering = ("production", "language__code")
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Select related production and language to avoid N+1 queries."""
         return super().get_queryset(request).select_related("production", "language")
 
@@ -363,7 +384,7 @@ class ProductionGenreAdmin(BaseAdmin):
     """
     Standalone admin for the ProductionGenre through-table.
 
-    Allows direct inspection and editing of genre–production links and
+    Allows direct inspection and editing of genre-production links and
     their ``position`` values without going through the production change
     page. For most use cases, prefer the inline on :class:`ProductionAdmin`.
 
@@ -389,7 +410,7 @@ class ProductionGenreAdmin(BaseAdmin):
 
     ordering = ("production", "position")
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Select related production and genre to avoid N+1 queries."""
         return super().get_queryset(request).select_related("production", "genre")
 
@@ -399,7 +420,7 @@ class ProductionTagAdmin(BaseAdmin):
     """
     Standalone admin for the ProductionTag through-table.
 
-    Allows direct inspection and editing of tag–production links without
+    Allows direct inspection and editing of tag-production links without
     going through the production change page. For most use cases, prefer
     the inline on :class:`ProductionAdmin`.
 
@@ -426,6 +447,8 @@ class ProductionTagAdmin(BaseAdmin):
 
     ordering = ("production", "tag__type")
 
-    def get_queryset(self, request):
+    inlines = [ProductionTagTranslationInline]
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Select related production and tag to avoid N+1 queries."""
         return super().get_queryset(request).select_related("production", "tag")

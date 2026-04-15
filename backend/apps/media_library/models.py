@@ -1,5 +1,4 @@
-"""
-Models for the Media app.
+"""Models for the Media app.
 
 The media hierarchy is two levels deep:
 
@@ -14,15 +13,21 @@ The media hierarchy is two levels deep:
   banner) of a media item together with its URL.
 """
 
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 
+from apps.core.media_validation import (
+    ALLOWED_IMAGE_MIME_TYPES,
+    MAX_MEDIA_FILE_SIZE_BYTES,
+    validate_media_file,
+)
 from apps.core.models import BaseModel
 from apps.languages.models import Language
 
 
 class MediaGallery(BaseModel):
-    """
-    A named collection of media items.
+    """A named collection of media items.
 
     Galleries group related MediaItem objects and are typically attached
     to a production, location, or other entity in the archive.
@@ -54,12 +59,12 @@ class MediaGallery(BaseModel):
         ordering = ["name"]
 
     def __str__(self) -> str:
-        return self.name if self.name else "Unnamed Gallery"
+        """Return a human-readable representation of the media gallery."""
+        return self.name or "Unnamed Gallery"
 
 
 class MediaItem(BaseModel):
-    """
-    A single media asset within a MediaGallery.
+    """A single media asset within a MediaGallery.
 
     Supports images, videos, and audio files. Dimensional metadata
     (``width``, ``height``) applies to visual media only.
@@ -142,6 +147,7 @@ class MediaItem(BaseModel):
         ordering = ["position"]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the media item."""
         return f"{self.type} - {self.original_filename or 'Unnamed'}"
 
 
@@ -185,12 +191,12 @@ class MediaGalleryItem(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the gallery-item link."""
         return f"{self.gallery_id}:{self.media_item_id}@{self.position}"
 
 
 class MediaItemTranslation(BaseModel):
-    """
-    Localised metadata for a MediaItem.
+    """Localised metadata for a MediaItem.
 
     Each media item can have at most one translation per language.
     All translated fields are optional.
@@ -263,12 +269,12 @@ class MediaItemTranslation(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """Return a human-readable representation of the media item translation."""
         return f"{self.media_item} - {self.language}"
 
 
 class MediaItemCrop(BaseModel):
-    """
-    A named, pre-rendered crop of a MediaItem, stored as a local image file.
+    """A named, pre-rendered crop of a MediaItem, stored as a local image file.
 
     Crops are downloaded from the Viernulvier CDN and saved locally via
     Django's ImageField. Only a curated set of crop variants is stored
@@ -321,5 +327,21 @@ class MediaItemCrop(BaseModel):
             )
         ]
 
+    def clean(self) -> None:
+        """Validate uploaded crop images for admin and importer save paths."""
+        super().clean()
+
+        uploaded_image = getattr(self.image, "_file", None)
+        if isinstance(uploaded_image, UploadedFile):
+            try:
+                validate_media_file(
+                    uploaded_image,
+                    allowed_mime_types=ALLOWED_IMAGE_MIME_TYPES,
+                    max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
+                )
+            except ValueError as exc:
+                raise ValidationError({"image": str(exc)}) from exc
+
     def __str__(self) -> str:
+        """Return a human-readable representation of the media item crop."""
         return f"{self.media_item} - {self.name}"

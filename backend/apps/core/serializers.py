@@ -1,5 +1,4 @@
-"""
-Shared serializer utilities for the core app.
+"""Shared serializer utilities for the core app.
 
 ``TranslatableSerializerMixin`` is the single mechanism used across the
 project for serialising localised content. Every serializer that exposes
@@ -11,13 +10,7 @@ Translation format
 Translated fields are returned as a dictionary mapping language codes to
 their localised values::
 
-    {
-        "title": {
-            "nl": "De Laatste Avond",
-            "en": "The Last Evening",
-            "fr": "Le Dernier Soir"
-        }
-    }
+    {"title": {"nl": "De Laatste Avond", "en": "The Last Evening", "fr": "Le Dernier Soir"}}
 
 Language codes with an empty or falsy value are omitted from the dictionary
 so consumers always receive only the languages that have actual content.
@@ -29,12 +22,13 @@ be query-free, viewsets must include the relevant ``Prefetch`` in their
 queryset. See the individual app viewsets for examples.
 """
 
+from typing import Any
+
 from django.conf import settings
 
 
 class TranslatableSerializerMixin:
-    """
-    Mixin that adds :meth:`get_translated_field` to any DRF serializer.
+    """Mixin that adds :meth:`get_translated_field` to any DRF serializer.
 
     Converts a model's translation rows into a ``{language_code: value}``
     dictionary. Designed to be used alongside Django's ``prefetch_related``
@@ -59,12 +53,11 @@ class TranslatableSerializerMixin:
 
     def get_translated_field(
         self,
-        obj,
+        obj: Any,
         field_name: str,
         related_name: str = "translations",
     ) -> dict:
-        """
-        Build a ``{language_code: value}`` dictionary for a translated field.
+        """Build a ``{language_code: value}`` dictionary for a translated field.
 
         Reads translation rows from ``obj.<related_name>.all()`` - which is
         expected to be a prefetched queryset - and returns a dictionary of
@@ -85,14 +78,14 @@ class TranslatableSerializerMixin:
             ``related_name`` used on translation FK fields throughout the
             project.
 
-        Returns
+        Returns:
         -------
         dict
             A ``{language_code: value}`` mapping containing only languages
             with a truthy value for ``field_name``. Returns an empty dict
             when no translations exist or none have content for this field.
 
-        Examples
+        Examples:
         --------
         >>> self.get_translated_field(production, "title")
         {"nl": "De Laatste Avond", "en": "The Last Evening"}
@@ -105,8 +98,7 @@ class TranslatableSerializerMixin:
         return {t.language.code: getattr(t, field_name) for t in translations if getattr(t, field_name)}
 
     def get_base_language_code(self) -> str:
-        """
-        Return the project's primary language code.
+        """Return the project's primary language code.
 
         The base language is derived from ``settings.LANGUAGE_CODE``.
         If the setting includes a regional variant (e.g. ``"en-us"``),
@@ -118,12 +110,12 @@ class TranslatableSerializerMixin:
         - Admin dropdown labels
         - Any serializer that needs a single canonical language value
 
-        Returns
+        Returns:
         -------
         str
             The primary language code (e.g. ``"en"``, ``"nl"``, ``"fr"``).
 
-        Examples
+        Examples:
         --------
         >>> settings.LANGUAGE_CODE = "en-us"
         >>> self.get_base_language_code()
@@ -137,13 +129,12 @@ class TranslatableSerializerMixin:
 
     def get_base_translated_value(
         self,
-        obj,
+        obj: Any,
         field_name: str,
         related_name: str = "translations",
-        fallback=None,
-    ):
-        """
-        Return a single translated value in the project's base language.
+        fallback: Any = None,
+    ) -> Any:
+        """Return a single translated value in the project's base language.
 
         This method is designed for API "display fields" (e.g. ``display_name``)
         where a single human-readable label is required rather than a full
@@ -187,12 +178,12 @@ class TranslatableSerializerMixin:
             Value returned when no suitable translation is found.
             Typically ``None`` or a technical identifier (e.g. ``obj.id``).
 
-        Returns
+        Returns:
         -------
         Any
             The translated value in the base language, or a fallback.
 
-        Examples
+        Examples:
         --------
         >>> self.get_base_translated_value(production, "title")
         "The Last Evening"

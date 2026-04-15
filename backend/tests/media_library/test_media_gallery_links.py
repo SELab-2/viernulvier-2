@@ -8,7 +8,7 @@ from tests.factories.media_library import MediaGalleryFactory, MediaItemFactory
 
 
 @pytest.mark.django_db
-def test_gallery_serializer_excludes_through_links_when_fk_is_null():
+def test_gallery_serializer_excludes_through_links_when_fk_is_null() -> None:
     gallery = MediaGalleryFactory.create()
     item = MediaItemFactory.create(gallery=None, position=7, original_filename="linked.jpg")
     MediaGalleryItem.objects.create(gallery=gallery, media_item=item, position=0)

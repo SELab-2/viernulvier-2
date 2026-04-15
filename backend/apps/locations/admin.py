@@ -1,6 +1,8 @@
 """Admin configuration for the Locations app."""
 
 from django.contrib import admin
+from django.db.models import QuerySet
+from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin
 
@@ -36,7 +38,7 @@ class LocationAdmin(BaseAdmin):
     ordering = ("id",)
     inlines = [LocationTranslationInline]
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         "Avoiding N+1 queries by prefetching related translations."
         return super().get_queryset(request).prefetch_related("translations")
 
@@ -70,7 +72,7 @@ class SpaceAdmin(BaseAdmin):
     autocomplete_fields = ("location",)
     inlines = [SpaceTranslationInline]
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         "Avoiding N+1 queries by prefetching related translations."
         return super().get_queryset(request).prefetch_related("translations")
 
@@ -110,7 +112,7 @@ class HallAdmin(BaseAdmin):
     autocomplete_fields = ("space",)
     inlines = [HallTranslationInline]
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         "Avoiding N+1 queries by prefetching related translations."
         return super().get_queryset(request).prefetch_related("translations")
 

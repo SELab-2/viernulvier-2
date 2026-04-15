@@ -1,5 +1,4 @@
-"""
-WSGI config for the viernulvier_archive project.
+"""WSGI config for the viernulvier_archive project.
 
 Exposes the WSGI callable as ``application``. Used by WSGI servers such
 as Gunicorn.

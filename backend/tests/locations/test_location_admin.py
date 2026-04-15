@@ -51,29 +51,29 @@ from tests.factories.location import (
 class TestLocationAdminRegistration(TestCase):
     """Verify location-related admins are registered on the default site."""
 
-    def test_location_registered(self):
-        self.assertIn(Location, admin.site._registry)
-        self.assertIsInstance(admin.site._registry[Location], LocationAdmin)
+    def test_location_registered(self) -> None:
+        assert Location in admin.site._registry
+        assert isinstance(admin.site._registry[Location], LocationAdmin)
 
-    def test_location_translation_registered(self):
-        self.assertIn(LocationTranslation, admin.site._registry)
-        self.assertIsInstance(admin.site._registry[LocationTranslation], LocationTranslationAdmin)
+    def test_location_translation_registered(self) -> None:
+        assert LocationTranslation in admin.site._registry
+        assert isinstance(admin.site._registry[LocationTranslation], LocationTranslationAdmin)
 
-    def test_space_registered(self):
-        self.assertIn(Space, admin.site._registry)
-        self.assertIsInstance(admin.site._registry[Space], SpaceAdmin)
+    def test_space_registered(self) -> None:
+        assert Space in admin.site._registry
+        assert isinstance(admin.site._registry[Space], SpaceAdmin)
 
-    def test_space_translation_registered(self):
-        self.assertIn(SpaceTranslation, admin.site._registry)
-        self.assertIsInstance(admin.site._registry[SpaceTranslation], SpaceTranslationAdmin)
+    def test_space_translation_registered(self) -> None:
+        assert SpaceTranslation in admin.site._registry
+        assert isinstance(admin.site._registry[SpaceTranslation], SpaceTranslationAdmin)
 
-    def test_hall_registered(self):
-        self.assertIn(Hall, admin.site._registry)
-        self.assertIsInstance(admin.site._registry[Hall], HallAdmin)
+    def test_hall_registered(self) -> None:
+        assert Hall in admin.site._registry
+        assert isinstance(admin.site._registry[Hall], HallAdmin)
 
-    def test_hall_translation_registered(self):
-        self.assertIn(HallTranslation, admin.site._registry)
-        self.assertIsInstance(admin.site._registry[HallTranslation], HallTranslationAdmin)
+    def test_hall_translation_registered(self) -> None:
+        assert HallTranslation in admin.site._registry
+        assert isinstance(admin.site._registry[HallTranslation], HallTranslationAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -84,29 +84,29 @@ class TestLocationAdminRegistration(TestCase):
 class TestLocationAdminInheritance(TestCase):
     """Ensure admin classes inherit from BaseAdmin/ModelAdmin."""
 
-    def test_location_inherits(self):
-        self.assertTrue(issubclass(LocationAdmin, BaseAdmin))
-        self.assertTrue(issubclass(LocationAdmin, admin.ModelAdmin))
+    def test_location_inherits(self) -> None:
+        assert issubclass(LocationAdmin, BaseAdmin)
+        assert issubclass(LocationAdmin, admin.ModelAdmin)
 
-    def test_location_translation_inherits(self):
-        self.assertTrue(issubclass(LocationTranslationAdmin, BaseAdmin))
-        self.assertTrue(issubclass(LocationTranslationAdmin, admin.ModelAdmin))
+    def test_location_translation_inherits(self) -> None:
+        assert issubclass(LocationTranslationAdmin, BaseAdmin)
+        assert issubclass(LocationTranslationAdmin, admin.ModelAdmin)
 
-    def test_space_inherits(self):
-        self.assertTrue(issubclass(SpaceAdmin, BaseAdmin))
-        self.assertTrue(issubclass(SpaceAdmin, admin.ModelAdmin))
+    def test_space_inherits(self) -> None:
+        assert issubclass(SpaceAdmin, BaseAdmin)
+        assert issubclass(SpaceAdmin, admin.ModelAdmin)
 
-    def test_space_translation_inherits(self):
-        self.assertTrue(issubclass(SpaceTranslationAdmin, BaseAdmin))
-        self.assertTrue(issubclass(SpaceTranslationAdmin, admin.ModelAdmin))
+    def test_space_translation_inherits(self) -> None:
+        assert issubclass(SpaceTranslationAdmin, BaseAdmin)
+        assert issubclass(SpaceTranslationAdmin, admin.ModelAdmin)
 
-    def test_hall_inherits(self):
-        self.assertTrue(issubclass(HallAdmin, BaseAdmin))
-        self.assertTrue(issubclass(HallAdmin, admin.ModelAdmin))
+    def test_hall_inherits(self) -> None:
+        assert issubclass(HallAdmin, BaseAdmin)
+        assert issubclass(HallAdmin, admin.ModelAdmin)
 
-    def test_hall_translation_inherits(self):
-        self.assertTrue(issubclass(HallTranslationAdmin, BaseAdmin))
-        self.assertTrue(issubclass(HallTranslationAdmin, admin.ModelAdmin))
+    def test_hall_translation_inherits(self) -> None:
+        assert issubclass(HallTranslationAdmin, BaseAdmin)
+        assert issubclass(HallTranslationAdmin, admin.ModelAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -115,128 +115,128 @@ class TestLocationAdminInheritance(TestCase):
 
 
 class TestLocationAdminConfig(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = LocationAdmin(Location, admin.site)
 
-    def test_list_display(self):
+    def test_list_display(self) -> None:
         for field in ("id", "city", "street", "number", "country", "is_own_location"):
-            self.assertIn(field, self.admin.list_display)
+            assert field in self.admin.list_display
 
-    def test_list_filter(self):
-        self.assertIn("is_own_location", self.admin.list_filter)
+    def test_list_filter(self) -> None:
+        assert "is_own_location" in self.admin.list_filter
 
-    def test_search_fields(self):
+    def test_search_fields(self) -> None:
         for field in ("city", "street", "country"):
-            self.assertIn(field, self.admin.search_fields)
+            assert field in self.admin.search_fields
 
-    def test_inlines(self):
-        self.assertIn(LocationTranslationInline, self.admin.inlines)
+    def test_inlines(self) -> None:
+        assert LocationTranslationInline in self.admin.inlines
 
 
 class TestLocationTranslationInlineConfig(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.inline = LocationTranslationInline(Location, admin.site)
 
-    def test_model(self):
-        self.assertIs(self.inline.model, LocationTranslation)
+    def test_model(self) -> None:
+        assert self.inline.model is LocationTranslation
 
-    def test_fields(self):
-        self.assertEqual(tuple(self.inline.fields), ("language", "name"))
+    def test_fields(self) -> None:
+        assert tuple(self.inline.fields) == ("language", "name")
 
-    def test_autocomplete_fields(self):
-        self.assertIn("language", self.inline.autocomplete_fields)
+    def test_autocomplete_fields(self) -> None:
+        assert "language" in self.inline.autocomplete_fields
 
-    def test_extra(self):
-        self.assertEqual(self.inline.extra, 1)
+    def test_extra(self) -> None:
+        assert self.inline.extra == 1
 
 
 class TestLocationTranslationAdminConfig(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = LocationTranslationAdmin(LocationTranslation, admin.site)
 
-    def test_list_display(self):
+    def test_list_display(self) -> None:
         for field in ("id", "language", "location", "name"):
-            self.assertIn(field, self.admin.list_display)
+            assert field in self.admin.list_display
 
-    def test_list_filter(self):
-        self.assertIn("language", self.admin.list_filter)
-        self.assertIn("location", self.admin.list_filter)
+    def test_list_filter(self) -> None:
+        assert "language" in self.admin.list_filter
+        assert "location" in self.admin.list_filter
 
-    def test_search_fields(self):
-        self.assertIn("name", self.admin.search_fields)
+    def test_search_fields(self) -> None:
+        assert "name" in self.admin.search_fields
 
 
 class TestSpaceAdminConfig(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = SpaceAdmin(Space, admin.site)
 
-    def test_list_display(self):
-        self.assertIn("id", self.admin.list_display)
-        self.assertIn("location", self.admin.list_display)
+    def test_list_display(self) -> None:
+        assert "id" in self.admin.list_display
+        assert "location" in self.admin.list_display
 
-    def test_autocomplete(self):
-        self.assertIn("location", self.admin.autocomplete_fields)
+    def test_autocomplete(self) -> None:
+        assert "location" in self.admin.autocomplete_fields
 
-    def test_inlines(self):
-        self.assertIn(SpaceTranslationInline, self.admin.inlines)
+    def test_inlines(self) -> None:
+        assert SpaceTranslationInline in self.admin.inlines
 
 
 class TestSpaceTranslationInlineConfig(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.inline = SpaceTranslationInline(Space, admin.site)
 
-    def test_model(self):
-        self.assertIs(self.inline.model, SpaceTranslation)
+    def test_model(self) -> None:
+        assert self.inline.model is SpaceTranslation
 
-    def test_fields(self):
-        self.assertEqual(tuple(self.inline.fields), ("language", "name"))
+    def test_fields(self) -> None:
+        assert tuple(self.inline.fields) == ("language", "name")
 
-    def test_extra(self):
-        self.assertEqual(self.inline.extra, 1)
+    def test_extra(self) -> None:
+        assert self.inline.extra == 1
 
 
 class TestSpaceTranslationAdminConfig(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = SpaceTranslationAdmin(SpaceTranslation, admin.site)
 
-    def test_list_display(self):
+    def test_list_display(self) -> None:
         for field in ("id", "language", "space", "name"):
-            self.assertIn(field, self.admin.list_display)
+            assert field in self.admin.list_display
 
 
 class TestHallAdminConfig(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = HallAdmin(Hall, admin.site)
 
-    def test_list_display(self):
+    def test_list_display(self) -> None:
         for field in ("id", "space", "seat_selection", "open_seating"):
-            self.assertIn(field, self.admin.list_display)
+            assert field in self.admin.list_display
 
-    def test_autocomplete(self):
-        self.assertIn("space", self.admin.autocomplete_fields)
+    def test_autocomplete(self) -> None:
+        assert "space" in self.admin.autocomplete_fields
 
-    def test_inlines(self):
-        self.assertIn(HallTranslationInline, self.admin.inlines)
+    def test_inlines(self) -> None:
+        assert HallTranslationInline in self.admin.inlines
 
 
 class TestHallTranslationInlineConfig(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.inline = HallTranslationInline(Hall, admin.site)
 
-    def test_model(self):
-        self.assertIs(self.inline.model, HallTranslation)
+    def test_model(self) -> None:
+        assert self.inline.model is HallTranslation
 
-    def test_fields(self):
-        self.assertEqual(tuple(self.inline.fields), ("language", "name", "remark"))
+    def test_fields(self) -> None:
+        assert tuple(self.inline.fields) == ("language", "name", "remark")
 
 
 class TestHallTranslationAdminConfig(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = HallTranslationAdmin(HallTranslation, admin.site)
 
-    def test_list_display(self):
+    def test_list_display(self) -> None:
         for field in ("id", "language", "hall", "name"):
-            self.assertIn(field, self.admin.list_display)
+            assert field in self.admin.list_display
 
 
 # ---------------------------------------------------------------------------
@@ -247,7 +247,7 @@ class TestHallTranslationAdminConfig(TestCase):
 class TestLocationAdminFunctional(TestCase):
     """Functional admin flows for location models."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = User.objects.create_superuser("admin", "admin@example.com", "password")
         self.client.force_login(self.superuser)
 
@@ -261,12 +261,12 @@ class TestLocationAdminFunctional(TestCase):
 
     # Location -----------------------------------------------------------------
 
-    def test_location_changelist(self):
+    def test_location_changelist(self) -> None:
         url = reverse("admin:locations_location_changelist")
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_location_add(self):
+    def test_location_add(self) -> None:
         url = reverse("admin:locations_location_add")
         response = self.client.post(
             url,
@@ -286,10 +286,10 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(Location.objects.filter(city="Gent", street="Main").exists())
+        assert response.status_code == 200
+        assert Location.objects.filter(city="Gent", street="Main").exists()
 
-    def test_location_change(self):
+    def test_location_change(self) -> None:
         url = reverse("admin:locations_location_change", args=[self.location.pk])
         response = self.client.post(
             url,
@@ -312,24 +312,24 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         self.location.refresh_from_db()
-        self.assertEqual(self.location.street, "Updated")
+        assert self.location.street == "Updated"
 
-    def test_location_delete(self):
+    def test_location_delete(self) -> None:
         url = reverse("admin:locations_location_delete", args=[self.location.pk])
         response = self.client.post(url, {"post": "yes"}, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(Location.objects.filter(pk=self.location.pk).exists())
+        assert response.status_code == 200
+        assert not Location.objects.filter(pk=self.location.pk).exists()
 
     # LocationTranslation -------------------------------------------------------
 
-    def test_location_translation_changelist(self):
+    def test_location_translation_changelist(self) -> None:
         url = reverse("admin:locations_locationtranslation_changelist")
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_location_translation_add(self):
+    def test_location_translation_add(self) -> None:
         url = reverse("admin:locations_locationtranslation_add")
         new_language = LanguageFactory(code="fr")
         response = self.client.post(
@@ -341,10 +341,10 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(LocationTranslation.objects.filter(name="Venue Added", language=new_language).exists())
+        assert response.status_code == 200
+        assert LocationTranslation.objects.filter(name="Venue Added", language=new_language).exists()
 
-    def test_location_translation_change(self):
+    def test_location_translation_change(self) -> None:
         url = reverse(
             "admin:locations_locationtranslation_change",
             args=[self.location_translation.pk],
@@ -358,27 +358,27 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         self.location_translation.refresh_from_db()
-        self.assertEqual(self.location_translation.name, "Venue Updated")
+        assert self.location_translation.name == "Venue Updated"
 
-    def test_location_translation_delete(self):
+    def test_location_translation_delete(self) -> None:
         url = reverse(
             "admin:locations_locationtranslation_delete",
             args=[self.location_translation.pk],
         )
         response = self.client.post(url, {"post": "yes"}, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(LocationTranslation.objects.filter(pk=self.location_translation.pk).exists())
+        assert response.status_code == 200
+        assert not LocationTranslation.objects.filter(pk=self.location_translation.pk).exists()
 
     # Space ---------------------------------------------------------------------
 
-    def test_space_changelist(self):
+    def test_space_changelist(self) -> None:
         url = reverse("admin:locations_space_changelist")
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_space_add(self):
+    def test_space_add(self) -> None:
         url = reverse("admin:locations_space_add")
         response = self.client.post(
             url,
@@ -391,10 +391,10 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(Space.objects.filter(location=self.location).count() >= 1)
+        assert response.status_code == 200
+        assert Space.objects.filter(location=self.location).count() >= 1
 
-    def test_space_change(self):
+    def test_space_change(self) -> None:
         url = reverse("admin:locations_space_change", args=[self.space.pk])
         response = self.client.post(
             url,
@@ -410,22 +410,22 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_space_delete(self):
+    def test_space_delete(self) -> None:
         url = reverse("admin:locations_space_delete", args=[self.space.pk])
         response = self.client.post(url, {"post": "yes"}, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(Space.objects.filter(pk=self.space.pk).exists())
+        assert response.status_code == 200
+        assert not Space.objects.filter(pk=self.space.pk).exists()
 
     # SpaceTranslation ---------------------------------------------------------
 
-    def test_space_translation_changelist(self):
+    def test_space_translation_changelist(self) -> None:
         url = reverse("admin:locations_spacetranslation_changelist")
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_space_translation_add(self):
+    def test_space_translation_add(self) -> None:
         url = reverse("admin:locations_spacetranslation_add")
         new_language = LanguageFactory(code="de")
         response = self.client.post(
@@ -437,10 +437,10 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(SpaceTranslation.objects.filter(name="Room B", language=new_language).exists())
+        assert response.status_code == 200
+        assert SpaceTranslation.objects.filter(name="Room B", language=new_language).exists()
 
-    def test_space_translation_change(self):
+    def test_space_translation_change(self) -> None:
         url = reverse("admin:locations_spacetranslation_change", args=[self.space_translation.pk])
         response = self.client.post(
             url,
@@ -451,24 +451,24 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         self.space_translation.refresh_from_db()
-        self.assertEqual(self.space_translation.name, "Room C")
+        assert self.space_translation.name == "Room C"
 
-    def test_space_translation_delete(self):
+    def test_space_translation_delete(self) -> None:
         url = reverse("admin:locations_spacetranslation_delete", args=[self.space_translation.pk])
         response = self.client.post(url, {"post": "yes"}, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(SpaceTranslation.objects.filter(pk=self.space_translation.pk).exists())
+        assert response.status_code == 200
+        assert not SpaceTranslation.objects.filter(pk=self.space_translation.pk).exists()
 
     # Hall ----------------------------------------------------------------------
 
-    def test_hall_changelist(self):
+    def test_hall_changelist(self) -> None:
         url = reverse("admin:locations_hall_changelist")
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_hall_add(self):
+    def test_hall_add(self) -> None:
         url = reverse("admin:locations_hall_add")
         response = self.client.post(
             url,
@@ -483,10 +483,10 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(Hall.objects.filter(space=self.space).count() >= 1)
+        assert response.status_code == 200
+        assert Hall.objects.filter(space=self.space).count() >= 1
 
-    def test_hall_change(self):
+    def test_hall_change(self) -> None:
         url = reverse("admin:locations_hall_change", args=[self.hall.pk])
         response = self.client.post(
             url,
@@ -505,22 +505,22 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_hall_delete(self):
+    def test_hall_delete(self) -> None:
         url = reverse("admin:locations_hall_delete", args=[self.hall.pk])
         response = self.client.post(url, {"post": "yes"}, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(Hall.objects.filter(pk=self.hall.pk).exists())
+        assert response.status_code == 200
+        assert not Hall.objects.filter(pk=self.hall.pk).exists()
 
     # HallTranslation ----------------------------------------------------------
 
-    def test_hall_translation_changelist(self):
+    def test_hall_translation_changelist(self) -> None:
         url = reverse("admin:locations_halltranslation_changelist")
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_hall_translation_add(self):
+    def test_hall_translation_add(self) -> None:
         url = reverse("admin:locations_halltranslation_add")
         new_language = LanguageFactory(code="es", name="Spanish")
         response = self.client.post(
@@ -533,10 +533,10 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(HallTranslation.objects.filter(name="Hall X", language=new_language).exists())
+        assert response.status_code == 200
+        assert HallTranslation.objects.filter(name="Hall X", language=new_language).exists()
 
-    def test_hall_translation_change(self):
+    def test_hall_translation_change(self) -> None:
         url = reverse("admin:locations_halltranslation_change", args=[self.hall_translation.pk])
         response = self.client.post(
             url,
@@ -548,12 +548,12 @@ class TestLocationAdminFunctional(TestCase):
             },
             follow=True,
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         self.hall_translation.refresh_from_db()
-        self.assertEqual(self.hall_translation.name, "Hall Y")
+        assert self.hall_translation.name == "Hall Y"
 
-    def test_hall_translation_delete(self):
+    def test_hall_translation_delete(self) -> None:
         url = reverse("admin:locations_halltranslation_delete", args=[self.hall_translation.pk])
         response = self.client.post(url, {"post": "yes"}, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(HallTranslation.objects.filter(pk=self.hall_translation.pk).exists())
+        assert response.status_code == 200
+        assert not HallTranslation.objects.filter(pk=self.hall_translation.pk).exists()

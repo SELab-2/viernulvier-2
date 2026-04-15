@@ -26,20 +26,20 @@ class RequiredFieldForm(forms.Form):
 
 
 class TestTwoStepBulkActionMixin(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.factory = RequestFactory()
         self.admin = _DummyTwoStepAdmin(Production, admin.site)
         self.production = ProductionFactory()
 
     def _request_with_messages(self, method, path, data=None):
         request = getattr(self.factory, method)(path, data=data or {})
-        SessionMiddleware(lambda req: None).process_request(request)
+        SessionMiddleware(lambda _: None).process_request(request)
         request.session.save()
         request._messages = FallbackStorage(request)
         request.user = AnonymousUser()
         return request
 
-    def test_run_two_step_bulk_action_renders_intermediate_form(self):
+    def test_run_two_step_bulk_action_renders_intermediate_form(self) -> None:
         request = self._request_with_messages("get", "/admin/productions/production/")
 
         response = self.admin._run_two_step_bulk_action(
@@ -52,10 +52,10 @@ class TestTwoStepBulkActionMixin(TestCase):
             selected_label="Selected productions",
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.template_name, "admin/two_step_action.html")
+        assert response.status_code == 200
+        assert response.template_name == "admin/two_step_action.html"
 
-    def test_run_two_step_bulk_action_apply_calls_handler(self):
+    def test_run_two_step_bulk_action_apply_calls_handler(self) -> None:
         request = self._request_with_messages(
             "post",
             "/admin/productions/production/",
@@ -75,12 +75,12 @@ class TestTwoStepBulkActionMixin(TestCase):
             apply_handler=apply_handler,
         )
 
-        self.assertIsNone(response)
+        assert response is None
         apply_handler.assert_called_once()
         selected_qs = apply_handler.call_args[0][0]
-        self.assertEqual(list(selected_qs.values_list("id", flat=True)), [self.production.id])
+        assert list(selected_qs.values_list("id", flat=True)) == [self.production.id]
 
-    def test_run_two_step_bulk_action_apply_with_no_selection_returns_none(self):
+    def test_run_two_step_bulk_action_apply_with_no_selection_returns_none(self) -> None:
         request = self._request_with_messages(
             "post",
             "/admin/productions/production/",
@@ -98,9 +98,9 @@ class TestTwoStepBulkActionMixin(TestCase):
             apply_handler=Mock(return_value="Applied"),
         )
 
-        self.assertIsNone(response)
+        assert response is None
 
-    def test_run_two_step_bulk_action_apply_with_invalid_form_renders_form_page(self):
+    def test_run_two_step_bulk_action_apply_with_invalid_form_renders_form_page(self) -> None:
         request = self._request_with_messages(
             "post",
             "/admin/productions/production/",
@@ -119,12 +119,12 @@ class TestTwoStepBulkActionMixin(TestCase):
             apply_handler=Mock(return_value="Applied"),
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.template_name, "admin/two_step_action.html")
+        assert response.status_code == 200
+        assert response.template_name == "admin/two_step_action.html"
 
     def test_run_two_step_bulk_action_initial_step_with_empty_queryset_returns_none(
         self,
-    ):
+    ) -> None:
         request = self._request_with_messages("get", "/admin/productions/production/")
 
         response = self.admin._run_two_step_bulk_action(
@@ -136,4 +136,4 @@ class TestTwoStepBulkActionMixin(TestCase):
             apply_handler=Mock(return_value="Applied"),
         )
 
-        self.assertIsNone(response)
+        assert response is None

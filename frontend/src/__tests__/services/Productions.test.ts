@@ -1,7 +1,8 @@
 import { api } from '../../services/Api'
 import { ApiError } from '../../services/ApiTypes'
 import { getProduction, getProductions } from '../../services/productions/Productions'
-import { AttendanceMode, PerformerType } from '../../types/Productions'
+
+import type { AttendanceMode, PerformerType } from '../../types/Productions'
 
 jest.mock('../../services/Api', () => ({
   api: {
@@ -16,6 +17,9 @@ describe('productions service', () => {
     id: 42,
     attendance_mode: 'offline',
     performer_type: 'group',
+    first_event_start: '2026-03-22T20:00:00Z',
+    last_event_end: '2026-03-22T22:00:00Z',
+    media_gallery: [],
     uit_database_theme: {
       id: 4,
       name: 'Drama',

@@ -1,5 +1,4 @@
-"""
-ViewSets for the Media app.
+"""ViewSets for the Media app.
 
 Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
@@ -18,8 +17,7 @@ _TAG = "Media"
 @extend_schema(tags=[_TAG])
 @media_gallery_schema
 class MediaGalleryViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for MediaGallery objects.
+    """CRUD endpoints for MediaGallery objects.
 
     A gallery is a named collection of media items. The response includes
     all nested media items (with their localised metadata and crop variants)
@@ -61,8 +59,7 @@ class MediaGalleryViewSet(ApiModelViewSet):
 @extend_schema(tags=[_TAG])
 @media_item_schema
 class MediaItemViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for MediaItem objects.
+    """CRUD endpoints for MediaItem objects.
 
     A media item is a single image, video, or audio asset within a gallery.
     The response includes localised metadata and all pre-rendered crop variants.

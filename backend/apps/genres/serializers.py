@@ -1,5 +1,4 @@
-"""
-Serializers for the Genre app.
+"""Serializers for the Genre app.
 
 Field-level `help_text` and `extra_kwargs` are picked up automatically
 by drf-spectacular and rendered in the Swagger UI, so descriptions do
@@ -14,9 +13,7 @@ from .models import Genre, GenreUseAs
 
 
 class GenreUseAsSerializer(serializers.ModelSerializer):
-    """
-    Represents a GenreUseAs object - the role a genre plays in the system.
-    """
+    """Represents a GenreUseAs object - the role a genre plays in the system."""
 
     class Meta:
         model = GenreUseAs
@@ -30,8 +27,7 @@ class GenreUseAsSerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
-    """
-    Represents a Genre.
+    """Represents a Genre.
 
     The `name` field contains all available translations as a dictionary,
     for example: {"en": "Theatre", "fr": "Théâtre"}.

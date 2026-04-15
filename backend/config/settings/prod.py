@@ -1,5 +1,4 @@
-"""
-Production settings for the viernulvier_archive project.
+"""Production settings for the viernulvier_archive project.
 
 Extends base.py with:
 - Strict security headers (HSTS, secure cookies, SSL redirect)
@@ -16,8 +15,8 @@ Usage:
 
 import os
 
-from .base import *  # noqa: F401, F403
-from .base import REST_FRAMEWORK  # noqa: F811
+from .base import *  # noqa: F403
+from .base import REST_FRAMEWORK
 
 # ---------------------------------------------------------------------------
 # Core
@@ -71,7 +70,6 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_CLASSES": [
         "apps.core.throttles.PublicKeyMinuteThrottle",
         "apps.core.throttles.PublicKeyHourThrottle",
-        "apps.core.throttles.InternalKeyThrottle",
         # fallback for unauthenticated requests, should be blocked by permissions but just in case
         "rest_framework.throttling.AnonRateThrottle",
     ],
@@ -80,6 +78,5 @@ REST_FRAMEWORK = {
         "public_hour": "800/hour",
         # fallback for unauthenticated requests, should be blocked by permissions but just in case
         "anon": "10/minute",
-        "internal": None,
     },
 }

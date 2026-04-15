@@ -24,11 +24,30 @@ from tests.factories.genre import (
     GenreUseAsFactory,
 )
 from tests.factories.language import LanguageFactory
-from tests.helpers.api import internal_headers, paginated_results, public_headers, wrong_headers
 
 PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def int_headers():
+    return {"HTTP_X_API_KEY": INT_KEY}
+
+
+def pub_headers():
+    return {"HTTP_X_API_KEY": PUB_KEY}
+
+
+def wrong_headers():
+    return {"HTTP_X_API_KEY": "completely-wrong-key"}
+
+
+def results_list(response):
+    return response.data.get("results", response.data)
 
 
 # ---------------------------------------------------------------------------
@@ -77,10 +96,10 @@ class TestGenreViewSetPrefetch(TestCase):
 
     def test_list_prefetches_translations_bounded_queries(self):
         with CaptureQueriesContext(connection) as ctx:
-            response = self.client.get("/api/v1/genres/?ordering=id", **public_headers(PUB_KEY))
+            response = self.client.get("/api/v1/genres/?ordering=id", **pub_headers())
 
         self.assertEqual(response.status_code, 200)
-        self.assertGreaterEqual(len(paginated_results(response)), 5)
+        self.assertGreaterEqual(len(results_list(response)), 5)
         self.assertEqual(len(ctx), 4)
 
 
@@ -100,11 +119,11 @@ class TestGenreUseAsViewSet(TestCase):
 
     # list
     def test_list_public_key(self):
-        response = self.client.get("/api/v1/genre-use-as/?ordering=id", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/genre-use-as/?ordering=id", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_internal_key(self):
-        response = self.client.get("/api/v1/genre-use-as/?ordering=id", **internal_headers(INT_KEY))
+        response = self.client.get("/api/v1/genre-use-as/?ordering=id", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_without_auth(self):
@@ -113,12 +132,12 @@ class TestGenreUseAsViewSet(TestCase):
 
     # retrieve
     def test_retrieve_public_key(self):
-        response = self.client.get(f"/api/v1/genre-use-as/{self.use_as.id}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/genre-use-as/{self.use_as.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["name"], "genre")
 
     def test_retrieve_internal_key(self):
-        response = self.client.get(f"/api/v1/genre-use-as/{self.use_as.id}/", **internal_headers(INT_KEY))
+        response = self.client.get(f"/api/v1/genre-use-as/{self.use_as.id}/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_wrong_key(self):
@@ -131,7 +150,7 @@ class TestGenreUseAsViewSet(TestCase):
             "/api/v1/genre-use-as/",
             {"name": "tag"},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 201)
         self.assertTrue(GenreUseAs.objects.filter(name="tag").exists())
@@ -141,7 +160,7 @@ class TestGenreUseAsViewSet(TestCase):
             "/api/v1/genre-use-as/",
             {"name": "tag"},
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertEqual(response.status_code, 403)
 
@@ -159,7 +178,7 @@ class TestGenreUseAsViewSet(TestCase):
             f"/api/v1/genre-use-as/{self.use_as.id}/",
             {"name": "genre-updated"},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 200)
         self.use_as.refresh_from_db()
@@ -170,7 +189,7 @@ class TestGenreUseAsViewSet(TestCase):
             f"/api/v1/genre-use-as/{self.use_as.id}/",
             {"name": "genre-patched"},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 200)
         self.use_as.refresh_from_db()
@@ -181,17 +200,17 @@ class TestGenreUseAsViewSet(TestCase):
             f"/api/v1/genre-use-as/{self.use_as.id}/",
             {"name": "genre-updated"},
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertEqual(response.status_code, 403)
 
     def test_delete_internal_key(self):
-        response = self.client.delete(f"/api/v1/genre-use-as/{self.use_as.id}/", **internal_headers(INT_KEY))
+        response = self.client.delete(f"/api/v1/genre-use-as/{self.use_as.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
         self.assertFalse(GenreUseAs.objects.filter(id=self.use_as.id).exists())
 
     def test_delete_public_key_denied(self):
-        response = self.client.delete(f"/api/v1/genre-use-as/{self.use_as.id}/", **public_headers(PUB_KEY))
+        response = self.client.delete(f"/api/v1/genre-use-as/{self.use_as.id}/", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
 
@@ -213,15 +232,15 @@ class TestGenreViewSet(TestCase):
 
     # list
     def test_list_public_key(self):
-        response = self.client.get("/api/v1/genres/?ordering=id", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/genres/?ordering=id", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_internal_key(self):
-        response = self.client.get("/api/v1/genres/?ordering=id", **internal_headers(INT_KEY))
+        response = self.client.get("/api/v1/genres/?ordering=id", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_response_fields(self):
-        response = self.client.get("/api/v1/genres/?ordering=id", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/genres/?ordering=id", **pub_headers())
         results = response.data.get("results", response.data)
         item = results[0]
         self.assertIn("id", item)
@@ -234,12 +253,12 @@ class TestGenreViewSet(TestCase):
 
     # retrieve
     def test_retrieve_public_key(self):
-        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["type"], "Theater")
 
     def test_retrieve_internal_key(self):
-        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **internal_headers(INT_KEY))
+        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_with_wrong_key(self):
@@ -252,7 +271,7 @@ class TestGenreViewSet(TestCase):
             "/api/v1/genres/",
             {"type": "Festival", "use_as_id": self.use_as.id},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 201)
         self.assertTrue(Genre.objects.filter(type="Festival").exists())
@@ -262,7 +281,7 @@ class TestGenreViewSet(TestCase):
             "/api/v1/genres/",
             {"type": "Festival", "use_as_id": self.use_as.id},
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertEqual(response.status_code, 403)
 
@@ -280,7 +299,7 @@ class TestGenreViewSet(TestCase):
             f"/api/v1/genres/{self.genre.id}/",
             {"type": "Concert", "use_as_id": self.use_as.id},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 200)
         self.genre.refresh_from_db()
@@ -291,7 +310,7 @@ class TestGenreViewSet(TestCase):
             f"/api/v1/genres/{self.genre.id}/",
             {"type": "Opera"},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 200)
         self.genre.refresh_from_db()
@@ -302,7 +321,7 @@ class TestGenreViewSet(TestCase):
             f"/api/v1/genres/{self.genre.id}/",
             {"type": "Opera", "use_as": self.use_as.id},
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertEqual(response.status_code, 403)
 
@@ -316,12 +335,12 @@ class TestGenreViewSet(TestCase):
 
     # delete
     def test_delete_internal_key(self):
-        response = self.client.delete(f"/api/v1/genres/{self.genre.id}/", **internal_headers(INT_KEY))
+        response = self.client.delete(f"/api/v1/genres/{self.genre.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
         self.assertFalse(Genre.objects.filter(id=self.genre.id).exists())
 
     def test_delete_public_key_denied(self):
-        response = self.client.delete(f"/api/v1/genres/{self.genre.id}/", **public_headers(PUB_KEY))
+        response = self.client.delete(f"/api/v1/genres/{self.genre.id}/", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_delete_without_auth_denied(self):

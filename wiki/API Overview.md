@@ -133,3 +133,40 @@ Rate limiting is applied to all requests authenticated with a `PUBLIC_API_KEY`.
 - Unauthorized method calls receive **HTTP 403**.
 - Throttled requests receive **HTTP 429**.
 - Security is enforced using **timing-safe key comparisons**.
+
+---
+
+## Media Upload Validation Policy
+
+All upload flows use one shared validation policy for media safety and consistency.
+
+### Supported MIME Types
+
+- `image/jpeg`
+- `image/png`
+- `image/webp`
+- `application/pdf` (only for generic media uploads)
+
+### Validation Rules
+
+- **Maximum file size**: 10 MB
+- **Binary signature check**:
+    - PDF files must start with `%PDF-`
+    - Images are verified using Pillow (`JPEG`, `PNG`, `WEBP`)
+- **Declared-vs-content mismatch detection**:
+    - If request `content_type` says image but binary payload is PDF (or vice versa), the upload is rejected
+- **Extension-vs-MIME consistency check**:
+    - Example: `poster.pdf` with PNG content is rejected
+- **Filename normalization**:
+    - Client-side paths are stripped and only the basename is used
+
+### Endpoints and Fields Covered
+
+- `POST /api/v1/media/` (`MediaFile.file`)
+- `PUT/PATCH /api/v1/media/{id}/` when replacing `file`
+- `POST/PUT/PATCH /api/v1/blogs/` (`Blog.cover_image`)
+- Internal/admin/importer save paths for `Blog.cover_image` and `MediaItemCrop.image`
+
+### Validation Error Shape
+
+Validation failures are returned in the API problem-details format with status **422 Unprocessable Entity**.

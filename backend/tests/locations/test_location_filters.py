@@ -4,6 +4,7 @@ Tests for apps/locations/filters.py and apps/locations/views.py.
 
 import pytest
 from django.test import TestCase, override_settings
+from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.locations.filters import HallFilter, LocationFilter, SpaceFilter
@@ -17,13 +18,6 @@ from tests.factories.location import (
     SpaceFactory,
     SpaceTranslationFactory,
 )
-from tests.helpers.api import (
-    internal_headers,
-    paginated_results,
-    public_headers,
-    v1_detail_url,
-    v1_list_url,
-)
 
 pytestmark = pytest.mark.django_db
 
@@ -32,11 +26,11 @@ INT_KEY = "int-location-filter-test-key"
 
 
 def pub_headers():
-    return public_headers(PUB_KEY)
+    return {"HTTP_X_API_KEY": PUB_KEY}
 
 
 def int_headers():
-    return internal_headers(INT_KEY)
+    return {"HTTP_X_API_KEY": INT_KEY}
 
 
 # =====================================================
@@ -223,10 +217,10 @@ class TestLocationViewSet(TestCase):
         Location.objects.all().delete()
 
     def list_url(self):
-        return v1_list_url("location")
+        return reverse("v1:location-list")
 
     def detail_url(self, pk):
-        return v1_detail_url("location", pk=pk)
+        return reverse("v1:location-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -252,14 +246,14 @@ class TestLocationViewSet(TestCase):
         LocationFactory(city="Gent")
         LocationFactory(city="Brussel")
         response = self.client.get(self.list_url(), {"city": "Gent"}, **pub_headers())
-        results = paginated_results(response)
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_is_own_location(self):
         LocationFactory(is_own_location=True)
         LocationFactory(is_own_location=False)
         response = self.client.get(self.list_url(), {"is_own_location": "true"}, **pub_headers())
-        results = paginated_results(response)
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_translated_name(self):
@@ -268,21 +262,21 @@ class TestLocationViewSet(TestCase):
         LocationTranslationFactory(location=loc, language=lang, name="Stadsschouwburg")
         LocationFactory()
         response = self.client.get(self.list_url(), {"name": "stads"}, **pub_headers())
-        results = paginated_results(response)
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 
     def test_ordering_by_city(self):
         LocationFactory(city="Gent")
         LocationFactory(city="Antwerpen")
         response = self.client.get(self.list_url(), {"ordering": "city"}, **pub_headers())
-        cities = [r["city"] for r in paginated_results(response)]
+        cities = [r["city"] for r in response.data.get("results", response.data)]
         self.assertEqual(cities, sorted(cities))
 
     def test_search_by_city(self):
         LocationFactory(city="Gent")
         LocationFactory(city="Brussel")
         response = self.client.get(self.list_url(), {"search": "Gent"}, **pub_headers())
-        results = paginated_results(response)
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 
 
@@ -298,10 +292,10 @@ class TestSpaceViewSet(TestCase):
         Space.objects.all().delete()
 
     def list_url(self):
-        return v1_list_url("space")
+        return reverse("v1:space-list")
 
     def detail_url(self, pk):
-        return v1_detail_url("space", pk=pk)
+        return reverse("v1:space-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -317,7 +311,7 @@ class TestSpaceViewSet(TestCase):
         SpaceFactory(location=loc)
         SpaceFactory()
         response = self.client.get(self.list_url(), {"location": loc.id}, **pub_headers())
-        results = paginated_results(response)
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_translated_name(self):
@@ -326,7 +320,7 @@ class TestSpaceViewSet(TestCase):
         SpaceTranslationFactory(space=space, language=lang, name="Foyer")
         SpaceFactory()
         response = self.client.get(self.list_url(), {"name": "foyer"}, **pub_headers())
-        results = paginated_results(response)
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 
     def test_internal_can_delete(self):
@@ -347,7 +341,7 @@ class TestHallViewSet(TestCase):
         Hall.objects.all().delete()
 
     def list_url(self):
-        return v1_list_url("hall")
+        return reverse("v1:hall-list")
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -363,7 +357,7 @@ class TestHallViewSet(TestCase):
         HallFactory(space=space)
         HallFactory()
         response = self.client.get(self.list_url(), {"space": space.id}, **pub_headers())
-        results = paginated_results(response)
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_location(self):
@@ -371,14 +365,14 @@ class TestHallViewSet(TestCase):
         HallFactory(space=SpaceFactory(location=loc))
         HallFactory()
         response = self.client.get(self.list_url(), {"location": loc.id}, **pub_headers())
-        results = paginated_results(response)
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_seat_selection(self):
         HallFactory(seat_selection=True)
         HallFactory(seat_selection=False)
         response = self.client.get(self.list_url(), {"seat_selection": "true"}, **pub_headers())
-        results = paginated_results(response)
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 
     def test_search_by_translated_name(self):
@@ -387,11 +381,11 @@ class TestHallViewSet(TestCase):
         HallTranslationFactory(hall=hall, language=lang, name="Grote Zaal")
         HallFactory()
         response = self.client.get(self.list_url(), {"search": "Grote"}, **pub_headers())
-        results = paginated_results(response)
+        results = response.data.get("results", response.data)
         self.assertEqual(len(results), 1)
 
     def test_ordering_by_id(self):
         HallFactory.create_batch(3)
         response = self.client.get(self.list_url(), {"ordering": "id"}, **pub_headers())
-        ids = [r["id"] for r in paginated_results(response)]
+        ids = [r["id"] for r in response.data.get("results", response.data)]
         self.assertEqual(ids, sorted(ids))

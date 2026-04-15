@@ -1,5 +1,4 @@
-"""
-Staging settings for the viernulvier_archive project.
+"""Staging settings for the viernulvier_archive project.
 
 Mirrors production as closely as possible so that staging catches
 configuration drift before it reaches prod. The main differences are:
@@ -14,7 +13,7 @@ Usage:
 
 import os
 
-from .base import *  # noqa: F401, F403
+from .base import *  # noqa: F403
 from .base import REST_FRAMEWORK
 
 # ---------------------------------------------------------------------------
@@ -48,7 +47,6 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_CLASSES": [
         "apps.core.throttles.PublicKeyMinuteThrottle",
         "apps.core.throttles.PublicKeyHourThrottle",
-        "apps.core.throttles.InternalKeyThrottle",
         # fallback for unauthenticated requests, should be blocked by permissions but just in case
         "rest_framework.throttling.AnonRateThrottle",
     ],
@@ -57,6 +55,5 @@ REST_FRAMEWORK = {
         "public_hour": "800/hour",
         # fallback for unauthenticated requests, should be blocked by permissions but just in case
         "anon": "10/minute",
-        "internal": None,
     },
 }

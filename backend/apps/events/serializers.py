@@ -1,5 +1,4 @@
-"""
-Serializers for the Events app.
+"""Serializers for the Events app.
 
 Field-level ``help_text`` and ``extra_kwargs`` are picked up automatically by
 drf-spectacular and rendered in the Swagger UI, so descriptions do not need to
@@ -24,8 +23,7 @@ from .models import Event, EventPrice
 
 
 class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
-    """
-    Represents a single price tier assigned to an event.
+    """Represents a single price tier assigned to an event.
 
     Each ``EventPrice`` links an event to a ``PriceRank`` and records the
     ticket amount (in euro) and the number of seats available at that rank.
@@ -49,7 +47,7 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     )
 
     @extend_schema_field(serializers.CharField(allow_null=True))
-    def get_price_rank_display(self, obj):
+    def get_price_rank_display(self, obj: EventPrice) -> str | None:
         """Return the price rank name in the project's base language."""
         if not obj.price_rank:
             return None
@@ -61,7 +59,8 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         )
 
     @extend_schema_field(serializers.CharField(allow_null=True))
-    def get_price_display(self, obj):
+    def get_price_display(self, obj: EventPrice) -> str | None:
+        """Return the price category name in the project's base language."""
         if not obj.price:
             return None
         return self.get_base_translated_value(
@@ -94,8 +93,7 @@ class EventPriceSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
 
 class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
-    """
-    Full representation of an Event.
+    """Full representation of an Event.
 
     An event is a scheduled occurrence of a production inside a hall. The
     ``prices`` field is a nested read-only array of ``EventPriceSerializer``
@@ -148,7 +146,7 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     )
 
     @extend_schema_field(serializers.CharField())
-    def get_production_display(self, obj):
+    def get_production_display(self, obj: Event) -> str:
         """Return the production name in the project's base language."""
         return self.get_base_translated_value(
             obj.production,
@@ -158,7 +156,7 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         )
 
     @extend_schema_field(serializers.CharField(allow_null=True))
-    def get_hall_display(self, obj):
+    def get_hall_display(self, obj: Event) -> str | None:
         """Return the hall name in the project's base language."""
         if not obj.hall:
             return None
@@ -197,8 +195,8 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
 
 
 class NestedEventSerializer(EventSerializer):
-    """
-    Compact event representation for use when nested inside a Production response.
+    """Compact event representation for use when nested inside a Production response.
+
     Production fields are excluded to avoid redundant/circular data.
     """
 

@@ -1,6 +1,4 @@
-"""
-Filters for the Language app.
-"""
+"""Filters for the Language app."""
 
 import django_filters
 
@@ -10,8 +8,7 @@ from .models import Language
 
 
 class LanguageFilter(BaseModelFilter):
-    """
-    FilterSet for Language list queries.
+    """FilterSet for Language list queries.
 
     Supported query parameters
     --------------------------

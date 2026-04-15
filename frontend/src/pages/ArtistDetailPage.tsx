@@ -1,7 +1,7 @@
-import { Container, Typography, Paper, Stack, Button } from '@mui/material'
-import { useParams, useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { Container, Typography, Paper, Stack, Button } from '@mui/material'
+import { useTranslation } from 'react-i18next'
+import { useParams, useNavigate } from 'react-router-dom'
 
 const ArtistDetailPage = () => {
   const { id } = useParams<{ id: string }>()

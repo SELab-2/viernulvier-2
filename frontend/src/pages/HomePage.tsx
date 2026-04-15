@@ -1,104 +1,224 @@
-import { Container, Paper, Stack, Typography, Box } from '@mui/material'
+import { useMediaQuery, useTheme } from '@mui/material'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import FilteredSearchBar from '../components/searchbar/FilteredSearchBar'
-import Tag from '../components/Tag'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { useCallback, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 
-const TAGS = [
-  { display_name: 'theater', name: { nl: 'Theater', en: 'THEATER' } },
-  { display_name: 'concert', name: { nl: 'Concert', en: 'CONCERT' } },
-  { display_name: 'expo', name: { nl: 'Expo', en: 'EXPO' } },
-  { display_name: 'film', name: { nl: 'Film', en: 'FILM' } },
-  { display_name: 'workshop', name: { nl: 'Workshop', en: 'WORKSHOP' } },
-  { display_name: 'music', name: { nl: 'Muziek', en: 'MUSIC' } },
-  { display_name: 'Festival', name: { nl: 'Festival', en: 'FESTIVAL' } },
-]
+import CollectionPageLayout from '../components/CollectionPageLayout'
+import FloatingAlert from '../components/FloatingAlert'
+import ProductionView from '../components/ProductionView'
+import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
+import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
+import { ApiError } from '../services/ApiTypes'
+import { getProductions } from '../services/productions/Productions'
 
-// TODO: Fetch tags from API in the future
+import type { Production } from '../types/Productions'
 
-/**
- * Parse selected tags from the URL query string.
- * @param search - The URL search string (e.g. '?tags=theater,concert')
- * @returns Array of tag names
- */
-function parseTagsFromQuery(search: string): string[] {
-  const params = new URLSearchParams(search)
-  const tags = params.get('tags')
-  return tags ? tags.split(',').filter(Boolean) : []
+// Page size for the productions list pagination. This is a constant for now but could be made configurable in the future if needed.
+const PAGE_SIZE = 12
+
+// Function to determine the ordering parameter for the API based on the current sort target and direction.
+const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
+  const targetField = sortTarget === 'name' ? 'title_sort' : 'first_event_start'
+  return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 
+// Home page component that displays a list of productions with search, sorting, and pagination functionality.
 const HomePage = () => {
   const { t } = useTranslation()
+  const theme = useTheme()
   const location = useLocation()
-  const navigate = useNavigate()
-  const selectedTags = parseTagsFromQuery(location.search)
-  // Local state for search input
-  const [searchValue, setSearchValue] = useState('')
-  // Demo: no filters or layout options
-  const filters: import('../components/searchbar/filters/DropDownFilter').DropDownFilterProps[] = []
-  const layoutOptions: { name: string; displayName: string }[] = []
-  const currentLayout = ''
+  // Type for optional navigation state used to show a one-time floating alert when arriving
+  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
+  const nav = location as { state?: NavState }
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
+  const {
+    searchValue,
+    sortTarget,
+    sortDirection,
+    viewMode,
+    page,
+    setSearchValue,
+    setSortTarget,
+    setSortDirection,
+    setViewMode,
+    setPage,
+  } = useSearchBarUrlState({ isMobile })
 
-  /**
-   * Toggle a tag's selection and update the URL.
-   * @param tag - The tag name to toggle
-   */
-  const handleTagToggle = useCallback(
-    (tag: string) => {
-      // Get current tags from URL and toggle the clicked tag
-      const tags = parseTagsFromQuery(location.search)
-      let newTags
-      if (tags.includes(tag)) {
-        newTags = tags.filter((t) => t !== tag)
-      } else {
-        newTags = [...tags, tag]
-      }
-      // Update URL with new tags
-      const params = new URLSearchParams(location.search)
-      if (newTags.length > 0) {
-        params.set('tags', newTags.join(','))
-      } else {
-        params.delete('tags')
-      }
-      navigate({ search: params.toString() }, { replace: false })
-    },
-    [location.search, navigate],
+  // Local state for managing the productions data, loading state, error messages, and a retry key to trigger refetching
+  const [isLoading, setIsLoading] = useState(true)
+  const [productions, setProductions] = useState<Production[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [showFallbackError, setShowFallbackError] = useState(false)
+  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
+  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(null)
+  const [retryKey, setRetryKey] = useState(0)
+  const [searchDraft, setSearchDraft] = useState(searchValue)
+
+  const renderedErrorMessage = showFallbackError
+    ? t('productions.home.error.fallback')
+    : errorMessage
+  const floatingErrorMessage = t('productions.home.error.notification')
+
+  // Memoized value for the API ordering parameter to avoid unnecessary recalculations on every render.
+  const ordering = useMemo(
+    () => getOrderingValue(sortTarget, sortDirection),
+    [sortDirection, sortTarget],
   )
 
-  return (
-    <Container maxWidth="md" sx={{ py: 6 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Stack spacing={3}>
-          <Typography variant="h3" component="h1">
-            {t('title')}
-          </Typography>
-          <Typography variant="subtitle1">{t('subtitle')}</Typography>
-        </Stack>
-        <Box sx={{ mt: 4 }}>
-          <FilteredSearchBar
-            placeholder="Search..."
-            searchValue={searchValue}
-            onSearchChange={setSearchValue}
-            tags={TAGS}
-            selectedTags={selectedTags}
-            onTagToggle={handleTagToggle}
-            filters={filters}
-            layoutOptions={layoutOptions}
-            currentLayout={currentLayout}
-            onLayoutChange={() => {}}
-          />
-        </Box>
+  // Effect to synchronize the search draft state with the actual search value from the URL
+  useEffect(() => {
+    setSearchDraft(searchValue)
+  }, [searchValue])
 
-        {/* Test tags for description and reeks context */}
-        <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
-          {/* Description tag example */}
-          <Tag tagName="Festival" context="description" />
-          {/* Reeks tag example */}
-          <Tag tagName="VIDEODROOM" context="series" />
-        </Box>
-      </Paper>
-    </Container>
+  // Effect to fetch productions data from the API whenever the ordering, page, retryKey, or searchValue changes.
+  useEffect(() => {
+    let isActive = true
+
+    const fetchProductions = async () => {
+      setIsLoading(true)
+      setErrorMessage(null)
+      setShowFallbackError(false)
+      setIsFloatingErrorOpen(false)
+      setFloatingAlertMessage(null)
+
+      try {
+        const response = await getProductions({
+          page,
+          pageSize: PAGE_SIZE,
+          filters: {
+            search: searchValue.trim() || undefined,
+            ordering,
+          },
+        })
+
+        if (!isActive) {
+          return
+        }
+
+        setProductions(response.results)
+        setTotalCount(response.count)
+      } catch (error: unknown) {
+        if (!isActive) {
+          return
+        }
+
+        if (error instanceof ApiError) {
+          // Backend error payloads are not guaranteed to be localized,
+          // so we always show the translated fallback copy in the UI.
+          setErrorMessage(null)
+          setShowFallbackError(true)
+        } else {
+          setErrorMessage(null)
+          setShowFallbackError(true)
+        }
+        setIsFloatingErrorOpen(true)
+        setFloatingAlertMessage(null)
+        setProductions([])
+        setTotalCount(0)
+      } finally {
+        if (isActive) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void fetchProductions()
+
+    return () => {
+      isActive = false
+    }
+  }, [ordering, page, retryKey, searchValue])
+
+  // Function to handle retrying the API call when there is an error
+  const onRetry = () => {
+    setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
+    setRetryKey((value) => value + 1)
+  }
+
+  const onFloatingErrorClose = () => {
+    setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
+  }
+
+  // Function to handle search submission, which updates the search value
+  const onSearchSubmit = (value: string) => {
+    const nextQuery = value.trim()
+    if (nextQuery === searchValue.trim()) {
+      setRetryKey((current) => current + 1)
+      return
+    }
+
+    setSearchValue(nextQuery)
+  }
+
+  // If a page navigated here with a floatingAlert in location.state, show it once.
+  useEffect(() => {
+    const { state } = nav
+    if (state?.floatingAlert?.open) {
+      setErrorMessage(null)
+      setShowFallbackError(false)
+      setFloatingAlertMessage(state.floatingAlert.message ?? null)
+      setIsFloatingErrorOpen(true)
+      // Clear the history state so the alert won't reappear on back/refresh
+      try {
+        window.history.replaceState({}, document.title)
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [nav])
+
+  // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.
+  // It also handles the different UI states such as loading, error, and empty results.
+  return (
+    <>
+      <CollectionPageLayout
+        isMobile={isMobile}
+        searchPlaceholder={
+          isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
+        }
+        searchValue={searchDraft}
+        onSearchChange={setSearchDraft}
+        onSearchSubmit={onSearchSubmit}
+        sortTarget={sortTarget}
+        onSortTargetChange={setSortTarget}
+        sortDirection={sortDirection}
+        onSortDirectionChange={setSortDirection}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        resultCount={totalCount}
+        sidebarAriaLabel={t('productions.home.filterPanelLabel')}
+        sidebarTitle={t('productions.home.filterPanelTitle')}
+        sidebarDescription={t('productions.home.filterPanelPlaceholder')}
+        resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
+        isLoading={isLoading}
+        loadingLabel={t('productions.home.loading')}
+        loadingContent={
+          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+        }
+        errorMessage={renderedErrorMessage}
+        retryLabel={t('productions.home.error.retry')}
+        onRetry={onRetry}
+        emptyTitle={t('productions.home.empty.title')}
+        emptyDescription={t('productions.home.empty.description')}
+        hasResults={productions.length > 0}
+        resultsContent={<ProductionView productions={productions} layout={viewMode} />}
+        page={page}
+        pageSize={PAGE_SIZE}
+        totalItems={totalCount}
+        onPageChange={setPage}
+      />
+
+      <FloatingAlert
+        open={isFloatingErrorOpen}
+        onClose={onFloatingErrorClose}
+        severity="error"
+        message={floatingAlertMessage ?? floatingErrorMessage}
+      />
+    </>
   )
 }
 

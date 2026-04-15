@@ -1,5 +1,4 @@
-"""
-Base settings for the viernulvier_archive project.
+"""Base settings for the viernulvier_archive project.
 
 Environment-specific settings files (dev, prod, test) import everything
 from here and override only what differs. Never run the application with
@@ -13,8 +12,8 @@ hard-coded fallback in this file.
 """
 
 import os
-import textwrap
 from pathlib import Path
+import textwrap
 
 from dotenv import load_dotenv
 
@@ -73,6 +72,8 @@ LOCAL_APPS = [
     "apps.pricing",
     "apps.locations",
     "apps.media_library",
+    "apps.media_files",
+    "apps.blogs",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -163,7 +164,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ---------------------------------------------------------------------------
@@ -290,10 +291,12 @@ SPECTACULAR_SETTINGS = {
         {"name": "Productions", "description": "Production management and translations."},
         {"name": "Events", "description": "Event instances and pricing information."},
         {"name": "Media", "description": "Media galleries, items and crops."},
+        {"name": "Media Files", "description": "Uploaded posters, brochures, PDFs, and other print materials."},
         {"name": "Locations", "description": "Locations, halls and spaces."},
         {"name": "Genres", "description": "Genre taxonomy and usage types."},
         {"name": "Tags", "description": "Tag management and production tagging."},
         {"name": "Pricing", "description": "Price ranks and price structures."},
+        {"name": "Blogs", "description": "Blog post management and translations."},
         {"name": "Languages", "description": "Supported languages."},
         {"name": "Imports", "description": "Import pipeline audit logs."},
     ],

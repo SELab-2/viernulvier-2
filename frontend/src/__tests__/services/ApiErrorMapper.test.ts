@@ -1,10 +1,15 @@
-import { ApiError } from '../../services/ApiTypes'
+import i18n from '../../i18n'
 import { normalizeApiError } from '../../services/ApiErrorMapper'
+import { ApiError } from '../../services/ApiTypes'
 
 describe('normalizeApiError', () => {
   const isAxiosError = (error: unknown) => {
     return Boolean((error as { isAxiosError?: boolean })?.isAxiosError)
   }
+
+  beforeEach(async () => {
+    await i18n.changeLanguage('en')
+  })
 
   it.each([
     [400, 'Invalid request parameters.'],
@@ -54,6 +59,24 @@ describe('normalizeApiError', () => {
     expect(result).toMatchObject({
       status: 0,
       message: 'A network error occurred. Please check your connection.',
+    })
+  })
+
+  it('returns Dutch messages when active language is nl', async () => {
+    await i18n.changeLanguage('nl')
+
+    const result = normalizeApiError(
+      {
+        isAxiosError: true,
+        response: { status: 404 },
+      },
+      isAxiosError,
+    )
+
+    expect(result).toBeInstanceOf(ApiError)
+    expect(result).toMatchObject({
+      status: 404,
+      message: 'De gevraagde resource werd niet gevonden.',
     })
   })
 

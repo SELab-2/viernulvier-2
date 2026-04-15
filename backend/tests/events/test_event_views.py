@@ -14,11 +14,31 @@ from tests.factories.language import LanguageFactory
 from tests.factories.location import HallFactory, HallTranslationFactory
 from tests.factories.pricing import PriceRankFactory, PriceRankTranslationFactory
 from tests.factories.production import ProductionFactory, ProductionTranslationFactory
-from tests.helpers.api import internal_headers, paginated_results, public_headers, wrong_headers
 
 PUB_KEY = "pub-event-view-test-key"
 INT_KEY = "int-event-view-test-key"
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def pub_headers():
+    return {"HTTP_X_API_KEY": PUB_KEY}
+
+
+def int_headers():
+    return {"HTTP_X_API_KEY": INT_KEY}
+
+
+def wrong_headers():
+    return {"HTTP_X_API_KEY": "completely-wrong-key"}
+
+
+def results_list(response):
+    """Support both paginated and non-paginated responses."""
+    return response.data.get("results", response.data)
 
 
 # ---------------------------------------------------------------------------
@@ -79,26 +99,26 @@ class _EventSetupMixin(TestCase):
 class TestEventViewSetList(_EventSetupMixin):
     def test_list_with_public_key_returns_200(self):
         """Test case for test_list_with_public_key_returns_200."""
-        response = self.client.get("/api/v1/events/?ordering=id", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/events/?ordering=id", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_with_internal_key_also_returns_200(self):
         """Test case for test_list_with_internal_key_also_returns_200."""
-        response = self.client.get("/api/v1/events/?ordering=id", **internal_headers(INT_KEY))
+        response = self.client.get("/api/v1/events/?ordering=id", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_returns_events(self):
         """Test case for test_list_returns_events."""
-        response = self.client.get("/api/v1/events/?ordering=id", **public_headers(PUB_KEY))
-        items = paginated_results(response)
+        response = self.client.get("/api/v1/events/?ordering=id", **pub_headers())
+        items = results_list(response)
         ids = [item["id"] for item in items]
         self.assertIn(self.e1.id, ids)
         self.assertIn(self.e2.id, ids)
 
     def test_list_response_has_expected_fields(self):
         """Test case for test_list_response_has_expected_fields."""
-        response = self.client.get("/api/v1/events/?ordering=id", **public_headers(PUB_KEY))
-        item = paginated_results(response)[0]
+        response = self.client.get("/api/v1/events/?ordering=id", **pub_headers())
+        item = results_list(response)[0]
 
         self.assertIn("id", item)
         self.assertIn("production", item)
@@ -126,24 +146,24 @@ class TestEventViewSetList(_EventSetupMixin):
 class TestEventViewSetRetrieve(_EventSetupMixin):
     def test_retrieve_with_public_key_returns_200(self):
         """Test case for test_retrieve_with_public_key_returns_200."""
-        response = self.client.get(f"/api/v1/events/{self.e1.id}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/events/{self.e1.id}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_with_internal_key_also_returns_200(self):
         """Test case for test_retrieve_with_internal_key_also_returns_200."""
-        response = self.client.get(f"/api/v1/events/{self.e1.id}/", **internal_headers(INT_KEY))
+        response = self.client.get(f"/api/v1/events/{self.e1.id}/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_returns_correct_event(self):
         """Test case for test_retrieve_returns_correct_event."""
-        response = self.client.get(f"/api/v1/events/{self.e1.id}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/events/{self.e1.id}/", **pub_headers())
         self.assertEqual(response.data["id"], self.e1.id)
         self.assertEqual(response.data["production"]["id"], self.production.id)
         self.assertEqual(response.data["hall"]["id"], self.hall.id)
 
     def test_retrieve_nonexistent_returns_404(self):
         """Test case for test_retrieve_nonexistent_returns_404."""
-        response = self.client.get("/api/v1/events/999999/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/events/999999/", **pub_headers())
         self.assertEqual(response.status_code, 404)
 
     def test_retrieve_without_auth_returns_401(self):
@@ -175,7 +195,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
             },
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 201)
 
@@ -191,7 +211,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
             },
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertTrue(Event.objects.filter(starts_at=(now.isoformat())).exists())
 
@@ -207,7 +227,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
             },
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertEqual(response.status_code, 403)
 
@@ -253,7 +273,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
             },
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 422)
 
@@ -276,7 +296,7 @@ class TestEventViewSetUpdate(_EventSetupMixin):
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
             },
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 200)
 
@@ -292,7 +312,7 @@ class TestEventViewSetUpdate(_EventSetupMixin):
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
             },
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertEqual(response.status_code, 403)
 
@@ -308,7 +328,7 @@ class TestEventViewSetUpdate(_EventSetupMixin):
                 "ends_at": (now + timedelta(hours=2)).isoformat(),
             },
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 404)
 
@@ -325,7 +345,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
             f"/api/v1/events/{self.e1.id}/",
             {"starts_at": (timezone.now() + timedelta(hours=1)).isoformat()},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 200)
 
@@ -337,7 +357,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
             f"/api/v1/events/{self.e1.id}/",
             {"starts_at": new_start_time.isoformat()},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
 
         self.assertEqual(response.status_code, 200)
@@ -352,7 +372,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
             f"/api/v1/events/{self.e1.id}/",
             {"starts_at": (timezone.now() + timedelta(hours=1)).isoformat()},
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertEqual(response.status_code, 403)
 
@@ -384,17 +404,17 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
 class TestEventViewSetDelete(_EventSetupMixin):
     def test_delete_with_internal_key_returns_204(self):
         """Test case for test_delete_with_internal_key_returns_204."""
-        response = self.client.delete(f"/api/v1/events/{self.e1.id}/", **internal_headers(INT_KEY))
+        response = self.client.delete(f"/api/v1/events/{self.e1.id}/", **int_headers())
         self.assertEqual(response.status_code, 204)
 
     def test_delete_removes_event_from_db(self):
         """Test case for test_delete_removes_event_from_db."""
-        self.client.delete(f"/api/v1/events/{self.e1.id}/", **internal_headers(INT_KEY))
+        self.client.delete(f"/api/v1/events/{self.e1.id}/", **int_headers())
         self.assertFalse(Event.objects.filter(id=self.e1.id).exists())
 
     def test_delete_with_public_key_returns_403(self):
         """Test case for test_delete_with_public_key_returns_403."""
-        response = self.client.delete(f"/api/v1/events/{self.e1.id}/", **public_headers(PUB_KEY))
+        response = self.client.delete(f"/api/v1/events/{self.e1.id}/", **pub_headers())
         self.assertEqual(response.status_code, 403)
 
     def test_delete_without_auth_returns_401(self):
@@ -404,7 +424,7 @@ class TestEventViewSetDelete(_EventSetupMixin):
 
     def test_delete_nonexistent_returns_404(self):
         """Test case for test_delete_nonexistent_returns_404."""
-        response = self.client.delete("/api/v1/events/999999/", **internal_headers(INT_KEY))
+        response = self.client.delete("/api/v1/events/999999/", **int_headers())
         self.assertEqual(response.status_code, 404)
 
 
@@ -454,8 +474,8 @@ class TestEventViewSetPrefetch(TestCase):
     def test_list_prefetches_related_models(self):
         # Ensure query count stays bounded when related data grows
         with CaptureQueriesContext(connection) as captured:
-            response = self.client.get("/api/v1/events/?ordering=id", **public_headers(PUB_KEY))
+            response = self.client.get("/api/v1/events/?ordering=id", **pub_headers())
 
         self.assertEqual(response.status_code, 200)
-        self.assertGreaterEqual(len(paginated_results(response)), 5)
+        self.assertGreaterEqual(len(results_list(response)), 5)
         self.assertLessEqual(len(captured), 14)

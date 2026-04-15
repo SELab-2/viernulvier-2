@@ -1,5 +1,4 @@
-"""
-ASGI config for the viernulvier_archive project.
+"""ASGI config for the viernulvier_archive project.
 
 Exposes the ASGI callable as ``application``. Used by ASGI servers such
 as Uvicorn or Daphne.

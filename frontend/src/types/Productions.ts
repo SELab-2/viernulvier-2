@@ -1,5 +1,6 @@
-import type { Genre } from './Genres'
 import type { Event } from './Events'
+import type { Genre } from './Genres'
+import type { MediaGallery } from './Media'
 import type { Tag } from './Tags'
 
 /** Valid attendance mode values. */
@@ -16,6 +17,29 @@ export interface ProductionClassification {
   name: string
 }
 
+/** Tag returned inside a `related` entry. */
+export interface RelatedTag {
+  id: number
+  name: Record<string, string>
+  display_name: string | null
+}
+
+/** Minimal production shape used under `related` entries. */
+export interface RelatedProduction {
+  id: number
+  title: Record<string, string>
+  display_title: string | null
+  artist_name: Record<string, string> | null
+  display_artist_name: string | null
+  media_gallery: MediaGallery
+}
+
+/** Shape of a single related entry (grouped by tag). */
+export interface ProductionRelated {
+  tag: RelatedTag
+  productions: RelatedProduction[]
+}
+
 /**
  * Production object returned by the backend `/productions/` endpoints.
  */
@@ -23,6 +47,9 @@ export interface Production {
   id: number
   attendance_mode: AttendanceMode | ''
   performer_type: PerformerType | ''
+  first_event_start: string | null
+  last_event_end: string | null
+  media_gallery: MediaGallery
   uit_database_theme: ProductionClassification | null
   uit_database_type: ProductionClassification | null
   display_title: string | null
@@ -35,6 +62,7 @@ export interface Production {
   tags: Tag[]
   genres: Genre[]
   events?: Event[]
+  related?: ProductionRelated[]
 }
 
 /**

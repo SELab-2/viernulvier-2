@@ -41,11 +41,30 @@ from tests.factories.media_library import (
     MediaItemFactory,
     MediaItemTranslationFactory,
 )
-from tests.helpers.api import internal_headers, paginated_results, public_headers, wrong_headers
 
 PUB_KEY = "pub-media-library-view-test-key"
 INT_KEY = "int-media-library-view-test-key"
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def int_headers():
+    return {"HTTP_X_API_KEY": INT_KEY}
+
+
+def pub_headers():
+    return {"HTTP_X_API_KEY": PUB_KEY}
+
+
+def wrong_headers():
+    return {"HTTP_X_API_KEY": "completely-wrong-key"}
+
+
+def results_list(response):
+    return response.data.get("results", response.data)
 
 
 # ---------------------------------------------------------------------------
@@ -131,11 +150,11 @@ class TestMediaGalleryViewSetList(TestCase):
         self.gallery_b = MediaGalleryFactory.create(name="Gallery B")
 
     def test_list_with_public_key_returns_200(self):
-        response = self.client.get("/api/v1/media-galleries/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-galleries/", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_with_internal_key_returns_200(self):
-        response = self.client.get("/api/v1/media-galleries/", **internal_headers(INT_KEY))
+        response = self.client.get("/api/v1/media-galleries/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_without_auth_returns_401_or_403(self):
@@ -147,19 +166,19 @@ class TestMediaGalleryViewSetList(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_list_returns_all_galleries(self):
-        response = self.client.get("/api/v1/media-galleries/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-galleries/", **pub_headers())
         self.assertEqual(len(response.data["results"]), 2)
 
     def test_list_response_contains_id_field(self):
-        response = self.client.get("/api/v1/media-galleries/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-galleries/", **pub_headers())
         self.assertIn("id", response.data["results"][0])
 
     def test_list_response_contains_name_field(self):
-        response = self.client.get("/api/v1/media-galleries/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-galleries/", **pub_headers())
         self.assertIn("name", response.data["results"][0])
 
     def test_list_response_contains_media_items_field(self):
-        response = self.client.get("/api/v1/media-galleries/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-galleries/", **pub_headers())
         self.assertIn("media_items", response.data["results"][0])
 
 
@@ -175,11 +194,11 @@ class TestMediaGalleryViewSetDetail(TestCase):
         self.gallery = MediaGalleryFactory.create(name="Detail Gallery")
 
     def test_detail_with_public_key_returns_200(self):
-        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_detail_with_internal_key_returns_200(self):
-        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **internal_headers(INT_KEY))
+        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_detail_without_auth_returns_401_or_403(self):
@@ -187,28 +206,28 @@ class TestMediaGalleryViewSetDetail(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_detail_returns_correct_name(self):
-        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **pub_headers())
         self.assertEqual(response.data["name"], "Detail Gallery")
 
     def test_detail_unknown_id_returns_404(self):
-        response = self.client.get("/api/v1/media-galleries/999999/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-galleries/999999/", **pub_headers())
         self.assertEqual(response.status_code, 404)
 
     def test_detail_media_items_is_list(self):
-        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **pub_headers())
         self.assertIsInstance(response.data["media_items"], list)
 
     def test_detail_nested_media_items_included(self):
         MediaItemFactory.create(gallery=self.gallery)
         MediaItemFactory.create(gallery=self.gallery, position=1, original_filename="b.jpg")
-        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **pub_headers())
         self.assertEqual(len(response.data["media_items"]), 2)
 
     def test_detail_nested_crops_expose_image_url(self):
         """Crops nested inside gallery detail must use image_url, not url."""
         item = MediaItemFactory.create(gallery=self.gallery)
         MediaItemCropFactory.create(media_item=item, name="hd_ready")
-        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/media-galleries/{self.gallery.pk}/", **pub_headers())
         crops = response.data["media_items"][0]["crops"]
         self.assertEqual(len(crops), 1)
         self.assertIn("image_url", crops[0])
@@ -232,7 +251,7 @@ class TestMediaGalleryViewSetWrite(TestCase):
             "/api/v1/media-galleries/",
             {"name": "New Gallery"},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 201)
 
@@ -241,7 +260,7 @@ class TestMediaGalleryViewSetWrite(TestCase):
             "/api/v1/media-galleries/",
             {"name": "New Gallery"},
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertIn(response.status_code, (401, 403))
 
@@ -258,7 +277,7 @@ class TestMediaGalleryViewSetWrite(TestCase):
             f"/api/v1/media-galleries/{self.gallery.pk}/",
             {"name": "Updated Gallery"},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 200)
 
@@ -267,7 +286,7 @@ class TestMediaGalleryViewSetWrite(TestCase):
             f"/api/v1/media-galleries/{self.gallery.pk}/",
             {"name": "Updated Gallery"},
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertIn(response.status_code, (401, 403))
 
@@ -276,7 +295,7 @@ class TestMediaGalleryViewSetWrite(TestCase):
             f"/api/v1/media-galleries/{self.gallery.pk}/",
             {"name": "Patched Gallery"},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 200)
 
@@ -285,21 +304,21 @@ class TestMediaGalleryViewSetWrite(TestCase):
             f"/api/v1/media-galleries/{self.gallery.pk}/",
             {"name": "Patched"},
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertIn(response.status_code, (401, 403))
 
     def test_delete_with_internal_key_returns_204(self):
         response = self.client.delete(
             f"/api/v1/media-galleries/{self.gallery.pk}/",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 204)
 
     def test_delete_with_public_key_returns_403(self):
         response = self.client.delete(
             f"/api/v1/media-galleries/{self.gallery.pk}/",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertIn(response.status_code, (401, 403))
 
@@ -331,11 +350,11 @@ class TestMediaItemViewSetList(TestCase):
         )
 
     def test_list_with_public_key_returns_200(self):
-        response = self.client.get("/api/v1/media-items/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-items/", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_with_internal_key_returns_200(self):
-        response = self.client.get("/api/v1/media-items/", **internal_headers(INT_KEY))
+        response = self.client.get("/api/v1/media-items/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_list_without_auth_returns_401_or_403(self):
@@ -347,11 +366,11 @@ class TestMediaItemViewSetList(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_list_returns_all_items(self):
-        response = self.client.get("/api/v1/media-items/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-items/", **pub_headers())
         self.assertEqual(len(response.data["results"]), 2)
 
     def test_list_response_contains_expected_fields(self):
-        response = self.client.get("/api/v1/media-items/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-items/", **pub_headers())
         item = response.data["results"][0]
         for field in (
             "id",
@@ -371,14 +390,14 @@ class TestMediaItemViewSetList(TestCase):
                 self.assertIn(field, item)
 
     def test_list_items_are_ordered_by_position(self):
-        response = self.client.get("/api/v1/media-items/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-items/", **pub_headers())
         positions = [item["position"] for item in response.data["results"]]
         self.assertEqual(positions, sorted(positions))
 
     def test_list_crops_expose_image_url_not_url(self):
         """Crops in the item list must use image_url, not url or image."""
         MediaItemCropFactory.create(media_item=self.item_a, name="hd_ready")
-        response = self.client.get("/api/v1/media-items/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-items/", **pub_headers())
         # Find the item that has the crop
         item_with_crop = next(i for i in response.data["results"] if i["crops"])
         crop = item_with_crop["crops"][0]
@@ -403,11 +422,11 @@ class TestMediaItemViewSetDetail(TestCase):
         )
 
     def test_detail_with_public_key_returns_200(self):
-        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **pub_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_detail_with_internal_key_returns_200(self):
-        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **internal_headers(INT_KEY))
+        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **int_headers())
         self.assertEqual(response.status_code, 200)
 
     def test_detail_without_auth_returns_401_or_403(self):
@@ -415,21 +434,21 @@ class TestMediaItemViewSetDetail(TestCase):
         self.assertIn(response.status_code, (401, 403))
 
     def test_detail_returns_correct_filename(self):
-        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **pub_headers())
         self.assertEqual(response.data["original_filename"], "detail.jpg")
 
     def test_detail_unknown_id_returns_404(self):
-        response = self.client.get("/api/v1/media-items/999999/", **public_headers(PUB_KEY))
+        response = self.client.get("/api/v1/media-items/999999/", **pub_headers())
         self.assertEqual(response.status_code, 404)
 
     def test_detail_crops_is_list(self):
-        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **pub_headers())
         self.assertIsInstance(response.data["crops"], list)
 
     def test_detail_crop_fields_use_image_url(self):
         """Crop in item detail must expose image_url, not url or image."""
         MediaItemCropFactory.create(media_item=self.item, name="hd_ready")
-        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **pub_headers())
         self.assertEqual(len(response.data["crops"]), 1)
         crop = response.data["crops"][0]
         self.assertIn("image_url", crop)
@@ -443,7 +462,7 @@ class TestMediaItemViewSetDetail(TestCase):
             language=language,
             title="NL Titel",
         )
-        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **public_headers(PUB_KEY))
+        response = self.client.get(f"/api/v1/media-items/{self.item.pk}/", **pub_headers())
         self.assertIsInstance(response.data["title"], dict)
         self.assertEqual(response.data["title"]["nl"], "NL Titel")
 
@@ -471,7 +490,7 @@ class TestMediaItemViewSetWrite(TestCase):
                 "position": 5,
             },
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 201)
 
@@ -480,7 +499,7 @@ class TestMediaItemViewSetWrite(TestCase):
             "/api/v1/media-items/",
             {"gallery": self.gallery.pk, "type": "foto"},
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertIn(response.status_code, (401, 403))
 
@@ -497,7 +516,7 @@ class TestMediaItemViewSetWrite(TestCase):
             f"/api/v1/media-items/{self.item.pk}/",
             {"original_filename": "patched.jpg"},
             format="json",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 200)
 
@@ -506,21 +525,21 @@ class TestMediaItemViewSetWrite(TestCase):
             f"/api/v1/media-items/{self.item.pk}/",
             {"original_filename": "patched.jpg"},
             format="json",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertIn(response.status_code, (401, 403))
 
     def test_delete_with_internal_key_returns_204(self):
         response = self.client.delete(
             f"/api/v1/media-items/{self.item.pk}/",
-            **internal_headers(INT_KEY),
+            **int_headers(),
         )
         self.assertEqual(response.status_code, 204)
 
     def test_delete_with_public_key_returns_403(self):
         response = self.client.delete(
             f"/api/v1/media-items/{self.item.pk}/",
-            **public_headers(PUB_KEY),
+            **pub_headers(),
         )
         self.assertIn(response.status_code, (401, 403))
 
@@ -554,10 +573,10 @@ class TestMediaGalleryViewSetPrefetch(TestCase):
 
     def test_gallery_list_prefetches_nested_relations(self):
         with self.assertNumQueries(6):
-            response = self.client.get("/api/v1/media-galleries/", **public_headers(PUB_KEY))
+            response = self.client.get("/api/v1/media-galleries/", **pub_headers())
 
         self.assertEqual(response.status_code, 200)
-        self.assertGreaterEqual(len(paginated_results(response)), 3)
+        self.assertGreaterEqual(len(results_list(response)), 3)
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
@@ -579,7 +598,7 @@ class TestMediaItemViewSetPrefetch(TestCase):
 
     def test_item_list_prefetches_related_models(self):
         with self.assertNumQueries(5):
-            response = self.client.get("/api/v1/media-items/", **public_headers(PUB_KEY))
+            response = self.client.get("/api/v1/media-items/", **pub_headers())
 
         self.assertEqual(response.status_code, 200)
-        self.assertGreaterEqual(len(paginated_results(response)), 6)
+        self.assertGreaterEqual(len(results_list(response)), 6)

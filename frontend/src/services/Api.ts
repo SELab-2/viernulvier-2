@@ -1,7 +1,12 @@
 import axios from 'axios'
+
+import i18n from '../i18n'
 import { normalizeApiError } from './ApiErrorMapper'
 
-const API_KEY: string = import.meta.env.VITE_PUBLIC_API_KEY
+// When running Vite, `process.env.VITE_PUBLIC_API_KEY` is replaced from envdefs.
+// In Jest/tests, this value is available via process.env and no import.meta usage
+// is needed, avoiding `Cannot use 'import.meta' outside a module` bug.
+const API_KEY: string = process.env.VITE_PUBLIC_API_KEY ?? ''
 
 /**
  * Shared Axios instance pre-configured with the correct base URL and API key
@@ -22,6 +27,12 @@ export const api = axios.create({
     'Content-Type': 'application/json',
     'X-API-Key': API_KEY,
   },
+})
+
+api.interceptors.request.use((config) => {
+  const resolvedLanguage = (i18n.resolvedLanguage || i18n.language || 'nl').split('-', 1)[0]
+  config.headers.set('Accept-Language', resolvedLanguage)
+  return config
 })
 
 /**

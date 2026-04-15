@@ -1,12 +1,13 @@
+import { api } from '../Api'
+import { buildListParams } from '../ApiParams'
+
+import type { GetMediaGalleriesOptions, GetMediaItemsOptions } from './MediaOptions'
 import type {
   MediaGallery,
   MediaGalleryListResponse,
   MediaItem,
   MediaItemListResponse,
 } from '../../types/Media'
-import { api } from '../Api'
-import { buildListParams } from '../ApiParams'
-import type { GetMediaGalleriesOptions, GetMediaItemsOptions } from './MediaOptions'
 
 /**
  * Retrieve a list of media galleries with optional pagination and filtering.

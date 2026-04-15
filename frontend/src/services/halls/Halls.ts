@@ -1,7 +1,8 @@
-import type { Hall, HallListResponse } from '../../types/Halls'
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
+
 import type { GetHallsOptions } from './HallOptions'
+import type { Hall, HallListResponse } from '../../types/Halls'
 
 /**
  * Retrieve a single hall by its numeric ID.

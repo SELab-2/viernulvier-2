@@ -1,5 +1,30 @@
 This guide explains how to use the `sync_viernulvier` Django management command to synchronize data from the Viernulvier/Peppered API to your local database.
 
+## Architecture
+
+The scraper implementation has been refactored into focused, single-responsibility modules within `backend/apps/imports/scrapers/`:
+
+- **`viernulvier_constants.py`** - Shared constants, exceptions, and configuration dataclasses
+- **`viernulvier_http.py`** - HTTP session management, retry logic, and pagination
+- **`viernulvier_normalize.py`** - Value normalization and field coercion helpers
+- **`viernulvier_relations.py`** - Foreign key resolution, translations, and many-to-many sync
+- **`viernulvier_sync.py`** - Core model synchronization loop
+- **`viernulvier_media.py`** - Media gallery and crop synchronization
+- **`viernulvier.py`** - Compatibility facade maintaining legacy API
+
+For pre-API historical data, a dedicated CSV importer is available in `backend/apps/imports/csv_importer/`:
+
+- **`legacy_csv.py`** - Imports the bundled legacy production/event CSV exports into current models
+- **`management/commands/import_legacy_csv.py`** - CLI entrypoint for running the legacy CSV import
+
+This modular design improves maintainability, testability, and separation of concerns.
+
+**Benefits of the refactoring**:
+- Each module has a clear, single responsibility
+- Lower cyclomatic complexity enables all modules to comply with ruff linting rules
+- Easier to test individual components in isolation
+- Simpler to locate and modify specific functionality
+
 ## Overview
 
 The `sync_viernulvier` command fetches data from the Viernulvier/Peppered API (`https://www.viernulvier.gent/api/v1`) and synchronizes it with your local Django database. It supports:
@@ -22,6 +47,27 @@ python manage.py sync_viernulvier
 ```
 
 This will process all sync steps in the correct order (respecting foreign key dependencies).
+
+### Import Historical CSV Data
+
+To import the older pre-API archive data from the bundled CSV files:
+
+```bash
+python manage.py import_legacy_csv
+```
+
+Dry-run mode is available:
+
+```bash
+python manage.py import_legacy_csv --dry-run
+```
+
+To import only one legacy dataset, use `--only`:
+
+```bash
+python manage.py import_legacy_csv --only productions
+python manage.py import_legacy_csv --only events
+```
 
 ### Sync a Specific Step
 
@@ -196,12 +242,21 @@ python manage.py sync_viernulvier --updated-after 2024-06-01T00:00:00Z
 
 ### Sync Process
 
-1. **API Request**: The command makes paginated GET requests to the Viernulvier API endpoints
-2. **Data Mapping**: Each API field is mapped to the corresponding Django model field using configuration
-3. **Upsert Logic**: Records are created or updated based on the `external_id` field
-4. **Translations**: Multi-language fields are synced to separate translation models
-5. **Relationships**: Foreign keys and many-to-many relationships are resolved and linked
-6. **Transaction Safety**: Each record is saved within a database transaction for data integrity
+1. **HTTP Layer** (`viernulvier_http.py`): Establishes a persistent `requests.Session` with retry logic (exponential backoff + jitter) for 429/5xx/network errors. Manages pagination and concurrent page fetching via `ThreadPoolExecutor`.
+2. **Data Fetching**: The command makes paginated GET requests to the Viernulvier API endpoints with ETag support for efficient incremental syncs.
+3. **Data Normalization** (`viernulvier_normalize.py`): Each API field is normalized using value transformers (URL validation, date parsing, decimal conversion, etc.)
+4. **Relationship Resolution** (`viernulvier_relations.py`): Foreign keys are resolved using an in-memory cache (warm-loaded per model) to avoid N+1 queries. Many-to-many relationships are synced after the primary record.
+5. **Core Sync** (`viernulvier_sync.py`): Records are created or updated based on the `external_id` field. Translations are batched per language to minimize database queries. Each record is saved within a savepoint for safe error handling.
+6. **Media Sync** (`viernulvier_media.py`): Media galleries, items, and crops are fetched and synchronized separately. Crop variants (hd_ready, FE3_header) are downloaded and stored locally.
+7. **Transaction Safety**: Dry-run mode is supported for inspection before writing. All changes are wrapped in database transactions.
+
+### Key Design Decisions
+
+- **Session pooling**: One `requests.Session` per sync run for connection reuse and auth header consistency
+- **Batch translation updates**: All translated fields for one parent + one language are merged into a single DB call
+- **In-memory FK cache**: One bulk query per model to populate cache, eliminating N+1 problems
+- **Concurrent page fetching**: Up to 4 concurrent HTTP requests with thread pool, preserving page order
+- **Per-item savepoints**: One bad record never aborts the whole batch
 
 ### Field Mapping
 
@@ -210,11 +265,79 @@ The scraper uses a `ModelSyncConfig` for each model that defines:
 - **field_map**: Maps API field names to Django model field names
 - **translations**: Configuration for translatable fields (title, description, etc.)
 - **m2m**: Configuration for many-to-many relationships
-- **value_transforms**: Custom transformation functions for specific fields
+- **value_transforms**: Custom transformation functions for specific fields (via `viernulvier_normalize.py`)
 
 ### External IDs
 
 All synchronized models must have an `external_id` field that stores the API's `@id` value. This is used as the unique identifier for update-or-create operations.
+
+---
+
+## Module Guide for Developers
+
+This section explains where to make changes for different types of modifications:
+
+### Adding or Modifying API Constants
+
+**File**: `viernulvier_constants.py`
+
+- Base URL, endpoints, timeouts
+- Retry configuration (backoff strategy, max retries, status codes)
+- Error context paths
+- Exception class definitions
+- Configuration dataclasses (`ModelSyncConfig`, `TranslationConfig`, `M2MConfig`)
+
+### HTTP Issues or Retry Logic
+
+**File**: `viernulvier_http.py`
+
+- Retry mechanism with exponential backoff and jitter
+- Session management and user-agent rotation
+- Pagination helpers
+- Concurrent page fetching via `ThreadPoolExecutor`
+- Request error handling (429, 5xx, network errors)
+- ETag/304 response handling
+
+### Value Transformation or Normalization
+
+**File**: `viernulvier_normalize.py`
+
+- URL validation and normalization
+- Date/datetime parsing
+- Decimal/number conversion
+- String transformations (camelCase to snake_case)
+- Field value parsing and coercion
+
+### Foreign Keys, Translations, or M2M Relations
+
+**File**: `viernulvier_relations.py`
+
+- `FKCache` class for in-memory FK resolution
+- Translation building and batching
+- Many-to-many relationship sync
+- Default value population
+- Bulk loading of related objects
+
+### Core Sync Logic and Error Handling
+
+**File**: `viernulvier_sync.py`
+
+- Main synchronization loop (`sync_viernulvier_impl`)
+- Transaction and savepoint handling
+- Upsert logic (create/update based on external_id)
+- Error accumulation and reporting
+- Dry-run mode
+- Import logging
+
+### Media, Galleries, and Crops
+
+**File**: `viernulvier_media.py`
+
+- Media gallery linking
+- Crop downloading and storage
+- Image variant handling (hd_ready, FE3_header)
+- Media item crop synchronization
+- Local file storage via Django's ImageField backend
 
 ---
 
@@ -319,12 +442,36 @@ LOGGING = {
 
 ## Contributing
 
+### Adding a New Sync Step
+
 If you need to add support for additional API endpoints or models:
 
-1. Add the model configuration in `apps/imports/management/commands/sync_viernulvier.py`
-2. Add the sync step to the `SYNC_STEPS` list (in dependency order)
-3. Test with `--only` flag first
-4. Update this documentation
+1. **Create the Django model** in the appropriate `apps/*/models.py` file with an `external_id` field
+2. **Add model configuration** in `apps/imports/management/commands/sync_viernulvier.py`:
+   - Create a `ModelSyncConfig` instance with field mappings, translations, and M2M relationships
+   - Register it in `SYNC_STEPS` list (in dependency order)
+3. **Test thoroughly**:
+   - Test with `--only <step_name>` flag first
+   - Test with `--dry-run` mode to verify without writing
+   - Test with various date filters
+4. **Update this documentation** with the new step in the Available Sync Steps table
 
-Make sure there exists a model for Django, and it is present in the database.
+### Modifying Scraper Behavior
+
+Refer to the [Module Guide for Developers](#module-guide-for-developers) section to understand which module to modify for your use case.
+
+### Testing
+
+Run the scraper tests from the backend directory:
+
+```bash
+cd backend
+pytest apps/imports/tests/ -v
+```
+
+Or test a single step interactively:
+
+```bash
+python manage.py sync_viernulvier --only <step_name> --dry-run
+```
 

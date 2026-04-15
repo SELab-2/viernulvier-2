@@ -14,21 +14,21 @@ class HealthViewTests(TestCase):
     Tests for the health endpoint.
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.factory = RequestFactory()
 
-    def test_health_ok(self):
+    def test_health_ok(self) -> None:
         """
         Health endpoint should return 200 when the database is reachable.
         """
         request = self.factory.get("/health")
         response = health(request)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content), {"status": "ok"})
+        assert response.status_code == 200
+        assert json.loads(response.content) == {"status": "ok"}
 
     @patch("config.health.connections")
-    def test_health_database_unavailable(self, mock_connections):
+    def test_health_database_unavailable(self, mock_connections) -> None:
         """
         Health endpoint should return 503 when the database raises OperationalError.
         """
@@ -40,17 +40,11 @@ class HealthViewTests(TestCase):
         request = self.factory.get("/health")
         response = health(request)
 
-        self.assertEqual(response.status_code, 503)
-        self.assertEqual(
-            json.loads(response.content),
-            {
-                "status": "error",
-                "detail": "database unavailable",
-            },
-        )
+        assert response.status_code == 503
+        assert json.loads(response.content) == {"status": "error", "detail": "database unavailable"}
 
     @patch("config.health.connections")
-    def test_health_executes_query(self, mock_connections):
+    def test_health_executes_query(self, mock_connections) -> None:
         """
         Verify that the SQL query is executed when the database connection works.
         """
@@ -65,5 +59,5 @@ class HealthViewTests(TestCase):
 
         mock_cursor.execute.assert_called_once_with("SELECT 1")
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content), {"status": "ok"})
+        assert response.status_code == 200
+        assert json.loads(response.content) == {"status": "ok"}
