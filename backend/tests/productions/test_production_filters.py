@@ -4,7 +4,6 @@ Tests for apps/productions/filters.py and apps/productions/views.py.
 
 import pytest
 from django.test import TestCase, override_settings
-from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.productions.filters import ProductionFilter
@@ -21,6 +20,13 @@ from tests.factories.production import (
     UitDatabaseTypeFactory,
 )
 from tests.factories.tag import TagFactory
+from tests.helpers.api import (
+    internal_headers,
+    paginated_results,
+    public_headers,
+    v1_detail_url,
+    v1_list_url,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -29,11 +35,11 @@ INT_KEY = "int-production-filter-test-key"
 
 
 def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
+    return public_headers(PUB_KEY)
 
 
 def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
+    return internal_headers(INT_KEY)
 
 
 # =====================================================
@@ -190,10 +196,10 @@ class TestProductionViewSet(TestCase):
         Production.objects.all().delete()
 
     def list_url(self):
-        return reverse("v1:production-list")
+        return v1_list_url("production")
 
     def detail_url(self, pk):
-        return reverse("v1:production-detail", kwargs={"pk": pk})
+        return v1_detail_url("production", pk=pk)
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -203,7 +209,7 @@ class TestProductionViewSet(TestCase):
         ProductionFactory.create_batch(3)
         response = self.client.get(self.list_url(), **pub_headers())
         self.assertEqual(response.status_code, 200)
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 3)
 
     def test_public_can_retrieve(self):
@@ -226,7 +232,7 @@ class TestProductionViewSet(TestCase):
         ProductionFactory(attendance_mode="offline")
         ProductionFactory(attendance_mode="online")
         response = self.client.get(self.list_url(), {"attendance_mode": "offline"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_genre(self):
@@ -236,7 +242,7 @@ class TestProductionViewSet(TestCase):
         ProductionGenreFactory(production=prod, genre=genre, position=1)
         ProductionFactory()
         response = self.client.get(self.list_url(), {"genre": genre.id}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_tag(self):
@@ -245,7 +251,7 @@ class TestProductionViewSet(TestCase):
         ProductionTagFactory(production=prod, tag=tag)
         ProductionFactory()
         response = self.client.get(self.list_url(), {"tag": tag.id}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_has_media(self):
@@ -253,7 +259,7 @@ class TestProductionViewSet(TestCase):
         ProductionFactory(media_gallery=gallery)
         ProductionFactory(media_gallery=None)
         response = self.client.get(self.list_url(), {"has_media": "true"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_translated_title(self):
@@ -263,20 +269,20 @@ class TestProductionViewSet(TestCase):
         ProductionTranslationFactory(production=prod_a, language=lang, title="Hamlet")
         ProductionTranslationFactory(production=prod_b, language=lang, title="Macbeth")
         response = self.client.get(self.list_url(), {"title": "Hamlet"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_default_ordering_newest_first(self):
         ProductionFactory.create_batch(3)
         response = self.client.get(self.list_url(), **pub_headers())
-        ids = [r["id"] for r in response.data.get("results", response.data)]
+        ids = [r["id"] for r in paginated_results(response)]
         self.assertGreater(ids[0], ids[-1])
 
     def test_ordering_by_attendance_mode(self):
         ProductionFactory(attendance_mode="online")
         ProductionFactory(attendance_mode="offline")
         response = self.client.get(self.list_url(), {"ordering": "attendance_mode"}, **pub_headers())
-        modes = [r["attendance_mode"] for r in response.data.get("results", response.data)]
+        modes = [r["attendance_mode"] for r in paginated_results(response)]
         self.assertEqual(modes, sorted(modes))
 
     def test_search_by_title_translation(self):
@@ -285,7 +291,7 @@ class TestProductionViewSet(TestCase):
         ProductionTranslationFactory(production=prod, language=lang, title="Hamlet")
         ProductionFactory()
         response = self.client.get(self.list_url(), {"search": "Hamlet"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_search_by_artist_name(self):
@@ -294,5 +300,5 @@ class TestProductionViewSet(TestCase):
         ProductionTranslationFactory(production=prod, language=lang, artist_name="Toneelschuur")
         ProductionFactory()
         response = self.client.get(self.list_url(), {"search": "Toneelschuur"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)

@@ -4,12 +4,18 @@ Tests for apps/languages/filters.py and apps/languages/views.py.
 
 import pytest
 from django.test import TestCase, override_settings
-from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.languages.filters import LanguageFilter
 from apps.languages.models import Language
 from tests.factories.language import LanguageFactory
+from tests.helpers.api import (
+    internal_headers,
+    paginated_results,
+    public_headers,
+    v1_detail_url,
+    v1_list_url,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -108,11 +114,11 @@ INT_KEY = "int-filter-test-key"
 
 
 def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
+    return internal_headers(INT_KEY)
 
 
 def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
+    return public_headers(PUB_KEY)
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
@@ -122,9 +128,9 @@ class TestLanguageViewSet(TestCase):
         Language.objects.all().delete()
 
     def detail_url(self, code):
-        return reverse("v1:language-detail", kwargs={"code": code})
+        return v1_detail_url("language", code=code)
 
-    list_url = reverse("v1:language-list")
+    list_url = v1_list_url("language")
 
     def test_anon_returns_401_or_403(self):
         response = self.client.get(self.list_url)
@@ -134,7 +140,7 @@ class TestLanguageViewSet(TestCase):
         LanguageFactory.create_batch(2)
         response = self.client.get(self.list_url, **pub_headers())
         self.assertEqual(response.status_code, 200)
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 2)
 
     def test_public_can_retrieve(self):
@@ -173,7 +179,7 @@ class TestLanguageViewSet(TestCase):
         LanguageFactory(code="nl")
         LanguageFactory(code="en")
         response = self.client.get(self.list_url, {"code": "nl"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["code"], "nl")
 
@@ -181,7 +187,7 @@ class TestLanguageViewSet(TestCase):
         LanguageFactory(code="nl", is_active=True)
         LanguageFactory(code="en", is_active=False)
         response = self.client.get(self.list_url, {"is_active": "true"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_ordering_by_name_ascending(self):
@@ -189,28 +195,28 @@ class TestLanguageViewSet(TestCase):
         LanguageFactory(code="en", name="English")
         LanguageFactory(code="fr", name="French")
         response = self.client.get(self.list_url, {"ordering": "name"}, **pub_headers())
-        names = [r["name"] for r in response.data.get("results", response.data)]
+        names = [r["name"] for r in paginated_results(response)]
         self.assertEqual(names, sorted(names))
 
     def test_ordering_by_name_descending(self):
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
         response = self.client.get(self.list_url, {"ordering": "-name"}, **pub_headers())
-        names = [r["name"] for r in response.data.get("results", response.data)]
+        names = [r["name"] for r in paginated_results(response)]
         self.assertEqual(names, sorted(names, reverse=True))
 
     def test_search_by_code(self):
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
         response = self.client.get(self.list_url, {"search": "nl"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_search_by_name(self):
         LanguageFactory(code="nl", name="Dutch")
         LanguageFactory(code="en", name="English")
         response = self.client.get(self.list_url, {"search": "English"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["code"], "en")
 

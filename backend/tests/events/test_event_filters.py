@@ -4,7 +4,6 @@ Tests for apps/events/filters.py and apps/events/views.py.
 
 import pytest
 from django.test import TestCase, override_settings
-from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -14,6 +13,13 @@ from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.location import HallFactory, LocationFactory, SpaceFactory
 from tests.factories.production import ProductionFactory, ProductionTranslationFactory
+from tests.helpers.api import (
+    internal_headers,
+    paginated_results,
+    public_headers,
+    v1_detail_url,
+    v1_list_url,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -27,11 +33,11 @@ INT_KEY = "int-event-filter-test-key"
 
 
 def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
+    return public_headers(PUB_KEY)
 
 
 def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
+    return internal_headers(INT_KEY)
 
 
 # =====================================================
@@ -160,10 +166,10 @@ class TestEventViewSet(TestCase):
         Event.objects.all().delete()
 
     def list_url(self):
-        return reverse("v1:event-list")
+        return v1_list_url("event")
 
     def detail_url(self, pk):
-        return reverse("v1:event-detail", kwargs={"pk": pk})
+        return v1_detail_url("event", pk=pk)
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -173,7 +179,7 @@ class TestEventViewSet(TestCase):
         EventFactory.create_batch(2)
         response = self.client.get(self.list_url(), **pub_headers())
         self.assertEqual(response.status_code, 200)
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 2)
 
     def test_public_can_retrieve(self):
@@ -208,7 +214,7 @@ class TestEventViewSet(TestCase):
         EventFactory(production=prod)
         EventFactory()
         response = self.client.get(self.list_url(), {"production": prod.id}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_hall(self):
@@ -216,7 +222,7 @@ class TestEventViewSet(TestCase):
         EventFactory(hall=hall)
         EventFactory()
         response = self.client.get(self.list_url(), {"hall": hall.id}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_location(self):
@@ -225,21 +231,21 @@ class TestEventViewSet(TestCase):
         EventFactory(hall=hall)
         EventFactory()
         response = self.client.get(self.list_url(), {"location": location.id}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_starts_at_after(self):
         EventFactory(starts_at=_dt(5), ends_at=_dt(6))
         EventFactory(starts_at=_dt(-5), ends_at=_dt(-4))
         response = self.client.get(self.list_url(), {"starts_at_after": _dt(1).isoformat()}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_starts_at_before(self):
         EventFactory(starts_at=_dt(5), ends_at=_dt(6))
         EventFactory(starts_at=_dt(-5), ends_at=_dt(-4))
         response = self.client.get(self.list_url(), {"starts_at_before": _dt(1).isoformat()}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     # --- ordering ---
@@ -248,14 +254,14 @@ class TestEventViewSet(TestCase):
         EventFactory(starts_at=_dt(5), ends_at=_dt(6))
         EventFactory(starts_at=_dt(1), ends_at=_dt(2))
         response = self.client.get(self.list_url(), **pub_headers())
-        dates = [r["starts_at"] for r in response.data.get("results", response.data)]
+        dates = [r["starts_at"] for r in paginated_results(response)]
         self.assertEqual(dates, sorted(dates))
 
     def test_ordering_by_starts_at_descending(self):
         EventFactory(starts_at=_dt(1), ends_at=_dt(2))
         EventFactory(starts_at=_dt(5), ends_at=_dt(6))
         response = self.client.get(self.list_url(), {"ordering": "-starts_at"}, **pub_headers())
-        dates = [r["starts_at"] for r in response.data.get("results", response.data)]
+        dates = [r["starts_at"] for r in paginated_results(response)]
         self.assertEqual(dates, sorted(dates, reverse=True))
 
     # --- search ---
@@ -269,5 +275,5 @@ class TestEventViewSet(TestCase):
         EventFactory(production=prod_a)
         EventFactory(production=prod_b)
         response = self.client.get(self.list_url(), {"search": "Hamlet"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)

@@ -4,7 +4,6 @@ Tests for apps/pricing/filters.py and apps/pricing/views.py.
 
 import pytest
 from django.test import TestCase, override_settings
-from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.pricing.filters import PriceFilter, PriceRankFilter
@@ -16,6 +15,13 @@ from tests.factories.pricing import (
     PriceRankTranslationFactory,
     PriceTranslationFactory,
 )
+from tests.helpers.api import (
+    internal_headers,
+    paginated_results,
+    public_headers,
+    v1_detail_url,
+    v1_list_url,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -24,11 +30,11 @@ INT_KEY = "int-pricing-filter-test-key"
 
 
 def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
+    return public_headers(PUB_KEY)
 
 
 def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
+    return internal_headers(INT_KEY)
 
 
 # =====================================================
@@ -178,10 +184,10 @@ class TestPriceViewSet(TestCase):
         Price.objects.all().delete()
 
     def list_url(self):
-        return reverse("v1:price-list")
+        return v1_list_url("price")
 
     def detail_url(self, pk):
-        return reverse("v1:price-detail", kwargs={"pk": pk})
+        return v1_detail_url("price", pk=pk)
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -207,28 +213,28 @@ class TestPriceViewSet(TestCase):
         PriceFactory(type="student")
         PriceFactory(type="full")
         response = self.client.get(self.list_url(), {"type": "student"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_cineville_box(self):
         PriceFactory(cineville_box=True)
         PriceFactory(cineville_box=False)
         response = self.client.get(self.list_url(), {"cineville_box": "true"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_default_ordering_by_sort_order(self):
         PriceFactory(sort_order=10)
         PriceFactory(sort_order=1)
         response = self.client.get(self.list_url(), **pub_headers())
-        orders = [r["sort_order"] for r in response.data.get("results", response.data)]
+        orders = [r["sort_order"] for r in paginated_results(response)]
         self.assertEqual(orders, sorted(orders))
 
     def test_search_by_type(self):
         PriceFactory(type="student")
         PriceFactory(type="full")
         response = self.client.get(self.list_url(), {"search": "student"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
 
@@ -244,7 +250,7 @@ class TestPriceRankViewSet(TestCase):
         PriceRank.objects.all().delete()
 
     def list_url(self):
-        return reverse("v1:price-rank-list")
+        return v1_list_url("price-rank")
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -259,7 +265,7 @@ class TestPriceRankViewSet(TestCase):
         PriceRankFactory(position=1)
         PriceRankFactory(position=2)
         response = self.client.get(self.list_url(), {"position": "1"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_position_range(self):
@@ -267,14 +273,14 @@ class TestPriceRankViewSet(TestCase):
         PriceRankFactory(position=3)
         PriceRankFactory(position=5)
         response = self.client.get(self.list_url(), {"position_gte": "2", "position_lte": "4"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_default_ordering_by_position(self):
         PriceRankFactory(position=5)
         PriceRankFactory(position=1)
         response = self.client.get(self.list_url(), **pub_headers())
-        positions = [r["position"] for r in response.data.get("results", response.data)]
+        positions = [r["position"] for r in paginated_results(response)]
         self.assertEqual(positions, sorted(positions))
 
     def test_search_by_translated_description(self):
@@ -283,5 +289,5 @@ class TestPriceRankViewSet(TestCase):
         PriceRankTranslationFactory(price_rank=rank, language=lang, description="Student rank")
         PriceRankFactory(position=2)
         response = self.client.get(self.list_url(), {"search": "Student"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)

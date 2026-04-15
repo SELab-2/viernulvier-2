@@ -4,7 +4,6 @@ Tests for apps/media_library/filters.py and apps/media_library/views.py.
 
 import pytest
 from django.test import TestCase, override_settings
-from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.media_library.filters import MediaGalleryFilter, MediaItemFilter
@@ -15,6 +14,13 @@ from tests.factories.media_library import (
     MediaItemFactory,
     MediaItemTranslationFactory,
 )
+from tests.helpers.api import (
+    internal_headers,
+    paginated_results,
+    public_headers,
+    v1_detail_url,
+    v1_list_url,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -23,11 +29,11 @@ INT_KEY = "int-media-filter-test-key"
 
 
 def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
+    return public_headers(PUB_KEY)
 
 
 def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
+    return internal_headers(INT_KEY)
 
 
 # =====================================================
@@ -158,10 +164,10 @@ class TestMediaGalleryViewSet(TestCase):
         MediaGallery.objects.all().delete()
 
     def list_url(self):
-        return reverse("v1:media-gallery-list")
+        return v1_list_url("media-gallery")
 
     def detail_url(self, pk):
-        return reverse("v1:media-gallery-detail", kwargs={"pk": pk})
+        return v1_detail_url("media-gallery", pk=pk)
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -171,7 +177,7 @@ class TestMediaGalleryViewSet(TestCase):
         MediaGalleryFactory.create_batch(2)
         response = self.client.get(self.list_url(), **pub_headers())
         self.assertEqual(response.status_code, 200)
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 2)
 
     def test_public_cannot_delete(self):
@@ -189,27 +195,27 @@ class TestMediaGalleryViewSet(TestCase):
         MediaGalleryFactory(name="Season 2024")
         MediaGalleryFactory(name="Press Photos")
         response = self.client.get(self.list_url(), {"name": "season"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_default_ordering_by_name(self):
         MediaGalleryFactory(name="Zzz Gallery")
         MediaGalleryFactory(name="Aaa Gallery")
         response = self.client.get(self.list_url(), **pub_headers())
-        names = [r["name"] for r in response.data.get("results", response.data)]
+        names = [r["name"] for r in paginated_results(response)]
         self.assertEqual(names, sorted(names))
 
     def test_ordering_by_id(self):
         MediaGalleryFactory.create_batch(3)
         response = self.client.get(self.list_url(), {"ordering": "id"}, **pub_headers())
-        ids = [r["id"] for r in response.data.get("results", response.data)]
+        ids = [r["id"] for r in paginated_results(response)]
         self.assertEqual(ids, sorted(ids))
 
     def test_search_by_name(self):
         MediaGalleryFactory(name="Season 2024")
         MediaGalleryFactory(name="Press Photos")
         response = self.client.get(self.list_url(), {"search": "Season"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
 
@@ -225,10 +231,10 @@ class TestMediaItemViewSet(TestCase):
         MediaItem.objects.all().delete()
 
     def list_url(self):
-        return reverse("v1:media-item-list")
+        return v1_list_url("media-item")
 
     def detail_url(self, pk):
-        return reverse("v1:media-item-detail", kwargs={"pk": pk})
+        return v1_detail_url("media-item", pk=pk)
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -255,28 +261,28 @@ class TestMediaItemViewSet(TestCase):
         MediaItemFactory(gallery=gallery, type="foto")
         MediaItemFactory(type="foto")
         response = self.client.get(self.list_url(), {"gallery": gallery.id}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_type(self):
         MediaItemFactory(type="foto")
         MediaItemFactory(type="video")
         response = self.client.get(self.list_url(), {"type": "foto"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_filter_by_format(self):
         MediaItemFactory(type="foto", format="jpg")
         MediaItemFactory(type="foto", format="png")
         response = self.client.get(self.list_url(), {"file_format": "jpg"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_default_ordering_by_position(self):
         MediaItemFactory(type="foto", position=10)
         MediaItemFactory(type="foto", position=1)
         response = self.client.get(self.list_url(), **pub_headers())
-        positions = [r["position"] for r in response.data.get("results", response.data)]
+        positions = [r["position"] for r in paginated_results(response)]
         self.assertEqual(positions, sorted(positions))
 
     def test_ordering_by_type(self):
@@ -284,14 +290,14 @@ class TestMediaItemViewSet(TestCase):
         MediaItemFactory(type="audio")
         MediaItemFactory(type="foto")
         response = self.client.get(self.list_url(), {"ordering": "type"}, **pub_headers())
-        types = [r["type"] for r in response.data.get("results", response.data)]
+        types = [r["type"] for r in paginated_results(response)]
         self.assertEqual(types, sorted(types))
 
     def test_search_by_original_filename(self):
         MediaItemFactory(type="foto", original_filename="poster-hamlet.jpg")
         MediaItemFactory(type="foto", original_filename="cover-other.jpg")
         response = self.client.get(self.list_url(), {"search": "hamlet"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
 
     def test_search_by_translated_title(self):
@@ -300,5 +306,5 @@ class TestMediaItemViewSet(TestCase):
         MediaItemTranslationFactory(media_item=item, language=lang, title="Hamlet poster")
         MediaItemFactory(type="foto", original_filename="other.jpg")
         response = self.client.get(self.list_url(), {"search": "Hamlet"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         self.assertEqual(len(results), 1)
