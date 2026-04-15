@@ -10,10 +10,10 @@ import { tokens } from './tokens'
 
 import type { SxProps, SystemStyleObject, Theme } from '@mui/system'
 
-export const createNavbarStyles = (theme: Theme) => {
+export const createNavbarStyles = () => {
   return {
     activeLink: {
-      borderBottomColor: theme.palette.primary.contrastText,
+      borderBottomColor: tokens.colors.neutral.white,
     } as SystemStyleObject<Theme>,
 
     navLink: {
