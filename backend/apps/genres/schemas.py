@@ -15,7 +15,6 @@ from apps.core.openapi import (
 
 from .serializers import GenreSerializer
 
-
 # ===========================================================================
 # Genre - examples
 # ===========================================================================
@@ -35,9 +34,7 @@ _GENRE_RESPONSE_MULTILINGUAL = OpenApiExample(
 _GENRE_INPUT = OpenApiExample(
     "Genre - request body",
     summary="Payload for creating a new genre",
-    description=(
-        "Only `type` is required. Localised names are added via the translation endpoints after creation."
-    ),
+    description=("Only `type` is required. Localised names are added via the translation endpoints after creation."),
     value={"type": "contemporary_dance", "vendor_id": "theater-123"},
     request_only=True,
 )

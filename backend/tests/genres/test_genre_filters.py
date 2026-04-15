@@ -80,7 +80,6 @@ class TestGenreFilter:
         assert self._qs({"name": "classical"}).count() == 0
 
 
-
 # =====================================================
 # GenreViewSet
 # =====================================================

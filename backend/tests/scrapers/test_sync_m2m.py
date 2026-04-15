@@ -10,6 +10,7 @@ from typing import Never
 from unittest.mock import Mock
 
 from apps.imports.scrapers import viernulvier
+from apps.imports.scrapers import viernulvier_relations as rel
 from apps.imports.scrapers.viernulvier import (
     FKCache,
     M2MConfig,
@@ -258,12 +259,8 @@ class TestSyncM2M:
         _sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-miss"]}, cfg, cache)
         assert created_rows
 
-
-    def test_sync_m2m_ignores_missing_api_key(db):
+    def test_sync_m2m_ignores_missing_api_key(self):
         """If the item does not contain the m2m api key, the function returns early."""
-        from apps.imports.scrapers import viernulvier_relations as rel
-        from apps.imports.scrapers.viernulvier_constants import M2MConfig
-
         class DummyRelated:
             pass
 
@@ -271,15 +268,18 @@ class TestSyncM2M:
             class objects:
                 filter = staticmethod(lambda **_: None)
 
-        cfg = M2MConfig(api_key="missing", related_model=DummyRelated, through_model=Through, parent_fk="p", related_fk="r")
+        cfg = M2MConfig(
+            api_key="missing",
+            related_model=DummyRelated,
+            through_model=Through,
+            parent_fk="p",
+            related_fk="r",
+        )
 
         result = rel.sync_m2m(object(), {}, cfg, rel.FKCache())
         assert result is None
 
-
-    def test_resolve_related_pk_with_create_fn_sets_cache(db):
-        from apps.imports.scrapers import viernulvier_relations as rel
-
+    def test_resolve_related_pk_with_create_fn_sets_cache(self):
         fk = rel.FKCache()
 
         class RelModel:
@@ -288,29 +288,31 @@ class TestSyncM2M:
 
             class objects:
                 @staticmethod
-                def get(**kwargs):
-                    raise RelModel.DoesNotExist()
+                def get(**_kwargs):
+                    raise RelModel.DoesNotExist
 
         created = {}
 
         def create_fn(ext_id, raw_item):
-            created['val'] = ext_id
+            created["val"] = ext_id
             return 777
 
-        from apps.imports.scrapers.viernulvier_constants import M2MConfig
-
-        m2m = M2MConfig(api_key="x", related_model=RelModel, through_model=None, parent_fk="p", related_fk="r", create_related_fn=create_fn)
+        m2m = M2MConfig(
+            api_key="x",
+            related_model=RelModel,
+            through_model=None,
+            parent_fk="p",
+            related_fk="r",
+            create_related_fn=create_fn,
+        )
 
         pk = rel._resolve_related_pk(RelModel, "missing-id", {"name": "x"}, m2m, fk)
 
         assert pk == 777
         assert fk.get(RelModel, "missing-id") == 777
-        assert created['val'] == "missing-id"
+        assert created["val"] == "missing-id"
 
-
-    def test_sync_m2m_bulk_create_fallback_and_save_exception(db, caplog):
-        from apps.imports.scrapers import viernulvier_relations as rel
-
+    def test_sync_m2m_bulk_create_fallback_and_save_exception(self, caplog):
         fk = rel.FKCache()
 
         class DummyRelated:
@@ -319,15 +321,16 @@ class TestSyncM2M:
 
         # fake through model and manager
         class FakeManager:
-            def filter(self, **kwargs):
+            def filter(self, **_kwargs):
                 class D:
                     def delete(self):
                         return None
 
                 return D()
 
-            def bulk_create(self, objs, ignore_conflicts=False):
-                raise Exception("bulk create fail")
+            def bulk_create(self, _objs, ignore_conflicts=False):
+                del ignore_conflicts
+                raise RuntimeError("bulk create fail")
 
         class FakeThrough:
             objects = FakeManager()
@@ -336,15 +339,13 @@ class TestSyncM2M:
                 self._kwargs = kwargs
 
             def save(self):
-                raise Exception("save failed")
+                raise RuntimeError("save failed")
 
         class ParentObj:
             def __init__(self):
                 self.pk = 42
 
         parent = ParentObj()
-
-        from apps.imports.scrapers.viernulvier_constants import M2MConfig
 
         m2m = M2MConfig(
             api_key="things",
@@ -368,6 +369,5 @@ class TestSyncM2M:
 
         # ensure fallback path logged (warning) or error logged on save failure
         assert any(
-            ("bulk_create failed" in rec.getMessage()) or ("Error creating" in rec.getMessage())
-            for rec in caplog.records
+            ("bulk_create failed" in rec.getMessage()) or ("Error creating" in rec.getMessage()) for rec in caplog.records
         )

@@ -1,7 +1,6 @@
-from django.core.exceptions import ValidationError
 import pytest
 
-from apps.genres.models import Genre, GenreTranslation
+from apps.genres.models import GenreTranslation
 
 # Use the factories to create test data
 from tests.factories.genre import (
