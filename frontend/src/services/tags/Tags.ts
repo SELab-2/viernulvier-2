@@ -35,8 +35,6 @@ export const getTag = async (id: number): Promise<Tag> => {
  * Supported tag-specific filter fields currently include:
  * - `type`: filter by tag type/category
  * - `source`: filter by originating system
- * - `source_type`: filter by source sub-classification
- * - `is_external`: filter by external tags
  * - `is_enabled`: filter by enabled/disabled tags
  * - `name`: filter by translated tag name
  *

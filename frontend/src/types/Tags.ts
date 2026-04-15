@@ -7,9 +7,7 @@ export interface Tag {
   id: number
   url: string
   source: string
-  source_type: string
   type: string
-  is_external: boolean
   is_enabled: boolean
   display_name: string | null
   display_short_description: string | null

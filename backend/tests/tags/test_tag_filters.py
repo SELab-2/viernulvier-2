@@ -54,24 +54,6 @@ class TestTagFilter:
         assert self._qs({"source": "uitdatabank"}).count() == 1
         assert self._qs({"source": "data"}).count() == 1
 
-    def test_source_type_icontains(self) -> None:
-        TagFactory(source_type="targetAudience")
-        TagFactory(source_type="theme")
-
-        assert self._qs({"source_type": "target"}).count() == 1
-
-    def test_is_external_true(self) -> None:
-        TagFactory(is_external=True)
-        TagFactory(is_external=False)
-
-        assert self._qs({"is_external": "true"}).count() == 1
-
-    def test_is_external_false(self) -> None:
-        TagFactory(is_external=True)
-        TagFactory(is_external=False)
-
-        assert self._qs({"is_external": "false"}).count() == 1
-
     def test_is_enabled_true(self) -> None:
         TagFactory(is_enabled=True)
         TagFactory(is_enabled=False)
@@ -124,13 +106,6 @@ class TestTagFilter:
         TagFactory(external_id="TAG-002")
 
         assert self._qs({"external_id": "tag-001"}).count() == 1
-
-    def test_is_external_and_source_combined(self) -> None:
-        TagFactory(is_external=True, source="uitdatabank")
-        TagFactory(is_external=True, source="other")
-        TagFactory(is_external=False, source="uitdatabank")
-
-        assert self._qs({"is_external": "true", "source": "uitdatabank"}).count() == 1
 
     def test_type_and_is_enabled_combined(self) -> None:
         TagFactory(type="theme", is_enabled=True)
@@ -204,13 +179,6 @@ class TestTagViewSet(TestCase):
         TagFactory(is_enabled=True)
         TagFactory(is_enabled=False)
         response = self.client.get(self.list_url(), {"is_enabled": "true"}, **pub_headers())
-        results = response.data.get("results", response.data)
-        assert len(results) == 1
-
-    def test_filter_by_is_external(self) -> None:
-        TagFactory(is_external=True)
-        TagFactory(is_external=False)
-        response = self.client.get(self.list_url(), {"is_external": "true"}, **pub_headers())
         results = response.data.get("results", response.data)
         assert len(results) == 1
 

@@ -40,9 +40,7 @@ class TestTagSerializerFields(TestCase):
             "id",
             "url",
             "source",
-            "source_type",
             "type",
-            "is_external",
             "is_enabled",
             "name",
             "short_description",
@@ -56,9 +54,7 @@ class TestTagSerializerFields(TestCase):
             "id",
             "url",
             "source",
-            "source_type",
             "type",
-            "is_external",
             "is_enabled",
             "name",
             "display_name",
@@ -88,21 +84,6 @@ class TestTagSerializerScalarFields(TestCase):
         data = TagSerializer(tag).data
         assert data["source"] == "external-api"
 
-    def test_serializes_source_type_correctly(self) -> None:
-        tag = TagFactory.create(source_type="api")
-        data = TagSerializer(tag).data
-        assert data["source_type"] == "api"
-
-    def test_serializes_is_external_true(self) -> None:
-        tag = TagFactory.create(is_external=True)
-        data = TagSerializer(tag).data
-        assert data["is_external"]
-
-    def test_serializes_is_external_false(self) -> None:
-        tag = TagFactory.create(is_external=False)
-        data = TagSerializer(tag).data
-        assert not data["is_external"]
-
     def test_serializes_is_enabled_true(self) -> None:
         tag = TagFactory.create(is_enabled=True)
         data = TagSerializer(tag).data
@@ -122,11 +103,6 @@ class TestTagSerializerScalarFields(TestCase):
         tag = TagFactory.create(type="genre")
         data = TagSerializer(tag).data
         assert isinstance(data["type"], str)
-
-    def test_is_external_is_bool(self) -> None:
-        tag = TagFactory.create()
-        data = TagSerializer(tag).data
-        assert isinstance(data["is_external"], bool)
 
     def test_is_enabled_is_bool(self) -> None:
         tag = TagFactory.create()
@@ -294,8 +270,6 @@ class TestTagSerializerDeserialization(TestCase):
         payload = {
             "type": "genre",
             "source": "system",
-            "source_type": "internal",
-            "is_external": False,
             "is_enabled": True,
         }
         payload.update(overrides)
@@ -366,9 +340,7 @@ class TestTagDisplayNameBaseLanguage:
         tag = Tag.objects.create(
             url="",
             source="system",
-            source_type="",
             type="theme",
-            is_external=False,
             is_enabled=True,
         )
         TagTranslation.objects.create(tag=tag, language=nl, name="Thema", short_description="", url_title="")
@@ -385,9 +357,7 @@ class TestTagDisplayNameBaseLanguage:
         tag = Tag.objects.create(
             url="",
             source="system",
-            source_type="",
             type="theme",
-            is_external=False,
             is_enabled=True,
         )
         TagTranslation.objects.create(tag=tag, language=nl, name="Thema", short_description="", url_title="")

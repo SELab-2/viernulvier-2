@@ -18,9 +18,10 @@ describe('productions service', () => {
     performer_type: 'group',
     first_event_start: '2026-03-22T20:00:00Z',
     last_event_end: '2026-03-22T22:00:00Z',
-    media_gallery: [],
+    media_gallery: {
       id: 4,
       name: 'Drama',
+      media_items: [],
     },
     uit_database_type: {
       id: 7,
@@ -49,9 +50,7 @@ describe('productions service', () => {
         id: 9,
         url: 'https://example.com/tags/classic',
         source: 'uitdatabank',
-        source_type: 'theme',
         type: 'theme',
-        is_external: true,
         is_enabled: true,
         display_name: 'Classic',
         display_short_description: 'Classic theatre',

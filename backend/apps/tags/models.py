@@ -20,16 +20,13 @@ class Tag(BaseModel):
     """A classification label that can be attached to one or more productions.
 
     Tags support both internally created labels and labels imported from
-    external systems (e.g. UiTdatabank). The ``is_external`` flag and
-    ``source`` / ``source_type`` fields record the origin of the tag.
+    external systems (e.g. UiTdatabank). The ``source`` field records
+    the origin of the tag.
 
     Attributes:
         url:         Public URL of the tag in the originating system.
         source:      Identifier of the system that created this tag
                      (e.g. ``uitdatabank``, ``system``).
-        source_type: Sub-classification of the source
-                     (e.g. ``theme``, ``targetAudience``).
-        is_external: ``True`` when this tag was imported from an external system.
         is_enabled:  ``False`` to soft-disable the tag without removing it.
         type:        Internal category used for grouping
                      (e.g. ``theme``, ``audience``).
@@ -46,19 +43,6 @@ class Tag(BaseModel):
         blank=True,
         help_text="Identifier of the system that created this tag (e.g. `uitdatabank`, `system`).",
         db_comment="Source of the tag (e.g. system, external API).",
-    )
-
-    source_type = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Sub-classification of the source (e.g. `theme`, `targetAudience`).",
-        db_comment="Type of the source.",
-    )
-
-    is_external = models.BooleanField(
-        default=False,
-        help_text="`true` when this tag was imported from an external system.",
-        db_comment="Whether this tag originates from an external system.",
     )
 
     is_enabled = models.BooleanField(

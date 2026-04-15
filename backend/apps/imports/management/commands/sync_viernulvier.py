@@ -145,9 +145,9 @@ TAG_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
         "source": "source",
-        "sourceType": "source_type",
+        "sourceType": None,
         "enable": "is_enabled",
-        "external": "is_external",
+        "external": None,
         "url": "url",
         "type": "type",
         "code": None,
