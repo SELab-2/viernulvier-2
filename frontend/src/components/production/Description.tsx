@@ -1,5 +1,6 @@
-import { Box, useTheme } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+
 import { tokens } from '../../theme/tokens'
 import sanitizeHtml from '../../utils/SanitizeHtml'
 
@@ -15,25 +16,21 @@ interface DescriptionProps {
  * If no description is available, shows translated placeholder text.
  */
 export default function Description({ teaser, description }: DescriptionProps) {
-  const theme = useTheme()
   const { t } = useTranslation()
 
   return (
-    <div
+    <Box
       className="production-description"
-      style={{
-        color: theme.palette.text.primary,
-        background: 'transparent',
-      }}
+      sx={{ color: 'text.primary', background: 'transparent' }}
     >
       {teaser && (
         <Box
           sx={{
-            fontSize: '1.05rem',
+            fontSize: tokens.typography.sizes.base,
             lineHeight: 1.7,
-            color: theme.palette.text.secondary,
+            color: 'text.secondary',
             fontStyle: 'italic',
-            marginBottom: '20px',
+            mb: 2.5,
             '& img': {
               maxWidth: '100%',
               height: 'auto',
@@ -46,9 +43,9 @@ export default function Description({ teaser, description }: DescriptionProps) {
       {description ? (
         <Box
           sx={{
-            fontSize: '0.95rem',
+            fontSize: tokens.typography.sizes.sm,
             lineHeight: 1.8,
-            color: theme.palette.text.primary,
+            color: 'text.primary',
             '& img': {
               maxWidth: '100%',
               height: 'auto',
@@ -57,17 +54,18 @@ export default function Description({ teaser, description }: DescriptionProps) {
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(description) }}
         />
       ) : (
-        <p
-          style={{
-            fontSize: '0.9rem',
-            color: tokens.colors.neutral.gray400,
+        <Typography
+          component="p"
+          sx={{
+            fontSize: tokens.typography.sizes.sm,
+            color: 'text.secondary',
             fontStyle: 'italic',
             fontFamily: tokens.typography.fontFamily,
           }}
         >
           {t('productions.detail.noDescription', 'No description available.')}
-        </p>
+        </Typography>
       )}
-    </div>
+    </Box>
   )
 }

@@ -1,12 +1,14 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
-import type { ReactElement } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
+
 import ProductionGridCard from '../../components/ProductionGridCard'
 import i18n from '../../i18n'
+
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
+import type { ReactElement } from 'react'
 
 const accentTheme = createTheme({
   palette: {

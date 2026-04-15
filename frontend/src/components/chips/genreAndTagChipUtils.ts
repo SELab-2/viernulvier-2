@@ -1,5 +1,6 @@
-import type { GenreAndTagChipType } from '../../types/GenreAndTagChip'
 import { PARAM_GENRES, PARAM_TAGS } from '../searchbar/useSearchBarUrlState'
+
+import type { GenreAndTagChipType } from '../../types/GenreAndTagChip'
 
 /**
  * Maps chip types to their corresponding URL query keys.

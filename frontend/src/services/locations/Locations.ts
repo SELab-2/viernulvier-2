@@ -1,7 +1,8 @@
-import type { Location, LocationListResponse } from '../../types/Locations'
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
+
 import type { GetLocationsOptions } from './LocationOptions'
+import type { Location, LocationListResponse } from '../../types/Locations'
 
 /**
  * Retrieve a single location by its numeric ID.

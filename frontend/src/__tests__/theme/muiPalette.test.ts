@@ -80,7 +80,7 @@ describe('muiPalette - createAppTheme', () => {
 
   it('should have shadows array with correct values', () => {
     const theme = createAppTheme('light')
-    const shadows = theme.shadows
+    const { shadows } = theme
 
     expect(shadows[0]).toBe('none')
     expect(shadows[1]).toBe(tokens.shadows.sm)

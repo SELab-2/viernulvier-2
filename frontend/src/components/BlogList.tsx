@@ -1,6 +1,7 @@
-import type { Blog } from '../types/Blogs'
 import BlogListCard from './BlogListCard'
 import GenericList from './GenericList'
+
+import type { Blog } from '../types/Blogs'
 
 export interface BlogListProps {
   blogs: Blog[]

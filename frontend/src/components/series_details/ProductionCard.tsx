@@ -1,18 +1,18 @@
 /*
- * Displays a single production with metadata, description and tags.
+ * Displays a single production with metadata, description, genres and series tags.
  * Designed to be reusable across different pages (lists, search, etc.).
  */
 
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material'
 import DOMPurify from 'dompurify'
-import type { KeyboardEvent, MouseEvent } from 'react'
-import GenreAndTagChip from '../chips/GenreAndTagChip'
-import { getTranslatedRecord } from '../../utils/translations'
 
-type ProductionTag = {
+import { tokens } from '../../theme/tokens'
+import GenreAndTagChip from '../chips/GenreAndTagChip'
+import type { KeyboardEvent, MouseEvent } from 'react'
+
+type ProductionChip = {
   id: number | string
-  name: string | Record<string, string> | null
-  display_name?: string | null
+  name: string
   labels?: Record<string, string>
   onClick?: () => void
 }
@@ -21,52 +21,24 @@ type Props = {
   title: string
   meta: string
   description: string
-  tags: ProductionTag[]
-  lang?: string
+  genres: ProductionChip[]
+  seriesTags: ProductionChip[]
   onClick?: (event: MouseEvent<HTMLDivElement>) => void
 }
 
-const ProductionCard = ({ title, meta, description, tags, lang = 'nl', onClick }: Props) => {
+const ProductionCard = ({ title, meta, description, genres, seriesTags, onClick }: Props) => {
   const isInteractive = typeof onClick === 'function'
 
-  const getTagLabels = (tag: ProductionTag): Record<string, string> => {
-    if (tag.labels) return tag.labels
-
-    if (tag.name && typeof tag.name === 'object') {
-      return tag.name
-    }
-
-    return {}
-  }
-
-  const getTagName = (tag: ProductionTag): string => {
-    if (typeof tag.name === 'string' && tag.name.trim()) {
-      return tag.name
-    }
-
-    const labels = getTagLabels(tag)
-
-    return getTranslatedRecord(labels, lang, tag.display_name ?? String(tag.id))
-  }
-
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!isInteractive) return
+    if (!isInteractive) {
+      return
+    }
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       onClick(event as unknown as MouseEvent<HTMLDivElement>)
     }
   }
-
-  const resolvedTags = tags.map((tag) => {
-    const resolvedName = getTagName(tag)
-
-    return {
-      id: tag.id,
-      name: resolvedName,
-      labels: { [lang]: resolvedName },
-    }
-  })
 
   return (
     <Card
@@ -86,7 +58,7 @@ const ProductionCard = ({ title, meta, description, tags, lang = 'nl', onClick }
     >
       <CardContent sx={{ p: 2.5 }}>
         <Stack spacing={1.25}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ fontWeight: tokens.typography.weights.bold }}>
             {title}
           </Typography>
 
@@ -119,11 +91,22 @@ const ProductionCard = ({ title, meta, description, tags, lang = 'nl', onClick }
           />
 
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-            {resolvedTags.map((tag) => (
+            {genres.map((genre) => (
               <GenreAndTagChip
-                key={tag.id}
+                key={`genre-${genre.id}`}
+                name={genre.name}
+                labels={genre.labels ?? {}}
+                id={genre.id}
+                chipType="genre"
+                context="static"
+              />
+            ))}
+
+            {seriesTags.map((tag) => (
+              <GenreAndTagChip
+                key={`tag-${tag.id}`}
                 name={tag.name}
-                labels={tag.labels}
+                labels={tag.labels ?? {}}
                 id={tag.id}
                 chipType="seriesTag"
                 context="series"

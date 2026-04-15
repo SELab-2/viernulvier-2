@@ -1,8 +1,10 @@
-import { MemoryRouter } from 'react-router-dom'
 import { render, screen, waitFor } from '@testing-library/react'
-import RelatedProductions from '../../../components/production/RelatedProductions'
-import type { ProductionRelated, RelatedProduction } from '../../../types/Productions'
 import React from 'react'
+import { MemoryRouter } from 'react-router-dom'
+
+import RelatedProductions from '../../../components/production/RelatedProductions'
+
+import type { ProductionRelated, RelatedProduction } from '../../../types/Productions'
 
 const languageState = { current: 'nl' }
 

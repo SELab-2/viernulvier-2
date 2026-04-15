@@ -1,9 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+
 import BlogDetailPage from '../../pages/BlogDetailPage'
-import type { Blog } from '../../types/Blogs'
 import { getBlog } from '../../services/blogs/Blogs'
+
+import type { Blog } from '../../types/Blogs'
 
 const languageState = { current: 'nl' }
 

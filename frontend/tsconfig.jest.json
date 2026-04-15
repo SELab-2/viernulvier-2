@@ -7,5 +7,6 @@
     "esModuleInterop": true,
     "types": ["jest", "node", "@testing-library/jest-dom"]
   },
-  "include": ["src"]
+  "include": ["src", "src/**/*.test.ts", "src/**/*.test.tsx", "src/setupTests.ts", "src/**/*.d.ts"],
+  "exclude": []
 }

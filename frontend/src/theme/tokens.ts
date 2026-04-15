@@ -72,6 +72,8 @@ export const tokens = {
       footerBorder: 'rgba(255,255,255,0.12)',
       mediaNavDark: 'rgba(10, 14, 40, 0.65)',
       mediaNavLight: 'rgba(255,255,255,0.8)',
+      modalBackdropDark: 'rgba(35, 35, 35, 0.72)',
+      modalBackdropLight: 'rgba(255, 255, 255, 0.72)',
     },
 
     media: {

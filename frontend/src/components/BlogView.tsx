@@ -1,8 +1,10 @@
 import { useMediaQuery, useTheme } from '@mui/material'
-import type { Blog } from '../types/Blogs'
-import type { SearchViewMode } from './searchbar/types'
+
 import BlogGrid from './BlogGrid'
 import BlogList from './BlogList'
+
+import type { Blog } from '../types/Blogs'
+import type { SearchViewMode } from './searchbar/types'
 
 export interface BlogViewProps {
   blogs: Blog[]

@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import type { Production } from '../../../types/Productions'
+
 import MetaPanel from '../../../components/production/MetaPanel'
+
+import type { Production } from '../../../types/Productions'
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),
