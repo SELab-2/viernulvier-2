@@ -15,7 +15,7 @@ responses still include all translations in a single payload.
 """
 
 from django.db.models import Max, Min, Prefetch, Q, QuerySet
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Lower
 from django.http import HttpRequest
 from drf_spectacular.utils import extend_schema
 
@@ -176,17 +176,35 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         queryset = super().get_queryset()
 
         return queryset.annotate(
-            title_sort=Coalesce(
-                Min("translations__title", filter=Q(translations__language__code=language_code)),
-                Min("translations__title"),
+            title_sort=Lower(
+                Coalesce(
+                    Min(
+                        "translations__title",
+                        filter=Q(translations__language__code=language_code)
+                        & ~Q(translations__title=""),
+                    ),
+                    Min("translations__title", filter=~Q(translations__title="")),
+                )
             ),
-            artist_name_search=Coalesce(
-                Min("translations__artist_name", filter=Q(translations__language__code=language_code)),
-                Min("translations__artist_name"),
+            artist_name_search=Lower(
+                Coalesce(
+                    Min(
+                        "translations__artist_name",
+                        filter=Q(translations__language__code=language_code)
+                        & ~Q(translations__artist_name=""),
+                    ),
+                    Min("translations__artist_name", filter=~Q(translations__artist_name="")),
+                )
             ),
-            tagline_search=Coalesce(
-                Min("translations__tagline", filter=Q(translations__language__code=language_code)),
-                Min("translations__tagline"),
+            tagline_search=Lower(
+                Coalesce(
+                    Min(
+                        "translations__tagline",
+                        filter=Q(translations__language__code=language_code)
+                        & ~Q(translations__tagline=""),
+                    ),
+                    Min("translations__tagline", filter=~Q(translations__tagline="")),
+                )
             ),
         )
 

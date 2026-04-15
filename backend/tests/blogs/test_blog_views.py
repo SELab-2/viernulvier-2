@@ -234,6 +234,33 @@ class TestBlogViewSet(TestCase):
         ids_en = [item["id"] for item in results_list(response_en)]
         assert ids_en.index(blog_b.id) < ids_en.index(blog_a.id)
 
+    def test_ordering_by_title_sort_is_case_insensitive(self) -> None:
+        blog_lower = BlogFactory(slug="title-case-lower")
+        BlogTranslationFactory(
+            blog=blog_lower,
+            language=self.language,
+            title="alpha",
+            body="EN body",
+            excerpt="",
+        )
+
+        blog_upper = BlogFactory(slug="title-case-upper")
+        BlogTranslationFactory(
+            blog=blog_upper,
+            language=self.language,
+            title="Zulu",
+            body="EN body",
+            excerpt="",
+        )
+
+        response = self.client.get(
+            "/api/v1/blogs/",
+            {"ordering": "title_sort", "lang": "en"},
+            **pub_headers(),
+        )
+        ids = [item["id"] for item in results_list(response)]
+        assert ids.index(blog_lower.id) < ids.index(blog_upper.id)
+
     def test_search_prefers_accept_language_translation(self) -> None:
         language_nl = LanguageFactory(code="nl", name="Dutch")
 

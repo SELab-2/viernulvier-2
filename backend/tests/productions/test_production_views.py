@@ -526,13 +526,13 @@ class TestProductionViewSetPrefetch(TestCase):
 
     def setUp(self) -> None:
         self.client = APIClient()
-        nl = LanguageFactory.create(code="nl", name="Dutch")
-        en = LanguageFactory.create(code="en", name="English")
+        self.nl = LanguageFactory.create(code="nl", name="Dutch")
+        self.en = LanguageFactory.create(code="en", name="English")
         for _ in range(5):
             p = ProductionFactory.create()
             ProductionTranslationFactory.create(
                 production=p,
-                language=nl,
+                language=self.nl,
                 title="NL Titel",
                 description="",
                 teaser="",
@@ -541,7 +541,7 @@ class TestProductionViewSetPrefetch(TestCase):
             )
             ProductionTranslationFactory.create(
                 production=p,
-                language=en,
+                language=self.en,
                 title="EN Title",
                 description="",
                 teaser="",
@@ -787,13 +787,13 @@ class TestProductionLanguageAwareOrderingAndSearch(TestCase):
         self.client = APIClient()
         Production.objects.all().delete()
 
-        nl = LanguageFactory.create(code="nl", name="Dutch")
-        en = LanguageFactory.create(code="en", name="English")
+        self.nl = LanguageFactory.create(code="nl", name="Dutch")
+        self.en = LanguageFactory.create(code="en", name="English")
 
         self.prod_alpha_nl = ProductionFactory.create()
         ProductionTranslationFactory.create(
             production=self.prod_alpha_nl,
-            language=nl,
+            language=self.nl,
             title="Alpha",
             artist_name="",
             tagline="",
@@ -802,7 +802,7 @@ class TestProductionLanguageAwareOrderingAndSearch(TestCase):
         )
         ProductionTranslationFactory.create(
             production=self.prod_alpha_nl,
-            language=en,
+            language=self.en,
             title="Zulu",
             artist_name="",
             tagline="",
@@ -813,7 +813,7 @@ class TestProductionLanguageAwareOrderingAndSearch(TestCase):
         self.prod_alpha_en = ProductionFactory.create()
         ProductionTranslationFactory.create(
             production=self.prod_alpha_en,
-            language=nl,
+            language=self.nl,
             title="Zulu",
             artist_name="",
             tagline="",
@@ -822,7 +822,7 @@ class TestProductionLanguageAwareOrderingAndSearch(TestCase):
         )
         ProductionTranslationFactory.create(
             production=self.prod_alpha_en,
-            language=en,
+            language=self.en,
             title="Alpha",
             artist_name="",
             tagline="",
@@ -848,6 +848,37 @@ class TestProductionLanguageAwareOrderingAndSearch(TestCase):
         )
         ids_en = [row["id"] for row in response_en.data["results"]]
         assert ids_en[:2] == [self.prod_alpha_en.id, self.prod_alpha_nl.id]
+
+    def test_ordering_by_title_sort_is_case_insensitive(self) -> None:
+        prod_lower = ProductionFactory.create()
+        ProductionTranslationFactory.create(
+            production=prod_lower,
+            language=self.en,
+            title="alpha",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+
+        prod_upper = ProductionFactory.create()
+        ProductionTranslationFactory.create(
+            production=prod_upper,
+            language=self.en,
+            title="Zulu",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+
+        response = self.client.get(
+            "/api/v1/productions/",
+            {"ordering": "title_sort", "lang": "en"},
+            **pub_headers(),
+        )
+        ids = [row["id"] for row in response.data["results"]]
+        assert ids.index(prod_lower.id) < ids.index(prod_upper.id)
 
     def test_search_uses_accept_language_preferred_translation(self) -> None:
         response_nl = self.client.get(
@@ -920,6 +951,26 @@ class TestProductionOrderingEdgeCases(TestCase):
 
         self.prod_without_translation = ProductionFactory.create()
 
+        self.prod_blank_en = ProductionFactory.create()
+        ProductionTranslationFactory.create(
+            production=self.prod_blank_en,
+            language=en,
+            title="",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+        ProductionTranslationFactory.create(
+            production=self.prod_blank_en,
+            language=nl,
+            title="Beta",
+            artist_name="",
+            tagline="",
+            teaser="",
+            description="",
+        )
+
         self.prod_early = ProductionFactory.create()
         self.prod_late = ProductionFactory.create()
         self.prod_without_events = ProductionFactory.create()
@@ -952,6 +1003,18 @@ class TestProductionOrderingEdgeCases(TestCase):
         assert ids.index(self.prod_zulu.id) < ids.index(self.prod_alpha.id)
         assert ids.index(self.prod_without_translation.id) > ids.index(self.prod_alpha.id)
         assert ids.index(self.prod_without_translation.id) > ids.index(self.prod_zulu.id)
+
+    def test_title_sort_ignores_blank_preferred_language_and_uses_fallback(self) -> None:
+        ids_asc = self._ids({"ordering": "title_sort", "lang": "en"}, **pub_headers())
+        ids_desc = self._ids({"ordering": "-title_sort", "lang": "en"}, **pub_headers())
+
+        assert ids_asc.index(self.prod_alpha.id) < ids_asc.index(self.prod_blank_en.id)
+        assert ids_asc.index(self.prod_blank_en.id) < ids_asc.index(self.prod_zulu.id)
+        assert ids_asc.index(self.prod_without_translation.id) > ids_asc.index(self.prod_blank_en.id)
+
+        assert ids_desc.index(self.prod_zulu.id) < ids_desc.index(self.prod_blank_en.id)
+        assert ids_desc.index(self.prod_blank_en.id) < ids_desc.index(self.prod_alpha.id)
+        assert ids_desc.index(self.prod_without_translation.id) > ids_desc.index(self.prod_blank_en.id)
 
     def test_first_event_start_places_missing_date_last_ascending(self) -> None:
         ids = self._ids({"ordering": "first_event_start"}, **pub_headers())

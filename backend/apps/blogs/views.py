@@ -5,7 +5,7 @@ on routing and queryset configuration only.
 """
 
 from django.db.models import Min, Prefetch, Q, QuerySet
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Lower
 
 from apps.core.mixins import LanguageAwareMixin
 from apps.core.views import ApiModelViewSet
@@ -95,12 +95,24 @@ class BlogViewSet(LanguageAwareMixin, ApiModelViewSet):
         queryset = super().get_queryset()
 
         return queryset.annotate(
-            title_sort=Coalesce(
-                Min("translations__title", filter=Q(translations__language__code=language_code)),
-                Min("translations__title"),
+            title_sort=Lower(
+                Coalesce(
+                    Min(
+                        "translations__title",
+                        filter=Q(translations__language__code=language_code)
+                        & ~Q(translations__title=""),
+                    ),
+                    Min("translations__title", filter=~Q(translations__title="")),
+                )
             ),
-            excerpt_search=Coalesce(
-                Min("translations__excerpt", filter=Q(translations__language__code=language_code)),
-                Min("translations__excerpt"),
+            excerpt_search=Lower(
+                Coalesce(
+                    Min(
+                        "translations__excerpt",
+                        filter=Q(translations__language__code=language_code)
+                        & ~Q(translations__excerpt=""),
+                    ),
+                    Min("translations__excerpt", filter=~Q(translations__excerpt="")),
+                )
             ),
         )
