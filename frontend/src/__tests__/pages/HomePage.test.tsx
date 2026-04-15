@@ -9,6 +9,7 @@ import { ApiError } from '../../services/ApiTypes'
 import { getGenres } from '../../services/genres/Genres'
 import { getProductions } from '../../services/productions/Productions'
 import { getTags } from '../../services/tags/Tags'
+
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
 import type { Tag } from '../../types/Tags'
@@ -285,7 +286,7 @@ describe('HomePage (ProductionPage)', () => {
     expect(screen.getByTestId('url-search')).toHaveTextContent('v=l')
   })
 
-  it('opens filters in a mobile dialog instead of rendering the sidebar inline', async () => {
+  it('keeps filters available inline on mobile screens', async () => {
     setMatchMediaMatches(true)
     mockedGetProductions.mockResolvedValue({
       count: 1,
@@ -297,13 +298,8 @@ describe('HomePage (ProductionPage)', () => {
     renderPage()
 
     await screen.findByRole('heading', { name: 'Productie 11' })
-    expect(
-      screen.queryByRole('complementary', { name: 'Geavanceerde filters' }),
-    ).not.toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
-
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Filters' })).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'Online' })).toBeInTheDocument()
   })
 
@@ -425,10 +421,10 @@ describe('HomePage (ProductionPage)', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Fysiek' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'Groep' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'Solo' }))
-    fireEvent.click(screen.getByText('Theater'))
-    fireEvent.click(screen.getByText('Dans'))
-    fireEvent.click(screen.getByText('Premiere'))
-    fireEvent.click(screen.getByText('Festival'))
+    fireEvent.click(await screen.findByRole('button', { name: 'Filter op Theater' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Filter op Dans' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Premiere' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Festival' }))
 
     await waitFor(() => {
       expect(mockedGetProductions).toHaveBeenLastCalledWith({

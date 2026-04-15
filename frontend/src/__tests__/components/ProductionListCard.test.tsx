@@ -183,6 +183,7 @@ describe('ProductionListCard', () => {
     renderListCard({ production })
 
     expect(screen.getByAltText('Fallback image')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Voorstelling' })).toHaveStyle({ height: '100%' })
   })
 
   it('shows formatted date range when events have start dates', () => {

@@ -6,17 +6,18 @@ import { useLocation } from 'react-router-dom'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import EntityView from '../components/entity/EntityView'
 import FloatingAlert from '../components/FloatingAlert'
+import ProductionFilterPanel from '../components/production/ProductionFilterPanel'
 import ProductionGridCard from '../components/productions/ProductionGridCard'
 import ProductionListCard from '../components/productions/ProductionListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
+import { getGenres } from '../services/genres/Genres'
 import { getProductions } from '../services/productions/Productions'
+import { getTags } from '../services/tags/Tags'
 
-import ProductionFilterPanel from '../components/production/ProductionFilterPanel'
 import type { Genre } from '../types/Genres'
 import type { Production } from '../types/Productions'
-
 import type { Tag } from '../types/Tags'
 
 // Page size for pagination.
@@ -106,6 +107,36 @@ const HomePage = () => {
   useEffect(() => {
     setSearchDraft(searchValue)
   }, [searchValue])
+
+  useEffect(() => {
+    let isActive = true
+
+    const fetchFilterMetadata = async () => {
+      try {
+        const [genreResponse, tagResponse] = await Promise.all([getGenres(), getTags()])
+
+        if (!isActive) {
+          return
+        }
+
+        setGenres(genreResponse.results)
+        setTags(tagResponse.results)
+      } catch {
+        if (!isActive) {
+          return
+        }
+
+        setGenres([])
+        setTags([])
+      }
+    }
+
+    void fetchFilterMetadata()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   // Effect to fetch the productions data from the API whenever the ordering, page, retryKey, or searchValue changes
   useEffect(() => {
