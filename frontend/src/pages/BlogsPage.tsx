@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import BlogView from '../components/BlogView'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
+import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import { ApiError } from '../services/ApiTypes'
 import { getBlogs } from '../services/blogs/Blogs'
@@ -177,6 +178,9 @@ const BlogsPage = () => {
         resultsRegionAriaLabel={t('blogs.home.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('blogs.home.loading')}
+        loadingContent={
+          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+        }
         errorMessage={renderedErrorMessage}
         retryLabel={t('blogs.home.error.retry')}
         onRetry={onRetry}
