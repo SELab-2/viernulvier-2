@@ -252,7 +252,6 @@ const SeriesDetailPage = () => {
                   }
                   meta={buildProductionMeta(production, i18n.language)}
                   description={buildProductionDescription(production, i18n.language)}
-                  lang={i18n.language}
                   onClick={() => navigate(`/productions/${production.id}`)}
                   genres={production.genres.map((genre) => ({
                     id: genre.id,
@@ -264,8 +263,10 @@ const SeriesDetailPage = () => {
                   }))}
                   seriesTags={production.tags.map((tag) => ({
                     id: tag.id,
-                    name: tag.name,
-                    display_name: tag.display_name || t('series.untitled'),
+                    name:
+                      tag.display_name ||
+                      getLocalizedRecordValue(tag.name, i18n.language) ||
+                      t('series.untitled'),
                     labels: tag.name ?? {},
                   }))}
                 />
