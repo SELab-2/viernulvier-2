@@ -1,7 +1,9 @@
 import { render, screen, fireEvent } from '@testing-library/react'
+
+import EventList from '../../../components/production/EventList'
+
 import type { Event } from '../../../types/Events'
 import type { Production } from '../../../types/Productions'
-import EventList from '../../../components/production/EventList'
 
 const mockI18n = { language: 'nl' }
 

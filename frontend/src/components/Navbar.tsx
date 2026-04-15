@@ -1,3 +1,7 @@
+import CloseIcon from '@mui/icons-material/Close'
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
+import MenuIcon from '@mui/icons-material/Menu'
 import {
   AppBar,
   Toolbar,
@@ -11,21 +15,18 @@ import {
   ClickAwayListener,
   useTheme,
 } from '@mui/material'
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
-import MenuIcon from '@mui/icons-material/Menu'
-import CloseIcon from '@mui/icons-material/Close'
 import { useEffect, useRef, useState } from 'react'
-import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { createCommonStyles } from '../theme/styles'
+import { useLocation, Link } from 'react-router-dom'
+
+import { createCommonStyles, createNavbarStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
 
 const NAV_LINKS = [
   { labelKey: 'nav.home', to: '/' },
-  { labelKey: 'nav.events', to: '/series' },
-  { labelKey: 'nav.productions', to: '/artists' },
+  { labelKey: 'nav.series', to: '/series' },
   { labelKey: 'nav.blogs', to: '/blogs' },
+  { labelKey: 'nav.media', to: '/media' },
 ] as const
 
 type SupportedLanguage = 'en' | 'nl'
@@ -39,6 +40,7 @@ type NavbarProps = {
 const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
+  const navbarStyles = createNavbarStyles()
   const { t, i18n } = useTranslation()
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -75,10 +77,6 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
       setMobileMenuOpen(true)
       setMenuOpenedAtPath(location.pathname)
     }
-  }
-
-  const activeLinkSx = {
-    fontWeight: tokens.typography.weights.bold,
   }
 
   const baseListSx = { listStyle: 'none', m: 0, p: 0 }
@@ -132,41 +130,14 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             }}
           >
             {/* Brand: logo + "/ Archive" */}
-            <Box
-              component={RouterLink}
-              to="/"
-              sx={{
-                flexGrow: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.5,
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <Box component={Link} to="/" sx={navbarStyles.brandLink}>
               <Box
                 component="img"
                 src="/vnv_logo.png"
                 alt="Viernulvier logo"
-                sx={{
-                  height: { xs: 32, sm: 36 },
-                  width: 'auto',
-                  display: 'block',
-                  filter: 'brightness(0) invert(1)',
-                }}
+                sx={navbarStyles.brandLogo}
               />
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  display: { xs: 'none', sm: 'block' },
-                  color: theme.palette.primary.contrastText,
-                  fontWeight: tokens.typography.weights.regular,
-                  letterSpacing: '0.03em',
-                  fontSize: '24px',
-                  lineHeight: 1,
-                  transform: 'translateY(4.5px)',
-                }}
-              >
+              <Typography variant="subtitle1" sx={navbarStyles.brandArchiveText}>
                 / Archive
               </Typography>
             </Box>
@@ -183,17 +154,11 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                 <Box component="li" key={to}>
                   <Button
                     color="inherit"
-                    component={RouterLink}
+                    component={Link}
                     to={to}
                     aria-current={isActive(to) ? 'page' : undefined}
                     disableRipple
-                    sx={{
-                      textTransform: 'none',
-                      fontSize: '1.05rem',
-                      letterSpacing: '0.02em',
-                      ...(isActive(to) ? activeLinkSx : {}),
-                      '&:hover': { bgcolor: 'transparent' },
-                    }}
+                    sx={[navbarStyles.navLink, ...(isActive(to) ? [navbarStyles.activeLink] : [])]}
                   >
                     {t(labelKey)}
                   </Button>
@@ -266,7 +231,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                     fontSize: { xs: '0.85rem', sm: '0.95rem' },
                   }}
                 >
-                  {currentLanguage === 'en' ? 'EN' : 'NL'}
+                  {nextLanguage.toUpperCase()}
                 </Button>
               </Box>
             </Stack>
@@ -305,19 +270,16 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                     <Button
                       fullWidth
                       color="inherit"
-                      component={RouterLink}
+                      component={Link}
                       to={to}
                       aria-current={isActive(to) ? 'page' : undefined}
                       onClick={closeMobileMenu}
                       disableRipple
-                      sx={{
-                        justifyContent: 'flex-start',
-                        textTransform: 'none',
-                        fontSize: '1.05rem',
-                        letterSpacing: '0.02em',
-                        ...(isActive(to) ? activeLinkSx : {}),
-                        '&:hover': { bgcolor: 'transparent' },
-                      }}
+                      sx={[
+                        navbarStyles.navLink,
+                        { justifyContent: 'flex-start' },
+                        ...(isActive(to) ? [navbarStyles.activeLink] : []),
+                      ]}
                     >
                       {t(labelKey)}
                     </Button>

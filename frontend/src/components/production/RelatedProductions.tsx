@@ -1,10 +1,13 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import type { ProductionRelated, RelatedTag } from '../../types/Productions'
-import Carousel from '../carousel/Carousel'
-import ProductionGridCard from '../ProductionGridCard'
-import GenreAndTagChip from '../chips/GenreAndTagChip'
+
+import { tokens } from '../../theme/tokens'
 import { getTranslatedRecord } from '../../utils/translations'
+import Carousel from '../carousel/Carousel'
+import GenreAndTagChip from '../chips/GenreAndTagChip'
+import ProductionGridCard from '../productions/ProductionGridCard'
+
+import type { ProductionRelated, RelatedTag } from '../../types/Productions'
 
 /**
  * Define the props for the RelatedProductions component:
@@ -46,7 +49,7 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
       <Typography
         variant="h5"
         sx={(theme) => ({
-          fontWeight: 700,
+          fontWeight: tokens.typography.weights.bold,
           fontSize: { xs: '1.05rem', sm: '1.25rem' },
           letterSpacing: '-0.01em',
           color: theme.palette.text.primary,
@@ -60,9 +63,11 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
         return (
           <Box key={entry.tag.id}>
             {showTag && (
-              <Box sx={{ mb: 1.5, display: 'inline-flex', fontWeight: 600 }}>
+              <Box
+                sx={{ mb: 1.5, display: 'inline-flex', fontWeight: tokens.typography.weights.bold }}
+              >
                 <GenreAndTagChip
-                  name={entry.tag.display_name ?? 'unknown tag'}
+                  name={tagName}
                   labels={entry.tag.name as Record<string, string>}
                   context="series"
                   chipType="seriesTag"

@@ -73,28 +73,33 @@ export function formatDateTime(iso: string | null | undefined, locale: string): 
 }
 
 /**
- * Builds a human-readable date-range label from a production's event list.
+ * Builds a human-readable date label from a production's event list.
  *
- * Events are sorted by `starts_at`. When the first and last dates resolve to
- * the same formatted string the label is just that single date. Otherwise the
- * label is `"startDate – endDate"`.
+ * If only one endpoint is available, that date is shown. When both dates are
+ * available and resolve to the same formatted string, the label is just that
+ * single date. Otherwise the label is `"startDate - endDate"`.
  *
  * @param firstEventStart The production's first event start date.
  * @param lastEventEnd The production's last event end date.
  * @param language BCP 47 locale tag for {@link formatDate}.
- * @returns Formatted range string, or `''` when there are no dateable events.
+ * @returns Formatted date string, range string, or `''` when both values are missing.
  */
 export function getProductionDateLabel(
   firstEventStart: string | null,
   lastEventEnd: string | null,
   language: string,
 ): string {
-  if (!firstEventStart || !lastEventEnd) {
-    return ''
-  }
-
   const first = formatDate(firstEventStart, language)
   const last = formatDate(lastEventEnd, language)
+
+  if (!last) {
+    return first
+  }
+
+  if (!first) {
+    return last
+  }
+
   if (first === last) {
     return first
   }

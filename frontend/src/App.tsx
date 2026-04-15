@@ -1,7 +1,8 @@
 import { CssBaseline, ThemeProvider } from '@mui/material'
 import { useMemo, useState } from 'react'
-import { createAppTheme } from './theme/muiPalette'
+
 import Router from './router'
+import { createAppTheme } from './theme/muiPalette'
 
 const STORAGE_KEY = 'vnv-theme-mode'
 

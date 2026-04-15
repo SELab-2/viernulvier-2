@@ -1,6 +1,7 @@
-import type { Blog } from '../types/Blogs'
 import BlogGridCard from './BlogGridCard'
 import GenericGrid from './GenericGrid'
+
+import type { Blog } from '../types/Blogs'
 
 export interface BlogGridProps {
   blogs: Blog[]

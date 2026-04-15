@@ -1,19 +1,22 @@
-import { useEffect, useMemo, useState } from 'react'
 import { useMediaQuery, useTheme } from '@mui/material'
-import { useLocation } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
+
 import BlogView from '../components/BlogView'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
+import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
 import { getBlogs } from '../services/blogs/Blogs'
+
 import type { Blog } from '../types/Blogs'
 
 const PAGE_SIZE = 12
 
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
-  const targetField = sortTarget === 'name' ? 'slug' : 'published_at'
+  const targetField = sortTarget === 'name' ? 'title_sort' : 'published_at'
   return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 
@@ -120,8 +123,8 @@ const BlogsPage = () => {
 
   // If a page navigated here with a floatingAlert in location.state, show it once.
   useEffect(() => {
-    const state = nav.state
-    if (state?.floatingAlert && state.floatingAlert.open) {
+    const { state } = nav
+    if (state?.floatingAlert?.open) {
       setErrorMessage(null)
       setShowFallbackError(false)
       setFloatingAlertMessage(state.floatingAlert.message ?? null)
@@ -177,6 +180,9 @@ const BlogsPage = () => {
         resultsRegionAriaLabel={t('blogs.home.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('blogs.home.loading')}
+        loadingContent={
+          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+        }
         errorMessage={renderedErrorMessage}
         retryLabel={t('blogs.home.error.retry')}
         onRetry={onRetry}

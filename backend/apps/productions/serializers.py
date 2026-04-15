@@ -23,6 +23,7 @@ from apps.core.serializers import TranslatableSerializerMixin
 from apps.genres.serializers import GenreSerializer
 from apps.media_library.models import MediaItem
 from apps.media_library.serializers import MediaGallerySerializer
+from apps.tags.models import Tag
 from apps.tags.serializers import TagSerializer
 
 from .models import Production, ProductionTag, UitDatabaseType

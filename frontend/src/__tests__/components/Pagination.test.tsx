@@ -1,9 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
-import type { ComponentProps } from 'react'
+
 import Pagination from '../../components/Pagination'
 import i18n from '../../i18n'
+
+import type { ComponentProps } from 'react'
 
 const renderPagination = (props: ComponentProps<typeof Pagination>) => {
   const theme = createTheme()
@@ -18,6 +20,10 @@ const renderPagination = (props: ComponentProps<typeof Pagination>) => {
 }
 
 describe('Pagination', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('nl')
+  })
+
   it('renders nothing when only one page is available', () => {
     const { container } = renderPagination({
       page: 1,
@@ -29,13 +35,21 @@ describe('Pagination', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('renders navigation and current page text when multiple pages exist', () => {
+  it('renders navigation and marks the current page when multiple pages exist', () => {
     renderPagination({
       page: 2,
       pageSize: 10,
       totalItems: 35,
       onPageChange: jest.fn(),
     })
+
+    expect(
+      screen.getByRole('navigation', { name: 'Paginering van producties' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Huidige pagina, pagina 2' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
   })
 
   it('emits selected page when user clicks a page button', () => {

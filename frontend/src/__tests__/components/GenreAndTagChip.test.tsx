@@ -1,12 +1,14 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { ReactElement } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
+
 import GenreAndTagChip from '../../components/chips/GenreAndTagChip'
 import i18n from '../../i18n'
 import { getTranslatedRecord } from '../../utils/translations'
+
+import type { ReactElement } from 'react'
 
 const accentTheme = createTheme({
   palette: {

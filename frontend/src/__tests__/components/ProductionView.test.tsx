@@ -1,7 +1,9 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+
 import ProductionView from '../../components/ProductionView'
+
 import type { Production } from '../../types/Productions'
 
 // Mock child layout components so tests only cover ProductionView's routing logic,

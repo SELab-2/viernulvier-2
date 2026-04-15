@@ -1,6 +1,7 @@
 import { api } from '../../services/Api'
 import { ApiError } from '../../services/ApiTypes'
 import { getTag, getTags } from '../../services/tags/Tags'
+
 import type { Tag, TagListResponse } from '../../types/Tags'
 
 jest.mock('../../services/Api', () => ({

@@ -2,8 +2,10 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
+
 import ProductionList from '../../components/ProductionList'
 import i18n from '../../i18n'
+
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
 

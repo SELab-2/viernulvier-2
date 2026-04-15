@@ -25,6 +25,7 @@ from apps.core.serializers import TranslatableSerializerMixin
 from apps.productions.models import Production
 from apps.productions.serializers import (
     ProductionSerializer,
+    ProductionSeriesSerializer,
     ProductionTagSerializer,
     RelatedProductionSerializer,
     RelatedTagSerializer,
@@ -154,6 +155,16 @@ class TestRelatedTagSerializerFields(TestCase):
     def test_expected_fields_are_present(self) -> None:
         data = RelatedTagSerializer(self.tag).data
         assert set(data.keys()) == {"id", "name", "display_name"}
+
+
+class TestProductionSeriesSerializer(TestCase):
+    """Cover edge branches for aggregated series serialization."""
+
+    def test_get_last_production_image_returns_none_without_last_production_id(self) -> None:
+        tag = TagFactory.create()
+        serializer = ProductionSeriesSerializer(context={"last_production_image_by_production_id": {1: "img"}})
+
+        assert serializer.get_last_production_image(tag) is None
 
 
 class TestProductionSerializerRelated(TestCase):

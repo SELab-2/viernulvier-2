@@ -1,6 +1,6 @@
-import { ApiError } from '../../services/ApiTypes'
-import { normalizeApiError } from '../../services/ApiErrorMapper'
 import i18n from '../../i18n'
+import { normalizeApiError } from '../../services/ApiErrorMapper'
+import { ApiError } from '../../services/ApiTypes'
 
 describe('normalizeApiError', () => {
   const isAxiosError = (error: unknown) => {

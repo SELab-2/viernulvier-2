@@ -1,7 +1,9 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen } from '@testing-library/react'
-import type { ReactElement } from 'react'
+
 import ImageWithFallback from '../../components/ImageWithFallback'
+
+import type { ReactElement } from 'react'
 
 const lightTheme = createTheme({ palette: { mode: 'light' } })
 const darkTheme = createTheme({ palette: { mode: 'dark' } })

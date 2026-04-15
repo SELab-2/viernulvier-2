@@ -1,7 +1,8 @@
-import type { Genre, GenreListResponse } from '../../types/Genres'
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
+
 import type { GetGenresOptions } from './GenreOptions'
+import type { Genre, GenreListResponse } from '../../types/Genres'
 
 /**
  * Retrieve a single genre by its numeric ID.

@@ -1,6 +1,7 @@
-import { Snackbar, Box, IconButton } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
+import { Snackbar, Box, IconButton } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+
 import { tokens } from '../theme/tokens'
 
 type FloatingAlertSeverity = 'error' | 'warning' | 'info' | 'success'
@@ -35,27 +36,31 @@ const FloatingAlert = ({
 
   const severityConfig: Record<
     FloatingAlertSeverity,
-    { bgColor: string; textColor: string; borderColor: string }
+    { bgColor: string; textColor: string; borderColor: string; titleColor: string }
   > = {
     error: {
-      bgColor: theme.palette.mode === 'dark' ? '#5f2c2c' : '#ffebee',
-      textColor: theme.palette.mode === 'dark' ? '#ff8a80' : '#c62828',
-      borderColor: theme.palette.mode === 'dark' ? '#ff8a80' : '#d32f2f',
+      bgColor: theme.palette.error.main,
+      textColor: theme.palette.error.contrastText,
+      borderColor: theme.palette.error.dark,
+      titleColor: theme.palette.error.main,
     },
     warning: {
-      bgColor: theme.palette.mode === 'dark' ? '#5f4c2c' : '#fff8e1',
-      textColor: theme.palette.mode === 'dark' ? '#ffb74d' : '#e65100',
-      borderColor: theme.palette.mode === 'dark' ? '#ffb74d' : '#f57f17',
+      bgColor: theme.palette.warning.main,
+      textColor: theme.palette.text.primary,
+      borderColor: theme.palette.warning.main,
+      titleColor: theme.palette.warning.main,
     },
     info: {
-      bgColor: theme.palette.mode === 'dark' ? '#2c4a5f' : '#e3f2fd',
-      textColor: theme.palette.mode === 'dark' ? '#64b5f6' : '#0d47a1',
-      borderColor: theme.palette.mode === 'dark' ? '#64b5f6' : '#1976d2',
+      bgColor: theme.palette.info.main,
+      textColor: theme.palette.text.primary,
+      borderColor: theme.palette.info.main,
+      titleColor: theme.palette.info.main,
     },
     success: {
-      bgColor: theme.palette.mode === 'dark' ? '#2c5f3c' : '#e8f5e9',
-      textColor: theme.palette.mode === 'dark' ? '#81c784' : '#1b5e20',
-      borderColor: theme.palette.mode === 'dark' ? '#81c784' : '#388e3c',
+      bgColor: theme.palette.success.main,
+      textColor: theme.palette.text.primary,
+      borderColor: theme.palette.success.main,
+      titleColor: theme.palette.success.main,
     },
   }
 
@@ -96,6 +101,7 @@ const FloatingAlert = ({
           py: 1.5,
           borderRadius: tokens.borderRadius.sm,
           border: `1px solid ${config.borderColor}`,
+          borderLeft: `4px solid ${config.titleColor}`,
           bgcolor: config.bgColor,
           color: config.textColor,
           maxWidth: 400,
@@ -109,6 +115,7 @@ const FloatingAlert = ({
                 fontWeight: 600,
                 fontSize: '0.95rem',
                 mb: 0.25,
+                color: config.titleColor,
               }}
             >
               {title}
@@ -133,7 +140,7 @@ const FloatingAlert = ({
             flexShrink: 0,
             p: 0,
             '&:hover': {
-              bgcolor: tokens.colors.overlay.black05,
+              bgcolor: theme.palette.action.hover,
             },
           }}
         >

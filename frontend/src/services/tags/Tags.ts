@@ -1,8 +1,8 @@
-import type { Tag } from '../../types/Tags'
-import type { TagListResponse } from '../../types/Tags'
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
+
 import type { GetTagsOptions } from './TagOptions'
+import type { TagListResponse, Tag } from '../../types/Tags'
 
 /**
  * Retrieve a single tag by its numeric ID.

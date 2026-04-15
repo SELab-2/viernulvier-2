@@ -1,10 +1,12 @@
 import { Alert, Box, Button, Container, Paper, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import type { ReactNode } from 'react'
+
 import LoadingSpinner from './LoadingSpinner'
 import Pagination from './Pagination'
 import SearchControlsBar from './searchbar/SearchControlsBar'
+
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './searchbar/types'
+import type { ReactNode } from 'react'
 
 export interface CollectionPageLayoutProps {
   isMobile: boolean
@@ -17,6 +19,7 @@ export interface CollectionPageLayoutProps {
   onSortTargetChange: (value: SearchSortTarget) => void
   sortDirection: SearchSortDirection
   onSortDirectionChange: (value: SearchSortDirection) => void
+  sortTargetOptions?: Array<{ value: SearchSortTarget; labelKey: string }>
   viewMode: SearchViewMode
   onViewModeChange: (value: SearchViewMode) => void
   resultCount: number
@@ -26,6 +29,7 @@ export interface CollectionPageLayoutProps {
   resultsRegionAriaLabel: string
   isLoading: boolean
   loadingLabel: string
+  loadingContent?: ReactNode
   errorMessage: string | null
   retryLabel: string
   onRetry: () => void
@@ -44,8 +48,7 @@ export interface CollectionPageLayoutProps {
  * Reusable layout component for collection pages that includes a search bar, sidebar, results area, and pagination.
  * Handles common UI states such as loading, error, and empty results. The layout is responsive and adapts to mobile screens.
  *
- * Uses {@link SearchControlsBar} for the search and sorting controls, uses {@link Pagination} for pagination controls,
- * uses {@link ProductionView} for displaying production results.
+ * Uses {@link SearchControlsBar} for the search and sorting controls, and {@link Pagination} for page navigation.
  *
  * @param props.isMobile Boolean indicating if the layout is being rendered on a mobile device.
  * @param props.searchPlaceholder Placeholder text for the search input.
@@ -92,6 +95,7 @@ const CollectionPageLayout = ({
   onSortTargetChange,
   sortDirection,
   onSortDirectionChange,
+  sortTargetOptions,
   viewMode,
   onViewModeChange,
   resultCount,
@@ -101,6 +105,7 @@ const CollectionPageLayout = ({
   resultsRegionAriaLabel,
   isLoading,
   loadingLabel,
+  loadingContent,
   errorMessage,
   retryLabel,
   onRetry,
@@ -121,9 +126,7 @@ const CollectionPageLayout = ({
   const resultsSection = (
     <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ flex: 1, minWidth: 0 }}>
       {isLoading ? (
-        <Box sx={{ py: 8 }}>
-          <LoadingSpinner label={loadingLabel} />
-        </Box>
+        <Box sx={{ py: 8 }}>{loadingContent ?? <LoadingSpinner label={loadingLabel} />}</Box>
       ) : null}
 
       {/* Error */}
@@ -163,6 +166,7 @@ const CollectionPageLayout = ({
     <Box sx={{ py: { xs: 3, md: 4 } }}>
       <Container maxWidth="xl">
         <Stack spacing={3}>
+          {/* Search, sort, and view controls. */}
           <SearchControlsBar
             placeholder={searchPlaceholder}
             searchValue={searchValue}
@@ -172,6 +176,7 @@ const CollectionPageLayout = ({
             onSortTargetChange={onSortTargetChange}
             sortDirection={sortDirection}
             onSortDirectionChange={onSortDirectionChange}
+            sortTargetOptions={sortTargetOptions}
             viewMode={viewMode}
             onViewModeChange={onViewModeChange}
             resultCount={resultCount}
@@ -216,7 +221,7 @@ const CollectionPageLayout = ({
             resultsSection
           )}
 
-          {/* Pagination */}
+          {/* Pagination controls. */}
           <Pagination
             page={page}
             pageSize={pageSize}

@@ -12,10 +12,16 @@ import {
   Typography,
   useTheme,
 } from '@mui/material'
-import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
+import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
+
 import SearchBar from './SearchBar'
-import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
+import {
+  DEFAULT_SORT_TARGET_OPTIONS,
+  type SearchSortDirection,
+  type SearchSortTarget,
+  type SearchViewMode,
+} from './types'
 import { tokens } from '../../theme/tokens'
 
 export interface SearchControlsBarProps {
@@ -31,12 +37,8 @@ export interface SearchControlsBarProps {
   viewMode?: SearchViewMode
   onViewModeChange?: (viewMode: SearchViewMode) => void
   showViewModeToggle?: boolean
+  sortTargetOptions?: Array<{ value: SearchSortTarget; labelKey: string }>
 }
-
-const SORT_TARGET_OPTIONS: Array<{ value: SearchSortTarget; labelKey: string }> = [
-  { value: 'date', labelKey: 'searchbar.sort.date' },
-  { value: 'name', labelKey: 'searchbar.sort.name' },
-]
 
 const SORT_TARGET_LABEL_ID = 'searchbar-sort-target-label'
 const NOOP_SORT_TARGET_CHANGE: NonNullable<SearchControlsBarProps['onSortTargetChange']> = () => {}
@@ -58,9 +60,15 @@ const SearchControlsBar = ({
   viewMode = 'grid',
   onViewModeChange = NOOP_VIEW_MODE_CHANGE,
   showViewModeToggle = true,
+  sortTargetOptions = DEFAULT_SORT_TARGET_OPTIONS,
 }: SearchControlsBarProps) => {
   const { t } = useTranslation()
   const theme = useTheme()
+
+  // Fall back to the first allowed sort target when the current one is no longer valid.
+  const effectiveSortTarget = sortTargetOptions.some((option) => option.value === sortTarget)
+    ? sortTarget
+    : (sortTargetOptions[0]?.value ?? 'name')
   const interactionColor =
     theme.palette.mode === 'dark' ? tokens.colors.neutral.white : tokens.colors.neutral.black
   const interactionHoverBackground =
@@ -90,9 +98,10 @@ const SearchControlsBar = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel id={SORT_TARGET_LABEL_ID}>{t('searchbar.sort.targetLabel')}</InputLabel>
+            {/* Sort target selector. */}
             <Select
               labelId={SORT_TARGET_LABEL_ID}
-              value={sortTarget}
+              value={effectiveSortTarget}
               label={t('searchbar.sort.targetLabel')}
               onChange={(event) => onSortTargetChange(event.target.value as SearchSortTarget)}
               sx={{
@@ -100,7 +109,7 @@ const SearchControlsBar = ({
                 backgroundColor: theme.palette.background.default,
               }}
             >
-              {SORT_TARGET_OPTIONS.map((option) => (
+              {sortTargetOptions.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
                   {t(option.labelKey)}
                 </MenuItem>
@@ -108,6 +117,7 @@ const SearchControlsBar = ({
             </Select>
           </FormControl>
 
+          {/* Sort direction toggle. */}
           <Tooltip
             title={
               nextSortDirection === 'asc'
@@ -141,6 +151,7 @@ const SearchControlsBar = ({
             </ToggleButton>
           </Tooltip>
 
+          {/* View mode toggle. */}
           {showViewModeToggle ? (
             <ToggleButtonGroup
               exclusive
@@ -183,6 +194,7 @@ const SearchControlsBar = ({
             </ToggleButtonGroup>
           ) : null}
 
+          {/* Result count indicator. */}
           {typeof resultCount === 'number' ? (
             <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
               {t('searchbar.resultsFound', { count: resultCount })}

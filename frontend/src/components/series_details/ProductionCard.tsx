@@ -1,14 +1,17 @@
 /*
- * Displays a single production with metadata, description and tags.
+ * Displays a single production with metadata, description, genres and series tags.
  * Designed to be reusable across different pages (lists, search, etc.).
  */
 
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material'
 import DOMPurify from 'dompurify'
-import type { KeyboardEvent, MouseEvent } from 'react'
+
+import { tokens } from '../../theme/tokens'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
 
-type ProductionTag = {
+import type { KeyboardEvent, MouseEvent } from 'react'
+
+type ProductionChip = {
   id: number | string
   name: string
   labels?: Record<string, string>
@@ -19,15 +22,18 @@ type Props = {
   title: string
   meta: string
   description: string
-  tags: ProductionTag[]
+  genres: ProductionChip[]
+  seriesTags: ProductionChip[]
   onClick?: (event: MouseEvent<HTMLDivElement>) => void
 }
 
-const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
+const ProductionCard = ({ title, meta, description, genres, seriesTags, onClick }: Props) => {
   const isInteractive = typeof onClick === 'function'
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!isInteractive) return
+    if (!isInteractive) {
+      return
+    }
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
@@ -53,7 +59,7 @@ const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
     >
       <CardContent sx={{ p: 2.5 }}>
         <Stack spacing={1.25}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ fontWeight: tokens.typography.weights.bold }}>
             {title}
           </Typography>
 
@@ -86,9 +92,20 @@ const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
           />
 
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-            {tags.map((tag) => (
+            {genres.map((genre) => (
               <GenreAndTagChip
-                key={tag.id}
+                key={`genre-${genre.id}`}
+                name={genre.name}
+                labels={genre.labels ?? {}}
+                id={genre.id}
+                chipType="genre"
+                context="static"
+              />
+            ))}
+
+            {seriesTags.map((tag) => (
+              <GenreAndTagChip
+                key={`tag-${tag.id}`}
                 name={tag.name}
                 labels={tag.labels ?? {}}
                 id={tag.id}

@@ -1,12 +1,15 @@
 import '@testing-library/jest-dom'
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
+
 import App from '../App'
-import '../i18n'
+import i18n from '../i18n'
 
 describe('App', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.history.pushState({}, '', '/')
     localStorage.clear()
+    localStorage.setItem('i18nextLng', 'nl')
+    await i18n.changeLanguage('nl')
   })
 
   afterEach(() => {
@@ -20,8 +23,8 @@ describe('App', () => {
     expect(screen.getByAltText('Viernulvier logo')).toBeInTheDocument()
     expect(within(mainNav).getByRole('link', { name: 'Archief' })).toBeInTheDocument()
     expect(within(mainNav).getByRole('link', { name: 'Reeksen' })).toBeInTheDocument()
-    expect(within(mainNav).getByRole('link', { name: 'Artiesten' })).toBeInTheDocument()
-    expect(within(mainNav).getByRole('link', { name: 'Verhalen' })).toBeInTheDocument()
+    expect(within(mainNav).getByRole('link', { name: 'Blogs' })).toBeInTheDocument()
+    expect(within(mainNav).getByRole('link', { name: 'Media' })).toBeInTheDocument()
   })
 
   it('renders not found page on unknown route', () => {

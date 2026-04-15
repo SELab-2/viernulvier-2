@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import SeriesDetailPage from '../../pages/SeriesDetailPage'
 
-import { getTag } from '../../services/tags/Tags'
+import SeriesDetailPage from '../../pages/SeriesDetailPage'
 import { getProductions } from '../../services/productions/Productions'
+import { getTag } from '../../services/tags/Tags'
 
 jest.mock('../../services/tags/Tags', () => ({
   getTag: jest.fn(),
@@ -18,12 +18,12 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
-        'series.loading': 'Reeks wordt geladen...',
+        'series.loading': 'Reeks laden',
         'series.backToSeries': 'Terug naar reeksen',
         'series.allEditions': 'Alle edities',
         'series.allEditionsSubtitle':
           'Chronologisch overzicht van de producties binnen deze reeks.',
-        'series.noProductions': 'Er zijn nog geen producties gekoppeld aan deze reeks.',
+        'series.noProductions': 'Er zijn geen producties gekoppeld aan deze reeks.',
         'series.invalidId': 'Ongeldig reeks-ID.',
         'series.fetchError': 'Kon de reeks niet ophalen.',
         'series.noDescription': 'Geen beschrijving beschikbaar.',
@@ -69,8 +69,7 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
-    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
-    expect(screen.getByText('Reeks wordt geladen...')).toBeInTheDocument()
+    expect(screen.getByTestId('series-detail-skeleton')).toBeInTheDocument()
   })
 
   it('renders series data when API succeeds', async () => {
@@ -90,6 +89,7 @@ describe('SeriesDetailPage', () => {
           teaser: { nl: 'Beschrijving productie' },
           description: { nl: 'Beschrijving productie' },
           artist_name: { nl: 'Artiest' },
+          genres: [],
           tags: [],
         },
       ],
@@ -156,7 +156,7 @@ describe('SeriesDetailPage', () => {
     renderPage()
 
     expect(
-      await screen.findByText('Er zijn nog geen producties gekoppeld aan deze reeks.'),
+      await screen.findByText('Er zijn geen producties gekoppeld aan deze reeks.'),
     ).toBeInTheDocument()
   })
 
@@ -185,6 +185,7 @@ describe('SeriesDetailPage', () => {
           teaser: { nl: 'Beschrijving productie' },
           description: { nl: 'Beschrijving productie' },
           artist_name: { nl: 'Artiest' },
+          genres: [],
           tags: [],
         },
       ],
@@ -196,5 +197,72 @@ describe('SeriesDetailPage', () => {
     fireEvent.click(productionCard)
 
     expect(await screen.findByText('PRODUCTION DETAIL')).toBeInTheDocument()
+  })
+
+  it('renders both production genres and series tags in the production card', async () => {
+    mockedGetTag.mockResolvedValue({
+      id: 1,
+      name: { nl: 'VIDEODROOM' },
+      short_description: { nl: 'Beschrijving van de reeks' },
+      type: 'festival',
+    })
+
+    mockedGetProductions.mockResolvedValue({
+      results: [
+        {
+          id: 1,
+          display_title: 'VIDEODROOM 2024',
+          title: { nl: 'VIDEODROOM 2024' },
+          teaser: { nl: 'Beschrijving productie' },
+          description: { nl: 'Beschrijving productie' },
+          artist_name: { nl: 'Artiest' },
+          genres: [
+            {
+              id: 10,
+              type: 'genre',
+              use_as: { id: 1, name: 'genre' },
+              name: { nl: 'Audiovisueel', en: 'Audiovisual' },
+              display_name: null,
+              vendor_id: null,
+            },
+            {
+              id: 11,
+              type: 'genre',
+              use_as: { id: 1, name: 'genre' },
+              name: { nl: 'Performance', en: 'Performance' },
+              display_name: null,
+              vendor_id: null,
+            },
+          ],
+          tags: [
+            {
+              id: 20,
+              name: { nl: 'Festivalreeks', en: 'Festival series' },
+              display_name: null,
+              type: 'series',
+            },
+            {
+              id: 21,
+              name: { nl: 'Videodroom', en: 'Videodroom' },
+              display_name: null,
+              type: 'series',
+            },
+          ],
+        },
+      ],
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('Audiovisueel')).toBeInTheDocument()
+    expect(screen.getByText('Performance')).toBeInTheDocument()
+    expect(screen.getByText('Festivalreeks')).toBeInTheDocument()
+    expect(screen.getByText('Videodroom')).toBeInTheDocument()
+
+    expect(screen.getByRole('link', { name: 'Festivalreeks' })).toHaveAttribute(
+      'href',
+      '/series/20',
+    )
+    expect(screen.getByRole('link', { name: 'Videodroom' })).toHaveAttribute('href', '/series/21')
   })
 })
