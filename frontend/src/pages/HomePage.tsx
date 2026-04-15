@@ -24,6 +24,7 @@ const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'd
   return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 
+// Home page component that displays a list of productions with search, sorting, and pagination functionality.
 const HomePage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
@@ -33,6 +34,7 @@ const HomePage = () => {
   const nav = location as { state?: NavState }
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
+  // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
   const {
     searchValue,
     sortTarget,
@@ -57,11 +59,13 @@ const HomePage = () => {
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
+  // Error message to display in the UI, preferring the translated fallback message
   const renderedErrorMessage = showFallbackError
     ? t('productions.home.error.fallback')
     : errorMessage
   const floatingErrorMessage = t('productions.home.error.notification')
 
+  // Memoized value for the API ordering parameter to avoid unnecessary recalculations on every render.
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
     [sortDirection, sortTarget],
@@ -71,6 +75,7 @@ const HomePage = () => {
     setSearchDraft(searchValue)
   }, [searchValue])
 
+  // Effect to fetch the productions data from the API whenever the ordering, page, retryKey, or searchValue changes
   useEffect(() => {
     let isActive = true
 
@@ -129,17 +134,20 @@ const HomePage = () => {
     }
   }, [ordering, page, retryKey, searchValue])
 
+  // Handler for retrying the data fetch when an error occurs, triggered by the retry button in the UI.
   const onRetry = () => {
     setIsFloatingErrorOpen(false)
     setFloatingAlertMessage(null)
     setRetryKey((value) => value + 1)
   }
 
+  // Handler for closing the floating error alert.
   const onFloatingErrorClose = () => {
     setIsFloatingErrorOpen(false)
     setFloatingAlertMessage(null)
   }
 
+  // Handler for submitting the search form, which updates the searchValue and triggers a new data fetch
   const onSearchSubmit = (value: string) => {
     const nextQuery = value.trim()
     if (nextQuery === searchValue.trim()) {
