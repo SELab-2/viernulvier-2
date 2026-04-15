@@ -1,8 +1,10 @@
 import { useMediaQuery, useTheme } from '@mui/material'
-import type { Key, ReactNode } from 'react'
-import type { SearchViewMode } from '../searchbar/types'
+
 import EntityGrid from './EntityGrid'
 import EntityList from './EntityList'
+
+import type { SearchViewMode } from '../searchbar/types'
+import type { Key, ReactNode } from 'react'
 
 type EntityViewItemProps<T> = {
   getKey: (item: T) => Key

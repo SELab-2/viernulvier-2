@@ -2,8 +2,10 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { act, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
-import i18n from '../../i18n'
+
 import SeriesGridCard from '../../components/series/SeriesGridCard'
+import i18n from '../../i18n'
+
 import type { Series } from '../../types/Series'
 
 const renderCard = (series: Series) =>

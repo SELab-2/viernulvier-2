@@ -1,17 +1,12 @@
 import { api } from '../../services/Api'
 import { ApiError } from '../../services/ApiTypes'
-<<<<<<< HEAD
 import {
   getProduction,
   getProductions,
   getProductionSeries,
 } from '../../services/productions/Productions'
-import { AttendanceMode, PerformerType } from '../../types/Productions'
-=======
-import { getProduction, getProductions } from '../../services/productions/Productions'
 
 import type { AttendanceMode, PerformerType } from '../../types/Productions'
->>>>>>> 7ff0e31a6a67e54de81f0c44feab9c096fe548a1
 
 jest.mock('../../services/Api', () => ({
   api: {

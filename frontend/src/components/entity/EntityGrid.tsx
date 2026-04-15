@@ -1,6 +1,8 @@
 import { Box, useTheme } from '@mui/material'
-import type { Key, ReactNode } from 'react'
+
 import { createCommonStyles } from '../../theme/styles'
+
+import type { Key, ReactNode } from 'react'
 
 export interface EntityGridProps<T> {
   items: T[]

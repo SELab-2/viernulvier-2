@@ -1,8 +1,8 @@
 // src/services/media_files/MediaFiles.test.ts
 
-import { getMediaFile, getMediaFiles } from '../../services/media_files/MediaFiles'
 import { api } from '../../services/Api'
 import { buildListParams } from '../../services/ApiParams'
+import { getMediaFile, getMediaFiles } from '../../services/media_files/MediaFiles'
 
 jest.mock('../../services/Api', () => ({
   api: {

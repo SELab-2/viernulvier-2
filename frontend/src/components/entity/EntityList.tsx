@@ -1,6 +1,5 @@
 import { Stack } from '@mui/material'
-import { Fragment } from 'react'
-import type { Key, ReactNode } from 'react'
+import { Fragment, type Key, type ReactNode } from 'react'
 
 export interface EntityListProps<T> {
   items: T[]

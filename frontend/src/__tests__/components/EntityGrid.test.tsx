@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+
 import EntityGrid from '../../components/entity/EntityGrid'
 
 describe('EntityGrid', () => {

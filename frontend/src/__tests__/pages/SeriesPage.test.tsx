@@ -2,9 +2,11 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
+
 import i18n from '../../i18n'
 import SeriesPage from '../../pages/SeriesPage'
 import { getProductionSeries } from '../../services/productions/Productions'
+
 import type { Series } from '../../types/Series'
 import type { Tag } from '../../types/Tags'
 

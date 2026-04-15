@@ -41,11 +41,11 @@ export interface SearchControlsBarProps {
 }
 
 const SORT_TARGET_LABEL_ID = 'searchbar-sort-target-label'
-const NOOP_SORT_TARGET_CHANGE: NonNullable<SearchControlsBarProps['onSortTargetChange']> = () => { }
+const NOOP_SORT_TARGET_CHANGE: NonNullable<SearchControlsBarProps['onSortTargetChange']> = () => {}
 const NOOP_SORT_DIRECTION_CHANGE: NonNullable<
   SearchControlsBarProps['onSortDirectionChange']
-> = () => { }
-const NOOP_VIEW_MODE_CHANGE: NonNullable<SearchControlsBarProps['onViewModeChange']> = () => { }
+> = () => {}
+const NOOP_VIEW_MODE_CHANGE: NonNullable<SearchControlsBarProps['onViewModeChange']> = () => {}
 
 const SearchControlsBar = ({
   placeholder,

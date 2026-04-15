@@ -3,10 +3,12 @@ import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
-import type { Series } from '../../types/Series'
+
 import { formatDate } from '../../utils/dateUtils'
 import { getTranslatedRecord } from '../../utils/translations'
 import ImageWithFallback from '../ImageWithFallback'
+
+import type { Series } from '../../types/Series'
 
 export interface SeriesListCardProps {
   series: Series
@@ -30,7 +32,7 @@ const getLocalizedSeriesDescription = (series: Series, language: string): string
 
 const SeriesListCard = ({ series }: SeriesListCardProps) => {
   const { i18n } = useTranslation()
-  const language = i18n.language
+  const { language } = i18n
 
   const title = getLocalizedSeriesName(series, language)
   const description = getLocalizedSeriesDescription(series, language)
