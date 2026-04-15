@@ -16,7 +16,7 @@ const SearchBar = ({
   onSearchSubmit,
 }: SearchBarProps) => {
   const theme = useTheme()
-  const t = useTranslation().t
+  const { t } = useTranslation()
 
   const handleSearchSubmit = () => {
     onSearchSubmit?.(searchValue.trim())
@@ -27,6 +27,7 @@ const SearchBar = ({
       fullWidth
       variant="outlined"
       placeholder={placeholder}
+      autoComplete="off"
       value={searchValue}
       onChange={(e) => onSearchChange(e.target.value)}
       onKeyDown={(event) => {
@@ -35,6 +36,13 @@ const SearchBar = ({
         }
       }}
       slotProps={{
+        htmlInput: {
+          autoComplete: 'off',
+          autoCapitalize: 'none',
+          autoCorrect: 'off',
+          spellCheck: false,
+          inputMode: 'search',
+        },
         input: {
           endAdornment: (
             <InputAdornment position="end">

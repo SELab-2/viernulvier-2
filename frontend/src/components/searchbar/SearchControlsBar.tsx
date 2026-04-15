@@ -12,11 +12,16 @@ import {
   Typography,
   useTheme,
 } from '@mui/material'
-import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
+import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
+
 import SearchBar from './SearchBar'
-import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
-import { DEFAULT_SORT_TARGET_OPTIONS } from './types'
+import {
+  DEFAULT_SORT_TARGET_OPTIONS,
+  type SearchSortDirection,
+  type SearchSortTarget,
+  type SearchViewMode,
+} from './types'
 import { tokens } from '../../theme/tokens'
 
 export interface SearchControlsBarProps {
@@ -36,11 +41,11 @@ export interface SearchControlsBarProps {
 }
 
 const SORT_TARGET_LABEL_ID = 'searchbar-sort-target-label'
-const NOOP_SORT_TARGET_CHANGE: NonNullable<SearchControlsBarProps['onSortTargetChange']> = () => {}
+const NOOP_SORT_TARGET_CHANGE: NonNullable<SearchControlsBarProps['onSortTargetChange']> = () => { }
 const NOOP_SORT_DIRECTION_CHANGE: NonNullable<
   SearchControlsBarProps['onSortDirectionChange']
-> = () => {}
-const NOOP_VIEW_MODE_CHANGE: NonNullable<SearchControlsBarProps['onViewModeChange']> = () => {}
+> = () => { }
+const NOOP_VIEW_MODE_CHANGE: NonNullable<SearchControlsBarProps['onViewModeChange']> = () => { }
 
 const SearchControlsBar = ({
   placeholder,

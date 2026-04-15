@@ -1,19 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
 import { useMediaQuery, useTheme } from '@mui/material'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import EntityView from '../components/entity/EntityView'
 import FloatingAlert from '../components/FloatingAlert'
+import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import SeriesGridCard from '../components/series/SeriesGridCard'
 import SeriesListCard from '../components/series/SeriesListCard'
-import type { SearchSortTarget } from '../components/searchbar/types'
-import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
-import { ApiError } from '../services/ApiTypes'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
+import { ApiError } from '../services/ApiTypes'
 import { getProductionSeries } from '../services/productions/Productions'
-import type { Series } from '../types/Series'
-import type { SearchSortDirection } from '../components/searchbar/types'
 import { getTranslatedRecord } from '../utils/translations'
+
+import type { SearchSortTarget, SearchSortDirection } from '../components/searchbar/types'
+import type { Series } from '../types/Series'
 
 // Page size for pagination.
 const PAGE_SIZE = 12

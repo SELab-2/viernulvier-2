@@ -1,26 +1,26 @@
-import { useEffect, useMemo, useState } from 'react'
 import { useMediaQuery, useTheme } from '@mui/material'
-import { useLocation } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
+
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import EntityView from '../components/entity/EntityView'
 import FloatingAlert from '../components/FloatingAlert'
 import ProductionGridCard from '../components/productions/ProductionGridCard'
 import ProductionListCard from '../components/productions/ProductionListCard'
-import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
+import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
 import { getProductions } from '../services/productions/Productions'
+
 import type { Production } from '../types/Productions'
 
 // Page size for pagination.
 const PAGE_SIZE = 12
 
 // Function to determine the ordering parameter for the API based on the current sort target and direction.
-// Currently broken because the backend has no field for translations__title
-// TODO fix
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
-  const targetField = sortTarget === 'name' ? 'translations__title' : 'first_event_start'
+  const targetField = sortTarget === 'name' ? 'title_sort' : 'first_event_start'
   return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 
@@ -152,8 +152,8 @@ const HomePage = () => {
 
   // If a page navigated here with a floatingAlert in location.state, show it once.
   useEffect(() => {
-    const state = nav.state
-    if (state?.floatingAlert && state.floatingAlert.open) {
+    const { state } = nav
+    if (state?.floatingAlert?.open) {
       setErrorMessage(null)
       setShowFallbackError(false)
       setFloatingAlertMessage(state.floatingAlert.message ?? null)

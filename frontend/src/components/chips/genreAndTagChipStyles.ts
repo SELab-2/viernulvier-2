@@ -1,6 +1,7 @@
-import type { SxProps, Theme } from '@mui/material'
 import { tokens } from '../../theme/tokens'
+
 import type { GetGenreAndTagChipStylesInput } from '../../types/GenreAndTagChip'
+import type { SxProps, Theme } from '@mui/material'
 
 /**
  * Returns CSS styles for a genre or series-tag chip, depending on the selected context,

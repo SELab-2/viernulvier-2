@@ -282,6 +282,17 @@ class TestProductionViewSet(TestCase):
         modes = [r["attendance_mode"] for r in response.data.get("results", response.data)]
         assert modes == sorted(modes)
 
+    def test_ordering_by_title_sort(self) -> None:
+        lang = LanguageFactory(code="en")
+        prod_b = ProductionFactory()
+        prod_a = ProductionFactory()
+        ProductionTranslationFactory(production=prod_b, language=lang, title="Zulu")
+        ProductionTranslationFactory(production=prod_a, language=lang, title="Alpha")
+
+        response = self.client.get(self.list_url(), {"ordering": "title_sort"}, **pub_headers())
+        ids = [r["id"] for r in response.data.get("results", response.data)]
+        assert ids[:2] == [prod_a.id, prod_b.id]
+
     def test_search_by_title_translation(self) -> None:
         lang = LanguageFactory(code="en")
         prod = ProductionFactory()

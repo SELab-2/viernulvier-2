@@ -4,34 +4,38 @@
  * of associated productions.
  */
 
-import { useEffect, useMemo, useState } from 'react'
 import { Alert, Box, Container, Divider, Stack, Typography } from '@mui/material'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 
+import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
+import Breadcrumbs from '../components/production/Breadcrumbs'
+import ProductionCard from '../components/series_details/ProductionCard'
 import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
-import ProductionCard from '../components/series_details/ProductionCard'
 import TimelineItem from '../components/series_details/TimelineItem'
-import Breadcrumbs from '../components/production/Breadcrumbs'
-
-import { getTag } from '../services/tags/Tags'
 import { getProductions } from '../services/productions/Productions'
-import type { Tag } from '../types/Tags'
+import { getTag } from '../services/tags/Tags'
+
 import type { Production } from '../types/Productions'
-import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
+import type { Tag } from '../types/Tags'
 
 type SeriesStat = {
   value: string
   label: string
 }
 
+type SeriesErrorKey = 'series.invalidId' | 'series.fetchError' | null
+
 function getLocalizedRecordValue(
   value: Record<string, string> | null | undefined,
   language: string,
   fallback = '',
 ): string {
-  if (!value) return fallback
+  if (!value) {
+    return fallback
+  }
 
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
 
@@ -45,13 +49,16 @@ function extractYearFromProduction(production: Production): string {
   if (production.last_event_end) {
     return new Date(production.last_event_end).getFullYear().toString()
   }
+
   const candidates = [production.display_title, ...Object.values(production.title ?? {})].filter(
     Boolean,
   ) as string[]
 
   for (const candidate of candidates) {
     const match = candidate.match(/\b(19|20)\d{2}\b/)
-    if (match) return match[0]
+    if (match) {
+      return match[0]
+    }
   }
 
   return '—'
@@ -75,11 +82,6 @@ function buildProductionDescription(production: Production, language: string): s
   )
 }
 
-// TODO: use production images in production cards. This is just a placeholder for the moment.
-// function buildProductionImage(_production: Production): string {
-//   return ''
-// }
-
 const SeriesDetailPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -88,13 +90,13 @@ const SeriesDetailPage = () => {
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<SeriesErrorKey>(null)
 
   useEffect(() => {
     const numericId = Number(id)
 
     if (!numericId || Number.isNaN(numericId)) {
-      setError(t('series.invalidId'))
+      setError('series.invalidId')
       setIsLoading(false)
       return
     }
@@ -117,23 +119,29 @@ const SeriesDetailPage = () => {
         setSeriesTag(tag)
         setProductions(productionsResponse.results)
       } catch {
-        setError(t('series.fetchError'))
+        setError('series.fetchError')
       } finally {
         setIsLoading(false)
       }
     }
 
     void fetchSeries()
-  }, [id, t])
+  }, [id])
 
   const sortedProductions = useMemo(() => {
     return [...productions].sort((a, b) => {
       const yearA = Number(extractYearFromProduction(a))
       const yearB = Number(extractYearFromProduction(b))
 
-      if (Number.isNaN(yearA) && Number.isNaN(yearB)) return b.id - a.id
-      if (Number.isNaN(yearA)) return 1
-      if (Number.isNaN(yearB)) return -1
+      if (Number.isNaN(yearA) && Number.isNaN(yearB)) {
+        return b.id - a.id
+      }
+      if (Number.isNaN(yearA)) {
+        return 1
+      }
+      if (Number.isNaN(yearB)) {
+        return -1
+      }
 
       return yearB - yearA
     })
@@ -201,10 +209,9 @@ const SeriesDetailPage = () => {
             ]}
           />
         </Stack>
+
         <SeriesHeader name={seriesName} description={seriesDescription} />
-
         <SeriesStats stats={stats} />
-
         <Divider />
 
         <Stack spacing={1}>
@@ -246,7 +253,15 @@ const SeriesDetailPage = () => {
                   meta={buildProductionMeta(production, i18n.language)}
                   description={buildProductionDescription(production, i18n.language)}
                   onClick={() => navigate(`/productions/${production.id}`)}
-                  tags={production.tags.map((tag) => ({
+                  genres={production.genres.map((genre) => ({
+                    id: genre.id,
+                    name:
+                      genre.display_name ||
+                      getLocalizedRecordValue(genre.name, i18n.language) ||
+                      t('series.untitled'),
+                    labels: genre.name ?? {},
+                  }))}
+                  seriesTags={production.tags.map((tag) => ({
                     id: tag.id,
                     name:
                       tag.display_name ||
@@ -254,7 +269,6 @@ const SeriesDetailPage = () => {
                       t('series.untitled'),
                     labels: tag.name ?? {},
                   }))}
-                  // image={buildProductionImage(production)}
                 />
               </TimelineItem>
             ))}

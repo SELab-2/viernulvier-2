@@ -1,5 +1,6 @@
-import type { Hall } from '../../types/Halls'
 import getLocationName from '../../utils/locations'
+
+import type { Hall } from '../../types/Halls'
 
 describe('getLocationName', () => {
   it('returns empty string for undefined hall', () => {

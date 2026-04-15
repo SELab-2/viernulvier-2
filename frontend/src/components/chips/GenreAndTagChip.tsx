@@ -1,14 +1,15 @@
 import CloseIcon from '@mui/icons-material/Close'
-import { Chip, useTheme } from '@mui/material'
-import { useState } from 'react'
-import type { MouseEvent } from 'react'
+import { Box, Chip, useTheme } from '@mui/material'
+import { useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
-import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
-import { tokens } from '../../theme/tokens'
+
 import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
 import { getQueryKeyForChipType } from './genreAndTagChipUtils'
+import { tokens } from '../../theme/tokens'
 import { getTranslatedRecord } from '../../utils/translations'
+
+import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
 
 /**
  * Generic chip component that supports both genre and series-tag scenarios.
@@ -74,37 +75,41 @@ const GenreAndTagChip = ({
   return (
     <Chip
       label={
-        <span
-          style={{
+        <Box
+          component="span"
+          sx={{
             display: 'flex',
             alignItems: 'center',
             minWidth: 0,
-            gap: showSelectedIcon ? 6 : 0,
+            gap: showSelectedIcon ? 0.75 : 0,
             transition: 'gap 0.2s cubic-bezier(.4,1.3,.6,1), width 0.2s cubic-bezier(.4,1.3,.6,1)',
           }}
         >
-          <span
-            style={{
+          <Box
+            component="span"
+            sx={{
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
+              minWidth: 0,
               transition: 'color 0.2s',
             }}
           >
             {label}
-          </span>
+          </Box>
 
           {showSelectedIcon ? (
-            <span
-              style={{
+            <Box
+              component="span"
+              sx={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 18,
-                height: 18,
+                width: 2.25,
+                height: 2.25,
                 borderRadius: '50%',
-                background: hovered ? iconHoverBackground : 'transparent',
-                color: hovered ? selectedChipColor : tokens.colors.neutral.white,
+                backgroundColor: hovered ? iconHoverBackground : 'transparent',
+                color: hovered ? selectedChipColor : 'inherit',
                 boxShadow: hovered ? `0 0 0 2px ${iconHoverBackground}` : undefined,
                 cursor: 'pointer',
                 transition: 'background 0.15s, color 0.15s',
@@ -113,9 +118,9 @@ const GenreAndTagChip = ({
               }}
             >
               <CloseIcon fontSize="small" />
-            </span>
+            </Box>
           ) : null}
-        </span>
+        </Box>
       }
       clickable={isClickable}
       onClick={isSearchContext ? handleSearchClick : undefined}

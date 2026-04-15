@@ -1,4 +1,5 @@
 import { Box, Stack } from '@mui/material'
+
 import type { Key, ReactNode } from 'react'
 
 export interface GenericListProps<T> {

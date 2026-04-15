@@ -1,7 +1,8 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import '@testing-library/jest-dom/jest-globals'
-import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { MemoryRouter } from 'react-router-dom'
+
 import Navbar from '../../components/Navbar'
 import i18n from '../../i18n'
 

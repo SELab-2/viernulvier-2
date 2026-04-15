@@ -1,5 +1,6 @@
-import type { Hall } from '../types/Halls'
 import { getTranslatedRecord } from './translations'
+
+import type { Hall } from '../types/Halls'
 
 /**
  * Resolves a short venue label for a {@link Hall} for map/list UI.

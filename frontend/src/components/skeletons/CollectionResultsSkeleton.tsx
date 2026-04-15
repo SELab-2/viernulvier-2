@@ -1,8 +1,10 @@
 import { Box, Paper, Skeleton, Stack } from '@mui/material'
-import type { SearchViewMode } from '../searchbar/types'
+import { useTheme } from '@mui/material/styles'
+
 import { createCommonStyles } from '../../theme/styles'
 import { tokens } from '../../theme/tokens'
-import { useTheme } from '@mui/material/styles'
+
+import type { SearchViewMode } from '../searchbar/types'
 
 interface CollectionResultsSkeletonProps {
   layout: SearchViewMode

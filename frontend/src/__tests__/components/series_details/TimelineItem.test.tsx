@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+
 import '@testing-library/jest-dom'
 import TimelineItem from '../../../components/series_details/TimelineItem'
 
