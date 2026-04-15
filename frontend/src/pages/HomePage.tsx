@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
 import { useMediaQuery, useTheme } from '@mui/material'
-import { useLocation } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
+
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
 import ProductionView from '../components/ProductionView'
-import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
+import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
 import { getProductions } from '../services/productions/Productions'
+
 import type { Production } from '../types/Productions'
 
 // Page size for the productions list pagination. This is a constant for now but could be made configurable in the future if needed.
@@ -154,8 +156,8 @@ const HomePage = () => {
 
   // If a page navigated here with a floatingAlert in location.state, show it once.
   useEffect(() => {
-    const state = nav.state
-    if (state?.floatingAlert && state.floatingAlert.open) {
+    const { state } = nav
+    if (state?.floatingAlert?.open) {
       setErrorMessage(null)
       setShowFallbackError(false)
       setFloatingAlertMessage(state.floatingAlert.message ?? null)

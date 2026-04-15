@@ -6,10 +6,9 @@
  * Each function takes a theme and returns an SxProps<Theme> object.
  */
 
-import { SxProps, Theme } from '@mui/material/styles'
 import { tokens } from './tokens'
 
-import { SystemStyleObject } from '@mui/system'
+import type { SxProps, SystemStyleObject, Theme } from '@mui/system'
 
 export const createNavbarStyles = (theme: Theme) => {
   return {
@@ -81,7 +80,7 @@ export const createCommonStyles = (theme: Theme) => {
       backgroundColor: theme.palette.background.paper,
       transition: tokens.transitions.base,
       '&:hover': {
-        boxShadow: theme.shadows[3],
+        boxShadow: tokens.shadows.md,
       },
     } as SxProps<Theme>,
 

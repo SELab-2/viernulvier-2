@@ -1,6 +1,7 @@
-import type { Production } from '../types/Productions'
-import ProductionGridCard from './ProductionGridCard'
 import GenericGrid from './GenericGrid'
+import ProductionGridCard from './ProductionGridCard'
+
+import type { Production } from '../types/Productions'
 
 export interface ProductionGridProps {
   productions: Production[]

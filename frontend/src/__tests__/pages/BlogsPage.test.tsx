@@ -2,10 +2,12 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
+
 import i18n from '../../i18n'
 import BlogsPage from '../../pages/BlogsPage'
 import { ApiError } from '../../services/ApiTypes'
 import { getBlogs } from '../../services/blogs/Blogs'
+
 import type { Blog } from '../../types/Blogs'
 
 jest.mock('../../services/blogs/Blogs', () => ({

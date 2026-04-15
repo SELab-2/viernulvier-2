@@ -1,3 +1,7 @@
+import CloseIcon from '@mui/icons-material/Close'
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
+import MenuIcon from '@mui/icons-material/Menu'
 import {
   AppBar,
   Toolbar,
@@ -11,13 +15,10 @@ import {
   ClickAwayListener,
   useTheme,
 } from '@mui/material'
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
-import MenuIcon from '@mui/icons-material/Menu'
-import CloseIcon from '@mui/icons-material/Close'
 import { useEffect, useRef, useState } from 'react'
-import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useLocation, Link } from 'react-router-dom'
+
 import { createCommonStyles, createNavbarStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
 
@@ -129,7 +130,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             }}
           >
             {/* Brand: logo + "/ Archive" */}
-            <Box component={RouterLink} to="/" sx={navbarStyles.brandLink}>
+            <Box component={Link} to="/" sx={navbarStyles.brandLink}>
               <Box
                 component="img"
                 src="/vnv_logo.png"
@@ -153,7 +154,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                 <Box component="li" key={to}>
                   <Button
                     color="inherit"
-                    component={RouterLink}
+                    component={Link}
                     to={to}
                     aria-current={isActive(to) ? 'page' : undefined}
                     disableRipple
@@ -269,7 +270,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                     <Button
                       fullWidth
                       color="inherit"
-                      component={RouterLink}
+                      component={Link}
                       to={to}
                       aria-current={isActive(to) ? 'page' : undefined}
                       onClick={closeMobileMenu}

@@ -12,7 +12,7 @@ class IntersectionObserverMock implements IntersectionObserver {
   scrollMargin: string = ''
   readonly root: Element | Document | null = null
   readonly rootMargin = ''
-  readonly thresholds: ReadonlyArray<number> = []
+  readonly thresholds: readonly number[] = []
   disconnect = () => {}
   observe = () => {}
   takeRecords = () => []

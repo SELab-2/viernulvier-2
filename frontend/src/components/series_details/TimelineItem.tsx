@@ -4,6 +4,7 @@
  */
 
 import { Box, Stack, Typography } from '@mui/material'
+
 import type { ReactNode } from 'react'
 
 type Props = {

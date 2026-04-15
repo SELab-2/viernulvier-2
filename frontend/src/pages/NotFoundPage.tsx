@@ -1,6 +1,7 @@
 import { Button, Container, Paper, Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
+
 import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
 

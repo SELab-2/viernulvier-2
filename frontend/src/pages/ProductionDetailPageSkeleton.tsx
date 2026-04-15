@@ -4,29 +4,29 @@ const ProductionDetailPageSkeleton = () => {
   const theme = useTheme()
 
   return (
-    <div
+    <Box
       className="production-details-page"
-      style={{
+      sx={{
         backgroundColor: theme.palette.background.default,
         color: theme.palette.text.primary,
       }}
       data-testid="production-detail-skeleton"
     >
-      <div
+      <Box
         className="production-details-container"
-        style={{ backgroundColor: theme.palette.background.default }}
+        sx={{ backgroundColor: theme.palette.background.default }}
       >
-        <div
+        <Box
           className="production-details-left"
-          style={{ backgroundColor: theme.palette.background.default }}
+          sx={{ backgroundColor: theme.palette.background.default }}
         >
           <Box sx={{ borderBottom: `1px solid ${theme.palette.divider}`, pb: 1.5, mb: 3 }}>
             <Skeleton variant="text" width="45%" height={24} />
           </Box>
 
-          <div
+          <Box
             className="hero-image"
-            style={{
+            sx={{
               width: '100%',
               aspectRatio: '16/7',
               borderRadius: '4px',
@@ -35,7 +35,7 @@ const ProductionDetailPageSkeleton = () => {
             }}
           >
             <Skeleton variant="rectangular" width="100%" height="100%" />
-          </div>
+          </Box>
 
           <Box sx={{ mb: 3 }}>
             <Skeleton variant="text" width="60%" height={44} />
@@ -48,11 +48,11 @@ const ProductionDetailPageSkeleton = () => {
             <Skeleton variant="text" width="95%" height={30} />
             <Skeleton variant="text" width="98%" height={30} />
           </Box>
-        </div>
+        </Box>
 
-        <div
+        <Box
           className="production-details-right"
-          style={{
+          sx={{
             backgroundColor: theme.palette.background.default,
             borderLeft: `1px solid ${theme.palette.divider}`,
           }}
@@ -115,8 +115,8 @@ const ProductionDetailPageSkeleton = () => {
               </Box>
             ))}
           </Box>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       <Box sx={{ p: 2, width: '100%', maxWidth: 1250, mx: 'auto', pb: 4 }}>
         <Skeleton variant="text" width={220} height={36} sx={{ mb: 1 }} />
@@ -132,7 +132,7 @@ const ProductionDetailPageSkeleton = () => {
           <Skeleton variant="rectangular" height={160} />
         </Box>
       </Box>
-    </div>
+    </Box>
   )
 }
 
