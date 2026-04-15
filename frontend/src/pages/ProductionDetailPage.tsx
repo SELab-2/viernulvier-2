@@ -1,10 +1,7 @@
 import { Box, Typography } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useNavigate } from 'react-router-dom'
-
-import ImageWithFallback from '../components/ImageWithFallback'
-import LoadingSpinner from '../components/LoadingSpinner'
+import type { Production } from '../types/Productions'
 import Breadcrumbs from '../components/production/Breadcrumbs'
 import Description from '../components/production/Description'
 import EventsList from '../components/production/EventList'
@@ -14,6 +11,7 @@ import RelatedProductions from '../components/production/RelatedProductions'
 import { getProduction } from '../services/productions/Productions'
 import { tokens } from '../theme/tokens'
 import { getLocalizedValue } from '../utils/localization'
+import ProductionDetailPageSkeleton from './ProductionDetailPageSkeleton'
 
 import type { Production } from '../types/Productions'
 
@@ -116,10 +114,8 @@ const ProductionDetailsPage = () => {
     fetchProduction()
   }, [id, navigate])
 
-  // If the page is still loading, show the spinner.
-  if (loading) {
-    return <LoadingSpinner fullScreen />
-  }
+  // If the page is still loading, show a full-page skeleton.
+  if (loading) return <ProductionDetailPageSkeleton />
 
   // If there was an error or no production was found, show an error message.
   if (!prod) {

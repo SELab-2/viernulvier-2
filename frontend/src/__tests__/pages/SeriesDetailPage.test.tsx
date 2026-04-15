@@ -69,8 +69,7 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
-    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
-    expect(screen.getByText('Reeks wordt geladen...')).toBeInTheDocument()
+    expect(screen.getByTestId('series-detail-skeleton')).toBeInTheDocument()
   })
 
   it('renders series data when API succeeds', async () => {

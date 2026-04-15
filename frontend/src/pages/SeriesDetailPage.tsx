@@ -19,7 +19,7 @@ import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
 
 import type { Production } from '../types/Productions'
-import type { Tag } from '../types/Tags'
+import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 
 type SeriesStat = {
   value: string
@@ -175,7 +175,7 @@ const SeriesDetailPage = () => {
   }, [seriesTag?.type, sortedProductions, t])
 
   if (isLoading) {
-    return <LoadingSpinner label={t('series.loading')} fullScreen />
+    return <SeriesDetailPageSkeleton />
   }
 
   if (error || !seriesTag) {
