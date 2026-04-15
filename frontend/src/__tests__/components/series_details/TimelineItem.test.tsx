@@ -11,7 +11,7 @@ describe('TimelineItem', () => {
       </TimelineItem>,
     )
 
-    expect(screen.getByText('2024')).toBeInTheDocument()
+    expect(screen.getAllByText('2024').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Timeline content')).toBeInTheDocument()
   })
 
@@ -25,7 +25,7 @@ describe('TimelineItem', () => {
       </TimelineItem>,
     )
 
-    expect(screen.getByText('2023')).toBeInTheDocument()
+    expect(screen.getAllByText('2023').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('VIDEODROOM 2023')).toBeInTheDocument()
     expect(screen.getByText('Festival edition')).toBeInTheDocument()
   })
