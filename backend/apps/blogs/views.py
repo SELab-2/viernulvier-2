@@ -99,8 +99,7 @@ class BlogViewSet(LanguageAwareMixin, ApiModelViewSet):
                 Coalesce(
                     Min(
                         "translations__title",
-                        filter=Q(translations__language__code=language_code)
-                        & ~Q(translations__title=""),
+                        filter=Q(translations__language__code=language_code) & ~Q(translations__title=""),
                     ),
                     Min("translations__title", filter=~Q(translations__title="")),
                 )
@@ -109,8 +108,7 @@ class BlogViewSet(LanguageAwareMixin, ApiModelViewSet):
                 Coalesce(
                     Min(
                         "translations__excerpt",
-                        filter=Q(translations__language__code=language_code)
-                        & ~Q(translations__excerpt=""),
+                        filter=Q(translations__language__code=language_code) & ~Q(translations__excerpt=""),
                     ),
                     Min("translations__excerpt", filter=~Q(translations__excerpt="")),
                 )

@@ -180,8 +180,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                 Coalesce(
                     Min(
                         "translations__title",
-                        filter=Q(translations__language__code=language_code)
-                        & ~Q(translations__title=""),
+                        filter=Q(translations__language__code=language_code) & ~Q(translations__title=""),
                     ),
                     Min("translations__title", filter=~Q(translations__title="")),
                 )
@@ -190,8 +189,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                 Coalesce(
                     Min(
                         "translations__artist_name",
-                        filter=Q(translations__language__code=language_code)
-                        & ~Q(translations__artist_name=""),
+                        filter=Q(translations__language__code=language_code) & ~Q(translations__artist_name=""),
                     ),
                     Min("translations__artist_name", filter=~Q(translations__artist_name="")),
                 )
@@ -200,8 +198,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                 Coalesce(
                     Min(
                         "translations__tagline",
-                        filter=Q(translations__language__code=language_code)
-                        & ~Q(translations__tagline=""),
+                        filter=Q(translations__language__code=language_code) & ~Q(translations__tagline=""),
                     ),
                     Min("translations__tagline", filter=~Q(translations__tagline="")),
                 )
