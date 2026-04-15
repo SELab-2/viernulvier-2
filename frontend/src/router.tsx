@@ -2,8 +2,6 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Box } from '@mui/material'
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
-import ArtistDetailPage from './pages/ArtistDetailPage'
-import ArtistsPage from './pages/ArtistsPage'
 import BlogsPage from './pages/BlogsPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -25,16 +23,16 @@ const Router = ({ mode, onToggleMode }: RouterProps) => {
         <Box component="main" sx={{ flexGrow: 1 }}>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/productions" element={<Navigate to="/" replace />} />
+            <Route path="/productions/:id" element={<ProductionDetailPage />} />
             <Route path="/series" element={<SeriesPage />} />
             <Route path="/series/:id" element={<SeriesDetailPage />} />
-            <Route path="/artists" element={<ArtistsPage />} />
-            <Route path="/artists/:id" element={<ArtistDetailPage />} />
             <Route path="/blogs" element={<BlogsPage />} />
             <Route path="/blogs/:id" element={<BlogDetailPage />} />
-            <Route path="/events" element={<Navigate to="/series" replace />} />
-            <Route path="/events/:id" element={<Navigate to="/series" replace />} />
-            <Route path="/productions" element={<Navigate to="/artists" replace />} />
-            <Route path="/productions/:id" element={<ProductionDetailPage />} />
+            <Route path="/media" element={<Navigate to="/" replace />} />
+            {/* TODO: Remove after media page is implemented */}
+            <Route path="/media/:id" element={<Navigate to="/" replace />} />
+            {/* TODO: Remove after media page is implemented */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Box>

@@ -85,7 +85,7 @@ const ProductionCard = ({ title, meta, description, tags, onClick }: Props) => {
             }}
           />
 
-          <Stack direction="row" spacing={1} flexWrap="wrap">
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
             {tags.map((tag) => (
               <GenreAndTagChip
                 key={tag.id}
