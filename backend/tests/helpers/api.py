@@ -34,5 +34,3 @@ def v1_list_url(resource: str) -> str:
 
 def v1_detail_url(resource: str, **kwargs) -> str:
     return reverse(f"v1:{resource}-detail", kwargs=kwargs)
-
-

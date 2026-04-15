@@ -2,9 +2,9 @@
 Tests for apps/pricing/filters.py and apps/pricing/views.py.
 """
 
-import pytest
 from django.test import TestCase, override_settings
 from django.urls import reverse
+import pytest
 from rest_framework.test import APIClient
 
 from apps.pricing.filters import PriceFilter, PriceRankFilter
@@ -185,51 +185,51 @@ class TestPriceViewSet(TestCase):
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
-        self.assertIn(response.status_code, (401, 403))
+        assert response.status_code in (401, 403)
 
     def test_public_can_list(self):
         PriceFactory.create_batch(3)
         response = self.client.get(self.list_url(), **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_public_cannot_delete(self):
         price = PriceFactory()
         response = self.client.delete(self.detail_url(price.pk), **pub_headers())
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
     def test_internal_can_delete(self):
         price = PriceFactory()
         response = self.client.delete(self.detail_url(price.pk), **int_headers())
-        self.assertEqual(response.status_code, 204)
-        self.assertFalse(Price.objects.filter(pk=price.pk).exists())
+        assert response.status_code == 204
+        assert not Price.objects.filter(pk=price.pk).exists()
 
     def test_filter_by_type(self):
         PriceFactory(type="student")
         PriceFactory(type="full")
         response = self.client.get(self.list_url(), {"type": "student"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
     def test_filter_cineville_box(self):
         PriceFactory(cineville_box=True)
         PriceFactory(cineville_box=False)
         response = self.client.get(self.list_url(), {"cineville_box": "true"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
     def test_default_ordering_by_sort_order(self):
         PriceFactory(sort_order=10)
         PriceFactory(sort_order=1)
         response = self.client.get(self.list_url(), **pub_headers())
         orders = [r["sort_order"] for r in response.data.get("results", response.data)]
-        self.assertEqual(orders, sorted(orders))
+        assert orders == sorted(orders)
 
     def test_search_by_type(self):
         PriceFactory(type="student")
         PriceFactory(type="full")
         response = self.client.get(self.list_url(), {"search": "student"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
 
 # =====================================================
@@ -248,19 +248,19 @@ class TestPriceRankViewSet(TestCase):
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
-        self.assertIn(response.status_code, (401, 403))
+        assert response.status_code in (401, 403)
 
     def test_public_can_list(self):
         PriceRankFactory.create_batch(3)
         response = self.client.get(self.list_url(), **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_filter_by_position(self):
         PriceRankFactory(position=1)
         PriceRankFactory(position=2)
         response = self.client.get(self.list_url(), {"position": "1"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
     def test_filter_position_range(self):
         PriceRankFactory(position=1)
@@ -268,14 +268,14 @@ class TestPriceRankViewSet(TestCase):
         PriceRankFactory(position=5)
         response = self.client.get(self.list_url(), {"position_gte": "2", "position_lte": "4"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
     def test_default_ordering_by_position(self):
         PriceRankFactory(position=5)
         PriceRankFactory(position=1)
         response = self.client.get(self.list_url(), **pub_headers())
         positions = [r["position"] for r in response.data.get("results", response.data)]
-        self.assertEqual(positions, sorted(positions))
+        assert positions == sorted(positions)
 
     def test_search_by_translated_description(self):
         lang = LanguageFactory(code="en")
@@ -284,4 +284,4 @@ class TestPriceRankViewSet(TestCase):
         PriceRankFactory(position=2)
         response = self.client.get(self.list_url(), {"search": "Student"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1

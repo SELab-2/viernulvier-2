@@ -50,4 +50,3 @@ def test_v1_list_url_builds_named_route():
 
 def test_v1_detail_url_builds_named_route_with_kwargs():
     assert v1_detail_url("language", code="nl") == "/api/v1/languages/nl/"
-

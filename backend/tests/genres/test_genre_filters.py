@@ -2,9 +2,9 @@
 Tests for apps/genres/filters.py and apps/genres/views.py.
 """
 
-import pytest
 from django.test import TestCase, override_settings
 from django.urls import reverse
+import pytest
 from rest_framework.test import APIClient
 
 from apps.genres.filters import GenreFilter, GenreUseAsFilter
@@ -148,47 +148,47 @@ class TestGenreUseAsViewSet(TestCase):
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
-        self.assertIn(response.status_code, (401, 403))
+        assert response.status_code in (401, 403)
 
     def test_public_can_list(self):
         GenreUseAsFactory.create_batch(2)
         response = self.client.get(self.list_url(), **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_public_cannot_create(self):
         response = self.client.post(self.list_url(), {"name": "tag"}, **pub_headers())
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
     def test_internal_can_create(self):
         response = self.client.post(self.list_url(), {"name": "tag"}, **int_headers())
-        self.assertEqual(response.status_code, 201)
-        self.assertTrue(GenreUseAs.objects.filter(name="tag").exists())
+        assert response.status_code == 201
+        assert GenreUseAs.objects.filter(name="tag").exists()
 
     def test_internal_can_delete(self):
         obj = GenreUseAsFactory()
         response = self.client.delete(self.detail_url(obj.pk), **int_headers())
-        self.assertEqual(response.status_code, 204)
+        assert response.status_code == 204
 
     def test_filter_by_name(self):
         GenreUseAsFactory(name="genre")
         GenreUseAsFactory(name="tag")
         response = self.client.get(self.list_url(), {"name": "tag"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
     def test_ordering_by_name(self):
         GenreUseAsFactory(name="zzz")
         GenreUseAsFactory(name="aaa")
         response = self.client.get(self.list_url(), {"ordering": "name"}, **pub_headers())
         names = [r["name"] for r in response.data.get("results", response.data)]
-        self.assertEqual(names, sorted(names))
+        assert names == sorted(names)
 
     def test_search_by_name(self):
         GenreUseAsFactory(name="genre")
         GenreUseAsFactory(name="tag")
         response = self.client.get(self.list_url(), {"search": "tag"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
 
 # =====================================================
@@ -210,24 +210,24 @@ class TestGenreViewSet(TestCase):
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
-        self.assertIn(response.status_code, (401, 403))
+        assert response.status_code in (401, 403)
 
     def test_public_can_list(self):
         GenreFactory.create_batch(3)
         response = self.client.get(self.list_url(), **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 3)
+        assert len(results) == 3
 
     def test_public_cannot_delete(self):
         genre = GenreFactory()
         response = self.client.delete(self.detail_url(genre.pk), **pub_headers())
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
     def test_internal_can_create(self):
         use_as = GenreUseAsFactory()
         response = self.client.post(self.list_url(), {"type": "theater", "use_as_id": use_as.pk}, **int_headers())
-        self.assertEqual(response.status_code, 201)
+        assert response.status_code == 201
 
     def test_filter_by_use_as(self):
         use_a = GenreUseAsFactory()
@@ -236,14 +236,14 @@ class TestGenreViewSet(TestCase):
         GenreFactory.create_batch(2, use_as=use_b)
         response = self.client.get(self.list_url(), {"use_as": use_a.id}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
     def test_filter_by_type(self):
         GenreFactory(type="theater")
         GenreFactory(type="festival")
         response = self.client.get(self.list_url(), {"type": "theater"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
     def test_filter_by_translated_name(self):
         lang = LanguageFactory(code="en")
@@ -251,14 +251,14 @@ class TestGenreViewSet(TestCase):
         GenreTranslationFactory(genre=GenreFactory(type="festival"), language=lang, name="Festival")
         response = self.client.get(self.list_url(), {"name": "Festival"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
     def test_ordering_by_type(self):
         GenreFactory(type="zzz")
         GenreFactory(type="aaa")
         response = self.client.get(self.list_url(), {"ordering": "type"}, **pub_headers())
         types = [r["type"] for r in response.data.get("results", response.data)]
-        self.assertEqual(types, sorted(types))
+        assert types == sorted(types)
 
     def test_search_across_type_and_translations(self):
         lang = LanguageFactory(code="en")
@@ -266,4 +266,4 @@ class TestGenreViewSet(TestCase):
         GenreTranslationFactory(genre=genre, language=lang, name="Toneelstuk")
         response = self.client.get(self.list_url(), {"search": "Toneelstuk"}, **pub_headers())
         results = response.data.get("results", response.data)
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1

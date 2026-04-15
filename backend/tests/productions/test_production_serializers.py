@@ -249,6 +249,29 @@ class TestProductionSerializerRelated(TestCase):
         assert len(data["related"][0]["productions"]) == 1
         assert data["related"][0]["productions"][0]["id"] == self.related_production.id
 
+    def test_related_uses_prefetched_production_tags_when_available(self) -> None:
+        production_tag = self.production.productiontag_set.select_related("tag").get(tag=self.tag)
+        self.production.prefetched_production_tags = [production_tag]
+
+        with patch.object(self.production.tags, "all", side_effect=AssertionError("fallback path should not be used")):
+            data = ProductionSerializer(self.production, context={"include": {"related"}}).data
+
+        assert "related" in data
+        assert len(data["related"]) == 1
+        assert data["related"][0]["tag"]["id"] == self.tag.id
+        assert len(data["related"][0]["productions"]) == 1
+        assert data["related"][0]["productions"][0]["id"] == self.related_production.id
+
+    def test_related_returns_empty_list_when_production_has_no_tags(self) -> None:
+        untagged_production = ProductionFactory.create()
+
+        with patch("apps.productions.serializers.ProductionTag.objects.filter") as filter_mock:
+            data = ProductionSerializer(untagged_production, context={"include": {"related"}}).data
+
+        assert "related" in data
+        assert data["related"] == []
+        filter_mock.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # ProductionSerializer - scalar fields

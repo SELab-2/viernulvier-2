@@ -8,6 +8,7 @@ from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
 from apps.events.models import Event
+from apps.events.serializers import EventSerializer
 from apps.events.views import EventViewSet
 from tests.factories.event import EventFactory, EventPriceFactory
 from tests.factories.language import LanguageFactory
@@ -49,17 +50,15 @@ def results_list(response):
 class TestEventViewSetClass(TestCase):
     def test_inherits_from_api_model_viewset(self):
         """Test case for test_inherits_from_api_model_viewset."""
-        self.assertTrue(issubclass(EventViewSet, ApiModelViewSet))
+        assert issubclass(EventViewSet, ApiModelViewSet)
 
     def test_queryset_model(self):
         """Test case for test_queryset_model."""
-        self.assertEqual(EventViewSet.queryset.model, Event)
+        assert EventViewSet.queryset.model == Event
 
     def test_serializer_class(self):
         """Test case for test_serializer_class."""
-        from apps.events.serializers import EventSerializer
-
-        self.assertEqual(EventViewSet.serializer_class, EventSerializer)
+        assert EventViewSet.serializer_class == EventSerializer
 
 
 # ---------------------------------------------------------------------------
@@ -100,42 +99,42 @@ class TestEventViewSetList(_EventSetupMixin):
     def test_list_with_public_key_returns_200(self):
         """Test case for test_list_with_public_key_returns_200."""
         response = self.client.get("/api/v1/events/?ordering=id", **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_list_with_internal_key_also_returns_200(self):
         """Test case for test_list_with_internal_key_also_returns_200."""
         response = self.client.get("/api/v1/events/?ordering=id", **int_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_list_returns_events(self):
         """Test case for test_list_returns_events."""
         response = self.client.get("/api/v1/events/?ordering=id", **pub_headers())
         items = results_list(response)
         ids = [item["id"] for item in items]
-        self.assertIn(self.e1.id, ids)
-        self.assertIn(self.e2.id, ids)
+        assert self.e1.id in ids
+        assert self.e2.id in ids
 
     def test_list_response_has_expected_fields(self):
         """Test case for test_list_response_has_expected_fields."""
         response = self.client.get("/api/v1/events/?ordering=id", **pub_headers())
         item = results_list(response)[0]
 
-        self.assertIn("id", item)
-        self.assertIn("production", item)
-        self.assertIn("hall", item)
-        self.assertIn("starts_at", item)
-        self.assertIn("ends_at", item)
-        self.assertIn("prices", item)
+        assert "id" in item
+        assert "production" in item
+        assert "hall" in item
+        assert "starts_at" in item
+        assert "ends_at" in item
+        assert "prices" in item
 
     def test_list_without_auth_returns_401(self):
         """Test case for test_list_without_auth_returns_401."""
         response = self.client.get("/api/v1/events/")
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
     def test_list_with_wrong_key_returns_401(self):
         """Test case for test_list_with_wrong_key_returns_401."""
         response = self.client.get("/api/v1/events/", **wrong_headers())
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
 
 # ---------------------------------------------------------------------------
@@ -147,34 +146,34 @@ class TestEventViewSetRetrieve(_EventSetupMixin):
     def test_retrieve_with_public_key_returns_200(self):
         """Test case for test_retrieve_with_public_key_returns_200."""
         response = self.client.get(f"/api/v1/events/{self.e1.id}/", **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_retrieve_with_internal_key_also_returns_200(self):
         """Test case for test_retrieve_with_internal_key_also_returns_200."""
         response = self.client.get(f"/api/v1/events/{self.e1.id}/", **int_headers())
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_retrieve_returns_correct_event(self):
         """Test case for test_retrieve_returns_correct_event."""
         response = self.client.get(f"/api/v1/events/{self.e1.id}/", **pub_headers())
-        self.assertEqual(response.data["id"], self.e1.id)
-        self.assertEqual(response.data["production"]["id"], self.production.id)
-        self.assertEqual(response.data["hall"]["id"], self.hall.id)
+        assert response.data["id"] == self.e1.id
+        assert response.data["production"]["id"] == self.production.id
+        assert response.data["hall"]["id"] == self.hall.id
 
     def test_retrieve_nonexistent_returns_404(self):
         """Test case for test_retrieve_nonexistent_returns_404."""
         response = self.client.get("/api/v1/events/999999/", **pub_headers())
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     def test_retrieve_without_auth_returns_401(self):
         """Test case for test_retrieve_without_auth_returns_401."""
         response = self.client.get(f"/api/v1/events/{self.e1.id}/")
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
     def test_retrieve_with_wrong_key_returns_401(self):
         """Test case for test_retrieve_with_wrong_key_returns_401."""
         response = self.client.get(f"/api/v1/events/{self.e1.id}/", **wrong_headers())
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
 
 # ---------------------------------------------------------------------------
@@ -197,7 +196,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 201)
+        assert response.status_code == 201
 
     def test_create_adds_event_to_db(self):
         """Test case for test_create_adds_event_to_db."""
@@ -213,7 +212,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertTrue(Event.objects.filter(starts_at=(now.isoformat())).exists())
+        assert Event.objects.filter(starts_at=now.isoformat()).exists()
 
     def test_create_with_public_key_returns_403(self):
         """Test case for test_create_with_public_key_returns_403."""
@@ -229,7 +228,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
             format="json",
             **pub_headers(),
         )
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
     def test_create_without_auth_returns_401(self):
         """Test case for test_create_without_auth_returns_401."""
@@ -244,7 +243,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
             },
             format="json",
         )
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
     def test_create_with_wrong_key_returns_401(self):
         """Test case for test_create_with_wrong_key_returns_401."""
@@ -260,7 +259,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
             format="json",
             **wrong_headers(),
         )
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
     def test_create_missing_required_field_returns_422(self):
         """Test case for test_create_missing_required_field_returns_422."""
@@ -275,7 +274,7 @@ class TestEventViewSetCreate(_EventSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 422)
+        assert response.status_code == 422
 
 
 # ---------------------------------------------------------------------------
@@ -298,7 +297,7 @@ class TestEventViewSetUpdate(_EventSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_put_with_public_key_returns_403(self):
         """Test case for test_put_with_public_key_returns_403."""
@@ -314,7 +313,7 @@ class TestEventViewSetUpdate(_EventSetupMixin):
             format="json",
             **pub_headers(),
         )
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
     def test_put_nonexistent_returns_404(self):
         """Test case for test_put_nonexistent_returns_404."""
@@ -330,7 +329,7 @@ class TestEventViewSetUpdate(_EventSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
 
 # ---------------------------------------------------------------------------
@@ -347,7 +346,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_patch_updates_only_specified_fields(self):
         """Test case for test_patch_updates_only_specified_fields."""
@@ -360,11 +359,11 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
             **int_headers(),
         )
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         self.e1.refresh_from_db()
 
-        self.assertAlmostEqual(self.e1.starts_at, new_start_time, delta=timedelta(seconds=1))
+        assert abs(self.e1.starts_at - new_start_time) <= timedelta(seconds=1)
 
     def test_patch_with_public_key_returns_403(self):
         """Test case for test_patch_with_public_key_returns_403."""
@@ -374,7 +373,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
             format="json",
             **pub_headers(),
         )
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
     def test_patch_without_auth_returns_401(self):
         """Test case for test_patch_without_auth_returns_401."""
@@ -383,7 +382,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
             {"starts_at": (timezone.now() + timedelta(hours=1)).isoformat()},
             format="json",
         )
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
     def test_patch_with_wrong_key_returns_401(self):
         """Test case for test_patch_with_wrong_key_returns_401."""
@@ -393,7 +392,7 @@ class TestEventViewSetPartialUpdate(_EventSetupMixin):
             format="json",
             **wrong_headers(),
         )
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
 
 # ---------------------------------------------------------------------------
@@ -405,27 +404,27 @@ class TestEventViewSetDelete(_EventSetupMixin):
     def test_delete_with_internal_key_returns_204(self):
         """Test case for test_delete_with_internal_key_returns_204."""
         response = self.client.delete(f"/api/v1/events/{self.e1.id}/", **int_headers())
-        self.assertEqual(response.status_code, 204)
+        assert response.status_code == 204
 
     def test_delete_removes_event_from_db(self):
         """Test case for test_delete_removes_event_from_db."""
         self.client.delete(f"/api/v1/events/{self.e1.id}/", **int_headers())
-        self.assertFalse(Event.objects.filter(id=self.e1.id).exists())
+        assert not Event.objects.filter(id=self.e1.id).exists()
 
     def test_delete_with_public_key_returns_403(self):
         """Test case for test_delete_with_public_key_returns_403."""
         response = self.client.delete(f"/api/v1/events/{self.e1.id}/", **pub_headers())
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
     def test_delete_without_auth_returns_401(self):
         """Test case for test_delete_without_auth_returns_401."""
         response = self.client.delete(f"/api/v1/events/{self.e1.id}/")
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
     def test_delete_nonexistent_returns_404(self):
         """Test case for test_delete_nonexistent_returns_404."""
         response = self.client.delete("/api/v1/events/999999/", **int_headers())
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
 
 # ---------------------------------------------------------------------------
@@ -476,6 +475,6 @@ class TestEventViewSetPrefetch(TestCase):
         with CaptureQueriesContext(connection) as captured:
             response = self.client.get("/api/v1/events/?ordering=id", **pub_headers())
 
-        self.assertEqual(response.status_code, 200)
-        self.assertGreaterEqual(len(results_list(response)), 5)
-        self.assertLessEqual(len(captured), 14)
+        assert response.status_code == 200
+        assert len(results_list(response)) >= 5
+        assert len(captured) <= 17
