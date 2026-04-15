@@ -4,21 +4,17 @@ import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import i18n from '../../i18n'
 import SeriesPage from '../../pages/SeriesPage'
-import { getTags } from '../../services/tags/Tags'
-import { getProductions } from '../../services/productions/Productions'
-import type { Production } from '../../types/Productions'
+import { getProductionSeries } from '../../services/productions/Productions'
+import type { Series } from '../../types/Series'
 import type { Tag } from '../../types/Tags'
 
 jest.mock('../../services/productions/Productions', () => ({
-  getProductions: jest.fn(),
+  getProductionSeries: jest.fn(),
 }))
 
-jest.mock('../../services/tags/Tags', () => ({
-  getTags: jest.fn(),
-}))
-
-const mockedGetTags = getTags as jest.MockedFunction<typeof getTags>
-const mockedGetProductions = getProductions as jest.MockedFunction<typeof getProductions>
+const mockedGetProductionSeries = getProductionSeries as jest.MockedFunction<
+  typeof getProductionSeries
+>
 
 const LocationProbe = () => {
   const location = useLocation()
@@ -41,24 +37,11 @@ const buildTag = (id: number, name: string): Tag => ({
   url_title: null,
 })
 
-const buildProduction = (id: number, tags: Tag[]): Production => ({
-  id,
-  attendance_mode: 'offline',
-  performer_type: 'solo',
-  first_event_start: '2026-01-01T19:00:00Z',
-  last_event_end: '2026-01-01T20:00:00Z',
-  media_gallery: { id: 0, name: null, media_items: [] },
-  uit_database_theme: null,
-  uit_database_type: null,
-  display_title: `Productie ${id}`,
-  display_artist_name: null,
-  title: { nl: `Productie ${id}`, en: `Production ${id}` },
-  artist_name: {},
-  tagline: {},
-  teaser: {},
-  description: {},
-  tags,
-  genres: [],
+const buildSeries = (tag: Tag): Series => ({
+  tag,
+  firstProductionStart: '2026-01-01T19:00:00Z',
+  lastProductionEnd: '2026-01-01T20:00:00Z',
+  lastProductionImage: null,
 })
 
 const renderPage = (initialPath = '/series') =>
@@ -85,52 +68,21 @@ describe('SeriesPage', () => {
   it('loads tags and renders series cards', async () => {
     const seriesTag = buildTag(10, 'Reeks Alpha')
 
-    mockedGetTags.mockResolvedValueOnce({
+    mockedGetProductionSeries.mockResolvedValueOnce({
       count: 1,
       next: null,
       previous: null,
-      results: [seriesTag],
-    })
-
-    mockedGetProductions.mockResolvedValueOnce({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [buildProduction(1, [seriesTag])],
-    })
-
-    mockedGetProductions.mockResolvedValueOnce({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [buildProduction(1, [seriesTag])],
+      results: [buildSeries(seriesTag)],
     })
 
     renderPage()
 
     await waitFor(() => {
-      expect(mockedGetTags).toHaveBeenCalledWith({
+      expect(mockedGetProductionSeries).toHaveBeenCalledWith({
         page: 1,
         pageSize: 250,
         filters: {
-          is_enabled: true,
           search: undefined,
-        },
-      })
-      expect(mockedGetProductions).toHaveBeenNthCalledWith(1, {
-        page: 1,
-        pageSize: 1,
-        filters: {
-          tag: 10,
-          ordering: 'first_event_start',
-        },
-      })
-      expect(mockedGetProductions).toHaveBeenNthCalledWith(2, {
-        page: 1,
-        pageSize: 1,
-        filters: {
-          tag: 10,
-          ordering: '-first_event_start',
         },
       })
     })
@@ -141,77 +93,48 @@ describe('SeriesPage', () => {
 
   it('fetches first and last production for each series card', async () => {
     const seriesTag = buildTag(10, 'Reeks Alpha')
+    const secondSeriesTag = buildTag(11, 'Reeks Beta')
 
-    mockedGetTags.mockResolvedValueOnce({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [seriesTag],
-    })
-
-    mockedGetProductions
+    mockedGetProductionSeries
       .mockResolvedValueOnce({
         count: 2,
         next: 'https://example.test/productions/?page=2',
         previous: null,
-        results: [buildProduction(1, [seriesTag])],
+        results: [buildSeries(seriesTag)],
       })
       .mockResolvedValueOnce({
         count: 2,
         next: null,
         previous: 'https://example.test/productions/?page=1',
-        results: [buildProduction(2, [seriesTag])],
+        results: [buildSeries(secondSeriesTag)],
       })
 
     renderPage()
 
     await waitFor(() => {
-      expect(mockedGetTags).toHaveBeenCalledWith({
+      expect(mockedGetProductionSeries).toHaveBeenNthCalledWith(1, {
         page: 1,
         pageSize: 250,
         filters: {
-          is_enabled: true,
           search: undefined,
         },
       })
-      expect(mockedGetProductions).toHaveBeenNthCalledWith(1, {
-        page: 1,
-        pageSize: 1,
+      expect(mockedGetProductionSeries).toHaveBeenNthCalledWith(2, {
+        page: 2,
+        pageSize: 250,
         filters: {
-          tag: 10,
-          ordering: 'first_event_start',
-        },
-      })
-      expect(mockedGetProductions).toHaveBeenNthCalledWith(2, {
-        page: 1,
-        pageSize: 1,
-        filters: {
-          tag: 10,
-          ordering: '-first_event_start',
+          search: undefined,
         },
       })
     })
 
     expect(await screen.findByRole('heading', { name: 'Reeks Alpha' })).toBeInTheDocument()
-    expect(screen.getByText('1 jan 2026')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Reeks Beta' })).toBeInTheDocument()
+    expect(screen.getAllByText('1 jan 2026').length).toBeGreaterThan(0)
   })
 
   it('shows empty state when there are no series bundles', async () => {
-    mockedGetTags.mockResolvedValueOnce({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [buildTag(10, 'Reeks Alpha')],
-    })
-
-    mockedGetProductions.mockResolvedValueOnce({
-      count: 0,
-      next: null,
-      previous: null,
-      results: [],
-    })
-
-    mockedGetProductions.mockResolvedValueOnce({
+    mockedGetProductionSeries.mockResolvedValueOnce({
       count: 0,
       next: null,
       previous: null,
@@ -229,32 +152,13 @@ describe('SeriesPage', () => {
   it('shows error state and retries successfully', async () => {
     const seriesTag = buildTag(10, 'Reeks Alpha')
 
-    mockedGetTags.mockResolvedValue({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [seriesTag],
-    })
-
-    mockedGetProductions
+    mockedGetProductionSeries
       .mockRejectedValueOnce(new Error('network down'))
       .mockResolvedValueOnce({
         count: 1,
         next: null,
         previous: null,
-        results: [buildProduction(2, [seriesTag])],
-      })
-      .mockResolvedValueOnce({
-        count: 1,
-        next: null,
-        previous: null,
-        results: [buildProduction(2, [seriesTag])],
-      })
-      .mockResolvedValueOnce({
-        count: 1,
-        next: null,
-        previous: null,
-        results: [buildProduction(2, [seriesTag])],
+        results: [buildSeries(seriesTag)],
       })
 
     renderPage()
@@ -264,7 +168,7 @@ describe('SeriesPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Opnieuw proberen' }))
 
     await waitFor(() => {
-      expect(mockedGetProductions).toHaveBeenCalledTimes(4)
+      expect(mockedGetProductionSeries).toHaveBeenCalledTimes(2)
     })
 
     expect(await screen.findByRole('heading', { name: 'Reeks Alpha' })).toBeInTheDocument()
@@ -273,26 +177,12 @@ describe('SeriesPage', () => {
   it('does not render a filter chip panel', async () => {
     const seriesTag = buildTag(10, 'Reeks Alpha')
 
-    mockedGetTags.mockResolvedValue({
+    mockedGetProductionSeries.mockResolvedValue({
       count: 1,
       next: null,
       previous: null,
-      results: [seriesTag],
+      results: [buildSeries(seriesTag)],
     })
-
-    mockedGetProductions
-      .mockResolvedValueOnce({
-        count: 1,
-        next: null,
-        previous: null,
-        results: [buildProduction(3, [seriesTag])],
-      })
-      .mockResolvedValueOnce({
-        count: 1,
-        next: null,
-        previous: null,
-        results: [buildProduction(3, [seriesTag])],
-      })
 
     renderPage()
 

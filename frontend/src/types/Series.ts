@@ -12,3 +12,13 @@ export interface Series {
   lastProductionEnd: string | null
   lastProductionImage: string | null
 }
+
+/**
+ * Paginated list response for series summaries.
+ */
+export interface SeriesListResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: Series[]
+}

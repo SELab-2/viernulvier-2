@@ -9,16 +9,14 @@ import SeriesListCard from '../components/series/SeriesListCard'
 import type { SearchSortTarget } from '../components/searchbar/types'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import { ApiError } from '../services/ApiTypes'
-import { getProductions } from '../services/productions/Productions'
-import { getTags } from '../services/tags/Tags'
+import { getProductionSeries } from '../services/productions/Productions'
 import type { Series } from '../types/Series'
-import type { Tag } from '../types/Tags'
 import type { SearchSortDirection } from '../components/searchbar/types'
 import { getTranslatedRecord } from '../utils/translations'
 
 // Page size for pagination.
 const PAGE_SIZE = 12
-const TAG_FETCH_SIZE = 250
+const SERIES_FETCH_SIZE = 250
 const SERIES_SORT_TARGET_OPTIONS: Array<{ value: SearchSortTarget; labelKey: string }> = [
   { value: 'name', labelKey: 'searchbar.sort.name' },
 ]
@@ -63,72 +61,27 @@ const sortSeries = ({
   return sorted
 }
 
-// Function to fetch all enabled tags from the API.
-const fetchAllTags = async ({ search }: { search?: string }): Promise<Tag[]> => {
-  const tags: Tag[] = []
+// Fetch all aggregated series rows from the backend endpoint.
+const fetchSeriesList = async ({ search }: { search?: string }): Promise<Series[]> => {
+  const seriesList: Series[] = []
   let page = 1
   let hasMore = true
 
   while (hasMore) {
-    const response = await getTags({
+    const response = await getProductionSeries({
       page,
-      pageSize: TAG_FETCH_SIZE,
+      pageSize: SERIES_FETCH_SIZE,
       filters: {
-        is_enabled: true,
         search,
       },
     })
 
-    tags.push(...response.results)
+    seriesList.push(...response.results)
     hasMore = response.next !== null
     page += 1
   }
 
-  return tags
-}
-
-// Function to derive series metadata from the first and last production per tag.
-const fetchSeriesList = async ({ search }: { search?: string }): Promise<Series[]> => {
-  const tags = await fetchAllTags({ search })
-  const seriesList = await Promise.all(
-    tags.map(async (tag) => {
-      const [firstProductionResponse, lastProductionResponse] = await Promise.all([
-        getProductions({
-          page: 1,
-          pageSize: 1,
-          filters: {
-            tag: tag.id,
-            ordering: 'first_event_start',
-          },
-        }),
-        getProductions({
-          page: 1,
-          pageSize: 1,
-          filters: {
-            tag: tag.id,
-            ordering: '-first_event_start',
-          },
-        }),
-      ])
-
-      const firstProduction = firstProductionResponse.results[0]
-      const lastProduction = lastProductionResponse.results[0]
-
-      if (!firstProduction || !lastProduction) {
-        return null
-      }
-
-      return {
-        tag,
-        firstProductionStart: firstProduction.first_event_start ?? firstProduction.last_event_end,
-        lastProductionEnd: lastProduction.last_event_end ?? lastProduction.first_event_start,
-        lastProductionImage:
-          lastProduction.media_gallery?.media_items[0]?.crops[0]?.image_url ?? null,
-      }
-    }),
-  )
-
-  return seriesList.filter((series): series is Series => series !== null)
+  return seriesList
 }
 
 const SeriesPage = () => {
