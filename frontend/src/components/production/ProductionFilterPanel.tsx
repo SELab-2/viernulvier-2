@@ -18,7 +18,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import dayjs, { type Dayjs } from 'dayjs'
 import 'dayjs/locale/nl'
-import { useMemo, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { tokens } from '../../theme/tokens'
@@ -42,6 +42,12 @@ type ChipOption = {
   name: string
   labels: Record<string, string>
   chipType: 'genre' | 'seriesTag'
+}
+
+type DateFieldState = {
+  sourceValue: string
+  draft: Dayjs | null
+  hasError: boolean
 }
 
 export interface ProductionFilterPanelProps {
@@ -112,6 +118,12 @@ const formatDateValue = (value: Dayjs | null): string => {
 
   return value.format('YYYY-MM-DD')
 }
+
+const createDateFieldState = (sourceValue: string): DateFieldState => ({
+  sourceValue,
+  draft: parseDateValue(sourceValue),
+  hasError: false,
+})
 
 const FilterSection = ({ title, children, defaultExpanded = true }: FilterSectionProps) => {
   return (
@@ -266,42 +278,48 @@ const ProductionFilterPanel = ({
 }: ProductionFilterPanelProps) => {
   const { i18n, t } = useTranslation()
   const adapterLocale = i18n.language.startsWith('nl') ? 'nl' : 'en'
-  const [startAfterDraft, setStartAfterDraft] = useState<Dayjs | null>(
-    parseDateValue(firstEventStartAfter),
+  const [startAfterField, setStartAfterField] = useState<DateFieldState>(() =>
+    createDateFieldState(firstEventStartAfter),
   )
-  const [startAfterHasError, setStartAfterHasError] = useState(false)
-  const [startBeforeDraft, setStartBeforeDraft] = useState<Dayjs | null>(
-    parseDateValue(firstEventStartBefore),
+  const startAfterFieldRef = useRef(startAfterField)
+  const [startBeforeField, setStartBeforeField] = useState<DateFieldState>(() =>
+    createDateFieldState(firstEventStartBefore),
   )
-  const [startBeforeHasError, setStartBeforeHasError] = useState(false)
+  const startBeforeFieldRef = useRef(startBeforeField)
 
-  const [prevFirstEventStartAfter, setPrevFirstEventStartAfter] = useState(firstEventStartAfter)
-  if (firstEventStartAfter !== prevFirstEventStartAfter) {
-    setPrevFirstEventStartAfter(firstEventStartAfter)
-    setStartAfterDraft(parseDateValue(firstEventStartAfter))
-    setStartAfterHasError(false)
-  }
-  const [prevFirstEventStartBefore, setPrevFirstEventStartBefore] = useState(firstEventStartBefore)
-  if (firstEventStartBefore !== prevFirstEventStartBefore) {
-    setPrevFirstEventStartBefore(firstEventStartBefore)
-    setStartBeforeDraft(parseDateValue(firstEventStartBefore))
-    setStartBeforeHasError(false)
-  }
+  const currentStartAfterField =
+    startAfterField.sourceValue === firstEventStartAfter
+      ? startAfterField
+      : createDateFieldState(firstEventStartAfter)
+  const currentStartBeforeField =
+    startBeforeField.sourceValue === firstEventStartBefore
+      ? startBeforeField
+      : createDateFieldState(firstEventStartBefore)
 
   const applyStartAfterDraft = () => {
-    if (startAfterHasError) {
+    const latestField =
+      startAfterFieldRef.current.sourceValue === firstEventStartAfter
+        ? startAfterFieldRef.current
+        : createDateFieldState(firstEventStartAfter)
+
+    if (latestField.hasError) {
       return
     }
 
-    onFirstEventStartAfterChange(formatDateValue(startAfterDraft))
+    onFirstEventStartAfterChange(formatDateValue(latestField.draft))
   }
 
   const applyStartBeforeDraft = () => {
-    if (startBeforeHasError) {
+    const latestField =
+      startBeforeFieldRef.current.sourceValue === firstEventStartBefore
+        ? startBeforeFieldRef.current
+        : createDateFieldState(firstEventStartBefore)
+
+    if (latestField.hasError) {
       return
     }
 
-    onFirstEventStartBeforeChange(formatDateValue(startBeforeDraft))
+    onFirstEventStartBeforeChange(formatDateValue(latestField.draft))
   }
 
   const handleDateInputEnter = (event: KeyboardEvent, applyDraft: () => void) => {
@@ -411,11 +429,16 @@ const ProductionFilterPanel = ({
           <Stack spacing={tokens.spacing.numericMd}>
             <DatePicker
               label={t('productions.home.filters.startAfter')}
-              value={startAfterDraft}
+              value={currentStartAfterField.draft}
               format={DATE_PICKER_FORMAT}
               onChange={(value, context) => {
-                setStartAfterDraft(value)
-                setStartAfterHasError(context.validationError != null)
+                const nextState = {
+                  sourceValue: firstEventStartAfter,
+                  draft: value,
+                  hasError: context.validationError != null,
+                }
+                startAfterFieldRef.current = nextState
+                setStartAfterField(nextState)
               }}
               onClose={applyStartAfterDraft}
               slotProps={{
@@ -435,11 +458,16 @@ const ProductionFilterPanel = ({
             />
             <DatePicker
               label={t('productions.home.filters.startBefore')}
-              value={startBeforeDraft}
+              value={currentStartBeforeField.draft}
               format={DATE_PICKER_FORMAT}
               onChange={(value, context) => {
-                setStartBeforeDraft(value)
-                setStartBeforeHasError(context.validationError != null)
+                const nextState = {
+                  sourceValue: firstEventStartBefore,
+                  draft: value,
+                  hasError: context.validationError != null,
+                }
+                startBeforeFieldRef.current = nextState
+                setStartBeforeField(nextState)
               }}
               onClose={applyStartBeforeDraft}
               slotProps={{

@@ -82,6 +82,15 @@ jest.mock('@mui/x-date-pickers/DatePicker', () => ({
           onBlur={() => slotProps?.textField?.onBlur?.()}
           onKeyDown={(event) => slotProps?.textField?.onKeyDown?.(event)}
         />
+        <button
+          type="button"
+          onClick={() => {
+            onChange(createMockDayValue('2026-07-15'), { validationError: null })
+            onClose?.()
+          }}
+        >
+          {`Pick ${label}`}
+        </button>
         <button type="button" onClick={() => onClose?.()}>
           {`Close ${label}`}
         </button>
@@ -430,5 +439,14 @@ describe('ProductionFilterPanel', () => {
 
     expect(initialProps.onFirstEventStartAfterChange).toHaveBeenCalledWith('2026-08-20')
     expect(initialProps.onFirstEventStartBeforeChange).toHaveBeenCalledWith('2026-09-21')
+  })
+
+  it('applies the latest date when a calendar selection changes and closes immediately', () => {
+    const { props } = renderPanel()
+    const startAfterLabel = i18n.t('productions.home.filters.startAfter')
+
+    fireEvent.click(screen.getByRole('button', { name: `Pick ${startAfterLabel}` }))
+
+    expect(props.onFirstEventStartAfterChange).toHaveBeenCalledWith('2026-07-15')
   })
 })
