@@ -377,4 +377,26 @@ describe('ProductionGridCard', () => {
     expect(screen.getByText(/Mar/)).toBeInTheDocument()
     expect(screen.getByText(/2026/)).toBeInTheDocument()
   })
+
+  it('translates genre chip labels for the active locale instead of always using display_name', async () => {
+    await i18n.changeLanguage('en')
+
+    const production = baseProduction({
+      genres: [
+        {
+          id: 9,
+          type: 'primary',
+          use_as: { id: 1, name: 'cat' },
+          name: { nl: 'Dans', en: 'Dance' },
+          display_name: 'Dans',
+          vendor_id: null,
+        },
+      ],
+    })
+
+    renderGridCard({ production })
+
+    expect(screen.getByText('Dance')).toBeInTheDocument()
+    expect(screen.queryByText(/^Dans$/)).not.toBeInTheDocument()
+  })
 })
