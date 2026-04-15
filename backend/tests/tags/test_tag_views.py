@@ -110,21 +110,21 @@ class TestTagViewSetList(TestCase):
 
     def test_list_returns_all_tags_with_public_key(self):
         response = self.client.get("/api/v1/tags/", **pub_headers())
-        results = response.data.get("results", response.data)
+        results = results_list(response)
         ids = [item["id"] for item in results]
         assert self.tag_a.id in ids
         assert self.tag_b.id in ids
 
     def test_list_returns_all_tags_with_internal_key(self):
         response = self.client.get("/api/v1/tags/", **int_headers())
-        results = response.data.get("results", response.data)
+        results = results_list(response)
         ids = [item["id"] for item in results]
         assert self.tag_a.id in ids
         assert self.tag_b.id in ids
 
     def test_list_response_has_correct_fields(self):
         response = self.client.get("/api/v1/tags/", **pub_headers())
-        results = response.data.get("results", response.data)
+        results = results_list(response)
         item = results[0]
         for field in (
             "id",

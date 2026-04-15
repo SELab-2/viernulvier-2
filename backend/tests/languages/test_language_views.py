@@ -24,6 +24,7 @@ from apps.languages.serializers import LanguageSerializer
 from apps.languages.views import LanguageViewSet
 from tests.factories.language import LanguageFactory
 from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import paginated_results as results_list
 from tests.helpers.api import public_headers as pub_headers
 from tests.helpers.api import wrong_headers
 
@@ -74,21 +75,21 @@ class TestLanguageViewSetList(TestCase):
 
     def test_list_returns_all_languages_with_public_key(self):
         response = self.client.get("/api/v1/languages/", **pub_headers())
-        results = response.data.get("results", response.data)
+        results = results_list(response)
         codes = [item["code"] for item in results]
         assert "nl" in codes
         assert "en" in codes
 
     def test_list_returns_all_languages_with_internal_key(self):
         response = self.client.get("/api/v1/languages/", **int_headers())
-        results = response.data.get("results", response.data)
+        results = results_list(response)
         codes = [item["code"] for item in results]
         assert "nl" in codes
         assert "en" in codes
 
     def test_list_response_has_correct_fields(self):
         response = self.client.get("/api/v1/languages/", **pub_headers())
-        results = response.data.get("results", response.data)
+        results = results_list(response)
         item = results[0]
         assert "code" in item
         assert "name" in item
