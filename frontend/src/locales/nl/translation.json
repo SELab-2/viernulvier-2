@@ -205,6 +205,36 @@
       "editions": "Edities",
       "period": "Periode",
       "type": "Type"
+    },
+    "home": {
+      "loading": "Reeksen laden",
+      "resultsRegionLabel": "Resultaten van reeksen",
+      "filterPanelLabel": "Filterpaneel voor reeksen",
+      "filterPanelTitle": "Reeksen",
+      "filterPanelDescription": "Selecteer een of meerdere reekslabels om de bundels te filteren.",
+      "tagFilterLabel": "Reeksfilters",
+      "empty": {
+        "title": "Geen reeksen gevonden",
+        "description": "Pas je zoekopdracht aan en probeer opnieuw."
+      },
+      "card": {
+        "productionCount": "{{count}} producties"
+      },
+      "error": {
+        "retry": "Opnieuw proberen",
+        "fallback": "Kon reeksen niet laden.",
+        "notification": "Er ging iets mis bij het laden van reeksen."
+      }
+    },
+    "pagination": {
+      "navigationLabel": "Paginering van reeksen",
+      "pageXofY": "Pagina {{page}} van {{totalPages}}",
+      "firstPage": "Ga naar eerste pagina",
+      "lastPage": "Ga naar laatste pagina",
+      "nextPage": "Ga naar volgende pagina",
+      "previousPage": "Ga naar vorige pagina",
+      "currentPage": "Huidige pagina, pagina {{page}}",
+      "goToPage": "Ga naar pagina {{page}}"
     }
   },
   "blog": {
