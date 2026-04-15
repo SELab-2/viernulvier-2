@@ -1,7 +1,8 @@
-import type { MediaFile, MediaFileListResponse } from '../../types/MediaFiles'
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
+
 import type { GetMediaFilesOptions } from './MediaFileOptions'
+import type { MediaFile, MediaFileListResponse } from '../../types/MediaFiles'
 
 /**
  * Retrieve a single media file by its UUID.
