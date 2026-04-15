@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 
-import LoadingSpinner from '../components/LoadingSpinner'
+import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 import Breadcrumbs from '../components/production/Breadcrumbs'
 import ProductionCard from '../components/series_details/ProductionCard'
 import SeriesHeader from '../components/series_details/SeriesHeader'
@@ -19,7 +19,7 @@ import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
 
 import type { Production } from '../types/Productions'
-import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
+import type { Tag } from '../types/Tags'
 
 type SeriesStat = {
   value: string
