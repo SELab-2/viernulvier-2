@@ -4,19 +4,29 @@
  * of associated productions.
  */
 
-import { Alert, Box, Container, Divider, Stack, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Container,
+  Divider,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useParams } from 'react-router-dom'
 
-import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 import Breadcrumbs from '../components/production/Breadcrumbs'
-import ProductionCard from '../components/series_details/ProductionCard'
+import ProductionGridCard from '../components/productions/ProductionGridCard'
+import ProductionListCard from '../components/productions/ProductionListCard'
 import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
-import TimelineItem from '../components/series_details/TimelineItem'
+import TimelineItem, { DOT_CENTER_X } from '../components/series_details/TimelineItem'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
+import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 
 import type { Production } from '../types/Productions'
 import type { Tag } from '../types/Tags'
@@ -64,28 +74,11 @@ function extractYearFromProduction(production: Production): string {
   return '—'
 }
 
-function buildProductionMeta(production: Production, language: string): string {
-  const parts = [
-    getLocalizedRecordValue(production.artist_name, language),
-    production.uit_database_type?.name ?? '',
-    production.uit_database_theme?.name ?? '',
-  ].filter(Boolean)
-
-  return parts.join(' · ')
-}
-
-function buildProductionDescription(production: Production, language: string): string {
-  return (
-    getLocalizedRecordValue(production.teaser, language) ||
-    getLocalizedRecordValue(production.description, language) ||
-    ''
-  )
-}
-
 const SeriesDetailPage = () => {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const { t, i18n } = useTranslation()
+  const theme = useTheme()
+  const isSmallViewport = useMediaQuery(theme.breakpoints.down('md'))
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
@@ -214,7 +207,7 @@ const SeriesDetailPage = () => {
         <SeriesStats stats={stats} />
         <Divider />
 
-        <Stack spacing={1}>
+        <Stack spacing={1} sx={{ textAlign: { xs: 'center', md: 'left' } }}>
           <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
             {t('series.allEditions')}
           </Typography>
@@ -229,50 +222,43 @@ const SeriesDetailPage = () => {
             {t('series.noProductions')}
           </Alert>
         ) : (
-          <Stack spacing={4} sx={{ position: 'relative', pl: { xs: 0, md: 3 } }}>
+          <Box sx={{ position: 'relative' }}>
             <Box
               sx={{
                 position: 'absolute',
-                left: 11,
-                top: 10,
-                bottom: 10,
+                left: { md: DOT_CENTER_X },
+                top: { md: DOT_CENTER_X },
+                bottom: 0,
                 width: '1px',
                 bgcolor: 'divider',
                 display: { xs: 'none', md: 'block' },
               }}
             />
 
-            {sortedProductions.map((production) => (
-              <TimelineItem key={production.id} year={extractYearFromProduction(production)}>
-                <ProductionCard
-                  title={
-                    production.display_title ||
-                    getLocalizedRecordValue(production.title, i18n.language) ||
-                    t('series.untitledProduction')
-                  }
-                  meta={buildProductionMeta(production, i18n.language)}
-                  description={buildProductionDescription(production, i18n.language)}
-                  onClick={() => navigate(`/productions/${production.id}`)}
-                  genres={production.genres.map((genre) => ({
-                    id: genre.id,
-                    name:
-                      genre.display_name ||
-                      getLocalizedRecordValue(genre.name, i18n.language) ||
-                      t('series.untitled'),
-                    labels: genre.name ?? {},
-                  }))}
-                  seriesTags={production.tags.map((tag) => ({
-                    id: tag.id,
-                    name:
-                      tag.display_name ||
-                      getLocalizedRecordValue(tag.name, i18n.language) ||
-                      t('series.untitled'),
-                    labels: tag.name ?? {},
-                  }))}
-                />
-              </TimelineItem>
-            ))}
-          </Stack>
+            <Stack spacing={2}>
+              {sortedProductions.map((production) => (
+                <TimelineItem key={production.id} year={extractYearFromProduction(production)}>
+                  {isSmallViewport ? (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        width: '100%',
+                        '& > a': {
+                          width: '100%',
+                          maxWidth: 350,
+                        },
+                      }}
+                    >
+                      <ProductionGridCard production={production} />
+                    </Box>
+                  ) : (
+                    <ProductionListCard production={production} />
+                  )}
+                </TimelineItem>
+              ))}
+            </Stack>
+          </Box>
         )}
       </Stack>
     </Container>

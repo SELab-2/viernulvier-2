@@ -1,6 +1,8 @@
 /*
  * Represents a single item in a vertical timeline.
- * Displays a year marker and renders child content (e.g. a card).
+ *
+ * Desktop: dot (with z-index above the line) + year to its right, card fills remaining width.
+ * Mobile: centered year separator with dividers matching card width, card centered below.
  */
 
 import { Box, Stack, Typography } from '@mui/material'
@@ -12,39 +14,68 @@ type Props = {
   children: ReactNode
 }
 
+export const DOT_CENTER_X = 5
+
 const TimelineItem = ({ year, children }: Props) => {
   return (
     <Stack
       direction={{ xs: 'column', md: 'row' }}
-      spacing={2}
-      sx={{ position: 'relative', alignItems: { xs: 'flex-start', md: 'flex-start' } }}
+      sx={{ alignItems: { md: 'flex-start' }, gap: { md: 2 } }}
     >
-      {/* Timeline marker + year */}
       <Stack
-        direction={{ xs: 'row', md: 'column' }}
-        spacing={1}
-        sx={{ width: { xs: 'auto', md: 40 }, flexShrink: 0, alignItems: 'center' }}
+        direction="row"
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          flexShrink: 0,
+          alignItems: 'center',
+          gap: 1,
+        }}
       >
-        {/* Dot (only visible on desktop) */}
         <Box
           sx={{
-            width: 10,
-            height: 10,
+            width: DOT_CENTER_X * 2,
+            height: DOT_CENTER_X * 2,
             borderRadius: '50%',
             bgcolor: 'text.primary',
-            display: { xs: 'none', md: 'block' },
-            mt: 2,
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 1,
           }}
         />
-
-        {/* Year label */}
-        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 44 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1 }}>
           {year}
         </Typography>
       </Stack>
 
-      {/* Content (e.g. ProductionCard) */}
-      <Box sx={{ flex: 1, width: '100%', minWidth: 0 }}>{children}</Box>
+      <Box sx={{ flex: 1, width: '100%', minWidth: 0 }}>
+        <Stack
+          direction="row"
+          sx={{
+            display: { xs: 'flex', md: 'none' },
+            alignItems: 'center',
+            gap: 2,
+            maxWidth: 350,
+            width: '100%',
+            mx: 'auto',
+            mb: 1.5,
+          }}
+        >
+          <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0, lineHeight: 1 }}>
+            {year}
+          </Typography>
+          <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
+        </Stack>
+
+        <Box
+          sx={{
+            display: { xs: 'flex', md: 'block' },
+            justifyContent: 'center',
+          }}
+        >
+          {children}
+        </Box>
+      </Box>
     </Stack>
   )
 }
