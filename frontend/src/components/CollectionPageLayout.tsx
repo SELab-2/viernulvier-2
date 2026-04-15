@@ -118,7 +118,7 @@ const CollectionPageLayout = ({
   const shouldRenderSidebar = showSidebar && sidebarContent
 
   const resultsSection = (
-    <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ flex: 1, minWidth: 0 }}>
+    <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ minWidth: 0 }}>
       {isLoading ? (
         <Box sx={{ py: 8 }}>{loadingContent ?? <LoadingSpinner label={loadingLabel} />}</Box>
       ) : null}
@@ -156,54 +156,68 @@ const CollectionPageLayout = ({
     </Box>
   )
 
+  const contentColumn = (
+    <Stack spacing={3} sx={{ flex: 1, minWidth: 0 }}>
+      {/* Search, sort, and view controls. */}
+      <SearchControlsBar
+        placeholder={searchPlaceholder}
+        searchValue={searchValue}
+        onSearchChange={onSearchChange}
+        onSearchSubmit={onSearchSubmit}
+        sortTarget={sortTarget}
+        onSortTargetChange={onSortTargetChange}
+        sortDirection={sortDirection}
+        onSortDirectionChange={onSortDirectionChange}
+        sortTargetOptions={sortTargetOptions}
+        viewMode={viewMode}
+        onViewModeChange={onViewModeChange}
+        resultCount={resultCount}
+        showViewModeToggle={!isMobile}
+      />
+
+      {resultsSection}
+
+      {/* Pagination controls. */}
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={onPageChange}
+        disabled={isLoading}
+        i18nKeyPrefix={paginationI18nKeyPrefix}
+      />
+    </Stack>
+  )
+
   return (
     <Box sx={{ py: { xs: 3, md: 4 } }}>
       <Container maxWidth="xl">
-        <Stack spacing={3}>
-          {/* Search, sort, and view controls. */}
-          <SearchControlsBar
-            placeholder={searchPlaceholder}
-            searchValue={searchValue}
-            onSearchChange={onSearchChange}
-            onSearchSubmit={onSearchSubmit}
-            sortTarget={sortTarget}
-            onSortTargetChange={onSortTargetChange}
-            sortDirection={sortDirection}
-            onSortDirectionChange={onSortDirectionChange}
-            sortTargetOptions={sortTargetOptions}
-            viewMode={viewMode}
-            onViewModeChange={onViewModeChange}
-            resultCount={resultCount}
-            showViewModeToggle={!isMobile}
-          />
-
-          {shouldRenderSidebar ? (
+        {shouldRenderSidebar ? (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              gap: 3,
+              alignItems: { xs: 'stretch', md: 'stretch' },
+            }}
+          >
             <Box
               sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', md: 'row' },
-                gap: 3,
-                alignItems: 'flex-start',
+                flexShrink: 0,
+                width: { xs: '100%', md: theme.spacing(39) },
+                '& > *': {
+                  height: '100%',
+                },
               }}
             >
               {sidebarContent}
-
-              {resultsSection}
             </Box>
-          ) : (
-            resultsSection
-          )}
 
-          {/* Pagination controls. */}
-          <Pagination
-            page={page}
-            pageSize={pageSize}
-            totalItems={totalItems}
-            onPageChange={onPageChange}
-            disabled={isLoading}
-            i18nKeyPrefix={paginationI18nKeyPrefix}
-          />
-        </Stack>
+            {contentColumn}
+          </Box>
+        ) : (
+          contentColumn
+        )}
       </Container>
     </Box>
   )

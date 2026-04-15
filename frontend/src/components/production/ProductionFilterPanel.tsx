@@ -9,6 +9,7 @@ import {
   Checkbox,
   Divider,
   FormControlLabel,
+  Paper,
   Stack,
   Typography,
 } from '@mui/material'
@@ -17,14 +18,17 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import dayjs, { type Dayjs } from 'dayjs'
 import 'dayjs/locale/nl'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { tokens } from '../../theme/tokens'
+import GenreAndTagChip from '../chips/GenreAndTagChip'
+
 import type { Genre } from '../../types/Genres'
 import type { AttendanceMode, PerformerType } from '../../types/Productions'
 import type { Tag } from '../../types/Tags'
-import GenreAndTagChip from '../chips/GenreAndTagChip'
 
-const DEFAULT_VISIBLE_FILTER_OPTIONS = 8
+const DEFAULT_VISIBLE_FILTER_OPTIONS = 5
 const DATE_PICKER_FORMAT = 'DD/MM/YYYY'
 
 type FilterSectionProps = {
@@ -102,7 +106,7 @@ const parseDateValue = (value: string): Dayjs | null => {
 }
 
 const formatDateValue = (value: Dayjs | null): string => {
-  if (!value || !value.isValid()) {
+  if (!value?.isValid()) {
     return ''
   }
 
@@ -111,23 +115,17 @@ const formatDateValue = (value: Dayjs | null): string => {
 
 const FilterSection = ({ title, children, defaultExpanded = true }: FilterSectionProps) => {
   return (
-    <Accordion
-      defaultExpanded={defaultExpanded}
-      disableGutters
-      elevation={0}
-      sx={{
-        border: (theme) => `1px solid ${theme.palette.divider}`,
-        borderRadius: '12px !important',
-        overflow: 'hidden',
-        '&:before': { display: 'none' },
-      }}
-    >
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 2, py: 0.5 }}>
-        <Typography variant="subtitle1" component="h2">
+    <Accordion defaultExpanded={defaultExpanded} disableGutters elevation={0}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />}>
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: tokens.typography.weights.medium }}
+          component="h2"
+        >
           {title}
         </Typography>
       </AccordionSummary>
-      <AccordionDetails sx={{ px: 2, pt: 0, pb: 2 }}>{children}</AccordionDetails>
+      <AccordionDetails sx={{ paddingTop: 0 }}>{children}</AccordionDetails>
     </Accordion>
   )
 }
@@ -177,8 +175,8 @@ const ChipFilterSection = ({
   }
 
   return (
-    <Stack spacing={1}>
-      <Stack spacing={1}>
+    <Stack spacing={tokens.spacing.numericXs}>
+      <Stack spacing={0.75}>
         {visibleSelectedOptions.map((option) => (
           <Box key={`${option.chipType}-${option.id}`}>
             <GenreAndTagChip
@@ -192,10 +190,6 @@ const ChipFilterSection = ({
             />
           </Box>
         ))}
-
-        {visibleSelectedOptions.length > 0 && visibleUnselectedOptions.length > 0 ? (
-          <Divider />
-        ) : null}
 
         {visibleUnselectedOptions.map((option) => (
           <Box key={`${option.chipType}-${option.id}`}>
@@ -217,10 +211,13 @@ const ChipFilterSection = ({
           <Button
             size="small"
             onClick={() => setShowAll((value) => !value)}
-            endIcon={showAll ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            endIcon={
+              showAll ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />
+            }
             sx={{
-              color: 'text.primary',
-              borderColor: 'text.primary',
+              color: 'text.secondary',
+              px: 0,
+              fontSize: tokens.typography.sizes.xs,
             }}
           >
             {showAll
@@ -232,6 +229,23 @@ const ChipFilterSection = ({
     </Stack>
   )
 }
+
+const FilterCheckbox = ({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: () => void
+}) => (
+  <FormControlLabel
+    slotProps={{ typography: { variant: 'body2' } }}
+    sx={{ height: 24 }}
+    label={label}
+    control={<Checkbox size="small" checked={checked} onChange={onChange} color="default" />}
+  />
+)
 
 const ProductionFilterPanel = ({
   attendanceModes,
@@ -255,17 +269,45 @@ const ProductionFilterPanel = ({
   const [startAfterDraft, setStartAfterDraft] = useState<Dayjs | null>(
     parseDateValue(firstEventStartAfter),
   )
+  const [startAfterHasError, setStartAfterHasError] = useState(false)
   const [startBeforeDraft, setStartBeforeDraft] = useState<Dayjs | null>(
     parseDateValue(firstEventStartBefore),
   )
+  const [startBeforeHasError, setStartBeforeHasError] = useState(false)
 
   useEffect(() => {
     setStartAfterDraft(parseDateValue(firstEventStartAfter))
+    setStartAfterHasError(false)
   }, [firstEventStartAfter])
 
   useEffect(() => {
     setStartBeforeDraft(parseDateValue(firstEventStartBefore))
+    setStartBeforeHasError(false)
   }, [firstEventStartBefore])
+
+  const applyStartAfterDraft = () => {
+    if (startAfterHasError) {
+      return
+    }
+
+    onFirstEventStartAfterChange(formatDateValue(startAfterDraft))
+  }
+
+  const applyStartBeforeDraft = () => {
+    if (startBeforeHasError) {
+      return
+    }
+
+    onFirstEventStartBeforeChange(formatDateValue(startBeforeDraft))
+  }
+
+  const handleDateInputEnter = (event: KeyboardEvent, applyDraft: () => void) => {
+    if (event.key !== 'Enter') {
+      return
+    }
+
+    applyDraft()
+  }
 
   const genreOptions = useMemo(
     () =>
@@ -311,16 +353,35 @@ const ProductionFilterPanel = ({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={adapterLocale}>
-      <Stack spacing={2}>
+      <Paper
+        variant="outlined"
+        sx={{
+          borderRadius: tokens.borderRadius.lg,
+          overflow: 'hidden',
+          height: 'fit-content',
+        }}
+      >
         <Stack
           direction="row"
           spacing={1}
-          sx={{
+          sx={(theme) => ({
             alignItems: 'center',
             justifyContent: 'space-between',
-          }}
+            px: tokens.spacing.numericMd,
+            py: tokens.spacing.numericSm,
+            backgroundColor: theme.palette.background.default,
+            borderBottom: `1px solid ${theme.palette.divider}`,
+          })}
         >
-          <Typography variant="subtitle1" component="h2">
+          <Typography
+            variant="subtitle2"
+            component="h2"
+            sx={{
+              fontWeight: tokens.typography.weights.medium,
+              fontSize: tokens.typography.sizes.base,
+              lineHeight: tokens.typography.lineHeights.tight,
+            }}
+          >
             {t('productions.home.filterPanelTitle')}
           </Typography>
           <Button
@@ -331,6 +392,8 @@ const ProductionFilterPanel = ({
             sx={{
               color: 'text.primary',
               borderColor: 'text.primary',
+              fontSize: tokens.typography.sizes.xs,
+              transition: tokens.transitions.fast,
               '&:hover': {
                 borderColor: 'text.primary',
                 backgroundColor: 'action.hover',
@@ -341,86 +404,26 @@ const ProductionFilterPanel = ({
           </Button>
         </Stack>
 
-        <FilterSection title={t('productions.home.filters.attendanceMode')}>
-          <Stack>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={attendanceModes.includes('offline')}
-                  onChange={() => onAttendanceModeToggle('offline')}
-                  color="default"
-                />
-              }
-              label={t('productions.detail.meta.offline')}
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={attendanceModes.includes('online')}
-                  onChange={() => onAttendanceModeToggle('online')}
-                  color="default"
-                />
-              }
-              label={t('productions.detail.meta.online')}
-            />
-          </Stack>
-        </FilterSection>
-
-        <FilterSection title={t('productions.home.filters.performerType')}>
-          <Stack>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={performerTypes.includes('solo')}
-                  onChange={() => onPerformerTypeToggle('solo')}
-                  color="default"
-                />
-              }
-              label={t('productions.detail.meta.solo')}
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={performerTypes.includes('group')}
-                  onChange={() => onPerformerTypeToggle('group')}
-                  color="default"
-                />
-              }
-              label={t('productions.detail.meta.group')}
-            />
-          </Stack>
-        </FilterSection>
-
-        <FilterSection title={t('productions.home.filters.genres')}>
-          <ChipFilterSection
-            options={genreOptions}
-            selectedIds={selectedGenreIds}
-            emptyLabel={t('productions.home.filters.noGenres')}
-            onToggle={(id) => onGenreSelectionChange(toggleIdInArray(selectedGenreIds, id))}
-          />
-        </FilterSection>
-
-        <FilterSection title={t('productions.home.filters.tags')}>
-          <ChipFilterSection
-            options={tagOptions}
-            selectedIds={selectedTagIds}
-            emptyLabel={t('productions.home.filters.noTags')}
-            onToggle={(id) => onTagSelectionChange(toggleIdInArray(selectedTagIds, id))}
-          />
-        </FilterSection>
-
         <FilterSection title={t('productions.home.filters.date')}>
-          <Stack spacing={2}>
+          <Stack spacing={tokens.spacing.numericMd}>
             <DatePicker
               label={t('productions.home.filters.startAfter')}
               value={startAfterDraft}
               format={DATE_PICKER_FORMAT}
-              onChange={(value) => setStartAfterDraft(value)}
-              onAccept={(value) => onFirstEventStartAfterChange(formatDateValue(value))}
+              onChange={(value, context) => {
+                setStartAfterDraft(value)
+                setStartAfterHasError(context.validationError != null)
+              }}
+              onClose={applyStartAfterDraft}
               slotProps={{
                 textField: {
                   size: 'small',
                   fullWidth: true,
+                  slotProps: {
+                    inputLabel: { shrink: true },
+                  },
+                  onBlur: applyStartAfterDraft,
+                  onKeyDown: (event) => handleDateInputEnter(event, applyStartAfterDraft),
                 },
                 actionBar: {
                   actions: ['clear', 'accept'],
@@ -431,12 +434,20 @@ const ProductionFilterPanel = ({
               label={t('productions.home.filters.startBefore')}
               value={startBeforeDraft}
               format={DATE_PICKER_FORMAT}
-              onChange={(value) => setStartBeforeDraft(value)}
-              onAccept={(value) => onFirstEventStartBeforeChange(formatDateValue(value))}
+              onChange={(value, context) => {
+                setStartBeforeDraft(value)
+                setStartBeforeHasError(context.validationError != null)
+              }}
+              onClose={applyStartBeforeDraft}
               slotProps={{
                 textField: {
                   size: 'small',
                   fullWidth: true,
+                  slotProps: {
+                    inputLabel: { shrink: true },
+                  },
+                  onBlur: applyStartBeforeDraft,
+                  onKeyDown: (event) => handleDateInputEnter(event, applyStartBeforeDraft),
                 },
                 actionBar: {
                   actions: ['clear', 'accept'],
@@ -445,7 +456,63 @@ const ProductionFilterPanel = ({
             />
           </Stack>
         </FilterSection>
-      </Stack>
+
+        <Divider />
+
+        <FilterSection title={t('productions.home.filters.performerType')}>
+          <Stack>
+            <FilterCheckbox
+              label={t('productions.detail.meta.solo')}
+              checked={performerTypes.includes('solo')}
+              onChange={() => onPerformerTypeToggle('solo')}
+            />
+            <FilterCheckbox
+              label={t('productions.detail.meta.group')}
+              checked={performerTypes.includes('group')}
+              onChange={() => onPerformerTypeToggle('group')}
+            />
+          </Stack>
+        </FilterSection>
+
+        <Divider />
+
+        <FilterSection title={t('productions.home.filters.genres')}>
+          <ChipFilterSection
+            options={genreOptions}
+            selectedIds={selectedGenreIds}
+            emptyLabel={t('productions.home.filters.noGenres')}
+            onToggle={(id) => onGenreSelectionChange(toggleIdInArray(selectedGenreIds, id))}
+          />
+        </FilterSection>
+
+        <Divider />
+
+        <FilterSection title={t('productions.home.filters.tags')}>
+          <ChipFilterSection
+            options={tagOptions}
+            selectedIds={selectedTagIds}
+            emptyLabel={t('productions.home.filters.noTags')}
+            onToggle={(id) => onTagSelectionChange(toggleIdInArray(selectedTagIds, id))}
+          />
+        </FilterSection>
+
+        <Divider />
+
+        <FilterSection title={t('productions.home.filters.attendanceMode')}>
+          <Stack>
+            <FilterCheckbox
+              label={t('productions.detail.meta.offline')}
+              checked={attendanceModes.includes('offline')}
+              onChange={() => onAttendanceModeToggle('offline')}
+            />
+            <FilterCheckbox
+              label={t('productions.detail.meta.online')}
+              checked={attendanceModes.includes('online')}
+              onChange={() => onAttendanceModeToggle('online')}
+            />
+          </Stack>
+        </FilterSection>
+      </Paper>
     </LocalizationProvider>
   )
 }
