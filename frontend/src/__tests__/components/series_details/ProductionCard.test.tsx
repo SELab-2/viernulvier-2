@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
+import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
+
 import ProductionCard from '../../../components/series_details/ProductionCard'
+import i18n from '../../../i18n'
 
 describe('ProductionCard', () => {
   const defaultProps = {
@@ -18,11 +21,17 @@ describe('ProductionCard', () => {
     ],
   }
 
+  beforeEach(async () => {
+    await i18n.changeLanguage('nl')
+  })
+
   const renderCard = (props = defaultProps) => {
     return render(
-      <MemoryRouter>
-        <ProductionCard {...props} />
-      </MemoryRouter>,
+      <I18nextProvider i18n={i18n}>
+        <MemoryRouter>
+          <ProductionCard {...props} />
+        </MemoryRouter>
+      </I18nextProvider>,
     )
   }
 

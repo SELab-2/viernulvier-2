@@ -1,7 +1,9 @@
-import { render, screen } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material'
-import type { MediaItem, MediaItemCrop } from '../../../types/Media'
+import { render, screen } from '@testing-library/react'
+
 import MediaList from '../../../components/production/MediaList'
+
+import type { MediaItem, MediaItemCrop } from '../../../types/Media'
 
 const baseCrop = (overrides: Partial<MediaItemCrop> = {}): MediaItemCrop => ({
   id: 1,

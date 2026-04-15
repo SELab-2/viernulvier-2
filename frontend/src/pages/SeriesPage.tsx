@@ -1,6 +1,6 @@
 import { Container, Typography, Paper, Stack, Link as MuiLink } from '@mui/material'
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 
 const SeriesPage = () => {
   const { t } = useTranslation()

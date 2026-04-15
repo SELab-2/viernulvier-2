@@ -12,11 +12,13 @@ import {
   Typography,
   useTheme,
 } from '@mui/material'
-import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
+import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
+
 import SearchBar from './SearchBar'
-import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
 import { tokens } from '../../theme/tokens'
+
+import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
 
 export interface SearchControlsBarProps {
   placeholder?: string

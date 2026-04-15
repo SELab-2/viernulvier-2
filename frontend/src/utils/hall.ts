@@ -10,7 +10,7 @@ export function getHallDisplayName(event: Event, lang: string): string | null {
   const locale = lang.split('-')[0] || 'nl'
   const hallName = event.hall?.name
 
-  if (hallName && hallName[locale]) {
+  if (hallName?.[locale]) {
     return hallName[locale]
   }
 

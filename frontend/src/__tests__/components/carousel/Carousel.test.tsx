@@ -1,5 +1,6 @@
 import { Box } from '@mui/material'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+
 import Carousel from '../../../components/carousel/Carousel'
 
 type Listener = () => void

@@ -5,8 +5,10 @@
 
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material'
 import DOMPurify from 'dompurify'
-import type { KeyboardEvent, MouseEvent } from 'react'
+
+import { tokens } from '../../theme/tokens'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
+import type { KeyboardEvent, MouseEvent } from 'react'
 
 type ProductionChip = {
   id: number | string
@@ -28,7 +30,9 @@ const ProductionCard = ({ title, meta, description, genres, seriesTags, onClick 
   const isInteractive = typeof onClick === 'function'
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!isInteractive) return
+    if (!isInteractive) {
+      return
+    }
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
@@ -54,7 +58,7 @@ const ProductionCard = ({ title, meta, description, genres, seriesTags, onClick 
     >
       <CardContent sx={{ p: 2.5 }}>
         <Stack spacing={1.25}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ fontWeight: tokens.typography.weights.bold }}>
             {title}
           </Typography>
 

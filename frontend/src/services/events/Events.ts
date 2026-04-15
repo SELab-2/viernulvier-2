@@ -1,7 +1,8 @@
-import type { Event, EventListResponse } from '../../types/Events'
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
+
 import type { GetEventsOptions } from './EventOptions'
+import type { Event, EventListResponse } from '../../types/Events'
 
 /**
  * Retrieve a single event by its numeric ID.

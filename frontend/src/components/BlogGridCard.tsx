@@ -2,12 +2,14 @@ import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
+
+import ImageWithFallback from './ImageWithFallback'
 import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
-import type { Blog } from '../types/Blogs'
 import { formatBlogPublishedDate } from '../utils/blogs'
 import { getTranslatedRecord } from '../utils/translations'
-import ImageWithFallback from './ImageWithFallback'
+
+import type { Blog } from '../types/Blogs'
 
 export interface BlogGridCardProps {
   blog: Blog
@@ -17,7 +19,7 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
   const { i18n, t } = useTranslation()
-  const language = i18n.language
+  const { language } = i18n
 
   const title = getTranslatedRecord(blog.title, language, blog.display_title)
   const excerpt = getTranslatedRecord(blog.excerpt, language, blog.display_excerpt)

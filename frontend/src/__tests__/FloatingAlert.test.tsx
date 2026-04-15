@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
+
 import FloatingAlert from '../components/FloatingAlert'
 
 describe('FloatingAlert', () => {

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+
 import Description from '../../../components/production/Description'
 
 jest.mock('react-i18next', () => ({

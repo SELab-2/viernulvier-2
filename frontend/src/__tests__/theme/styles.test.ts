@@ -4,7 +4,8 @@
  * Tests for reusable MUI sx pattern styles.
  */
 
-import { createTheme, SxProps, Theme } from '@mui/material/styles'
+import { createTheme, type SxProps, type Theme } from '@mui/material/styles'
+
 import { createCommonStyles } from '../../theme/styles'
 import { tokens } from '../../theme/tokens'
 

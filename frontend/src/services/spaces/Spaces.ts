@@ -1,9 +1,9 @@
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
-import type { GetSpacesOptions } from './SpaceOptions'
+
+import type { GetSpacesOptions, HallInSpaceResponse, SpaceResponse } from './SpaceOptions'
 import type { Hall } from '../../types/Halls'
 import type { Space, SpaceListResponse } from '../../types/Spaces'
-import type { HallInSpaceResponse, SpaceResponse } from './SpaceOptions'
 
 /**
  * Normalize a hall nested under `/spaces/` responses.

@@ -57,11 +57,13 @@ function Carousel({
 
   const snapCount = emblaApi?.scrollSnapList().length ?? Math.max(1, slides.length)
 
-  const dotRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const dotRefs = useRef<Array<HTMLButtonElement | null>>([])
   const dotsScrollRef = useRef<HTMLDivElement | null>(null)
 
   const updateControls = useCallback(() => {
-    if (!emblaApi) return
+    if (!emblaApi) {
+      return
+    }
 
     setSelectedIndex(emblaApi.selectedScrollSnap())
     setCanScrollPrev(emblaApi.canScrollPrev())
@@ -69,7 +71,9 @@ function Carousel({
   }, [emblaApi])
 
   useEffect(() => {
-    if (!emblaApi) return
+    if (!emblaApi) {
+      return
+    }
 
     emblaApi.on('select', updateControls)
     emblaApi.on('reInit', updateControls)
@@ -84,7 +88,9 @@ function Carousel({
   useLayoutEffect(() => {
     const el = dotRefs.current[selectedIndex]
     const container = dotsScrollRef.current
-    if (!el || !container) return
+    if (!el || !container) {
+      return
+    }
 
     // Calculate the scroll position so that the dot is centered in the container
     // Doing it this way won't force a scroll towards the caroussel on a refresh
@@ -178,13 +184,13 @@ function Carousel({
               transform: 'translate(-50%, -50%)',
               zIndex: 2,
               backgroundColor: theme.palette.background.paper,
-              boxShadow: '0 0 18px rgba(0, 0, 0, 0.06)',
+              boxShadow: theme.shadows[1],
               opacity: 0,
               pointerEvents: 'none',
               transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
               '&:hover': {
                 backgroundColor: theme.palette.background.paper,
-                boxShadow: '0 0 24px rgba(0, 0, 0, 0.10)',
+                boxShadow: theme.shadows[3],
                 transform: 'translate(-56%, -50%)',
               },
               '@media (hover: none)': {
@@ -215,13 +221,13 @@ function Carousel({
               zIndex: 2,
               border: `1px solid ${theme.palette.divider}`,
               backgroundColor: theme.palette.background.paper,
-              boxShadow: '0 0 18px rgba(0, 0, 0, 0.06)',
+              boxShadow: theme.shadows[1],
               opacity: 0,
               pointerEvents: 'none',
               transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
               '&:hover': {
                 backgroundColor: theme.palette.background.paper,
-                boxShadow: '0 0 24px rgba(0, 0, 0, 0.10)',
+                boxShadow: theme.shadows[3],
                 transform: 'translate(56%, -50%)',
               },
               '@media (hover: none)': {

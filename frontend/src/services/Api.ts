@@ -1,4 +1,5 @@
 import axios from 'axios'
+
 import { normalizeApiError } from './ApiErrorMapper'
 
 // When running Vite, `process.env.VITE_PUBLIC_API_KEY` is replaced from envdefs.

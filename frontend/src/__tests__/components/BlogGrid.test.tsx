@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react'
-import type { ReactNode } from 'react'
+
 import BlogGrid from '../../components/BlogGrid'
+
 import type { Blog } from '../../types/Blogs'
+import type { ReactNode } from 'react'
 
 jest.mock('../../components/BlogGridCard', () => ({
   __esModule: true,

@@ -1,9 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
-import type { ComponentProps } from 'react'
+
 import Pagination from '../../components/Pagination'
 import i18n from '../../i18n'
+
+import type { ComponentProps } from 'react'
 
 const renderPagination = (props: ComponentProps<typeof Pagination>) => {
   const theme = createTheme()
@@ -18,6 +20,10 @@ const renderPagination = (props: ComponentProps<typeof Pagination>) => {
 }
 
 describe('Pagination', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('nl')
+  })
+
   it('renders nothing when only one page is available', () => {
     const { container } = renderPagination({
       page: 1,
