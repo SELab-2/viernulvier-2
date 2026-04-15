@@ -5,8 +5,8 @@ import LoadingSpinner from './LoadingSpinner'
 import Pagination from './Pagination'
 import SearchControlsBar from './searchbar/SearchControlsBar'
 
-import type { ReactNode } from 'react'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './searchbar/types'
+import type { ReactNode } from 'react'
 
 export interface CollectionPageLayoutProps {
   isMobile: boolean
