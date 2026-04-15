@@ -317,7 +317,6 @@ describe('ProductionListCard', () => {
         {
           id: 9,
           type: 'primary',
-          use_as: { id: 1, name: 'cat' },
           name: { nl: 'Dans', en: 'Dance' },
           display_name: 'Dans',
           vendor_id: null,
