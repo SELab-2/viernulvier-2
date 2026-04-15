@@ -1,5 +1,6 @@
 """Reusable API test helpers to reduce repetitive test plumbing."""
 
+from django.conf import settings
 from django.urls import reverse
 
 DEFAULT_WRONG_API_KEY = "completely-wrong-key"
@@ -9,12 +10,12 @@ def api_key_headers(api_key: str) -> dict[str, str]:
     return {"HTTP_X_API_KEY": api_key}
 
 
-def public_headers(public_api_key: str) -> dict[str, str]:
-    return api_key_headers(public_api_key)
+def public_headers(public_api_key: str | None = None) -> dict[str, str]:
+    return api_key_headers(public_api_key or settings.PUBLIC_API_KEY)
 
 
-def internal_headers(internal_api_key: str) -> dict[str, str]:
-    return api_key_headers(internal_api_key)
+def internal_headers(internal_api_key: str | None = None) -> dict[str, str]:
+    return api_key_headers(internal_api_key or settings.INTERNAL_API_KEY)
 
 
 def wrong_headers(value: str = DEFAULT_WRONG_API_KEY) -> dict[str, str]:

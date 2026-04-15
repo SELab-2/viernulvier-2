@@ -15,19 +15,13 @@ from tests.factories.media_library import (
     MediaItemFactory,
     MediaItemTranslationFactory,
 )
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import public_headers as pub_headers
 
 pytestmark = pytest.mark.django_db
 
 PUB_KEY = "pub-media-filter-test-key"
 INT_KEY = "int-media-filter-test-key"
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
 
 
 # =====================================================

@@ -11,19 +11,13 @@ from apps.tags.filters import TagFilter
 from apps.tags.models import Tag
 from tests.factories.language import LanguageFactory
 from tests.factories.tag import TagFactory, TagTranslationFactory
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import public_headers as pub_headers
 
 pytestmark = pytest.mark.django_db
 
 PUB_KEY = "pub-tag-filter-test-key"
 INT_KEY = "int-tag-filter-test-key"
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
 
 
 # =====================================================

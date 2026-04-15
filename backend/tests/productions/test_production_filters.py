@@ -21,19 +21,13 @@ from tests.factories.production import (
     UitDatabaseTypeFactory,
 )
 from tests.factories.tag import TagFactory
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import public_headers as pub_headers
 
 pytestmark = pytest.mark.django_db
 
 PUB_KEY = "pub-production-filter-test-key"
 INT_KEY = "int-production-filter-test-key"
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
 
 
 # =====================================================

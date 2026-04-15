@@ -4,25 +4,13 @@ from rest_framework.test import APIClient
 from tests.factories.blog import BlogFactory, BlogTranslationFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.production import ProductionFactory, ProductionTranslationFactory
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import paginated_results as results_list
+from tests.helpers.api import public_headers as pub_headers
+from tests.helpers.api import wrong_headers
 
 PUB_KEY = "pub-blog-test-key"
 INT_KEY = "int-blog-test-key"
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def wrong_headers():
-    return {"HTTP_X_API_KEY": "wrong-blog-key"}
-
-
-def results_list(response):
-    return response.data.get("results", response.data)
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)

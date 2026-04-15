@@ -23,26 +23,12 @@ from apps.languages.models import Language
 from apps.languages.serializers import LanguageSerializer
 from apps.languages.views import LanguageViewSet
 from tests.factories.language import LanguageFactory
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import public_headers as pub_headers
+from tests.helpers.api import wrong_headers
 
 PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def wrong_headers():
-    return {"HTTP_X_API_KEY": "completely-wrong-key"}
 
 
 # ---------------------------------------------------------------------------

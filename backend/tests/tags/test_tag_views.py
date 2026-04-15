@@ -26,30 +26,13 @@ from apps.tags.serializers import TagSerializer
 from apps.tags.views import TagViewSet
 from tests.factories.language import LanguageFactory
 from tests.factories.tag import TagFactory, TagTranslationFactory
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import paginated_results as results_list
+from tests.helpers.api import public_headers as pub_headers
+from tests.helpers.api import wrong_headers
 
 PUB_KEY = "pub-tag-view-test-key"
 INT_KEY = "int-tag-view-test-key"
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def wrong_headers():
-    return {"HTTP_X_API_KEY": "completely-wrong-key"}
-
-
-def results_list(response):
-    return response.data.get("results", response.data)
 
 
 # ---------------------------------------------------------------------------

@@ -10,6 +10,8 @@ from rest_framework.test import APIClient
 from apps.languages.filters import LanguageFilter
 from apps.languages.models import Language
 from tests.factories.language import LanguageFactory
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import public_headers as pub_headers
 
 pytestmark = pytest.mark.django_db
 
@@ -105,14 +107,6 @@ class TestLanguageFilter:
 
 PUB_KEY = "pub-filter-test-key"
 INT_KEY = "int-filter-test-key"
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)

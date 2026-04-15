@@ -2,6 +2,8 @@
 
 from types import SimpleNamespace
 
+from django.test import override_settings
+
 from tests.helpers.api import (
     DEFAULT_WRONG_API_KEY,
     api_key_headers,
@@ -22,8 +24,18 @@ def test_public_headers_delegates_to_api_key_headers():
     assert public_headers("pub") == {"HTTP_X_API_KEY": "pub"}
 
 
+@override_settings(PUBLIC_API_KEY="pub-from-settings")
+def test_public_headers_uses_settings_value_when_arg_missing():
+    assert public_headers() == {"HTTP_X_API_KEY": "pub-from-settings"}
+
+
 def test_internal_headers_delegates_to_api_key_headers():
     assert internal_headers("int") == {"HTTP_X_API_KEY": "int"}
+
+
+@override_settings(INTERNAL_API_KEY="int-from-settings")
+def test_internal_headers_uses_settings_value_when_arg_missing():
+    assert internal_headers() == {"HTTP_X_API_KEY": "int-from-settings"}
 
 
 def test_wrong_headers_uses_default_wrong_key():
@@ -42,6 +54,11 @@ def test_paginated_results_returns_results_list_when_present():
 def test_paginated_results_returns_data_for_non_paginated_payload():
     response = SimpleNamespace(data=[{"id": 1}])
     assert paginated_results(response) == [{"id": 1}]
+
+
+def test_paginated_results_returns_dict_when_results_key_missing():
+    response = SimpleNamespace(data={"detail": "ok"})
+    assert paginated_results(response) == {"detail": "ok"}
 
 
 def test_v1_list_url_builds_named_route():

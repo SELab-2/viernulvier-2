@@ -38,21 +38,12 @@ from apps.core.authentications import ApiKeyAuthentication
 from apps.core.permissions import ApiKeyPermission
 from apps.core.views import ApiModelViewSet
 from apps.languages.models import Language
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import public_headers as pub_headers
+from tests.helpers.api import wrong_headers
 
 INT_KEY = "int-view-test-key"
 PUB_KEY = "pub-view-test-key"
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def wrong_headers():
-    return {"HTTP_X_API_KEY": "completely-wrong-key"}
 
 
 # ---------------------------------------------------------------------------

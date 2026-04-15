@@ -14,6 +14,8 @@ from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.location import HallFactory, LocationFactory, SpaceFactory
 from tests.factories.production import ProductionFactory, ProductionTranslationFactory
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import public_headers as pub_headers
 
 pytestmark = pytest.mark.django_db
 
@@ -24,14 +26,6 @@ def _dt(days_offset=0):
 
 PUB_KEY = "pub-event-filter-test-key"
 INT_KEY = "int-event-filter-test-key"
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
 
 
 # =====================================================
