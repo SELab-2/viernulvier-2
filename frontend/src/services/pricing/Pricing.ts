@@ -1,12 +1,13 @@
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
+
+import type { GetPricesOptions, GetPriceRanksOptions } from './PricingOptions'
 import type {
   Price,
   PriceListResponse,
   PriceRank,
   PriceRankListResponse,
 } from '../../types/Pricing'
-import type { GetPricesOptions, GetPriceRanksOptions } from './PricingOptions'
 
 /**
  * Retrieve a single price by its numeric ID.

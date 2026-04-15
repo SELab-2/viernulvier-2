@@ -1,7 +1,25 @@
-import type { Production, ProductionListResponse } from '../../types/Productions'
 import { api } from '../Api'
 import { buildListParams } from '../ApiParams'
+
 import type { GetProductionsOptions } from './ProductionOptions'
+import type { Production, ProductionListResponse } from '../../types/Productions'
+import type { SeriesListResponse } from '../../types/Series'
+import type { Tag } from '../../types/Tags'
+import type { FilteredListOptions } from '../ApiTypes'
+
+interface ProductionSeriesApiRow {
+  tag: Tag
+  first_production_start: string | null
+  last_production_end: string | null
+  last_production_image: string | null
+}
+
+interface ProductionSeriesApiResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: ProductionSeriesApiRow[]
+}
 
 /**
  * Retrieve a single production by its numeric ID, optionally including events.
@@ -86,4 +104,31 @@ export const getProductions = async (
     params: buildListParams(options),
   })
   return res.data
+}
+
+/**
+ * Retrieve aggregated production-tag series rows.
+ *
+ * This sends a `GET /productions/series/` request that returns one row per
+ * production tag bundle, including first/last production boundaries and a
+ * representative image from the latest production.
+ */
+export const getProductionSeries = async (
+  options?: FilteredListOptions<object>,
+): Promise<SeriesListResponse> => {
+  const res = await api.get<ProductionSeriesApiResponse>('/productions/series/', {
+    params: buildListParams(options),
+  })
+
+  return {
+    count: res.data.count,
+    next: res.data.next,
+    previous: res.data.previous,
+    results: res.data.results.map((row) => ({
+      tag: row.tag,
+      firstProductionStart: row.first_production_start,
+      lastProductionEnd: row.last_production_end,
+      lastProductionImage: row.last_production_image,
+    })),
+  }
 }

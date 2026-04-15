@@ -4,6 +4,7 @@
  */
 
 import { Box, Stack, Typography } from '@mui/material'
+
 import type { ReactNode } from 'react'
 
 type Props = {
@@ -16,15 +17,13 @@ const TimelineItem = ({ year, children }: Props) => {
     <Stack
       direction={{ xs: 'column', md: 'row' }}
       spacing={2}
-      alignItems={{ xs: 'flex-start', md: 'flex-start' }}
-      sx={{ position: 'relative' }}
+      sx={{ position: 'relative', alignItems: { xs: 'flex-start', md: 'flex-start' } }}
     >
       {/* Timeline marker + year */}
       <Stack
         direction={{ xs: 'row', md: 'column' }}
         spacing={1}
-        alignItems="center"
-        sx={{ width: { xs: 'auto', md: 40 }, flexShrink: 0 }}
+        sx={{ width: { xs: 'auto', md: 40 }, flexShrink: 0, alignItems: 'center' }}
       >
         {/* Dot (only visible on desktop) */}
         <Box

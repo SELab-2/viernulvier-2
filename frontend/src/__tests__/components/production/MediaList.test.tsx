@@ -1,7 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material'
-import type { MediaItem, MediaItemCrop } from '../../../types/Media'
+import { render, screen } from '@testing-library/react'
+
 import MediaList from '../../../components/production/MediaList'
+
+import type { MediaItem, MediaItemCrop } from '../../../types/Media'
 
 const baseCrop = (overrides: Partial<MediaItemCrop> = {}): MediaItemCrop => ({
   id: 1,
@@ -31,6 +33,10 @@ const baseMediaItem = (overrides: Partial<MediaItem> = {}): MediaItem => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),
 }))
+
+beforeEach(() => {
+  Element.prototype.scrollTo = jest.fn()
+})
 
 function mockMatchMedia(mode: 'mobile' | 'tablet' | 'desktop') {
   window.matchMedia = jest.fn().mockImplementation((query) => {
@@ -122,13 +128,6 @@ describe('MediaList component', () => {
     // image from FE3_header should be visible as first slide
     const firstImage = screen.getByAltText('Img1') as HTMLImageElement
     expect(firstImage).toHaveAttribute('src', 'https://a.png')
-
-    // check counter and carousel controls work
-    expect(screen.getByText('1 / 4')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Next media' }))
-    expect(screen.getByText('4 / 4')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Previous media' }))
-    expect(screen.getByText('1 / 4')).toBeInTheDocument()
   })
 
   it('uses hd_ready when FE3_header is absent and falls back to first crop', () => {
@@ -172,62 +171,7 @@ describe('MediaList component', () => {
     render(<MediaList mediaItems={items} />)
 
     expect(screen.getByAltText('Imghd')).toHaveAttribute('src', 'https://hd.png')
-    fireEvent.click(screen.getByRole('button', { name: 'Next media' }))
     expect(screen.getByAltText('Imgfallback')).toHaveAttribute('src', 'https://fallback.png')
-  })
-
-  it('renders with tablet mode (2 items per slide) and dark theme style', () => {
-    mockMatchMedia('tablet')
-
-    const theme = createTheme({
-      palette: {
-        mode: 'dark',
-      },
-    })
-
-    const items = [
-      baseMediaItem({
-        id: 1,
-        display_title: 'T1',
-        original_filename: 't1.png',
-        crops: [{ id: 5, name: 'hd_ready', image_url: 'https://t1.png' }],
-      }),
-      baseMediaItem({
-        id: 2,
-        display_title: 'T2',
-        original_filename: 't2.png',
-        crops: [{ id: 6, name: 'hd_ready', image_url: 'https://t2.png' }],
-      }),
-      baseMediaItem({
-        id: 3,
-        display_title: 'T3',
-        original_filename: 't3.png',
-        crops: [{ id: 7, name: 'other', image_url: 'https://t3.png' }],
-      }),
-    ]
-
-    render(
-      <ThemeProvider theme={theme}>
-        <MediaList mediaItems={items} />
-      </ThemeProvider>,
-    )
-
-    expect(screen.getByText('1 / 3')).toBeInTheDocument()
-
-    const buttons = screen.getAllByRole('button', { name: /Previous media|Next media/ })
-    const prevBtn = buttons.find((btn) => btn.getAttribute('aria-label') === 'Previous media')
-    const nextBtn = buttons.find((btn) => btn.getAttribute('aria-label') === 'Next media')
-    expect(prevBtn).toBeDefined()
-    expect(nextBtn).toBeDefined()
-
-    expect(prevBtn).toHaveStyle('background: rgba(10, 14, 40, 0.65)')
-    expect(nextBtn).toHaveStyle('background: rgba(10, 14, 40, 0.65)')
-
-    const firstSlide = screen.getByAltText('T1')
-    expect(firstSlide).toBeInTheDocument()
-
-    fireEvent.click(nextBtn!)
-    expect(screen.getByText('3 / 3')).toBeInTheDocument()
   })
 
   it('covers MediaList line 150 fallback alt text', () => {

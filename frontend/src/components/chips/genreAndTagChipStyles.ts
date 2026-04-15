@@ -1,14 +1,7 @@
-import type { SxProps, Theme } from '@mui/material'
+import { tokens } from '../../theme/tokens'
 
-/**
- * Input for `getGenreAndTagChipStyles`.
- */
-type GetGenreAndTagChipStylesInput = {
-  theme: Theme
-  selected: boolean
-  context: 'search' | 'description' | 'series' | 'static'
-  chipType: 'genre' | 'seriesTag'
-}
+import type { GetGenreAndTagChipStylesInput } from '../../types/GenreAndTagChip'
+import type { SxProps, Theme } from '@mui/material'
 
 /**
  * Returns CSS styles for a genre or series-tag chip, depending on the selected context,
@@ -25,8 +18,8 @@ export const getGenreAndTagChipStyles = ({
 }: GetGenreAndTagChipStylesInput): SxProps<Theme> => {
   const accentMain = theme.palette.accent?.main ?? theme.palette.primary.main
   const accentHover = theme.palette.accent?.dark ?? accentMain
-  const seriesMain = theme.palette.primary.main
-  const seriesHover = theme.palette.primary.dark
+  const seriesMain = tokens.colors.series.main
+  const seriesHover = tokens.colors.series.dark
   const selectedBg = chipType === 'genre' ? accentMain : seriesMain
   const selectedHoverBg = chipType === 'genre' ? accentHover : seriesHover
   const selectedHoverStyles =
@@ -51,8 +44,8 @@ export const getGenreAndTagChipStyles = ({
       : {}
 
   const base: SxProps<Theme> = {
-    borderRadius: '9999px',
-    fontWeight: 500,
+    borderRadius: tokens.borderRadius.full,
+    fontWeight: tokens.typography.weights.medium,
     fontSize: '0.95rem',
     px: 0.1,
     py: 0.3,

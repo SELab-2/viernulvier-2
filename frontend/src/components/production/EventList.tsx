@@ -17,9 +17,12 @@ import {
 } from '@mui/material'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Event } from '../../types/Events'
+
+import { tokens } from '../../theme/tokens'
 import { formatDate, formatTime } from '../../utils/dateUtils'
 import { getHallDisplayName } from '../../utils/hall'
+
+import type { Event } from '../../types/Events'
 
 interface EventsListProps {
   events: Event[]
@@ -38,7 +41,7 @@ export default function EventsList({ events }: EventsListProps) {
 
   if (!events.length) {
     return (
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" sx={(theme) => ({ color: theme.palette.text.primary })}>
         {t('productions.detail.noEvents', 'Geen geplande events.')}
       </Typography>
     )
@@ -64,23 +67,28 @@ export default function EventsList({ events }: EventsListProps) {
         return (
           <Box key={event.id}>
             {/* -- Event row -- */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Stack
+              direction="row"
+              sx={(theme) => ({
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                color: theme.palette.text.primary,
+              })}
+            >
               <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
                 {/* Date + time */}
-                <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                  <Stack direction="row" spacing={0.75} alignItems="center">
-                    <CalendarTodayOutlinedIcon
-                      sx={{ fontSize: '0.95rem', color: 'text.primary' }}
-                    />
-                    <Typography variant="body2" fontWeight={600} color="text.primary">
+                <Stack direction="row" spacing={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+                    <CalendarTodayOutlinedIcon sx={{ fontSize: '0.95rem' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       {event.starts_at ? formatDate(event.starts_at, lang) : '—'}
                     </Typography>
                   </Stack>
 
                   {event.starts_at && (
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <ScheduleOutlinedIcon sx={{ fontSize: '0.95rem', color: 'text.primary' }} />
-                      <Typography variant="body2" color="text.primary" fontWeight={500}>
+                    <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+                      <ScheduleOutlinedIcon sx={{ fontSize: '0.95rem' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         {formatTime(event.starts_at, lang)}
                         {event.ends_at ? ` - ${formatTime(event.ends_at, lang)}` : ''}
                       </Typography>
@@ -93,11 +101,9 @@ export default function EventsList({ events }: EventsListProps) {
                   const hallName = getHallDisplayName(event, lang)
                   return (
                     hallName && (
-                      <Stack direction="row" spacing={0.75} alignItems="center">
-                        <RoomOutlinedIcon sx={{ fontSize: '0.9rem', color: 'text.primary' }} />
-                        <Typography variant="body2" color="text.primary">
-                          {hallName}
-                        </Typography>
+                      <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+                        <RoomOutlinedIcon sx={{ fontSize: '0.9rem' }} />
+                        <Typography variant="body2">{hallName}</Typography>
                       </Stack>
                     )
                   )
@@ -105,7 +111,11 @@ export default function EventsList({ events }: EventsListProps) {
               </Stack>
 
               {/* Expand prices toggle */}
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0, ml: 2 }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ alignItems: 'center', flexShrink: 0, ml: 2 }}
+              >
                 {hasPrices && (
                   <IconButton
                     size="small"
@@ -118,7 +128,7 @@ export default function EventsList({ events }: EventsListProps) {
                     }
                     sx={(theme) => ({
                       border: `1px solid ${theme.palette.divider}`,
-                      borderRadius: '4px',
+                      borderRadius: tokens.borderRadius.sm,
                     })}
                   >
                     <ExpandMoreIcon
@@ -140,20 +150,26 @@ export default function EventsList({ events }: EventsListProps) {
                   sx={(theme) => ({
                     mt: 1.5,
                     border: `1px solid ${theme.palette.divider}`,
-                    borderRadius: '4px',
+                    borderRadius: tokens.borderRadius.sm,
                     overflow: 'hidden',
                   })}
                 >
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 600 }}>
+                        <TableCell sx={{ fontWeight: tokens.typography.weights.bold }}>
                           {t('events.priceType', 'Type')}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        <TableCell
+                          align="right"
+                          sx={{ fontWeight: tokens.typography.weights.bold }}
+                        >
                           {t('events.price', 'Prijs')}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        <TableCell
+                          align="right"
+                          sx={{ fontWeight: tokens.typography.weights.bold }}
+                        >
                           {t('events.available', 'Beschikbaar')}
                         </TableCell>
                       </TableRow>
@@ -166,7 +182,15 @@ export default function EventsList({ events }: EventsListProps) {
                             <Typography variant="body2">€{Number(p.amount).toFixed(2)}</Typography>
                           </TableCell>
                           <TableCell align="right">
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography
+                              variant="body2"
+                              sx={(theme) => ({
+                                color:
+                                  theme.palette.mode === 'dark'
+                                    ? tokens.colors.dark.textMuted
+                                    : tokens.colors.light.textMuted,
+                              })}
+                            >
                               {p.available ?? '-'}
                             </Typography>
                           </TableCell>

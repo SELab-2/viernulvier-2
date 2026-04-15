@@ -1,7 +1,9 @@
 import { useMediaQuery, useTheme } from '@mui/material'
-import type { Production } from '../types/Productions'
+
 import ProductionGrid from './ProductionGrid'
 import ProductionList from './ProductionList'
+
+import type { Production } from '../types/Productions'
 
 export type LayoutMode = 'grid' | 'list'
 
@@ -37,7 +39,8 @@ const ProductionView = ({
 
   if (activeLayout === 'list') {
     return <ProductionList productions={productions} selectedGenreIds={selectedGenreIds} />
-  } else if (activeLayout === 'grid') {
+  }
+  if (activeLayout === 'grid') {
     return <ProductionGrid productions={productions} selectedGenreIds={selectedGenreIds} />
   }
 }

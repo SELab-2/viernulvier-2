@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import SearchControlsBar, {
-  SearchControlsBarProps,
-} from '../../components/searchbar/SearchControlsBar'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
+
+import SearchControlsBar, {
+  type SearchControlsBarProps,
+} from '../../components/searchbar/SearchControlsBar'
 import i18n from '../../i18n'
 
 const renderSearchBar = (props: SearchControlsBarProps) => {
@@ -24,8 +25,9 @@ describe('SearchControlsBar', () => {
   const mockOnViewModeChange = jest.fn()
   const mockOnSearchSubmit = jest.fn()
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks()
+    await i18n.changeLanguage('nl')
   })
 
   const props = {
@@ -46,6 +48,12 @@ describe('SearchControlsBar', () => {
     renderSearchBar(props)
     expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument()
     expect(screen.getByText('12 resultaten gevonden')).toBeInTheDocument()
+  })
+
+  it('uses singular copy when there is exactly one result', () => {
+    renderSearchBar({ ...props, resultCount: 1 })
+
+    expect(screen.getByText('1 resultaat gevonden')).toBeInTheDocument()
   })
 
   it('calls onSearchChange when input value changes', () => {

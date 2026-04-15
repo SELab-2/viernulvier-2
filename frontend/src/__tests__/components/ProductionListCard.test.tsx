@@ -1,12 +1,14 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
-import type { ReactElement } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
-import ProductionListCard from '../../components/ProductionListCard'
+
+import ProductionListCard from '../../components/productions/ProductionListCard'
 import i18n from '../../i18n'
+
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
+import type { ReactElement } from 'react'
 
 const accentTheme = createTheme({
   palette: {
@@ -201,14 +203,15 @@ describe('ProductionListCard', () => {
     expect(screen.queryByText(/2026/)).not.toBeInTheDocument()
   })
 
-  it('does not show the date row when last_event_end is null', () => {
+  it('shows the start date when last_event_end is null', () => {
     const production = baseProduction({
       first_event_start: '2026-03-20T18:30:00.000Z',
       last_event_end: null,
     })
     renderListCard({ production })
 
-    expect(screen.queryByText(/mrt|Mar/)).not.toBeInTheDocument()
+    expect(screen.getByText(/mrt|Mar/)).toBeInTheDocument()
+    expect(screen.getByText(/2026/)).toBeInTheDocument()
   })
 
   it('shows a date range when first and last event fall on different dates', () => {
@@ -307,6 +310,28 @@ describe('ProductionListCard', () => {
 
     expect(screen.getByText(/Mar/)).toBeInTheDocument()
     expect(screen.getByText(/2026/)).toBeInTheDocument()
+  })
+
+  it('translates genre chip labels for the active locale instead of always using display_name', async () => {
+    await i18n.changeLanguage('en')
+
+    const production = baseProduction({
+      genres: [
+        {
+          id: 9,
+          type: 'primary',
+          use_as: { id: 1, name: 'cat' },
+          name: { nl: 'Dans', en: 'Dance' },
+          display_name: 'Dans',
+          vendor_id: null,
+        },
+      ],
+    })
+
+    renderListCard({ production })
+
+    expect(screen.getByText('Dance')).toBeInTheDocument()
+    expect(screen.queryByText(/^Dans$/)).not.toBeInTheDocument()
   })
 
   it('shows the image fallback when media_gallery has no media items', () => {

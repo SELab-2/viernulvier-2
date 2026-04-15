@@ -1,17 +1,21 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { Box, Typography, useTheme } from '@mui/material'
+import { Box, Typography } from '@mui/material'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Production } from '../types/Productions'
-import LoadingSpinner from '../components/LoadingSpinner'
-import Breadcrumbs from '../components/production/Breadcrumbs'
+import { useParams, useNavigate } from 'react-router-dom'
+
+import ProductionDetailPageSkeleton from './ProductionDetailPageSkeleton'
 import ImageWithFallback from '../components/ImageWithFallback'
+import Breadcrumbs from '../components/production/Breadcrumbs'
 import Description from '../components/production/Description'
-import MetaPanel from '../components/production/MetaPanel'
-import { getProduction } from '../services/productions/Productions'
 import EventsList from '../components/production/EventList'
 import MediaList from '../components/production/MediaList'
+import MetaPanel from '../components/production/MetaPanel'
+import RelatedProductions from '../components/production/RelatedProductions'
+import { getProduction } from '../services/productions/Productions'
+import { tokens } from '../theme/tokens'
 import { getLocalizedValue } from '../utils/localization'
+
+import type { Production } from '../types/Productions'
 
 /**
  * Helper function to get the most suitable image URL for the production details page.
@@ -23,8 +27,8 @@ import { getLocalizedValue } from '../utils/localization'
  */
 function getProductionHeroImageUrl(production: Production): string | null {
   // Find the first media item of type 'foto'
-  const mediaItems = production.media_gallery.media_items
-  const firstPhoto = mediaItems.find((item) => item.type === 'foto')
+  const mediaItems = production.media_gallery?.media_items
+  const firstPhoto = mediaItems?.find((item) => item.type === 'foto')
 
   // return null if there is no item with type 'foto'
   if (!firstPhoto) {
@@ -60,29 +64,29 @@ function getProductionHeroImageUrl(production: Production): string | null {
  *   - breadcrumb, hero image, description
  *   - metadata panel (with MetaPanel component)
  *   - events list, media gallery
- *
- * Important: no business transformations here; MetaPanel handles production meta resolution.
  */
 const ProductionDetailsPage = () => {
-  const { id } = useParams()
+  const { id } = useParams() // Get the id from the URL params (e.g. /productions/123 -> id = 123)
   const navigate = useNavigate()
-  const theme = useTheme()
   const { i18n, t } = useTranslation()
   const lang = i18n.language
 
   const [prod, setProd] = useState<Production | null>(null)
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
+  const tRef = useRef(t)
+  tRef.current = t
 
   // useEffect to fetch the production given the id in the URL.
   useEffect(() => {
-    if (!id) return
-
+    if (!id) {
+      return
+    }
     setLoading(true)
 
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
-      const errMsg = t('productions.detail.error.invalidId', 'Invalid production ID')
+      const errMsg = tRef.current('productions.detail.error.invalidId', 'Invalid production ID')
       navigate('/', {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
@@ -93,10 +97,13 @@ const ProductionDetailsPage = () => {
 
     const fetchProduction = async () => {
       try {
-        const data = await getProduction(parsed, ['events'])
+        const data = await getProduction(parsed, ['events', 'related'])
         setProd(data)
       } catch {
-        const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
+        const errMsg = tRef.current(
+          'productions.detail.error.loadFailed',
+          'Could not load production',
+        )
         navigate('/', {
           state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
         })
@@ -107,21 +114,23 @@ const ProductionDetailsPage = () => {
     }
 
     fetchProduction()
-  }, [id, t, navigate])
+  }, [id, navigate])
 
-  // If the page is still loading, show the spinner.
-  if (loading && !prod) return <LoadingSpinner fullScreen />
+  // If the page is still loading, show a full-page skeleton.
+  if (loading) {
+    return <ProductionDetailPageSkeleton />
+  }
 
   // If there was an error or no production was found, show an error message.
   if (!prod) {
     return (
-      <div style={{ padding: 40 }}>
+      <Box sx={{ p: 5 }}>
         {error ? (
-          <div>{error}</div>
+          <Box>{error}</Box>
         ) : (
-          <div>{t('productions.detail.notFound', 'Productie niet gevonden.')}</div>
+          <Box>{tRef.current('productions.detail.notFound', 'Productie niet gevonden.')}</Box>
         )}
-      </div>
+      </Box>
     )
   }
 
@@ -140,21 +149,21 @@ const ProductionDetailsPage = () => {
   const events = production.events ?? []
 
   return (
-    <div
+    <Box
       className="production-details-page"
-      style={{
+      sx={(theme) => ({
         backgroundColor: theme.palette.background.default,
         color: theme.palette.text.primary,
-      }}
+      })}
     >
-      <div
+      <Box
         className="production-details-container"
-        style={{ backgroundColor: theme.palette.background.default }}
+        sx={(theme) => ({ backgroundColor: theme.palette.background.default })}
       >
         {/* LEFT: Breadcrumb + Hero + Description */}
-        <div
+        <Box
           className="production-details-left"
-          style={{ backgroundColor: theme.palette.background.paper }}
+          sx={(theme) => ({ backgroundColor: theme.palette.background.default })}
         >
           <Breadcrumbs
             items={[
@@ -163,15 +172,15 @@ const ProductionDetailsPage = () => {
               { label: title },
             ]}
           />
-          <div
+          <Box
             className="hero-image"
-            style={{
+            sx={{
               width: '100%',
-              aspectRatio: '16/7',
+              aspectRatio: '16 / 7',
               backgroundColor: 'transparent',
-              borderRadius: '4px',
+              borderRadius: tokens.borderRadius.sm,
               overflow: 'hidden',
-              marginBottom: '32px',
+              mb: 4,
             }}
           >
             <ImageWithFallback
@@ -179,45 +188,50 @@ const ProductionDetailsPage = () => {
               alt={title}
               sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
-          </div>
+          </Box>
           <Description teaser={teaser} description={description} />
-        </div>
+        </Box>
         {/* RIGHT: Metadata panel */}
-        <div
+        <Box
           className="production-details-right"
-          style={{
-            backgroundColor: theme.palette.background.paper,
+          sx={(theme) => ({
+            backgroundColor: theme.palette.background.default,
             borderLeft: `1px solid ${theme.palette.divider}`,
-          }}
+          })}
         >
-          <MetaPanel production={production} language={lang} style={{ borderLeft: 'none' }} />
+          <MetaPanel production={production} language={lang} sx={{ borderLeft: 'none' }} />
           <Box
             sx={(theme) => ({
               mt: 3,
               p: 2,
               border: `1px solid ${theme.palette.divider}`,
-              borderRadius: '4px',
+              backgroundColor: theme.palette.background.paper,
+              borderRadius: tokens.borderRadius.sm,
             })}
           >
             <Typography
               variant="subtitle1"
-              fontWeight={600}
-              sx={{ mb: 1, color: theme.palette.text.primary }}
+              sx={{ mb: 1, color: 'text.primary', fontWeight: tokens.typography.weights.bold }}
             >
               {t('productions.detail.events', 'Events')}
             </Typography>
             <EventsList events={events} />
           </Box>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      {production.media_gallery.media_items.length > 0 && (
-        <div style={{ padding: '0 16px 32px' }}>
+      {production.media_gallery?.media_items?.length > 0 && (
+        <Box sx={{ px: 2, pb: 4 }}>
           <MediaList mediaItems={production.media_gallery.media_items} />
-        </div>
+        </Box>
       )}
-      <p> TODO: related productions tonen </p>
-    </div>
+
+      {production.related && production.related.length > 0 && (
+        <Box sx={{ px: 2, pb: 4 }}>
+          <RelatedProductions related={production.related ?? []} lang={lang} />
+        </Box>
+      )}
+    </Box>
   )
 }
 

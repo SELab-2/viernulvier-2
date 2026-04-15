@@ -1,6 +1,6 @@
 import { api } from '../../../src/services/Api'
-import { getEvent, getEvents } from '../../../src/services/events/Events'
 import { ApiError } from '../../../src/services/ApiTypes'
+import { getEvent, getEvents } from '../../../src/services/events/Events'
 
 const nestedGenreUseAs = { id: 2, name: 'genre' }
 

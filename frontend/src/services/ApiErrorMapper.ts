@@ -1,12 +1,13 @@
 import { ApiError } from './ApiTypes'
+import i18n from '../i18n'
 
-/** Human-readable messages for the most common HTTP error statuses. */
-const STATUS_MESSAGES: Record<number, string> = {
-  400: 'Invalid request parameters.',
-  401: 'Not authenticated. Please log in.',
-  403: 'You do not have permission to perform this action.',
-  404: 'The requested resource was not found.',
-  500: 'An internal server error occurred. Please try again later.',
+/** Translation keys for the most common HTTP error statuses. */
+const STATUS_MESSAGE_KEYS: Record<number, string> = {
+  400: 'apiErrors.status.400',
+  401: 'apiErrors.status.401',
+  403: 'apiErrors.status.403',
+  404: 'apiErrors.status.404',
+  500: 'apiErrors.status.500',
 }
 
 /**
@@ -21,11 +22,12 @@ export const normalizeApiError = (
 ): unknown => {
   if (isAxiosError(error)) {
     const status = (error as { response?: { status?: number } }).response?.status ?? 0
+    const knownStatusTranslationKey = STATUS_MESSAGE_KEYS[status]
     const message =
-      STATUS_MESSAGES[status] ??
+      (knownStatusTranslationKey ? i18n.t(knownStatusTranslationKey) : null) ??
       (status > 0
-        ? `Request failed with status ${status}.`
-        : 'A network error occurred. Please check your connection.')
+        ? i18n.t('apiErrors.status.genericWithCode', { status })
+        : i18n.t('apiErrors.network'))
 
     return new ApiError(status, message)
   }

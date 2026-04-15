@@ -1,5 +1,7 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 import pytest
+from rest_framework import serializers
 
 from apps.blogs.models import BlogTranslation
 from apps.blogs.serializers import BlogSerializer
@@ -122,3 +124,34 @@ class TestBlogSerializer(TestCase):
         assert serializer.is_valid(), serializer.errors
         with pytest.raises(Language.DoesNotExist):
             serializer.save()
+
+    def test_create_rejects_non_image_cover_upload(self) -> None:
+        payload = {
+            "slug": "invalid-cover",
+            "cover_image": SimpleUploadedFile("brochure.pdf", b"%PDF-1.7", content_type="application/pdf"),
+        }
+
+        serializer = BlogSerializer(data=payload)
+
+        assert not serializer.is_valid()
+        assert "cover_image" in serializer.errors
+
+    def test_validate_cover_image_allows_empty_value(self) -> None:
+        serializer = BlogSerializer()
+
+        assert serializer.validate_cover_image(None) is None
+
+    def test_validate_cover_image_accepts_valid_image(self) -> None:
+        serializer = BlogSerializer()
+        image = SimpleUploadedFile("cover.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
+
+        assert serializer.validate_cover_image(image) == image
+
+    def test_validate_cover_image_rejects_invalid_file(self) -> None:
+        serializer = BlogSerializer()
+        invalid_file = SimpleUploadedFile("cover.pdf", b"not-an-image", content_type="application/pdf")
+
+        with pytest.raises(serializers.ValidationError) as exc_info:
+            serializer.validate_cover_image(invalid_file)
+
+        assert "Unsupported file type" in str(exc_info.value)

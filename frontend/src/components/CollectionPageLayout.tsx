@@ -1,27 +1,16 @@
-import CloseIcon from '@mui/icons-material/Close'
-import FilterListIcon from '@mui/icons-material/FilterList'
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Paper,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Container, Paper, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { useState, type ReactNode } from 'react'
+
 import LoadingSpinner from './LoadingSpinner'
 import Pagination from './Pagination'
 import SearchControlsBar from './searchbar/SearchControlsBar'
+
+import type { ReactNode } from 'react'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './searchbar/types'
 
 export interface CollectionPageLayoutProps {
   isMobile: boolean
+  showSidebar?: boolean
   searchPlaceholder: string
   searchValue: string
   onSearchChange: (value: string) => void
@@ -30,16 +19,15 @@ export interface CollectionPageLayoutProps {
   onSortTargetChange: (value: SearchSortTarget) => void
   sortDirection: SearchSortDirection
   onSortDirectionChange: (value: SearchSortDirection) => void
+  sortTargetOptions?: Array<{ value: SearchSortTarget; labelKey: string }>
   viewMode: SearchViewMode
   onViewModeChange: (value: SearchViewMode) => void
   resultCount: number
-  sidebarAriaLabel: string
-  sidebarTitle: string
-  sidebarDescription: string
   sidebarContent?: ReactNode
   resultsRegionAriaLabel: string
   isLoading: boolean
   loadingLabel: string
+  loadingContent?: ReactNode
   errorMessage: string | null
   retryLabel: string
   onRetry: () => void
@@ -58,8 +46,7 @@ export interface CollectionPageLayoutProps {
  * Reusable layout component for collection pages that includes a search bar, sidebar, results area, and pagination.
  * Handles common UI states such as loading, error, and empty results. The layout is responsive and adapts to mobile screens.
  *
- * Uses {@link SearchControlsBar} for the search and sorting controls, uses {@link Pagination} for pagination controls,
- * uses {@link ProductionView} for displaying production results.
+ * Uses {@link SearchControlsBar} for the search and sorting controls, and {@link Pagination} for page navigation.
  *
  * @param props.isMobile Boolean indicating if the layout is being rendered on a mobile device.
  * @param props.searchPlaceholder Placeholder text for the search input.
@@ -73,9 +60,7 @@ export interface CollectionPageLayoutProps {
  * @param props.viewMode Current view mode ('list' or 'grid').
  * @param props.onViewModeChange Callback function to update the view mode.
  * @param props.resultCount Number of results found, used for display in the search controls bar.
- * @param props.sidebarAriaLabel ARIA label for the sidebar region for accessibility.
- * @param props.sidebarTitle Title text displayed in the sidebar area.
- * @param props.sidebarDescription Description text displayed in the sidebar area.
+ * @param props.sidebarContent ReactNode containing the content to display in the sidebar area.
  * @param props.resultsRegionAriaLabel ARIA label for the results region for accessibility.
  * @param props.isLoading Boolean indicating if the data is currently loading, used to show loading state.
  * @param props.loadingLabel Label text to display in the loading spinner.
@@ -97,6 +82,7 @@ export interface CollectionPageLayoutProps {
 
 const CollectionPageLayout = ({
   isMobile,
+  showSidebar = true,
   searchPlaceholder,
   searchValue,
   onSearchChange,
@@ -105,16 +91,15 @@ const CollectionPageLayout = ({
   onSortTargetChange,
   sortDirection,
   onSortDirectionChange,
+  sortTargetOptions,
   viewMode,
   onViewModeChange,
   resultCount,
-  sidebarAriaLabel,
-  sidebarTitle,
-  sidebarDescription,
   sidebarContent,
   resultsRegionAriaLabel,
   isLoading,
   loadingLabel,
+  loadingContent,
   errorMessage,
   retryLabel,
   onRetry,
@@ -130,14 +115,52 @@ const CollectionPageLayout = ({
 }: CollectionPageLayoutProps) => {
   const theme = useTheme()
   const isEmpty = !isLoading && !errorMessage && !hasResults
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false)
-  const showInlineSidebar = !isMobile
-  const showMobileFilterButton = isMobile && Boolean(sidebarContent)
+  const shouldRenderSidebar = showSidebar && sidebarContent
+
+  const resultsSection = (
+    <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ flex: 1, minWidth: 0 }}>
+      {isLoading ? (
+        <Box sx={{ py: 8 }}>{loadingContent ?? <LoadingSpinner label={loadingLabel} />}</Box>
+      ) : null}
+
+      {/* Error */}
+      {!isLoading && errorMessage ? (
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={onRetry}>
+              {retryLabel}
+            </Button>
+          }
+        >
+          {errorMessage}
+        </Alert>
+      ) : null}
+
+      {/* Empty */}
+      {isEmpty ? (
+        <Paper variant="outlined" sx={{ p: 4, borderRadius: 2 }}>
+          <Stack spacing={1}>
+            <Typography variant="h6" component="h2">
+              {emptyTitle}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {emptyDescription}
+            </Typography>
+          </Stack>
+        </Paper>
+      ) : null}
+
+      {/* Results */}
+      {!isLoading && !errorMessage && hasResults ? resultsContent : null}
+    </Box>
+  )
 
   return (
     <Box sx={{ py: { xs: 3, md: 4 } }}>
       <Container maxWidth="xl">
         <Stack spacing={3}>
+          {/* Search, sort, and view controls. */}
           <SearchControlsBar
             placeholder={searchPlaceholder}
             searchValue={searchValue}
@@ -147,143 +170,31 @@ const CollectionPageLayout = ({
             onSortTargetChange={onSortTargetChange}
             sortDirection={sortDirection}
             onSortDirectionChange={onSortDirectionChange}
+            sortTargetOptions={sortTargetOptions}
             viewMode={viewMode}
             onViewModeChange={onViewModeChange}
             resultCount={resultCount}
             showViewModeToggle={!isMobile}
           />
 
-          {showMobileFilterButton ? (
-            <>
-              <Box>
-                <Button
-                  variant="outlined"
-                  startIcon={<FilterListIcon />}
-                  onClick={() => setIsMobileFiltersOpen(true)}
-                  sx={{
-                    color: 'text.primary',
-                    borderColor: 'text.primary',
-                    '&:hover': {
-                      borderColor: 'text.primary',
-                      backgroundColor: 'action.hover',
-                    },
-                  }}
-                >
-                  {sidebarTitle}
-                </Button>
-              </Box>
-
-              <Dialog
-                open={isMobileFiltersOpen}
-                onClose={() => setIsMobileFiltersOpen(false)}
-                fullWidth
-                maxWidth="sm"
-                PaperProps={{
-                  sx: {
-                    backgroundColor: theme.palette.background.paper,
-                    border: `1px solid ${theme.palette.divider}`,
-                    borderRadius: 3,
-                  },
-                }}
-              >
-                <DialogTitle sx={{ pr: 6, backgroundColor: theme.palette.background.paper }}>
-                  {sidebarTitle}
-                </DialogTitle>
-                <IconButton
-                  aria-label={sidebarTitle}
-                  onClick={() => setIsMobileFiltersOpen(false)}
-                  sx={{ position: 'absolute', right: 8, top: 8, color: 'text.primary' }}
-                >
-                  <CloseIcon />
-                </IconButton>
-                <DialogContent dividers sx={{ backgroundColor: theme.palette.background.paper }}>
-                  {sidebarContent}
-                </DialogContent>
-              </Dialog>
-            </>
-          ) : null}
-
-          <Box
-            display="flex"
-            flexDirection={{ xs: 'column', md: 'row' }}
-            gap={3}
-            alignItems="flex-start"
-          >
-            {showInlineSidebar ? (
-              <Paper
-                component="aside"
-                elevation={0}
-                aria-label={sidebarAriaLabel}
-                sx={{
-                  width: { xs: '100%', md: 320 },
-                  flexShrink: 0,
-                  minHeight: 160,
-                  p: 2.5,
-                  borderRadius: 3,
-                  border: `1px solid ${theme.palette.divider}`,
-                  backgroundColor: theme.palette.background.paper,
-                }}
-              >
-                {sidebarContent ?? (
-                  <Stack spacing={1}>
-                    <Typography variant="subtitle1" component="h2">
-                      {sidebarTitle}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {sidebarDescription}
-                    </Typography>
-                  </Stack>
-                )}
-              </Paper>
-            ) : null}
-
-            {/* Main content area */}
-            {/* Loading */}
+          {shouldRenderSidebar ? (
             <Box
-              component="section"
-              aria-label={resultsRegionAriaLabel}
-              sx={{ flex: 1, minWidth: 0 }}
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                gap: 3,
+                alignItems: 'flex-start',
+              }}
             >
-              {isLoading ? (
-                <Box py={8}>
-                  <LoadingSpinner label={loadingLabel} />
-                </Box>
-              ) : null}
+              {sidebarContent}
 
-              {/* Error */}
-              {!isLoading && errorMessage ? (
-                <Alert
-                  severity="error"
-                  action={
-                    <Button color="inherit" size="small" onClick={onRetry}>
-                      {retryLabel}
-                    </Button>
-                  }
-                >
-                  {errorMessage}
-                </Alert>
-              ) : null}
-
-              {/* Empty */}
-              {isEmpty ? (
-                <Paper variant="outlined" sx={{ p: 4, borderRadius: 2 }}>
-                  <Stack spacing={1}>
-                    <Typography variant="h6" component="h2">
-                      {emptyTitle}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {emptyDescription}
-                    </Typography>
-                  </Stack>
-                </Paper>
-              ) : null}
-
-              {/* Results */}
-              {!isLoading && !errorMessage && hasResults ? resultsContent : null}
+              {resultsSection}
             </Box>
-          </Box>
+          ) : (
+            resultsSection
+          )}
 
-          {/* Pagination */}
+          {/* Pagination controls. */}
           <Pagination
             page={page}
             pageSize={pageSize}

@@ -312,7 +312,14 @@ const ProductionFilterPanel = ({
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={adapterLocale}>
       <Stack spacing={2}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Typography variant="subtitle1" component="h2">
             {t('productions.home.filterPanelTitle')}
           </Typography>

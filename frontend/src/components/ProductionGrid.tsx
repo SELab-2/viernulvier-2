@@ -1,6 +1,7 @@
-import { Box } from '@mui/material'
+import GenericGrid from './GenericGrid'
+import ProductionGridCard from './productions/ProductionGridCard'
+
 import type { Production } from '../types/Productions'
-import ProductionGridCard from './ProductionGridCard'
 
 export interface ProductionGridProps {
   productions: Production[]
@@ -20,15 +21,13 @@ export interface ProductionGridProps {
  */
 const ProductionGrid = ({ productions, selectedGenreIds }: ProductionGridProps) => {
   return (
-    <Box display="flex" flexWrap="wrap" gap={3} justifyContent="center">
-      {productions.map((production) => (
-        <ProductionGridCard
-          key={production.id}
-          production={production}
-          selectedGenreIds={selectedGenreIds}
-        />
-      ))}
-    </Box>
+    <GenericGrid
+      items={productions}
+      getKey={(production) => production.id}
+      renderItem={(production) => (
+        <ProductionGridCard production={production} selectedGenreIds={selectedGenreIds} />
+      )}
+    />
   )
 }
 

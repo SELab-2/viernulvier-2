@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 import '@testing-library/jest-dom'
 import { TextDecoder, TextEncoder } from 'util'
+import './i18n'
 
 global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder as typeof global.TextDecoder
@@ -8,9 +9,10 @@ global.TextDecoder = TextDecoder as typeof global.TextDecoder
 process.env.VITE_PUBLIC_API_KEY = process.env.VITE_PUBLIC_API_KEY ?? 'test-api-key'
 
 class IntersectionObserverMock implements IntersectionObserver {
+  scrollMargin: string = ''
   readonly root: Element | Document | null = null
   readonly rootMargin = ''
-  readonly thresholds: ReadonlyArray<number> = []
+  readonly thresholds: readonly number[] = []
   disconnect = () => {}
   observe = () => {}
   takeRecords = () => []

@@ -1,27 +1,30 @@
 import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
+
 import CollectionPageLayout from '../components/CollectionPageLayout'
+import EntityView from '../components/entity/EntityView'
 import FloatingAlert from '../components/FloatingAlert'
-import ProductionView from '../components/ProductionView'
-import ProductionFilterPanel from '../components/production/ProductionFilterPanel'
+import ProductionGridCard from '../components/productions/ProductionGridCard'
+import ProductionListCard from '../components/productions/ProductionListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
+import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
-import { getGenres } from '../services/genres/Genres'
 import { getProductions } from '../services/productions/Productions'
-import { getTags } from '../services/tags/Tags'
+
+import ProductionFilterPanel from '../components/production/ProductionFilterPanel'
 import type { Genre } from '../types/Genres'
 import type { Production } from '../types/Productions'
+
 import type { Tag } from '../types/Tags'
 
-// Page size for the productions list pagination. This is a constant for now but could be made configurable in the future if needed.
+// Page size for pagination.
 const PAGE_SIZE = 12
 
 // Function to determine the ordering parameter for the API based on the current sort target and direction.
-// Currently broken because the backend has no field for translations__title
-// TODO fix
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
-  const targetField = sortTarget === 'name' ? 'translations__title' : 'first_event_start'
+  const targetField = sortTarget === 'name' ? 'title_sort' : 'first_event_start'
   return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 
@@ -38,7 +41,12 @@ const toIsoDateBoundary = (value: string, boundary: 'start' | 'end'): string | u
 const HomePage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
+  const location = useLocation()
+  // Type for optional navigation state used to show a one-time floating alert when arriving
+  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
+  const nav = location as { state?: NavState }
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
   const {
     searchValue,
@@ -75,9 +83,11 @@ const HomePage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
   const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
+  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(null)
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
+  // Error message to display in the UI, preferring the translated fallback message
   const renderedErrorMessage = showFallbackError
     ? t('productions.home.error.fallback')
     : errorMessage
@@ -93,53 +103,20 @@ const HomePage = () => {
   const selectedGenreId = selectedGenreIds[0]
   const selectedTagId = selectedTagIds[0]
 
-  // Effect to synchronize the search draft state with the actual search value from the URL
   useEffect(() => {
     setSearchDraft(searchValue)
   }, [searchValue])
 
+  // Effect to fetch the productions data from the API whenever the ordering, page, retryKey, or searchValue changes
   useEffect(() => {
     let isActive = true
 
-    const fetchFilterOptions = async () => {
-      try {
-        const [genreResponse, tagResponse] = await Promise.all([
-          getGenres({ page: 1, pageSize: 100 }),
-          getTags({ page: 1, pageSize: 100 }),
-        ])
-
-        if (!isActive) {
-          return
-        }
-
-        setGenres(genreResponse.results)
-        setTags(tagResponse.results)
-      } catch {
-        if (!isActive) {
-          return
-        }
-
-        setGenres([])
-        setTags([])
-      }
-    }
-
-    void fetchFilterOptions()
-
-    return () => {
-      isActive = false
-    }
-  }, [])
-
-  // Effect to fetch productions data from the API whenever the ordering, page, retryKey, or searchValue changes.
-  useEffect(() => {
-    let isActive = true
-
-    const fetchProductions = async () => {
+    const fetchPageData = async () => {
       setIsLoading(true)
       setErrorMessage(null)
       setShowFallbackError(false)
       setIsFloatingErrorOpen(false)
+      setFloatingAlertMessage(null)
 
       try {
         const response = await getProductions({
@@ -171,13 +148,16 @@ const HomePage = () => {
         }
 
         if (error instanceof ApiError) {
-          setErrorMessage(error.message)
-          setShowFallbackError(false)
+          // Backend error payloads are not guaranteed to be localized,
+          // so we always show the translated fallback copy in the UI.
+          setErrorMessage(null)
+          setShowFallbackError(true)
         } else {
           setErrorMessage(null)
           setShowFallbackError(true)
         }
         setIsFloatingErrorOpen(true)
+        setFloatingAlertMessage(null)
         setProductions([])
         setTotalCount(0)
       } finally {
@@ -187,7 +167,7 @@ const HomePage = () => {
       }
     }
 
-    void fetchProductions()
+    void fetchPageData()
 
     return () => {
       isActive = false
@@ -205,20 +185,57 @@ const HomePage = () => {
     selectedTagId,
   ])
 
-  // Function to handle retrying the API call when there is an error
+  // Handler for retrying the data fetch when an error occurs, triggered by the retry button in the UI.
   const onRetry = () => {
     setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
     setRetryKey((value) => value + 1)
   }
 
+  // Handler for closing the floating error alert.
   const onFloatingErrorClose = () => {
     setIsFloatingErrorOpen(false)
+    setFloatingAlertMessage(null)
   }
 
-  // Function to handle search submission, which updates the search value
+  // Handler for submitting the search form, which updates the searchValue and triggers a new data fetch
   const onSearchSubmit = (value: string) => {
-    setSearchValue(value.trim())
+    const nextQuery = value.trim()
+    if (nextQuery === searchValue.trim()) {
+      setRetryKey((current) => current + 1)
+      return
+    }
+
+    setSearchValue(nextQuery)
   }
+
+  // If a page navigated here with a floatingAlert in location.state, show it once.
+  useEffect(() => {
+    const { state } = nav
+    if (state?.floatingAlert?.open) {
+      setErrorMessage(null)
+      setShowFallbackError(false)
+      setFloatingAlertMessage(state.floatingAlert.message ?? null)
+      setIsFloatingErrorOpen(true)
+      // Clear the history state so the alert won't reappear on back/refresh
+      try {
+        window.history.replaceState({}, document.title)
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [nav])
+
+  // Main results content.
+  const resultsContent = (
+    <EntityView
+      items={productions}
+      layout={viewMode}
+      getKey={(production) => production.id}
+      renderListItem={(production) => <ProductionListCard production={production} />}
+      renderGridItem={(production) => <ProductionGridCard production={production} />}
+    />
+  )
 
   // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.
   // It also handles the different UI states such as loading, error, and empty results.
@@ -239,9 +256,6 @@ const HomePage = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         resultCount={totalCount}
-        sidebarAriaLabel={t('productions.home.filterPanelLabel')}
-        sidebarTitle={t('productions.home.filterPanelTitle')}
-        sidebarDescription={t('productions.home.filterPanelPlaceholder')}
         sidebarContent={
           <ProductionFilterPanel
             attendanceModes={attendanceModes}
@@ -264,19 +278,16 @@ const HomePage = () => {
         resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('productions.home.loading')}
+        loadingContent={
+          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+        }
         errorMessage={renderedErrorMessage}
         retryLabel={t('productions.home.error.retry')}
         onRetry={onRetry}
         emptyTitle={t('productions.home.empty.title')}
         emptyDescription={t('productions.home.empty.description')}
         hasResults={productions.length > 0}
-        resultsContent={
-          <ProductionView
-            productions={productions}
-            layout={viewMode}
-            selectedGenreIds={selectedGenreIds}
-          />
-        }
+        resultsContent={resultsContent}
         page={page}
         pageSize={PAGE_SIZE}
         totalItems={totalCount}
@@ -287,7 +298,7 @@ const HomePage = () => {
         open={isFloatingErrorOpen}
         onClose={onFloatingErrorClose}
         severity="error"
-        message={floatingErrorMessage}
+        message={floatingAlertMessage ?? floatingErrorMessage}
       />
     </>
   )

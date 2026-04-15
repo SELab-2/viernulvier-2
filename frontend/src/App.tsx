@@ -1,6 +1,8 @@
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
+import { CssBaseline, ThemeProvider } from '@mui/material'
 import { useMemo, useState } from 'react'
+
 import Router from './router'
+import { createAppTheme } from './theme/muiPalette'
 
 const STORAGE_KEY = 'vnv-theme-mode'
 
@@ -14,22 +16,7 @@ const App = () => {
   const [mode, setMode] = useState<'light' | 'dark'>(getInitialMode)
 
   // Recreate the MUI theme only when mode changes.
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode,
-          accent: {
-            main: '#8224E3',
-            contrastText: '#ffffff',
-          },
-        },
-        typography: {
-          fontFamily: ['ABC Monument Grotesk', 'Helvetica', 'Arial', 'sans-serif'].join(','),
-        },
-      }),
-    [mode],
-  )
+  const theme = useMemo(() => createAppTheme(mode), [mode])
 
   // Update UI mode and persist it for future visits.
   const toggleMode = () => {

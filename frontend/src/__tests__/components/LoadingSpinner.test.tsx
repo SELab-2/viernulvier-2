@@ -1,7 +1,9 @@
-import type { ReactNode } from 'react'
-import { render, screen } from '@testing-library/react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { render, screen } from '@testing-library/react'
+
 import LoadingSpinner from '../../components/LoadingSpinner'
+
+import type { ReactNode } from 'react'
 
 const renderWithTheme = (mode: 'light' | 'dark', ui: ReactNode = <LoadingSpinner />) => {
   const theme = createTheme({
