@@ -4,12 +4,12 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
-import ArchivePage from './pages/ArchivePage'
 import BlogDetailPage from './pages/BlogDetailPage'
 import BlogsPage from './pages/BlogsPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import ProductionDetailPage from './pages/ProductionDetailPage'
+import ProductionsPage from './pages/ProductionsPage'
 import SeriesDetailPage from './pages/SeriesDetailPage'
 import SeriesPage from './pages/SeriesPage'
 
@@ -37,7 +37,7 @@ const Router = ({ mode, onToggleMode }: RouterProps) => {
         <Box component="main" sx={{ flexGrow: 1 }}>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/archive" element={<ArchivePage />} />
+            <Route path="/archive" element={<ProductionsPage />} />
             <Route path="/productions" element={<Navigate to="/archive" replace />} />
             <Route path="/productions/:id" element={<ProductionDetailPage />} />
             <Route path="/series" element={<SeriesPage />} />
