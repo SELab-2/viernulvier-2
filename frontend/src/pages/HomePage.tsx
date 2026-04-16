@@ -13,10 +13,11 @@ import {
   useTheme,
 } from '@mui/material'
 import { keyframes } from '@mui/material/styles'
-import { type SyntheticEvent, useState } from 'react'
+import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 
+import { getLandingStats, type LandingStatsResponse } from '../services/productions/Productions'
 import { tokens } from '../theme/tokens'
 
 // ─── Animations ────────────────────────────────────────────────────────────────
@@ -72,13 +73,24 @@ const LANDING_CARDS: LandingCard[] = [
   },
 ]
 
-// Placeholder stats — replace with real data from your API
+const FALLBACK_ARCHIVE_STATS: LandingStatsResponse = {
+  productions: 8500,
+  series: 0,
+  years: 22,
+  stories: 0,
+}
+
 const ARCHIVE_STATS = [
-  { labelKey: 'landing.stats.productions', value: '1.200+' },
-  { labelKey: 'landing.stats.series', value: '80+' },
-  { labelKey: 'landing.stats.years', value: '35+' },
-  { labelKey: 'landing.stats.stories', value: '120+' },
-]
+  { labelKey: 'landing.stats.productions', dataKey: 'productions' },
+  { labelKey: 'landing.stats.series', dataKey: 'series' },
+  { labelKey: 'landing.stats.years', dataKey: 'years' },
+  { labelKey: 'landing.stats.stories', dataKey: 'stories' },
+] as const
+
+const formatArchiveStatValue = (value: number): string => {
+  const formatted = new Intl.NumberFormat('nl-BE').format(value)
+  return value > 0 ? `${formatted}+` : formatted
+}
 
 const LANDING_NOTES = [
   {
@@ -131,6 +143,35 @@ const HomePage = () => {
   const navigate = useNavigate()
   const isDark = theme.palette.mode === 'dark'
   const [searchQuery, setSearchQuery] = useState('')
+  const [archiveStats, setArchiveStats] = useState<LandingStatsResponse>(FALLBACK_ARCHIVE_STATS)
+
+  useEffect(() => {
+    let isActive = true
+
+    const fetchStats = async () => {
+      try {
+        const response = await getLandingStats()
+        if (!isActive) {
+          return
+        }
+
+        setArchiveStats(response)
+      } catch {
+        if (!isActive) {
+          return
+        }
+
+        // Keep predictable values when the stats endpoint is temporarily unavailable.
+        setArchiveStats(FALLBACK_ARCHIVE_STATS)
+      }
+    }
+
+    void fetchStats()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   const handleSearch = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -372,7 +413,7 @@ const HomePage = () => {
                     color: 'text.primary',
                   }}
                 >
-                  {stat.value}
+                  {formatArchiveStatValue(archiveStats[stat.dataKey])}
                 </Typography>
                 <Typography
                   variant="caption"

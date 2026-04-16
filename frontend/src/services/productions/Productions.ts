@@ -21,6 +21,13 @@ interface ProductionSeriesApiResponse {
   results: ProductionSeriesApiRow[]
 }
 
+export interface LandingStatsResponse {
+  productions: number
+  series: number
+  years: number
+  stories: number
+}
+
 /**
  * Retrieve a single production by its numeric ID, optionally including events.
  *
@@ -129,4 +136,12 @@ export const getProductionSeries = async (
       lastProductionImage: row.last_production_image,
     })),
   }
+}
+
+/**
+ * Retrieve homepage counters used in the landing stats bar.
+ */
+export const getLandingStats = async (): Promise<LandingStatsResponse> => {
+  const res = await api.get<LandingStatsResponse>('/productions/landing-stats/')
+  return res.data
 }

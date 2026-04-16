@@ -30,6 +30,7 @@ from apps.productions.models import Production
 from apps.productions.serializers import ProductionSerializer
 from apps.productions.views import ProductionViewSet
 from tests.factories.event import EventFactory
+from tests.factories.blog import BlogFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.media_library import MediaGalleryFactory, MediaItemCropFactory, MediaItemFactory
 from tests.factories.production import (
@@ -237,6 +238,65 @@ class TestProductionSeriesAction(TestCase):
         assert response.status_code == 200
         assert isinstance(response.data, list)
         assert response.data[0]["tag"]["id"] == tag.id
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestProductionLandingStatsAction(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+
+    def test_landing_stats_returns_aggregated_counts(self) -> None:
+        prod_a = ProductionFactory.create()
+        prod_b = ProductionFactory.create()
+
+        series_tag_a = TagFactory.create()
+        series_tag_b = TagFactory.create()
+        ProductionTagFactory.create(production=prod_a, tag=series_tag_a)
+        ProductionTagFactory.create(production=prod_b, tag=series_tag_b)
+
+        EventFactory.create(
+            production=prod_a,
+            starts_at=datetime(2021, 3, 14, 20, 0, tzinfo=UTC),
+            ends_at=datetime(2021, 3, 14, 22, 0, tzinfo=UTC),
+        )
+        EventFactory.create(
+            production=prod_b,
+            starts_at=datetime(2024, 5, 7, 19, 0, tzinfo=UTC),
+            ends_at=datetime(2024, 5, 7, 21, 0, tzinfo=UTC),
+        )
+        EventFactory.create(
+            production=prod_b,
+            starts_at=None,
+            ends_at=datetime(2025, 1, 1, 0, 30, tzinfo=UTC),
+        )
+
+        BlogFactory.create(published_at=datetime(2024, 1, 12, 10, 0, tzinfo=UTC))
+        BlogFactory.create(published_at=datetime(2024, 2, 2, 10, 0, tzinfo=UTC))
+        BlogFactory.create(published_at=None)
+
+        response = self.client.get("/api/v1/productions/landing-stats/", **pub_headers())
+
+        assert response.status_code == 200
+        assert response.data == {
+            "productions": 2,
+            "series": 2,
+            "years": 3,
+            "stories": 2,
+        }
+
+    def test_landing_stats_allows_public_and_internal_keys(self) -> None:
+        public_response = self.client.get("/api/v1/productions/landing-stats/", **pub_headers())
+        internal_response = self.client.get("/api/v1/productions/landing-stats/", **int_headers())
+
+        assert public_response.status_code == 200
+        assert internal_response.status_code == 200
+
+    def test_landing_stats_rejects_unauthorized_requests(self) -> None:
+        response_without_key = self.client.get("/api/v1/productions/landing-stats/")
+        response_wrong_key = self.client.get("/api/v1/productions/landing-stats/", **wrong_headers())
+
+        assert response_without_key.status_code in (401, 403)
+        assert response_wrong_key.status_code in (401, 403)
 
 
 # ---------------------------------------------------------------------------

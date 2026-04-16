@@ -29,6 +29,15 @@ from apps.tags.serializers import TagSerializer
 from .models import Production, ProductionTag, UitDatabaseTheme, UitDatabaseType
 
 
+class ProductionLandingStatsSerializer(serializers.Serializer):
+    """Compact payload for homepage archive counters."""
+
+    productions = serializers.IntegerField(min_value=0)
+    series = serializers.IntegerField(min_value=0)
+    years = serializers.IntegerField(min_value=0)
+    stories = serializers.IntegerField(min_value=0)
+
+
 class ProductionSeriesSerializer(serializers.ModelSerializer):
     """Aggregated series summary grouped by production tag.
 
