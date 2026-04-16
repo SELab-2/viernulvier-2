@@ -26,6 +26,11 @@
       "years": "Years documented",
       "stories": "Stories"
     },
+    "statsSection": {
+      "eyebrow": "Archive at a glance",
+      "title": "A quick overview of the collection.",
+      "description": "Live counts for productions, series, documented years, and stories."
+    },
     "side": {
       "eyebrow": "What you can explore",
       "title": "Four clear ways into the collection.",
@@ -141,6 +146,16 @@
     "detailTitle": "Production Detail",
     "detailPlaceholder": "Production details for ID {{id}} will be displayed here.",
     "backToProductions": "Back to Productions",
+    "pagination": {
+      "navigationLabel": "Production pagination",
+      "pageXofY": "Page {{page}} of {{totalPages}}",
+      "firstPage": "Go to first page",
+      "lastPage": "Go to last page",
+      "nextPage": "Go to next page",
+      "previousPage": "Go to previous page",
+      "currentPage": "Current page, page {{page}}",
+      "goToPage": "Go to page {{page}}"
+    },
     "detail": {
       "related": "Related productions",
       "meta": {

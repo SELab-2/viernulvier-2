@@ -375,57 +375,88 @@ const HomePage = () => {
           {/* ── 3. STATS BAR ─────────────────────────────────────────────────── */}
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
-              gap: 0,
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: tokens.card.borderRadiusPx,
-              overflow: 'hidden',
               animation: `${fadeUp} 700ms 200ms ease both`,
               '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
             }}
           >
-            {ARCHIVE_STATS.map((stat, i) => (
+            <Stack spacing={2}>
+              <RuleLabel label={t('landing.statsSection.eyebrow')} />
+              <Stack spacing={0.75} sx={{ maxWidth: 720 }}>
+                <Typography
+                  variant="h5"
+                  component="h2"
+                  sx={{ fontWeight: 800, letterSpacing: '-0.02em', color: 'text.primary' }}
+                >
+                  {t('landing.statsSection.title')}
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                  {t('landing.statsSection.description')}
+                </Typography>
+              </Stack>
+
               <Box
-                key={stat.labelKey}
                 sx={{
-                  p: { xs: 2.5, md: 3 },
-                  borderRight:
-                    i < ARCHIVE_STATS.length - 1 ? `1px solid ${theme.palette.divider}` : 'none',
-                  borderBottom: {
-                    xs: i < 2 ? `1px solid ${theme.palette.divider}` : 'none',
-                    sm: 'none',
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: 'repeat(2, minmax(0, 1fr))',
+                    md: 'repeat(4, minmax(0, 1fr))',
                   },
-                  bgcolor: subtleBg,
-                  textAlign: 'center',
+                  gap: 1,
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: tokens.card.borderRadiusPx,
+                  overflow: 'hidden',
+                  bgcolor: theme.palette.background.paper,
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: { xs: '1.8rem', md: '2.4rem' },
-                    fontWeight: 800,
-                    letterSpacing: '-0.03em',
-                    lineHeight: 1,
-                    color: 'text.primary',
-                  }}
-                >
-                  {formatArchiveStatValue(archiveStats[stat.dataKey])}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    mt: 0.5,
-                    display: 'block',
-                    fontSize: '0.78rem',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'text.disabled',
-                  }}
-                >
-                  {t(stat.labelKey)}
-                </Typography>
+                {ARCHIVE_STATS.map((stat, i) => (
+                  <Box
+                    key={stat.labelKey}
+                    sx={{
+                      p: { xs: 1.75, md: 2.25 },
+                      borderRight: {
+                        xs: 'none',
+                        md:
+                          i < ARCHIVE_STATS.length - 1
+                            ? `1px solid ${theme.palette.divider}`
+                            : 'none',
+                      },
+                      borderBottom: {
+                        xs: i < 2 ? `1px solid ${theme.palette.divider}` : 'none',
+                        md: 'none',
+                      },
+                      bgcolor: subtleBg,
+                      textAlign: 'center',
+                      minWidth: 0,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: { xs: '1.45rem', md: '1.8rem' },
+                        fontWeight: 800,
+                        letterSpacing: '-0.03em',
+                        lineHeight: 1,
+                        color: 'text.primary',
+                      }}
+                    >
+                      {formatArchiveStatValue(archiveStats[stat.dataKey])}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        mt: 0.5,
+                        display: 'block',
+                        fontSize: '0.72rem',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        color: 'text.disabled',
+                      }}
+                    >
+                      {t(stat.labelKey)}
+                    </Typography>
+                  </Box>
+                ))}
               </Box>
-            ))}
+            </Stack>
           </Box>
 
           {/* ── 4. ENTRY CARDS SECTION ───────────────────────────────────────── */}

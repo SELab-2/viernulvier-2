@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
@@ -39,26 +40,27 @@ describe('HomePage', () => {
   it('renders the landing hero and archive links', async () => {
     renderPage()
 
-    expect(await screen.findByText('1.200+')).toBeInTheDocument()
+    expect(await screen.findByText('1.200+')).toBeTruthy()
 
     expect(
       screen.getByRole('heading', {
         name: 'Het levende archief van VIERNULVIER.',
       }),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open het archief' })).toHaveAttribute(
-      'href',
+    ).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Open het archief' }).getAttribute('href')).toBe(
       '/archive',
     )
-    expect(screen.getByRole('link', { name: 'Bekijk reeksen' })).toHaveAttribute('href', '/series')
-    expect(screen.getByRole('link', { name: 'Lees verhalen' })).toHaveAttribute('href', '/blogs')
-    expect(screen.getByRole('heading', { name: 'Ontdek reeksen' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Bekijk reeksen' }).getAttribute('href')).toBe(
+      '/series',
+    )
+    expect(screen.getByRole('link', { name: 'Lees verhalen' }).getAttribute('href')).toBe('/blogs')
+    expect(screen.getByRole('heading', { name: 'Ontdek reeksen' })).toBeTruthy()
   })
 
   it('renders equally tall entry cards', async () => {
     const { container } = renderPage()
 
-    expect(await screen.findByText('1.200+')).toBeInTheDocument()
+    expect(await screen.findByText('1.200+')).toBeTruthy()
 
     const cardLinks = Array.from(container.querySelectorAll('a[href]')).filter((link) =>
       Boolean(link.querySelector('h3')),
@@ -66,7 +68,7 @@ describe('HomePage', () => {
 
     expect(cardLinks).toHaveLength(4)
     cardLinks.forEach((link) => {
-      expect(link).toHaveStyle('min-height: 200px')
+      expect(window.getComputedStyle(link).minHeight).toBe('200px')
     })
   })
 
@@ -80,9 +82,9 @@ describe('HomePage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('1.234+')).toBeInTheDocument()
-    expect(screen.getByText('81+')).toBeInTheDocument()
-    expect(screen.getByText('36+')).toBeInTheDocument()
-    expect(screen.getByText('121+')).toBeInTheDocument()
+    expect(await screen.findByText('1.234+')).toBeTruthy()
+    expect(screen.getByText('81+')).toBeTruthy()
+    expect(screen.getByText('36+')).toBeTruthy()
+    expect(screen.getByText('121+')).toBeTruthy()
   })
 })

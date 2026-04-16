@@ -26,6 +26,11 @@
       "years": "Gedocumenteerde jaren",
       "stories": "Verhalen"
     },
+    "statsSection": {
+      "eyebrow": "Archief in cijfers",
+      "title": "Een snel overzicht van de collectie.",
+      "description": "Live tellingen van producties, reeksen, gedocumenteerde jaren en verhalen."
+    },
     "side": {
       "eyebrow": "Wat je hier vindt",
       "title": "Vier heldere ingangen in de collectie.",
@@ -141,6 +146,16 @@
     "detailTitle": "Productie Detail",
     "detailPlaceholder": "Details van productie met ID {{id}} worden hier weergegeven.",
     "backToProductions": "Terug naar Producties",
+    "pagination": {
+      "navigationLabel": "Paginering van producties",
+      "pageXofY": "Pagina {{page}} van {{totalPages}}",
+      "firstPage": "Ga naar eerste pagina",
+      "lastPage": "Ga naar laatste pagina",
+      "nextPage": "Ga naar volgende pagina",
+      "previousPage": "Ga naar vorige pagina",
+      "currentPage": "Huidige pagina, pagina {{page}}",
+      "goToPage": "Ga naar pagina {{page}}"
+    },
     "detail": {
       "related": "Gerelateerde producties",
       "meta": {
