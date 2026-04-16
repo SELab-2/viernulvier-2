@@ -16,15 +16,13 @@ Unless stated otherwise, commands should be run from the repository root. Comman
 
 Use the dev setup when you want fast iteration and hot reload.
 
-### 1. Backend environment file
+### 1. Infrastructure environment file
 
-Create `backend/.env` by copying `backend/.env.example`.
+Create `infrastructure/.env` by copying `infrastructure/.env.example`.
 
-This file is used by Django when you run the backend directly on your machine.
+For local development with `python manage.py runserver`, Django loads this file via `python-dotenv`.
 
 ### 2. Start only the database with Docker
-
-Create `infrastructure/.env.dev` by copying `infrastructure/.env.dev.example`.
 
 Start PostgreSQL:
 
@@ -68,9 +66,11 @@ docker compose -f infrastructure/docker-compose.dev.yml down
 
 Use the staging stack when you want to run the full application locally behind nginx, close to production, but without HTTPS and certbot.
 
-### 1. Create the staging env file
+### 1. Create the shared env file
 
-Create `infrastructure/.env.staging` by copying `infrastructure/.env.staging.example`.
+Create `infrastructure/.env` by copying `infrastructure/.env.example`.
+
+For local staging, set `DOMAIN=localhost`.
 
 ### 2. Start the full stack
 
@@ -138,7 +138,7 @@ The safest order is:
 1. Install Docker on the server.
 2. Install and register the GitHub Actions self-hosted runner.
 3. Add the production variables as GitHub Secrets.
-4. Trigger the deployment workflow once so `infrastructure/.env.prod` is generated on the server.
+4. Trigger the deployment workflow once so `infrastructure/.env` is generated on the server.
 5. Run `infrastructure/certbot/setup-certbot.sh` once to request the real certificate.
 
 ### 1. Install Docker
@@ -173,14 +173,14 @@ Official reference:
 
 ### 3. Add GitHub Secrets
 
-The deploy workflow creates `infrastructure/.env.prod` from `infrastructure/.env.prod.example`, so every variable in that example file should be added as a GitHub repository secret.
+The deploy workflow creates `infrastructure/.env` directly from GitHub Secrets. Every variable listed in `infrastructure/.env.example` should exist as a GitHub repository secret with the same name.
 
 To add them:
 
 1. Open the repository on GitHub.
 2. Go to `Settings -> Secrets and variables -> Actions`.
 3. Click `New repository secret`.
-4. Open `infrastructure/.env.prod.example`.
+4. Open `infrastructure/.env.example`.
 5. For each variable name in that file, create a secret in GitHub with the same name and the correct production value.
 
 ### 4. First deployment
@@ -190,7 +190,7 @@ The production workflow is defined in `.github/workflows/deploy.yml`.
 It:
 
 1. Checks out the repository on the self-hosted runner.
-2. Creates `infrastructure/.env.prod` from GitHub Secrets using `envsubst`.
+2. Creates `infrastructure/.env` from GitHub Secrets.
 3. Builds the production containers.
 4. Starts the stack with Docker Compose.
 5. Runs a simple post-deploy container status check.

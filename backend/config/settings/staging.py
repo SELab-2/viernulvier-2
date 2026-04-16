@@ -11,8 +11,6 @@ Usage:
     DJANGO_SETTINGS_MODULE=config.settings.staging gunicorn config.wsgi
 """
 
-import os
-
 from .base import *  # noqa: F403
 from .base import REST_FRAMEWORK
 
@@ -22,21 +20,21 @@ from .base import REST_FRAMEWORK
 
 DEBUG = False
 
-ALLOWED_HOSTS = [host.strip() for host in os.environ["ALLOWED_HOSTS"].split(",") if host.strip()]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 # ---------------------------------------------------------------------------
-# Security - same as prod, except a short HSTS duration
+# Security - relaxed for local staging over plain HTTP
 # ---------------------------------------------------------------------------
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_SSL_REDIRECT = True
-SECURE_HSTS_SECONDS = 300  # 5 minutes - safe to iterate on staging domains
+SECURE_SSL_REDIRECT = False
+SECURE_HSTS_SECONDS = 0
 SECURE_CONTENT_TYPE_NOSNIFF = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
-CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host]
+CSRF_TRUSTED_ORIGINS = [f"http://{host}" for host in ALLOWED_HOSTS if host]
 
 # ---------------------------------------------------------------------------
 # REST Framework - throttle rates lower than prod for easier manual testing
