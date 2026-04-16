@@ -98,12 +98,12 @@ const LANDING_NOTES = [
     descriptionKey: 'landing.side.archive.description',
   },
   {
-    titleKey: 'landing.side.stories.title',
-    descriptionKey: 'landing.side.stories.description',
-  },
-  {
     titleKey: 'landing.side.series.title',
     descriptionKey: 'landing.side.series.description',
+  },
+  {
+    titleKey: 'landing.side.stories.title',
+    descriptionKey: 'landing.side.stories.description',
   },
   {
     titleKey: 'landing.side.prints.title',
@@ -368,10 +368,6 @@ const HomePage = () => {
                     </Stack>
                   ))}
                 </Stack>
-
-                <Typography variant="caption" color="text.disabled" sx={{ lineHeight: 1.5 }}>
-                  {t('landing.side.footer')}
-                </Typography>
               </Paper>
             </Box>
           </Paper>

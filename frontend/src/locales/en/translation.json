@@ -15,7 +15,7 @@
     "hero": {
       "eyebrow": "VIERNULVIER ARCHIVE",
       "title": "The living archive of VIERNULVIER.",
-      "description": "Discover decades of performances, concerts and theatre from Kunstencentrum VIERNULVIER - compiled, enriched with context and made accessible to everyone.",
+      "description": "Explore decades of performances, concerts, and theatre at Kunstencentrum VIERNULVIER, carefully catalogued and enriched with context.",
       "primaryCta": "Open archive",
       "seriesCta": "Browse series",
       "secondaryCta": "Read stories"
@@ -27,55 +27,54 @@
       "stories": "Stories"
     },
     "side": {
-      "eyebrow": "What you will find",
-      "title": "Four entry points into the collection.",
+      "eyebrow": "What you can explore",
+      "title": "Four clear ways into the collection.",
       "archive": {
         "title": "Performances, concerts & theatre",
-        "description": "Search by artist, venue, or period. Every event in the VIERNULVIER history, catalogued and searchable."
+        "description": "Search by artist, venue, or period. Every documented production in VIERNULVIER's history, searchable in one place."
       },
       "stories": {
         "title": "Stories and context",
-        "description": "Editorial pieces that add meaning to the archive - interviews, essays, and notes from researchers and curators."
+        "description": "Editorial pieces that deepen the archive - interviews, essays, and notes by researchers and curators."
       },
       "series": {
         "title": "Series and editions",
-        "description": "Productions grouped by recurring series. Follow how each edition evolved across the years."
+        "description": "Productions grouped by recurring series. Follow how each edition evolves over time."
       },
       "prints": {
         "title": "Posters and printed matter",
         "description": "Scanned posters, programme booklets, and brochures from the physical collection."
-      },
-      "footer": "Use these entry points to navigate directly to the part of the collection you want to explore."
+      }
     },
     "cardsSection": {
       "eyebrow": "Explore the collection",
       "title": "Where do you want to start?",
-      "description": "Four clear entry points into the VIERNULVIER archive. Each one opens a different layer of the collection."
+      "description": "Explore the VIERNULVIER archive through one of the four perspectives. Each gateway reveals a unique aspect of our rich collection."
     },
     "cards": {
       "archive": {
         "eyebrow": "01 - Archive",
         "title": "Explore the archive",
-        "description": "Search performances by artist, venue, or period. The complete production history of VIERNULVIER.",
+        "description": "Search productions by artist, venue, or period. The full production history of VIERNULVIER.",
         "cta": "Open archive"
       },
       "series": {
         "eyebrow": "02 - Series",
         "title": "Browse series",
-        "description": "Productions grouped by series. Follow the linked editions in chronological order.",
+        "description": "Productions grouped by recurring series. Follow linked editions in chronological order.",
         "cta": "Open series"
       },
       "stories": {
         "eyebrow": "03 - Stories",
         "title": "Read the stories",
-        "description": "Interviews, essays, and research notes that add context to the archive.",
+        "description": "Interviews, essays, and research notes that add depth and context to the archive.",
         "cta": "Read stories"
       },
       "prints": {
         "eyebrow": "04 - Prints",
-        "title": "View printed materials",
+        "title": "Explore printed materials",
         "description": "Posters, programme booklets, and brochures from the physical collection.",
-        "cta": "View prints"
+        "cta": "Open prints"
       }
     }
   },

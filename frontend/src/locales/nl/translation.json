@@ -15,7 +15,7 @@
     "hero": {
       "eyebrow": "VIERNULVIER-ARCHIEF",
       "title": "Het levende archief van VIERNULVIER.",
-      "description": "Ontdek decennia aan voorstellingen, concerten en theater van Kunstencentrum VIERNULVIER - gebundeld, verrijkt met context en voor iedereen toegankelijk gemaakt.",
+      "description": "Verken decennia aan voorstellingen, concerten en theater van Kunstencentrum VIERNULVIER, zorgvuldig gecatalogiseerd en verrijkt met context.",
       "primaryCta": "Open het archief",
       "seriesCta": "Bekijk reeksen",
       "secondaryCta": "Lees verhalen"
@@ -27,55 +27,54 @@
       "stories": "Verhalen"
     },
     "side": {
-      "eyebrow": "Wat je vindt",
-      "title": "Vier ingangen in de collectie.",
+      "eyebrow": "Wat je hier vindt",
+      "title": "Vier heldere ingangen in de collectie.",
       "archive": {
         "title": "Voorstellingen, concerten & theater",
-        "description": "Zoek op artiest, locatie of periode. Elke productie in de geschiedenis van VIERNULVIER, gecatalogiseerd en doorzoekbaar."
+        "description": "Zoek op artiest, locatie of periode. Elke gedocumenteerde productie uit de geschiedenis van VIERNULVIER, doorzoekbaar op een plek."
       },
       "stories": {
         "title": "Verhalen en context",
-        "description": "Redactionele stukken die het archief verrijken - interviews, essays en notities van onderzoekers en curatoren."
+        "description": "Redactionele stukken die het archief verdiepen: interviews, essays en notities van onderzoekers en curatoren."
       },
       "series": {
         "title": "Reeksen en edities",
-        "description": "Producties gegroepeerd per terugkerende reeks. Volg hoe elke editie door de jaren heen evolueerde."
+        "description": "Producties gegroepeerd per terugkerende reeks. Volg hoe edities door de jaren heen evolueren."
       },
       "prints": {
         "title": "Affiches en drukwerk",
         "description": "Gescande affiches, programmaboekjes en brochures uit de fysieke collectie."
-      },
-      "footer": "Gebruik deze ingangen om rechtstreeks naar het deel van de collectie te gaan dat je wilt verkennen."
+      }
     },
     "cardsSection": {
       "eyebrow": "Verken de collectie",
       "title": "Waar wil je beginnen?",
-      "description": "Vier duidelijke ingangen in het VIERNULVIER-archief. Elke ingang opent een andere laag van de collectie."
+      "description": "Verken het VIERNULVIER-archief via een van de vier invalshoeken. Elke toegangspoort onthult een unieke laag van onze rijke collectie."
     },
     "cards": {
       "archive": {
         "eyebrow": "01 - Archief",
         "title": "Verken het archief",
-        "description": "Zoek voorstellingen op artiest, locatie of periode. De volledige productiegeschiedenis van VIERNULVIER.",
-        "cta": "Open archief"
+        "description": "Zoek producties op artiest, locatie of periode. De volledige productiegeschiedenis van VIERNULVIER.",
+        "cta": "Open het archief"
       },
       "series": {
         "eyebrow": "02 - Reeksen",
         "title": "Ontdek reeksen",
-        "description": "Producties gegroepeerd per reeks. Volg de edities in chronologische volgorde.",
+        "description": "Producties gegroepeerd per terugkerende reeks. Volg gekoppelde edities in chronologische volgorde.",
         "cta": "Open reeksen"
       },
       "stories": {
         "eyebrow": "03 - Verhalen",
         "title": "Lees de verhalen",
-        "description": "Interviews, essays en onderzoeksnotities die context toevoegen aan het archief.",
+        "description": "Interviews, essays en onderzoeksnotities die extra context geven aan het archief.",
         "cta": "Lees verhalen"
       },
       "prints": {
         "eyebrow": "04 - Drukwerk",
-        "title": "Bekijk drukwerk",
+        "title": "Ontdek drukwerk",
         "description": "Affiches, programmaboekjes en brochures uit de fysieke collectie.",
-        "cta": "Bekijk prints"
+        "cta": "Bekijk drukwerk"
       }
     }
   },
