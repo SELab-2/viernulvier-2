@@ -2,6 +2,9 @@
 infrastructure/.env.*
 !infrastructure/.env.*.example
 
+.env
+infrastructure/.env
+
 # Virtual environment
 /venv/
 venv/
