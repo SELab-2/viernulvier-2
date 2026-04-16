@@ -435,6 +435,7 @@ const ProductionFilterPanel = ({
               label={t('productions.home.filters.startAfter')}
               value={currentStartAfterField.draft}
               format={DATE_PICKER_FORMAT}
+              disableFuture
               onChange={(value, context) => {
                 const nextState = {
                   sourceValue: firstEventStartAfter,
@@ -464,6 +465,7 @@ const ProductionFilterPanel = ({
               label={t('productions.home.filters.startBefore')}
               value={currentStartBeforeField.draft}
               format={DATE_PICKER_FORMAT}
+              disableFuture
               onChange={(value, context) => {
                 const nextState = {
                   sourceValue: firstEventStartBefore,
