@@ -1,13 +1,17 @@
 import react from '@vitejs/plugin-react'
+import path from 'path'
 import { defineConfig, loadEnv } from 'vite'
 
 export default ({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '')
+  const envDir = path.resolve(import.meta.dirname, '../infrastructure')
+  const env = loadEnv(mode, envDir, 'PUBLIC_')
 
   return defineConfig({
     plugins: [react()],
+    envDir: envDir,
+    envPrefix: 'PUBLIC_',
     define: {
-      'process.env.VITE_PUBLIC_API_KEY': JSON.stringify(env.VITE_PUBLIC_API_KEY ?? ''),
+      'process.env.PUBLIC_API_KEY': JSON.stringify(env.PUBLIC_API_KEY),
     },
     server: {
       proxy: {
