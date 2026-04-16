@@ -1,4 +1,5 @@
 import { useMediaQuery, useTheme } from '@mui/material'
+import { useMemo } from 'react'
 
 import ProductionGrid from './ProductionGrid'
 import ProductionList from './ProductionList'
@@ -11,6 +12,7 @@ export interface ProductionViewProps {
   productions: Production[]
   layout?: LayoutMode
   selectedGenreIds?: number[]
+  onGenreIdsChange?: (ids: number[]) => void
 }
 
 /**
@@ -22,8 +24,13 @@ export interface ProductionViewProps {
  * the `layout` prop. Layout toggle controls should live in the parent and pass the
  * chosen mode down via `layout`.
  *
+ * When `selectedGenreIds` is provided, productions whose genres include at least
+ * one selected id are sorted to the front of the list. Genre chips on cards are
+ * rendered as non-interactive whenever `selectedGenreIds` is defined.
+ *
  * @param props.productions List of productions to display.
  * @param props.selectedGenreIds Genre ids currently active in the parent filter state.
+ * @param props.onGenreIdsChange Callback to update the selected genre ids in the parent.
  * @param props.layout Requested layout mode; defaults to 'list'.
  * @returns The production view element.
  */
@@ -37,11 +44,29 @@ const ProductionView = ({
 
   const activeLayout: LayoutMode = isSmall ? 'grid' : layout
 
+  // Stable-sort: productions that match at least one selected genre float to the top.
+  const sortedProductions = useMemo(() => {
+    if (!selectedGenreIds || selectedGenreIds.length === 0) {
+      return productions
+    }
+    return [...productions].sort((a, b) => {
+      const aMatches = a.genres.some((g) => selectedGenreIds.includes(g.id))
+      const bMatches = b.genres.some((g) => selectedGenreIds.includes(g.id))
+      if (aMatches && !bMatches) {
+        return -1
+      }
+      if (!aMatches && bMatches) {
+        return 1
+      }
+      return 0
+    })
+  }, [productions, selectedGenreIds])
+
   if (activeLayout === 'list') {
-    return <ProductionList productions={productions} selectedGenreIds={selectedGenreIds} />
+    return <ProductionList productions={sortedProductions} selectedGenreIds={selectedGenreIds} />
   }
   if (activeLayout === 'grid') {
-    return <ProductionGrid productions={productions} selectedGenreIds={selectedGenreIds} />
+    return <ProductionGrid productions={sortedProductions} selectedGenreIds={selectedGenreIds} />
   }
 }
 
