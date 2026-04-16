@@ -38,7 +38,6 @@ const ProductionView = ({
   productions,
   layout = 'list',
   selectedGenreIds,
-  onGenreIdsChange,
 }: ProductionViewProps) => {
   const theme = useTheme()
   const isSmall = useMediaQuery(theme.breakpoints.down('md'))
@@ -47,12 +46,18 @@ const ProductionView = ({
 
   // Stable-sort: productions that match at least one selected genre float to the top.
   const sortedProductions = useMemo(() => {
-    if (!selectedGenreIds || selectedGenreIds.length === 0) return productions
+    if (!selectedGenreIds || selectedGenreIds.length === 0) {
+      return productions
+    }
     return [...productions].sort((a, b) => {
       const aMatches = a.genres.some((g) => selectedGenreIds.includes(g.id))
       const bMatches = b.genres.some((g) => selectedGenreIds.includes(g.id))
-      if (aMatches && !bMatches) return -1
-      if (!aMatches && bMatches) return 1
+      if (aMatches && !bMatches) {
+        return -1
+      }
+      if (!aMatches && bMatches) {
+        return 1
+      }
       return 0
     })
   }, [productions, selectedGenreIds])

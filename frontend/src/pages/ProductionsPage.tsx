@@ -211,7 +211,6 @@ const ProductionsPage = () => {
             productions={productions}
             layout={viewMode}
             selectedGenreIds={selectedGenreIds}
-            onGenreIdsChange={setSelectedGenreIds}
           />
         }
         page={page}
