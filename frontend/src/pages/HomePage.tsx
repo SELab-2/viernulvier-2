@@ -5,8 +5,8 @@ import { useLocation } from 'react-router-dom'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import EntityView from '../components/entity/EntityView'
+import FilterPanel from '../components/filter-panel/FilterPanel'
 import FloatingAlert from '../components/FloatingAlert'
-import ProductionFilterPanel from '../components/production/ProductionFilterPanel'
 import ProductionGridCard from '../components/productions/ProductionGridCard'
 import ProductionListCard from '../components/productions/ProductionListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
@@ -272,7 +272,7 @@ const HomePage = () => {
     />
   )
   const filterPanel = (
-    <ProductionFilterPanel
+    <FilterPanel
       attendanceModes={attendanceModes}
       performerTypes={performerTypes}
       firstEventStartAfter={firstEventStartAfter}

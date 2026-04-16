@@ -6,13 +6,11 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import React, { type ReactNode } from 'react'
 import { I18nextProvider } from 'react-i18next'
 
-import ProductionFilterPanel, {
-  type ProductionFilterPanelProps,
-} from '../../../components/production/ProductionFilterPanel'
-import i18n from '../../../i18n'
+import FilterPanel, { type FilterPanelProps } from '../../components/filter-panel/FilterPanel'
+import i18n from '../../i18n'
 
-import type { Genre } from '../../../types/Genres'
-import type { Tag } from '../../../types/Tags'
+import type { Genre } from '../../types/Genres'
+import type { Tag } from '../../types/Tags'
 
 jest.mock('@mui/x-date-pickers/AdapterDayjs', () => ({
   AdapterDayjs: function AdapterDayjs() {
@@ -99,7 +97,7 @@ jest.mock('@mui/x-date-pickers/DatePicker', () => ({
   },
 }))
 
-jest.mock('../../../components/chips/GenreAndTagChip', () => ({
+jest.mock('../../components/chips/GenreAndTagChip', () => ({
   __esModule: true,
   default: ({
     id,
@@ -158,9 +156,7 @@ const buildTag = (overrides: Partial<Tag> = {}): Tag => ({
   url_title: overrides.url_title ?? {},
 })
 
-const buildProps = (
-  overrides: Partial<ProductionFilterPanelProps> = {},
-): ProductionFilterPanelProps => ({
+const buildProps = (overrides: Partial<FilterPanelProps> = {}): FilterPanelProps => ({
   attendanceModes: [],
   performerTypes: [],
   firstEventStartAfter: '',
@@ -179,7 +175,7 @@ const buildProps = (
   ...overrides,
 })
 
-const renderPanel = (overrides: Partial<ProductionFilterPanelProps> = {}) => {
+const renderPanel = (overrides: Partial<FilterPanelProps> = {}) => {
   const props = buildProps(overrides)
 
   return {
@@ -188,16 +184,16 @@ const renderPanel = (overrides: Partial<ProductionFilterPanelProps> = {}) => {
   }
 }
 
-const renderWithProps = (props: ProductionFilterPanelProps) =>
+const renderWithProps = (props: FilterPanelProps) =>
   render(
     <I18nextProvider i18n={i18n}>
       <ThemeProvider theme={createTheme()}>
-        <ProductionFilterPanel {...props} />
+        <FilterPanel {...props} />
       </ThemeProvider>
     </I18nextProvider>,
   )
 
-describe('ProductionFilterPanel', () => {
+describe('FilterPanel', () => {
   beforeEach(async () => {
     jest.clearAllMocks()
     await i18n.changeLanguage('nl')
@@ -426,7 +422,7 @@ describe('ProductionFilterPanel', () => {
     view.rerender(
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={createTheme()}>
-          <ProductionFilterPanel {...nextProps} />
+          <FilterPanel {...nextProps} />
         </ThemeProvider>
       </I18nextProvider>,
     )
