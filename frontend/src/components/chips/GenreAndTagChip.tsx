@@ -4,10 +4,10 @@ import { useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 
-import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
-import { getQueryKeyForChipType } from './genreAndTagChipUtils'
 import { tokens } from '../../theme/tokens'
 import { getTranslatedRecord } from '../../utils/translations'
+import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
+import { getQueryKeyForChipType } from './genreAndTagChipUtils'
 
 import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
 
@@ -51,7 +51,7 @@ const GenreAndTagChip = ({
     context === 'series'
       ? `/series/${String(id)}`
       : context === 'description'
-        ? `/?${getQueryKeyForChipType(chipType)}=${encodeURIComponent(String(id))}`
+        ? `/archive?${getQueryKeyForChipType(chipType)}=${encodeURIComponent(String(id))}`
         : undefined
   const showSelectedIcon = context === 'search' && selected
   const selectedChipColor =
