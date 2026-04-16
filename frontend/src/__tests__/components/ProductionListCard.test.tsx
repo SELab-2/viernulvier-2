@@ -253,7 +253,7 @@ describe('ProductionListCard', () => {
     expect(screen.queryByText(/ - /)).not.toBeInTheDocument()
   })
 
-  it('renders static genre chips without interactive filter behavior', () => {
+  it('renders genre chips as navigation links without search-filter behavior', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(1, 'Dans'), minimalGenre(2, 'Muziek')],
@@ -267,7 +267,7 @@ describe('ProductionListCard', () => {
     expect(onGenreClick).not.toHaveBeenCalled()
   })
 
-  it('renders static series tag chips alongside genres', () => {
+  it('renders series tag chips alongside genres as navigation links', () => {
     const production = baseProduction({
       tags: [minimalTag(11, 'Festivalreeks')],
       genres: [minimalGenre(1, 'Dans')],
@@ -415,7 +415,7 @@ describe('ProductionListCard', () => {
     expect(screen.getByAltText('Fallback image')).toBeInTheDocument()
   })
 
-  it('does not fire onGenreClick for static chips', () => {
+  it('does not fire onGenreClick — chips navigate rather than toggle filters', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(1, 'A'), minimalGenre(2, 'B')],
@@ -427,7 +427,7 @@ describe('ProductionListCard', () => {
     expect(onGenreClick).not.toHaveBeenCalled()
   })
 
-  it('keeps only the card link interactive when genres are static', () => {
+  it('card link navigates to detail route; genre chips navigate to homepage filter', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(5, 'Chip')],

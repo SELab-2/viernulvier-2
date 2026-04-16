@@ -115,41 +115,43 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
             ) : null}
           </Stack>
 
-          <Stack
-            direction="row"
-            spacing={0.75}
-            sx={{ flexWrap: 'wrap', height: 32, overflow: 'hidden' }}
-          >
-            {tags.map((tag) => (
-              <GenreAndTagChip
-                key={`tag-${tag.id}`}
-                name={getTranslatedRecord(
-                  tag.name || tag.url_title || {},
-                  language,
-                  tag.display_name ?? tag.type ?? String(tag.id),
-                )}
-                labels={tag.name || tag.url_title || {}}
-                chipType="seriesTag"
-                context="static"
-                id={tag.id}
-              />
-            ))}
-            {genres.map((genre) => (
-              <GenreAndTagChip
-                key={genre.id}
-                name={getTranslatedRecord(
-                  genre.name,
-                  language,
-                  genre.display_name ?? String(genre.id),
-                )}
-                labels={genre.name || {}}
-                chipType="genre"
-                context="static"
-                id={genre.id}
-                selected={selectedGenreIds?.includes(genre.id) || false}
-              />
-            ))}
-          </Stack>
+          <Box onClick={(e) => e.stopPropagation()}>
+            <Stack
+              direction="row"
+              spacing={0.75}
+              sx={{ flexWrap: 'wrap', height: 32, overflow: 'hidden' }}
+            >
+              {tags.map((tag) => (
+                <GenreAndTagChip
+                  key={`tag-${tag.id}`}
+                  name={getTranslatedRecord(
+                    tag.name || tag.url_title || {},
+                    language,
+                    tag.display_name ?? tag.type ?? String(tag.id),
+                  )}
+                  labels={tag.name || tag.url_title || {}}
+                  chipType="seriesTag"
+                  context="series"
+                  id={tag.id}
+                />
+              ))}
+              {genres.map((genre) => (
+                <GenreAndTagChip
+                  key={genre.id}
+                  name={getTranslatedRecord(
+                    genre.name,
+                    language,
+                    genre.display_name ?? String(genre.id),
+                  )}
+                  labels={genre.name || {}}
+                  chipType="genre"
+                  context="description"
+                  id={genre.id}
+                  selected={selectedGenreIds?.includes(genre.id) || false}
+                />
+              ))}
+            </Stack>
+          </Box>
         </Stack>
       </Stack>
 
