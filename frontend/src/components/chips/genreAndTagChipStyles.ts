@@ -71,6 +71,16 @@ export const getGenreAndTagChipStyles = ({
     }
   }
 
+  if (context !== 'static') {
+    return {
+      ...base,
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+      borderColor: selectedBg,
+      ...unselectedHoverStyles,
+    }
+  }
+
   return {
     ...base,
     backgroundColor: theme.palette.background.paper,
