@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
+import EntityView from '../components/entity/EntityView'
 import FloatingAlert from '../components/FloatingAlert'
-import ProductionView from '../components/ProductionView'
+import ProductionGridCard from '../components/productions/ProductionGridCard'
+import ProductionListCard from '../components/productions/ProductionListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
@@ -13,7 +15,7 @@ import { getProductions } from '../services/productions/Productions'
 
 import type { Production } from '../types/Productions'
 
-// Page size for the productions list pagination. This is a constant for now but could be made configurable in the future if needed.
+// Page size for pagination.
 const PAGE_SIZE = 12
 
 // Function to determine the ordering parameter for the API based on the current sort target and direction.
@@ -31,6 +33,7 @@ const HomePage = () => {
   type NavState = { floatingAlert?: { open?: boolean; message?: string } }
   const nav = location as { state?: NavState }
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
   const {
     searchValue,
@@ -56,6 +59,7 @@ const HomePage = () => {
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
+  // Error message to display in the UI, preferring the translated fallback message
   const renderedErrorMessage = showFallbackError
     ? t('productions.home.error.fallback')
     : errorMessage
@@ -67,16 +71,15 @@ const HomePage = () => {
     [sortDirection, sortTarget],
   )
 
-  // Effect to synchronize the search draft state with the actual search value from the URL
   useEffect(() => {
     setSearchDraft(searchValue)
   }, [searchValue])
 
-  // Effect to fetch productions data from the API whenever the ordering, page, retryKey, or searchValue changes.
+  // Effect to fetch the productions data from the API whenever the ordering, page, retryKey, or searchValue changes
   useEffect(() => {
     let isActive = true
 
-    const fetchProductions = async () => {
+    const fetchPageData = async () => {
       setIsLoading(true)
       setErrorMessage(null)
       setShowFallbackError(false)
@@ -124,26 +127,27 @@ const HomePage = () => {
       }
     }
 
-    void fetchProductions()
+    void fetchPageData()
 
     return () => {
       isActive = false
     }
   }, [ordering, page, retryKey, searchValue])
 
-  // Function to handle retrying the API call when there is an error
+  // Handler for retrying the data fetch when an error occurs, triggered by the retry button in the UI.
   const onRetry = () => {
     setIsFloatingErrorOpen(false)
     setFloatingAlertMessage(null)
     setRetryKey((value) => value + 1)
   }
 
+  // Handler for closing the floating error alert.
   const onFloatingErrorClose = () => {
     setIsFloatingErrorOpen(false)
     setFloatingAlertMessage(null)
   }
 
-  // Function to handle search submission, which updates the search value
+  // Handler for submitting the search form, which updates the searchValue and triggers a new data fetch
   const onSearchSubmit = (value: string) => {
     const nextQuery = value.trim()
     if (nextQuery === searchValue.trim()) {
@@ -170,6 +174,17 @@ const HomePage = () => {
       }
     }
   }, [nav])
+
+  // Main results content.
+  const resultsContent = (
+    <EntityView
+      items={productions}
+      layout={viewMode}
+      getKey={(production) => production.id}
+      renderListItem={(production) => <ProductionListCard production={production} />}
+      renderGridItem={(production) => <ProductionGridCard production={production} />}
+    />
+  )
 
   // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.
   // It also handles the different UI states such as loading, error, and empty results.
@@ -205,7 +220,7 @@ const HomePage = () => {
         emptyTitle={t('productions.home.empty.title')}
         emptyDescription={t('productions.home.empty.description')}
         hasResults={productions.length > 0}
-        resultsContent={<ProductionView productions={productions} layout={viewMode} />}
+        resultsContent={resultsContent}
         page={page}
         pageSize={PAGE_SIZE}
         totalItems={totalCount}
