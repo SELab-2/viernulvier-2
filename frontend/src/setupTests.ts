@@ -6,7 +6,7 @@ import './i18n'
 global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder as typeof global.TextDecoder
 
-process.env.VITE_PUBLIC_API_KEY = process.env.VITE_PUBLIC_API_KEY ?? 'test-api-key'
+process.env.PUBLIC_API_KEY = process.env.PUBLIC_API_KEY ?? 'test-api-key'
 
 class IntersectionObserverMock implements IntersectionObserver {
   scrollMargin: string = ''
