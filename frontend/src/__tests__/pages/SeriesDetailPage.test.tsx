@@ -32,7 +32,7 @@ jest.mock('react-i18next', () => ({
         'series.stats.editions': 'Edities',
         'series.stats.period': 'Periode',
         'series.stats.type': 'Type',
-        'nav.home': 'Archief',
+        'nav.home': 'Home',
         'footer.nav.series': 'Reeksen',
       }
 
@@ -119,7 +119,7 @@ describe('SeriesDetailPage', () => {
 
     await screen.findByRole('heading', { name: 'VIDEODROOM' })
 
-    expect(screen.getByRole('button', { name: 'Archief' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reeksen' })).toBeInTheDocument()
   })
 

@@ -1,12 +1,8 @@
 {
-  "title": "Archiefomgeving",
-  "subtitle": "Catalogiseer en bewaar items.",
-  "english": "Engels",
-  "dutch": "Nederlands",
   "nav": {
-    "home": "Archief",
+    "home": "Home",
+    "archive": "Archief",
     "series": "Reeksen",
-    "productions": "Artiesten",
     "blogs": "Blogs",
     "media": "Media",
     "mainNav": "Hoofdnavigatie",
@@ -14,6 +10,92 @@
     "closeMenu": "Menu sluiten",
     "switchToLightMode": "Donkere modus",
     "switchToDarkMode": "Lichte modus"
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "VIERNULVIER-ARCHIEF",
+      "title": "Het levende archief van VIERNULVIER.",
+      "description": "Verken decennia aan voorstellingen, concerten en theater van Kunstencentrum VIERNULVIER, zorgvuldig gecatalogiseerd en verrijkt met context.",
+      "primaryCta": "Open het archief",
+      "seriesCta": "Bekijk reeksen",
+      "secondaryCta": "Lees verhalen",
+      "websiteCta": "Bezoek de officiële website"
+    },
+    "stats": {
+      "productions": "Producties",
+      "series": "Reeksen",
+      "years": "Gedocumenteerde jaren",
+      "stories": "Verhalen"
+    },
+    "statsSection": {
+      "eyebrow": "Archief in cijfers",
+      "title": "Een snel overzicht van de collectie.",
+      "description": "Live tellingen van producties, reeksen, gedocumenteerde jaren en verhalen."
+    },
+    "ticker": {
+      "brand": "VIERNULVIER",
+      "city": "GENT",
+      "archive": "ARCHIEF",
+      "years": "{{value}} JAAR",
+      "productions": "{{value}} PRODUCTIES",
+      "center": "KUNSTENCENTRUM",
+      "collection": "COLLECTIE",
+      "performances": "VOORSTELLINGEN",
+      "theatre": "THEATER",
+      "concert": "CONCERT",
+      "dance": "DANS"
+    },
+    "side": {
+      "eyebrow": "Wat je hier vindt",
+      "title": "Vier heldere ingangen in de collectie.",
+      "archive": {
+        "title": "Voorstellingen, concerten & theater",
+        "description": "Zoek op artiest, locatie of periode. Elke gedocumenteerde productie uit de geschiedenis van VIERNULVIER, doorzoekbaar op een plek."
+      },
+      "stories": {
+        "title": "Verhalen en context",
+        "description": "Redactionele stukken die het archief verdiepen: interviews, essays en notities van onderzoekers en curatoren."
+      },
+      "series": {
+        "title": "Reeksen en edities",
+        "description": "Producties gegroepeerd per terugkerende reeks. Volg hoe edities door de jaren heen evolueren."
+      },
+      "prints": {
+        "title": "Affiches en drukwerk",
+        "description": "Gescande affiches, programmaboekjes en brochures uit de fysieke collectie."
+      }
+    },
+    "cardsSection": {
+      "eyebrow": "Verken de collectie",
+      "title": "Waar wil je beginnen?",
+      "description": "Verken het VIERNULVIER-archief via een van de vier invalshoeken. Elke toegangspoort onthult een unieke laag van onze rijke collectie."
+    },
+    "cards": {
+      "archive": {
+        "eyebrow": "01 - Archief",
+        "title": "Verken het archief",
+        "description": "Zoek producties op artiest, locatie of periode. De volledige productiegeschiedenis van VIERNULVIER.",
+        "cta": "Open het archief"
+      },
+      "series": {
+        "eyebrow": "02 - Reeksen",
+        "title": "Ontdek reeksen",
+        "description": "Producties gegroepeerd per terugkerende reeks. Volg gekoppelde edities in chronologische volgorde.",
+        "cta": "Open reeksen"
+      },
+      "stories": {
+        "eyebrow": "03 - Verhalen",
+        "title": "Lees de verhalen",
+        "description": "Interviews, essays en onderzoeksnotities die extra context geven aan het archief.",
+        "cta": "Lees verhalen"
+      },
+      "prints": {
+        "eyebrow": "04 - Drukwerk",
+        "title": "Ontdek drukwerk",
+        "description": "Affiches, programmaboekjes en brochures uit de fysieke collectie.",
+        "cta": "Bekijk drukwerk"
+      }
+    }
   },
   "searchbar": {
     "searchPlaceholder": "Zoek naar evenementen, artiesten of locaties...",
@@ -23,21 +105,10 @@
     "resultsFound_other": "{{count}} resultaten gevonden",
     "sort": {
       "targetLabel": "Sorteer op",
-      "directionLabel": "Sorteerrichting",
       "name": "Naam",
       "date": "Datum",
-      "ascending": "Oplopend",
-      "descending": "Aflopend",
       "switchToAscending": "Schakel naar oplopend",
       "switchToDescending": "Schakel naar aflopend"
-    },
-    "period": {
-      "label": "Periode",
-      "from_x": "Vanaf {{date}}",
-      "to_x": "Tot en met {{date}}",
-      "from_label": "Van",
-      "to_label": "Tot",
-      "all": "Alles"
     },
     "layout": {
       "label": "Weergave",
@@ -56,23 +127,32 @@
       "genericWithCode": "Aanvraag mislukt met status {{status}}."
     }
   },
-  "listCard": {
-    "view": "Bekijk",
-    "imageAlt": "Afbeelding voor {{title}}"
-  },
   "genreChip": {
     "filterByGenre": "Filter op {{genre}}"
   },
   "events": {
-    "title": "Evenementen",
-    "listPlaceholder": "Lijst met evenementen wordt hier weergegeven.",
-    "detailTitle": "Evenement Detail",
-    "detailPlaceholder": "Details van evenement met ID {{id}} worden hier weergegeven.",
-    "backToEvents": "Terug naar Evenementen",
     "priceType": "Type",
     "price": "Prijs",
     "available": "Beschikbaar",
     "availableQuantity": "{{count}} beschikbaar"
+  },
+  "archive": {
+    "home": {
+      "loading": "Archief laden",
+      "resultsRegionLabel": "Resultaten van het archief",
+      "filterPanelLabel": "Archieffilters",
+      "filterPanelTitle": "Filters",
+      "filterPanelPlaceholder": "Gebruik zoeken en sorteren om het archief te verkennen.",
+      "empty": {
+        "title": "Geen archiefitems gevonden",
+        "description": "Pas je zoekopdracht aan en probeer opnieuw."
+      },
+      "error": {
+        "retry": "Opnieuw proberen",
+        "fallback": "Kon het archief niet laden.",
+        "notification": "Er ging iets mis bij het laden van het archief."
+      }
+    }
   },
   "productions": {
     "title": "Producties",
@@ -80,24 +160,9 @@
     "detailTitle": "Productie Detail",
     "detailPlaceholder": "Details van productie met ID {{id}} worden hier weergegeven.",
     "backToProductions": "Terug naar Producties",
-    "home": {
-      "loading": "Producties laden",
-      "resultsRegionLabel": "Resultaten van producties",
-      "filterPanelLabel": "Geavanceerde filters",
-      "filterPanelTitle": "Filters",
-      "filterPanelPlaceholder": "Geavanceerde filters worden in dit paneel toegevoegd.",
-      "empty": {
-        "title": "Geen producties gevonden",
-        "description": "Pas je zoekopdracht aan en probeer opnieuw."
-      },
-      "error": {
-        "retry": "Opnieuw proberen",
-        "fallback": "Kon producties niet laden.",
-        "notification": "Er ging iets mis bij het laden van producties."
-      }
-    },
     "pagination": {
       "navigationLabel": "Paginering van producties",
+      "pageXofY": "Pagina {{page}} van {{totalPages}}",
       "firstPage": "Ga naar eerste pagina",
       "lastPage": "Ga naar laatste pagina",
       "nextPage": "Ga naar volgende pagina",
@@ -135,9 +200,6 @@
       "resultsRegionLabel": "Resultaten van verhalen",
       "searchPlaceholder": "Zoek verhalen op titel of samenvatting...",
       "searchPlaceholderMobile": "Zoek verhalen...",
-      "sidebarLabel": "Context van verhalen",
-      "sidebarTitle": "Verhalen",
-      "sidebarDescription": "Blader door redactionele verhalen uit het VIERNULVIER-archief.",
       "coverAltFallback": "Omslagafbeelding van blog",
       "noExcerpt": "Geen samenvatting beschikbaar.",
       "unpublished": "Niet gepubliceerd",
@@ -150,22 +212,12 @@
         "fallback": "Kon verhalen niet laden.",
         "notification": "Er ging iets mis bij het laden van verhalen."
       }
-    },
-    "pagination": {
-      "navigationLabel": "Paginering van verhalen",
-      "firstPage": "Ga naar eerste pagina",
-      "lastPage": "Ga naar laatste pagina",
-      "nextPage": "Ga naar volgende pagina",
-      "previousPage": "Ga naar vorige pagina",
-      "currentPage": "Huidige pagina, pagina {{page}}",
-      "goToPage": "Ga naar pagina {{page}}"
     }
   },
   "notFound": {
-    "code": "404",
     "title": "Pagina niet gevonden",
     "description": "De pagina die je zoekt bestaat niet of is verplaatst.",
-    "backHome": "Terug naar archief"
+    "backHome": "Terug naar home"
   },
   "footer": {
     "address": {
@@ -177,8 +229,8 @@
       "vat": "BTW BE 0423.063.619"
     },
     "nav": {
-      "ariaLabel": "Navigatie",
-      "home": "Archief",
+      "home": "Home",
+      "archive": "Archief",
       "series": "Reeksen",
       "blogs": "Blogs",
       "media": "Media"
@@ -192,11 +244,9 @@
     "listPlaceholder": "Lijst met reeksen wordt hier weergegeven.",
     "allEditions": "Alle edities",
     "allEditionsSubtitle": "Chronologisch overzicht van de producties binnen deze reeks.",
-    "breadcrumb": "Archief / Reeksen / {{name}}",
     "noDescription": "Geen beschrijving beschikbaar.",
     "noProductions": "Er zijn geen producties gekoppeld aan deze reeks.",
     "loading": "Reeks laden",
-    "notFound": "Reeks niet gevonden.",
     "invalidId": "Ongeldig reeks-ID.",
     "fetchError": "Kon de reeks niet ophalen.",
     "untitled": "Naamloze reeks",
@@ -238,14 +288,7 @@
     }
   },
   "blog": {
-    "title": "Blogs",
-    "unknown": "Onbekende blog",
     "couldNotLoad": "Kon de blog niet laden",
-    "invalidId": "Ongeldig blog ID",
-    "detail": {
-      "publishedOn": "Gepubliceerd op",
-      "notPublished": "Niet gepubliceerd",
-      "related": "Gerelateerde producties"
-    }
+    "invalidId": "Ongeldig blog ID"
   }
 }

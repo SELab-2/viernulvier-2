@@ -24,6 +24,7 @@ import { tokens } from '../theme/tokens'
 
 const NAV_LINKS = [
   { labelKey: 'nav.home', to: '/' },
+  { labelKey: 'nav.archive', to: '/archive' },
   { labelKey: 'nav.series', to: '/series' },
   { labelKey: 'nav.blogs', to: '/blogs' },
   { labelKey: 'nav.media', to: '/media' },

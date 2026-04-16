@@ -41,3 +41,9 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: jest.fn(),
   })),
 })
+
+Object.defineProperty(window, 'scrollTo', {
+  writable: true,
+  configurable: true,
+  value: jest.fn(),
+})
