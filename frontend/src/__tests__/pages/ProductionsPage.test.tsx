@@ -1,4 +1,4 @@
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { createTheme, ThemeProvider } from '@mui/material/styles'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
@@ -7,8 +7,7 @@ import i18n from '../../i18n'
 import ProductionsPage from '../../pages/ProductionsPage'
 import { ApiError } from '../../services/ApiTypes'
 import { getGenres } from '../../services/genres/Genres'
-import { getProductions } from '../../services/productions/Productions'
-import { getTags } from '../../services/tags/Tags'
+import { getProductions, getProductionSeries } from '../../services/productions/Productions'
 
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
@@ -16,19 +15,18 @@ import type { Tag } from '../../types/Tags'
 
 jest.mock('../../services/productions/Productions', () => ({
   getProductions: jest.fn(),
+  getProductionSeries: jest.fn(),
 }))
 
 jest.mock('../../services/genres/Genres', () => ({
   getGenres: jest.fn(),
 }))
 
-jest.mock('../../services/tags/Tags', () => ({
-  getTags: jest.fn(),
-}))
-
 const mockedGetProductions = getProductions as jest.MockedFunction<typeof getProductions>
+const mockedGetProductionSeries = getProductionSeries as jest.MockedFunction<
+  typeof getProductionSeries
+>
 const mockedGetGenres = getGenres as jest.MockedFunction<typeof getGenres>
-const mockedGetTags = getTags as jest.MockedFunction<typeof getTags>
 
 const genreFixtures: Genre[] = [
   {
@@ -153,11 +151,16 @@ describe('ProductionsPage', () => {
       previous: null,
       results: genreFixtures,
     })
-    mockedGetTags.mockResolvedValue({
+    mockedGetProductionSeries.mockResolvedValue({
       count: tagFixtures.length,
       next: null,
       previous: null,
-      results: tagFixtures,
+      results: tagFixtures.map((tag) => ({
+        tag,
+        firstProductionStart: null,
+        lastProductionEnd: null,
+        lastProductionImage: null,
+      })),
     })
   })
 
