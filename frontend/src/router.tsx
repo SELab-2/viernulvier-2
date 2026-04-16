@@ -1,5 +1,6 @@
 import { Box } from '@mui/material'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useLayoutEffect } from 'react'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
@@ -17,9 +18,20 @@ type RouterProps = {
   onToggleMode: () => void
 }
 
+const ScrollToTop = () => {
+  const location = useLocation()
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0 })
+  }, [location.pathname])
+
+  return null
+}
+
 const Router = ({ mode, onToggleMode }: RouterProps) => {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Navbar mode={mode} onToggleMode={onToggleMode} />
         <Box component="main" sx={{ flexGrow: 1 }}>
