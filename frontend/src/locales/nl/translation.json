@@ -31,6 +31,19 @@
       "title": "Een snel overzicht van de collectie.",
       "description": "Live tellingen van producties, reeksen, gedocumenteerde jaren en verhalen."
     },
+    "ticker": {
+      "brand": "VIERNULVIER",
+      "city": "GENT",
+      "archive": "ARCHIEF",
+      "years": "{{value}} JAAR",
+      "productions": "{{value}} PRODUCTIES",
+      "center": "KUNSTENCENTRUM",
+      "collection": "COLLECTIE",
+      "performances": "VOORSTELLINGEN",
+      "theatre": "THEATER",
+      "concert": "CONCERT",
+      "dance": "DANS"
+    },
     "side": {
       "eyebrow": "Wat je hier vindt",
       "title": "Vier heldere ingangen in de collectie.",

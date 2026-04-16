@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 
 import { getLandingStats, type LandingStatsResponse } from '../services/productions/Productions'
+import { createHomePageStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
 
 // ─── Animations ────────────────────────────────────────────────────────────────
@@ -25,6 +26,11 @@ import { tokens } from '../theme/tokens'
 const fadeUp = keyframes`
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
+`
+
+const ticker = keyframes`
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
 `
 
 // ─── Static data ────────────────────────────────────────────────────────────────
@@ -135,13 +141,74 @@ const RuleLabel = ({ label }: { label: string }) => {
   )
 }
 
+const TickerStrip = ({ items }: { items: string[] }) => {
+  const theme = useTheme()
+  const homepageStyles = createHomePageStyles(theme)
+  const tickerLane = [...items, ...items, ...items]
+  const tickerLanes = [tickerLane, tickerLane]
+
+  return (
+    <Box
+      sx={{
+        overflow: 'hidden',
+        bgcolor: homepageStyles.tickerBackground,
+        borderTop: `1px solid ${theme.palette.divider}`,
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        py: '8px',
+        userSelect: 'none',
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          width: 'max-content',
+          animation: `${ticker} 60s linear infinite`,
+          willChange: 'transform',
+          '&:hover': { animationPlayState: 'paused' },
+          '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+        }}
+      >
+        {tickerLanes.map((lane, laneIndex) => (
+          <Box
+            key={`lane-${laneIndex}`}
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              flexShrink: 0,
+              gap: 3,
+              pr: 3,
+            }}
+          >
+            {lane.map((item, index) => (
+              <Typography
+                key={`${laneIndex}-${item}-${index}`}
+                component="span"
+                sx={{
+                  fontFamily: '"Space Mono", monospace',
+                  fontSize: '0.64rem',
+                  letterSpacing: '0.22em',
+                  color: homepageStyles.tickerText,
+                  whiteSpace: 'nowrap',
+                  fontWeight: item === '·' ? 400 : 700,
+                }}
+              >
+                {item}
+              </Typography>
+            ))}
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  )
+}
+
 // ─── Page ───────────────────────────────────────────────────────────────────────
 
 const HomePage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
+  const homepageStyles = createHomePageStyles(theme)
   const navigate = useNavigate()
-  const isDark = theme.palette.mode === 'dark'
   const [searchQuery, setSearchQuery] = useState('')
   const [archiveStats, setArchiveStats] = useState<LandingStatsResponse>(FALLBACK_ARCHIVE_STATS)
 
@@ -182,12 +249,30 @@ const HomePage = () => {
     }
   }
 
-  // Colour tokens that adapt to dark / light
-  const subtleBg = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'
-  const accentBorder = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'
-  const heroBg = isDark
-    ? 'linear-gradient(160deg, rgba(255,255,255,0.05) 0%, transparent 60%)'
-    : 'linear-gradient(160deg, rgba(0,0,0,0.03) 0%, transparent 60%)'
+  const tickerItems = [
+    t('landing.ticker.brand'),
+    '·',
+    t('landing.ticker.city'),
+    '·',
+    t('landing.ticker.archive'),
+    '·',
+    t('landing.ticker.collection'),
+    '·',
+    t('landing.ticker.years', { value: formatArchiveStatValue(archiveStats.years) }),
+    '·',
+    t('landing.ticker.productions', { value: formatArchiveStatValue(archiveStats.productions) }),
+    '·',
+    t('landing.ticker.performances'),
+    '·',
+    t('landing.ticker.center'),
+    '·',
+    t('landing.ticker.theatre'),
+    '·',
+    t('landing.ticker.concert'),
+    '·',
+    t('landing.ticker.dance'),
+    '·',
+  ]
 
   return (
     <Box sx={{ py: { xs: 3, md: 5 } }}>
@@ -201,7 +286,7 @@ const HomePage = () => {
               overflow: 'hidden',
               borderRadius: tokens.card.borderRadiusPx,
               border: `1px solid ${theme.palette.divider}`,
-              background: heroBg,
+              background: homepageStyles.heroBackground,
               animation: `${fadeUp} 700ms 80ms ease both`,
               '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
             }}
@@ -214,9 +299,7 @@ const HomePage = () => {
                 left: 0,
                 right: 0,
                 height: '2px',
-                background: isDark
-                  ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25) 40%, rgba(255,255,255,0.1) 70%, transparent)'
-                  : 'linear-gradient(90deg, transparent, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.06) 70%, transparent)',
+                background: homepageStyles.heroAccentLine,
               }}
             />
 
@@ -295,10 +378,10 @@ const HomePage = () => {
                       </InputAdornment>
                     }
                     sx={{
-                      bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'background.paper',
+                      bgcolor: homepageStyles.inputBackground,
                       fontSize: '0.95rem',
                       '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: accentBorder,
+                        borderColor: homepageStyles.accentBorder,
                       },
                     }}
                   />
@@ -331,7 +414,7 @@ const HomePage = () => {
                   p: { xs: 2.5, sm: 3 },
                   borderRadius: tokens.card.borderRadiusPx,
                   border: `1px solid ${theme.palette.divider}`,
-                  bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.82)',
+                  bgcolor: homepageStyles.heroPanelBackground,
                   backdropFilter: 'blur(12px)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -370,6 +453,8 @@ const HomePage = () => {
                 </Stack>
               </Paper>
             </Box>
+
+            <TickerStrip items={tickerItems} />
           </Paper>
 
           {/* ── 3. STATS BAR ─────────────────────────────────────────────────── */}
@@ -424,7 +509,7 @@ const HomePage = () => {
                         xs: i < 2 ? `1px solid ${theme.palette.divider}` : 'none',
                         md: 'none',
                       },
-                      bgcolor: subtleBg,
+                      bgcolor: homepageStyles.subtleSurface,
                       textAlign: 'center',
                       minWidth: 0,
                     }}
@@ -511,8 +596,8 @@ const HomePage = () => {
                     animation: `${fadeUp} 700ms ${160 + card.index * 80}ms ease both`,
                     '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
                     '&:hover': {
-                      bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
-                      borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.18)',
+                      bgcolor: homepageStyles.cardHoverBackground,
+                      borderColor: homepageStyles.cardHoverBorder,
                       transform: 'translateY(-3px)',
                       boxShadow: tokens.shadows.md,
                     },

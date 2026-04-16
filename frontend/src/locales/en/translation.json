@@ -31,6 +31,19 @@
       "title": "A quick overview of the collection.",
       "description": "Live counts for productions, series, documented years, and stories."
     },
+    "ticker": {
+      "brand": "VIERNULVIER",
+      "city": "GHENT",
+      "archive": "ARCHIVE",
+      "years": "{{value}} YEARS",
+      "productions": "{{value}} PRODUCTIONS",
+      "center": "ARTS CENTRE",
+      "collection": "COLLECTION",
+      "performances": "PERFORMANCES",
+      "theatre": "THEATRE",
+      "concert": "CONCERT",
+      "dance": "DANCE"
+    },
     "side": {
       "eyebrow": "What you can explore",
       "title": "Four clear ways into the collection.",
