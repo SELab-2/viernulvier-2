@@ -1,47 +1,54 @@
 name: Deploy to production
 
 on:
-    push:
-        branches: [main]
-    workflow_dispatch:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-    deploy:
-        runs-on: self-hosted
+  deploy:
+    runs-on: self-hosted
 
-        steps:
-            - uses: actions/checkout@v6
+    steps:
+      - uses: actions/checkout@v6
 
-            - name: Create .env.prod from template
-              env:
-                  SECRET_KEY: ${{ secrets.SECRET_KEY }}
-                  ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
-                  DOMAIN: ${{ secrets.DOMAIN }}
-                  DB_NAME: ${{ secrets.DB_NAME }}
-                  DB_USER: ${{ secrets.DB_USER }}
-                  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-                  VIERNULVIER_API_KEY: ${{ secrets.VIERNULVIER_API_KEY }}
-                  PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
-                  INTERNAL_API_KEY: ${{ secrets.INTERNAL_API_KEY }}
-              run: |
-                  : "${SECRET_KEY:?Missing SECRET_KEY}"
-                  : "${ALLOWED_HOSTS:?Missing ALLOWED_HOSTS}"
-                  : "${DOMAIN:?Missing DOMAIN}"
-                  : "${DB_NAME:?Missing DB_NAME}"
-                  : "${DB_USER:?Missing DB_USER}"
-                  : "${DB_PASSWORD:?Missing DB_PASSWORD}"
-                  : "${VIERNULVIER_API_KEY:?Missing VIERNULVIER_API_KEY}"
-                  : "${PUBLIC_API_KEY:?Missing PUBLIC_API_KEY}"
-                  : "${INTERNAL_API_KEY:?Missing INTERNAL_API_KEY}"
+      - name: Create infrastructure/.env from secrets
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DOMAIN: ${{ secrets.DOMAIN }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          VIERNULVIER_API_KEY: ${{ secrets.VIERNULVIER_API_KEY }}
+          PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
+          INTERNAL_API_KEY: ${{ secrets.INTERNAL_API_KEY }}
+        run: |
+          : "${SECRET_KEY:?Missing SECRET_KEY}"
+          : "${DOMAIN:?Missing DOMAIN}"
+          : "${POSTGRES_DB:?Missing POSTGRES_DB}"
+          : "${POSTGRES_USER:?Missing POSTGRES_USER}"
+          : "${POSTGRES_PASSWORD:?Missing POSTGRES_PASSWORD}"
+          : "${VIERNULVIER_API_KEY:?Missing VIERNULVIER_API_KEY}"
+          : "${PUBLIC_API_KEY:?Missing PUBLIC_API_KEY}"
+          : "${INTERNAL_API_KEY:?Missing INTERNAL_API_KEY}"
 
-                  envsubst < infrastructure/.env.prod.example > infrastructure/.env.prod
+          cat > infrastructure/.env <<EOF
+          SECRET_KEY=${SECRET_KEY}
+          DOMAIN=${DOMAIN}
+          POSTGRES_DB=${POSTGRES_DB}
+          POSTGRES_USER=${POSTGRES_USER}
+          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          VIERNULVIER_API_KEY=${VIERNULVIER_API_KEY}
+          PUBLIC_API_KEY=${PUBLIC_API_KEY}
+          INTERNAL_API_KEY=${INTERNAL_API_KEY}
+          EOF
 
-            - name: Build and start containers
-              run: |
-                  docker compose --env-file infrastructure/.env.prod -f infrastructure/docker-compose.prod.yml build
-                  docker compose --env-file infrastructure/.env.prod -f infrastructure/docker-compose.prod.yml up -d
+      - name: Build and start containers
+        run: |
+          docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml build
+          docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml up -d
 
-            - name: Verify deployment
-              run: |
-                  sleep 5
-                  docker compose -f infrastructure/docker-compose.prod.yml ps
+      - name: Verify deployment
+        run: |
+          sleep 5
+          docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml ps
