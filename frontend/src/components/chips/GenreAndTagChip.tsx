@@ -49,7 +49,7 @@ const GenreAndTagChip = ({
     context === 'series'
       ? `/series/${String(id)}`
       : context === 'description'
-        ? `/?${getQueryKeyForChipType(chipType)}=${encodeURIComponent(String(id))}`
+        ? `/archive?${getQueryKeyForChipType(chipType)}=${encodeURIComponent(String(id))}`
         : undefined
   const showSelectedIcon = context === 'search' && selected
 
