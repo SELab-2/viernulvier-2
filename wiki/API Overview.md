@@ -173,6 +173,32 @@ Validation failures are returned in the API problem-details format with status *
 
 ---
 
+## Productions List Filtering
+
+The productions list endpoint supports composable filtering:
+
+- `GET /api/v1/productions/`
+
+### Multi-value `genre` and `tag` filters
+
+- `genre` and `tag` accept one or multiple IDs
+- Multiple values use **AND semantics**
+    - only productions that contain **all** selected genres/tags are returned
+
+Supported formats:
+
+- Comma-separated values
+    - `?genre=2,9`
+    - `?tag=5,8`
+
+Example combined request:
+
+- `GET /api/v1/productions/?genre=2,9&tag=5,8`
+
+This returns only productions that have both genres `2` and `9` and both tags `5` and `8`.
+
+---
+
 ## Series Aggregation Endpoint
 
 To support fast series overviews in the frontend, the productions API exposes an aggregated read endpoint:

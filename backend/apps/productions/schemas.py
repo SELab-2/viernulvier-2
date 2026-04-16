@@ -205,6 +205,30 @@ _PRODUCTION_PARTIAL_INPUT = OpenApiExample(
     request_only=True,
 )
 
+_PRODUCTION_FILTER_GENRE_COMMA = OpenApiExample(
+    "Filter productions by two genres",
+    value="2,9",
+    parameter_only=("genre", OpenApiParameter.QUERY),
+)
+
+_PRODUCTION_FILTER_GENRE_NONE = OpenApiExample(
+    "No genre filter",
+    value="",
+    parameter_only=("genre", OpenApiParameter.QUERY),
+)
+
+_PRODUCTION_FILTER_TAG_COMMA = OpenApiExample(
+    "Filter productions by two tags",
+    value="5,8",
+    parameter_only=("tag", OpenApiParameter.QUERY),
+)
+
+_PRODUCTION_FILTER_TAG_NONE = OpenApiExample(
+    "No tag filter",
+    value="",
+    parameter_only=("tag", OpenApiParameter.QUERY),
+)
+
 
 # ===========================================================================
 # Production - per-action schemas
@@ -221,8 +245,35 @@ _PRODUCTION_LIST = extend_schema(
         "Nested `tags` and `genres` carry their own translated fields as dictionaries. "
         "Each tag also exposes a `description` dictionary containing per-production "
         "context notes in all available languages; the dictionary is empty when no "
-        "descriptions have been added for that tag."
+        "descriptions have been added for that tag.\n\n"
+        "Filtering on `genre` and `tag` accepts single or multiple IDs. "
+        "When multiple values are provided, AND semantics are applied: only productions "
+        "that contain all selected genres/tags are returned."
     ),
+    parameters=[
+        OpenApiParameter(
+            name="genre",
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            required=False,
+            description=(
+                "One or more genre IDs as comma-separated values (`?genre=2,9`). "
+                "Multiple values are combined with AND semantics."
+            ),
+            examples=[_PRODUCTION_FILTER_GENRE_NONE, _PRODUCTION_FILTER_GENRE_COMMA],
+        ),
+        OpenApiParameter(
+            name="tag",
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            required=False,
+            description=(
+                "One or more tag IDs as comma-separated values (`?tag=5,8`). "
+                "Multiple values are combined with AND semantics."
+            ),
+            examples=[_PRODUCTION_FILTER_TAG_NONE, _PRODUCTION_FILTER_TAG_COMMA],
+        ),
+    ],
     responses={200: ProductionSerializer, **READ_ERRORS},
     examples=[_PRODUCTION_RESPONSE],
 )
