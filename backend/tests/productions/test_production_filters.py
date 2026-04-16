@@ -159,6 +159,30 @@ class TestProductionFilter:
 
         assert list(result) == [prod_both]
 
+    def test_filter_by_genre_ignores_empty_and_invalid_parts(self) -> None:
+        genre = GenreFactory()
+        prod = ProductionFactory()
+        ProductionGenreFactory(production=prod, genre=genre, position=1)
+        ProductionFactory()
+
+        result = self._qs({"genre": f" ,abc,{genre.id}"})
+
+        assert list(result) == [prod]
+
+    def test_filter_by_genre_with_only_invalid_values_returns_unfiltered(self) -> None:
+        ProductionFactory.create_batch(3)
+
+        result = self._qs({"genre": " ,abc, "})
+
+        assert result.count() == 3
+
+    def test_filter_by_tag_with_only_invalid_values_returns_unfiltered(self) -> None:
+        ProductionFactory.create_batch(2)
+
+        result = self._qs({"tag": " ,abc, "})
+
+        assert result.count() == 2
+
     def test_has_media_true(self) -> None:
         gallery = MediaGalleryFactory()
         ProductionFactory(media_gallery=gallery)
