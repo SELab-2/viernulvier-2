@@ -263,8 +263,12 @@ const HomePage = () => {
       items={productions}
       layout={viewMode}
       getKey={(production) => production.id}
-      renderListItem={(production) => <ProductionListCard production={production} />}
-      renderGridItem={(production) => <ProductionGridCard production={production} />}
+      renderListItem={(production) => (
+        <ProductionListCard production={production} selectedGenreIds={selectedGenreIds} />
+      )}
+      renderGridItem={(production) => (
+        <ProductionGridCard production={production} selectedGenreIds={selectedGenreIds} />
+      )}
     />
   )
   const filterPanel = (
