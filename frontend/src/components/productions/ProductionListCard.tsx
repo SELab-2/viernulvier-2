@@ -46,6 +46,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
     language,
   )
   const genres = production.genres.filter((genre) => genre.display_name)
+  const tags = production.tags.filter((tag) => tag.display_name || tag.name || tag.url_title)
 
   return (
     <Stack
@@ -119,6 +120,20 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
             spacing={0.75}
             sx={{ flexWrap: 'wrap', height: 32, overflow: 'hidden' }}
           >
+            {tags.map((tag) => (
+              <GenreAndTagChip
+                key={`tag-${tag.id}`}
+                name={getTranslatedRecord(
+                  tag.name || tag.url_title || {},
+                  language,
+                  tag.display_name ?? tag.type ?? String(tag.id),
+                )}
+                labels={tag.name || tag.url_title || {}}
+                chipType="seriesTag"
+                context="static"
+                id={tag.id}
+              />
+            ))}
             {genres.map((genre) => (
               <GenreAndTagChip
                 key={genre.id}
