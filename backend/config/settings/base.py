@@ -6,9 +6,10 @@ this file directly - always use one of the environment-specific modules.
 
 Environment variables
 ---------------------
-All secrets and deployment-specific values are read from the environment
-(or from a ``.env`` file via python-dotenv). No secret may have a
-hard-coded fallback in this file.
+All secrets and deployment-specific values are loaded from
+``infrastructure/.env`` via python-dotenv. No secret may have a
+hard-coded fallback in this file. See ``infrastructure/.env.example``
+for the full list of required variables.
 """
 
 import os
@@ -19,8 +20,6 @@ from dotenv import load_dotenv
 
 from api.versioning import VERSIONING_SETTINGS
 
-load_dotenv()
-
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -30,6 +29,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # ---------------------------------------------------------------------------
 # Security - no defaults for secrets
 # ---------------------------------------------------------------------------
+
+load_dotenv(os.path.join(BASE_DIR.parent, "infrastructure", ".env"))
 
 SECRET_KEY = os.environ["SECRET_KEY"]
 
@@ -125,11 +126,11 @@ TEMPLATES = [
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME", "viernulvier_archief"),
-        "USER": os.environ.get("DB_USER", "postgres"),
-        "PASSWORD": os.environ["DB_PASSWORD"],
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": os.environ.get("DB_PORT", "5432"),
+        "NAME": os.environ["POSTGRES_DB"],
+        "USER": os.environ["POSTGRES_USER"],
+        "PASSWORD": os.environ["POSTGRES_PASSWORD"],
+        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
+        "PORT": "5432",
         "CONN_MAX_AGE": 60,  # Persistent connections for better performance
         "OPTIONS": {
             "connect_timeout": 10,  # Short timeout for faster failure in case of DB issues
@@ -332,12 +333,12 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console"],
-            "level": os.environ.get("DJANGO_LOG_LEVEL", "WARNING"),
+            "level": "WARNING",
             "propagate": False,
         },
         "apps": {
             "handlers": ["console"],
-            "level": os.environ.get("APP_LOG_LEVEL", "INFO"),
+            "level": "INFO",
             "propagate": False,
         },
     },

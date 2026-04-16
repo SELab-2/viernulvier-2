@@ -100,10 +100,9 @@ jobs:
       SECRET_KEY: django-insecure-test-key-only-for-github-actions
       INTERNAL_API_KEY: test-internal-key
       PUBLIC_API_KEY: test-public-key
-      DB_PASSWORD: password
-      DB_NAME: test_db
-      DB_USER: postgres
-      DB_HOST: localhost
+      POSTGRES_DB: test_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
 
     steps:
       - name: Checkout
