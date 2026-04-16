@@ -6,6 +6,8 @@
  * Each function takes a theme and returns an SxProps<Theme> object.
  */
 
+import { alpha } from '@mui/material/styles'
+
 import { tokens } from './tokens'
 
 import type { SxProps, SystemStyleObject, Theme } from '@mui/system'
@@ -191,6 +193,43 @@ export const createCommonStyles = (theme: Theme) => {
       alignItems: 'center',
       justifyContent: 'center',
     } as SxProps<Theme>,
+  }
+}
+
+export const createHomePageStyles = (theme: Theme) => {
+  const isDark = theme.palette.mode === 'dark'
+
+  return {
+    heroBackground: isDark
+      ? 'linear-gradient(160deg, rgba(255,255,255,0.05) 0%, transparent 60%)'
+      : 'linear-gradient(160deg, rgba(0,0,0,0.03) 0%, transparent 60%)',
+    heroAccentLine: isDark
+      ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25) 40%, rgba(255,255,255,0.1) 70%, transparent)'
+      : 'linear-gradient(90deg, transparent, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.06) 70%, transparent)',
+    heroPanelBackground: isDark
+      ? alpha(theme.palette.common.white, 0.03)
+      : alpha(theme.palette.common.white, 0.82),
+    inputBackground: isDark
+      ? alpha(theme.palette.common.white, 0.04)
+      : theme.palette.background.paper,
+    tickerBackground: isDark
+      ? alpha(theme.palette.common.white, 0.04)
+      : alpha(theme.palette.common.black, 0.03),
+    tickerText: isDark
+      ? alpha(theme.palette.common.white, 0.38)
+      : alpha(theme.palette.common.black, 0.42),
+    subtleSurface: isDark
+      ? alpha(theme.palette.common.white, 0.03)
+      : alpha(theme.palette.common.black, 0.02),
+    cardHoverBackground: isDark
+      ? alpha(theme.palette.common.white, 0.04)
+      : alpha(theme.palette.common.black, 0.02),
+    cardHoverBorder: isDark
+      ? alpha(theme.palette.common.white, 0.2)
+      : alpha(theme.palette.common.black, 0.18),
+    accentBorder: isDark
+      ? alpha(theme.palette.common.white, 0.12)
+      : alpha(theme.palette.common.black, 0.1),
   }
 }
 
