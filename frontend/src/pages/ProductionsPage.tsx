@@ -293,6 +293,7 @@ const ProductionsPage = () => {
       )}
     />
   )
+
   const filterPanel = (
     <FilterPanel
       attendanceModes={attendanceModes}

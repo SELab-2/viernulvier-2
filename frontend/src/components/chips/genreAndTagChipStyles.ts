@@ -1,7 +1,7 @@
 import { tokens } from '../../theme/tokens'
 
-import type { GetGenreAndTagChipStylesInput } from '../../types/GenreAndTagChip'
 import type { SxProps, Theme } from '@mui/material'
+import type { GetGenreAndTagChipStylesInput } from '../../types/GenreAndTagChip'
 
 /**
  * Returns CSS styles for a genre or series-tag chip, depending on the selected context,
@@ -23,7 +23,7 @@ export const getGenreAndTagChipStyles = ({
   const selectedBg = chipType === 'genre' ? accentMain : seriesMain
   const selectedHoverBg = chipType === 'genre' ? accentHover : seriesHover
   const selectedHoverStyles =
-    context === 'search'
+    context !== 'static'
       ? {
           '&:hover': {
             backgroundColor: `${selectedHoverBg} !important`,
@@ -33,7 +33,7 @@ export const getGenreAndTagChipStyles = ({
         }
       : {}
   const unselectedHoverStyles =
-    context === 'search'
+    context !== 'static'
       ? {
           '&:hover': {
             backgroundColor: selectedBg,
@@ -60,7 +60,7 @@ export const getGenreAndTagChipStyles = ({
     },
   }
 
-  if (context === 'series' || selected) {
+  if (selected) {
     return {
       ...base,
       backgroundColor: `${selectedBg} !important`,
@@ -68,6 +68,16 @@ export const getGenreAndTagChipStyles = ({
       borderColor: selectedBg,
       boxShadow: 'none',
       ...selectedHoverStyles,
+    }
+  }
+
+  if (context !== 'static') {
+    return {
+      ...base,
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+      borderColor: selectedBg,
+      ...unselectedHoverStyles,
     }
   }
 
