@@ -267,6 +267,25 @@ const HomePage = () => {
       renderGridItem={(production) => <ProductionGridCard production={production} />}
     />
   )
+  const filterPanel = (
+    <ProductionFilterPanel
+      attendanceModes={attendanceModes}
+      performerTypes={performerTypes}
+      firstEventStartAfter={firstEventStartAfter}
+      firstEventStartBefore={firstEventStartBefore}
+      selectedGenreIds={selectedGenreIds}
+      selectedTagIds={selectedTagIds}
+      genres={genres}
+      tags={tags}
+      onAttendanceModeToggle={toggleAttendanceMode}
+      onPerformerTypeToggle={togglePerformerType}
+      onFirstEventStartAfterChange={setFirstEventStartAfter}
+      onFirstEventStartBeforeChange={setFirstEventStartBefore}
+      onGenreSelectionChange={setSelectedGenreIds}
+      onTagSelectionChange={setSelectedTagIds}
+      onClearFilters={clearFilters}
+    />
+  )
 
   // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.
   // It also handles the different UI states such as loading, error, and empty results.
@@ -287,25 +306,7 @@ const HomePage = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         resultCount={totalCount}
-        sidebarContent={
-          <ProductionFilterPanel
-            attendanceModes={attendanceModes}
-            performerTypes={performerTypes}
-            firstEventStartAfter={firstEventStartAfter}
-            firstEventStartBefore={firstEventStartBefore}
-            selectedGenreIds={selectedGenreIds}
-            selectedTagIds={selectedTagIds}
-            genres={genres}
-            tags={tags}
-            onAttendanceModeToggle={toggleAttendanceMode}
-            onPerformerTypeToggle={togglePerformerType}
-            onFirstEventStartAfterChange={setFirstEventStartAfter}
-            onFirstEventStartBeforeChange={setFirstEventStartBefore}
-            onGenreSelectionChange={setSelectedGenreIds}
-            onTagSelectionChange={setSelectedTagIds}
-            onClearFilters={clearFilters}
-          />
-        }
+        sidebarContent={filterPanel}
         resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('productions.home.loading')}

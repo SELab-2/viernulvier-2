@@ -66,6 +66,7 @@ export interface ProductionFilterPanelProps {
   onGenreSelectionChange: (ids: number[]) => void
   onTagSelectionChange: (ids: number[]) => void
   onClearFilters: () => void
+  headerActions?: ReactNode
 }
 
 const getLocalizedDisplayName = (
@@ -275,6 +276,7 @@ const ProductionFilterPanel = ({
   onGenreSelectionChange,
   onTagSelectionChange,
   onClearFilters,
+  headerActions,
 }: ProductionFilterPanelProps) => {
   const { i18n, t } = useTranslation()
   const adapterLocale = i18n.language.startsWith('nl') ? 'nl' : 'en'
@@ -379,7 +381,6 @@ const ProductionFilterPanel = ({
         sx={{
           borderRadius: tokens.borderRadius.lg,
           overflow: 'hidden',
-          height: 'fit-content',
         }}
       >
         <Stack
@@ -405,24 +406,27 @@ const ProductionFilterPanel = ({
           >
             {t('productions.home.filterPanelTitle')}
           </Typography>
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={onClearFilters}
-            disabled={!hasActiveFilters}
-            sx={{
-              color: 'text.primary',
-              borderColor: 'text.primary',
-              fontSize: tokens.typography.sizes.xs,
-              transition: tokens.transitions.fast,
-              '&:hover': {
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexShrink: 0 }}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={onClearFilters}
+              disabled={!hasActiveFilters}
+              sx={{
+                color: 'text.primary',
                 borderColor: 'text.primary',
-                backgroundColor: 'action.hover',
-              },
-            }}
-          >
-            {t('productions.home.filters.clear')}
-          </Button>
+                fontSize: tokens.typography.sizes.xs,
+                transition: tokens.transitions.fast,
+                '&:hover': {
+                  borderColor: 'text.primary',
+                  backgroundColor: 'action.hover',
+                },
+              }}
+            >
+              {t('productions.home.filters.clear')}
+            </Button>
+            {headerActions}
+          </Stack>
         </Stack>
 
         <FilterSection title={t('productions.home.filters.date')}>

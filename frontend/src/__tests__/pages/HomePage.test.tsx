@@ -286,7 +286,7 @@ describe('HomePage (ProductionPage)', () => {
     expect(screen.getByTestId('url-search')).toHaveTextContent('v=l')
   })
 
-  it('keeps filters available inline on mobile screens', async () => {
+  it('opens filters from a separate mobile button', async () => {
     setMatchMediaMatches(true)
     mockedGetProductions.mockResolvedValue({
       count: 1,
@@ -298,9 +298,20 @@ describe('HomePage (ProductionPage)', () => {
     renderPage()
 
     await screen.findByRole('heading', { name: 'Productie 11' })
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Filters' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Filters' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument()
+    expect(screen.queryByRole('checkbox', { name: 'Online' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
+
+    expect(screen.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'Online' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Filters' })).not.toBeInTheDocument()
+    })
   })
 
   it('fetches next page when pagination is used', async () => {

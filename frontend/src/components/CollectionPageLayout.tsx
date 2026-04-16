@@ -1,12 +1,27 @@
-import { Alert, Box, Button, Container, Paper, Stack, Typography } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import FilterAltIcon from '@mui/icons-material/FilterAlt'
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Dialog,
+  DialogContent,
+  IconButton,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { cloneElement, isValidElement, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import LoadingSpinner from './LoadingSpinner'
 import Pagination from './Pagination'
 import SearchControlsBar from './searchbar/SearchControlsBar'
 
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './searchbar/types'
-import type { ReactNode } from 'react'
 
 export interface CollectionPageLayoutProps {
   isMobile: boolean
@@ -113,9 +128,66 @@ const CollectionPageLayout = ({
   onPageChange,
   paginationI18nKeyPrefix,
 }: CollectionPageLayoutProps) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const isEmpty = !isLoading && !errorMessage && !hasResults
   const shouldRenderSidebar = showSidebar && sidebarContent
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+
+  const mobileSidebarLabel = t('searchbar.filters')
+  const mobileSidebarButton =
+    isMobile && shouldRenderSidebar ? (
+      <Tooltip title={mobileSidebarLabel}>
+        <IconButton
+          aria-label={mobileSidebarLabel}
+          aria-haspopup="dialog"
+          aria-expanded={isMobileSidebarOpen}
+          onClick={() => setIsMobileSidebarOpen(true)}
+          sx={{
+            height: 40,
+            width: 40,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 1,
+            backgroundColor: theme.palette.background.default,
+            color: theme.palette.text.primary,
+            '&:hover': {
+              borderColor: 'text.primary',
+              backgroundColor:
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+            },
+          }}
+        >
+          <FilterAltIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    ) : null
+  const mobileSidebarHeaderAction =
+    isMobile && shouldRenderSidebar ? (
+      <IconButton
+        aria-label="Close"
+        onClick={() => setIsMobileSidebarOpen(false)}
+        size="small"
+        sx={{
+          height: 32,
+          width: 32,
+          border: `1px solid ${theme.palette.text.primary}`,
+          borderRadius: 1,
+          color: 'text.primary',
+          '&:hover': {
+            borderColor: 'text.primary',
+            backgroundColor: 'action.hover',
+          },
+        }}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    ) : null
+  const mobileSidebarContent =
+    isMobile && isValidElement<{ headerActions?: ReactNode }>(sidebarContent)
+      ? cloneElement(sidebarContent, {
+          headerActions: mobileSidebarHeaderAction,
+        })
+      : sidebarContent
 
   const resultsSection = (
     <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ minWidth: 0 }}>
@@ -169,6 +241,7 @@ const CollectionPageLayout = ({
         sortDirection={sortDirection}
         onSortDirectionChange={onSortDirectionChange}
         sortTargetOptions={sortTargetOptions}
+        extraControls={mobileSidebarButton}
         viewMode={viewMode}
         onViewModeChange={onViewModeChange}
         resultCount={resultCount}
@@ -192,7 +265,7 @@ const CollectionPageLayout = ({
   return (
     <Box sx={{ py: { xs: 3, md: 4 } }}>
       <Container maxWidth="xl">
-        {shouldRenderSidebar ? (
+        {shouldRenderSidebar && !isMobile ? (
           <Box
             sx={{
               display: 'flex',
@@ -205,9 +278,7 @@ const CollectionPageLayout = ({
               sx={{
                 flexShrink: 0,
                 width: { xs: '100%', md: theme.spacing(39) },
-                '& > *': {
-                  height: '100%',
-                },
+                alignSelf: { md: 'flex-start' },
               }}
             >
               {sidebarContent}
@@ -218,6 +289,43 @@ const CollectionPageLayout = ({
         ) : (
           contentColumn
         )}
+
+        {shouldRenderSidebar && isMobile ? (
+          <Dialog
+            open={isMobile && isMobileSidebarOpen}
+            onClose={() => setIsMobileSidebarOpen(false)}
+            fullScreen
+            slotProps={{
+              paper: {
+                'aria-label': mobileSidebarLabel,
+                sx: {
+                  m: 0,
+                  maxWidth: '100%',
+                  borderRadius: 0,
+                  backgroundImage: 'none',
+                },
+              },
+            }}
+          >
+            <DialogContent
+              sx={{
+                p: 0,
+              }}
+            >
+              <Box
+                sx={{
+                  '& > .MuiPaper-root': {
+                    border: 'none',
+                    borderRadius: 0,
+                    boxShadow: 'none',
+                  },
+                }}
+              >
+                {mobileSidebarContent}
+              </Box>
+            </DialogContent>
+          </Dialog>
+        ) : null}
       </Container>
     </Box>
   )
