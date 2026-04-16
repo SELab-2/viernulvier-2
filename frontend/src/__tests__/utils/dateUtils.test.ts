@@ -69,12 +69,14 @@ describe('getProductionDateLabel', () => {
     expect(getProductionDateLabel(null, null, 'en-US')).toBe('')
   })
 
-  it('returns empty string when lastEventEnd is null', () => {
-    expect(getProductionDateLabel('2025-06-15T12:00:00.000Z', null, 'en-US')).toBe('')
+  it('returns the start date when lastEventEnd is null', () => {
+    expect(getProductionDateLabel('2025-06-15T12:00:00.000Z', null, 'en-US')).toMatch(/2025/)
+    expect(getProductionDateLabel('2025-06-15T12:00:00.000Z', null, 'en-US')).not.toContain(' - ')
   })
 
-  it('returns empty string when firstEventStart is null but lastEventEnd is set', () => {
-    expect(getProductionDateLabel(null, '2025-06-15T12:00:00.000Z', 'en-US')).toBe('')
+  it('returns the end date when firstEventStart is null but lastEventEnd is set', () => {
+    expect(getProductionDateLabel(null, '2025-06-15T12:00:00.000Z', 'en-US')).toMatch(/2025/)
+    expect(getProductionDateLabel(null, '2025-06-15T12:00:00.000Z', 'en-US')).not.toContain(' - ')
   })
 
   it('returns a single formatted date when first and last fall on the same calendar day', () => {

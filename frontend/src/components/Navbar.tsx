@@ -41,7 +41,7 @@ type NavbarProps = {
 const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
-  const navbarStyles = createNavbarStyles(theme)
+  const navbarStyles = createNavbarStyles()
   const { t, i18n } = useTranslation()
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
