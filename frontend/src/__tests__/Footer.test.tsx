@@ -24,7 +24,8 @@ describe('Footer', () => {
     renderFooter()
 
     expect(screen.getByText('Kunstencentrum VIERNULVIER vzw')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('href', '/archive')
     expect(screen.getByRole('link', { name: 'Reeksen' })).toHaveAttribute('href', '/series')
     expect(screen.getByRole('link', { name: 'Blogs' })).toHaveAttribute('href', '/blogs')
     expect(screen.getByRole('link', { name: 'Media' })).toHaveAttribute('href', '/media')
@@ -35,7 +36,8 @@ describe('Footer', () => {
     await i18n.changeLanguage('en')
     renderFooter()
 
-    expect(screen.getByRole('link', { name: 'Archive' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Archive' })).toHaveAttribute('href', '/archive')
     expect(screen.getByRole('link', { name: 'Series' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Blogs' })).toHaveAttribute('href', '/blogs')
     expect(screen.getByRole('link', { name: 'Media' })).toHaveAttribute('href', '/media')
