@@ -416,7 +416,7 @@ describe('HomePage (ProductionPage)', () => {
     expect(await screen.findByRole('heading', { name: 'Productie 9' })).toBeInTheDocument()
   })
 
-  it('applies sidebar filters to the URL and forwards only the first selected values to the backend', async () => {
+  it('applies sidebar filters to the URL and forwards one attendance and one performer mode to the backend', async () => {
     mockedGetProductions.mockResolvedValue({
       count: 1,
       next: null,
@@ -444,8 +444,8 @@ describe('HomePage (ProductionPage)', () => {
         filters: {
           search: undefined,
           ordering: '-first_event_start',
-          attendance_mode: 'online',
-          performer_type: 'group',
+          attendance_mode: 'offline',
+          performer_type: 'solo',
           genre: 5,
           tag: 8,
           first_event_start_after: '2026-03-01T00:00:00.000Z',
@@ -454,8 +454,8 @@ describe('HomePage (ProductionPage)', () => {
       })
     })
 
-    expect(screen.getByTestId('url-search')).toHaveTextContent('am=online-offline')
-    expect(screen.getByTestId('url-search')).toHaveTextContent('pt=group-solo')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('am=offline')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('pt=solo')
     expect(screen.getByTestId('url-search')).toHaveTextContent('g=5-9')
     expect(screen.getByTestId('url-search')).toHaveTextContent('t=8-12')
     expect(screen.getByTestId('url-search')).toHaveTextContent('fa=2026-03-01')

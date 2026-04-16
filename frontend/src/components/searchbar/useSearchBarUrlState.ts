@@ -45,19 +45,40 @@ const toggleArrayValue = <T extends string | number>(values: T[], value: T): T[]
   return [...values, value]
 }
 
+// Single-select filter: clear when clicking the active value; otherwise replace with only the new value.
+const toggleExclusiveFilterValue = <T extends string>(values: T[], value: T): T[] => {
+  if (values.includes(value)) {
+    return values.filter((item) => item !== value)
+  }
+
+  return [value]
+}
+
+const takeAtMostOne = <T>(values: T[]): T[] => {
+  if (!values.length) {
+    return []
+  }
+
+  return [values[0]]
+}
+
 const normalizeDateInput = (value: string | null): string => {
   const normalized = value?.trim() ?? ''
   return DATE_INPUT_PATTERN.test(normalized) ? normalized : ''
 }
 
 const parseAttendanceModes = (values: string[]): AttendanceMode[] => {
-  return values.filter(
+  const valid = values.filter(
     (value): value is AttendanceMode => value === 'offline' || value === 'online',
   )
+  return takeAtMostOne(valid)
 }
 
 const parsePerformerTypes = (values: string[]): PerformerType[] => {
-  return values.filter((value): value is PerformerType => value === 'group' || value === 'solo')
+  const valid = values.filter(
+    (value): value is PerformerType => value === 'group' || value === 'solo',
+  )
+  return takeAtMostOne(valid)
 }
 
 // Parses the search sort target from the URL query parameter
@@ -327,7 +348,7 @@ export const useSearchBarUrlState = ({
           }
 
           if (nextAttendanceModes !== undefined) {
-            const encodedAttendanceModes = encodeTokenList(nextAttendanceModes)
+            const encodedAttendanceModes = encodeTokenList(takeAtMostOne(nextAttendanceModes))
             if (encodedAttendanceModes) {
               nextParams.set(PARAM_ATTENDANCE_MODE, encodedAttendanceModes)
             } else {
@@ -336,7 +357,7 @@ export const useSearchBarUrlState = ({
           }
 
           if (nextPerformerTypes !== undefined) {
-            const encodedPerformerTypes = encodeTokenList(nextPerformerTypes)
+            const encodedPerformerTypes = encodeTokenList(takeAtMostOne(nextPerformerTypes))
             if (encodedPerformerTypes) {
               nextParams.set(PARAM_PERFORMER_TYPE, encodedPerformerTypes)
             } else {
@@ -448,12 +469,12 @@ export const useSearchBarUrlState = ({
     setSelectedTagIds: (ids: number[]) => updateSearchParams({ tags: ids, page: DEFAULT_PAGE }),
     toggleAttendanceMode: (value: AttendanceMode) =>
       updateSearchParams({
-        attendanceModes: toggleArrayValue(attendanceModes, value),
+        attendanceModes: toggleExclusiveFilterValue(attendanceModes, value),
         page: DEFAULT_PAGE,
       }),
     togglePerformerType: (value: PerformerType) =>
       updateSearchParams({
-        performerTypes: toggleArrayValue(performerTypes, value),
+        performerTypes: toggleExclusiveFilterValue(performerTypes, value),
         page: DEFAULT_PAGE,
       }),
     toggleGenreId: (id: number) =>

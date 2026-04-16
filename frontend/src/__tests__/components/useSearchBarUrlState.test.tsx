@@ -159,8 +159,8 @@ describe('useSearchBarUrlState pagination sync', () => {
   it('reads production filter state from URL params', () => {
     renderHarness('/?am=online-offline&pt=group-solo&fa=2026-03-01&fb=2026-03-31&g=5-9&t=8-12')
 
-    expect(screen.getByTestId('attendance-modes')).toHaveTextContent('online,offline')
-    expect(screen.getByTestId('performer-types')).toHaveTextContent('group,solo')
+    expect(screen.getByTestId('attendance-modes')).toHaveTextContent('online')
+    expect(screen.getByTestId('performer-types')).toHaveTextContent('group')
     expect(screen.getByTestId('start-after')).toHaveTextContent('2026-03-01')
     expect(screen.getByTestId('start-before')).toHaveTextContent('2026-03-31')
     expect(screen.getByTestId('genres')).toHaveTextContent('5,9')
@@ -178,8 +178,8 @@ describe('useSearchBarUrlState pagination sync', () => {
     fireEvent.click(screen.getByText('tag-8-12'))
 
     expect(screen.getByTestId('url-search')).toHaveTextContent('q=hamlet')
-    expect(screen.getByTestId('url-search')).toHaveTextContent('am=online-offline')
-    expect(screen.getByTestId('url-search')).toHaveTextContent('pt=group-solo')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('am=online')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('pt=group')
     expect(screen.getByTestId('url-search')).toHaveTextContent('fa=2026-03-01')
     expect(screen.getByTestId('url-search')).toHaveTextContent('fb=2026-03-31')
     expect(screen.getByTestId('url-search')).toHaveTextContent('g=5-9')
