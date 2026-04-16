@@ -45,6 +45,8 @@ const ProductionsPage = () => {
     setPage,
   } = useSearchBarUrlState({ isMobile })
 
+  const [selectedGenreIds, setSelectedGenreIds] = useState<number[]>([])
+
   // Local state for managing the productions data, loading state, error messages, and a retry key to trigger refetching
   const [isLoading, setIsLoading] = useState(true)
   const [productions, setProductions] = useState<Production[]>([])
@@ -204,7 +206,14 @@ const ProductionsPage = () => {
         emptyTitle={t('archive.home.empty.title')}
         emptyDescription={t('archive.home.empty.description')}
         hasResults={productions.length > 0}
-        resultsContent={<ProductionView productions={productions} layout={viewMode} />}
+        resultsContent={
+          <ProductionView
+            productions={productions}
+            layout={viewMode}
+            selectedGenreIds={selectedGenreIds}
+            onGenreIdsChange={setSelectedGenreIds}
+          />
+        }
         page={page}
         pageSize={PAGE_SIZE}
         totalItems={totalCount}

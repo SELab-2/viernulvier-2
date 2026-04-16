@@ -25,6 +25,9 @@ export interface ProductionGridCardProps {
  * first crop of the first gallery image when present; otherwise {@link ImageWithFallback} shows the
  * branded placeholder.
  *
+ * Genre chips use `context="static"` (non-interactive) whenever `selectedGenreIds` is defined,
+ * so that genre filtering is controlled exclusively by the parent rather than navigating away.
+ *
  * @param props.production Full API payload (title, artist, media gallery, genres, events, etc.).
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
  * @returns The grid card element.
@@ -132,7 +135,7 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
                   )}
                   labels={genre.name || {}}
                   chipType="genre"
-                  context="description"
+                  context={selectedGenreIds !== undefined ? 'static' : 'description'}
                   id={genre.id}
                   selected={selectedGenreIds?.includes(genre.id) || false}
                 />
