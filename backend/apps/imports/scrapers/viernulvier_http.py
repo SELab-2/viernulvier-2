@@ -11,6 +11,7 @@ import time
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin, urlparse
 
+from dotenv import load_dotenv
 import requests
 from requests.adapters import HTTPAdapter
 
@@ -32,7 +33,6 @@ from .viernulvier_constants import (
     ScraperError,
 )
 
-from dotenv import load_dotenv
 load_dotenv(os.path.join(BASE_DIR.parent, "infrastructure", ".env"))
 
 logger = logging.getLogger("apps.imports.scrapers.viernulvier")
