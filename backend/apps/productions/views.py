@@ -270,9 +270,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
     @staticmethod
     def _get_documented_years_count() -> int:
         """Count unique years covered by event start/end timestamps."""
-        start_years = {
-            value.year for value in Event.objects.exclude(starts_at__isnull=True).dates("starts_at", "year")
-        }
+        start_years = {value.year for value in Event.objects.exclude(starts_at__isnull=True).dates("starts_at", "year")}
         end_years = {value.year for value in Event.objects.exclude(ends_at__isnull=True).dates("ends_at", "year")}
         return len(start_years | end_years)
 
@@ -285,7 +283,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         responses={200: ProductionLandingStatsSerializer},
     )
     @action(detail=False, methods=["get"], url_path="landing-stats")
-    def landing_stats(self, request: Request) -> Response:
+    def landing_stats(self, _request: Request) -> Response:
         """Return pre-aggregated counters used by the frontend homepage."""
         payload = {
             "productions": Production.objects.count(),

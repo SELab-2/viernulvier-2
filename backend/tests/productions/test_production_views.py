@@ -29,8 +29,8 @@ from apps.core.views import ApiModelViewSet
 from apps.productions.models import Production
 from apps.productions.serializers import ProductionSerializer
 from apps.productions.views import ProductionViewSet
-from tests.factories.event import EventFactory
 from tests.factories.blog import BlogFactory
+from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.media_library import MediaGalleryFactory, MediaItemCropFactory, MediaItemFactory
 from tests.factories.production import (
