@@ -210,12 +210,12 @@ describe('GenreAndTagChip in genre mode', () => {
     expect(onToggle).toHaveBeenCalledWith(99, 'genre')
   })
 
-  it('navigates to homepage with a genre id in description context', () => {
+  it('navigates to the archive with a genre id in description context', () => {
     renderChip(
       <GenreAndTagChip name="Dans" labels={{}} chipType="genre" id={7} context="description" />,
     )
 
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/?g=7')
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/archive?g=7')
   })
 
   it('renders static context as non-clickable', () => {
@@ -260,7 +260,7 @@ describe('GenreAndTagChip in series tag mode', () => {
     expect(screen.getByTestId('CloseIcon')).toBeInTheDocument()
   })
 
-  it('navigates to homepage with a tag id in description context', () => {
+  it('navigates to the archive with a tag id in description context', () => {
     renderChip(
       <GenreAndTagChip
         name="Reekstag"
@@ -271,7 +271,7 @@ describe('GenreAndTagChip in series tag mode', () => {
       />,
     )
 
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/?t=12')
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/archive?t=12')
   })
 
   it('navigates to the series page in series context', () => {
