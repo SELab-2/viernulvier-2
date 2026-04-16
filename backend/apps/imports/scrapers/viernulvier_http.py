@@ -14,6 +14,8 @@ from urllib.parse import urljoin, urlparse
 import requests
 from requests.adapters import HTTPAdapter
 
+from config.settings.base import BASE_DIR
+
 from .viernulvier_constants import (
     BASE_DOMAIN,
     BASE_URL,
@@ -29,6 +31,9 @@ from .viernulvier_constants import (
     RateLimitError,
     ScraperError,
 )
+
+from dotenv import load_dotenv
+load_dotenv(os.path.join(BASE_DIR.parent, "infrastructure", ".env"))
 
 logger = logging.getLogger("apps.imports.scrapers.viernulvier")
 
