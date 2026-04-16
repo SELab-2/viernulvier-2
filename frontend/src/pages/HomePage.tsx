@@ -404,6 +404,16 @@ const HomePage = () => {
                   <Button component={RouterLink} to="/blogs" variant="outlined" size="large">
                     {t('landing.hero.secondaryCta')}
                   </Button>
+                  <Button
+                    component="a"
+                    href="https://www.viernulvier.gent/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="text"
+                    size="large"
+                  >
+                    {t('landing.hero.websiteCta')}
+                  </Button>
                 </Stack>
               </Stack>
 
