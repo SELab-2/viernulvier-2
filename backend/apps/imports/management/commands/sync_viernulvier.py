@@ -352,6 +352,7 @@ PRODUCTION_CONFIG = ModelSyncConfig(
             related_lookup_field="external_id",
             extra_fields={"position": "position"},
             create_related_fn=_create_uitdatabank_theme_genre,
+            clear_existing=False,
         ),
     ],
 )
