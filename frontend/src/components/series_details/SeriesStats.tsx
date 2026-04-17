@@ -1,5 +1,6 @@
 /*
- * Displays a horizontal (or vertical on mobile) list of key statistics.
+ * Displays a row of key statistics for a series.
+ * Switches between a single column (small screens) and a single row (larger screens).
  */
 
 import { Box, Divider, Stack, Typography } from '@mui/material'
@@ -19,19 +20,15 @@ const SeriesStats = ({ stats }: Props) => {
       direction={{ xs: 'column', sm: 'row' }}
       spacing={{ xs: 2, sm: 5 }}
       divider={
-        // Divider only visible on larger screens
         <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />
       }
       sx={{ py: 1 }}
     >
       {stats.map((stat) => (
         <Box key={stat.value + stat.label}>
-          {/* Value */}
           <Typography variant="h4" sx={{ fontWeight: 800 }}>
             {stat.value}
           </Typography>
-
-          {/* Label */}
           <Typography variant="body2" color="text.secondary">
             {stat.label}
           </Typography>

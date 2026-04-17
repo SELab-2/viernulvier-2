@@ -8,6 +8,7 @@ import i18n from '../../i18n'
 
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
+import type { Tag } from '../../types/Tags'
 import type { ReactElement } from 'react'
 
 const accentTheme = createTheme({
@@ -26,6 +27,22 @@ const minimalGenre = (id: number, nlName: string): Genre => ({
   name: { nl: nlName },
   display_name: nlName,
   vendor_id: null,
+})
+
+const minimalTag = (id: number, nlName: string, enName = nlName): Tag => ({
+  id,
+  url: `https://example.com/tags/${id}`,
+  source: 'db',
+  source_type: 'internal',
+  type: 'series',
+  is_external: false,
+  is_enabled: true,
+  display_name: nlName,
+  display_short_description: null,
+  display_url_title: null,
+  name: { nl: nlName, en: enName },
+  short_description: null,
+  url_title: null,
 })
 
 const baseProduction = (overrides: Partial<Production> = {}): Production => ({
@@ -287,7 +304,7 @@ describe('ProductionGridCard', () => {
     expect(screen.queryByText(/ - /)).not.toBeInTheDocument()
   })
 
-  it('renders static genre chips without interactive filter behavior', () => {
+  it('renders genre chips as navigation links without search-filter behavior', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(1, 'Dans'), minimalGenre(2, 'Muziek')],
@@ -299,6 +316,18 @@ describe('ProductionGridCard', () => {
     expect(screen.getByText('Muziek')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
     expect(onGenreClick).not.toHaveBeenCalled()
+  })
+
+  it('renders series tag chips alongside genres as navigation links', () => {
+    const production = baseProduction({
+      tags: [minimalTag(11, 'Festivalreeks')],
+      genres: [minimalGenre(1, 'Dans')],
+    })
+
+    renderGridCard({ production })
+
+    expect(screen.getByText('Festivalreeks')).toBeInTheDocument()
+    expect(screen.getByText('Dans')).toBeInTheDocument()
   })
 
   it('does not render a genre row when there are no genres', () => {
@@ -326,7 +355,7 @@ describe('ProductionGridCard', () => {
     expect(screen.queryByRole('button', { name: /^Filter (op|by)/ })).not.toBeInTheDocument()
   })
 
-  it('does not fire onGenreClick for static chips', () => {
+  it('does not fire onGenreClick — chips navigate rather than toggle filters', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(1, 'A'), minimalGenre(2, 'B')],
@@ -338,7 +367,7 @@ describe('ProductionGridCard', () => {
     expect(onGenreClick).not.toHaveBeenCalled()
   })
 
-  it('keeps only the card link interactive when genres are static', () => {
+  it('card link navigates to detail route; genre chips navigate to homepage filter', () => {
     const onGenreClick = jest.fn()
     const production = baseProduction({
       genres: [minimalGenre(5, 'Chip')],
@@ -394,5 +423,18 @@ describe('ProductionGridCard', () => {
 
     expect(screen.getByText('Dance')).toBeInTheDocument()
     expect(screen.queryByText(/^Dans$/)).not.toBeInTheDocument()
+  })
+
+  it('translates series tag chip labels for the active locale', async () => {
+    await i18n.changeLanguage('en')
+
+    const production = baseProduction({
+      tags: [minimalTag(12, 'Reeks', 'Series')],
+    })
+
+    renderGridCard({ production })
+
+    expect(screen.getByText('Series')).toBeInTheDocument()
+    expect(screen.queryByText(/^Reeks$/)).not.toBeInTheDocument()
   })
 })

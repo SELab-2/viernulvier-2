@@ -1,12 +1,8 @@
 {
-  "title": "Archive workspace",
-  "subtitle": "Catalog and preserve items.",
-  "english": "English",
-  "dutch": "Dutch",
   "nav": {
-    "home": "Archive",
+    "home": "Home",
+    "archive": "Archive",
     "series": "Series",
-    "productions": "Artists",
     "blogs": "Blogs",
     "media": "Media",
     "mainNav": "Main navigation",
@@ -14,6 +10,92 @@
     "closeMenu": "Close menu",
     "switchToLightMode": "Dark mode",
     "switchToDarkMode": "Light mode"
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "VIERNULVIER ARCHIVE",
+      "title": "The living archive of VIERNULVIER.",
+      "description": "Explore decades of performances, concerts, and theatre at Kunstencentrum VIERNULVIER, carefully catalogued and enriched with context.",
+      "primaryCta": "Open archive",
+      "seriesCta": "Browse series",
+      "secondaryCta": "Read stories",
+      "websiteCta": "Visit official website"
+    },
+    "stats": {
+      "productions": "Productions",
+      "series": "Series",
+      "years": "Years documented",
+      "stories": "Stories"
+    },
+    "statsSection": {
+      "eyebrow": "Archive at a glance",
+      "title": "A quick overview of the collection.",
+      "description": "Live counts for productions, series, documented years, and stories."
+    },
+    "ticker": {
+      "brand": "VIERNULVIER",
+      "city": "GHENT",
+      "archive": "ARCHIVE",
+      "years": "{{value}} YEARS",
+      "productions": "{{value}} PRODUCTIONS",
+      "center": "ARTS CENTRE",
+      "collection": "COLLECTION",
+      "performances": "PERFORMANCES",
+      "theatre": "THEATRE",
+      "concert": "CONCERT",
+      "dance": "DANCE"
+    },
+    "side": {
+      "eyebrow": "What you can explore",
+      "title": "Four clear ways into the collection.",
+      "archive": {
+        "title": "Performances, concerts & theatre",
+        "description": "Search by artist, venue, or period. Every documented production in VIERNULVIER's history, searchable in one place."
+      },
+      "stories": {
+        "title": "Stories and context",
+        "description": "Editorial pieces that deepen the archive - interviews, essays, and notes by researchers and curators."
+      },
+      "series": {
+        "title": "Series and editions",
+        "description": "Productions grouped by recurring series. Follow how each edition evolves over time."
+      },
+      "prints": {
+        "title": "Posters and printed matter",
+        "description": "Scanned posters, programme booklets, and brochures from the physical collection."
+      }
+    },
+    "cardsSection": {
+      "eyebrow": "Explore the collection",
+      "title": "Where do you want to start?",
+      "description": "Explore the VIERNULVIER archive through one of the four perspectives. Each gateway reveals a unique aspect of our rich collection."
+    },
+    "cards": {
+      "archive": {
+        "eyebrow": "01 - Archive",
+        "title": "Explore the archive",
+        "description": "Search productions by artist, venue, or period. The full production history of VIERNULVIER.",
+        "cta": "Open archive"
+      },
+      "series": {
+        "eyebrow": "02 - Series",
+        "title": "Browse series",
+        "description": "Productions grouped by recurring series. Follow linked editions in chronological order.",
+        "cta": "Open series"
+      },
+      "stories": {
+        "eyebrow": "03 - Stories",
+        "title": "Read the stories",
+        "description": "Interviews, essays, and research notes that add depth and context to the archive.",
+        "cta": "Read stories"
+      },
+      "prints": {
+        "eyebrow": "04 - Prints",
+        "title": "Explore printed materials",
+        "description": "Posters, programme booklets, and brochures from the physical collection.",
+        "cta": "Open prints"
+      }
+    }
   },
   "searchbar": {
     "searchPlaceholder": "Search for events, artists, or venues...",
@@ -23,21 +105,10 @@
     "resultsFound_other": "{{count}} results found",
     "sort": {
       "targetLabel": "Sort by",
-      "directionLabel": "Sort direction",
       "name": "Name",
       "date": "Date",
-      "ascending": "Ascending",
-      "descending": "Descending",
       "switchToAscending": "Switch to ascending",
       "switchToDescending": "Switch to descending"
-    },
-    "period": {
-      "label": "Period",
-      "from_x": "From {{date}} on",
-      "to_x": "Up to {{date}}",
-      "from_label": "From",
-      "to_label": "To",
-      "all": "All"
     },
     "layout": {
       "label": "View mode",
@@ -56,23 +127,32 @@
       "genericWithCode": "Request failed with status {{status}}."
     }
   },
-  "listCard": {
-    "view": "View",
-    "imageAlt": "Image for {{title}}"
-  },
   "genreChip": {
     "filterByGenre": "Filter by {{genre}}"
   },
   "events": {
-    "title": "Events",
-    "listPlaceholder": "Events list will be displayed here.",
-    "detailTitle": "Event Detail",
-    "detailPlaceholder": "Event details for ID {{id}} will be displayed here.",
-    "backToEvents": "Back to Events",
     "priceType": "Type",
     "price": "Price",
     "available": "Available",
     "availableQuantity": "{{count}} available"
+  },
+  "archive": {
+    "home": {
+      "loading": "Loading archive",
+      "resultsRegionLabel": "Archive results",
+      "filterPanelLabel": "Archive filters",
+      "filterPanelTitle": "Filters",
+      "filterPanelPlaceholder": "Use search and sorting to explore the archive.",
+      "empty": {
+        "title": "No archive items found",
+        "description": "Adjust your search and try again."
+      },
+      "error": {
+        "retry": "Retry",
+        "fallback": "Could not load the archive.",
+        "notification": "Something went wrong while loading the archive."
+      }
+    }
   },
   "productions": {
     "title": "Productions",
@@ -80,24 +160,9 @@
     "detailTitle": "Production Detail",
     "detailPlaceholder": "Production details for ID {{id}} will be displayed here.",
     "backToProductions": "Back to Productions",
-    "home": {
-      "loading": "Loading productions",
-      "resultsRegionLabel": "Production results",
-      "filterPanelLabel": "Advanced filters",
-      "filterPanelTitle": "Filters",
-      "filterPanelPlaceholder": "Advanced filters will be available in this panel.",
-      "empty": {
-        "title": "No productions found",
-        "description": "Adjust your search and try again."
-      },
-      "error": {
-        "retry": "Retry",
-        "fallback": "Could not load productions.",
-        "notification": "Something went wrong while loading productions."
-      }
-    },
     "pagination": {
       "navigationLabel": "Production pagination",
+      "pageXofY": "Page {{page}} of {{totalPages}}",
       "firstPage": "Go to first page",
       "lastPage": "Go to last page",
       "nextPage": "Go to next page",
@@ -135,9 +200,6 @@
       "resultsRegionLabel": "Blog results",
       "searchPlaceholder": "Search stories by title or excerpt...",
       "searchPlaceholderMobile": "Search stories...",
-      "sidebarLabel": "Story context",
-      "sidebarTitle": "Stories",
-      "sidebarDescription": "Browse editorial stories from the VIERNULVIER archive.",
       "coverAltFallback": "Blog cover image",
       "noExcerpt": "No excerpt available.",
       "unpublished": "Unpublished",
@@ -150,22 +212,12 @@
         "fallback": "Could not load stories.",
         "notification": "Something went wrong while loading stories."
       }
-    },
-    "pagination": {
-      "navigationLabel": "Story pagination",
-      "firstPage": "Go to first page",
-      "lastPage": "Go to last page",
-      "nextPage": "Go to next page",
-      "previousPage": "Go to previous page",
-      "currentPage": "Current page, page {{page}}",
-      "goToPage": "Go to page {{page}}"
     }
   },
   "notFound": {
-    "code": "404",
     "title": "Page not found",
     "description": "The page you are looking for does not exist or has been moved.",
-    "backHome": "Back to archive"
+    "backHome": "Back to home"
   },
   "footer": {
     "address": {
@@ -177,8 +229,8 @@
       "vat": "BTW BE 0423.063.619"
     },
     "nav": {
-      "ariaLabel": "Navigation",
-      "home": "Archive",
+      "home": "Home",
+      "archive": "Archive",
       "series": "Series",
       "blogs": "Blogs",
       "media": "Media"
@@ -192,11 +244,9 @@
     "listPlaceholder": "List of series will be displayed here.",
     "allEditions": "All editions",
     "allEditionsSubtitle": "Chronological overview of the productions within this series.",
-    "breadcrumb": "Archive / Series / {{name}}",
     "noDescription": "No description available.",
     "noProductions": "There are no productions linked to this series.",
     "loading": "Loading series",
-    "notFound": "Series not found.",
     "invalidId": "Invalid series ID.",
     "fetchError": "Could not fetch the series.",
     "untitled": "Untitled series",
@@ -238,14 +288,7 @@
     }
   },
   "blog": {
-    "title": "Blog",
-    "unknown": "Could not load blog",
     "couldNotLoad": "Could not load blog",
-    "invalidId": "Invalid blog ID",
-    "detail": {
-      "publishedOn": "Published on",
-      "notPublished": "Not published",
-      "related": "Related productions"
-    }
+    "invalidId": "Invalid blog ID"
   }
 }

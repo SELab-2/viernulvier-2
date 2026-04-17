@@ -22,6 +22,7 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.blogs.models import Blog
 from apps.core.mixins import LanguageAwareMixin
 from apps.core.views import ApiModelViewSet
 from apps.events.models import Event, EventPrice
@@ -33,7 +34,11 @@ from apps.tags.models import Tag, TagTranslation
 from .filters import ProductionFilter
 from .models import Production, ProductionGenre, ProductionTag
 from .schemas import production_schema
-from .serializers import ProductionSerializer, ProductionSeriesSerializer
+from .serializers import (
+    ProductionLandingStatsSerializer,
+    ProductionSerializer,
+    ProductionSeriesSerializer,
+)
 
 _TAG = "Productions"
 
@@ -258,6 +263,34 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
             )
 
         return super().retrieve(request, *args, **kwargs)
+
+    @staticmethod
+    def _get_documented_years_count() -> int:
+        """Count unique years covered by event start/end timestamps."""
+        start_years = {value.year for value in Event.objects.exclude(starts_at__isnull=True).dates("starts_at", "year")}
+        end_years = {value.year for value in Event.objects.exclude(ends_at__isnull=True).dates("ends_at", "year")}
+        return len(start_years | end_years)
+
+    @extend_schema(
+        summary="Retrieve landing archive stats",
+        description=(
+            "Returns compact counters for the homepage stats bar: total productions, "
+            "total production series, documented years, and published stories."
+        ),
+        responses={200: ProductionLandingStatsSerializer},
+    )
+    @action(detail=False, methods=["get"], url_path="landing-stats")
+    def landing_stats(self, _request: Request) -> Response:
+        """Return pre-aggregated counters used by the frontend homepage."""
+        payload = {
+            "productions": Production.objects.count(),
+            "series": Tag.objects.filter(productions__isnull=False).distinct().count(),
+            "years": self._get_documented_years_count(),
+            "stories": Blog.objects.filter(published_at__isnull=False).count(),
+        }
+
+        serializer = ProductionLandingStatsSerializer(payload)
+        return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="series")
     def series(self, request: Request) -> Response:

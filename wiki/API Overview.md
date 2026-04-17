@@ -220,3 +220,18 @@ Each row represents one production-tag bundle (a "series") and includes:
 - `page`, `page_size`: standard DRF pagination controls
 
 This endpoint avoids expensive per-tag fan-out requests from clients.
+
+---
+
+## Landing Stats Endpoint
+
+For the homepage stats bar, the productions API exposes a compact counters endpoint:
+
+- `GET /api/v1/productions/landing-stats/`
+
+### What it returns
+
+- `productions`: total number of productions
+- `series`: total number of distinct series tags linked to at least one production
+- `years`: total number of distinct documented years in event start/end timestamps
+- `stories`: total number of published blog stories (`published_at` is not null)

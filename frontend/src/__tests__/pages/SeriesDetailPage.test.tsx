@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import SeriesDetailPage from '../../pages/SeriesDetailPage'
@@ -32,7 +32,7 @@ jest.mock('react-i18next', () => ({
         'series.stats.editions': 'Edities',
         'series.stats.period': 'Periode',
         'series.stats.type': 'Type',
-        'nav.home': 'Archief',
+        'nav.home': 'Home',
         'footer.nav.series': 'Reeksen',
       }
 
@@ -119,7 +119,7 @@ describe('SeriesDetailPage', () => {
 
     await screen.findByRole('heading', { name: 'VIDEODROOM' })
 
-    expect(screen.getByRole('button', { name: 'Archief' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reeksen' })).toBeInTheDocument()
   })
 
@@ -193,13 +193,13 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
-    const productionCard = await screen.findByRole('button', { name: /videodroom 2024/i })
+    const productionCard = await screen.findByRole('link', { name: /videodroom 2024/i })
     fireEvent.click(productionCard)
 
     expect(await screen.findByText('PRODUCTION DETAIL')).toBeInTheDocument()
   })
 
-  it('renders both production genres and series tags in the production card', async () => {
+  it('renders production genre chips on the production card when genres have display names', async () => {
     mockedGetTag.mockResolvedValue({
       id: 1,
       name: { nl: 'VIDEODROOM' },
@@ -222,7 +222,7 @@ describe('SeriesDetailPage', () => {
               type: 'genre',
               use_as: { id: 1, name: 'genre' },
               name: { nl: 'Audiovisueel', en: 'Audiovisual' },
-              display_name: null,
+              display_name: 'Audiovisueel',
               vendor_id: null,
             },
             {
@@ -230,24 +230,11 @@ describe('SeriesDetailPage', () => {
               type: 'genre',
               use_as: { id: 1, name: 'genre' },
               name: { nl: 'Performance', en: 'Performance' },
-              display_name: null,
+              display_name: 'Performance',
               vendor_id: null,
             },
           ],
-          tags: [
-            {
-              id: 20,
-              name: { nl: 'Festivalreeks', en: 'Festival series' },
-              display_name: null,
-              type: 'series',
-            },
-            {
-              id: 21,
-              name: { nl: 'Videodroom', en: 'Videodroom' },
-              display_name: null,
-              type: 'series',
-            },
-          ],
+          tags: [],
         },
       ],
     })
@@ -256,13 +243,5 @@ describe('SeriesDetailPage', () => {
 
     expect(await screen.findByText('Audiovisueel')).toBeInTheDocument()
     expect(screen.getByText('Performance')).toBeInTheDocument()
-    expect(screen.getByText('Festivalreeks')).toBeInTheDocument()
-    expect(screen.getByText('Videodroom')).toBeInTheDocument()
-
-    expect(screen.getByRole('link', { name: 'Festivalreeks' })).toHaveAttribute(
-      'href',
-      '/series/20',
-    )
-    expect(screen.getByRole('link', { name: 'Videodroom' })).toHaveAttribute('href', '/series/21')
   })
 })

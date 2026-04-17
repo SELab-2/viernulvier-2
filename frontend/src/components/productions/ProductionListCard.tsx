@@ -25,6 +25,9 @@ export interface ProductionListCardProps {
  * first crop of the first gallery image when present; otherwise {@link ImageWithFallback} shows the
  * branded placeholder.
  *
+ * Genre chips use `context="static"` (non-interactive) whenever `selectedGenreIds` is defined,
+ * so that genre filtering is controlled exclusively by the parent rather than navigating away.
+ *
  * @param props.production Full API payload (title, artist, media gallery, genres, events, etc.).
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
  * @returns The list row element.
@@ -46,6 +49,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
     language,
   )
   const genres = production.genres.filter((genre) => genre.display_name)
+  const tags = production.tags.filter((tag) => tag.display_name || tag.name || tag.url_title)
 
   return (
     <Stack
@@ -114,27 +118,43 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
             ) : null}
           </Stack>
 
-          <Stack
-            direction="row"
-            spacing={0.75}
-            sx={{ flexWrap: 'wrap', height: 32, overflow: 'hidden' }}
-          >
-            {genres.map((genre) => (
-              <GenreAndTagChip
-                key={genre.id}
-                name={getTranslatedRecord(
-                  genre.name,
-                  language,
-                  genre.display_name ?? String(genre.id),
-                )}
-                labels={genre.name || {}}
-                chipType="genre"
-                context="static"
-                id={genre.id}
-                selected={selectedGenreIds?.includes(genre.id) || false}
-              />
-            ))}
-          </Stack>
+          <Box onClick={(e) => e.stopPropagation()}>
+            <Stack
+              direction="row"
+              spacing={0.75}
+              sx={{ flexWrap: 'wrap', height: 32, overflow: 'hidden' }}
+            >
+              {tags.map((tag) => (
+                <GenreAndTagChip
+                  key={`tag-${tag.id}`}
+                  name={getTranslatedRecord(
+                    tag.name || tag.url_title || {},
+                    language,
+                    tag.display_name ?? tag.type ?? String(tag.id),
+                  )}
+                  labels={tag.name || tag.url_title || {}}
+                  chipType="seriesTag"
+                  context="series"
+                  id={tag.id}
+                />
+              ))}
+              {genres.map((genre) => (
+                <GenreAndTagChip
+                  key={genre.id}
+                  name={getTranslatedRecord(
+                    genre.name,
+                    language,
+                    genre.display_name ?? String(genre.id),
+                  )}
+                  labels={genre.name || {}}
+                  chipType="genre"
+                  context={selectedGenreIds !== undefined ? 'static' : 'description'}
+                  id={genre.id}
+                  selected={selectedGenreIds?.includes(genre.id) || false}
+                />
+              ))}
+            </Stack>
+          </Box>
         </Stack>
       </Stack>
 

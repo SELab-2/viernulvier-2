@@ -29,6 +29,7 @@ describe('Navbar', () => {
 
   it('renders all navigation links', () => {
     renderNavbar()
+    expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Archief' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Reeksen' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Blogs' })).toBeInTheDocument()
@@ -36,9 +37,9 @@ describe('Navbar', () => {
   })
 
   it('marks the active route with aria-current="page"', () => {
-    renderNavbar('/series')
-    expect(screen.getByRole('link', { name: 'Reeksen' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: 'Archief' })).not.toHaveAttribute('aria-current')
+    renderNavbar('/archive')
+    expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current')
   })
 
   it('shows target language and toggles to it when clicking the language button', () => {
