@@ -22,7 +22,7 @@ class TestGenre:
         GenreTranslationFactory(genre=genre, language__code="en", name="EN Festival")
         GenreTranslationFactory(genre=genre, language__code="nl", name="NL Festival")
 
-        assert str(genre) == "EN Festival (Festival)"
+        assert str(genre) == "EN Festival"
 
     def test_str_uses_vendor_id_when_translation_missing(self) -> None:
         genre = GenreFactory(type="theater", vendor_id="opera")

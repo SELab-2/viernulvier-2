@@ -58,6 +58,7 @@ class TestSyncM2M:
 
         FakeThrough.objects.filter.assert_not_called()
         assert len(created_rows) == 1
+
     def test_normalizes_scalar_payload_to_single_item(self) -> None:
         """A non-list payload is treated as a one-item list and processed safely."""
 

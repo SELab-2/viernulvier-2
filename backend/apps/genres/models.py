@@ -44,20 +44,6 @@ class Genre(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        """Return a human-readable representation of the genre, preferring the base display name, then vendor_id, then type."""
-        name = self.get_base_display_name(
-            related_name="translations",
-            fallback=None,
-        )
-
-        if name:
-            return f"{name} ({self.type})"
-
-        stripped_vendor_id = self.vendor_id.strip() if self.vendor_id else ""
-        if stripped_vendor_id != "":
-            return stripped_vendor_id
-
-def __str__(self) -> str:
         """Return the translated genre name, then ``vendor_id``, then ``type``."""
         name = self.get_base_display_name(
             related_name="translations",
