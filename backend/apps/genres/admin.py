@@ -6,7 +6,7 @@ from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin
 
-from .models import Genre, GenreTranslation, GenreUseAs
+from .models import Genre, GenreTranslation
 
 
 class GenreTranslationInline(admin.TabularInline):
@@ -19,15 +19,6 @@ class GenreTranslationInline(admin.TabularInline):
         return super().get_queryset(request).select_related("language")
 
 
-@admin.register(GenreUseAs)
-class GenreUseAsAdmin(BaseAdmin):
-    """Admin configuration for genre usage contexts."""
-
-    list_display = ("id", "name")
-    search_fields = ("name",)
-    ordering = ("name",)
-
-
 @admin.register(Genre)
 class GenreAdmin(BaseAdmin):
     """Admin configuration for genres."""
@@ -35,18 +26,17 @@ class GenreAdmin(BaseAdmin):
     list_display = (
         "id",
         "type",
-        "use_as",
         "name",
     )
-    list_filter = ("use_as",)
-    list_select_related = ("use_as",)
+    list_filter = ()
+    list_select_related = ()
     search_fields = (
         "type",
         "translations__name",
         "vendor_id",
     )
     ordering = ("id",)
-    autocomplete_fields = ("use_as",)
+    autocomplete_fields = ()
     inlines = [GenreTranslationInline]
 
     @admin.display(description="Name")
@@ -54,8 +44,8 @@ class GenreAdmin(BaseAdmin):
         return str(obj)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Genre]:
-        """Select related use_as and prefetch translations to avoid N+1 queries."""
-        return super().get_queryset(request).select_related("use_as").prefetch_related("translations")
+        """Prefetch translations to avoid N+1 queries."""
+        return super().get_queryset(request).prefetch_related("translations")
 
 
 @admin.register(GenreTranslation)

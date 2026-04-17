@@ -12,7 +12,7 @@ from rest_framework.routers import DefaultRouter
 
 from apps.blogs.views import BlogViewSet
 from apps.events.views import EventViewSet
-from apps.genres.views import GenreUseAsViewSet, GenreViewSet
+from apps.genres.views import GenreViewSet
 from apps.import_log.views import ImportLogViewSet
 from apps.languages.views import LanguageViewSet
 from apps.locations.views import HallViewSet, LocationViewSet, SpaceViewSet
@@ -28,7 +28,6 @@ router = DefaultRouter()
 router.register(r"languages", LanguageViewSet, basename="language")
 router.register(r"tags", TagViewSet, basename="tag")
 router.register(r"genres", GenreViewSet, basename="genre")
-router.register(r"genre-use-as", GenreUseAsViewSet, basename="genre-use-as")
 router.register(r"price-ranks", PriceRankViewSet, basename="price-rank")
 router.register(r"prices", PriceViewSet, basename="price")
 

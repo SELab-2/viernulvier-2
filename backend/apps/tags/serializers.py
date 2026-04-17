@@ -83,9 +83,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "id",
             "url",
             "source",
-            "source_type",
             "type",
-            "is_external",
             "is_enabled",
             "display_name",
             "display_short_description",
@@ -110,14 +108,8 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "source": {
                 "help_text": "Identifier of the system that created this tag (e.g. `uitdatabank`, `system`).",
             },
-            "source_type": {
-                "help_text": "Sub-classification of the source (e.g. `theme`, `targetAudience`).",
-            },
             "type": {
                 "help_text": "Internal category of the tag used for grouping (e.g. `theme`, `audience`).",
-            },
-            "is_external": {
-                "help_text": "`true` when this tag was imported from an external system.",
             },
             "is_enabled": {
                 "help_text": "`false` to soft-disable the tag without removing it.",

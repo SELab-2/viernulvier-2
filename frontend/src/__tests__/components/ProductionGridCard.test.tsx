@@ -24,7 +24,6 @@ const accentTheme = createTheme({
 const minimalGenre = (id: number, nlName: string): Genre => ({
   id,
   type: 'primary',
-  use_as: { id: 1, name: 'cat' },
   name: { nl: nlName },
   display_name: nlName,
   vendor_id: null,
@@ -34,9 +33,7 @@ const minimalTag = (id: number, nlName: string, enName = nlName): Tag => ({
   id,
   url: `https://example.com/tags/${id}`,
   source: 'db',
-  source_type: 'internal',
   type: 'series',
-  is_external: false,
   is_enabled: true,
   display_name: nlName,
   display_short_description: null,
@@ -53,7 +50,6 @@ const baseProduction = (overrides: Partial<Production> = {}): Production => ({
   first_event_start: null,
   last_event_end: null,
   media_gallery: { id: 0, name: null, media_items: [] },
-  uit_database_theme: null,
   uit_database_type: null,
   display_title: null,
   display_artist_name: null,
@@ -345,7 +341,6 @@ describe('ProductionGridCard', () => {
         {
           id: 1,
           type: 'primary',
-          use_as: { id: 1, name: 'cat' },
           name: { nl: 'Zonder display' },
           display_name: null,
           vendor_id: null,
@@ -415,7 +410,6 @@ describe('ProductionGridCard', () => {
         {
           id: 9,
           type: 'primary',
-          use_as: { id: 1, name: 'cat' },
           name: { nl: 'Dans', en: 'Dance' },
           display_name: 'Dans',
           vendor_id: null,

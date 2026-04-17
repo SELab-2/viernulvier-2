@@ -7,9 +7,9 @@ from django.urls import reverse
 import pytest
 from rest_framework.test import APIClient
 
-from apps.genres.filters import GenreFilter, GenreUseAsFilter
-from apps.genres.models import Genre, GenreUseAs
-from tests.factories.genre import GenreFactory, GenreTranslationFactory, GenreUseAsFactory
+from apps.genres.filters import GenreFilter
+from apps.genres.models import Genre
+from tests.factories.genre import GenreFactory, GenreTranslationFactory
 from tests.factories.language import LanguageFactory
 
 pytestmark = pytest.mark.django_db
@@ -27,39 +27,6 @@ def int_headers():
 
 
 # =====================================================
-# GenreUseAsFilter
-# =====================================================
-
-
-class TestGenreUseAsFilter:
-    def _qs(self, params):
-        return GenreUseAsFilter(params, queryset=GenreUseAs.objects.all()).qs
-
-    def test_name_icontains(self) -> None:
-        GenreUseAsFactory(name="genre")
-        GenreUseAsFactory(name="tag")
-
-        assert self._qs({"name": "genre"}).count() == 1
-        assert self._qs({"name": "enr"}).count() == 1
-
-    def test_name_case_insensitive(self) -> None:
-        GenreUseAsFactory(name="Genre")
-
-        assert self._qs({"name": "genre"}).count() == 1
-
-    def test_external_id_inherited(self) -> None:
-        GenreUseAsFactory(external_id="use-001")
-        GenreUseAsFactory(external_id="use-002")
-
-        assert self._qs({"external_id": "USE-001"}).count() == 1
-
-    def test_no_params_returns_all(self) -> None:
-        GenreUseAsFactory.create_batch(3)
-
-        assert self._qs({}).count() == 3
-
-
-# =====================================================
 # GenreFilter
 # =====================================================
 
@@ -67,14 +34,6 @@ class TestGenreUseAsFilter:
 class TestGenreFilter:
     def _qs(self, params):
         return GenreFilter(params, queryset=Genre.objects.all()).qs
-
-    def test_filter_by_use_as(self) -> None:
-        use_a = GenreUseAsFactory()
-        use_b = GenreUseAsFactory()
-        GenreFactory(use_as=use_a)
-        GenreFactory(use_as=use_b)
-
-        assert self._qs({"use_as": use_a.id}).count() == 1
 
     def test_type_icontains(self) -> None:
         GenreFactory(type="theater")
@@ -120,76 +79,6 @@ class TestGenreFilter:
 
         assert self._qs({"name": "classical"}).count() == 0
 
-    def test_combined_type_and_use_as(self) -> None:
-        use_a = GenreUseAsFactory()
-        use_b = GenreUseAsFactory()
-        GenreFactory(type="theater", use_as=use_a)
-        GenreFactory(type="theater", use_as=use_b)
-
-        assert self._qs({"type": "theater", "use_as": use_a.id}).count() == 1
-
-
-# =====================================================
-# GenreUseAsViewSet
-# =====================================================
-
-
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestGenreUseAsViewSet(TestCase):
-    def setUp(self) -> None:
-        self.client = APIClient()
-        GenreUseAs.objects.all().delete()
-
-    def list_url(self):
-        return reverse("v1:genre-use-as-list")
-
-    def detail_url(self, pk):
-        return reverse("v1:genre-use-as-detail", kwargs={"pk": pk})
-
-    def test_anon_is_rejected(self) -> None:
-        response = self.client.get(self.list_url())
-        assert response.status_code in (401, 403)
-
-    def test_public_can_list(self) -> None:
-        GenreUseAsFactory.create_batch(2)
-        response = self.client.get(self.list_url(), **pub_headers())
-        assert response.status_code == 200
-
-    def test_public_cannot_create(self) -> None:
-        response = self.client.post(self.list_url(), {"name": "tag"}, **pub_headers())
-        assert response.status_code == 403
-
-    def test_internal_can_create(self) -> None:
-        response = self.client.post(self.list_url(), {"name": "tag"}, **int_headers())
-        assert response.status_code == 201
-        assert GenreUseAs.objects.filter(name="tag").exists()
-
-    def test_internal_can_delete(self) -> None:
-        obj = GenreUseAsFactory()
-        response = self.client.delete(self.detail_url(obj.pk), **int_headers())
-        assert response.status_code == 204
-
-    def test_filter_by_name(self) -> None:
-        GenreUseAsFactory(name="genre")
-        GenreUseAsFactory(name="tag")
-        response = self.client.get(self.list_url(), {"name": "tag"}, **pub_headers())
-        results = response.data.get("results", response.data)
-        assert len(results) == 1
-
-    def test_ordering_by_name(self) -> None:
-        GenreUseAsFactory(name="zzz")
-        GenreUseAsFactory(name="aaa")
-        response = self.client.get(self.list_url(), {"ordering": "name"}, **pub_headers())
-        names = [r["name"] for r in response.data.get("results", response.data)]
-        assert names == sorted(names)
-
-    def test_search_by_name(self) -> None:
-        GenreUseAsFactory(name="genre")
-        GenreUseAsFactory(name="tag")
-        response = self.client.get(self.list_url(), {"search": "tag"}, **pub_headers())
-        results = response.data.get("results", response.data)
-        assert len(results) == 1
-
 
 # =====================================================
 # GenreViewSet
@@ -225,18 +114,8 @@ class TestGenreViewSet(TestCase):
         assert response.status_code == 403
 
     def test_internal_can_create(self) -> None:
-        use_as = GenreUseAsFactory()
-        response = self.client.post(self.list_url(), {"type": "theater", "use_as_id": use_as.pk}, **int_headers())
+        response = self.client.post(self.list_url(), {"type": "theater"}, **int_headers())
         assert response.status_code == 201
-
-    def test_filter_by_use_as(self) -> None:
-        use_a = GenreUseAsFactory()
-        use_b = GenreUseAsFactory()
-        GenreFactory(use_as=use_a)
-        GenreFactory.create_batch(2, use_as=use_b)
-        response = self.client.get(self.list_url(), {"use_as": use_a.id}, **pub_headers())
-        results = response.data.get("results", response.data)
-        assert len(results) == 1
 
     def test_filter_by_type(self) -> None:
         GenreFactory(type="theater")

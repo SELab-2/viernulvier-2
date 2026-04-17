@@ -9,8 +9,6 @@ import type { FilteredListOptions } from '../ApiTypes'
 export interface TagFilters {
   type?: string
   source?: string
-  source_type?: string
-  is_external?: boolean
   is_enabled?: boolean
   name?: string
 }

@@ -67,7 +67,6 @@ export const getProduction = async (id: number, include?: string[]): Promise<Pro
  * Supported production-specific filter fields currently include:
  * - `attendance_mode`: filter by attendance mode (`offline` or `online`)
  * - `performer_type`: filter by performer type (`group` or `solo`)
- * - `uit_database_theme`: filter by UIT Database theme ID
  * - `uit_database_type`: filter by UIT Database type ID
  * - `genre`: filter by attached genre ID
  * - `tag`: filter by attached tag ID

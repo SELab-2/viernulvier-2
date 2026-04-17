@@ -34,7 +34,6 @@ export const getGenre = async (id: number): Promise<Genre> => {
  * - `filters` -> each filter key is forwarded directly as a query parameter
  *
  * Supported filter fields currently include:
- * - `use_as`: filter by usage context ID
  * - `type`: filter by internal genre type
  * - `vendor_id`: filter by upstream vendor ID
  * - `name`: filter by translated genre name
@@ -60,7 +59,7 @@ export const getGenre = async (id: number): Promise<Genre> => {
  *   filters: {
  *     type: "theater",
  *     name: "festival",
- *     ordering: "use_as",
+ *     ordering: "type",
  *   },
  * });
  *

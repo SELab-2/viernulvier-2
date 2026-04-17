@@ -53,8 +53,8 @@ class TagAdmin(BaseAdmin):
     """
     Admin configuration for the Tag model.
 
-    The list view surfaces the type and status flags so editors can quickly
-    identify which tags are active, external, and what category they belong to.
+    The list view surfaces the type and status flag so editors can quickly
+    identify which tags are active and what category they belong to.
 
     ``search_fields`` includes ``type`` and ``source`` to allow autocomplete
     from :class:`~apps.productions.admin.ProductionTagInline`.
@@ -69,12 +69,10 @@ class TagAdmin(BaseAdmin):
         "id",
         "type",
         "source",
-        "is_external",
         "is_enabled",
     )
 
     list_filter = (
-        "is_external",
         "is_enabled",
         "type",
     )

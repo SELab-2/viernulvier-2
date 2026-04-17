@@ -55,7 +55,6 @@ def _import_legacy_production_row(row: dict[str, Any], *, dry_run: bool) -> bool
         defaults={
             "attendance_mode": "",
             "performer_type": "",
-            "uit_database_theme": None,
             "uit_database_type": None,
             "media_gallery": None,
         },

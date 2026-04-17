@@ -80,6 +80,8 @@ class M2MConfig:
     related_fk: str
     related_lookup_field: str = "external_id"
     extra_fields: dict[str, str] = field(default_factory=dict)
+    create_related_fn: Callable[[str, Any], Any | None] | None = None
+    clear_existing: bool = True
 
 
 @dataclass
