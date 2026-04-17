@@ -347,7 +347,8 @@ def sync_m2m(
     related_model = m2m_config.related_model
 
     fk_cache.warmup(related_model)
-    through_model.objects.filter(**{m2m_config.parent_fk: parent_obj}).delete()
+    if m2m_config.clear_existing:
+        through_model.objects.filter(**{m2m_config.parent_fk: parent_obj}).delete()
 
     to_create = []
     for position, raw_item in enumerate(raw_list):
