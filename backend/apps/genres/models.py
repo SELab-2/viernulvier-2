@@ -57,7 +57,16 @@ class Genre(BaseModel):
         if stripped_vendor_id != "":
             return stripped_vendor_id
 
-        return self.type
+def __str__(self) -> str:
+        """Return the translated genre name, then ``vendor_id``, then ``type``."""
+        name = self.get_base_display_name(
+            related_name="translations",
+            name_field="name",
+            fallback=None,
+        )
+
+        stripped_vendor_id = self.vendor_id.strip() if self.vendor_id else ""
+        return name or stripped_vendor_id or self.type
 
 
 class GenreTranslation(BaseModel):
