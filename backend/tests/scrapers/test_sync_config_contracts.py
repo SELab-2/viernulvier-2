@@ -58,7 +58,20 @@ def test_production_config_has_valid_m2m() -> None:
     for m2m_cfg in PRODUCTION_CONFIG.m2m:
         assert isinstance(m2m_cfg, M2MConfig)
         for attr in M2M_REQUIRED_ATTRIBUTES:
+def test_production_config_has_valid_m2m() -> None:
+    assert isinstance(PRODUCTION_CONFIG.m2m, list)
+    assert PRODUCTION_CONFIG.m2m
+
+    for m2m_cfg in PRODUCTION_CONFIG.m2m:
+        assert isinstance(m2m_cfg, M2MConfig)
+        for attr in M2M_REQUIRED_ATTRIBUTES:
             assert hasattr(m2m_cfg, attr)
+
+
+def test_production_uitdatabank_theme_m2m_does_not_clear_existing_genres() -> None:
+    """The theme mapping should append to production genres instead of replacing them."""
+    theme_cfg = next(cfg for cfg in PRODUCTION_CONFIG.m2m if cfg.api_key == "uitdatabank_theme")
+    assert theme_cfg.clear_existing is False
 
 
 def test_all_mapped_fields_exist_in_models() -> None:
