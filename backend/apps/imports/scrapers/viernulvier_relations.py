@@ -358,7 +358,8 @@ def sync_m2m(
         pk = _resolve_related_pk(related_model, ext_id, raw_item, m2m_config, fk_cache)
         if pk is None:
             continue
-        through_kwargs = _build_through_kwargs(parent_obj, related_model, m2m_config, raw_item, position, pk)
+        if m2m_config.clear_existing:
+            through_model.objects.filter(**{m2m_config.parent_fk: parent_obj}).delete()
         to_create.append(through_model(**through_kwargs))
 
     if not to_create:
