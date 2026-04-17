@@ -3,7 +3,7 @@ Tests for apps/genres/views.py - Genre viewsets
 
 Covers:
 - ViewSet inheritance from ApiModelViewSet
-- Endpoints for GenreUseAs, Genre
+- Endpoints for Genre
 - GET list/retrieve with public or internal key
 - POST/PUT/PATCH/DELETE only with internal key
 - Rejects missing/wrong auth
@@ -16,12 +16,11 @@ from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
-from apps.genres.models import Genre, GenreUseAs
-from apps.genres.views import GenreUseAsViewSet, GenreViewSet
+from apps.genres.models import Genre
+from apps.genres.views import GenreViewSet
 from tests.factories.genre import (
     GenreFactory,
     GenreTranslationFactory,
-    GenreUseAsFactory,
 )
 from tests.factories.language import LanguageFactory
 
@@ -53,16 +52,6 @@ def results_list(response):
 # ---------------------------------------------------------------------------
 # Class-level tests
 # ---------------------------------------------------------------------------
-
-
-class TestGenreUseAsViewSetClass(TestCase):
-    """Class-level checks for GenreUseAsViewSet."""
-
-    def test_inherits_from_api_model_viewset(self) -> None:
-        assert issubclass(GenreUseAsViewSet, ApiModelViewSet)
-
-    def test_queryset_model(self) -> None:
-        assert GenreUseAsViewSet.queryset.model == GenreUseAs
 
 
 class TestGenreViewSetClass(TestCase):
@@ -104,117 +93,6 @@ class TestGenreViewSetPrefetch(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GenreUseAs endpoints
-# ---------------------------------------------------------------------------
-
-
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestGenreUseAsViewSet(TestCase):
-    """CRUD tests for GenreUseAs endpoints."""
-
-    def setUp(self) -> None:
-        self.client = APIClient()
-        GenreUseAs.objects.all().delete()
-        self.use_as = GenreUseAsFactory(name="genre")
-
-    # list
-    def test_list_public_key(self) -> None:
-        response = self.client.get("/api/v1/genre-use-as/?ordering=id", **pub_headers())
-        assert response.status_code == 200
-
-    def test_list_internal_key(self) -> None:
-        response = self.client.get("/api/v1/genre-use-as/?ordering=id", **int_headers())
-        assert response.status_code == 200
-
-    def test_list_without_auth(self) -> None:
-        response = self.client.get("/api/v1/genre-use-as/")
-        assert response.status_code == 401
-
-    # retrieve
-    def test_retrieve_public_key(self) -> None:
-        response = self.client.get(f"/api/v1/genre-use-as/{self.use_as.id}/", **pub_headers())
-        assert response.status_code == 200
-        assert response.data["name"] == "genre"
-
-    def test_retrieve_internal_key(self) -> None:
-        response = self.client.get(f"/api/v1/genre-use-as/{self.use_as.id}/", **int_headers())
-        assert response.status_code == 200
-
-    def test_retrieve_wrong_key(self) -> None:
-        response = self.client.get(f"/api/v1/genre-use-as/{self.use_as.id}/", **wrong_headers())
-        assert response.status_code == 401
-
-    # create
-    def test_create_internal_key(self) -> None:
-        response = self.client.post(
-            "/api/v1/genre-use-as/",
-            {"name": "tag"},
-            format="json",
-            **int_headers(),
-        )
-        assert response.status_code == 201
-        assert GenreUseAs.objects.filter(name="tag").exists()
-
-    def test_create_public_key_denied(self) -> None:
-        response = self.client.post(
-            "/api/v1/genre-use-as/",
-            {"name": "tag"},
-            format="json",
-            **pub_headers(),
-        )
-        assert response.status_code == 403
-
-    def test_create_without_auth_denied(self) -> None:
-        response = self.client.post(
-            "/api/v1/genre-use-as/",
-            {"name": "tag"},
-            format="json",
-        )
-        assert response.status_code == 401
-
-    # update
-    def test_put_internal_key(self) -> None:
-        response = self.client.put(
-            f"/api/v1/genre-use-as/{self.use_as.id}/",
-            {"name": "genre-updated"},
-            format="json",
-            **int_headers(),
-        )
-        assert response.status_code == 200
-        self.use_as.refresh_from_db()
-        assert self.use_as.name == "genre-updated"
-
-    def test_patch_internal_key(self) -> None:
-        response = self.client.patch(
-            f"/api/v1/genre-use-as/{self.use_as.id}/",
-            {"name": "genre-patched"},
-            format="json",
-            **int_headers(),
-        )
-        assert response.status_code == 200
-        self.use_as.refresh_from_db()
-        assert self.use_as.name == "genre-patched"
-
-    def test_put_public_key_denied(self) -> None:
-        response = self.client.put(
-            f"/api/v1/genre-use-as/{self.use_as.id}/",
-            {"name": "genre-updated"},
-            format="json",
-            **pub_headers(),
-        )
-        assert response.status_code == 403
-
-    def test_delete_internal_key(self) -> None:
-        response = self.client.delete(f"/api/v1/genre-use-as/{self.use_as.id}/", **int_headers())
-        assert response.status_code == 204
-        assert not GenreUseAs.objects.filter(id=self.use_as.id).exists()
-
-    def test_delete_public_key_denied(self) -> None:
-        response = self.client.delete(f"/api/v1/genre-use-as/{self.use_as.id}/", **pub_headers())
-        assert response.status_code == 403
-
-
-# ---------------------------------------------------------------------------
 # Genre endpoints
 # ---------------------------------------------------------------------------
 
@@ -226,9 +104,7 @@ class TestGenreViewSet(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         Genre.objects.all().delete()
-        GenreUseAs.objects.all().delete()
-        self.use_as = GenreUseAsFactory(name="genre")
-        self.genre = GenreFactory(type="Theater", use_as=self.use_as)
+        self.genre = GenreFactory(type="Theater")
 
     # list
     def test_list_public_key(self) -> None:
@@ -245,7 +121,6 @@ class TestGenreViewSet(TestCase):
         item = results[0]
         assert "id" in item
         assert "type" in item
-        assert "use_as" in item
 
     def test_list_without_auth(self) -> None:
         response = self.client.get("/api/v1/genres/")
@@ -269,7 +144,7 @@ class TestGenreViewSet(TestCase):
     def test_create_internal_key(self) -> None:
         response = self.client.post(
             "/api/v1/genres/",
-            {"type": "Festival", "use_as_id": self.use_as.id},
+            {"type": "Festival"},
             format="json",
             **int_headers(),
         )
@@ -279,7 +154,7 @@ class TestGenreViewSet(TestCase):
     def test_create_public_key_denied(self) -> None:
         response = self.client.post(
             "/api/v1/genres/",
-            {"type": "Festival", "use_as_id": self.use_as.id},
+            {"type": "Festival"},
             format="json",
             **pub_headers(),
         )
@@ -288,7 +163,7 @@ class TestGenreViewSet(TestCase):
     def test_create_without_auth_denied(self) -> None:
         response = self.client.post(
             "/api/v1/genres/",
-            {"type": "Festival", "use_as": self.use_as.id},
+            {"type": "Festival"},
             format="json",
         )
         assert response.status_code == 401
@@ -297,7 +172,7 @@ class TestGenreViewSet(TestCase):
     def test_put_internal_key(self) -> None:
         response = self.client.put(
             f"/api/v1/genres/{self.genre.id}/",
-            {"type": "Concert", "use_as_id": self.use_as.id},
+            {"type": "Concert"},
             format="json",
             **int_headers(),
         )
@@ -319,7 +194,7 @@ class TestGenreViewSet(TestCase):
     def test_put_public_key_denied(self) -> None:
         response = self.client.put(
             f"/api/v1/genres/{self.genre.id}/",
-            {"type": "Opera", "use_as": self.use_as.id},
+            {"type": "Opera"},
             format="json",
             **pub_headers(),
         )
@@ -328,7 +203,7 @@ class TestGenreViewSet(TestCase):
     def test_put_without_auth_denied(self) -> None:
         response = self.client.put(
             f"/api/v1/genres/{self.genre.id}/",
-            {"type": "Opera", "use_as": self.use_as.id},
+            {"type": "Opera"},
             format="json",
         )
         assert response.status_code == 401

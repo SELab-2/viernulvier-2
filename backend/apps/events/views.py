@@ -89,7 +89,6 @@ class EventViewSet(ApiModelViewSet):
     queryset = (
         Event.objects.select_related(
             "production",
-            "production__uit_database_theme",
             "production__uit_database_type",
             "hall",
             "hall__space",
@@ -109,7 +108,7 @@ class EventViewSet(ApiModelViewSet):
             Prefetch(
                 "production__productiongenre_set",
                 queryset=(
-                    ProductionGenre.objects.select_related("genre", "genre__use_as")
+                    ProductionGenre.objects.select_related("genre")
                     .prefetch_related("genre__translations__language")
                     .order_by("position")
                 ),

@@ -35,7 +35,6 @@ _PRODUCTION_RESPONSE = OpenApiExample(
         "first_event_start": "2025-09-15T19:30:00Z",
         "last_event_end": "2025-11-02T21:30:00Z",
         "media_gallery": {"id": 706, "name": "home", "media_items": []},
-        "uit_database_theme": {"id": 3, "name": "Theater"},
         "uit_database_type": {"id": 7, "name": "Voorstelling"},
         "title": "De Laatste Avond",
         "artist_name": "Collectief Morgen",
@@ -49,8 +48,6 @@ _PRODUCTION_RESPONSE = OpenApiExample(
                 "name": "Hedendaags",
                 "url": "",
                 "source": "",
-                "source_type": "",
-                "is_external": False,
                 "is_enabled": True,
                 "short_description": None,
                 "url_title": "",
@@ -72,7 +69,6 @@ _PRODUCTION_RESPONSE_WITH_EVENTS = OpenApiExample(
         "first_event_start": "2025-09-15T19:30:00Z",
         "last_event_end": "2025-09-15T21:30:00Z",
         "media_gallery": {"id": 706, "name": "home", "media_items": []},
-        "uit_database_theme": {"id": 3, "name": "Theater"},
         "uit_database_type": {"id": 7, "name": "Voorstelling"},
         "title": "De Laatste Avond",
         "artist_name": "Collectief Morgen",
@@ -86,8 +82,6 @@ _PRODUCTION_RESPONSE_WITH_EVENTS = OpenApiExample(
                 "name": "Hedendaags",
                 "url": "",
                 "source": "",
-                "source_type": "",
-                "is_external": False,
                 "is_enabled": True,
                 "short_description": None,
                 "url_title": "",
@@ -150,7 +144,6 @@ _PRODUCTION_RESPONSE_WITH_RELATED = OpenApiExample(
         "attendance_mode": "offline",
         "performer_type": "group",
         "media_gallery": {"id": 706, "name": "home", "media_items": []},
-        "uit_database_theme": {"id": 3, "name": "Theater"},
         "uit_database_type": {"id": 7, "name": "Voorstelling"},
         "title": "De Laatste Avond",
         "artist_name": "Collectief Morgen",
@@ -164,8 +157,6 @@ _PRODUCTION_RESPONSE_WITH_RELATED = OpenApiExample(
                 "name": "Hedendaags",
                 "url": "",
                 "source": "",
-                "source_type": "",
-                "is_external": False,
                 "is_enabled": True,
                 "short_description": None,
                 "url_title": "",
@@ -201,7 +192,6 @@ _PRODUCTION_INPUT = OpenApiExample(
     value={
         "attendance_mode": "offline",
         "performer_type": "group",
-        "uit_database_theme": 3,
         "uit_database_type": 7,
         "media_gallery": None,
     },
@@ -213,6 +203,30 @@ _PRODUCTION_PARTIAL_INPUT = OpenApiExample(
     summary="Only the fields you want to change",
     value={"attendance_mode": "online", "performer_type": "solo"},
     request_only=True,
+)
+
+_PRODUCTION_FILTER_GENRE_COMMA = OpenApiExample(
+    "Filter productions by two genres",
+    value="2,9",
+    parameter_only=("genre", OpenApiParameter.QUERY),
+)
+
+_PRODUCTION_FILTER_GENRE_NONE = OpenApiExample(
+    "No genre filter",
+    value="",
+    parameter_only=("genre", OpenApiParameter.QUERY),
+)
+
+_PRODUCTION_FILTER_TAG_COMMA = OpenApiExample(
+    "Filter productions by two tags",
+    value="5,8",
+    parameter_only=("tag", OpenApiParameter.QUERY),
+)
+
+_PRODUCTION_FILTER_TAG_NONE = OpenApiExample(
+    "No tag filter",
+    value="",
+    parameter_only=("tag", OpenApiParameter.QUERY),
 )
 
 
@@ -231,8 +245,35 @@ _PRODUCTION_LIST = extend_schema(
         "Nested `tags` and `genres` carry their own translated fields as dictionaries. "
         "Each tag also exposes a `description` dictionary containing per-production "
         "context notes in all available languages; the dictionary is empty when no "
-        "descriptions have been added for that tag."
+        "descriptions have been added for that tag.\n\n"
+        "Filtering on `genre` and `tag` accepts single or multiple IDs. "
+        "When multiple values are provided, AND semantics are applied: only productions "
+        "that contain all selected genres/tags are returned."
     ),
+    parameters=[
+        OpenApiParameter(
+            name="genre",
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            required=False,
+            description=(
+                "One or more genre IDs as comma-separated values (`?genre=2,9`). "
+                "Multiple values are combined with AND semantics."
+            ),
+            examples=[_PRODUCTION_FILTER_GENRE_NONE, _PRODUCTION_FILTER_GENRE_COMMA],
+        ),
+        OpenApiParameter(
+            name="tag",
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            required=False,
+            description=(
+                "One or more tag IDs as comma-separated values (`?tag=5,8`). "
+                "Multiple values are combined with AND semantics."
+            ),
+            examples=[_PRODUCTION_FILTER_TAG_NONE, _PRODUCTION_FILTER_TAG_COMMA],
+        ),
+    ],
     responses={200: ProductionSerializer, **READ_ERRORS},
     examples=[_PRODUCTION_RESPONSE],
 )
@@ -275,7 +316,7 @@ _PRODUCTION_CREATE = extend_schema(
         "Creates a new **Production**.\n\n"
         "- `attendance_mode` accepts `offline` or `online`.\n"
         "- `performer_type` accepts `group` or `solo`.\n"
-        "- `uit_database_theme` and `uit_database_type` are optional FK references.\n"
+        "- `uit_database_type` is an optional FK reference.\n"
         "- Translated fields (title, description, etc.) are managed via the "
         "**Production Translation** endpoints.\n"
         "- Tags and genres are managed via their dedicated through-table endpoints.\n"

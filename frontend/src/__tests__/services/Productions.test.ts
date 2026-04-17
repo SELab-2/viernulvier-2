@@ -23,10 +23,10 @@ describe('productions service', () => {
     performer_type: 'group',
     first_event_start: '2026-03-22T20:00:00Z',
     last_event_end: '2026-03-22T22:00:00Z',
-    media_gallery: [],
-    uit_database_theme: {
+    media_gallery: {
       id: 4,
       name: 'Drama',
+      media_items: [],
     },
     uit_database_type: {
       id: 7,
@@ -55,9 +55,7 @@ describe('productions service', () => {
         id: 9,
         url: 'https://example.com/tags/classic',
         source: 'uitdatabank',
-        source_type: 'theme',
         type: 'theme',
-        is_external: true,
         is_enabled: true,
         display_name: 'Classic',
         display_short_description: 'Classic theatre',
@@ -77,7 +75,6 @@ describe('productions service', () => {
       {
         id: 3,
         type: 'theater',
-        use_as: 2,
         name: {
           en: 'Theatre',
         },
@@ -162,7 +159,6 @@ describe('productions service', () => {
     it.each([
       { attendance_mode: 'offline' as AttendanceMode },
       { performer_type: 'solo' as PerformerType },
-      { uit_database_theme: 4 },
       { uit_database_type: 7 },
       { genre: 3 },
       { tag: 9 },
@@ -189,7 +185,6 @@ describe('productions service', () => {
         filters: {
           attendance_mode: 'online' as AttendanceMode,
           performer_type: 'group' as PerformerType,
-          uit_database_theme: 2,
           uit_database_type: 5,
           genre: 3,
           tag: 8,
@@ -208,7 +203,6 @@ describe('productions service', () => {
           page_size: 10,
           attendance_mode: 'online',
           performer_type: 'group',
-          uit_database_theme: 2,
           uit_database_type: 5,
           genre: 3,
           tag: 8,

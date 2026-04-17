@@ -18,13 +18,12 @@ from apps.imports.management.commands.sync_viernulvier import (
     SPACE_CONFIG,
     SYNC_STEPS,
     TAG_CONFIG,
-    UITDATABASE_THEME_CONFIG,
     UITDATABASE_TYPE_CONFIG,
 )
 from apps.locations.models import Hall, Location, Space
 from apps.media_library.models import MediaGallery, MediaItem
 from apps.pricing.models import Price, PriceRank
-from apps.productions.models import Production, UitDatabaseTheme, UitDatabaseType
+from apps.productions.models import Production, UitDatabaseType
 from apps.tags.models import Tag
 
 
@@ -36,7 +35,6 @@ def get_model_field_names(model):
 
 
 ALL_CONFIGS = [
-    UITDATABASE_THEME_CONFIG,
     UITDATABASE_TYPE_CONFIG,
     GENRE_CONFIG,
     TAG_CONFIG,
@@ -53,7 +51,6 @@ ALL_CONFIGS = [
 ]
 
 BASE_CONFIGS = [
-    UITDATABASE_THEME_CONFIG,
     UITDATABASE_TYPE_CONFIG,
     GENRE_CONFIG,
     TAG_CONFIG,
@@ -73,7 +70,6 @@ CONFIGS_WITH_TRANSLATIONS = [
 ]
 
 CONFIGS_AND_MODELS = [
-    (UITDATABASE_THEME_CONFIG, UitDatabaseTheme),
     (UITDATABASE_TYPE_CONFIG, UitDatabaseType),
     (GENRE_CONFIG, Genre),
     (TAG_CONFIG, Tag),
@@ -93,12 +89,9 @@ VALUE_TRANSFORM_CONFIGS = [
     (HALL_CONFIG, Hall),
 ]
 
-FK_RESOLVER_CONFIGS = [
-    (GENRE_CONFIG, Genre),
-]
+FK_RESOLVER_CONFIGS = []
 
 EXTERNAL_ID_CONFIGS = [
-    ("UitDatabaseTheme", UitDatabaseTheme, UITDATABASE_THEME_CONFIG),
     ("UitDatabaseType", UitDatabaseType, UITDATABASE_TYPE_CONFIG),
     ("Genre", Genre, GENRE_CONFIG),
     ("Tag", Tag, TAG_CONFIG),

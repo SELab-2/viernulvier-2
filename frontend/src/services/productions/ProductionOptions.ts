@@ -10,7 +10,6 @@ import type { FilteredListOptions } from '../ApiTypes'
 export interface ProductionFilters {
   attendance_mode?: AttendanceMode
   performer_type?: PerformerType
-  uit_database_theme?: number
   uit_database_type?: number
   genre?: number
   tag?: number

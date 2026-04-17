@@ -2,12 +2,12 @@
 
 import pytest
 
-from apps.genres.models import GenreUseAs
+from apps.genres.models import Genre
 from apps.imports.management.commands.sync_viernulvier import (
     PRODUCTION_CONFIG,
     SYNC_STEPS,
+    _create_uitdatabank_theme_genre,
     _is_not_longterm,
-    _resolve_genre_use_as,
     nee_ja_to_bool,
 )
 from apps.imports.scrapers.viernulvier import M2MConfig, ModelSyncConfig, TranslationConfig
@@ -61,6 +61,12 @@ def test_production_config_has_valid_m2m() -> None:
             assert hasattr(m2m_cfg, attr)
 
 
+def test_production_uitdatabank_theme_m2m_does_not_clear_existing_genres() -> None:
+    """The theme mapping should append to production genres instead of replacing them."""
+    theme_cfg = next(cfg for cfg in PRODUCTION_CONFIG.m2m if cfg.api_key == "uitdatabank_theme")
+    assert theme_cfg.clear_existing is False
+
+
 def test_all_mapped_fields_exist_in_models() -> None:
     for config, model in CONFIGS_AND_MODELS:
         model_fields = get_model_field_names(model)
@@ -85,12 +91,8 @@ def test_value_transforms_reference_model_fields() -> None:
 
 
 def test_fk_resolvers_reference_model_fields() -> None:
-    for config, model in FK_RESOLVER_CONFIGS:
-        model_fields = get_model_field_names(model)
-        for field_name in config.fk_resolvers:
-            assert field_name in model_fields, (
-                f"Config for {model.__name__}: fk_resolver field '{field_name}' doesn't exist in model"
-            )
+    # GenreUseAs removal left no fk resolver configs; keep the contract explicit.
+    assert FK_RESOLVER_CONFIGS == []
 
 
 def test_sync_steps_structure_and_uniqueness() -> None:
@@ -194,29 +196,33 @@ def test_nee_ja_to_bool(value, expected) -> None:
 
 
 @pytest.mark.django_db
-def test_resolve_genre_use_as_creates_new() -> None:
-    """When no matching row exists, _resolve_genre_use_as creates one."""
-    pk = _resolve_genre_use_as("test_genre")
-    assert pk is not None
-    assert GenreUseAs.objects.filter(pk=pk, name="test_genre").exists()
+def test_create_uitdatabank_theme_genre_returns_none_for_empty_external_id() -> None:
+    assert _create_uitdatabank_theme_genre("", {"name": "Theme"}) is None
 
 
 @pytest.mark.django_db
-def test_resolve_genre_use_as_returns_existing() -> None:
-    """When a matching row exists, _resolve_genre_use_as returns its pk."""
-    existing = GenreUseAs.objects.create(name="existing_genre")
-    pk = _resolve_genre_use_as("existing_genre")
+def test_create_uitdatabank_theme_genre_creates_genre_with_defaults() -> None:
+    pk = _create_uitdatabank_theme_genre("/api/v1/uitdatabank/themes/12", {"name": " Theater "})
 
-    assert pk == existing.pk
-    assert GenreUseAs.objects.filter(name="existing_genre").count() == 1
+    genre = Genre.objects.get(pk=pk)
+    assert genre.external_id == "/api/v1/uitdatabank/themes/12"
+    assert genre.type == "uitdatabank_theme"
+    assert genre.vendor_id == "Theater"
 
 
 @pytest.mark.django_db
-def test_resolve_genre_use_as_handles_none() -> None:
-    """None input resolves to the default 'unknown' row."""
-    pk = _resolve_genre_use_as(None)
-    assert pk is not None
-    assert GenreUseAs.objects.filter(pk=pk, name="unknown").exists()
+def test_create_uitdatabank_theme_genre_updates_missing_vendor_id() -> None:
+    genre = Genre.objects.create(
+        external_id="/api/v1/uitdatabank/themes/34",
+        type="uitdatabank_theme",
+        vendor_id="",
+    )
+
+    pk = _create_uitdatabank_theme_genre("/api/v1/uitdatabank/themes/34", {"name": "Dance"})
+    genre.refresh_from_db()
+
+    assert pk == genre.pk
+    assert genre.vendor_id == "Dance"
 
 
 @pytest.mark.parametrize(

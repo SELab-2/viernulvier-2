@@ -28,7 +28,6 @@ const buildProduction = (id: number): Production => ({
   first_event_start: '2026-01-01T19:00:00Z',
   last_event_end: '2026-01-01T20:00:00Z',
   media_gallery: { id: 0, name: null, media_items: [] },
-  uit_database_theme: null,
   uit_database_type: null,
   display_title: `Production ${id}`,
   display_artist_name: null,

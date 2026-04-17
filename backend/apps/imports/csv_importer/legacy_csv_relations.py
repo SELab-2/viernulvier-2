@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from django.utils.text import slugify
 
-from apps.genres.models import Genre, GenreTranslation, GenreUseAs
+from apps.genres.models import Genre, GenreTranslation
 from apps.languages.models import Language
 from apps.locations.models import Hall, HallTranslation
 from apps.productions.models import ProductionGenre
@@ -40,21 +40,20 @@ def _ensure_genre(label: str, language: Language) -> Genre:
     Returns:
         The Genre object, either existing or newly created.
     """
-    genre_use_as, _ = GenreUseAs.objects.get_or_create(name="genre")
     genre_type = slugify(label)[:50] or label.strip().lower().replace(" ", "_")[:50] or "genre"
 
     translation = (
         GenreTranslation.objects.select_related("genre")
-        .filter(language=language, name=label[:50], genre__use_as=genre_use_as)
+        .filter(language=language, name=label[:50])
         .order_by("genre_id")
         .first()
     )
     if translation:
         return translation.genre
 
-    genre = Genre.objects.filter(type=genre_type, use_as=genre_use_as).order_by("id").first()
+    genre = Genre.objects.filter(type=genre_type).order_by("id").first()
     if genre is None:
-        genre = Genre.objects.create(type=genre_type, use_as=genre_use_as)
+        genre = Genre.objects.create(type=genre_type)
 
     GenreTranslation.objects.update_or_create(genre=genre, language=language, defaults={"name": label[:50]})
     return genre

@@ -18,31 +18,11 @@ from tests.factories.production import (
     ProductionTagFactory,
     ProductionTagTranslationFactory,
     ProductionTranslationFactory,
-    UitDatabaseThemeFactory,
     UitDatabaseTypeFactory,
 )
 from tests.factories.tag import TagFactory
 
 pytestmark = pytest.mark.django_db
-
-
-class TestUitDatabaseTheme:
-    """Tests for UitDatabaseTheme model behavior."""
-
-    def test_requires_name(self) -> None:
-        """Validate that an empty name is rejected."""
-        theme = UitDatabaseThemeFactory.build(name="")
-
-        with pytest.raises(ValidationError):
-            theme.full_clean()
-
-    def test_reverse_relation_productions(self) -> None:
-        """Verify reverse relation from theme to linked productions."""
-        theme = UitDatabaseThemeFactory()
-        productions = ProductionFactory.create_batch(3, uit_database_theme=theme)
-
-        assert theme.productions.count() == 3
-        assert all(p.uit_database_theme == theme for p in productions)
 
 
 class TestUitDatabaseType:
@@ -72,19 +52,16 @@ class TestProduction:
         production = ProductionFactory.create()
 
         assert production.pk is not None
-        assert production.uit_database_theme is not None
         assert production.uit_database_type is not None
         assert production.media_gallery is not None
 
     def test_allows_nullable_foreign_keys(self) -> None:
         """Ensure nullable foreign keys can all be set to None."""
         production = ProductionFactory.create(
-            uit_database_theme=None,
             uit_database_type=None,
             media_gallery=None,
         )
 
-        assert production.uit_database_theme is None
         assert production.uit_database_type is None
         assert production.media_gallery is None
 
@@ -101,16 +78,6 @@ class TestProduction:
 
         with pytest.raises(ValidationError):
             production.full_clean()
-
-    def test_deleting_theme_sets_production_theme_to_null(self) -> None:
-        """Deleting a theme should set linked production FK to null."""
-        theme = UitDatabaseThemeFactory()
-        production = ProductionFactory.create(uit_database_theme=theme)
-
-        theme.delete()
-        production.refresh_from_db()
-
-        assert production.uit_database_theme is None
 
     def test_deleting_type_sets_production_type_to_null(self) -> None:
         """Deleting a type should set linked production FK to null."""

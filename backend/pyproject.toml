@@ -174,3 +174,13 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = true  # also formats code examples inside docstrings
+
+[tool.coverage.run]
+omit = [
+    "*/migrations/*.py",
+]
+
+[tool.coverage.report]
+omit = [
+    "*/migrations/*.py",
+]

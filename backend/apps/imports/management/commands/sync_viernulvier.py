@@ -24,7 +24,7 @@ from typing import Any
 from django.core.management.base import BaseCommand
 
 from apps.events.models import Event, EventPrice
-from apps.genres.models import Genre, GenreTranslation, GenreUseAs
+from apps.genres.models import Genre, GenreTranslation
 from apps.imports.scrapers.viernulvier import (
     M2MConfig,
     ModelSyncConfig,
@@ -51,7 +51,6 @@ from apps.productions.models import (
     Production,
     ProductionGenre,
     ProductionTranslation,
-    UitDatabaseTheme,
     UitDatabaseType,
 )
 from apps.tags.models import Tag, TagTranslation
@@ -75,25 +74,36 @@ except ImportError:
         return None
 
 
-# ---------------------------------------------------------------------------
-# FK resolvers
-# ---------------------------------------------------------------------------
+def _create_uitdatabank_theme_genre(external_id: str, raw_item: Any) -> int | None:
+    """Create a Genre for an uitdatabank theme when missing.
 
+    The production sync can reference `uitdatabank_theme` even when it isn't
+    part of the regular `/genres` feed. In that case we upsert a minimal
+    Genre row and attach it via `ProductionGenre`.
+    """
+    if not external_id:
+        return None
 
-def _resolve_genre_use_as(raw_value: Any) -> int | None:
-    """Resolve the GenreUseAs FK by name, creating the row if needed."""
-    name = str(raw_value).strip() if raw_value else "unknown"
-    obj, _ = GenreUseAs.objects.get_or_create(name=name)
-    return obj.pk
+    defaults: dict[str, Any] = {
+        "type": "uitdatabank_theme",
+    }
+
+    name = raw_item.get("name") if isinstance(raw_item, dict) else None
+    if isinstance(name, str) and name.strip():
+        defaults["vendor_id"] = name.strip()
+
+    genre, _ = Genre.objects.get_or_create(external_id=external_id, defaults=defaults)
+
+    if name and not genre.vendor_id:
+        genre.vendor_id = name.strip()
+        genre.save(update_fields=["vendor_id"])
+
+    return genre.pk
 
 
 # ---------------------------------------------------------------------------
 # Sync configurations
 # ---------------------------------------------------------------------------
-
-UITDATABASE_THEME_CONFIG = ModelSyncConfig(
-    field_map={"@id": "external_id", "name": "name", "cdb_cat_id": None},
-)
 
 UITDATABASE_TYPE_CONFIG = ModelSyncConfig(
     field_map={"@id": "external_id", "name": "name", "cdb_cat_id": None},
@@ -103,13 +113,11 @@ GENRE_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
         "type": "type",
-        "use_as": "use_as",
         "vendor_id": "vendor_id",
         "name": None,
         "slug": None,
         "description": None,
     },
-    fk_resolvers={"use_as": _resolve_genre_use_as},
     value_transforms={"vendor_id": clean_vendor_id},
     translations=[
         TranslationConfig("name", GenreTranslation, "genre", "name", "language_id"),
@@ -120,9 +128,9 @@ TAG_CONFIG = ModelSyncConfig(
     field_map={
         "@id": "external_id",
         "source": "source",
-        "sourceType": "source_type",
+        "sourceType": None,
         "enable": "is_enabled",
-        "external": "is_external",
+        "external": None,
         "url": "url",
         "type": "type",
         "code": None,
@@ -264,7 +272,7 @@ PRODUCTION_CONFIG = ModelSyncConfig(
         "@id": "external_id",
         "attendance_mode": "attendance_mode",
         "performer_type": "performer_type",
-        "uitdatabank_theme": "uit_database_theme",
+        "uitdatabank_theme": None,
         "uitdatabank_type": "uit_database_type",
         "media_gallery": "media_gallery",
         "vendor_id": None,
@@ -335,6 +343,17 @@ PRODUCTION_CONFIG = ModelSyncConfig(
             related_lookup_field="external_id",
             extra_fields={"position": "position"},
         ),
+        M2MConfig(
+            api_key="uitdatabank_theme",
+            related_model=Genre,
+            through_model=ProductionGenre,
+            parent_fk="production",
+            related_fk="genre",
+            related_lookup_field="external_id",
+            extra_fields={"position": "position"},
+            create_related_fn=_create_uitdatabank_theme_genre,
+            clear_existing=False,
+        ),
     ],
 )
 
@@ -394,7 +413,6 @@ EVENT_PRICE_CONFIG = ModelSyncConfig(
 # ---------------------------------------------------------------------------
 
 SYNC_STEPS = [
-    ("uitdatabank_themes", UitDatabaseTheme, UITDATABASE_THEME_CONFIG, "/uitdatabank/themes"),
     ("uitdatabank_types", UitDatabaseType, UITDATABASE_TYPE_CONFIG, "/uitdatabank/types"),
     ("genres", Genre, GENRE_CONFIG, "/genres"),
     ("tags", Tag, TAG_CONFIG, "/tags"),

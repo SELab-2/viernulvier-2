@@ -26,9 +26,7 @@ _TAG_RESPONSE = OpenApiExample(
         "id": 12,
         "url": "https://example.com/tags/hedendaags",
         "source": "uitdatabank",
-        "source_type": "theme",
         "type": "theme",
-        "is_external": True,
         "is_enabled": True,
         "name": "Contemporary",
         "short_description": "Contemporary performing arts and theatre.",
@@ -44,9 +42,7 @@ _TAG_INTERNAL_RESPONSE = OpenApiExample(
         "id": 5,
         "url": "",
         "source": "",
-        "source_type": "",
         "type": "audience",
-        "is_external": False,
         "is_enabled": True,
         "name": "Family friendly",
         "short_description": None,
@@ -61,9 +57,7 @@ _TAG_INPUT = OpenApiExample(
     value={
         "url": "",
         "source": "",
-        "source_type": "",
         "type": "audience",
-        "is_external": False,
         "is_enabled": True,
     },
     request_only=True,
@@ -109,8 +103,6 @@ _TAG_CREATE = extend_schema(
     description=(
         "Creates a new **Tag**.\n\n"
         "- `type` is used as a classification label (e.g. `theme`, `audience`).\n"
-        "- Set `is_external` to `true` for tags imported from an external system "
-        "such as UiTdatabank.\n"
         "- Localised fields (`name`, `short_description`, `url_title`) must be added "
         "via the **Tag Translation** endpoints after creation.\n\n"
         "> **Requires an internal API key.**"

@@ -2,7 +2,7 @@
 Tests for apps/genres/admin.py
 
 Covers:
-- Admin registrations for GenreUseAs, Genre, GenreTranslation
+- Admin registrations for Genre, GenreTranslation
 - Admin classes inherit from BaseAdmin
 - list_display / list_filter / search_fields / ordering settings
 - Functional admin pages (changelist, add, change, delete) with superuser
@@ -18,13 +18,11 @@ from apps.genres.admin import (
     GenreAdmin,
     GenreTranslationAdmin,
     GenreTranslationInline,
-    GenreUseAsAdmin,
 )
-from apps.genres.models import Genre, GenreTranslation, GenreUseAs
+from apps.genres.models import Genre, GenreTranslation
 from tests.factories.genre import (
     GenreFactory,
     GenreTranslationFactory,
-    GenreUseAsFactory,
 )
 from tests.factories.language import LanguageFactory
 
@@ -35,10 +33,6 @@ from tests.factories.language import LanguageFactory
 
 class TestGenreAdminRegistration(TestCase):
     """Verify genre-related admins are registered on the default site."""
-
-    def test_genreuseas_registered(self) -> None:
-        assert GenreUseAs in admin.site._registry
-        assert isinstance(admin.site._registry[GenreUseAs], GenreUseAsAdmin)
 
     def test_genre_registered(self) -> None:
         assert Genre in admin.site._registry
@@ -57,10 +51,6 @@ class TestGenreAdminRegistration(TestCase):
 class TestGenreAdminInheritance(TestCase):
     """Ensure admin classes inherit from BaseAdmin/ModelAdmin."""
 
-    def test_genreuseas_inherits(self) -> None:
-        assert issubclass(GenreUseAsAdmin, BaseAdmin)
-        assert issubclass(GenreUseAsAdmin, admin.ModelAdmin)
-
     def test_genre_inherits(self) -> None:
         assert issubclass(GenreAdmin, BaseAdmin)
         assert issubclass(GenreAdmin, admin.ModelAdmin)
@@ -75,24 +65,6 @@ class TestGenreAdminInheritance(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestGenreUseAsAdminConfig(TestCase):
-    def setUp(self) -> None:
-        self.admin = GenreUseAsAdmin(GenreUseAs, admin.site)
-
-    def test_list_display(self) -> None:
-        assert "id" in self.admin.list_display
-        assert "name" in self.admin.list_display
-
-    def test_list_filter(self) -> None:
-        assert self.admin.list_filter == ()  # none set
-
-    def test_search_fields(self) -> None:
-        assert "name" in self.admin.search_fields
-
-    def test_ordering(self) -> None:
-        assert "name" in self.admin.ordering
-
-
 class TestGenreAdminConfig(TestCase):
     def setUp(self) -> None:
         self.admin = GenreAdmin(Genre, admin.site)
@@ -100,10 +72,9 @@ class TestGenreAdminConfig(TestCase):
     def test_list_display(self) -> None:
         assert "id" in self.admin.list_display
         assert "type" in self.admin.list_display
-        assert "use_as" in self.admin.list_display
 
     def test_list_filter(self) -> None:
-        assert "use_as" in self.admin.list_filter
+        assert self.admin.list_filter == ()
 
     def test_search_fields(self) -> None:
         assert "type" in self.admin.search_fields
@@ -162,40 +133,13 @@ class TestGenreAdminFunctional(TestCase):
         self.superuser = User.objects.create_superuser(username="admin", password="password", email="admin@example.com")
         self.client.force_login(self.superuser)
 
-        self.use_as = GenreUseAsFactory(name="genre")
         self.language = LanguageFactory(code="en", name="English")
-        self.genre = GenreFactory(type="Theater", use_as=self.use_as)
+        self.genre = GenreFactory(type="Theater")
         self.translation = GenreTranslationFactory(
             name="Theater",
             language=self.language,
             genre=self.genre,
         )
-
-    # -- GenreUseAs ---------------------------------------------------------
-
-    def test_useas_changelist(self) -> None:
-        url = reverse("admin:genres_genreuseas_changelist")
-        response = self.client.get(url)
-        assert response.status_code == 200
-
-    def test_useas_add(self) -> None:
-        url = reverse("admin:genres_genreuseas_add")
-        response = self.client.post(url, {"name": "tag"}, follow=True)
-        assert response.status_code == 200
-        assert GenreUseAs.objects.filter(name="tag").exists()
-
-    def test_useas_change(self) -> None:
-        url = reverse("admin:genres_genreuseas_change", args=[self.use_as.pk])
-        response = self.client.post(url, {"name": "genre-upd"}, follow=True)
-        assert response.status_code == 200
-        self.use_as.refresh_from_db()
-        assert self.use_as.name == "genre-upd"
-
-    def test_useas_delete(self) -> None:
-        url = reverse("admin:genres_genreuseas_delete", args=[self.use_as.pk])
-        response = self.client.post(url, {"post": "yes"}, follow=True)
-        assert response.status_code == 200
-        assert not GenreUseAs.objects.filter(pk=self.use_as.pk).exists()
 
     # -- Genre --------------------------------------------------------------
 
@@ -210,7 +154,6 @@ class TestGenreAdminFunctional(TestCase):
             url,
             {
                 "type": "Festival",
-                "use_as": self.use_as.pk,
                 "translations-TOTAL_FORMS": 1,
                 "translations-INITIAL_FORMS": 0,
                 "translations-MIN_NUM_FORMS": 0,
@@ -230,7 +173,6 @@ class TestGenreAdminFunctional(TestCase):
             url,
             {
                 "type": "Opera",
-                "use_as": self.use_as.pk,
                 "translations-TOTAL_FORMS": 1,
                 "translations-INITIAL_FORMS": 1,
                 "translations-MIN_NUM_FORMS": 0,
@@ -306,17 +248,13 @@ class TestGenreAdminQueryset(TestCase):
         self.site = admin.site
         self.admin_genre = GenreAdmin(Genre, self.site)
         self.admin_translation = GenreTranslationAdmin(GenreTranslation, self.site)
-        self.use_as_admin = GenreUseAsAdmin(GenreUseAs, self.site)
 
-        self.use_as = GenreUseAsFactory()
         self.language = LanguageFactory()
-        self.genre = GenreFactory(use_as=self.use_as)
+        self.genre = GenreFactory()
         self.translation = GenreTranslationFactory(genre=self.genre, language=self.language)
 
-    def test_genre_get_queryset_selects_use_as_and_prefetches_translations(self) -> None:
+    def test_genre_get_queryset_prefetches_translations(self) -> None:
         qs = self.admin_genre.get_queryset(request=None)
-        # Check that select_related('use_as') is applied
-        assert "use_as" in qs.query.select_related
         # Check that translations are prefetch_related
         prefetches = {getattr(x, "prefetch_to", x) for x in qs._prefetch_related_lookups}
         assert "translations" in prefetches
@@ -360,9 +298,8 @@ class TestGenreAdminFunctionalEdgeCases(TestCase):
     def setUp(self) -> None:
         self.superuser = User.objects.create_superuser(username="admin", password="password", email="admin@example.com")
         self.client.force_login(self.superuser)
-        self.use_as = GenreUseAsFactory()
         self.language = LanguageFactory()
-        self.genre = GenreFactory(type="Theater", use_as=self.use_as)
+        self.genre = GenreFactory(type="Theater")
         self.translation = GenreTranslationFactory(genre=self.genre, language=self.language, name="Theater")
 
     def test_genre_add_with_empty_translation(self) -> None:
@@ -371,7 +308,6 @@ class TestGenreAdminFunctionalEdgeCases(TestCase):
             url,
             {
                 "type": "Concert",
-                "use_as": self.use_as.pk,
                 "translations-TOTAL_FORMS": 1,
                 "translations-INITIAL_FORMS": 0,
                 "translations-MIN_NUM_FORMS": 0,
@@ -392,7 +328,6 @@ class TestGenreAdminFunctionalEdgeCases(TestCase):
             url,
             {
                 "type": "Drama",
-                "use_as": self.use_as.pk,
                 "translations-TOTAL_FORMS": 1,
                 "translations-INITIAL_FORMS": 1,
                 "translations-MIN_NUM_FORMS": 0,

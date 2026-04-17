@@ -91,7 +91,6 @@ The following sync steps are available (listed in dependency order):
 
 | Step Name              | Model              | API Endpoint            | Description                           |
 |------------------------|--------------------|-------------------------|---------------------------------------|
-| `uitdatabank_themes`   | UitDatabaseTheme   | `/uitdatabank/themes`   | UiTdatabank themes                    |
 | `uitdatabank_types`    | UitDatabaseType    | `/uitdatabank/types`    | UiTdatabank types                     |
 | `genres`               | Genre              | `/genres`               | Production genres                     |
 | `tags`                 | Tag                | `/tags`                 | Tags for categorization               |
@@ -348,7 +347,7 @@ This section explains where to make changes for different types of modifications
 If you get an error like:
 
 ```
-Unknown step 'event'. Choices: uitdatabank_themes, uitdatabank_types, ...
+Unknown step 'event'. Choices: uitdatabank_types, genres, ...
 ```
 
 Make sure you're using the exact step name from the [Available Sync Steps](#available-sync-steps) table. The names are case-sensitive and use underscores.
