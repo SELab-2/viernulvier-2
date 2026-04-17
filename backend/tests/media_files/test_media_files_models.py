@@ -2,20 +2,17 @@
 
 from io import BytesIO
 import os
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 import uuid
 
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 import pytest
 
-from apps.media_files.models import MediaFile, upload_to_media
+from apps.media_files.models import DESCRIPTION_MAX_LENGTH, MediaFile, upload_to_media
 
 pytestmark = pytest.mark.django_db
-
-User = get_user_model()
 
 
 def make_uploaded_file(
@@ -85,6 +82,33 @@ class TestMediaFileDerivedMethods:
         obj._state.adding = False
         assert obj._file_has_changed() is False
 
+    def test_derive_mime_type_uses_content_type_when_present(self) -> None:
+        obj = MediaFile()
+        mock_file = MagicMock()
+        mock_file.content_type = "image/png"
+        obj.file = mock_file
+        assert obj._derive_mime_type() == "image/png"
+
+    def test_populate_derived_fields_does_nothing_without_file(self) -> None:
+        obj = MediaFile()
+        obj._populate_derived_fields()
+        assert obj.mime_type == ""
+
+    def test_populate_derived_fields_handles_missing_previous_filename_record(self) -> None:
+        obj = MediaFile(
+            file=make_uploaded_file(name="poster.png", content=b"abc", content_type="image/png"),
+            filename="custom-name.png",
+        )
+        obj.pk = uuid.uuid4()
+        obj._state.adding = False
+
+        obj._populate_derived_fields()
+
+        assert obj.filename == "custom-name.png"
+        assert obj.mime_type == "image/png"
+        assert obj.size_bytes == 3
+        assert obj.file_type == MediaFile.FileType.IMAGE
+
 
 class TestMediaFileModel:
     def test_id_is_uuid(self) -> None:
@@ -95,9 +119,18 @@ class TestMediaFileModel:
         obj = MediaFile(file=make_uploaded_file(), external_id=None)
         obj.full_clean()
 
-    def test_uploaded_by_is_optional(self) -> None:
-        obj = MediaFile(file=make_uploaded_file(), uploaded_by=None)
+    def test_description_is_optional(self) -> None:
+        obj = MediaFile(file=make_uploaded_file(), description="")
         obj.full_clean()
+
+    def test_description_max_length_constant_matches_model_field(self) -> None:
+        assert MediaFile._meta.get_field("description").max_length == DESCRIPTION_MAX_LENGTH
+
+    def test_description_length_is_enforced(self) -> None:
+        obj = MediaFile(file=make_uploaded_file(), description="x" * (DESCRIPTION_MAX_LENGTH + 1))
+        with pytest.raises(ValidationError) as exc:
+            obj.full_clean()
+        assert "description" in exc.value.message_dict
 
     def test_str_returns_filename(self) -> None:
         obj = MediaFile.objects.create(file=make_uploaded_file(name="season-brochure.pdf"))
@@ -162,15 +195,25 @@ class TestMediaFileModel:
         obj.file = make_uploaded_file(name="two.pdf")
         assert obj._file_has_changed() is True
 
-    def test_metadata_updates_when_file_changes(self) -> None:
+    def test_metadata_updates_when_file_changes_and_filename_matches_previous(self) -> None:
         obj = MediaFile.objects.create(file=make_uploaded_file(name="one.pdf", content_type="application/pdf"))
+        obj.filename = "one.pdf"
         obj.file = make_uploaded_file(name="two.png", content=b"abc", content_type="image/png")
-        obj.filename = ""
         obj.save()
         obj.refresh_from_db()
         assert obj.filename == "two.png"
         assert obj.mime_type == "image/png"
         assert obj.size_bytes == 3
+        assert obj.file_type == MediaFile.FileType.IMAGE
+
+    def test_existing_custom_filename_is_preserved_when_file_changes(self) -> None:
+        obj = MediaFile.objects.create(file=make_uploaded_file(name="one.pdf"))
+        obj.filename = "custom-name.pdf"
+        obj.file = make_uploaded_file(name="two.png", content=b"abc", content_type="image/png")
+        obj.save()
+        obj.refresh_from_db()
+        assert obj.filename == "custom-name.pdf"
+        assert obj.mime_type == "image/png"
         assert obj.file_type == MediaFile.FileType.IMAGE
 
     def test_existing_filename_is_preserved_when_file_unchanged(self) -> None:
@@ -180,36 +223,16 @@ class TestMediaFileModel:
         obj.refresh_from_db()
         assert obj.filename == "custom-name.pdf"
 
-    def test_uploaded_by_set_null_when_user_deleted(self) -> None:
-        user = User.objects.create_user(username="uploader", email="uploader@example.com", password="password")
-        obj = MediaFile.objects.create(file=make_uploaded_file(), uploaded_by=user)
-        user.delete()
-        obj.refresh_from_db()
-        assert obj.uploaded_by is None
-
-    def test_derive_mime_type_uses_content_type_when_present(self) -> None:
-        obj = MediaFile()
-        mock_file = MagicMock()
-        mock_file.content_type = "image/png"
-        obj.file = mock_file
-        assert obj._derive_mime_type() == "image/png"
-
-    def test_populate_derived_fields_does_nothing_without_file(self) -> None:
-        obj = MediaFile()
-        obj._populate_derived_fields()
-        assert obj.mime_type == ""
-
-    def test_populate_derived_fields_handles_missing_previous_filename_record(self) -> None:
-        obj = MediaFile(
-            file=make_uploaded_file(name="poster.png", content=b"abc", content_type="image/png"),
-            filename="custom-name.png",
-        )
-        obj.pk = uuid.uuid4()
-        obj._state.adding = False
-
-        obj._populate_derived_fields()
-
-        assert obj.filename == "custom-name.png"
+    def test_clean_populates_fields_on_valid_file(self) -> None:
+        obj = MediaFile(file=make_uploaded_file(name="poster.png", content=b"abc", content_type="image/png"))
+        obj.clean()
+        assert obj.filename == "poster.png"
         assert obj.mime_type == "image/png"
         assert obj.size_bytes == 3
         assert obj.file_type == MediaFile.FileType.IMAGE
+
+    def test_save_without_file_still_calls_super(self) -> None:
+        obj = MediaFile()
+        with patch("apps.media_files.models.BaseModel.save", autospec=True) as mocked_save:
+            obj.save()
+        mocked_save.assert_called_once()

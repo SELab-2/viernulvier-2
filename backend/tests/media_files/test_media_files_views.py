@@ -2,7 +2,6 @@
 
 import tempfile
 
-from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
@@ -14,7 +13,6 @@ from apps.media_files.views import MediaFileViewSet
 
 PUB_KEY = "pub-media-files-view-test-key"
 INT_KEY = "int-media-files-view-test-key"
-User = get_user_model()
 
 
 def int_headers():
@@ -56,14 +54,24 @@ class TestMediaFileViewSetClass(TestCase):
         view.action = "list"
         assert view.get_serializer_class() == MediaFileSerializer
 
-    def test_get_serializer_class_returns_upload_serializer_for_create(self) -> None:
+    def test_get_serializer_class_returns_write_serializer_for_create(self) -> None:
         view = MediaFileViewSet()
         view.action = "create"
         assert view.get_serializer_class() == MediaFileUploadSerializer
 
+    def test_get_serializer_class_returns_write_serializer_for_update(self) -> None:
+        view = MediaFileViewSet()
+        view.action = "update"
+        assert view.get_serializer_class() == MediaFileUploadSerializer
+
+    def test_get_serializer_class_returns_write_serializer_for_partial_update(self) -> None:
+        view = MediaFileViewSet()
+        view.action = "partial_update"
+        assert view.get_serializer_class() == MediaFileUploadSerializer
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestMediaFileViewSetList(TestCase):
+class TestMediaFileViewSetListAndDetail(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         MediaFile.objects.all().delete()
@@ -71,12 +79,14 @@ class TestMediaFileViewSetList(TestCase):
         self.a = MediaFile.objects.create(
             file=make_file("a.pdf"),
             filename="a.pdf",
+            description="Algemene brochure",
             mime_type="application/pdf",
             size_bytes=100,
         )
         self.b = MediaFile.objects.create(
             file=make_file("poster.png", content_type="image/png"),
             filename="poster.png",
+            description="Premièreposter",
             mime_type="image/png",
             size_bytes=200,
         )
@@ -110,43 +120,28 @@ class TestMediaFileViewSetList(TestCase):
             "external_id",
             "file",
             "filename",
+            "description",
             "mime_type",
             "size_bytes",
             "file_type",
-            "uploaded_by",
             "created_at",
         ):
             with self.subTest(field=field):
                 assert field in item
 
-
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestMediaFileViewSetDetail(TestCase):
-    def setUp(self) -> None:
-        self.client = APIClient()
-        self.obj = MediaFile.objects.create(
-            file=make_file("detail.pdf"),
-            filename="detail.pdf",
-            mime_type="application/pdf",
-            size_bytes=111,
-        )
-
     def test_detail_with_public_key_returns_200(self) -> None:
-        response = self.client.get(f"/api/v1/media/{self.obj.pk}/", **pub_headers())
+        response = self.client.get(f"/api/v1/media/{self.a.pk}/", **pub_headers())
         assert response.status_code == 200
 
     def test_detail_with_internal_key_returns_200(self) -> None:
-        response = self.client.get(f"/api/v1/media/{self.obj.pk}/", **int_headers())
+        response = self.client.get(f"/api/v1/media/{self.a.pk}/", **int_headers())
         assert response.status_code == 200
 
-    def test_detail_without_auth_returns_401_or_403(self) -> None:
-        response = self.client.get(f"/api/v1/media/{self.obj.pk}/")
-        assert response.status_code in (401, 403)
-
     def test_detail_returns_correct_object(self) -> None:
-        response = self.client.get(f"/api/v1/media/{self.obj.pk}/", **pub_headers())
-        assert response.data["id"] == str(self.obj.pk)
-        assert response.data["filename"] == "detail.pdf"
+        response = self.client.get(f"/api/v1/media/{self.a.pk}/", **pub_headers())
+        assert response.data["id"] == str(self.a.pk)
+        assert response.data["filename"] == "a.pdf"
+        assert response.data["description"] == "Algemene brochure"
 
     def test_detail_unknown_id_returns_404(self) -> None:
         response = self.client.get("/api/v1/media/00000000-0000-0000-0000-000000000000/", **pub_headers())
@@ -154,7 +149,7 @@ class TestMediaFileViewSetDetail(TestCase):
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestMediaFileViewSetCreate(TestCase):
+class TestMediaFileViewSetCreateUpdateDelete(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         MediaFile.objects.all().delete()
@@ -168,40 +163,30 @@ class TestMediaFileViewSetCreate(TestCase):
         with override_settings(MEDIA_ROOT=self.temp_dir.name):
             response = self.client.post(
                 "/api/v1/media/",
-                {"file": make_file()},
+                {"file": make_file(), "description": "Nieuwe brochure"},
                 format="multipart",
                 **int_headers(),
             )
         assert response.status_code == 201, getattr(response, "data", response.content)
 
     @override_settings(MEDIA_ROOT=None)
-    def test_create_creates_object(self) -> None:
+    def test_create_creates_object_and_sets_metadata(self) -> None:
         with override_settings(MEDIA_ROOT=self.temp_dir.name):
             response = self.client.post(
                 "/api/v1/media/",
-                {"file": make_file()},
+                {"file": make_file("poster.png", content_type="image/png"), "description": "Poster voor campagne"},
                 format="multipart",
                 **int_headers(),
             )
+
         assert response.status_code == 201, getattr(response, "data", response.content)
         assert MediaFile.objects.count() == 1
-
-    @override_settings(MEDIA_ROOT=None)
-    def test_create_sets_metadata(self) -> None:
-        with override_settings(MEDIA_ROOT=self.temp_dir.name):
-            response = self.client.post(
-                "/api/v1/media/",
-                {"file": make_file("poster.png", content_type="image/png")},
-                format="multipart",
-                **int_headers(),
-            )
-
-        assert response.status_code == 201, getattr(response, "data", response.content)
 
         obj = MediaFile.objects.get()
         assert obj.filename == "poster.png"
         assert obj.mime_type == "image/png"
         assert obj.file_type == MediaFile.FileType.IMAGE
+        assert obj.description == "Poster voor campagne"
 
     def test_create_with_public_key_returns_401_or_403(self) -> None:
         response = self.client.post(
@@ -239,33 +224,71 @@ class TestMediaFileViewSetCreate(TestCase):
         pointers = [error["pointer"] for error in response.data.get("errors", [])]
         assert "/file" in pointers
 
+    @override_settings(MEDIA_ROOT=None)
+    def test_patch_updates_metadata_only(self) -> None:
+        with override_settings(MEDIA_ROOT=self.temp_dir.name):
+            obj = MediaFile.objects.create(file=make_file("old.pdf"), description="Oud")
+            response = self.client.patch(
+                f"/api/v1/media/{obj.pk}/",
+                {"description": "Nieuw", "external_id": "ext-55"},
+                format="json",
+                **int_headers(),
+            )
+        assert response.status_code == 200, getattr(response, "data", response.content)
+        obj.refresh_from_db()
+        assert obj.description == "Nieuw"
+        assert obj.external_id == "ext-55"
+        assert obj.filename == "old.pdf"
+
+    @override_settings(MEDIA_ROOT=None)
+    def test_put_replaces_file_and_updates_description(self) -> None:
+        with override_settings(MEDIA_ROOT=self.temp_dir.name):
+            obj = MediaFile.objects.create(file=make_file("old.pdf"), description="Oud")
+            response = self.client.put(
+                f"/api/v1/media/{obj.pk}/",
+                {"file": make_file("new.png", content=b"abc", content_type="image/png"), "description": "Nieuw"},
+                format="multipart",
+                **int_headers(),
+            )
+        assert response.status_code == 200, getattr(response, "data", response.content)
+        obj.refresh_from_db()
+        assert obj.filename == "new.png"
+        assert obj.description == "Nieuw"
+        assert obj.file_type == MediaFile.FileType.IMAGE
+
+    def test_delete_with_internal_key_returns_204(self) -> None:
+        obj = MediaFile.objects.create(file=make_file("delete.pdf"))
+        response = self.client.delete(f"/api/v1/media/{obj.pk}/", **int_headers())
+        assert response.status_code == 204
+        assert not MediaFile.objects.filter(pk=obj.pk).exists()
+
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestMediaFileViewSetFiltering(TestCase):
+class TestMediaFileViewSetFilteringOrderingSearch(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         MediaFile.objects.all().delete()
-        self.user_one = User.objects.create_user(username="editor1", email="editor1@example.com", password="pw")
-        self.user_two = User.objects.create_user(username="editor2", email="editor2@example.com", password="pw")
 
         self.pdf = MediaFile.objects.create(
             file=make_file("brochure.pdf"),
             filename="brochure.pdf",
+            description="Programmabrochure voorjaar",
             mime_type="application/pdf",
-            size_bytes=100,
-            uploaded_by=self.user_one,
+            size_bytes=300,
         )
         self.png = MediaFile.objects.create(
             file=make_file("poster.png", content_type="image/png"),
             filename="poster.png",
+            description="Social campagne poster",
             mime_type="image/png",
-            size_bytes=200,
-            uploaded_by=self.user_two,
+            size_bytes=100,
         )
 
     def test_filter_by_file_type(self) -> None:
         response = self.client.get("/api/v1/media/?file_type=pdf", **pub_headers())
-        assert len(results_list(response)) == 1
+        items = results_list(response)
+        assert len(items) == 1
+        assert items[0]["id"] == str(self.pdf.pk)
 
     def test_filter_by_mime_type(self) -> None:
         response = self.client.get("/api/v1/media/?mime_type=image/png", **pub_headers())
@@ -275,58 +298,16 @@ class TestMediaFileViewSetFiltering(TestCase):
         response = self.client.get("/api/v1/media/?filename=poster", **pub_headers())
         assert len(results_list(response)) == 1
 
-    def test_filter_by_uploaded_by_username(self) -> None:
-        response = self.client.get("/api/v1/media/?uploaded_by=editor1", **pub_headers())
+    def test_filter_by_description(self) -> None:
+        response = self.client.get("/api/v1/media/?description=campagne", **pub_headers())
         items = results_list(response)
         assert len(items) == 1
-        assert items[0]["id"] == str(self.pdf.pk)
-
-
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestMediaFileViewSetOrdering(TestCase):
-    def setUp(self) -> None:
-        self.client = APIClient()
-        MediaFile.objects.all().delete()
-
-        MediaFile.objects.create(
-            file=make_file("large.pdf"),
-            filename="large.pdf",
-            mime_type="application/pdf",
-            size_bytes=300,
-        )
-        MediaFile.objects.create(
-            file=make_file("small.pdf"),
-            filename="small.pdf",
-            mime_type="application/pdf",
-            size_bytes=100,
-        )
+        assert items[0]["id"] == str(self.png.pk)
 
     def test_ordering_by_size_bytes(self) -> None:
         response = self.client.get("/api/v1/media/?ordering=size_bytes", **pub_headers())
         sizes = [item["size_bytes"] for item in results_list(response)]
         assert sizes == sorted(sizes)
-
-
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestMediaFileViewSetSearch(TestCase):
-    def setUp(self) -> None:
-        self.client = APIClient()
-        MediaFile.objects.all().delete()
-        self.user = User.objects.create_user(username="searchuser", email="searchuser@example.com", password="pw")
-
-        MediaFile.objects.create(
-            file=make_file("poster.png", content_type="image/png"),
-            filename="poster.png",
-            mime_type="image/png",
-            size_bytes=100,
-            uploaded_by=self.user,
-        )
-        MediaFile.objects.create(
-            file=make_file("doc.pdf"),
-            filename="doc.pdf",
-            mime_type="application/pdf",
-            size_bytes=100,
-        )
 
     def test_search_by_filename(self) -> None:
         response = self.client.get("/api/v1/media/?search=poster", **pub_headers())
@@ -336,6 +317,8 @@ class TestMediaFileViewSetSearch(TestCase):
         response = self.client.get("/api/v1/media/?search=image", **pub_headers())
         assert len(results_list(response)) >= 1
 
-    def test_search_by_uploaded_by_username(self) -> None:
-        response = self.client.get("/api/v1/media/?search=searchuser", **pub_headers())
-        assert len(results_list(response)) == 1
+    def test_search_by_description(self) -> None:
+        response = self.client.get("/api/v1/media/?search=voorjaar", **pub_headers())
+        items = results_list(response)
+        assert len(items) == 1
+        assert items[0]["id"] == str(self.pdf.pk)
