@@ -330,6 +330,49 @@ def _build_through_kwargs(
     return through_kwargs
 
 
+def _process_m2m_items(
+    parent_obj: models.Model,
+    raw_list: list[Any],
+    through_model: type[models.Model],
+    related_model: type[models.Model],
+    m2m_config: M2MConfig,
+    fk_cache: FKCache,
+) -> list[models.Model]:
+    """Process raw M2M items and return through model instances to create."""
+    to_create = []
+    for position, raw_item in enumerate(raw_list):
+        ext_id = extract_external_id_from_url(raw_item)
+        if not ext_id:
+            continue
+
+        pk = _resolve_related_pk(related_model, ext_id, raw_item, m2m_config, fk_cache)
+        if pk is None:
+            continue
+
+        through_kwargs = _build_through_kwargs(parent_obj, related_model, m2m_config, raw_item, position, pk)
+        to_create.append(through_model(**through_kwargs))
+
+    return to_create
+
+
+def _save_m2m_instances(through_model: type[models.Model], to_create: list[models.Model], parent_obj: models.Model) -> None:
+    """Attempt bulk_create with fallback to individual saves."""
+    try:
+        through_model.objects.bulk_create(to_create, ignore_conflicts=True)
+    except Exception:
+        logger.warning("bulk_create failed for %s - falling back to individual saves", through_model.__name__)
+        for obj in to_create:
+            try:
+                obj.save()
+            except Exception:
+                logger.exception(
+                    "Error creating %s for %s pk=%s",
+                    through_model.__name__,
+                    parent_obj.__class__.__name__,
+                    parent_obj.pk,
+                )
+
+
 def sync_m2m(
     parent_obj: models.Model,
     item: Mapping[str, Any],
@@ -350,34 +393,9 @@ def sync_m2m(
     if m2m_config.clear_existing:
         through_model.objects.filter(**{m2m_config.parent_fk: parent_obj}).delete()
 
-    to_create = []
-    for position, raw_item in enumerate(raw_list):
-        ext_id = extract_external_id_from_url(raw_item)
-        if not ext_id:
-            continue
-
-        pk = _resolve_related_pk(related_model, ext_id, raw_item, m2m_config, fk_cache)
-        if pk is None:
-            continue
-        if m2m_config.clear_existing:
-            through_model.objects.filter(**{m2m_config.parent_fk: parent_obj}).delete()
-        through_kwargs = _build_through_kwargs(parent_obj, related_model, m2m_config, raw_item, position, pk)
-        to_create.append(through_model(**through_kwargs))
+    to_create = _process_m2m_items(parent_obj, raw_list, through_model, related_model, m2m_config, fk_cache)
 
     if not to_create:
         return
 
-    try:
-        through_model.objects.bulk_create(to_create, ignore_conflicts=True)
-    except Exception:
-        logger.warning("bulk_create failed for %s - falling back to individual saves", through_model.__name__)
-        for obj in to_create:
-            try:
-                obj.save()
-            except Exception:
-                logger.exception(
-                    "Error creating %s for %s pk=%s",
-                    through_model.__name__,
-                    parent_obj.__class__.__name__,
-                    parent_obj.pk,
-                )
+    _save_m2m_instances(through_model, to_create, parent_obj)

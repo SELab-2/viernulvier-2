@@ -50,6 +50,7 @@ def test_configs_with_translations_have_valid_structure() -> None:
             for attr in TRANSLATION_REQUIRED_ATTRIBUTES:
                 assert hasattr(trans_cfg, attr)
 
+
 def test_production_config_has_valid_m2m() -> None:
     assert isinstance(PRODUCTION_CONFIG.m2m, list)
     assert PRODUCTION_CONFIG.m2m
