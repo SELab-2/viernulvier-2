@@ -14,7 +14,7 @@ import type { MediaFile, MediaFileListResponse } from '../../types/MediaFiles'
  * @returns A promise that resolves to the media file data returned by the API.
  *
  * @example
- * const mediaFile = await getMediaFile('4f7ec8d0-6fd4-4d89-8f65-9d8d1f79b4b3');
+ * const mediaFile = await getMediaFile('4f7ec8d0-6fd4-4d89-8f65-9d8d1f79b4b3')
  *
  * @throws {ApiError} When the request fails.
  */
@@ -36,7 +36,7 @@ export const getMediaFile = async (id: string): Promise<MediaFile> => {
  * - `file_type`: filter by normalized file type
  * - `mime_type`: filter by stored MIME type
  * - `filename`: filter by uploaded filename
- * - `uploaded_by`: filter by uploader username
+ * - `description`: filter by description text
  *
  * In addition, all API list endpoints support these shared query parameters:
  * - `search`: free-text backend search
@@ -50,7 +50,7 @@ export const getMediaFile = async (id: string): Promise<MediaFile> => {
  * @returns A promise that resolves to the API response data, usually a paginated list.
  *
  * @example
- * const mediaFiles = await getMediaFiles();
+ * const mediaFiles = await getMediaFiles()
  *
  * @example
  * const mediaFiles = await getMediaFiles({
@@ -59,9 +59,10 @@ export const getMediaFile = async (id: string): Promise<MediaFile> => {
  *   filters: {
  *     file_type: 'image',
  *     filename: 'poster',
+ *     description: 'seizoen 2026',
  *     ordering: '-created_at',
  *   },
- * });
+ * })
  *
  * @throws {ApiError} When the request fails.
  */
