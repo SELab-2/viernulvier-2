@@ -20,6 +20,44 @@ from tests.scrapers.conftest import _make_m2m_setup
 
 
 class TestSyncM2M:
+    def test_does_not_delete_existing_rows_when_clear_existing_is_false(self) -> None:
+        """clear_existing=False should append without wiping existing through rows."""
+
+        class FakeRelated:
+            __name__ = "FakeRelated"
+            DoesNotExist = Exception
+
+            def __init__(self, pk=None) -> None:
+                self.pk = pk
+
+        created_rows = []
+
+        class FakeThrough:
+            __name__ = "FakeThrough"
+
+            def __init__(self, **kwargs) -> None:
+                created_rows.append(kwargs)
+
+            class objects:
+                filter = Mock(return_value=SimpleNamespace(delete=lambda: None))
+
+        cache = FKCache()
+        cache._loaded[FakeRelated] = True
+        cache.set(FakeRelated, "ext-1", 1)
+
+        cfg = M2MConfig(
+            api_key="genres",
+            related_model=FakeRelated,
+            through_model=FakeThrough,
+            parent_fk="production",
+            related_fk="genre",
+            clear_existing=False,
+        )
+
+        _sync_m2m(SimpleNamespace(pk=10), {"genres": ["ext-1"]}, cfg, cache)
+
+        FakeThrough.objects.filter.assert_not_called()
+        assert len(created_rows) == 1
     def test_normalizes_scalar_payload_to_single_item(self) -> None:
         """A non-list payload is treated as a one-item list and processed safely."""
 
