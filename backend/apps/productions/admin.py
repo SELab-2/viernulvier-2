@@ -29,7 +29,6 @@ from .models import (
     ProductionTag,
     ProductionTagTranslation,
     ProductionTranslation,
-    UitDatabaseTheme,
     UitDatabaseType,
 )
 
@@ -133,34 +132,14 @@ class ProductionTagTranslationInline(admin.TabularInline):
         return super().get_queryset(request).select_related("language")
 
 
-# ===========================================================================
-# UIT Database classification admins
-# ===========================================================================
-
-
-@admin.register(UitDatabaseTheme)
-class UitDatabaseThemeAdmin(BaseAdmin):
-    """
-    Admin for UIT Database Theme classifications.
-
-    Themes are typically imported from an external source and assigned
-    to productions. ``search_fields`` is required so this model can be
-    used as an ``autocomplete_fields`` target on ``ProductionAdmin``.
-    """
-
-    list_display = ("id", "name")
-    search_fields = ("name",)
-    ordering = ("name",)
-
-
 @admin.register(UitDatabaseType)
 class UitDatabaseTypeAdmin(BaseAdmin):
     """
     Admin for UIT Database Type classifications.
 
-    Types provide a more granular classification than themes. Like
-    ``UitDatabaseThemeAdmin``, ``search_fields`` is required so this model
-    can be used as an ``autocomplete_fields`` target on ``ProductionAdmin``.
+    Types are imported from an external source. ``search_fields`` is required
+    so this model can be used as an ``autocomplete_fields`` target on
+    ``ProductionAdmin``.
     """
 
     list_display = ("id", "name")
@@ -185,7 +164,7 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
     Queryset strategy
     -----------------
     - ``select_related`` covers the single-row FK references displayed in
-      ``list_display`` (``uit_database_theme``, ``uit_database_type``,
+            ``list_display`` (``uit_database_type``,
       ``media_gallery``).
     - ``prefetch_related("translations")`` prevents N+1 queries when the
       admin search uses ``translations__title`` or ``translations__artist_name``.
@@ -195,7 +174,6 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         "id",
         "attendance_mode",
         "performer_type",
-        "uit_database_theme",
         "uit_database_type",
         "media_gallery",
     )
@@ -208,7 +186,7 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         ArtistNameFilter,
     )
 
-    list_select_related = ("uit_database_theme", "uit_database_type", "media_gallery")
+    list_select_related = ("uit_database_type", "media_gallery")
 
     search_fields = (
         "id",
@@ -217,7 +195,6 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
     )
 
     autocomplete_fields = (
-        "uit_database_theme",
         "uit_database_type",
         "media_gallery",
     )
@@ -241,7 +218,6 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
             super()
             .get_queryset(request)
             .select_related(
-                "uit_database_theme",
                 "uit_database_type",
                 "media_gallery",
             )

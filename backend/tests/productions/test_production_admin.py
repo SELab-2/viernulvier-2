@@ -26,7 +26,6 @@ from apps.productions.admin import (
     ProductionTagTranslationInline,
     ProductionTranslationAdmin,
     ProductionTranslationInline,
-    UitDatabaseThemeAdmin,
     UitDatabaseTypeAdmin,
 )
 from apps.productions.models import (
@@ -35,7 +34,6 @@ from apps.productions.models import (
     ProductionTag,
     ProductionTagTranslation,
     ProductionTranslation,
-    UitDatabaseTheme,
     UitDatabaseType,
 )
 from tests.factories.language import LanguageFactory
@@ -43,7 +41,6 @@ from tests.factories.production import (
     ProductionFactory,
     ProductionTagFactory,
     ProductionTranslationFactory,
-    UitDatabaseThemeFactory,
     UitDatabaseTypeFactory,
 )
 from tests.factories.tag import TagFactory
@@ -75,12 +72,6 @@ class TestAdminRegistration(TestCase):
     def test_registered_admin_is_production_translation_admin(self) -> None:
         assert isinstance(admin.site._registry[ProductionTranslation], ProductionTranslationAdmin)
 
-    def test_uit_database_theme_is_registered(self) -> None:
-        assert UitDatabaseTheme in admin.site._registry
-
-    def test_registered_admin_is_uit_database_theme_admin(self) -> None:
-        assert isinstance(admin.site._registry[UitDatabaseTheme], UitDatabaseThemeAdmin)
-
     def test_uit_database_type_is_registered(self) -> None:
         assert UitDatabaseType in admin.site._registry
 
@@ -109,7 +100,6 @@ class TestAdminInheritance(TestCase):
     admins = [
         ProductionAdmin,
         ProductionTranslationAdmin,
-        UitDatabaseThemeAdmin,
         UitDatabaseTypeAdmin,
         ProductionGenreAdmin,
         ProductionTagAdmin,
@@ -124,25 +114,6 @@ class TestAdminInheritance(TestCase):
         for admin_class in self.admins:
             with self.subTest(admin_class=admin_class.__name__):
                 assert issubclass(admin_class, admin.ModelAdmin)
-
-
-# ---------------------------------------------------------------------------
-# UitDatabaseThemeAdmin configuration
-# ---------------------------------------------------------------------------
-
-
-class TestUitDatabaseThemeAdminConfiguration(TestCase):
-    def setUp(self) -> None:
-        self.admin = admin.site._registry[UitDatabaseTheme]
-
-    def test_list_display_contains_id(self) -> None:
-        assert "id" in self.admin.list_display
-
-    def test_list_display_contains_name(self) -> None:
-        assert "name" in self.admin.list_display
-
-    def test_search_fields_contains_name(self) -> None:
-        assert "name" in self.admin.search_fields
 
 
 # ---------------------------------------------------------------------------
@@ -183,8 +154,8 @@ class TestProductionAdminConfiguration(TestCase):
     def test_list_display_contains_performer_type(self) -> None:
         assert "performer_type" in self.admin.list_display
 
-    def test_list_display_contains_uit_database_theme(self) -> None:
-        assert "uit_database_theme" in self.admin.list_display
+    def test_list_display_does_not_contain_uit_database_theme(self) -> None:
+        assert "uit_database_theme" not in self.admin.list_display
 
     def test_list_display_contains_uit_database_type(self) -> None:
         assert "uit_database_type" in self.admin.list_display
@@ -208,8 +179,8 @@ class TestProductionAdminConfiguration(TestCase):
         assert "translations__title" in self.admin.search_fields
 
     # autocomplete_fields
-    def test_autocomplete_fields_contains_uit_database_theme(self) -> None:
-        assert "uit_database_theme" in self.admin.autocomplete_fields
+    def test_autocomplete_fields_does_not_contain_uit_database_theme(self) -> None:
+        assert "uit_database_theme" not in self.admin.autocomplete_fields
 
     def test_autocomplete_fields_contains_uit_database_type(self) -> None:
         assert "uit_database_type" in self.admin.autocomplete_fields
@@ -436,9 +407,9 @@ class TestProductionAdminGetQueryset(TestCase):
         qs = self.model_admin.get_queryset(self._make_request())
         assert qs.model == Production
 
-    def test_queryset_has_select_related_for_uit_database_theme(self) -> None:
+    def test_queryset_does_not_have_select_related_for_uit_database_theme(self) -> None:
         qs = self.model_admin.get_queryset(self._make_request())
-        assert "uit_database_theme" in qs.query.select_related
+        assert "uit_database_theme" not in qs.query.select_related
 
     def test_queryset_has_select_related_for_uit_database_type(self) -> None:
         qs = self.model_admin.get_queryset(self._make_request())
@@ -448,26 +419,6 @@ class TestProductionAdminGetQueryset(TestCase):
 # ---------------------------------------------------------------------------
 # Functional changelist / changeform tests
 # ---------------------------------------------------------------------------
-
-
-class TestUitDatabaseThemeAdminChangelist(TestCase):
-    def setUp(self) -> None:
-        self.superuser = make_superuser("theme_admin")
-        self.client.force_login(self.superuser)
-
-    def test_changelist_returns_200(self) -> None:
-        url = reverse("admin:productions_uitdatabasetheme_changelist")
-        assert self.client.get(url).status_code == 200
-
-    def test_changelist_shows_theme(self) -> None:
-        UitDatabaseThemeFactory.create(name="Jazz Night")
-        url = reverse("admin:productions_uitdatabasetheme_changelist")
-        self.assertContains(self.client.get(url), "Jazz Night")
-
-    def test_changeform_returns_200(self) -> None:
-        theme = UitDatabaseThemeFactory.create(name="Test Theme")
-        url = reverse("admin:productions_uitdatabasetheme_change", args=[theme.pk])
-        assert self.client.get(url).status_code == 200
 
 
 class TestUitDatabaseTypeAdminChangelist(TestCase):

@@ -130,9 +130,7 @@ class TestTagViewSetList(TestCase):
             "id",
             "url",
             "source",
-            "source_type",
             "type",
-            "is_external",
             "is_enabled",
             "name",
             "short_description",
@@ -209,8 +207,6 @@ class TestTagViewSetCreate(TestCase):
         self.payload = {
             "type": "mood",
             "source": "manual",
-            "source_type": "internal",
-            "is_external": False,
             "is_enabled": True,
         }
 
@@ -248,8 +244,6 @@ class TestTagViewSetUpdate(TestCase):
         self.payload = {
             "type": "updated-genre",
             "source": "system",
-            "source_type": "internal",
-            "is_external": False,
             "is_enabled": True,
         }
 

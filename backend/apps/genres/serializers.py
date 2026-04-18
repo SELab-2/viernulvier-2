@@ -9,21 +9,7 @@ from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
 
-from .models import Genre, GenreUseAs
-
-
-class GenreUseAsSerializer(serializers.ModelSerializer):
-    """Represents a GenreUseAs object - the role a genre plays in the system."""
-
-    class Meta:
-        model = GenreUseAs
-        fields = ["id", "name"]
-        read_only_fields = ["id"]
-        extra_kwargs = {
-            "name": {
-                "help_text": ("Human-readable label for this usage context (e.g. `genre`, `tag`, `category`)."),
-            },
-        }
+from .models import Genre
 
 
 class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
@@ -58,25 +44,10 @@ class GenreSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
-    use_as_id = serializers.PrimaryKeyRelatedField(
-        queryset=GenreUseAs.objects.all(),
-        source="use_as",
-        write_only=True,
-        required=True,
-        help_text="ID of the parent GenreUseAs (write-only).",
-    )
-
-    use_as = GenreUseAsSerializer(
-        help_text=(
-            "Primary key of the **GenreUseAs** that defines how this genre is applied (taxonomy classification or tag)."
-        ),
-        read_only=True,
-    )
-
     class Meta:
         model = Genre
-        fields = ["id", "type", "use_as", "name", "display_name", "vendor_id", "use_as_id"]
-        read_only_fields = ["id", "name", "display_name", "use_as"]
+        fields = ["id", "type", "name", "display_name", "vendor_id"]
+        read_only_fields = ["id", "name", "display_name"]
         extra_kwargs = {
             "type": {
                 "help_text": (

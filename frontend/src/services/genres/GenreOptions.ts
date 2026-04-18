@@ -7,7 +7,6 @@ import type { FilteredListOptions } from '../ApiTypes'
  * `ordering`, `external_id`) that every list endpoint supports.
  */
 export interface GenreFilters {
-  use_as?: number
   type?: string
   vendor_id?: string
   name?: string

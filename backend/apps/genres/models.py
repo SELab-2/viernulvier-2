@@ -1,40 +1,12 @@
 """Models for the Genre app.
 
-Genres classify productions and can be applied in different contexts
-(e.g. as a taxonomy genre or as a lightweight tag).
+Genres classify productions.
 """
 
 from django.db import models
 
 from apps.core.models import BaseModel
 from apps.languages.models import Language
-
-
-class GenreUseAs(BaseModel):
-    """Defines how a Genre is used in the system.
-
-    Examples:
-        - ``genre``  -> used as a production classification
-        - ``tag``    -> used as a lightweight label
-    """
-
-    name = models.CharField(
-        max_length=50,
-        null=False,
-        blank=False,
-        help_text="Context in which genres with this role are applied (e.g. 'genre', 'tag').",
-        db_comment="Use-case label for the genre.",
-    )
-
-    class Meta(BaseModel.Meta):
-        db_table = "genre_use_as"
-        verbose_name = "Genre Use As"
-        verbose_name_plural = "Genres Used As"
-        ordering = ["id"]
-
-    def __str__(self) -> str:
-        """Return the use case name (e.g. 'genre', 'tag')."""
-        return self.name
 
 
 class Genre(BaseModel):
@@ -46,7 +18,6 @@ class Genre(BaseModel):
     - A vendor-specific ``vendor_id`` (optional) provided by the upstream Viernulvier API
     - A technical ``type`` (internal snake_case identifier)
     - An optional ``vendor_id`` provided by the upstream Viernulvier API
-    - A ``use_as`` relationship defining its role in the system
     - One or more ``translations`` (localised display names)
     """
 
@@ -66,16 +37,6 @@ class Genre(BaseModel):
         db_comment="Technical type of the genre.",
     )
 
-    use_as = models.ForeignKey(
-        GenreUseAs,
-        on_delete=models.CASCADE,
-        related_name="genres",
-        null=False,
-        blank=False,
-        help_text="Defines how this genre is applied (taxonomy or tagging).",
-        db_comment="FK to GenreUseAs.",
-    )
-
     class Meta(BaseModel.Meta):
         db_table = "genre"
         verbose_name = "Genre"
@@ -83,20 +44,15 @@ class Genre(BaseModel):
         ordering = ["id"]
 
     def __str__(self) -> str:
-        """Return a human-readable representation of the genre, preferring the base display name, then vendor_id, then type."""
+        """Return the translated genre name, then ``vendor_id``, then ``type``."""
         name = self.get_base_display_name(
             related_name="translations",
+            name_field="name",
             fallback=None,
         )
 
-        if name:
-            return f"{name} ({self.type})"
-
         stripped_vendor_id = self.vendor_id.strip() if self.vendor_id else ""
-        if stripped_vendor_id != "":
-            return stripped_vendor_id
-
-        return self.type
+        return name or stripped_vendor_id or self.type
 
 
 class GenreTranslation(BaseModel):

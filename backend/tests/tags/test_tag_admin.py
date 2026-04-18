@@ -79,9 +79,6 @@ class TestTagAdminConfiguration(TestCase):
     def test_list_display_contains_type(self) -> None:
         assert "type" in self.admin.list_display
 
-    def test_list_display_contains_is_external(self) -> None:
-        assert "is_external" in self.admin.list_display
-
     def test_list_display_contains_is_enabled(self) -> None:
         assert "is_enabled" in self.admin.list_display
 
@@ -89,9 +86,6 @@ class TestTagAdminConfiguration(TestCase):
         assert isinstance(self.admin.list_display, (tuple, list))
 
     # -- list_filter ----------------------------------------------------------
-
-    def test_list_filter_contains_is_external(self) -> None:
-        assert "is_external" in self.admin.list_filter
 
     def test_list_filter_contains_is_enabled(self) -> None:
         assert "is_enabled" in self.admin.list_filter

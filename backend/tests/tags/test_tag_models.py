@@ -22,16 +22,12 @@ class TestTag:
         tag = TagFactory(
             url="http://example.com/tag/rock",
             source="source",
-            source_type="source_type",
-            is_external=True,
             is_enabled=True,
             type="type",
         )
 
         assert tag.url == "http://example.com/tag/rock"
         assert tag.source == "source"
-        assert tag.source_type == "source_type"
-        assert tag.is_external is True
         assert tag.is_enabled is True
         assert tag.type == "type"
 
