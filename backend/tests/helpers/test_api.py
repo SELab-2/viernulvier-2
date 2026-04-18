@@ -2,10 +2,12 @@
 
 from types import SimpleNamespace
 
-from django.test import override_settings
+from django.test import TestCase, override_settings
+import pytest
 
 from tests.helpers.api import (
     DEFAULT_WRONG_API_KEY,
+    BaseViewSetTestCase,
     api_key_headers,
     internal_headers,
     paginated_results,
@@ -67,3 +69,68 @@ def test_v1_list_url_builds_named_route():
 
 def test_v1_detail_url_builds_named_route_with_kwargs():
     assert v1_detail_url("language", code="nl") == "/api/v1/languages/nl/"
+
+
+class TestBaseViewSetTestCase(TestCase):
+    """Tests for BaseViewSetTestCase class."""
+
+    def test_list_url_raises_when_resource_name_not_defined(self):
+        """Should raise ValueError when resource_name is not defined."""
+
+        class InvalidViewSet(BaseViewSetTestCase):
+            pass
+
+        with pytest.raises(ValueError, match="must define resource_name"):
+            InvalidViewSet().list_url()
+
+    def test_detail_url_raises_when_resource_name_not_defined(self):
+        """Should raise ValueError when resource_name is not defined."""
+
+        class InvalidViewSet(BaseViewSetTestCase):
+            pass
+
+        with pytest.raises(ValueError, match="must define resource_name"):
+            InvalidViewSet().detail_url(pk=1)
+
+    def test_list_url_returns_correct_url(self):
+        """Should return correct list URL when resource_name is defined."""
+
+        class ValidViewSet(BaseViewSetTestCase):
+            resource_name = "language"
+
+        assert ValidViewSet().list_url() == "/api/v1/languages/"
+
+    def test_detail_url_returns_correct_url(self):
+        """Should return correct detail URL when resource_name is defined."""
+
+        class ValidViewSet(BaseViewSetTestCase):
+            resource_name = "language"
+
+        assert ValidViewSet().detail_url(code="nl") == "/api/v1/languages/nl/"
+
+    @override_settings(PUBLIC_API_KEY="test-pub-key")
+    def test_pub_headers_returns_public_headers(self):
+        """Should return public API headers."""
+
+        class ValidViewSet(BaseViewSetTestCase):
+            resource_name = "language"
+
+        assert ValidViewSet().pub_headers() == {"HTTP_X_API_KEY": "test-pub-key"}
+
+    @override_settings(INTERNAL_API_KEY="test-int-key")
+    def test_int_headers_returns_internal_headers(self):
+        """Should return internal API headers."""
+
+        class ValidViewSet(BaseViewSetTestCase):
+            resource_name = "language"
+
+        assert ValidViewSet().int_headers() == {"HTTP_X_API_KEY": "test-int-key"}
+
+    def test_wrong_headers_returns_invalid_headers(self):
+        """Should return invalid API headers."""
+
+        class ValidViewSet(BaseViewSetTestCase):
+            resource_name = "language"
+
+        headers = ValidViewSet().wrong_headers()
+        assert "HTTP_X_API_KEY" in headers

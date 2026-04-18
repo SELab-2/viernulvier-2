@@ -2,11 +2,9 @@
 Tests for apps/events/filters.py and apps/events/views.py.
 """
 
-from django.test import TestCase, override_settings
-from django.urls import reverse
+from django.test import override_settings
 from django.utils import timezone
 import pytest
-from rest_framework.test import APIClient
 
 from apps.events.filters import EventFilter
 from apps.events.models import Event
@@ -14,7 +12,7 @@ from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.location import HallFactory, LocationFactory, SpaceFactory
 from tests.factories.production import ProductionFactory, ProductionTranslationFactory
-from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import INTERNAL_API_KEY, PUBLIC_API_KEY, BaseViewSetTestCase, paginated_results
 from tests.helpers.api import public_headers as pub_headers
 
 pytestmark = pytest.mark.django_db
@@ -22,10 +20,6 @@ pytestmark = pytest.mark.django_db
 
 def _dt(days_offset=0):
     return timezone.now() + timezone.timedelta(days=days_offset)
-
-
-PUB_KEY = "pub-event-filter-test-key"
-INT_KEY = "int-event-filter-test-key"
 
 
 # =====================================================
@@ -147,17 +141,13 @@ class TestEventFilter:
 # =====================================================
 
 
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestEventViewSet(TestCase):
+@override_settings(PUBLIC_API_KEY=PUBLIC_API_KEY, INTERNAL_API_KEY=INTERNAL_API_KEY)
+class TestEventViewSet(BaseViewSetTestCase):
+    resource_name = "event"
+
     def setUp(self):
-        self.client = APIClient()
+        super().setUp()
         Event.objects.all().delete()
-
-    def list_url(self):
-        return reverse("v1:event-list")
-
-    def detail_url(self, pk):
-        return reverse("v1:event-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
@@ -165,33 +155,33 @@ class TestEventViewSet(TestCase):
 
     def test_public_can_list(self):
         EventFactory.create_batch(2)
-        response = self.client.get(self.list_url(), **pub_headers())
+        response = self.client.get(self.list_url(), **self.pub_headers())
         assert response.status_code == 200
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         assert len(results) == 2
 
     def test_public_can_retrieve(self):
         event = EventFactory()
-        response = self.client.get(self.detail_url(event.pk), **pub_headers())
+        response = self.client.get(self.detail_url(pk=event.pk), **self.pub_headers())
         assert response.status_code == 200
 
     def test_public_cannot_create(self):
-        response = self.client.post(self.list_url(), {}, format="json", **pub_headers())
+        response = self.client.post(self.list_url(), {}, format="json", **self.pub_headers())
         assert response.status_code == 403
 
     def test_public_cannot_update(self):
         event = EventFactory()
-        response = self.client.patch(self.detail_url(event.pk), {}, format="json", **pub_headers())
+        response = self.client.patch(self.detail_url(pk=event.pk), {}, format="json", **self.pub_headers())
         assert response.status_code == 403
 
     def test_public_cannot_delete(self):
         event = EventFactory()
-        response = self.client.delete(self.detail_url(event.pk), **pub_headers())
+        response = self.client.delete(self.detail_url(pk=event.pk), **self.pub_headers())
         assert response.status_code == 403
 
     def test_internal_can_delete(self):
         event = EventFactory()
-        response = self.client.delete(self.detail_url(event.pk), **int_headers())
+        response = self.client.delete(self.detail_url(pk=event.pk), **self.int_headers())
         assert response.status_code == 204
         assert not Event.objects.filter(pk=event.pk).exists()
 
@@ -201,16 +191,16 @@ class TestEventViewSet(TestCase):
         prod = ProductionFactory()
         EventFactory(production=prod)
         EventFactory()
-        response = self.client.get(self.list_url(), {"production": prod.id}, **pub_headers())
-        results = response.data.get("results", response.data)
+        response = self.client.get(self.list_url(), {"production": prod.id}, **self.pub_headers())
+        results = paginated_results(response)
         assert len(results) == 1
 
     def test_filter_by_hall(self):
         hall = HallFactory()
         EventFactory(hall=hall)
         EventFactory()
-        response = self.client.get(self.list_url(), {"hall": hall.id}, **pub_headers())
-        results = response.data.get("results", response.data)
+        response = self.client.get(self.list_url(), {"hall": hall.id}, **self.pub_headers())
+        results = paginated_results(response)
         assert len(results) == 1
 
     def test_filter_by_location(self):
@@ -218,8 +208,8 @@ class TestEventViewSet(TestCase):
         hall = HallFactory(space=SpaceFactory(location=location))
         EventFactory(hall=hall)
         EventFactory()
-        response = self.client.get(self.list_url(), {"location": location.id}, **pub_headers())
-        results = response.data.get("results", response.data)
+        response = self.client.get(self.list_url(), {"location": location.id}, **self.pub_headers())
+        results = paginated_results(response)
         assert len(results) == 1
 
     def test_filter_starts_at_after(self):
