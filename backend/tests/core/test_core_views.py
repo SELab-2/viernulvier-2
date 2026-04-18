@@ -38,21 +38,12 @@ from apps.core.authentications import ApiKeyAuthentication
 from apps.core.permissions import ApiKeyPermission
 from apps.core.views import ApiModelViewSet
 from apps.languages.models import Language
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import public_headers as pub_headers
+from tests.helpers.api import wrong_headers
 
 INT_KEY = "int-view-test-key"
 PUB_KEY = "pub-view-test-key"
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def wrong_headers():
-    return {"HTTP_X_API_KEY": "completely-wrong-key"}
 
 
 # ---------------------------------------------------------------------------
@@ -61,22 +52,22 @@ def wrong_headers():
 
 
 class TestApiModelViewSetClass(TestCase):
-    def test_authentication_classes_contains_api_key_authentication(self) -> None:
+    def test_authentication_classes_contains_api_key_authentication(self):
         assert ApiKeyAuthentication in ApiModelViewSet.authentication_classes
 
-    def test_permission_classes_contains_api_key_permission(self) -> None:
+    def test_permission_classes_contains_api_key_permission(self):
         assert ApiKeyPermission in ApiModelViewSet.permission_classes
 
-    def test_has_exactly_one_authentication_class(self) -> None:
+    def test_has_exactly_one_authentication_class(self):
         assert len(ApiModelViewSet.authentication_classes) == 1
 
-    def test_has_exactly_one_permission_class(self) -> None:
+    def test_has_exactly_one_permission_class(self):
         assert len(ApiModelViewSet.permission_classes) == 1
 
-    def test_inherits_from_model_viewset(self) -> None:
+    def test_inherits_from_model_viewset(self):
         assert issubclass(ApiModelViewSet, ModelViewSet)
 
-    def test_get_authenticators_returns_instances(self) -> None:
+    def test_get_authenticators_returns_instances(self):
         vs = ApiModelViewSet()
         vs.request = MagicMock()
         vs.kwargs = {}
@@ -85,7 +76,7 @@ class TestApiModelViewSetClass(TestCase):
         assert len(authenticators) == 1
         assert isinstance(authenticators[0], ApiKeyAuthentication)
 
-    def test_get_permissions_returns_instances(self) -> None:
+    def test_get_permissions_returns_instances(self):
         vs = ApiModelViewSet()
         vs.request = MagicMock()
         vs.kwargs = {}
@@ -102,24 +93,24 @@ class TestApiModelViewSetClass(TestCase):
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetList(TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
 
-    def test_list_internal_key_returns_200(self) -> None:
+    def test_list_internal_key_returns_200(self):
         response = self.client.get("/api/v1/languages/", **int_headers())
         assert response.status_code == 200
 
-    def test_list_public_key_returns_200(self) -> None:
+    def test_list_public_key_returns_200(self):
         response = self.client.get("/api/v1/languages/", **pub_headers())
         assert response.status_code == 200
 
-    def test_list_wrong_key_returns_401(self) -> None:
+    def test_list_wrong_key_returns_401(self):
         response = self.client.get("/api/v1/languages/", **wrong_headers())
         assert response.status_code == 401
 
-    def test_list_no_auth_returns_401(self) -> None:
+    def test_list_no_auth_returns_401(self):
         """No header -> authentication returns None -> DRF sends 401."""
         response = self.client.get("/api/v1/languages/")
         assert response.status_code == 401
@@ -132,32 +123,32 @@ class TestApiModelViewSetList(TestCase):
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetRetrieve(TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
 
-    def test_retrieve_internal_key_returns_200(self) -> None:
+    def test_retrieve_internal_key_returns_200(self):
         response = self.client.get("/api/v1/languages/nl/", **int_headers())
         assert response.status_code == 200
 
-    def test_retrieve_public_key_returns_200(self) -> None:
+    def test_retrieve_public_key_returns_200(self):
         response = self.client.get("/api/v1/languages/nl/", **pub_headers())
         assert response.status_code == 200
 
-    def test_retrieve_wrong_key_returns_401(self) -> None:
+    def test_retrieve_wrong_key_returns_401(self):
         response = self.client.get("/api/v1/languages/nl/", **wrong_headers())
         assert response.status_code == 401
 
-    def test_retrieve_no_auth_returns_401(self) -> None:
+    def test_retrieve_no_auth_returns_401(self):
         response = self.client.get("/api/v1/languages/nl/")
         assert response.status_code == 401
 
-    def test_retrieve_nonexistent_with_internal_key_returns_404(self) -> None:
+    def test_retrieve_nonexistent_with_internal_key_returns_404(self):
         response = self.client.get("/api/v1/languages/xx/", **int_headers())
         assert response.status_code == 404
 
-    def test_retrieve_nonexistent_with_public_key_returns_404(self) -> None:
+    def test_retrieve_nonexistent_with_public_key_returns_404(self):
         response = self.client.get("/api/v1/languages/xx/", **pub_headers())
         assert response.status_code == 404
 
@@ -169,26 +160,26 @@ class TestApiModelViewSetRetrieve(TestCase):
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetCreate(TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
 
     def _payload(self):
         return {"code": "de", "name": "German", "is_active": True}
 
-    def test_create_internal_key_returns_201(self) -> None:
+    def test_create_internal_key_returns_201(self):
         response = self.client.post("/api/v1/languages/", self._payload(), format="json", **int_headers())
         assert response.status_code == 201
 
-    def test_create_public_key_returns_403(self) -> None:
+    def test_create_public_key_returns_403(self):
         response = self.client.post("/api/v1/languages/", self._payload(), format="json", **pub_headers())
         assert response.status_code == 403
 
-    def test_create_wrong_key_returns_401(self) -> None:
+    def test_create_wrong_key_returns_401(self):
         response = self.client.post("/api/v1/languages/", self._payload(), format="json", **wrong_headers())
         assert response.status_code == 401
 
-    def test_create_no_auth_returns_401(self) -> None:
+    def test_create_no_auth_returns_401(self):
         response = self.client.post("/api/v1/languages/", self._payload(), format="json")
         assert response.status_code == 401
 
@@ -200,7 +191,7 @@ class TestApiModelViewSetCreate(TestCase):
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetUpdate(TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
@@ -208,23 +199,23 @@ class TestApiModelViewSetUpdate(TestCase):
     def _payload(self):
         return {"code": "nl", "name": "Nederlands", "is_active": False}
 
-    def test_put_internal_key_returns_200(self) -> None:
+    def test_put_internal_key_returns_200(self):
         response = self.client.put("/api/v1/languages/nl/", self._payload(), format="json", **int_headers())
         assert response.status_code == 200
 
-    def test_put_public_key_returns_403(self) -> None:
+    def test_put_public_key_returns_403(self):
         response = self.client.put("/api/v1/languages/nl/", self._payload(), format="json", **pub_headers())
         assert response.status_code == 403
 
-    def test_put_wrong_key_returns_401(self) -> None:
+    def test_put_wrong_key_returns_401(self):
         response = self.client.put("/api/v1/languages/nl/", self._payload(), format="json", **wrong_headers())
         assert response.status_code == 401
 
-    def test_put_no_auth_returns_401(self) -> None:
+    def test_put_no_auth_returns_401(self):
         response = self.client.put("/api/v1/languages/nl/", self._payload(), format="json")
         assert response.status_code == 401
 
-    def test_put_nonexistent_returns_404(self) -> None:
+    def test_put_nonexistent_returns_404(self):
         response = self.client.put(
             "/api/v1/languages/xx/",
             {"code": "xx", "name": "X", "is_active": True},
@@ -241,24 +232,24 @@ class TestApiModelViewSetUpdate(TestCase):
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetPartialUpdate(TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
 
-    def test_patch_internal_key_returns_200(self) -> None:
+    def test_patch_internal_key_returns_200(self):
         response = self.client.patch("/api/v1/languages/nl/", {"is_active": False}, format="json", **int_headers())
         assert response.status_code == 200
 
-    def test_patch_public_key_returns_403(self) -> None:
+    def test_patch_public_key_returns_403(self):
         response = self.client.patch("/api/v1/languages/nl/", {"is_active": False}, format="json", **pub_headers())
         assert response.status_code == 403
 
-    def test_patch_wrong_key_returns_401(self) -> None:
+    def test_patch_wrong_key_returns_401(self):
         response = self.client.patch("/api/v1/languages/nl/", {"is_active": False}, format="json", **wrong_headers())
         assert response.status_code == 401
 
-    def test_patch_no_auth_returns_401(self) -> None:
+    def test_patch_no_auth_returns_401(self):
         response = self.client.patch("/api/v1/languages/nl/", {"is_active": False}, format="json")
         assert response.status_code == 401
 
@@ -270,27 +261,27 @@ class TestApiModelViewSetPartialUpdate(TestCase):
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestApiModelViewSetDelete(TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         self.client = APIClient()
         Language.objects.all().delete()
         Language.objects.create(code="nl", name="Dutch", is_active=True)
 
-    def test_delete_internal_key_returns_204(self) -> None:
+    def test_delete_internal_key_returns_204(self):
         response = self.client.delete("/api/v1/languages/nl/", **int_headers())
         assert response.status_code == 204
 
-    def test_delete_public_key_returns_403(self) -> None:
+    def test_delete_public_key_returns_403(self):
         response = self.client.delete("/api/v1/languages/nl/", **pub_headers())
         assert response.status_code == 403
 
-    def test_delete_wrong_key_returns_401(self) -> None:
+    def test_delete_wrong_key_returns_401(self):
         response = self.client.delete("/api/v1/languages/nl/", **wrong_headers())
         assert response.status_code == 401
 
-    def test_delete_no_auth_returns_401(self) -> None:
+    def test_delete_no_auth_returns_401(self):
         response = self.client.delete("/api/v1/languages/nl/")
         assert response.status_code == 401
 
-    def test_delete_nonexistent_returns_404(self) -> None:
+    def test_delete_nonexistent_returns_404(self):
         response = self.client.delete("/api/v1/languages/xx/", **int_headers())
         assert response.status_code == 404

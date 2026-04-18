@@ -16,19 +16,13 @@ from tests.factories.pricing import (
     PriceRankTranslationFactory,
     PriceTranslationFactory,
 )
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import public_headers as pub_headers
 
 pytestmark = pytest.mark.django_db
 
 PUB_KEY = "pub-pricing-filter-test-key"
 INT_KEY = "int-pricing-filter-test-key"
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
 
 
 # =====================================================
@@ -40,44 +34,44 @@ class TestPriceFilter:
     def _qs(self, params):
         return PriceFilter(params, queryset=Price.objects.all()).qs
 
-    def test_type_icontains(self) -> None:
+    def test_type_icontains(self):
         PriceFactory(type="student")
         PriceFactory(type="full")
 
         assert self._qs({"type": "student"}).count() == 1
         assert self._qs({"type": "tude"}).count() == 1
 
-    def test_type_case_insensitive(self) -> None:
+    def test_type_case_insensitive(self):
         PriceFactory(type="Student")
 
         assert self._qs({"type": "student"}).count() == 1
 
-    def test_visibility_exact(self) -> None:
+    def test_visibility_exact(self):
         PriceFactory(visibility="public")
         PriceFactory(visibility="members_only")
 
         assert self._qs({"visibility": "public"}).count() == 1
 
-    def test_membership_icontains(self) -> None:
+    def test_membership_icontains(self):
         PriceFactory(membership="cineville")
         PriceFactory(membership="")
 
         assert self._qs({"membership": "cineville"}).count() == 1
         assert self._qs({"membership": "cine"}).count() == 1
 
-    def test_cineville_box_true(self) -> None:
+    def test_cineville_box_true(self):
         PriceFactory(cineville_box=True)
         PriceFactory(cineville_box=False)
 
         assert self._qs({"cineville_box": "true"}).count() == 1
 
-    def test_cineville_box_false(self) -> None:
+    def test_cineville_box_false(self):
         PriceFactory(cineville_box=True)
         PriceFactory(cineville_box=False)
 
         assert self._qs({"cineville_box": "false"}).count() == 1
 
-    def test_description_filter_across_translations(self) -> None:
+    def test_description_filter_across_translations(self):
         lang = LanguageFactory(code="en")
         price_a = PriceFactory(type="student")
         price_b = PriceFactory(type="full")
@@ -89,7 +83,7 @@ class TestPriceFilter:
         assert result.count() == 1
         assert result.first() == price_a
 
-    def test_description_filter_distinct_no_duplicates(self) -> None:
+    def test_description_filter_distinct_no_duplicates(self):
         lang_nl = LanguageFactory(code="nl")
         lang_fr = LanguageFactory(code="fr")
         price = PriceFactory()
@@ -98,13 +92,13 @@ class TestPriceFilter:
 
         assert self._qs({"description": "tudiant"}).count() == 1
 
-    def test_external_id_iexact(self) -> None:
+    def test_external_id_iexact(self):
         PriceFactory(external_id="PRICE-001")
         PriceFactory(external_id="PRICE-002")
 
         assert self._qs({"external_id": "price-001"}).count() == 1
 
-    def test_combined_type_and_cineville_box(self) -> None:
+    def test_combined_type_and_cineville_box(self):
         PriceFactory(type="cineville", cineville_box=True)
         PriceFactory(type="cineville", cineville_box=False)
 
@@ -120,34 +114,34 @@ class TestPriceRankFilter:
     def _qs(self, params):
         return PriceRankFilter(params, queryset=PriceRank.objects.all()).qs
 
-    def test_position_exact(self) -> None:
+    def test_position_exact(self):
         PriceRankFactory(position=1)
         PriceRankFactory(position=2)
 
         assert self._qs({"position": "1"}).count() == 1
 
-    def test_position_gte(self) -> None:
+    def test_position_gte(self):
         PriceRankFactory(position=1)
         PriceRankFactory(position=3)
         PriceRankFactory(position=5)
 
         assert self._qs({"position_gte": "3"}).count() == 2
 
-    def test_position_lte(self) -> None:
+    def test_position_lte(self):
         PriceRankFactory(position=1)
         PriceRankFactory(position=3)
         PriceRankFactory(position=5)
 
         assert self._qs({"position_lte": "3"}).count() == 2
 
-    def test_position_range(self) -> None:
+    def test_position_range(self):
         PriceRankFactory(position=1)
         PriceRankFactory(position=3)
         PriceRankFactory(position=5)
 
         assert self._qs({"position_gte": "2", "position_lte": "4"}).count() == 1
 
-    def test_description_filter_across_translations(self) -> None:
+    def test_description_filter_across_translations(self):
         lang = LanguageFactory(code="en")
         rank_a = PriceRankFactory(position=1)
         rank_b = PriceRankFactory(position=2)
@@ -159,7 +153,7 @@ class TestPriceRankFilter:
         assert result.count() == 1
         assert result.first() == rank_a
 
-    def test_external_id_iexact(self) -> None:
+    def test_external_id_iexact(self):
         PriceRankFactory(position=1, external_id="RANK-001")
         PriceRankFactory(position=2, external_id="RANK-002")
 
@@ -173,7 +167,7 @@ class TestPriceRankFilter:
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestPriceViewSet(TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         self.client = APIClient()
         Price.objects.all().delete()
 
@@ -183,48 +177,48 @@ class TestPriceViewSet(TestCase):
     def detail_url(self, pk):
         return reverse("v1:price-detail", kwargs={"pk": pk})
 
-    def test_anon_is_rejected(self) -> None:
+    def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
         assert response.status_code in (401, 403)
 
-    def test_public_can_list(self) -> None:
+    def test_public_can_list(self):
         PriceFactory.create_batch(3)
         response = self.client.get(self.list_url(), **pub_headers())
         assert response.status_code == 200
 
-    def test_public_cannot_delete(self) -> None:
+    def test_public_cannot_delete(self):
         price = PriceFactory()
         response = self.client.delete(self.detail_url(price.pk), **pub_headers())
         assert response.status_code == 403
 
-    def test_internal_can_delete(self) -> None:
+    def test_internal_can_delete(self):
         price = PriceFactory()
         response = self.client.delete(self.detail_url(price.pk), **int_headers())
         assert response.status_code == 204
         assert not Price.objects.filter(pk=price.pk).exists()
 
-    def test_filter_by_type(self) -> None:
+    def test_filter_by_type(self):
         PriceFactory(type="student")
         PriceFactory(type="full")
         response = self.client.get(self.list_url(), {"type": "student"}, **pub_headers())
         results = response.data.get("results", response.data)
         assert len(results) == 1
 
-    def test_filter_cineville_box(self) -> None:
+    def test_filter_cineville_box(self):
         PriceFactory(cineville_box=True)
         PriceFactory(cineville_box=False)
         response = self.client.get(self.list_url(), {"cineville_box": "true"}, **pub_headers())
         results = response.data.get("results", response.data)
         assert len(results) == 1
 
-    def test_default_ordering_by_sort_order(self) -> None:
+    def test_default_ordering_by_sort_order(self):
         PriceFactory(sort_order=10)
         PriceFactory(sort_order=1)
         response = self.client.get(self.list_url(), **pub_headers())
         orders = [r["sort_order"] for r in response.data.get("results", response.data)]
         assert orders == sorted(orders)
 
-    def test_search_by_type(self) -> None:
+    def test_search_by_type(self):
         PriceFactory(type="student")
         PriceFactory(type="full")
         response = self.client.get(self.list_url(), {"search": "student"}, **pub_headers())
@@ -239,30 +233,30 @@ class TestPriceViewSet(TestCase):
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestPriceRankViewSet(TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         self.client = APIClient()
         PriceRank.objects.all().delete()
 
     def list_url(self):
         return reverse("v1:price-rank-list")
 
-    def test_anon_is_rejected(self) -> None:
+    def test_anon_is_rejected(self):
         response = self.client.get(self.list_url())
         assert response.status_code in (401, 403)
 
-    def test_public_can_list(self) -> None:
+    def test_public_can_list(self):
         PriceRankFactory.create_batch(3)
         response = self.client.get(self.list_url(), **pub_headers())
         assert response.status_code == 200
 
-    def test_filter_by_position(self) -> None:
+    def test_filter_by_position(self):
         PriceRankFactory(position=1)
         PriceRankFactory(position=2)
         response = self.client.get(self.list_url(), {"position": "1"}, **pub_headers())
         results = response.data.get("results", response.data)
         assert len(results) == 1
 
-    def test_filter_position_range(self) -> None:
+    def test_filter_position_range(self):
         PriceRankFactory(position=1)
         PriceRankFactory(position=3)
         PriceRankFactory(position=5)
@@ -270,14 +264,14 @@ class TestPriceRankViewSet(TestCase):
         results = response.data.get("results", response.data)
         assert len(results) == 1
 
-    def test_default_ordering_by_position(self) -> None:
+    def test_default_ordering_by_position(self):
         PriceRankFactory(position=5)
         PriceRankFactory(position=1)
         response = self.client.get(self.list_url(), **pub_headers())
         positions = [r["position"] for r in response.data.get("results", response.data)]
         assert positions == sorted(positions)
 
-    def test_search_by_translated_description(self) -> None:
+    def test_search_by_translated_description(self):
         lang = LanguageFactory(code="en")
         rank = PriceRankFactory(position=1)
         PriceRankTranslationFactory(price_rank=rank, language=lang, description="Student rank")

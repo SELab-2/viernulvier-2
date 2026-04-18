@@ -10,25 +10,13 @@ from apps.core.views import ApiModelViewSet
 from apps.media_files.models import MediaFile
 from apps.media_files.serializers import MediaFileSerializer, MediaFileUploadSerializer
 from apps.media_files.views import MediaFileViewSet
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import paginated_results as results_list
+from tests.helpers.api import public_headers as pub_headers
+from tests.helpers.api import wrong_headers
 
 PUB_KEY = "pub-media-files-view-test-key"
 INT_KEY = "int-media-files-view-test-key"
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def wrong_headers():
-    return {"HTTP_X_API_KEY": "completely-wrong-key"}
-
-
-def results_list(response):
-    return response.data.get("results", response.data)
 
 
 def make_file(
