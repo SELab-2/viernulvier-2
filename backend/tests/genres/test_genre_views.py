@@ -23,31 +23,7 @@ from tests.factories.genre import (
     GenreTranslationFactory,
 )
 from tests.factories.language import LanguageFactory
-
-PUB_KEY = "pub-view-test-key"
-INT_KEY = "int-view-test-key"
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def wrong_headers():
-    return {"HTTP_X_API_KEY": "completely-wrong-key"}
-
-
-def results_list(response):
-    return response.data.get("results", response.data)
-
+from tests.helpers.api import INTERNAL_API_KEY, PUBLIC_API_KEY, BaseViewSetTestCase, paginated_results
 
 # ---------------------------------------------------------------------------
 # Class-level tests
@@ -69,7 +45,7 @@ class TestGenreViewSetClass(TestCase):
 # ---------------------------------------------------------------------------
 
 
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+@override_settings(PUBLIC_API_KEY=PUBLIC_API_KEY, INTERNAL_API_KEY=INTERNAL_API_KEY)
 class TestGenreViewSetPrefetch(TestCase):
     """Ensure genre list stays bounded in queries with translations present."""
 
@@ -85,11 +61,14 @@ class TestGenreViewSetPrefetch(TestCase):
 
     def test_list_prefetches_translations_bounded_queries(self) -> None:
         with CaptureQueriesContext(connection) as ctx:
-            response = self.client.get("/api/v1/genres/?ordering=id", **pub_headers())
+            response = self.client.get("/api/v1/genres/?ordering=id", **self.pub_headers())
 
         assert response.status_code == 200
-        assert len(results_list(response)) >= 5
+        assert len(paginated_results(response)) >= 5
         assert len(ctx) == 4
+
+    def pub_headers(self):
+        return {"HTTP_X_API_KEY": PUBLIC_API_KEY}
 
 
 # ---------------------------------------------------------------------------
@@ -97,27 +76,27 @@ class TestGenreViewSetPrefetch(TestCase):
 # ---------------------------------------------------------------------------
 
 
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestGenreViewSet(TestCase):
+@override_settings(PUBLIC_API_KEY=PUBLIC_API_KEY, INTERNAL_API_KEY=INTERNAL_API_KEY)
+class TestGenreViewSet(BaseViewSetTestCase):
     """CRUD tests for Genre endpoints."""
 
     def setUp(self) -> None:
-        self.client = APIClient()
+        super().setUp()
         Genre.objects.all().delete()
         self.genre = GenreFactory(type="Theater")
 
     # list
     def test_list_public_key(self) -> None:
-        response = self.client.get("/api/v1/genres/?ordering=id", **pub_headers())
+        response = self.client.get("/api/v1/genres/?ordering=id", **self.pub_headers())
         assert response.status_code == 200
 
     def test_list_internal_key(self) -> None:
-        response = self.client.get("/api/v1/genres/?ordering=id", **int_headers())
+        response = self.client.get("/api/v1/genres/?ordering=id", **self.int_headers())
         assert response.status_code == 200
 
     def test_list_response_fields(self) -> None:
-        response = self.client.get("/api/v1/genres/?ordering=id", **pub_headers())
-        results = response.data.get("results", response.data)
+        response = self.client.get("/api/v1/genres/?ordering=id", **self.pub_headers())
+        results = paginated_results(response)
         item = results[0]
         assert "id" in item
         assert "type" in item
@@ -128,16 +107,16 @@ class TestGenreViewSet(TestCase):
 
     # retrieve
     def test_retrieve_public_key(self) -> None:
-        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **pub_headers())
+        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **self.pub_headers())
         assert response.status_code == 200
         assert response.data["type"] == "Theater"
 
     def test_retrieve_internal_key(self) -> None:
-        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **int_headers())
+        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **self.int_headers())
         assert response.status_code == 200
 
     def test_retrieve_with_wrong_key(self) -> None:
-        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **wrong_headers())
+        response = self.client.get(f"/api/v1/genres/{self.genre.id}/", **self.wrong_headers())
         assert response.status_code == 401
 
     # create
@@ -146,7 +125,7 @@ class TestGenreViewSet(TestCase):
             "/api/v1/genres/",
             {"type": "Festival"},
             format="json",
-            **int_headers(),
+            **self.int_headers(),
         )
         assert response.status_code == 201
         assert Genre.objects.filter(type="Festival").exists()
@@ -156,7 +135,7 @@ class TestGenreViewSet(TestCase):
             "/api/v1/genres/",
             {"type": "Festival"},
             format="json",
-            **pub_headers(),
+            **self.pub_headers(),
         )
         assert response.status_code == 403
 
@@ -174,7 +153,7 @@ class TestGenreViewSet(TestCase):
             f"/api/v1/genres/{self.genre.id}/",
             {"type": "Concert"},
             format="json",
-            **int_headers(),
+            **self.int_headers(),
         )
         assert response.status_code == 200
         self.genre.refresh_from_db()
@@ -185,7 +164,7 @@ class TestGenreViewSet(TestCase):
             f"/api/v1/genres/{self.genre.id}/",
             {"type": "Opera"},
             format="json",
-            **int_headers(),
+            **self.int_headers(),
         )
         assert response.status_code == 200
         self.genre.refresh_from_db()
@@ -196,7 +175,7 @@ class TestGenreViewSet(TestCase):
             f"/api/v1/genres/{self.genre.id}/",
             {"type": "Opera"},
             format="json",
-            **pub_headers(),
+            **self.pub_headers(),
         )
         assert response.status_code == 403
 
@@ -210,12 +189,12 @@ class TestGenreViewSet(TestCase):
 
     # delete
     def test_delete_internal_key(self) -> None:
-        response = self.client.delete(f"/api/v1/genres/{self.genre.id}/", **int_headers())
+        response = self.client.delete(f"/api/v1/genres/{self.genre.id}/", **self.int_headers())
         assert response.status_code == 204
         assert not Genre.objects.filter(id=self.genre.id).exists()
 
     def test_delete_public_key_denied(self) -> None:
-        response = self.client.delete(f"/api/v1/genres/{self.genre.id}/", **pub_headers())
+        response = self.client.delete(f"/api/v1/genres/{self.genre.id}/", **self.pub_headers())
         assert response.status_code == 403
 
     def test_delete_without_auth_denied(self) -> None:
