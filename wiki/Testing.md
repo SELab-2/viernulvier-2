@@ -54,6 +54,7 @@ tests/
 ```
 
 Example:
+
 - App: `languages`
 - Tests: `tests/languages/test_language_admin.py`, `tests/languages/test_language_models.py`, ...
 
@@ -62,34 +63,35 @@ Example:
 `schemas.py` is documentation-only and generally does not need dedicated tests.
 
 - **Models**
-   - Field constraints (`null/blank/default/choices/unique`)
-   - `clean()` and `save()` behavior
-   - DB constraints and cascade behavior
-   - `__str__` output and model helpers
+  - Field constraints (`null/blank/default/choices/unique`)
+  - `clean()` and `save()` behavior
+  - DB constraints and cascade behavior
+  - `__str__` output and model helpers
 
 - **Admin**
-   - Model registration
-   - `list_display`, `list_filter`, `search_fields`, `ordering`
-   - Inlines, readonly fields, custom display helpers
-   - Custom actions and permission behavior (if overridden)
+  - Model registration
+  - `list_display`, `list_filter`, `search_fields`, `ordering`
+  - Inlines, readonly fields, custom display helpers
+  - Custom actions and permission behavior (if overridden)
 
 - **Serializers**
-   - Required/optional fields
-   - Validation rules + error messages
-   - Output shape and computed fields
+  - Required/optional fields
+  - Validation rules + error messages
+  - Output shape and computed fields
 
 - **Views / API**
-   - Auth + permissions (`401/403` behavior)
-   - CRUD success and failure paths
-   - Pagination/filtering/ordering
-   - Not found / invalid payload handling
-   - Query efficiency where relevant (e.g. no N+1 regressions)
+  - Auth + permissions (`401/403` behavior)
+  - CRUD success and failure paths
+  - Pagination/filtering/ordering
+  - Not found / invalid payload handling
+  - Query efficiency where relevant (e.g. no N+1 regressions)
 
 #### 5) Factories
 
 Shared factories live in `tests/factories/`.
 
 Use factories by default instead of manual object creation to keep tests:
+
 - concise,
 - consistent,
 - reusable across suites.
@@ -223,6 +225,6 @@ This ensures that all code merged via PRs is clean before it lands.
 #### Summary
 
 | Event | Job | Behaviour |
-|---|---|---|
+| --- | --- | --- |
 | Push to `main` / `dev` / `backend` | `autofix` | Runs `ruff check --fix` + `ruff format`, commits changes if any |
 | Pull request to `main` / `dev` / `backend` | `lint` | Runs `ruff check` + `ruff format --check`, fails on any issue |

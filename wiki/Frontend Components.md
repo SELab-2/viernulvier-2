@@ -7,7 +7,7 @@ This page documents the main frontend components and how they fit together. The 
 ## Component Overview
 
 | Component | File | Responsibility |
-|---|---|---|
+| --- | --- | --- |
 | Navbar | `frontend/src/components/Navbar.tsx` | Shared top-level navigation with branding, theme toggle, language toggle, and responsive mobile menu |
 | Footer | `frontend/src/components/Footer.tsx` | Shared footer with contact details, route links, social links, and newsletter CTA |
 | CollectionPageLayout | `frontend/src/components/CollectionPageLayout.tsx` | Common shell for paginated collection pages with search, sort, view mode, sidebar, loading, error, empty, and pagination states |

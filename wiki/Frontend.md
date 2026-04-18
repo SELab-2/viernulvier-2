@@ -104,7 +104,7 @@ The current design system uses **ABC Monument Grotesk** from `public/fonts/`.
 Routes are defined in `frontend/src/router.tsx`.
 
 | Route | Component | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `/` | `HomePage` | Landing page with archive search and stats |
 | `/archive` | `ProductionsPage` | Canonical archive listing route |
 | `/productions` | redirect to `/archive` | Compatibility alias |
@@ -172,6 +172,7 @@ Type-checks and builds production assets into `frontend/dist/`.
 ```bash
 npm run preview
 ```
+
 Preview the production build locally.
 
 ### Testing
