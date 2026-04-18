@@ -27,10 +27,10 @@ _MEDIA_FILE_RESPONSE = OpenApiExample(
         "external_id": None,
         "file": "/media/uploads/4f7ec8d0-6fd4-4d89-8f65-9d8d1f79b4b3.pdf",
         "filename": "season-brochure-2026.pdf",
+        "description": "Final Dutch brochure version for the 2026 season.",
         "mime_type": "application/pdf",
         "size_bytes": 2843921,
         "file_type": "pdf",
-        "uploaded_by": "editor1",
         "created_at": "2026-04-08T10:12:00.000000Z",
     },
     response_only=True,
@@ -44,10 +44,10 @@ _MEDIA_FILE_IMAGE_RESPONSE = OpenApiExample(
         "external_id": None,
         "file": "/media/uploads/9a7a3b8a-3bb6-4179-a52d-4f0a8fa9d921.png",
         "filename": "poster-premiere.png",
+        "description": "Main campaign poster for the premiere weekend.",
         "mime_type": "image/png",
         "size_bytes": 918273,
         "file_type": "image",
-        "uploaded_by": "editor2",
         "created_at": "2026-04-08T10:18:00.000000Z",
     },
     response_only=True,
@@ -58,6 +58,7 @@ _MEDIA_FILE_INPUT = OpenApiExample(
     summary="Multipart upload payload for a new media file",
     value={
         "file": "<binary file>",
+        "description": "Optional context about the file contents.",
     },
     request_only=True,
 )
@@ -67,6 +68,7 @@ _MEDIA_FILE_PARTIAL_INPUT = OpenApiExample(
     summary="Only the fields you want to change",
     value={
         "external_id": "print-archive-2026-001",
+        "description": "Final Dutch brochure version for the 2026 season.",
     },
     request_only=True,
 )
@@ -76,6 +78,7 @@ _MEDIA_FILE_PUT_INPUT = OpenApiExample(
     summary="Full replacement payload for a media file",
     value={
         "file": "<binary file>",
+        "description": "Updated file with revised print margins.",
     },
     request_only=True,
 )
@@ -91,12 +94,11 @@ _MEDIA_FILE_LIST = extend_schema(
         "Use this endpoint to populate the media overview page for posters, brochures, "
         "and other print materials.\n\n"
         "Filtering examples:\n"
-        "- `?uploaded_by=editor1` (exact username, case-insensitive)\n"
         "- `?file_type=pdf`\n"
         "- `?filename=poster`\n\n"
         "Search examples:\n"
-        "- `?search=editor1` (matches uploader username)\n"
-        "- `?search=poster`"
+        "- `?search=poster`\n\n"
+        "Each item can include an optional `description` with extra context about the file contents."
     ),
     parameters=[
         OpenApiParameter(
@@ -131,7 +133,7 @@ _MEDIA_FILE_CREATE = extend_schema(
         "- WEBP\n"
         "- PDF\n\n"
         "The backend derives and stores metadata such as the original filename, "
-        "MIME type, file size, and normalized internal file type.\n\n"
+        "description, MIME type, file size, and normalized internal file type.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=MediaFileUploadSerializer,
@@ -158,7 +160,7 @@ _MEDIA_FILE_PARTIAL_UPDATE = extend_schema(
         "Updates one or more writable fields of an existing **MediaFile** without "
         "requiring a full payload.\n\n"
         "Use this endpoint for small metadata changes such as setting or updating "
-        "`external_id`.\n\n"
+        "`external_id` or `description`.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=MediaFileUploadSerializer,

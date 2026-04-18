@@ -124,7 +124,7 @@ RESPONSE_400 = _problem_response(
         "title": "Bad Request",
         "status": 400,
         "detail": "Malformed request body: JSON parse error - Expecting value: line 1 column 1 (char 0)",
-        "instance": "/api/v1/languages/",
+        "instance": "/api/v1/resources/",
     },
 )
 
@@ -145,7 +145,7 @@ RESPONSE_401 = _problem_response(
         "title": "Unauthorized",
         "status": 401,
         "detail": "Authentication credentials were not provided.",
-        "instance": "/api/v1/languages/",
+        "instance": "/api/v1/resources/",
     },
 )
 
@@ -163,7 +163,7 @@ RESPONSE_403 = _problem_response(
         "title": "Forbidden",
         "status": 403,
         "detail": "You do not have permission to perform this action.",
-        "instance": "/api/v1/languages/",
+        "instance": "/api/v1/resources/",
     },
 )
 
@@ -177,8 +177,8 @@ RESPONSE_404 = _problem_response(
         "type": "about:blank",
         "title": "Not Found",
         "status": 404,
-        "detail": "No Language matches the given query.",
-        "instance": "/api/v1/languages/xx/",
+        "detail": "No resource matches the given query.",
+        "instance": "/api/v1/resources/123/",
     },
 )
 
@@ -199,7 +199,7 @@ RESPONSE_422 = _problem_response(
         "title": "Unprocessable Entity",
         "status": 422,
         "detail": "One or more validation errors occurred.",
-        "instance": "/api/v1/languages/",
+        "instance": "/api/v1/resources/",
         "errors": [
             {
                 "pointer": "/code/0",
