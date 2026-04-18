@@ -7,6 +7,7 @@ import { MemoryRouter } from 'react-router-dom'
 import i18n from '../../i18n'
 import HomePage from '../../pages/HomePage'
 import { getLandingStats } from '../../services/productions/Productions'
+
 import type { Production } from '../../types/Productions'
 
 jest.mock('../../services/productions/Productions', () => ({
