@@ -31,26 +31,12 @@ from apps.import_log.models import ImportLog
 from apps.import_log.serializers import ImportLogSerializer
 from apps.import_log.views import ImportLogViewSet
 from tests.factories.import_log import ImportLogFactory
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import public_headers as pub_headers
+from tests.helpers.api import wrong_headers
 
 PUB_KEY = "pub-import-log-view-test-key"
 INT_KEY = "int-import-log-view-test-key"
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def wrong_headers():
-    return {"HTTP_X_API_KEY": "completely-wrong-key"}
 
 
 def make_import_log(**kwargs):

@@ -166,6 +166,22 @@ class TestProductionSeriesSerializer(TestCase):
 
         assert serializer.get_last_production_image(tag) is None
 
+    def test_get_last_production_image_returns_lookup_value_for_last_production_id(self) -> None:
+        tag = TagFactory.create()
+        tag.last_production_id = 123
+        serializer = ProductionSeriesSerializer(
+            context={"last_production_image_by_production_id": {123: "https://img/test.jpg"}}
+        )
+
+        assert serializer.get_last_production_image(tag) == "https://img/test.jpg"
+
+    def test_get_last_production_image_returns_none_when_id_not_in_lookup(self) -> None:
+        tag = TagFactory.create()
+        tag.last_production_id = 456
+        serializer = ProductionSeriesSerializer(context={})
+
+        assert serializer.get_last_production_image(tag) is None
+
 
 class TestProductionSerializerRelated(TestCase):
     """Cover the related-production fallback and deduplication logic."""
@@ -224,6 +240,29 @@ class TestProductionSerializerRelated(TestCase):
         assert data["related"][0]["tag"]["id"] == self.tag.id
         assert len(data["related"][0]["productions"]) == 1
         assert data["related"][0]["productions"][0]["id"] == self.related_production.id
+
+    def test_related_uses_prefetched_production_tags_when_available(self) -> None:
+        production_tag = self.production.productiontag_set.select_related("tag").get(tag=self.tag)
+        self.production.prefetched_production_tags = [production_tag]
+
+        with patch.object(self.production.tags, "all", side_effect=AssertionError("fallback path should not be used")):
+            data = ProductionSerializer(self.production, context={"include": {"related"}}).data
+
+        assert "related" in data
+        assert len(data["related"]) == 1
+        assert data["related"][0]["tag"]["id"] == self.tag.id
+        assert len(data["related"][0]["productions"]) == 1
+        assert data["related"][0]["productions"][0]["id"] == self.related_production.id
+
+    def test_related_returns_empty_list_when_production_has_no_tags(self) -> None:
+        untagged_production = ProductionFactory.create()
+
+        with patch("apps.productions.serializers.ProductionTag.objects.filter") as filter_mock:
+            data = ProductionSerializer(untagged_production, context={"include": {"related"}}).data
+
+        assert "related" in data
+        assert data["related"] == []
+        filter_mock.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
