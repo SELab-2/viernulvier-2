@@ -136,36 +136,43 @@ npm test -- --runInBand
 # Lint (must pass in CI)
 npm run lint
 
+# Auto-fix lint issues
+npm run lint:fix
+
 # Check formatting without writing
-npx prettier --check src
+npm run format:check
 
 # Auto-fix formatting
-npx prettier --write src
+npm run format:fix
 ```
 
 #### 3) Test Folder Structure
 
-Tests live in `frontend/src/__tests__/` and mirror the component/page structure.
+Tests live in `frontend/src/__tests__/` and mirror the component, page, service, and theme structure.
 
 ```text
 src/
   __tests__/
-    App.test.tsx
-    Navbar.test.tsx
-    ...
+      components/
+      pages/
+      services/
+      theme/
 ```
 
 #### 4) What to Test Per Layer
 
 - **Components** — render output, interaction behavior, aria attributes, and i18n label correctness.
-- **Pages** — route rendering and basic content presence.
-- **State/callbacks** — that passed-in callbacks are called on user interaction.
+- **Pages** — route rendering, fetch orchestration, and loading/error/empty state transitions.
+- **Services** — request paths, query parameters, and error propagation.
+- **Theme helpers** — token mapping, palette creation, and shared style objects.
 
 Use `data-testid` attributes for stable element selection; prefer them over CSS class names or positional queries.
 
 #### 5) Testing Guidelines
 
 - Use `MemoryRouter` when testing components that use `useLocation` or `Link`.
+- Use `ThemeProvider` when the component depends on MUI theme values or breakpoints.
+- Use `I18nextProvider` or the shared test i18n instance when asserting translations.
 - Use `fireEvent` for simple interactions; use `userEvent` when pointer/keyboard fidelity matters.
 - Avoid asserting on CSS class names or MUI internals — assert on accessible attributes (`aria-label`, `aria-current`) and visible text.
 - Set the i18n language in `beforeEach` so translation assertions are deterministic.
