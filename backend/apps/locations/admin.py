@@ -42,6 +42,7 @@ class LocationAdmin(BaseAdmin):
         "Avoiding N+1 queries by prefetching related translations."
         return super().get_queryset(request).prefetch_related("translations")
 
+
 class SpaceTranslationInline(admin.TabularInline):
     model = SpaceTranslation
     extra = 1
@@ -63,6 +64,7 @@ class SpaceAdmin(BaseAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         "Avoiding N+1 queries by prefetching related translations."
         return super().get_queryset(request).prefetch_related("translations")
+
 
 class HallTranslationInline(admin.TabularInline):
     model = HallTranslation
@@ -91,4 +93,3 @@ class HallAdmin(BaseAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         "Avoiding N+1 queries by prefetching related translations."
         return super().get_queryset(request).prefetch_related("translations")
-

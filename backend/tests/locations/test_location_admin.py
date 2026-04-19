@@ -122,6 +122,7 @@ class TestLocationTranslationInlineConfig(TestCase):
     def test_extra(self) -> None:
         assert self.inline.extra == 1
 
+
 class TestSpaceAdminConfig(TestCase):
     def setUp(self) -> None:
         self.admin = SpaceAdmin(Space, admin.site)
@@ -149,6 +150,7 @@ class TestSpaceTranslationInlineConfig(TestCase):
 
     def test_extra(self) -> None:
         assert self.inline.extra == 1
+
 
 class TestHallAdminConfig(TestCase):
     def setUp(self) -> None:

@@ -27,6 +27,7 @@ class TestBlogAdminRegistration(TestCase):
         assert Blog in admin.site._registry
         assert isinstance(admin.site._registry[Blog], BlogAdmin)
 
+
 class TestBlogAdminInheritance(TestCase):
     def test_blog_admin_inherits_from_base_admin(self) -> None:
         assert issubclass(BlogAdmin, BaseAdmin)

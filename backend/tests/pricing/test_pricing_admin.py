@@ -13,7 +13,7 @@ Covers:
 from django.contrib import admin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
-from django.test import RequestFactory, TestCase
+from django.test import TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
@@ -21,7 +21,7 @@ from apps.pricing.admin import (
     PriceAdmin,
     PriceRankAdmin,
 )
-from apps.pricing.models import Price, PriceRank, PriceRankTranslation, PriceTranslation
+from apps.pricing.models import Price, PriceRank
 from tests.factories.language import LanguageFactory
 from tests.factories.pricing import (
     PriceFactory,

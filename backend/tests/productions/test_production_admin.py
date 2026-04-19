@@ -38,7 +38,6 @@ from tests.factories.production import (
     UitDatabaseTypeFactory,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -81,10 +80,7 @@ class TestAdminRegistration(TestCase):
 
 
 class TestAdminInheritance(TestCase):
-    admins = [
-        ProductionAdmin,
-        UitDatabaseTypeAdmin
-    ]
+    admins = [ProductionAdmin, UitDatabaseTypeAdmin]
 
     def test_all_admins_inherit_from_base_admin(self) -> None:
         for admin_class in self.admins:

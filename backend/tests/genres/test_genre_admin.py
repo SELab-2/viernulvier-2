@@ -38,7 +38,6 @@ class TestGenreAdminRegistration(TestCase):
         assert isinstance(admin.site._registry[Genre], GenreAdmin)
 
 
-
 # ---------------------------------------------------------------------------
 # Inheritance
 # ---------------------------------------------------------------------------
@@ -93,6 +92,7 @@ class TestGenreTranslationInlineConfig(TestCase):
 
     def test_extra(self) -> None:
         assert self.inline.extra == 1
+
 
 # ---------------------------------------------------------------------------
 # Functional admin tests

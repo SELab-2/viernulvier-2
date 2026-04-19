@@ -40,10 +40,10 @@ from apps.media_library.models import (
     MediaItemCrop,
     MediaItemTranslation,
 )
-
 from tests.factories.media_library import (
     MediaGalleryFactory,
-    MediaItemFactory,)
+    MediaItemFactory,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -263,6 +263,7 @@ class TestMediaItemCropAdminGetUrl(TestCase):
         obj.image = None
 
         assert self.admin.get_url(obj) == "-"
+
 
 # ---------------------------------------------------------------------------
 # MediaItemCropInline - get_url
