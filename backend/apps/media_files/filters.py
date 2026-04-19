@@ -21,9 +21,8 @@ class MediaFileFilter(BaseModelFilter):
     ``filename``
         Case-insensitive substring match on the original uploaded filename
         (e.g. ``?filename=poster``).
-    ``uploaded_by``
-        Case-insensitive exact match on uploader username
-        (e.g. ``?uploaded_by=editor1``).
+    ``description``
+        Case-insensitive substring match on the optional contextual description.
     ``external_id``
         Case-insensitive exact match on the inherited external identifier.
     """
@@ -31,7 +30,7 @@ class MediaFileFilter(BaseModelFilter):
     file_type = django_filters.CharFilter(lookup_expr="iexact")
     mime_type = django_filters.CharFilter(lookup_expr="iexact")
     filename = django_filters.CharFilter(lookup_expr="icontains")
-    uploaded_by = django_filters.CharFilter(field_name="uploaded_by__username", lookup_expr="iexact")
+    description = django_filters.CharFilter(lookup_expr="icontains")
 
     class Meta:
         model = MediaFile
@@ -39,6 +38,6 @@ class MediaFileFilter(BaseModelFilter):
             "file_type",
             "mime_type",
             "filename",
-            "uploaded_by",
+            "description",
             "external_id",
         ]
