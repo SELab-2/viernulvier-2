@@ -1,4 +1,45 @@
 {% load i18n %}
+<style>
+  .generic-multiselect-filter {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .generic-multiselect-filter summary {
+    min-width: 0;
+  }
+
+  .generic-multiselect-filter [data-option-row] {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .generic-multiselect-filter label {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    align-items: flex-start;
+    cursor: pointer;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .generic-multiselect-filter label > span {
+    flex: 1 1 auto;
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .generic-multiselect-filter input[type="search"] {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+</style>
 <details class="filter generic-multiselect-filter" style="margin-bottom:10px;" {% if spec.is_open %}open{% endif %}>
   <summary style="cursor:pointer; margin:0;"><span style="margin-left:6px;">{{ title }}</span></summary>
   <form method="get">
@@ -7,7 +48,7 @@
       <input type="hidden" name="{{ param.key }}" value="{{ param.val }}">
     {% endfor %}
 
-    <div style="display:flex; gap:6px; margin:8px 0 6px; align-items:center; flex-wrap:nowrap;">
+    <div style="display:flex; gap:6px; margin:8px 0 6px; align-items:center; flex-wrap:wrap;">
       <input
         type="search"
         name="{{ spec.search_param }}"
@@ -37,7 +78,7 @@
           {% for val, label in spec.lookup_choices %}
             {% if val in spec.selected_values %}
               <div data-option-row data-selected-row="1" data-option-label="{{ label|lower }}" style="margin:0 0 2px;">
-                <label style="display:flex; gap:6px; align-items:flex-start; cursor:pointer;">
+                <label style="display:flex; flex-wrap:nowrap; gap:6px; align-items:flex-start; cursor:pointer; min-width:0; width:100%;">
                   <input
                     type="checkbox"
                     name="{{ spec.parameter_name }}"
@@ -45,7 +86,7 @@
                     onchange="this.form.submit()"
                     checked
                   >
-                  {{ label }}
+                  <span style="flex:1 1 auto; min-width:0; word-break:break-word; overflow-wrap:anywhere; white-space:normal;">{{ label }}</span>
                 </label>
               </div>
             {% endif %}
@@ -58,14 +99,14 @@
         {% for val, label in spec.lookup_choices %}
           {% if val not in spec.selected_values %}
             <div data-option-row data-option-label="{{ label|lower }}" style="margin:0 0 2px;">
-              <label style="display:flex; gap:6px; align-items:flex-start; cursor:pointer;">
+              <label>
                 <input
                   type="checkbox"
                   name="{{ spec.parameter_name }}"
                   value="{{ val }}"
                   onchange="this.form.submit()"
                 >
-                {{ label }}
+                <span>{{ label }}</span>
               </label>
             </div>
           {% endif %}
