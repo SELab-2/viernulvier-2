@@ -42,18 +42,6 @@ class LocationAdmin(BaseAdmin):
         "Avoiding N+1 queries by prefetching related translations."
         return super().get_queryset(request).prefetch_related("translations")
 
-
-@admin.register(LocationTranslation)
-class LocationTranslationAdmin(BaseAdmin):
-    """Admin configuration for Location translations."""
-
-    list_display = ("id", "language", "location", "name")
-    list_filter = ("language", "location")
-    search_fields = ("name", "location__city", "location__street")
-    ordering = ("id",)
-    autocomplete_fields = ("language", "location")
-
-
 class SpaceTranslationInline(admin.TabularInline):
     model = SpaceTranslation
     extra = 1
@@ -75,18 +63,6 @@ class SpaceAdmin(BaseAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         "Avoiding N+1 queries by prefetching related translations."
         return super().get_queryset(request).prefetch_related("translations")
-
-
-@admin.register(SpaceTranslation)
-class SpaceTranslationAdmin(BaseAdmin):
-    """Admin configuration for Space translations."""
-
-    list_display = ("id", "language", "space", "name")
-    list_filter = ("language", "space")
-    search_fields = ("name", "space__location__city")
-    ordering = ("id",)
-    autocomplete_fields = ("language", "space")
-
 
 class HallTranslationInline(admin.TabularInline):
     model = HallTranslation
@@ -116,13 +92,3 @@ class HallAdmin(BaseAdmin):
         "Avoiding N+1 queries by prefetching related translations."
         return super().get_queryset(request).prefetch_related("translations")
 
-
-@admin.register(HallTranslation)
-class HallTranslationAdmin(BaseAdmin):
-    """Admin configuration for Hall translations."""
-
-    list_display = ("id", "language", "hall", "name")
-    list_filter = ("language", "hall")
-    search_fields = ("name", "hall__space__location__city")
-    ordering = ("id",)
-    autocomplete_fields = ("language", "hall")

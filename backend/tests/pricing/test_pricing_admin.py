@@ -20,8 +20,6 @@ from apps.core.admin import BaseAdmin
 from apps.pricing.admin import (
     PriceAdmin,
     PriceRankAdmin,
-    PriceRankTranslationAdmin,
-    PriceTranslationAdmin,
 )
 from apps.pricing.models import Price, PriceRank, PriceRankTranslation, PriceTranslation
 from tests.factories.language import LanguageFactory
@@ -61,17 +59,9 @@ class TestPricingAdminRegistration(TestCase):
     def test_price_rank_is_registered(self) -> None:
         assert PriceRank in admin.site._registry
 
-    def test_price_translation_is_registered(self) -> None:
-        assert PriceTranslation in admin.site._registry
-
-    def test_price_rank_translation_is_registered(self) -> None:
-        assert PriceRankTranslation in admin.site._registry
-
     def test_registered_admin_classes(self) -> None:
         assert isinstance(admin.site._registry[Price], PriceAdmin)
         assert isinstance(admin.site._registry[PriceRank], PriceRankAdmin)
-        assert isinstance(admin.site._registry[PriceTranslation], PriceTranslationAdmin)
-        assert isinstance(admin.site._registry[PriceRankTranslation], PriceRankTranslationAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -83,8 +73,6 @@ class TestPricingAdminInheritance(TestCase):
     admins = [
         PriceAdmin,
         PriceRankAdmin,
-        PriceTranslationAdmin,
-        PriceRankTranslationAdmin,
     ]
 
     def test_admins_inherit_from_base_admin_if_used(self) -> None:
@@ -152,68 +140,6 @@ class TestPricingAdminConfiguration(TestCase):
         admin_obj = PriceRankAdmin(PriceRank, self.site)
         assert admin_obj.inlines
 
-    def test_price_translation_admin_list_filter_uses_language_code(self) -> None:
-        """list_filter uses 'language__code', not 'language'."""
-        admin_obj = PriceTranslationAdmin(PriceTranslation, self.site)
-        assert "language__code" in admin_obj.list_filter
-        assert "language" not in admin_obj.list_filter
-
-    def test_price_rank_translation_admin_list_filter_uses_language_code(self) -> None:
-        """list_filter uses 'language__code', not 'language'."""
-        admin_obj = PriceRankTranslationAdmin(PriceRankTranslation, self.site)
-        assert "language__code" in admin_obj.list_filter
-        assert "language" not in admin_obj.list_filter
-
-
-# ---------------------------------------------------------------------------
-# Queryset optimisation
-# ---------------------------------------------------------------------------
-
-
-class TestPricingTranslationAdminGetQueryset(TestCase):
-    @classmethod
-    def setUpTestData(cls) -> None:
-        cls.lang = LanguageFactory.create(code="en", name="English")
-
-        cls.price = PriceFactory.create(
-            type="Standard",
-            visibility="public",
-            membership="",
-            minimum=None,
-            maximum=None,
-            step=None,
-            sort_order=0,
-            cineville_box=False,
-        )
-        cls.rank = PriceRankFactory.create(position=1, sold_out_buffer=0)
-
-        cls.price_tr = PriceTranslationFactory.create(price=cls.price, language=cls.lang, description="Standard ticket")
-        cls.rank_tr = PriceRankTranslationFactory.create(price_rank=cls.rank, language=cls.lang, description="First rank")
-
-    def setUp(self) -> None:
-        self.site = AdminSite()
-        self.factory = RequestFactory()
-
-    def test_price_translation_admin_select_related(self) -> None:
-        admin_obj = PriceTranslationAdmin(PriceTranslation, self.site)
-        request = self.factory.get("/admin/")
-        qs = admin_obj.get_queryset(request)
-
-        with self.assertNumQueries(1):
-            obj = qs.get(pk=self.price_tr.pk)
-            _ = obj.price.id
-            _ = obj.language.code
-
-    def test_price_rank_translation_admin_select_related(self) -> None:
-        admin_obj = PriceRankTranslationAdmin(PriceRankTranslation, self.site)
-        request = self.factory.get("/admin/")
-        qs = admin_obj.get_queryset(request)
-
-        with self.assertNumQueries(1):
-            obj = qs.get(pk=self.rank_tr.pk)
-            _ = obj.price_rank.id
-            _ = obj.language.code
-
 
 # ---------------------------------------------------------------------------
 # Functional admin tests (HTTP)
@@ -255,30 +181,8 @@ class TestPricingAdminChangelists(TestCase):
         url = admin_changelist_url(Price)
         assert self.client.get(url, {"cineville_box": "0"}).status_code == 200
 
-    def test_price_translation_changelist_returns_200(self) -> None:
-        assert self.client.get(admin_changelist_url(PriceTranslation)).status_code == 200
-
-    def test_price_translation_changeform_returns_200(self) -> None:
-        assert self.client.get(admin_change_url(PriceTranslation, self.price_tr.pk)).status_code == 200
-
-    def test_price_translation_changelist_filter_by_language_code(self) -> None:
-        """Changelist filter must use language__code lookup."""
-        url = admin_changelist_url(PriceTranslation)
-        assert self.client.get(url, {"language__code": "nl"}).status_code == 200
-
     def test_price_rank_changelist_returns_200(self) -> None:
         assert self.client.get(admin_changelist_url(PriceRank)).status_code == 200
 
     def test_price_rank_changeform_returns_200(self) -> None:
         assert self.client.get(admin_change_url(PriceRank, self.rank.pk)).status_code == 200
-
-    def test_price_rank_translation_changelist_returns_200(self) -> None:
-        assert self.client.get(admin_changelist_url(PriceRankTranslation)).status_code == 200
-
-    def test_price_rank_translation_changeform_returns_200(self) -> None:
-        assert self.client.get(admin_change_url(PriceRankTranslation, self.rank_tr.pk)).status_code == 200
-
-    def test_price_rank_translation_changelist_filter_by_language_code(self) -> None:
-        """Changelist filter must use language__code lookup."""
-        url = admin_changelist_url(PriceRankTranslation)
-        assert self.client.get(url, {"language__code": "nl"}).status_code == 200
