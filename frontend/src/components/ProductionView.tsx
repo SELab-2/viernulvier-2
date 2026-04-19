@@ -12,7 +12,6 @@ export interface ProductionViewProps {
   productions: Production[]
   layout?: LayoutMode
   selectedGenreIds?: number[]
-  onGenreIdsChange?: (ids: number[]) => void
 }
 
 /**
