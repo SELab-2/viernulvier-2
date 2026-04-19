@@ -10,7 +10,13 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 import pytest
 
-from apps.media_files.models import DESCRIPTION_MAX_LENGTH, MediaFile, upload_to_media
+from apps.languages.models import Language
+from apps.media_files.models import (
+    DESCRIPTION_MAX_LENGTH,
+    MediaFile,
+    MediaFileTranslation,
+    upload_to_media,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -29,10 +35,20 @@ def make_png_bytes() -> bytes:
     return buffer.getvalue()
 
 
+@pytest.fixture
+def dutch_language() -> Language:
+    return Language.objects.create(code="nl", name="Dutch", is_active=True)
+
+
+@pytest.fixture
+def english_language() -> Language:
+    return Language.objects.create(code="en", name="English", is_active=True)
+
+
 class TestUploadToMedia:
-    def test_upload_path_uses_media_uploads_prefix(self) -> None:
+    def test_upload_path_uses_uploads_prefix(self) -> None:
         path = upload_to_media(instance=None, filename="poster.png")
-        assert path.startswith("media/uploads/")
+        assert path.startswith("uploads/")
 
     def test_upload_path_preserves_extension(self) -> None:
         path = upload_to_media(instance=None, filename="poster.png")
@@ -115,22 +131,11 @@ class TestMediaFileModel:
         obj = MediaFile.objects.create(file=make_uploaded_file())
         assert isinstance(obj.id, uuid.UUID)
 
-    def test_external_id_is_optional(self) -> None:
-        obj = MediaFile(file=make_uploaded_file(), external_id=None)
-        obj.full_clean()
-
-    def test_description_is_optional(self) -> None:
-        obj = MediaFile(file=make_uploaded_file(), description="")
-        obj.full_clean()
-
-    def test_description_max_length_constant_matches_model_field(self) -> None:
-        assert MediaFile._meta.get_field("description").max_length == DESCRIPTION_MAX_LENGTH
-
-    def test_description_length_is_enforced(self) -> None:
-        obj = MediaFile(file=make_uploaded_file(), description="x" * (DESCRIPTION_MAX_LENGTH + 1))
-        with pytest.raises(ValidationError) as exc:
-            obj.full_clean()
-        assert "description" in exc.value.message_dict
+    def test_media_file_meta_configuration(self) -> None:
+        assert MediaFile._meta.db_table == "media_file"
+        assert MediaFile._meta.verbose_name == "Media file"
+        assert MediaFile._meta.verbose_name_plural == "Media files"
+        assert list(MediaFile._meta.ordering) == ["-created_at"]
 
     def test_str_returns_filename(self) -> None:
         obj = MediaFile.objects.create(file=make_uploaded_file(name="season-brochure.pdf"))
@@ -138,7 +143,7 @@ class TestMediaFileModel:
 
     def test_file_is_stored_under_upload_prefix(self) -> None:
         obj = MediaFile.objects.create(file=make_uploaded_file(name="season-brochure.pdf"))
-        assert obj.file.name.startswith("media/uploads/")
+        assert obj.file.name.startswith("uploads/")
         assert obj.file.name.endswith(".pdf")
 
     def test_pdf_mime_type_sets_pdf_file_type(self) -> None:
@@ -236,3 +241,75 @@ class TestMediaFileModel:
         with patch("apps.media_files.models.BaseModel.save", autospec=True) as mocked_save:
             obj.save()
         mocked_save.assert_called_once()
+
+
+class TestMediaFileTranslationModel:
+    def test_translation_meta_configuration(self) -> None:
+        assert MediaFileTranslation._meta.db_table == "media_file_translation"
+        assert MediaFileTranslation._meta.verbose_name == "Media file translation"
+        assert MediaFileTranslation._meta.verbose_name_plural == "Media file translations"
+        assert list(MediaFileTranslation._meta.ordering) == ["language__code"]
+
+    def test_description_max_length_constant_matches_translation_field(self) -> None:
+        assert MediaFileTranslation._meta.get_field("description").max_length == DESCRIPTION_MAX_LENGTH
+
+    def test_description_is_optional(self, dutch_language: Language) -> None:
+        obj = MediaFileTranslation(
+            media_file=MediaFile.objects.create(file=make_uploaded_file()),
+            language=dutch_language,
+            description="",
+        )
+        obj.full_clean()
+
+    def test_description_length_is_enforced(self, dutch_language: Language) -> None:
+        obj = MediaFileTranslation(
+            media_file=MediaFile.objects.create(file=make_uploaded_file()),
+            language=dutch_language,
+            description="x" * (DESCRIPTION_MAX_LENGTH + 1),
+        )
+        with pytest.raises(ValidationError) as exc:
+            obj.full_clean()
+        assert "description" in exc.value.message_dict
+
+    def test_str_returns_language_code_and_filename(self, dutch_language: Language) -> None:
+        media_file = MediaFile.objects.create(file=make_uploaded_file(name="poster.pdf"))
+        translation = MediaFileTranslation.objects.create(
+            media_file=media_file,
+            language=dutch_language,
+            description="Affiche",
+        )
+        assert str(translation) == "nl - poster.pdf"
+
+    def test_unique_constraint_rejects_same_language_twice(
+        self,
+        dutch_language: Language,
+    ) -> None:
+        media_file = MediaFile.objects.create(file=make_uploaded_file(name="poster.pdf"))
+        MediaFileTranslation.objects.create(
+            media_file=media_file,
+            language=dutch_language,
+            description="NL",
+        )
+        duplicate = MediaFileTranslation(
+            media_file=media_file,
+            language=dutch_language,
+            description="Nog eens NL",
+        )
+        with pytest.raises(ValidationError):
+            duplicate.full_clean()
+
+    def test_index_and_constraint_names_exist(self) -> None:
+        constraint_names = {constraint.name for constraint in MediaFileTranslation._meta.constraints}
+        index_names = {index.name for index in MediaFileTranslation._meta.indexes}
+        assert "unique_media_file_language" in constraint_names
+        assert "idx_media_file_lang" in index_names
+
+    def test_related_name_returns_translations(
+        self,
+        dutch_language: Language,
+        english_language: Language,
+    ) -> None:
+        media_file = MediaFile.objects.create(file=make_uploaded_file(name="poster.pdf"))
+        first = MediaFileTranslation.objects.create(media_file=media_file, language=dutch_language, description="NL")
+        second = MediaFileTranslation.objects.create(media_file=media_file, language=english_language, description="EN")
+        assert list(media_file.translations.order_by("language__code")) == [second, first]
