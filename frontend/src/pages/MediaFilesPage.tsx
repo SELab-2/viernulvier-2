@@ -323,13 +323,10 @@ const MediaFilesPage = () => {
     const [searchDraft, setSearchDraft] = useState(searchValue)
 
     const renderedErrorMessage = showFallbackError
-        ? t('mediaFiles.error.fallback', 'Could not load media files.')
+        ? t('media.error.fallback')
         : errorMessage
 
-    const floatingErrorMessage = t(
-        'mediaFiles.error.notification',
-        'Something went wrong while loading the media files.',
-    )
+    const floatingErrorMessage = t('media.error.notification')
 
     const ordering = useMemo(() => getOrderingValue(sortDirection), [sortDirection])
 
@@ -376,7 +373,7 @@ const MediaFilesPage = () => {
 
                 if (error instanceof ApiError) {
                     setErrorMessage(error.message)
-                    setShowFallbackError(false)
+                    setShowFallbackError(true)
                 } else {
                     setErrorMessage(null)
                     setShowFallbackError(true)
@@ -434,19 +431,18 @@ const MediaFilesPage = () => {
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
                 resultCount={totalCount}
-                resultsRegionAriaLabel={t('mediaFiles.resultsRegionLabel', 'Media files results')}
+                resultsRegionAriaLabel={t('media.resultsRegionLabel')}
                 isLoading={isLoading}
-                loadingLabel={t('mediaFiles.loading', 'Loading media files')}
+                loadingLabel={t('media.loading')}
                 loadingContent={
                     <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
                 }
                 errorMessage={renderedErrorMessage}
-                retryLabel={t('mediaFiles.retry', 'Retry')}
+                retryLabel={t('media.error.retry')}
                 onRetry={onRetry}
-                emptyTitle={t('mediaFiles.empty.title', 'No media files found')}
+                emptyTitle={t('media.empty.title')}
                 emptyDescription={t(
-                    'mediaFiles.empty.description',
-                    'No files match the current search.',
+                    'media.empty.description'
                 )}
                 hasResults={mediaFiles.length > 0}
                 resultsContent={
@@ -461,7 +457,7 @@ const MediaFilesPage = () => {
                 pageSize={PAGE_SIZE}
                 totalItems={totalCount}
                 onPageChange={setPage}
-                paginationI18nKeyPrefix="mediaFiles.pagination"
+                paginationI18nKeyPrefix="media.pagination"
             />
 
             <FloatingAlert

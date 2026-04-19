@@ -298,6 +298,17 @@
       "pdf": "PDF",
       "file": "Bestand"
     },
-    "size": "Grootte"
+    "size": "Grootte",
+    "error": {
+      "retry": "Probeer opnieuw",
+      "fallback": "Kon mediabestanden niet laden.",
+      "notification": "Er ging iets mis bij het laden van de mediabestanden."
+    },
+    "empty": {
+      "title": "Geen mediabestanden gevonden.",
+      "description": "Geen mediabestanden die voldoen aan de huidige zoekopdracht."
+    },
+    "loading": "Mediabestanden laden",
+    "resultsRegionLabel": "Resultaten van mediabestanden"
   }
 }

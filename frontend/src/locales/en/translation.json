@@ -298,6 +298,17 @@
       "pdf": "PDF",
       "file": "File"
     },
-    "size": "Size"
+    "size": "Size",
+    "error": {
+        "retry": "Retry",
+        "fallback": "Could not load media files.",
+        "notification": "Something went wrong while loading media files."
+    },
+    "empty": {
+      "title": "No media files found.",
+      "description": "Adjust your search and try again."
+    },
+    "loading": "Loading media files",
+    "resultsRegionLabel": "Media files results"
   }
 }
