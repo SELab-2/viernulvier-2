@@ -4,7 +4,6 @@ import os
 from typing import Any
 import uuid
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -16,6 +15,8 @@ from apps.core.media_validation import (
     validate_media_file,
 )
 from apps.core.models import BaseModel
+
+DESCRIPTION_MAX_LENGTH = 200
 
 
 def upload_to_media(instance: Any, filename: str) -> str:  # noqa: ARG001
@@ -36,6 +37,7 @@ class MediaFile(BaseModel):
     file = models.FileField(upload_to=upload_to_media)
 
     filename = models.CharField(max_length=255, blank=True)
+    description = models.CharField(max_length=DESCRIPTION_MAX_LENGTH, blank=True)
     mime_type = models.CharField(max_length=100, blank=True, editable=False)
     size_bytes = models.PositiveBigIntegerField(blank=True, null=True, editable=False)
 
@@ -46,13 +48,6 @@ class MediaFile(BaseModel):
         editable=False,
     )
 
-    uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="uploaded_media",
-    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     MAX_FILE_SIZE = MAX_MEDIA_FILE_SIZE_BYTES

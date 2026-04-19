@@ -1,16 +1,12 @@
 """Tests for apps.media_files.serializers."""
 
-from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import RequestFactory, TestCase
+from django.test import TestCase
 import pytest
 from rest_framework import serializers
-from rest_framework.request import Request
 
-from apps.media_files.models import MediaFile
+from apps.media_files.models import DESCRIPTION_MAX_LENGTH, MediaFile
 from apps.media_files.serializers import MediaFileSerializer, MediaFileUploadSerializer
-
-User = get_user_model()
 
 
 def make_uploaded_file(
@@ -21,17 +17,13 @@ def make_uploaded_file(
     return SimpleUploadedFile(name, content, content_type=content_type)
 
 
-def make_request(user=None, url: str = "/api/v1/media/") -> Request:
-    factory = RequestFactory()
-    django_request = factory.post(url)
-    request = Request(django_request)
-    request.user = user
-    return request
-
-
 class TestMediaFileSerializerFields(TestCase):
     def setUp(self) -> None:
-        self.media_file = MediaFile.objects.create(file=make_uploaded_file(name="season-brochure.pdf"))
+        self.media_file = MediaFile.objects.create(
+            file=make_uploaded_file(name="season-brochure.pdf"),
+            description="Seizoensbrochure voor website en drukwerk.",
+            external_id="ext-123",
+        )
 
     def test_expected_fields_are_present(self) -> None:
         data = MediaFileSerializer(self.media_file).data
@@ -40,10 +32,10 @@ class TestMediaFileSerializerFields(TestCase):
             "external_id",
             "file",
             "filename",
+            "description",
             "mime_type",
             "size_bytes",
             "file_type",
-            "uploaded_by",
             "created_at",
         }
         assert set(data.keys()) == expected
@@ -52,30 +44,16 @@ class TestMediaFileSerializerFields(TestCase):
         serializer = MediaFileSerializer()
         assert set(serializer.Meta.read_only_fields) == set(serializer.Meta.fields)
 
-
-class TestMediaFileSerializerValues(TestCase):
-    def setUp(self) -> None:
-        self.user = User.objects.create_user(
-            username="serializer-user",
-            email="serializer@example.com",
-            password="password",
-        )
-        self.media_file = MediaFile.objects.create(
-            file=make_uploaded_file(name="poster.png", content_type="image/png"),
-            uploaded_by=self.user,
-            external_id="ext-123",
-        )
-        self.data = MediaFileSerializer(self.media_file).data
-
     def test_scalar_values_are_serialized(self) -> None:
-        assert self.data["external_id"] == "ext-123"
-        assert self.data["filename"] == "poster.png"
-        assert self.data["mime_type"] == "image/png"
-        assert self.data["size_bytes"] == len(b"dummy content")
-        assert self.data["file_type"] == MediaFile.FileType.IMAGE
-        assert self.data["uploaded_by"] == self.user.username
-        assert self.data["created_at"] is not None
-        assert self.data["file"].endswith(".png")
+        data = MediaFileSerializer(self.media_file).data
+        assert data["external_id"] == "ext-123"
+        assert data["filename"] == "season-brochure.pdf"
+        assert data["description"] == "Seizoensbrochure voor website en drukwerk."
+        assert data["mime_type"] == "application/pdf"
+        assert data["size_bytes"] == len(b"dummy content")
+        assert data["file_type"] == MediaFile.FileType.PDF
+        assert data["created_at"] is not None
+        assert data["file"].endswith(".pdf")
 
 
 class TestMediaFileUploadSerializerFields(TestCase):
@@ -86,20 +64,27 @@ class TestMediaFileUploadSerializerFields(TestCase):
             "external_id",
             "file",
             "filename",
+            "description",
             "mime_type",
             "size_bytes",
             "file_type",
-            "uploaded_by",
             "created_at",
         }
 
-    def test_file_field_is_write_only(self) -> None:
+    def test_file_field_is_write_only_and_optional_for_updates(self) -> None:
         serializer = MediaFileUploadSerializer()
         assert serializer.fields["file"].write_only is True
+        assert serializer.fields["file"].required is False
+
+    def test_description_field_constraints_match_model(self) -> None:
+        serializer = MediaFileUploadSerializer()
+        assert serializer.fields["description"].required is False
+        assert serializer.fields["description"].allow_blank is True
+        assert serializer.fields["description"].max_length == DESCRIPTION_MAX_LENGTH
 
     def test_derived_fields_are_read_only(self) -> None:
         serializer = MediaFileUploadSerializer()
-        for field in ("id", "external_id", "filename", "mime_type", "size_bytes", "file_type", "uploaded_by", "created_at"):
+        for field in ("id", "filename", "mime_type", "size_bytes", "file_type", "created_at"):
             assert serializer.fields[field].read_only is True
 
 
@@ -117,10 +102,10 @@ class TestMediaFileUploadSerializerValidation(TestCase):
                 )
                 assert serializer.is_valid(), serializer.errors
 
-    def test_rejects_missing_file(self) -> None:
-        serializer = MediaFileUploadSerializer(data={})
+    def test_validate_requires_file_on_create(self) -> None:
+        serializer = MediaFileUploadSerializer(data={"description": "Alleen metadata"})
         assert not serializer.is_valid()
-        assert "file" in serializer.errors
+        assert serializer.errors == {"file": ["This field is required."]}
 
     def test_rejects_unsupported_file_type(self) -> None:
         serializer = MediaFileUploadSerializer(
@@ -160,20 +145,30 @@ class TestMediaFileUploadSerializerValidation(TestCase):
         uploaded_file = make_uploaded_file(name="ok.pdf", content_type="application/pdf")
         assert serializer.validate_file(uploaded_file) == uploaded_file
 
+    def test_validate_file_raises_for_invalid_file(self) -> None:
+        serializer = MediaFileUploadSerializer()
+        with pytest.raises(serializers.ValidationError):
+            serializer.validate_file(make_uploaded_file(name="bad.txt", content_type="text/plain"))
 
-class TestMediaFileUploadSerializerCreate(TestCase):
-    def setUp(self) -> None:
-        self.user = User.objects.create_user(
-            username="upload-user",
-            email="upload@example.com",
-            password="password",
-        )
-
-    def test_create_sets_metadata_for_authenticated_user(self) -> None:
-        request = make_request(user=self.user)
+    def test_description_max_length_is_enforced(self) -> None:
         serializer = MediaFileUploadSerializer(
-            data={"file": make_uploaded_file(name="poster.png", content=b"abcdef", content_type="image/png")},
-            context={"request": request},
+            data={
+                "file": make_uploaded_file(),
+                "description": "x" * (DESCRIPTION_MAX_LENGTH + 1),
+            }
+        )
+        assert not serializer.is_valid()
+        assert "description" in serializer.errors
+
+
+class TestMediaFileUploadSerializerMutations(TestCase):
+    def test_create_sets_metadata_and_optional_fields(self) -> None:
+        serializer = MediaFileUploadSerializer(
+            data={
+                "file": make_uploaded_file(name="poster.png", content=b"abcdef", content_type="image/png"),
+                "description": "Poster voor social.",
+                "external_id": "poster-001",
+            }
         )
         assert serializer.is_valid(), serializer.errors
         obj = serializer.save()
@@ -181,31 +176,50 @@ class TestMediaFileUploadSerializerCreate(TestCase):
         assert obj.mime_type == "image/png"
         assert obj.size_bytes == 6
         assert obj.file_type == MediaFile.FileType.IMAGE
-        assert obj.uploaded_by == self.user
+        assert obj.description == "Poster voor social."
+        assert obj.external_id == "poster-001"
         assert MediaFile.objects.filter(pk=obj.pk).exists()
 
-    def test_create_leaves_uploaded_by_none_for_anonymous_user(self) -> None:
-        class AnonymousUser:
-            is_authenticated = False
-
-        serializer = MediaFileUploadSerializer(
-            data={"file": make_uploaded_file()},
-            context={"request": make_request(user=AnonymousUser())},
-        )
-        assert serializer.is_valid(), serializer.errors
-        obj = serializer.save()
-        assert obj.uploaded_by is None
-
     def test_create_returns_media_file_instance(self) -> None:
-        serializer = MediaFileUploadSerializer(
-            data={"file": make_uploaded_file()},
-            context={"request": make_request(user=self.user)},
-        )
+        serializer = MediaFileUploadSerializer(data={"file": make_uploaded_file()})
         assert serializer.is_valid(), serializer.errors
         assert isinstance(serializer.save(), MediaFile)
 
-    def test_validate_file_raises_for_falsy_value(self) -> None:
-        """Covers serializers.py line 74: validate_file called with falsy value."""
-        serializer = MediaFileUploadSerializer()
-        with pytest.raises(serializers.ValidationError, match="No file was uploaded"):
-            serializer.validate_file(None)
+    def test_update_supports_metadata_only_patch(self) -> None:
+        instance = MediaFile.objects.create(
+            file=make_uploaded_file(name="old.pdf"),
+            description="Oud",
+            external_id="old-id",
+        )
+        serializer = MediaFileUploadSerializer(
+            instance=instance,
+            data={"description": "Nieuw", "external_id": "new-id"},
+            partial=True,
+        )
+        assert serializer.is_valid(), serializer.errors
+        obj = serializer.save()
+        assert obj.description == "Nieuw"
+        assert obj.external_id == "new-id"
+        assert obj.filename == "old.pdf"
+
+    def test_update_replaces_file_when_supplied(self) -> None:
+        instance = MediaFile.objects.create(
+            file=make_uploaded_file(name="old.pdf", content_type="application/pdf"),
+            description="Oud",
+        )
+        serializer = MediaFileUploadSerializer(
+            instance=instance,
+            data={
+                "file": make_uploaded_file(name="new.png", content=b"abc", content_type="image/png"),
+                "description": "Nieuw",
+            },
+            partial=True,
+        )
+        assert serializer.is_valid(), serializer.errors
+        obj = serializer.save()
+        obj.refresh_from_db()
+        assert obj.description == "Nieuw"
+        assert obj.filename == "new.png"
+        assert obj.mime_type == "image/png"
+        assert obj.size_bytes == 3
+        assert obj.file_type == MediaFile.FileType.IMAGE
