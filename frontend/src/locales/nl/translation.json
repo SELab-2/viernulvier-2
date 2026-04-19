@@ -290,5 +290,14 @@
   "blog": {
     "couldNotLoad": "Kon de blog niet laden",
     "invalidId": "Ongeldig blog ID"
+  },
+  "media": {
+    "searchPlaceholder": "Zoek bestanden op naam of beschrijving...",
+    "fileType": {
+      "image": "Afbeelding",
+      "pdf": "PDF",
+      "file": "Bestand"
+    },
+    "size": "Grootte"
   }
 }

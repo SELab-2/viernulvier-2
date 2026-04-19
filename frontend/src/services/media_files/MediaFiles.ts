@@ -7,7 +7,7 @@ import type { MediaFile, MediaFileListResponse } from '../../types/MediaFiles'
 /**
  * Retrieve a list of media files with optional pagination and filtering.
  *
- * This sends a `GET /media-files/` request. The `options` object is translated
+ * This sends a `GET /media/` request. The `options` object is translated
  * into query parameters like this:
  * - `page` -> `page`
  * - `pageSize` -> `page_size`
@@ -27,9 +27,7 @@ import type { MediaFile, MediaFileListResponse } from '../../types/MediaFiles'
 export const getMediaFiles = async (
   options?: GetMediaFilesOptions,
 ): Promise<MediaFileListResponse> => {
-  const response = await api.get<MediaFileListResponse>('/media-files/', {
-    params: buildListParams(options),
-  })
+  const response = await api.get<MediaFileListResponse>('/media/', { params: buildListParams(options), })
   return response.data
 }
 
@@ -37,6 +35,6 @@ export const getMediaFiles = async (
  * Retrieve a single media file by UUID.
  */
 export const getMediaFile = async (id: string): Promise<MediaFile> => {
-  const response = await api.get<MediaFile>(`/media-files/${id}/`)
+  const response = await api.get<MediaFile>(`/media/${id}/`)
   return response.data
 }

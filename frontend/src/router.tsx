@@ -12,6 +12,7 @@ import ProductionDetailPage from './pages/ProductionDetailPage'
 import ProductionsPage from './pages/ProductionsPage'
 import SeriesDetailPage from './pages/SeriesDetailPage'
 import SeriesPage from './pages/SeriesPage'
+import MediaFilesPage from './pages/MediaFilesPage'
 
 type RouterProps = {
   mode: 'light' | 'dark'
@@ -44,10 +45,7 @@ const Router = ({ mode, onToggleMode }: RouterProps) => {
             <Route path="/series/:id" element={<SeriesDetailPage />} />
             <Route path="/blogs" element={<BlogsPage />} />
             <Route path="/blogs/:id" element={<BlogDetailPage />} />
-            <Route path="/media" element={<Navigate to="/archive" replace />} />
-            {/* TODO: Remove after media page is implemented */}
-            <Route path="/media/:id" element={<Navigate to="/archive" replace />} />
-            {/* TODO: Remove after media page is implemented */}
+            <Route path="/media" element={<MediaFilesPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Box>

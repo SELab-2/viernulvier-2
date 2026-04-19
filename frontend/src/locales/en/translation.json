@@ -290,5 +290,14 @@
   "blog": {
     "couldNotLoad": "Could not load blog",
     "invalidId": "Invalid blog ID"
+  },
+  "media": {
+    "searchPlaceholder": "Search for files by name or description...",
+    "fileType": {
+      "image": "Image",
+      "pdf": "PDF",
+      "file": "File"
+    },
+    "size": "Size"
   }
 }
