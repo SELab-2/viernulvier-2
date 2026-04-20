@@ -61,7 +61,7 @@ This page documents the main frontend components and how they fit together. The 
 
 ### Usage
 
-- Used by `ProductionsPage` and `BlogsPage` to keep their search, loading, error, empty, and pagination states consistent.
+- Used by `SeriesPage`, `ProductionsPage` and `BlogsPage` to keep their search, loading, error, empty, and pagination states consistent.
 - Optionally renders a sidebar on archive pages.
 - Hides the view mode toggle on mobile while keeping the same search and sort controls.
 
