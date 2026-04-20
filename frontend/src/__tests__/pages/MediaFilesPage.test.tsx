@@ -70,9 +70,9 @@ jest.mock('../../components/FloatingAlert', () => ({
     open ? <div data-testid="floating-alert">{message}</div> : null,
 }))
 
-jest.mock('../../components/skeletons/CollectionResultsSkeleton', () => ({
+jest.mock('../../pages/MediaFilesPageSkeleton', () => ({
   __esModule: true,
-  default: () => <div data-testid="results-skeleton">loading</div>,
+  default: () => <div data-testid="page-skeleton" />,
 }))
 
 jest.mock('../../services/media_files/MediaFiles', () => ({
@@ -117,6 +117,14 @@ describe('MediaFilesPage', () => {
     jest.clearAllMocks()
   })
 
+  it('shows skeleton while loading', async () => {
+    mockedGetMediaFiles.mockReturnValue(new Promise(() => {}))
+
+    render(<MediaFilesPage />)
+
+    expect(screen.getByTestId('page-skeleton')).toBeInTheDocument()
+  })
+
   it('loads media files and does not show an error when the request succeeds', async () => {
     mockedGetMediaFiles.mockResolvedValueOnce({
       count: 1,
@@ -147,23 +155,17 @@ describe('MediaFilesPage', () => {
   })
 
   it('shows the ApiError message when the request fails with an ApiError', async () => {
-    mockedGetMediaFiles.mockRejectedValueOnce(
-      new ApiError(500, 'media.error.fallback'),
-    )
+    mockedGetMediaFiles.mockRejectedValueOnce(new ApiError(500, 'media.error.fallback'))
 
     render(<MediaFilesPage />)
 
     await waitFor(() => {
-      expect(screen.getByTestId('error-message')).toHaveTextContent(
-        'media.error.fallback',
-      )
+      expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
     })
 
     expect(screen.getByTestId('result-count')).toHaveTextContent('0')
     expect(screen.getByTestId('has-results')).toHaveTextContent('false')
-    expect(screen.getByTestId('floating-alert')).toHaveTextContent(
-      'media.error.notification',
-    )
+    expect(screen.getByTestId('floating-alert')).toHaveTextContent('media.error.notification')
   })
 
   it('shows the fallback error message for non-ApiError failures', async () => {
@@ -172,32 +174,24 @@ describe('MediaFilesPage', () => {
     render(<MediaFilesPage />)
 
     await waitFor(() => {
-      expect(screen.getByTestId('error-message')).toHaveTextContent(
-        'media.error.fallback',
-      )
+      expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
     })
 
-    expect(screen.getByTestId('floating-alert')).toHaveTextContent(
-      'media.error.notification',
-    )
+    expect(screen.getByTestId('floating-alert')).toHaveTextContent('media.error.notification')
   })
 
   it('retries loading after clicking retry', async () => {
-    mockedGetMediaFiles
-      .mockRejectedValueOnce(new Error('Unknown failure'))
-      .mockResolvedValueOnce({
-        count: 1,
-        next: null,
-        previous: null,
-        results: [mediaFile],
-      })
+    mockedGetMediaFiles.mockRejectedValueOnce(new Error('Unknown failure')).mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [mediaFile],
+    })
 
     render(<MediaFilesPage />)
 
     await waitFor(() => {
-      expect(screen.getByTestId('error-message')).toHaveTextContent(
-        'media.error.fallback',
-      )
+      expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'media.error.retry' }))

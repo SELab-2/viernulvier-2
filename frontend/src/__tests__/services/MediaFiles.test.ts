@@ -49,9 +49,7 @@ describe('MediaFiles API service', () => {
 
       const result = await getMediaFile('4f7ec8d0-6fd4-4d89-8f65-9d8d1f79b4b3')
 
-      expect(mockedApi.get).toHaveBeenCalledWith(
-        '/media/4f7ec8d0-6fd4-4d89-8f65-9d8d1f79b4b3/',
-      )
+      expect(mockedApi.get).toHaveBeenCalledWith('/media/4f7ec8d0-6fd4-4d89-8f65-9d8d1f79b4b3/')
       expect(result).toEqual(mediaFile)
     })
 
@@ -59,9 +57,7 @@ describe('MediaFiles API service', () => {
       const error = new Error('API error')
       mockedApi.get.mockRejectedValueOnce(error)
 
-      await expect(
-        getMediaFile('4f7ec8d0-6fd4-4d89-8f65-9d8d1f79b4b3'),
-      ).rejects.toThrow(error)
+      await expect(getMediaFile('4f7ec8d0-6fd4-4d89-8f65-9d8d1f79b4b3')).rejects.toThrow(error)
     })
   })
 

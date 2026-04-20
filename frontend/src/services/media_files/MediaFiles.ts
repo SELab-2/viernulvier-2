@@ -27,7 +27,9 @@ import type { MediaFile, MediaFileListResponse } from '../../types/MediaFiles'
 export const getMediaFiles = async (
   options?: GetMediaFilesOptions,
 ): Promise<MediaFileListResponse> => {
-  const response = await api.get<MediaFileListResponse>('/media/', { params: buildListParams(options), })
+  const response = await api.get<MediaFileListResponse>('/media/', {
+    params: buildListParams(options),
+  })
   return response.data
 }
 
