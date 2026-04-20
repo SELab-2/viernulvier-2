@@ -30,6 +30,10 @@ const ProductionsPage = () => {
   // Type for optional navigation state used to show a one-time floating alert when arriving at the page.
   type NavState = { floatingAlert?: { open?: boolean; message?: string } }
   const nav = location as { state?: NavState }
+  const navFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
+  const navFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
+  const initialFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
+  const initialFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
   const {
@@ -53,8 +57,10 @@ const ProductionsPage = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
-  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(null)
+  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(initialFloatingAlertOpen)
+  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(
+    initialFloatingAlertMessage,
+  )
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
@@ -67,10 +73,6 @@ const ProductionsPage = () => {
     () => getOrderingValue(sortTarget, sortDirection),
     [sortDirection, sortTarget],
   )
-
-  useEffect(() => {
-    setSearchDraft(searchValue)
-  }, [searchValue])
 
   // Effect to fetch the productions data from the API whenever the ordering, page, retryKey, or searchValue changes
   useEffect(() => {
@@ -153,17 +155,13 @@ const ProductionsPage = () => {
     }
 
     setSearchValue(nextQuery)
+    setSearchDraft(nextQuery)
   }
 
-  // If a page navigated here with a floatingAlert in location.state, show it once.
+  // If a page navigated here with a floatingAlert in location.state, clear it once.
   useEffect(() => {
     const { state } = nav
     if (state?.floatingAlert?.open) {
-      setErrorMessage(null)
-      setShowFallbackError(false)
-      setFloatingAlertMessage(state.floatingAlert.message ?? null)
-      setIsFloatingErrorOpen(true)
-      // Clear the history state so the alert won't reappear on back/refresh
       try {
         window.history.replaceState({}, document.title)
       } catch {
@@ -220,10 +218,10 @@ const ProductionsPage = () => {
       />
 
       <FloatingAlert
-        open={isFloatingErrorOpen}
+        open={isFloatingErrorOpen || navFloatingAlertOpen}
         onClose={onFloatingErrorClose}
         severity="error"
-        message={floatingAlertMessage ?? floatingErrorMessage}
+        message={navFloatingAlertMessage ?? floatingAlertMessage ?? floatingErrorMessage}
       />
     </>
   )
