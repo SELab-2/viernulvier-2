@@ -29,7 +29,7 @@ class MediaFileViewSet(ApiModelViewSet):
     serializer_class = MediaFileSerializer
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     filterset_class = MediaFileFilter
-    ordering_fields = ["id", "created_at", "size_bytes", "mime_type", "file_type"]
+    ordering_fields = ["created_at", "size_bytes", "file_type"]
     ordering = ["-created_at"]
     search_fields = ["filename", "translations__description", "mime_type"]
 
