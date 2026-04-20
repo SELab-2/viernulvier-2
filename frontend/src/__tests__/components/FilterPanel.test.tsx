@@ -188,6 +188,15 @@ const renderWithProps = (props: FilterPanelProps) =>
     </I18nextProvider>,
   )
 
+const expandPerformerAndAttendanceFilterSections = () => {
+  fireEvent.click(
+    screen.getByRole('button', { name: i18n.t('productions.home.filters.performerType') }),
+  )
+  fireEvent.click(
+    screen.getByRole('button', { name: i18n.t('productions.home.filters.attendanceMode') }),
+  )
+}
+
 describe('FilterPanel', () => {
   beforeEach(async () => {
     jest.clearAllMocks()
@@ -196,6 +205,8 @@ describe('FilterPanel', () => {
 
   it('renders the default panel state with disabled clear action and nl date locale', () => {
     renderPanel()
+
+    expandPerformerAndAttendanceFilterSections()
 
     expect(
       screen.getByRole('heading', { name: i18n.t('productions.home.filterPanelTitle') }),
@@ -218,6 +229,8 @@ describe('FilterPanel', () => {
       performerType: 'solo',
       selectedGenreIds: [3],
     })
+
+    expandPerformerAndAttendanceFilterSections()
 
     expect(
       screen.getByRole('button', { name: i18n.t('productions.home.filters.clear') }),

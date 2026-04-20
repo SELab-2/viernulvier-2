@@ -3,12 +3,12 @@ import { Box, Chip, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 
-import { getTranslatedRecord } from '../../utils/translations'
 import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
 import { getQueryKeyForChipType } from './genreAndTagChipUtils'
+import { getTranslatedRecord } from '../../utils/translations'
 
-import type { MouseEvent } from 'react'
 import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
+import type { MouseEvent } from 'react'
 
 /**
  * Generic chip component that supports both genre and series-tag scenarios.

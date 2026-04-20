@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
+import React from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
 
 import i18n from '../../i18n'
 import HomePage from '../../pages/HomePage'
 import { getLandingStats } from '../../services/productions/Productions'
-import type { Production } from '../../types/Productions'
 
 jest.mock('../../services/productions/Productions', () => ({
   getLandingStats: jest.fn(),
@@ -15,30 +15,7 @@ jest.mock('../../services/productions/Productions', () => ({
 
 const mockedGetLandingStats = getLandingStats as jest.MockedFunction<typeof getLandingStats>
 
-const buildProduction = (id: number): Production => ({
-  id,
-  attendance_mode: 'offline',
-  performer_type: 'solo',
-  first_event_start: '2026-01-01T19:00:00Z',
-  last_event_end: '2026-01-01T20:00:00Z',
-  media_gallery: { id: 0, name: null, media_items: [] },
-  uit_database_type: null,
-  display_title: `Production ${id}`,
-  display_artist_name: null,
-  title: { nl: `Productie ${id}` },
-  artist_name: {},
-  tagline: {},
-  teaser: {},
-  description: {},
-  tags: [],
-  genres: [],
-})
-
-const renderPage = (
-  initialEntry:
-    | string
-    | { pathname: string; state?: { floatingAlert?: { open?: boolean; message?: string } } } = '/',
-) =>
+const renderPage = () =>
   render(
     <MemoryRouter>
       <I18nextProvider i18n={i18n}>

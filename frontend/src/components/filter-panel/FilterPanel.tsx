@@ -5,11 +5,11 @@ import 'dayjs/locale/nl'
 import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { tokens } from '../../theme/tokens'
 import ChipFilterSection, { type ChipOption } from './ChipFilterSection'
 import FilterCheckbox from './FilterCheckbox'
 import FilterDatePicker from './FilterDatePicker'
 import FilterSection from './FilterSection'
+import { tokens } from '../../theme/tokens'
 
 import type { Genre } from '../../types/Genres'
 import type { AttendanceMode, PerformerType } from '../../types/Productions'

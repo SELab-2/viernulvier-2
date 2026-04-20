@@ -301,6 +301,9 @@ describe('ProductionsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
 
     expect(screen.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', { name: i18n.t('productions.home.filters.attendanceMode') }),
+    )
     expect(screen.getByRole('checkbox', { name: 'Online' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
@@ -424,6 +427,12 @@ describe('ProductionsPage', () => {
 
     await screen.findByRole('heading', { name: 'Productie 7' })
 
+    fireEvent.click(
+      screen.getByRole('button', { name: i18n.t('productions.home.filters.attendanceMode') }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: i18n.t('productions.home.filters.performerType') }),
+    )
     fireEvent.click(screen.getByRole('checkbox', { name: 'Online' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'Fysiek' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'Groep' }))

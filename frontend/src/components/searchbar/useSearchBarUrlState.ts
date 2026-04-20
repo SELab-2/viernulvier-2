@@ -1,8 +1,8 @@
 import { useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import type { AttendanceMode, PerformerType } from '../../types/Productions'
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
+import type { AttendanceMode, PerformerType } from '../../types/Productions'
 
 // Default values for search parameters when they are not present in the URL
 const DEFAULT_SEARCH_SORT_TARGET: SearchSortTarget = 'date'
