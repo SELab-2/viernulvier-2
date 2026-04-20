@@ -196,7 +196,7 @@ const FilterPanel = ({
 
         <Divider />
 
-        <FilterSection title={t('productions.home.filters.performerType')}>
+        <FilterSection title={t('productions.home.filters.performerType')} defaultExpanded={false}>
           <Stack>
             <FilterCheckbox
               label={t('productions.detail.meta.solo')}
@@ -213,7 +213,7 @@ const FilterPanel = ({
 
         <Divider />
 
-        <FilterSection title={t('productions.home.filters.attendanceMode')}>
+        <FilterSection title={t('productions.home.filters.attendanceMode')} defaultExpanded={false}>
           <Stack>
             <FilterCheckbox
               label={t('productions.detail.meta.offline')}
