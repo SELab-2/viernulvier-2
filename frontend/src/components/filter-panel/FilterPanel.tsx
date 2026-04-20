@@ -174,23 +174,6 @@ const FilterPanel = ({
 
         <Divider />
 
-        <FilterSection title={t('productions.home.filters.performerType')}>
-          <Stack>
-            <FilterCheckbox
-              label={t('productions.detail.meta.solo')}
-              checked={performerType === 'solo'}
-              onChange={() => onPerformerTypeToggle('solo')}
-            />
-            <FilterCheckbox
-              label={t('productions.detail.meta.group')}
-              checked={performerType === 'group'}
-              onChange={() => onPerformerTypeToggle('group')}
-            />
-          </Stack>
-        </FilterSection>
-
-        <Divider />
-
         <FilterSection title={t('productions.home.filters.genres')}>
           <ChipFilterSection
             options={genreOptions}
@@ -209,6 +192,23 @@ const FilterPanel = ({
             emptyLabel={t('productions.home.filters.noTags')}
             onToggle={(id) => onTagSelectionChange(toggleIdInArray(selectedTagIds, id))}
           />
+        </FilterSection>
+
+        <Divider />
+
+        <FilterSection title={t('productions.home.filters.performerType')}>
+          <Stack>
+            <FilterCheckbox
+              label={t('productions.detail.meta.solo')}
+              checked={performerType === 'solo'}
+              onChange={() => onPerformerTypeToggle('solo')}
+            />
+            <FilterCheckbox
+              label={t('productions.detail.meta.group')}
+              checked={performerType === 'group'}
+              onChange={() => onPerformerTypeToggle('group')}
+            />
+          </Stack>
         </FilterSection>
 
         <Divider />
