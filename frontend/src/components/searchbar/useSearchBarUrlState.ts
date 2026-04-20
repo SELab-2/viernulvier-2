@@ -45,40 +45,9 @@ const toggleArrayValue = <T extends string | number>(values: T[], value: T): T[]
   return [...values, value]
 }
 
-// Single-select filter: clear when clicking the active value; otherwise replace with only the new value.
-const toggleExclusiveFilterValue = <T extends string>(values: T[], value: T): T[] => {
-  if (values.includes(value)) {
-    return values.filter((item) => item !== value)
-  }
-
-  return [value]
-}
-
-const takeAtMostOne = <T>(values: T[]): T[] => {
-  if (!values.length) {
-    return []
-  }
-
-  return [values[0]]
-}
-
 const normalizeDateInput = (value: string | null): string => {
   const normalized = value?.trim() ?? ''
   return DATE_INPUT_PATTERN.test(normalized) ? normalized : ''
-}
-
-const parseAttendanceModes = (values: string[]): AttendanceMode[] => {
-  const valid = values.filter(
-    (value): value is AttendanceMode => value === 'offline' || value === 'online',
-  )
-  return takeAtMostOne(valid)
-}
-
-const parsePerformerTypes = (values: string[]): PerformerType[] => {
-  const valid = values.filter(
-    (value): value is PerformerType => value === 'group' || value === 'solo',
-  )
-  return takeAtMostOne(valid)
 }
 
 // Parses the search sort target from the URL query parameter
@@ -134,6 +103,32 @@ const parsePage = (value: string | null): number => {
   return parsed
 }
 
+// Parses the attendance mode from the URL query parameter
+const parseOptionalAttendanceMode = (value: string | null): AttendanceMode | undefined => {
+  if (value === 'of') {
+    return 'offline'
+  }
+
+  if (value === 'on') {
+    return 'online'
+  }
+
+  return undefined
+}
+
+// Parses the performer type from the URL query parameter
+const parseOptionalPerformerType = (value: string | null): PerformerType | undefined => {
+  if (value === 'g') {
+    return 'group'
+  }
+
+  if (value === 's') {
+    return 'solo'
+  }
+
+  return undefined
+}
+
 // Parses a string of tokens separated by FILTER_SEPARATOR into an array of trimmed, non-empty strings.
 const parseTokenList = (value: string | null): string[] => {
   if (!value) {
@@ -183,6 +178,24 @@ const encodeViewMode = (value: SearchViewMode): string | null => {
   return value === 'list' ? 'l' : 'g'
 }
 
+// Encode attendance mode for URL query parameter
+const encodeAttendanceMode = (value: AttendanceMode): string => {
+  if (value === 'offline') {
+    return 'of'
+  }
+
+  return 'on'
+}
+
+// Encode performer type for URL query parameter
+const encodePerformerType = (value: PerformerType): string => {
+  if (value === 'group') {
+    return 'g'
+  }
+
+  return 's'
+}
+
 // Encode page number for URL query parameter, omit if default (1) or invalid
 const encodePage = (value: number): string | null => {
   if (!Number.isFinite(value)) {
@@ -212,8 +225,10 @@ type UpdateSearchParamsInput = {
   sortDirection?: SearchSortDirection
   view?: SearchViewMode
   page?: number
-  attendanceModes?: AttendanceMode[]
-  performerTypes?: PerformerType[]
+  /** Pass `null` to remove the filter from the URL. */
+  attendanceMode?: AttendanceMode | null
+  /** Pass `null` to remove the filter from the URL. */
+  performerType?: PerformerType | null
   genres?: number[]
   tags?: number[]
   firstEventStartAfter?: string
@@ -230,8 +245,8 @@ export type SearchBarUrlState = {
   sortDirection: SearchSortDirection
   viewMode: SearchViewMode
   page: number
-  attendanceModes: AttendanceMode[]
-  performerTypes: PerformerType[]
+  attendanceMode: AttendanceMode | undefined
+  performerType: PerformerType | undefined
   firstEventStartAfter: string
   firstEventStartBefore: string
   selectedGenreIds: number[]
@@ -242,8 +257,8 @@ export type SearchBarUrlState = {
   setSortDirection: (value: SearchSortDirection) => void
   setViewMode: (value: SearchViewMode) => void
   setPage: (value: number) => void
-  setAttendanceModes: (values: AttendanceMode[]) => void
-  setPerformerTypes: (values: PerformerType[]) => void
+  setAttendanceMode: (value: AttendanceMode | undefined) => void
+  setPerformerType: (value: PerformerType | undefined) => void
   setFirstEventStartAfter: (value: string) => void
   setFirstEventStartBefore: (value: string) => void
   setSelectedGenreIds: (ids: number[]) => void
@@ -269,12 +284,8 @@ export const useSearchBarUrlState = ({
   const sortDirection = parseSearchSortDirection(searchParams.get(PARAM_SORT_DIRECTION))
   const parsedViewMode = parseSearchViewMode(searchParams.get(PARAM_VIEW))
   const page = parsePage(searchParams.get(PARAM_PAGE))
-  const attendanceModes = parseAttendanceModes(
-    readMultiParamValues(searchParams, PARAM_ATTENDANCE_MODE),
-  )
-  const performerTypes = parsePerformerTypes(
-    readMultiParamValues(searchParams, PARAM_PERFORMER_TYPE),
-  )
+  const attendanceMode = parseOptionalAttendanceMode(searchParams.get(PARAM_ATTENDANCE_MODE))
+  const performerType = parseOptionalPerformerType(searchParams.get(PARAM_PERFORMER_TYPE))
   const firstEventStartAfter = normalizeDateInput(searchParams.get(PARAM_FIRST_EVENT_START_AFTER))
   const firstEventStartBefore = normalizeDateInput(searchParams.get(PARAM_FIRST_EVENT_START_BEFORE))
   const viewMode: SearchViewMode = isMobile ? DEFAULT_SEARCH_VIEW_MODE : parsedViewMode
@@ -290,8 +301,8 @@ export const useSearchBarUrlState = ({
       sortDirection: nextSortDirection,
       view,
       page: nextPage,
-      attendanceModes: nextAttendanceModes,
-      performerTypes: nextPerformerTypes,
+      attendanceMode: nextAttendanceMode,
+      performerType: nextPerformerType,
       genres,
       tags,
       firstEventStartAfter: nextFirstEventStartAfter,
@@ -347,21 +358,19 @@ export const useSearchBarUrlState = ({
             }
           }
 
-          if (nextAttendanceModes !== undefined) {
-            const encodedAttendanceModes = encodeTokenList(takeAtMostOne(nextAttendanceModes))
-            if (encodedAttendanceModes) {
-              nextParams.set(PARAM_ATTENDANCE_MODE, encodedAttendanceModes)
-            } else {
+          if (nextAttendanceMode !== undefined) {
+            if (nextAttendanceMode === null) {
               nextParams.delete(PARAM_ATTENDANCE_MODE)
+            } else {
+              nextParams.set(PARAM_ATTENDANCE_MODE, encodeAttendanceMode(nextAttendanceMode))
             }
           }
 
-          if (nextPerformerTypes !== undefined) {
-            const encodedPerformerTypes = encodeTokenList(takeAtMostOne(nextPerformerTypes))
-            if (encodedPerformerTypes) {
-              nextParams.set(PARAM_PERFORMER_TYPE, encodedPerformerTypes)
-            } else {
+          if (nextPerformerType !== undefined) {
+            if (nextPerformerType === null) {
               nextParams.delete(PARAM_PERFORMER_TYPE)
+            } else {
+              nextParams.set(PARAM_PERFORMER_TYPE, encodePerformerType(nextPerformerType))
             }
           }
 
@@ -426,8 +435,8 @@ export const useSearchBarUrlState = ({
     sortDirection,
     viewMode,
     page,
-    attendanceModes,
-    performerTypes,
+    attendanceMode,
+    performerType,
     firstEventStartAfter,
     firstEventStartBefore,
     selectedGenreIds,
@@ -442,10 +451,10 @@ export const useSearchBarUrlState = ({
       updateSearchParams({ sortDirection: value, page: DEFAULT_PAGE }),
     setViewMode: (value: SearchViewMode) => updateSearchParams({ view: value }),
     setPage: (value: number) => updateSearchParams({ page: value }),
-    setAttendanceModes: (values: AttendanceMode[]) =>
-      updateSearchParams({ attendanceModes: values, page: DEFAULT_PAGE }),
-    setPerformerTypes: (values: PerformerType[]) =>
-      updateSearchParams({ performerTypes: values, page: DEFAULT_PAGE }),
+    setAttendanceMode: (value: AttendanceMode | undefined) =>
+      updateSearchParams({ attendanceMode: value ?? null, page: DEFAULT_PAGE }),
+    setPerformerType: (value: PerformerType | undefined) =>
+      updateSearchParams({ performerType: value ?? null, page: DEFAULT_PAGE }),
     setFirstEventStartAfter: (value: string) =>
       updateSearchParams({ firstEventStartAfter: value, page: DEFAULT_PAGE }),
     setFirstEventStartBefore: (value: string) =>
@@ -454,12 +463,12 @@ export const useSearchBarUrlState = ({
     setSelectedTagIds: (ids: number[]) => updateSearchParams({ tags: ids, page: DEFAULT_PAGE }),
     toggleAttendanceMode: (value: AttendanceMode) =>
       updateSearchParams({
-        attendanceModes: toggleExclusiveFilterValue(attendanceModes, value),
+        attendanceMode: attendanceMode === value ? null : value,
         page: DEFAULT_PAGE,
       }),
     togglePerformerType: (value: PerformerType) =>
       updateSearchParams({
-        performerTypes: toggleExclusiveFilterValue(performerTypes, value),
+        performerType: performerType === value ? null : value,
         page: DEFAULT_PAGE,
       }),
     toggleGenreId: (id: number) =>
@@ -470,8 +479,8 @@ export const useSearchBarUrlState = ({
       updateSearchParams({ tags: toggleArrayValue(selectedTagIds, id), page: DEFAULT_PAGE }),
     clearFilters: () =>
       updateSearchParams({
-        attendanceModes: [],
-        performerTypes: [],
+        attendanceMode: null,
+        performerType: null,
         genres: [],
         tags: [],
         firstEventStartAfter: '',

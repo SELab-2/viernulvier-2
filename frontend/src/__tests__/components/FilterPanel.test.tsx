@@ -157,8 +157,6 @@ const buildTag = (overrides: Partial<Tag> = {}): Tag => ({
 })
 
 const buildProps = (overrides: Partial<FilterPanelProps> = {}): FilterPanelProps => ({
-  attendanceModes: [],
-  performerTypes: [],
   firstEventStartAfter: '',
   firstEventStartBefore: '',
   selectedGenreIds: [],
@@ -219,8 +217,8 @@ describe('FilterPanel', () => {
 
   it('enables clear and forwards checkbox toggles for active filters', () => {
     const { props } = renderPanel({
-      attendanceModes: ['online'],
-      performerTypes: ['solo'],
+      attendanceMode: 'online',
+      performerType: 'solo',
       selectedGenreIds: [3],
     })
 

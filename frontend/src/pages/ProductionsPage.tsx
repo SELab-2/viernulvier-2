@@ -77,8 +77,8 @@ const ProductionsPage = () => {
     sortDirection,
     viewMode,
     page,
-    attendanceModes,
-    performerTypes,
+    attendanceMode,
+    performerType,
     firstEventStartAfter,
     firstEventStartBefore,
     selectedGenreIds,
@@ -121,8 +121,8 @@ const ProductionsPage = () => {
     () => getOrderingValue(sortTarget, sortDirection),
     [sortDirection, sortTarget],
   )
-  const selectedAttendanceMode = attendanceModes[0]
-  const selectedPerformerType = performerTypes[0]
+  const selectedAttendanceMode = attendanceMode
+  const selectedPerformerType = performerType
   const selectedGenreId = selectedGenreIds[0]
   const selectedTagId = selectedTagIds[0]
 
@@ -296,8 +296,8 @@ const ProductionsPage = () => {
 
   const filterPanel = (
     <FilterPanel
-      attendanceModes={attendanceModes}
-      performerTypes={performerTypes}
+      attendanceMode={attendanceMode}
+      performerType={performerType}
       firstEventStartAfter={firstEventStartAfter}
       firstEventStartBefore={firstEventStartBefore}
       selectedGenreIds={selectedGenreIds}

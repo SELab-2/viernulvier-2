@@ -16,8 +16,8 @@ import type { AttendanceMode, PerformerType } from '../../types/Productions'
 import type { Tag } from '../../types/Tags'
 
 export interface FilterPanelProps {
-  attendanceModes: AttendanceMode[]
-  performerTypes: PerformerType[]
+  attendanceMode?: AttendanceMode
+  performerType?: PerformerType
   firstEventStartAfter: string
   firstEventStartBefore: string
   selectedGenreIds: number[]
@@ -74,8 +74,8 @@ const toChipOptions = (
     .filter((option) => option.name)
 
 const FilterPanel = ({
-  attendanceModes,
-  performerTypes,
+  attendanceMode,
+  performerType,
   firstEventStartAfter,
   firstEventStartBefore,
   selectedGenreIds,
@@ -104,8 +104,8 @@ const FilterPanel = ({
   )
 
   const hasActiveFilters =
-    attendanceModes.length > 0 ||
-    performerTypes.length > 0 ||
+    attendanceMode !== undefined ||
+    performerType !== undefined ||
     Boolean(firstEventStartAfter) ||
     Boolean(firstEventStartBefore) ||
     selectedGenreIds.length > 0 ||
@@ -178,12 +178,12 @@ const FilterPanel = ({
           <Stack>
             <FilterCheckbox
               label={t('productions.detail.meta.solo')}
-              checked={performerTypes.includes('solo')}
+              checked={performerType === 'solo'}
               onChange={() => onPerformerTypeToggle('solo')}
             />
             <FilterCheckbox
               label={t('productions.detail.meta.group')}
-              checked={performerTypes.includes('group')}
+              checked={performerType === 'group'}
               onChange={() => onPerformerTypeToggle('group')}
             />
           </Stack>
@@ -217,12 +217,12 @@ const FilterPanel = ({
           <Stack>
             <FilterCheckbox
               label={t('productions.detail.meta.offline')}
-              checked={attendanceModes.includes('offline')}
+              checked={attendanceMode === 'offline'}
               onChange={() => onAttendanceModeToggle('offline')}
             />
             <FilterCheckbox
               label={t('productions.detail.meta.online')}
-              checked={attendanceModes.includes('online')}
+              checked={attendanceMode === 'online'}
               onChange={() => onAttendanceModeToggle('online')}
             />
           </Stack>
