@@ -83,7 +83,6 @@
                     type="checkbox"
                     name="{{ spec.parameter_name }}"
                     value="{{ val }}"
-                    onchange="this.form.submit()"
                     checked
                   >
                   <span style="flex:1 1 auto; min-width:0; word-break:break-word; overflow-wrap:anywhere; white-space:normal;">{{ label }}</span>
@@ -104,7 +103,6 @@
                   type="checkbox"
                   name="{{ spec.parameter_name }}"
                   value="{{ val }}"
-                  onchange="this.form.submit()"
                 >
                 <span>{{ label }}</span>
               </label>
@@ -122,9 +120,12 @@
       {% endif %}
     </div>
 
-    {% if spec.selected_values %}
-      <a href="{{ spec.reset_url }}">{% trans "Reset" %}</a>
-    {% endif %}
+    <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+      <button type="submit">{% trans "Apply" %}</button>
+      {% if spec.selected_values %}
+        <a href="{{ spec.reset_url }}">{% trans "Reset" %}</a>
+      {% endif %}
+    </div>
   </form>
 </details>
 
