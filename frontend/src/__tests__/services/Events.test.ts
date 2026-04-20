@@ -2,13 +2,10 @@ import { api } from '../../../src/services/Api'
 import { ApiError } from '../../../src/services/ApiTypes'
 import { getEvent, getEvents } from '../../../src/services/events/Events'
 
-const nestedGenreUseAs = { id: 2, name: 'genre' }
-
 const nestedProduction = {
   id: 1,
   attendance_mode: 'offline',
   performer_type: 'group',
-  uit_database_theme: { id: 2, name: 'Theater' },
   uit_database_type: { id: 6, name: 'Voorstelling' },
   display_title: 'Hamlet',
   display_artist_name: 'Toneelhuis',
@@ -22,7 +19,6 @@ const nestedProduction = {
     {
       id: 10,
       type: 'theater',
-      use_as: nestedGenreUseAs,
       name: { en: 'Theatre', nl: 'Theater' },
       display_name: 'Theater',
       vendor_id: 'vendor-42',

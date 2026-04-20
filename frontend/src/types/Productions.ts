@@ -50,7 +50,6 @@ export interface Production {
   first_event_start: string | null
   last_event_end: string | null
   media_gallery: MediaGallery
-  uit_database_theme: ProductionClassification | null
   uit_database_type: ProductionClassification | null
   display_title: string | null
   display_artist_name: string | null

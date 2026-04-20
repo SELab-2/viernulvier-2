@@ -220,7 +220,6 @@ describe('SeriesDetailPage', () => {
             {
               id: 10,
               type: 'genre',
-              use_as: { id: 1, name: 'genre' },
               name: { nl: 'Audiovisueel', en: 'Audiovisual' },
               display_name: 'Audiovisueel',
               vendor_id: null,
@@ -228,7 +227,6 @@ describe('SeriesDetailPage', () => {
             {
               id: 11,
               type: 'genre',
-              use_as: { id: 1, name: 'genre' },
               name: { nl: 'Performance', en: 'Performance' },
               display_name: 'Performance',
               vendor_id: null,

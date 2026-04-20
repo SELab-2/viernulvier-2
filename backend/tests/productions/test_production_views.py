@@ -5,7 +5,7 @@ Covers:
 - ViewSet inherits from ApiModelViewSet
 - Queryset model is Production
 - Serializer class is ProductionSerializer
-- Queryset has prefetch_related for translations, tags, uit_database_theme, uit_database_type
+- Queryset has prefetch_related for translations, tags, uit_database_type
 - GET  /api/v1/productions/        - public key ✓, internal key ✓
 - GET  /api/v1/productions/<id>/   - public key ✓, internal key ✓
 - POST /api/v1/productions/        - internal key ✓, public key ✗
@@ -38,30 +38,15 @@ from tests.factories.production import (
     ProductionTagFactory,
     ProductionTagTranslationFactory,
     ProductionTranslationFactory,
-    UitDatabaseThemeFactory,
     UitDatabaseTypeFactory,
 )
 from tests.factories.tag import TagFactory, TagTranslationFactory
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import public_headers as pub_headers
+from tests.helpers.api import wrong_headers
 
 PUB_KEY = "pub-production-view-test-key"
 INT_KEY = "int-production-view-test-key"
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def wrong_headers():
-    return {"HTTP_X_API_KEY": "completely-wrong-key"}
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +110,6 @@ class TestProductionViewSetList(TestCase):
             "first_event_start",
             "last_event_end",
             "media_gallery",
-            "uit_database_theme",
             "uit_database_type",
             "title",
             "description",
@@ -525,10 +509,8 @@ class TestProductionViewSetResponseStructure(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.nl = LanguageFactory.create(code="nl", name="Dutch")
-        self.theme = UitDatabaseThemeFactory.create(name="Drama")
         self.db_type = UitDatabaseTypeFactory.create(name="Theater")
         self.production = ProductionFactory.create(
-            uit_database_theme=self.theme,
             uit_database_type=self.db_type,
             attendance_mode="offline",
         )
@@ -543,10 +525,6 @@ class TestProductionViewSetResponseStructure(TestCase):
             artist_name="",
             tagline="",
         )
-
-    def test_detail_contains_nested_uit_database_theme(self) -> None:
-        response = self.client.get(f"/api/v1/productions/{self.production.pk}/", **pub_headers())
-        assert response.data["uit_database_theme"]["name"] == "Drama"
 
     def test_detail_contains_nested_uit_database_type(self) -> None:
         response = self.client.get(f"/api/v1/productions/{self.production.pk}/", **pub_headers())
@@ -1209,3 +1187,73 @@ class TestProductionOrderingEdgeCases(TestCase):
         )
 
         assert ids.index(self.prod_alpha.id) < ids.index(self.prod_zulu.id)
+
+
+# ---------------------------------------------------------------------------
+# Series endpoint tests
+# ---------------------------------------------------------------------------
+
+
+@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
+class TestProductionViewSetSeries(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.nl = LanguageFactory.create(code="nl", name="Dutch")
+
+        self.matching_tag = TagFactory.create(type="theme")
+        TagTranslationFactory.create(tag=self.matching_tag, language=self.nl, name="Series Match")
+
+        self.other_tag = TagFactory.create(type="theme")
+        TagTranslationFactory.create(tag=self.other_tag, language=self.nl, name="Other bundle")
+
+        self.older_production = ProductionFactory.create()
+        self.latest_production = ProductionFactory.create(media_gallery=MediaGalleryFactory.create())
+        self.unrelated_production = ProductionFactory.create()
+
+        ProductionTagFactory.create(production=self.older_production, tag=self.matching_tag)
+        ProductionTagFactory.create(production=self.latest_production, tag=self.matching_tag)
+        ProductionTagFactory.create(production=self.unrelated_production, tag=self.other_tag)
+
+        EventFactory.create(
+            production=self.older_production,
+            starts_at=_dt(2025, 1, 1),
+            ends_at=_dt(2025, 1, 1, 20),
+        )
+        EventFactory.create(
+            production=self.latest_production,
+            starts_at=_dt(2025, 4, 1),
+            ends_at=_dt(2025, 4, 1, 21),
+        )
+        EventFactory.create(
+            production=self.unrelated_production,
+            starts_at=_dt(2025, 2, 1),
+            ends_at=_dt(2025, 2, 1, 20),
+        )
+
+        item = MediaItemFactory.create(gallery=self.latest_production.media_gallery, position=0)
+        MediaItemCropFactory.create(media_item=item, image="series/latest.jpg")
+
+    def test_series_endpoint_supports_search_and_resolves_last_production_image(self) -> None:
+        response = self.client.get(
+            "/api/v1/productions/series/",
+            {"search": "Series"},
+            **pub_headers(),
+        )
+
+        assert response.status_code == 200
+        assert "results" in response.data
+        assert len(response.data["results"]) == 1
+
+        row = response.data["results"][0]
+        assert row["tag"]["id"] == self.matching_tag.id
+        assert row["first_production_start"] is not None
+        assert row["last_production_end"] is not None
+        assert row["last_production_image"].endswith("/media/series/latest.jpg")
+
+    def test_series_endpoint_returns_plain_list_when_pagination_disabled(self) -> None:
+        with patch.object(ProductionViewSet, "pagination_class", None):
+            response = self.client.get("/api/v1/productions/series/", **pub_headers())
+
+        assert response.status_code == 200
+        assert isinstance(response.data, list)
+        assert len(response.data) == 2

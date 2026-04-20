@@ -2,11 +2,9 @@
 Tests for apps/productions/serializers.py
 
 Covers:
-- UitDatabaseThemeSerializer field presence and completeness
 - UitDatabaseTypeSerializer field presence and completeness
 - ProductionSerializer field presence and completeness
 - ProductionSerializer serialization of scalar fields (attendance_mode, performer_type)
-- Nested UitDatabaseThemeSerializer output
 - Nested UitDatabaseTypeSerializer output
 - Nested TagSerializer output
 - Translated fields (title, description, teaser, artist_name, tagline) returned as dicts
@@ -31,7 +29,6 @@ from apps.productions.serializers import (
     ProductionTagSerializer,
     RelatedProductionSerializer,
     RelatedTagSerializer,
-    UitDatabaseThemeSerializer,
     UitDatabaseTypeSerializer,
 )
 from tests.factories.event import EventFactory
@@ -42,39 +39,9 @@ from tests.factories.production import (
     ProductionTagFactory,
     ProductionTagTranslationFactory,
     ProductionTranslationFactory,
-    UitDatabaseThemeFactory,
     UitDatabaseTypeFactory,
 )
 from tests.factories.tag import TagFactory
-
-# ---------------------------------------------------------------------------
-# UitDatabaseThemeSerializer
-# ---------------------------------------------------------------------------
-
-
-class TestUitDatabaseThemeSerializerFields(TestCase):
-    """Verify field presence and output of UitDatabaseThemeSerializer."""
-
-    def setUp(self) -> None:
-        self.theme = UitDatabaseThemeFactory.create(name="Drama")
-
-    def test_expected_fields_are_present(self) -> None:
-        data = UitDatabaseThemeSerializer(self.theme).data
-        for field in ("id", "name"):
-            assert field in data
-
-    def test_no_extra_fields_are_exposed(self) -> None:
-        data = UitDatabaseThemeSerializer(self.theme).data
-        assert set(data.keys()) == {"id", "name"}
-
-    def test_serializes_name_correctly(self) -> None:
-        data = UitDatabaseThemeSerializer(self.theme).data
-        assert data["name"] == "Drama"
-
-    def test_serializes_id_correctly(self) -> None:
-        data = UitDatabaseThemeSerializer(self.theme).data
-        assert data["id"] == self.theme.id
-
 
 # ---------------------------------------------------------------------------
 # UitDatabaseTypeSerializer
@@ -123,7 +90,6 @@ class TestProductionSerializerFields(TestCase):
             "attendance_mode",
             "performer_type",
             "media_gallery",
-            "uit_database_theme",
             "uit_database_type",
             "title",
             "description",
@@ -144,7 +110,6 @@ class TestProductionSerializerFields(TestCase):
             "first_event_start",
             "last_event_end",
             "media_gallery",
-            "uit_database_theme",
             "uit_database_type",
             "title",
             "description",
@@ -198,6 +163,22 @@ class TestProductionSeriesSerializer(TestCase):
     def test_get_last_production_image_returns_none_without_last_production_id(self) -> None:
         tag = TagFactory.create()
         serializer = ProductionSeriesSerializer(context={"last_production_image_by_production_id": {1: "img"}})
+
+        assert serializer.get_last_production_image(tag) is None
+
+    def test_get_last_production_image_returns_lookup_value_for_last_production_id(self) -> None:
+        tag = TagFactory.create()
+        tag.last_production_id = 123
+        serializer = ProductionSeriesSerializer(
+            context={"last_production_image_by_production_id": {123: "https://img/test.jpg"}}
+        )
+
+        assert serializer.get_last_production_image(tag) == "https://img/test.jpg"
+
+    def test_get_last_production_image_returns_none_when_id_not_in_lookup(self) -> None:
+        tag = TagFactory.create()
+        tag.last_production_id = 456
+        serializer = ProductionSeriesSerializer(context={})
 
         assert serializer.get_last_production_image(tag) is None
 
@@ -260,6 +241,29 @@ class TestProductionSerializerRelated(TestCase):
         assert len(data["related"][0]["productions"]) == 1
         assert data["related"][0]["productions"][0]["id"] == self.related_production.id
 
+    def test_related_uses_prefetched_production_tags_when_available(self) -> None:
+        production_tag = self.production.productiontag_set.select_related("tag").get(tag=self.tag)
+        self.production.prefetched_production_tags = [production_tag]
+
+        with patch.object(self.production.tags, "all", side_effect=AssertionError("fallback path should not be used")):
+            data = ProductionSerializer(self.production, context={"include": {"related"}}).data
+
+        assert "related" in data
+        assert len(data["related"]) == 1
+        assert data["related"][0]["tag"]["id"] == self.tag.id
+        assert len(data["related"][0]["productions"]) == 1
+        assert data["related"][0]["productions"][0]["id"] == self.related_production.id
+
+    def test_related_returns_empty_list_when_production_has_no_tags(self) -> None:
+        untagged_production = ProductionFactory.create()
+
+        with patch("apps.productions.serializers.ProductionTag.objects.filter") as filter_mock:
+            data = ProductionSerializer(untagged_production, context={"include": {"related"}}).data
+
+        assert "related" in data
+        assert data["related"] == []
+        filter_mock.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # ProductionSerializer - scalar fields
@@ -309,22 +313,6 @@ class TestProductionSerializerScalarFields(TestCase):
 # ---------------------------------------------------------------------------
 # ProductionSerializer - nested fields
 # ---------------------------------------------------------------------------
-
-
-class TestProductionSerializerNestedUitDatabaseTheme(TestCase):
-    """Verify nested UitDatabaseTheme serialization."""
-
-    def test_uit_database_theme_is_null_when_not_set(self) -> None:
-        production = ProductionFactory.create(uit_database_theme=None)
-        data = ProductionSerializer(production).data
-        assert data["uit_database_theme"] is None
-
-    def test_uit_database_theme_contains_id_and_name(self) -> None:
-        theme = UitDatabaseThemeFactory.create(name="Jazz")
-        production = ProductionFactory.create(uit_database_theme=theme)
-        data = ProductionSerializer(production).data
-        assert data["uit_database_theme"]["id"] == theme.id
-        assert data["uit_database_theme"]["name"] == "Jazz"
 
 
 class TestProductionSerializerNestedUitDatabaseType(TestCase):

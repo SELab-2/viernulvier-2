@@ -281,7 +281,11 @@ def sync_all_translations(
 
 
 def _resolve_related_pk(
-    related_model: type[models.Model], ext_id: str, m2m_config: M2MConfig, fk_cache: FKCache
+    related_model: type[models.Model],
+    ext_id: str,
+    raw_item: Any,
+    m2m_config: M2MConfig,
+    fk_cache: FKCache,
 ) -> Any | None:
     pk = fk_cache.get(related_model, ext_id)
     if pk is not None:
@@ -289,6 +293,11 @@ def _resolve_related_pk(
     try:
         obj = related_model.objects.get(**{m2m_config.related_lookup_field: ext_id})
     except related_model.DoesNotExist:
+        if m2m_config.create_related_fn is not None:
+            created_pk = m2m_config.create_related_fn(ext_id, raw_item)
+            if created_pk is not None:
+                fk_cache.set(related_model, ext_id, created_pk)
+                return created_pk
         logger.warning(
             "%s with %s=%r not found - sync related models first.",
             related_model.__name__,
@@ -321,38 +330,33 @@ def _build_through_kwargs(
     return through_kwargs
 
 
-def sync_m2m(
+def _process_m2m_items(
     parent_obj: models.Model,
-    item: Mapping[str, Any],
+    raw_list: list[Any],
+    through_model: type[models.Model],
+    related_model: type[models.Model],
     m2m_config: M2MConfig,
     fk_cache: FKCache,
-) -> None:
-    """Sync one M2M relation via through table using bulk_create."""
-    raw_list = item.get(m2m_config.api_key)
-    if not isinstance(raw_list, list):
-        return
-
-    through_model = m2m_config.through_model
-    related_model = m2m_config.related_model
-
-    fk_cache.warmup(related_model)
-    through_model.objects.filter(**{m2m_config.parent_fk: parent_obj}).delete()
-
+) -> list[models.Model]:
+    """Process raw M2M items and return through model instances to create."""
     to_create = []
     for position, raw_item in enumerate(raw_list):
         ext_id = extract_external_id_from_url(raw_item)
         if not ext_id:
             continue
 
-        pk = _resolve_related_pk(related_model, ext_id, m2m_config, fk_cache)
+        pk = _resolve_related_pk(related_model, ext_id, raw_item, m2m_config, fk_cache)
         if pk is None:
             continue
+
         through_kwargs = _build_through_kwargs(parent_obj, related_model, m2m_config, raw_item, position, pk)
         to_create.append(through_model(**through_kwargs))
 
-    if not to_create:
-        return
+    return to_create
 
+
+def _save_m2m_instances(through_model: type[models.Model], to_create: list[models.Model], parent_obj: models.Model) -> None:
+    """Attempt bulk_create with fallback to individual saves."""
     try:
         through_model.objects.bulk_create(to_create, ignore_conflicts=True)
     except Exception:
@@ -367,3 +371,31 @@ def sync_m2m(
                     parent_obj.__class__.__name__,
                     parent_obj.pk,
                 )
+
+
+def sync_m2m(
+    parent_obj: models.Model,
+    item: Mapping[str, Any],
+    m2m_config: M2MConfig,
+    fk_cache: FKCache,
+) -> None:
+    """Sync one M2M relation via through table using bulk_create."""
+    raw_value = item.get(m2m_config.api_key)
+    if raw_value is None:
+        return
+
+    raw_list = raw_value if isinstance(raw_value, list) else [raw_value]
+
+    through_model = m2m_config.through_model
+    related_model = m2m_config.related_model
+
+    fk_cache.warmup(related_model)
+    if m2m_config.clear_existing:
+        through_model.objects.filter(**{m2m_config.parent_fk: parent_obj}).delete()
+
+    to_create = _process_m2m_items(parent_obj, raw_list, through_model, related_model, m2m_config, fk_cache)
+
+    if not to_create:
+        return
+
+    _save_m2m_instances(through_model, to_create, parent_obj)

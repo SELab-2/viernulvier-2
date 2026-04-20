@@ -4,15 +4,14 @@ Tests for apps/productions/filters.py and apps/productions/views.py.
 
 from datetime import UTC, datetime
 
-from django.test import TestCase, override_settings
-from django.urls import reverse
+from django.http import QueryDict
+from django.test import override_settings
 import pytest
-from rest_framework.test import APIClient
 
 from apps.productions.filters import ProductionFilter
 from apps.productions.models import Production
 from tests.factories.event import EventFactory
-from tests.factories.genre import GenreFactory, GenreUseAsFactory
+from tests.factories.genre import GenreFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.media_library import MediaGalleryFactory
 from tests.factories.production import (
@@ -20,23 +19,12 @@ from tests.factories.production import (
     ProductionGenreFactory,
     ProductionTagFactory,
     ProductionTranslationFactory,
-    UitDatabaseThemeFactory,
     UitDatabaseTypeFactory,
 )
 from tests.factories.tag import TagFactory
+from tests.helpers.api import INTERNAL_API_KEY, PUBLIC_API_KEY, BaseViewSetTestCase, paginated_results
 
 pytestmark = pytest.mark.django_db
-
-PUB_KEY = "pub-production-filter-test-key"
-INT_KEY = "int-production-filter-test-key"
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
 
 
 # =====================================================
@@ -65,14 +53,6 @@ class TestProductionFilter:
 
         assert self._qs({"performer_type": "solo"}).count() == 1
 
-    def test_filter_by_uit_database_theme(self) -> None:
-        theme_a = UitDatabaseThemeFactory()
-        theme_b = UitDatabaseThemeFactory()
-        ProductionFactory(uit_database_theme=theme_a)
-        ProductionFactory(uit_database_theme=theme_b)
-
-        assert self._qs({"uit_database_theme": theme_a.id}).count() == 1
-
     def test_filter_by_uit_database_type(self) -> None:
         type_a = UitDatabaseTypeFactory()
         type_b = UitDatabaseTypeFactory()
@@ -82,9 +62,8 @@ class TestProductionFilter:
         assert self._qs({"uit_database_type": type_a.id}).count() == 1
 
     def test_filter_by_genre(self) -> None:
-        use_as = GenreUseAsFactory()
-        genre_a = GenreFactory(use_as=use_as)
-        genre_b = GenreFactory(use_as=use_as)
+        genre_a = GenreFactory()
+        genre_b = GenreFactory()
         prod_a = ProductionFactory()
         prod_b = ProductionFactory()
         ProductionGenreFactory(production=prod_a, genre=genre_a, position=1)
@@ -96,9 +75,8 @@ class TestProductionFilter:
         assert result.first() == prod_a
 
     def test_filter_by_genre_distinct_no_duplicates(self) -> None:
-        use_as = GenreUseAsFactory()
-        genre_a = GenreFactory(use_as=use_as)
-        genre_b = GenreFactory(use_as=use_as)
+        genre_a = GenreFactory()
+        genre_b = GenreFactory()
         prod = ProductionFactory()
         ProductionGenreFactory(production=prod, genre=genre_a, position=1)
         ProductionGenreFactory(production=prod, genre=genre_b, position=2)
@@ -116,6 +94,82 @@ class TestProductionFilter:
         result = self._qs({"tag": tag_a.id})
 
         assert result.count() == 1
+
+    def test_filter_by_multiple_genres_uses_and_semantics(self) -> None:
+        genre_a = GenreFactory()
+        genre_b = GenreFactory()
+        prod_both = ProductionFactory()
+        prod_only_a = ProductionFactory()
+        prod_only_b = ProductionFactory()
+
+        ProductionGenreFactory(production=prod_both, genre=genre_a, position=1)
+        ProductionGenreFactory(production=prod_both, genre=genre_b, position=2)
+        ProductionGenreFactory(production=prod_only_a, genre=genre_a, position=1)
+        ProductionGenreFactory(production=prod_only_b, genre=genre_b, position=1)
+
+        params = QueryDict("", mutable=True)
+        params.setlist("genre", [str(genre_a.id), str(genre_b.id)])
+
+        result = self._qs(params)
+
+        assert list(result) == [prod_both]
+
+    def test_filter_by_multiple_tags_uses_and_semantics(self) -> None:
+        tag_a = TagFactory()
+        tag_b = TagFactory()
+        prod_both = ProductionFactory()
+        prod_only_a = ProductionFactory()
+        prod_only_b = ProductionFactory()
+
+        ProductionTagFactory(production=prod_both, tag=tag_a)
+        ProductionTagFactory(production=prod_both, tag=tag_b)
+        ProductionTagFactory(production=prod_only_a, tag=tag_a)
+        ProductionTagFactory(production=prod_only_b, tag=tag_b)
+
+        params = QueryDict("", mutable=True)
+        params.setlist("tag", [str(tag_a.id), str(tag_b.id)])
+
+        result = self._qs(params)
+
+        assert list(result) == [prod_both]
+
+    def test_filter_by_comma_separated_genres_uses_and_semantics(self) -> None:
+        genre_a = GenreFactory()
+        genre_b = GenreFactory()
+        prod_both = ProductionFactory()
+        prod_only_a = ProductionFactory()
+
+        ProductionGenreFactory(production=prod_both, genre=genre_a, position=1)
+        ProductionGenreFactory(production=prod_both, genre=genre_b, position=2)
+        ProductionGenreFactory(production=prod_only_a, genre=genre_a, position=1)
+
+        result = self._qs({"genre": f"{genre_a.id},{genre_b.id}"})
+
+        assert list(result) == [prod_both]
+
+    def test_filter_by_genre_ignores_empty_and_invalid_parts(self) -> None:
+        genre = GenreFactory()
+        prod = ProductionFactory()
+        ProductionGenreFactory(production=prod, genre=genre, position=1)
+        ProductionFactory()
+
+        result = self._qs({"genre": f" ,abc,{genre.id}"})
+
+        assert list(result) == [prod]
+
+    def test_filter_by_genre_with_only_invalid_values_returns_unfiltered(self) -> None:
+        ProductionFactory.create_batch(3)
+
+        result = self._qs({"genre": " ,abc, "})
+
+        assert result.count() == 3
+
+    def test_filter_by_tag_with_only_invalid_values_returns_unfiltered(self) -> None:
+        ProductionFactory.create_batch(2)
+
+        result = self._qs({"tag": " ,abc, "})
+
+        assert result.count() == 2
 
     def test_has_media_true(self) -> None:
         gallery = MediaGalleryFactory()
@@ -186,17 +240,13 @@ class TestProductionFilter:
 # =====================================================
 
 
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestProductionViewSet(TestCase):
+@override_settings(PUBLIC_API_KEY=PUBLIC_API_KEY, INTERNAL_API_KEY=INTERNAL_API_KEY)
+class TestProductionViewSet(BaseViewSetTestCase):
+    resource_name = "production"
+
     def setUp(self) -> None:
-        self.client = APIClient()
+        super().setUp()
         Production.objects.all().delete()
-
-    def list_url(self):
-        return reverse("v1:production-list")
-
-    def detail_url(self, pk):
-        return reverse("v1:production-detail", kwargs={"pk": pk})
 
     def test_anon_is_rejected(self) -> None:
         response = self.client.get(self.list_url())
@@ -204,42 +254,41 @@ class TestProductionViewSet(TestCase):
 
     def test_public_can_list(self) -> None:
         ProductionFactory.create_batch(3)
-        response = self.client.get(self.list_url(), **pub_headers())
+        response = self.client.get(self.list_url(), **self.pub_headers())
         assert response.status_code == 200
-        results = response.data.get("results", response.data)
+        results = paginated_results(response)
         assert len(results) == 3
 
     def test_public_can_retrieve(self) -> None:
         prod = ProductionFactory()
-        response = self.client.get(self.detail_url(prod.pk), **pub_headers())
+        response = self.client.get(self.detail_url(pk=prod.pk), **self.pub_headers())
         assert response.status_code == 200
 
     def test_public_cannot_delete(self) -> None:
         prod = ProductionFactory()
-        response = self.client.delete(self.detail_url(prod.pk), **pub_headers())
+        response = self.client.delete(self.detail_url(pk=prod.pk), **self.pub_headers())
         assert response.status_code == 403
 
     def test_internal_can_delete(self) -> None:
         prod = ProductionFactory()
-        response = self.client.delete(self.detail_url(prod.pk), **int_headers())
+        response = self.client.delete(self.detail_url(pk=prod.pk), **self.int_headers())
         assert response.status_code == 204
         assert not Production.objects.filter(pk=prod.pk).exists()
 
     def test_filter_by_attendance_mode(self) -> None:
         ProductionFactory(attendance_mode="offline")
         ProductionFactory(attendance_mode="online")
-        response = self.client.get(self.list_url(), {"attendance_mode": "offline"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        response = self.client.get(self.list_url(), {"attendance_mode": "offline"}, **self.pub_headers())
+        results = paginated_results(response)
         assert len(results) == 1
 
     def test_filter_by_genre(self) -> None:
-        use_as = GenreUseAsFactory()
-        genre = GenreFactory(use_as=use_as)
+        genre = GenreFactory()
         prod = ProductionFactory()
         ProductionGenreFactory(production=prod, genre=genre, position=1)
         ProductionFactory()
-        response = self.client.get(self.list_url(), {"genre": genre.id}, **pub_headers())
-        results = response.data.get("results", response.data)
+        response = self.client.get(self.list_url(), {"genre": genre.id}, **self.pub_headers())
+        results = paginated_results(response)
         assert len(results) == 1
 
     def test_filter_by_tag(self) -> None:
@@ -247,16 +296,64 @@ class TestProductionViewSet(TestCase):
         prod = ProductionFactory()
         ProductionTagFactory(production=prod, tag=tag)
         ProductionFactory()
-        response = self.client.get(self.list_url(), {"tag": tag.id}, **pub_headers())
-        results = response.data.get("results", response.data)
+        response = self.client.get(self.list_url(), {"tag": tag.id}, **self.pub_headers())
+        results = paginated_results(response)
         assert len(results) == 1
+
+    def test_filter_by_multiple_genres_uses_and_semantics(self) -> None:
+        genre_a = GenreFactory()
+        genre_b = GenreFactory()
+        prod_both = ProductionFactory()
+        prod_only_a = ProductionFactory()
+
+        ProductionGenreFactory(production=prod_both, genre=genre_a, position=1)
+        ProductionGenreFactory(production=prod_both, genre=genre_b, position=2)
+        ProductionGenreFactory(production=prod_only_a, genre=genre_a, position=1)
+
+        params = QueryDict("", mutable=True)
+        params.setlist("genre", [str(genre_a.id), str(genre_b.id)])
+
+        response = self.client.get(self.list_url(), params, **self.pub_headers())
+        results = paginated_results(response)
+        assert [item["id"] for item in results] == [prod_both.id]
+
+    def test_filter_by_multiple_tags_uses_and_semantics(self) -> None:
+        tag_a = TagFactory()
+        tag_b = TagFactory()
+        prod_both = ProductionFactory()
+        prod_only_a = ProductionFactory()
+
+        ProductionTagFactory(production=prod_both, tag=tag_a)
+        ProductionTagFactory(production=prod_both, tag=tag_b)
+        ProductionTagFactory(production=prod_only_a, tag=tag_a)
+
+        params = QueryDict("", mutable=True)
+        params.setlist("tag", [str(tag_a.id), str(tag_b.id)])
+
+        response = self.client.get(self.list_url(), params, **self.pub_headers())
+        results = paginated_results(response)
+        assert [item["id"] for item in results] == [prod_both.id]
+
+    def test_filter_by_comma_separated_tags_uses_and_semantics(self) -> None:
+        tag_a = TagFactory()
+        tag_b = TagFactory()
+        prod_both = ProductionFactory()
+        prod_only_b = ProductionFactory()
+
+        ProductionTagFactory(production=prod_both, tag=tag_a)
+        ProductionTagFactory(production=prod_both, tag=tag_b)
+        ProductionTagFactory(production=prod_only_b, tag=tag_b)
+
+        response = self.client.get(self.list_url(), {"tag": f"{tag_a.id},{tag_b.id}"}, **self.pub_headers())
+        results = paginated_results(response)
+        assert [item["id"] for item in results] == [prod_both.id]
 
     def test_filter_has_media(self) -> None:
         gallery = MediaGalleryFactory()
         ProductionFactory(media_gallery=gallery)
         ProductionFactory(media_gallery=None)
-        response = self.client.get(self.list_url(), {"has_media": "true"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        response = self.client.get(self.list_url(), {"has_media": "true"}, **self.pub_headers())
+        results = paginated_results(response)
         assert len(results) == 1
 
     def test_filter_by_translated_title(self) -> None:
@@ -265,21 +362,21 @@ class TestProductionViewSet(TestCase):
         prod_b = ProductionFactory()
         ProductionTranslationFactory(production=prod_a, language=lang, title="Hamlet")
         ProductionTranslationFactory(production=prod_b, language=lang, title="Macbeth")
-        response = self.client.get(self.list_url(), {"title": "Hamlet"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        response = self.client.get(self.list_url(), {"title": "Hamlet"}, **self.pub_headers())
+        results = paginated_results(response)
         assert len(results) == 1
 
     def test_default_ordering_newest_first(self) -> None:
         ProductionFactory.create_batch(3)
-        response = self.client.get(self.list_url(), **pub_headers())
-        ids = [r["id"] for r in response.data.get("results", response.data)]
+        response = self.client.get(self.list_url(), **self.pub_headers())
+        ids = [r["id"] for r in paginated_results(response)]
         assert ids[0] > ids[-1]
 
     def test_ordering_by_attendance_mode(self) -> None:
         ProductionFactory(attendance_mode="online")
         ProductionFactory(attendance_mode="offline")
-        response = self.client.get(self.list_url(), {"ordering": "attendance_mode"}, **pub_headers())
-        modes = [r["attendance_mode"] for r in response.data.get("results", response.data)]
+        response = self.client.get(self.list_url(), {"ordering": "attendance_mode"}, **self.pub_headers())
+        modes = [r["attendance_mode"] for r in paginated_results(response)]
         assert modes == sorted(modes)
 
     def test_ordering_by_title_sort(self) -> None:
@@ -289,8 +386,8 @@ class TestProductionViewSet(TestCase):
         ProductionTranslationFactory(production=prod_b, language=lang, title="Zulu")
         ProductionTranslationFactory(production=prod_a, language=lang, title="Alpha")
 
-        response = self.client.get(self.list_url(), {"ordering": "title_sort"}, **pub_headers())
-        ids = [r["id"] for r in response.data.get("results", response.data)]
+        response = self.client.get(self.list_url(), {"ordering": "title_sort"}, **self.pub_headers())
+        ids = [r["id"] for r in paginated_results(response)]
         assert ids[:2] == [prod_a.id, prod_b.id]
 
     def test_search_by_title_translation(self) -> None:
@@ -298,8 +395,8 @@ class TestProductionViewSet(TestCase):
         prod = ProductionFactory()
         ProductionTranslationFactory(production=prod, language=lang, title="Hamlet")
         ProductionFactory()
-        response = self.client.get(self.list_url(), {"search": "Hamlet"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        response = self.client.get(self.list_url(), {"search": "Hamlet"}, **self.pub_headers())
+        results = paginated_results(response)
         assert len(results) == 1
 
     def test_search_by_artist_name(self) -> None:
@@ -307,8 +404,8 @@ class TestProductionViewSet(TestCase):
         prod = ProductionFactory()
         ProductionTranslationFactory(production=prod, language=lang, artist_name="Toneelschuur")
         ProductionFactory()
-        response = self.client.get(self.list_url(), {"search": "Toneelschuur"}, **pub_headers())
-        results = response.data.get("results", response.data)
+        response = self.client.get(self.list_url(), {"search": "Toneelschuur"}, **self.pub_headers())
+        results = paginated_results(response)
         assert len(results) == 1
 
 

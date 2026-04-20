@@ -6,10 +6,10 @@ export interface MediaFile {
   external_id: string | null
   file: string
   filename: string
+  description: string
   mime_type: string
   size_bytes: number | null
   file_type: 'image' | 'pdf' | 'other'
-  uploaded_by: string | null
   created_at: string
 }
 
