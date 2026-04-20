@@ -32,7 +32,6 @@ const genreFixtures: Genre[] = [
   {
     id: 5,
     type: 'main',
-    use_as: { id: 1, name: 'production' },
     name: { nl: 'Theater' },
     display_name: 'Theater',
     vendor_id: null,
@@ -40,7 +39,6 @@ const genreFixtures: Genre[] = [
   {
     id: 9,
     type: 'main',
-    use_as: { id: 1, name: 'production' },
     name: { nl: 'Dans' },
     display_name: 'Dans',
     vendor_id: null,
@@ -52,9 +50,7 @@ const tagFixtures: Tag[] = [
     id: 8,
     url: '/api/v1/tags/8/',
     source: 'manual',
-    source_type: 'editorial',
     type: 'series',
-    is_external: false,
     is_enabled: true,
     display_name: 'Premiere',
     display_short_description: null,
@@ -67,9 +63,7 @@ const tagFixtures: Tag[] = [
     id: 12,
     url: '/api/v1/tags/12/',
     source: 'manual',
-    source_type: 'editorial',
     type: 'series',
-    is_external: false,
     is_enabled: true,
     display_name: 'Festival',
     display_short_description: null,
@@ -456,8 +450,8 @@ describe('ProductionsPage', () => {
       })
     })
 
-    expect(screen.getByTestId('url-search')).toHaveTextContent('am=offline')
-    expect(screen.getByTestId('url-search')).toHaveTextContent('pt=solo')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('am=of')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('pt=s')
     expect(screen.getByTestId('url-search')).toHaveTextContent('g=5-9')
     expect(screen.getByTestId('url-search')).toHaveTextContent('t=8-12')
     expect(screen.getByTestId('url-search')).toHaveTextContent('fa=2026-03-01')

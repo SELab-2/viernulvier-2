@@ -126,7 +126,6 @@ jest.mock('../../components/chips/GenreAndTagChip', () => ({
 const buildGenre = (overrides: Partial<Genre> = {}): Genre => ({
   id: overrides.id ?? 1,
   type: overrides.type ?? 'main',
-  use_as: overrides.use_as ?? { id: 1, name: 'production' },
   name: Object.prototype.hasOwnProperty.call(overrides, 'name')
     ? (overrides.name ?? null)
     : { nl: `Genre ${String(overrides.id ?? 1)}` },
@@ -140,9 +139,7 @@ const buildTag = (overrides: Partial<Tag> = {}): Tag => ({
   id: overrides.id ?? 1,
   url: overrides.url ?? `/api/v1/tags/${String(overrides.id ?? 1)}/`,
   source: overrides.source ?? 'manual',
-  source_type: overrides.source_type ?? 'editorial',
   type: overrides.type ?? 'series',
-  is_external: overrides.is_external ?? false,
   is_enabled: overrides.is_enabled ?? true,
   display_name: Object.prototype.hasOwnProperty.call(overrides, 'display_name')
     ? (overrides.display_name ?? null)
