@@ -19,16 +19,16 @@ _MEDIA = "Media Files"
 class MediaFileViewSet(ApiModelViewSet):
     """CRUD endpoints for uploaded media files."""
 
-    queryset = MediaFile.objects.select_related("uploaded_by").order_by("-created_at")
+    queryset = MediaFile.objects.order_by("-created_at")
     serializer_class = MediaFileSerializer
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     filterset_class = MediaFileFilter
     ordering_fields = ["id", "created_at", "size_bytes", "mime_type", "file_type"]
     ordering = ["-created_at"]
-    search_fields = ["filename", "mime_type", "uploaded_by__username"]
+    search_fields = ["filename", "description", "mime_type"]
 
     def get_serializer_class(self) -> type[BaseSerializer]:
-        """Return the upload serializer for create and the read serializer otherwise."""
-        if getattr(self, "action", None) == "create":
+        """Return the write serializer for create/update actions and read serializer otherwise."""
+        if getattr(self, "action", None) in {"create", "update", "partial_update"}:
             return MediaFileUploadSerializer
         return MediaFileSerializer

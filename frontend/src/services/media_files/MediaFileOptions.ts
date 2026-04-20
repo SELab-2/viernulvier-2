@@ -10,7 +10,7 @@ export interface MediaFileFilters {
   file_type?: 'image' | 'pdf' | 'other'
   mime_type?: string
   filename?: string
-  uploaded_by?: string
+  description?: string
 }
 
 /**

@@ -23,10 +23,10 @@ describe('MediaFiles API service', () => {
     external_id: null,
     file: '/media/uploads/file.pdf',
     filename: 'file.pdf',
+    description: 'Definitieve brochure voor het seizoen 2026.',
     mime_type: 'application/pdf',
     size_bytes: 1234,
     file_type: 'pdf',
-    uploaded_by: 'editor1',
     created_at: '2026-01-01T00:00:00Z',
   }
 
@@ -60,10 +60,12 @@ describe('MediaFiles API service', () => {
 
   describe('getMediaFiles', () => {
     it('calls endpoint without params when no options provided', async () => {
+      mockedBuildListParams.mockReturnValueOnce(undefined)
       mockedApi.get.mockResolvedValueOnce({ data: listResponse })
 
       const result = await getMediaFiles()
 
+      expect(mockedBuildListParams).toHaveBeenCalledWith(undefined)
       expect(mockedApi.get).toHaveBeenCalledWith('/media/', {
         params: undefined,
       })
@@ -74,24 +76,26 @@ describe('MediaFiles API service', () => {
       mockedBuildListParams.mockReturnValue({
         page: 1,
         file_type: 'image',
+        description: 'poster',
       })
 
       mockedApi.get.mockResolvedValueOnce({ data: listResponse })
 
       const result = await getMediaFiles({
         page: 1,
-        filters: { file_type: 'image' },
+        filters: { file_type: 'image', description: 'poster' },
       })
 
       expect(mockedBuildListParams).toHaveBeenCalledWith({
         page: 1,
-        filters: { file_type: 'image' },
+        filters: { file_type: 'image', description: 'poster' },
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith('/media/', {
         params: {
           page: 1,
           file_type: 'image',
+          description: 'poster',
         },
       })
 
@@ -99,6 +103,7 @@ describe('MediaFiles API service', () => {
     })
 
     it('propagates errors', async () => {
+      mockedBuildListParams.mockReturnValueOnce(undefined)
       mockedApi.get.mockRejectedValueOnce(new Error('API error'))
 
       await expect(getMediaFiles()).rejects.toThrow('API error')
