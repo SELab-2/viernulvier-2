@@ -11,7 +11,7 @@ const FilterCheckbox = ({ label, checked, onChange }: FilterCheckboxProps) => (
     slotProps={{ typography: { variant: 'body2' } }}
     sx={{ height: 24 }}
     label={label}
-    control={<Checkbox size="small" checked={checked} onChange={onChange} color="default" />}
+    control={<Checkbox size="small" checked={checked} onChange={onChange} color="secondary" />}
   />
 )
 
