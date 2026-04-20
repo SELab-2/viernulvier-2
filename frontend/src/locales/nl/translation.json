@@ -300,7 +300,7 @@
     },
     "size": "Grootte",
     "error": {
-      "retry": "Probeer opnieuw",
+      "retry": "Opnieuw proberen",
       "fallback": "Kon mediabestanden niet laden.",
       "notification": "Er ging iets mis bij het laden van de mediabestanden."
     },
