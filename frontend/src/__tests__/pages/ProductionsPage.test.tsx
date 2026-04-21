@@ -1,4 +1,4 @@
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { createTheme, ThemeProvider } from '@mui/material/styles'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
@@ -6,15 +6,73 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import i18n from '../../i18n'
 import ProductionsPage from '../../pages/ProductionsPage'
 import { ApiError } from '../../services/ApiTypes'
-import { getProductions } from '../../services/productions/Productions'
+import { getGenres } from '../../services/genres/Genres'
+import { getProductions, getProductionSeries } from '../../services/productions/Productions'
 
+import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
+import type { Tag } from '../../types/Tags'
 
 jest.mock('../../services/productions/Productions', () => ({
   getProductions: jest.fn(),
+  getProductionSeries: jest.fn(),
+}))
+
+jest.mock('../../services/genres/Genres', () => ({
+  getGenres: jest.fn(),
 }))
 
 const mockedGetProductions = getProductions as jest.MockedFunction<typeof getProductions>
+const mockedGetProductionSeries = getProductionSeries as jest.MockedFunction<
+  typeof getProductionSeries
+>
+const mockedGetGenres = getGenres as jest.MockedFunction<typeof getGenres>
+
+const genreFixtures: Genre[] = [
+  {
+    id: 5,
+    type: 'main',
+    name: { nl: 'Theater' },
+    display_name: 'Theater',
+    vendor_id: null,
+  },
+  {
+    id: 9,
+    type: 'main',
+    name: { nl: 'Dans' },
+    display_name: 'Dans',
+    vendor_id: null,
+  },
+]
+
+const tagFixtures: Tag[] = [
+  {
+    id: 8,
+    url: '/api/v1/tags/8/',
+    source: 'manual',
+    type: 'series',
+    is_enabled: true,
+    display_name: 'Premiere',
+    display_short_description: null,
+    display_url_title: null,
+    name: { nl: 'Premiere' },
+    short_description: {},
+    url_title: {},
+  },
+  {
+    id: 12,
+    url: '/api/v1/tags/12/',
+    source: 'manual',
+    type: 'series',
+    is_enabled: true,
+    display_name: 'Festival',
+    display_short_description: null,
+    display_url_title: null,
+    name: { nl: 'Festival' },
+    short_description: {},
+    url_title: {},
+  },
+]
 
 const LocationProbe = () => {
   const location = useLocation()
@@ -43,10 +101,7 @@ const buildProduction = (id: number): Production => ({
 const renderPage = (
   initialEntry:
     | string
-    | {
-        pathname: string
-        state?: { floatingAlert?: { open?: boolean; message?: string } }
-      } = '/archive',
+    | { pathname: string; state?: { floatingAlert?: { open?: boolean; message?: string } } } = '/',
 ) =>
   render(
     <MemoryRouter initialEntries={[initialEntry]}>
@@ -59,6 +114,22 @@ const renderPage = (
     </MemoryRouter>,
   )
 
+const setMatchMediaMatches = (matches: boolean) => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: jest.fn().mockImplementation((query: string) => ({
+      matches,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  })
+}
+
 describe('ProductionsPage', () => {
   afterEach(() => {
     jest.clearAllMocks()
@@ -66,6 +137,24 @@ describe('ProductionsPage', () => {
 
   beforeEach(async () => {
     await i18n.changeLanguage('nl')
+    setMatchMediaMatches(false)
+    mockedGetGenres.mockResolvedValue({
+      count: genreFixtures.length,
+      next: null,
+      previous: null,
+      results: genreFixtures,
+    })
+    mockedGetProductionSeries.mockResolvedValue({
+      count: tagFixtures.length,
+      next: null,
+      previous: null,
+      results: tagFixtures.map((tag) => ({
+        tag,
+        firstProductionStart: null,
+        lastProductionEnd: null,
+        lastProductionImage: null,
+      })),
+    })
   })
 
   it('loads productions from API with default params and renders results', async () => {
@@ -123,7 +212,7 @@ describe('ProductionsPage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('Geen archiefitems gevonden')).toBeInTheDocument()
+    expect(await screen.findByText('Geen producties gevonden')).toBeInTheDocument()
     expect(screen.getByText('Pas je zoekopdracht aan en probeer opnieuw.')).toBeInTheDocument()
   })
 
@@ -137,7 +226,7 @@ describe('ProductionsPage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('Kon het archief niet laden.')).toBeInTheDocument()
+    expect(await screen.findByText('Kon producties niet laden.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Opnieuw proberen' }))
 
     await waitFor(() => {
@@ -151,7 +240,7 @@ describe('ProductionsPage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('Kon het archief niet laden.')).toBeInTheDocument()
+    expect(await screen.findByText('Kon producties niet laden.')).toBeInTheDocument()
     expect(screen.queryByText('Something failed on server')).not.toBeInTheDocument()
   })
 
@@ -164,7 +253,7 @@ describe('ProductionsPage', () => {
     })
 
     renderPage({
-      pathname: '/archive',
+      pathname: '/',
       state: {
         floatingAlert: {
           open: true,
@@ -191,6 +280,37 @@ describe('ProductionsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lijst' }))
 
     expect(screen.getByTestId('url-search')).toHaveTextContent('v=l')
+  })
+
+  it('opens filters from a separate mobile button', async () => {
+    setMatchMediaMatches(true)
+    mockedGetProductions.mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildProduction(11)],
+    })
+
+    renderPage()
+
+    await screen.findByRole('heading', { name: 'Productie 11' })
+    expect(screen.queryByRole('dialog', { name: 'Filters' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument()
+    expect(screen.queryByRole('checkbox', { name: 'Online' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
+
+    expect(screen.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', { name: i18n.t('productions.home.filters.attendanceMode') }),
+    )
+    expect(screen.getByRole('checkbox', { name: 'Online' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Filters' })).not.toBeInTheDocument()
+    })
   })
 
   it('fetches next page when pagination is used', async () => {
@@ -277,9 +397,9 @@ describe('ProductionsPage', () => {
       results: [buildProduction(9)],
     })
 
-    renderPage('/archive?q=romeo')
+    renderPage('/?q=romeo')
 
-    expect(await screen.findByText('Kon het archief niet laden.')).toBeInTheDocument()
+    expect(await screen.findByText('Kon producties niet laden.')).toBeInTheDocument()
 
     fireEvent.keyDown(
       screen.getByPlaceholderText('Zoek naar evenementen, artiesten of locaties...'),
@@ -293,5 +413,58 @@ describe('ProductionsPage', () => {
       expect(mockedGetProductions).toHaveBeenCalledTimes(2)
     })
     expect(await screen.findByRole('heading', { name: 'Productie 9' })).toBeInTheDocument()
+  })
+
+  it('applies sidebar filters to the URL and forwards one attendance and one performer mode to the backend', async () => {
+    mockedGetProductions.mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildProduction(7)],
+    })
+
+    renderPage('/?p=2&fa=2026-03-01&fb=2026-03-31')
+
+    await screen.findByRole('heading', { name: 'Productie 7' })
+
+    fireEvent.click(
+      screen.getByRole('button', { name: i18n.t('productions.home.filters.attendanceMode') }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: i18n.t('productions.home.filters.performerType') }),
+    )
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Online' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Fysiek' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Groep' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Solo' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Filter op Theater' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Filter op Dans' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Premiere' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Festival' }))
+
+    await waitFor(() => {
+      expect(mockedGetProductions).toHaveBeenLastCalledWith({
+        page: 1,
+        pageSize: 12,
+        filters: {
+          search: undefined,
+          ordering: '-first_event_start',
+          attendance_mode: 'offline',
+          performer_type: 'solo',
+          genre: 5,
+          tag: 8,
+          first_event_start_after: '2026-03-01T00:00:00.000Z',
+          first_event_start_before: '2026-03-31T23:59:59.999Z',
+        },
+      })
+    })
+
+    expect(screen.getByTestId('url-search')).toHaveTextContent('am=of')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('pt=s')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('g=5-9')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('t=8-12')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('fa=2026-03-01')
+    expect(screen.getByTestId('url-search')).toHaveTextContent('fb=2026-03-31')
+    expect(screen.getByTestId('url-search')).not.toHaveTextContent('p=')
   })
 })

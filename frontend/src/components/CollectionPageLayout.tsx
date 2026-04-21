@@ -1,12 +1,27 @@
-import { Alert, Box, Button, Container, Paper, Stack, Typography } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import FilterAltIcon from '@mui/icons-material/FilterAlt'
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Dialog,
+  DialogContent,
+  IconButton,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { cloneElement, isValidElement, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import LoadingSpinner from './LoadingSpinner'
 import Pagination from './Pagination'
 import SearchControlsBar from './searchbar/SearchControlsBar'
 
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './searchbar/types'
-import type { ReactNode } from 'react'
 
 export interface CollectionPageLayoutProps {
   isMobile: boolean
@@ -23,9 +38,7 @@ export interface CollectionPageLayoutProps {
   viewMode: SearchViewMode
   onViewModeChange: (value: SearchViewMode) => void
   resultCount: number
-  sidebarAriaLabel?: string
-  sidebarTitle?: string
-  sidebarDescription?: string
+  sidebarContent?: ReactNode
   resultsRegionAriaLabel: string
   isLoading: boolean
   loadingLabel: string
@@ -62,9 +75,7 @@ export interface CollectionPageLayoutProps {
  * @param props.viewMode Current view mode ('list' or 'grid').
  * @param props.onViewModeChange Callback function to update the view mode.
  * @param props.resultCount Number of results found, used for display in the search controls bar.
- * @param props.sidebarAriaLabel ARIA label for the sidebar region for accessibility.
- * @param props.sidebarTitle Title text displayed in the sidebar area.
- * @param props.sidebarDescription Description text displayed in the sidebar area.
+ * @param props.sidebarContent ReactNode containing the content to display in the sidebar area.
  * @param props.resultsRegionAriaLabel ARIA label for the results region for accessibility.
  * @param props.isLoading Boolean indicating if the data is currently loading, used to show loading state.
  * @param props.loadingLabel Label text to display in the loading spinner.
@@ -99,9 +110,7 @@ const CollectionPageLayout = ({
   viewMode,
   onViewModeChange,
   resultCount,
-  sidebarAriaLabel,
-  sidebarTitle,
-  sidebarDescription,
+  sidebarContent,
   resultsRegionAriaLabel,
   isLoading,
   loadingLabel,
@@ -119,12 +128,69 @@ const CollectionPageLayout = ({
   onPageChange,
   paginationI18nKeyPrefix,
 }: CollectionPageLayoutProps) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const isEmpty = !isLoading && !errorMessage && !hasResults
-  const shouldRenderSidebar = showSidebar && sidebarAriaLabel && sidebarTitle && sidebarDescription
+  const shouldRenderSidebar = showSidebar && sidebarContent
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+
+  const mobileSidebarLabel = t('searchbar.filters')
+  const mobileSidebarButton =
+    isMobile && shouldRenderSidebar ? (
+      <Tooltip title={mobileSidebarLabel}>
+        <IconButton
+          aria-label={mobileSidebarLabel}
+          aria-haspopup="dialog"
+          aria-expanded={isMobileSidebarOpen}
+          onClick={() => setIsMobileSidebarOpen(true)}
+          sx={{
+            height: 40,
+            width: 40,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 1,
+            backgroundColor: theme.palette.background.default,
+            color: theme.palette.text.primary,
+            '&:hover': {
+              borderColor: 'text.primary',
+              backgroundColor:
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+            },
+          }}
+        >
+          <FilterAltIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    ) : null
+  const mobileSidebarHeaderAction =
+    isMobile && shouldRenderSidebar ? (
+      <IconButton
+        aria-label="Close"
+        onClick={() => setIsMobileSidebarOpen(false)}
+        size="small"
+        sx={{
+          height: 32,
+          width: 32,
+          border: `1px solid ${theme.palette.text.primary}`,
+          borderRadius: 1,
+          color: 'text.primary',
+          '&:hover': {
+            borderColor: 'text.primary',
+            backgroundColor: 'action.hover',
+          },
+        }}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    ) : null
+  const mobileSidebarContent =
+    isMobile && isValidElement<{ headerActions?: ReactNode }>(sidebarContent)
+      ? cloneElement(sidebarContent, {
+          headerActions: mobileSidebarHeaderAction,
+        })
+      : sidebarContent
 
   const resultsSection = (
-    <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ flex: 1, minWidth: 0 }}>
+    <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ minWidth: 0 }}>
       {isLoading ? (
         <Box sx={{ py: 8 }}>{loadingContent ?? <LoadingSpinner label={loadingLabel} />}</Box>
       ) : null}
@@ -162,75 +228,104 @@ const CollectionPageLayout = ({
     </Box>
   )
 
+  const contentColumn = (
+    <Stack spacing={3} sx={{ flex: 1, minWidth: 0 }}>
+      {/* Search, sort, and view controls. */}
+      <SearchControlsBar
+        placeholder={searchPlaceholder}
+        searchValue={searchValue}
+        onSearchChange={onSearchChange}
+        onSearchSubmit={onSearchSubmit}
+        sortTarget={sortTarget}
+        onSortTargetChange={onSortTargetChange}
+        sortDirection={sortDirection}
+        onSortDirectionChange={onSortDirectionChange}
+        sortTargetOptions={sortTargetOptions}
+        extraControls={mobileSidebarButton}
+        viewMode={viewMode}
+        onViewModeChange={onViewModeChange}
+        resultCount={resultCount}
+        showViewModeToggle={!isMobile}
+      />
+
+      {resultsSection}
+
+      {/* Pagination controls. */}
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={onPageChange}
+        disabled={isLoading}
+        i18nKeyPrefix={paginationI18nKeyPrefix}
+      />
+    </Stack>
+  )
+
   return (
     <Box sx={{ py: { xs: 3, md: 4 } }}>
       <Container maxWidth="xl">
-        <Stack spacing={3}>
-          {/* Search, sort, and view controls. */}
-          <SearchControlsBar
-            placeholder={searchPlaceholder}
-            searchValue={searchValue}
-            onSearchChange={onSearchChange}
-            onSearchSubmit={onSearchSubmit}
-            sortTarget={sortTarget}
-            onSortTargetChange={onSortTargetChange}
-            sortDirection={sortDirection}
-            onSortDirectionChange={onSortDirectionChange}
-            sortTargetOptions={sortTargetOptions}
-            viewMode={viewMode}
-            onViewModeChange={onViewModeChange}
-            resultCount={resultCount}
-            showViewModeToggle={!isMobile}
-          />
-
-          {shouldRenderSidebar ? (
+        {shouldRenderSidebar && !isMobile ? (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              gap: 3,
+              alignItems: { xs: 'stretch', md: 'stretch' },
+            }}
+          >
             <Box
               sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', md: 'row' },
-                gap: 3,
-                alignItems: 'flex-start',
+                flexShrink: 0,
+                width: { xs: '100%', md: theme.spacing(39) },
+                alignSelf: { md: 'flex-start' },
               }}
             >
-              <Paper
-                component="aside"
-                elevation={1}
-                aria-label={sidebarAriaLabel}
+              {sidebarContent}
+            </Box>
+
+            {contentColumn}
+          </Box>
+        ) : (
+          contentColumn
+        )}
+
+        {shouldRenderSidebar && isMobile ? (
+          <Dialog
+            open={isMobile && isMobileSidebarOpen}
+            onClose={() => setIsMobileSidebarOpen(false)}
+            fullScreen
+            slotProps={{
+              paper: {
+                'aria-label': mobileSidebarLabel,
+                sx: {
+                  m: 0,
+                  maxWidth: '100%',
+                  borderRadius: 0,
+                  backgroundImage: 'none',
+                },
+              },
+            }}
+          >
+            <DialogContent
+              sx={{
+                p: 0,
+              }}
+            >
+              <Box
                 sx={{
-                  width: { xs: '100%', md: 280 },
-                  flexShrink: 0,
-                  minHeight: 160,
-                  p: 2.5,
-                  borderRadius: 2,
-                  border: `1px dashed ${theme.palette.divider}`,
+                  '& > .MuiPaper-root': {
+                    border: 'none',
+                    borderRadius: 0,
+                    boxShadow: 'none',
+                  },
                 }}
               >
-                <Stack spacing={1}>
-                  <Typography variant="subtitle1" component="h2">
-                    {sidebarTitle}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {sidebarDescription}
-                  </Typography>
-                </Stack>
-              </Paper>
-
-              {resultsSection}
-            </Box>
-          ) : (
-            resultsSection
-          )}
-
-          {/* Pagination controls. */}
-          <Pagination
-            page={page}
-            pageSize={pageSize}
-            totalItems={totalItems}
-            onPageChange={onPageChange}
-            disabled={isLoading}
-            i18nKeyPrefix={paginationI18nKeyPrefix}
-          />
-        </Stack>
+                {mobileSidebarContent}
+              </Box>
+            </DialogContent>
+          </Dialog>
+        ) : null}
       </Container>
     </Box>
   )
