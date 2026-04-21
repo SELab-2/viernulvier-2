@@ -101,8 +101,6 @@ const ProductionsPage = () => {
     clearFilters,
   } = useSearchBarUrlState({ isMobile })
 
-  const selectedGenreIds = useMemo(() => [], [])
-
   // Local state for managing the productions data, loading state, error messages, and a retry key to trigger refetching
   const [isLoading, setIsLoading] = useState(true)
   const [productions, setProductions] = useState<Production[]>([])
