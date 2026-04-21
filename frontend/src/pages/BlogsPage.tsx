@@ -26,7 +26,7 @@ const BlogsPage = () => {
   const location = useLocation()
   type NavState = { floatingAlert?: { open?: boolean; message?: string } }
   const nav = location as { state?: NavState }
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
   const {
     searchValue,
     sortTarget,

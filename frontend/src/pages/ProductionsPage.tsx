@@ -68,7 +68,7 @@ const ProductionsPage = () => {
   // Type for optional navigation state used to show a one-time floating alert when arriving
   type NavState = { floatingAlert?: { open?: boolean; message?: string } }
   const nav = location as { state?: NavState }
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
 
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
   const {
