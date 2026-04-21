@@ -74,8 +74,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
       <ImageWithFallback
         src={imageSrc}
         alt={title}
-        height="100%"
-        sx={{ aspectRatio: 16 / 9, borderRadius: tokens.borderRadius.sm }}
+        sx={{ height: '100%', aspectRatio: 16 / 9, borderRadius: tokens.borderRadius.sm }}
       />
 
       <Stack

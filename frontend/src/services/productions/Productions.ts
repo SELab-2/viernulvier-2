@@ -73,6 +73,8 @@ export const getProduction = async (id: number, include?: string[]): Promise<Pro
  * - `has_media`: filter by whether a media gallery is assigned
  * - `title`: filter by translated production title
  * - `artist_name`: filter by translated artist or company name
+ * - `first_event_start_after`: filter productions with an event on or after an ISO datetime
+ * - `first_event_start_before`: filter productions with an event on or before an ISO datetime
  *
  * In addition, all API list endpoints support these shared query parameters:
  * - `search`: free-text backend search

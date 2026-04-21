@@ -101,6 +101,7 @@
     "searchPlaceholder": "Search for events, artists, or venues...",
     "searchPlaceholderMobile": "Search events, artists...",
     "search": "Search",
+    "filters": "Filters",
     "resultsFound_one": "{{count}} result found",
     "resultsFound_other": "{{count}} results found",
     "sort": {
@@ -160,6 +161,35 @@
     "detailTitle": "Production Detail",
     "detailPlaceholder": "Production details for ID {{id}} will be displayed here.",
     "backToProductions": "Back to Productions",
+    "home": {
+      "loading": "Loading productions",
+      "resultsRegionLabel": "Production results",
+      "filterPanelTitle": "Filters",
+      "filters": {
+        "clear": "Clear",
+        "any": "All",
+        "attendanceMode": "Attendance",
+        "performerType": "Performer type",
+        "genres": "Genres",
+        "tags": "Tags",
+        "date": "Date",
+        "startAfter": "Starts after",
+        "startBefore": "Starts before",
+        "showMore": "More",
+        "showLess": "Less",
+        "noGenres": "No genres available.",
+        "noTags": "No tags available."
+      },
+      "empty": {
+        "title": "No productions found",
+        "description": "Adjust your search and try again."
+      },
+      "error": {
+        "retry": "Retry",
+        "fallback": "Could not load productions.",
+        "notification": "Something went wrong while loading productions."
+      }
+    },
     "pagination": {
       "navigationLabel": "Production pagination",
       "pageXofY": "Page {{page}} of {{totalPages}}",
