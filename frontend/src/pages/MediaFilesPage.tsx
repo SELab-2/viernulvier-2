@@ -13,14 +13,13 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 import FloatingAlert from '../components/FloatingAlert'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
-import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
 import { getMediaFiles } from '../services/media_files/MediaFiles'
 import { getLocalizedValue } from '../utils/localization'
@@ -240,8 +239,8 @@ const MediaFileCard = ({
             ) : null}
 
             {fileSize ? (
-              <Typography>
-                {t('media.size')}: {(mediaFile.size_bytes / 1024).toFixed(1)} KB
+              <Typography variant="body2" color="text.secondary">
+                {t('media.size')}: {fileSize}
               </Typography>
             ) : null}
           </Stack>
@@ -330,10 +329,10 @@ const MediaFilesPage = () => {
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
+  const previousOrderingRef = useRef<string | null>(null)
+
   const renderedErrorMessage = showFallbackError ? t('media.error.fallback') : errorMessage
-
   const floatingErrorMessage = t('media.error.notification')
-
   const ordering = useMemo(() => getOrderingValue(sortDirection), [sortDirection])
 
   useEffect(() => {
@@ -347,6 +346,16 @@ const MediaFilesPage = () => {
   }, [setSortTarget, sortTarget])
 
   useEffect(() => {
+    const previousOrdering = previousOrderingRef.current
+
+    if (previousOrdering !== null && previousOrdering !== ordering && page !== 1) {
+      setPage(1)
+    }
+
+    previousOrderingRef.current = ordering
+  }, [ordering, page, setPage])
+
+  useEffect(() => {
     let isActive = true
 
     const fetchMediaFiles = async () => {
@@ -356,12 +365,14 @@ const MediaFilesPage = () => {
       setIsFloatingErrorOpen(false)
 
       try {
+        const trimmedSearchValue = searchValue.trim()
+
         const response = await getMediaFiles({
           page,
           pageSize: PAGE_SIZE,
           filters: {
-            search: searchValue.trim() || undefined,
-            description: searchValue.trim() || undefined,
+            search: trimmedSearchValue || undefined,
+            description: trimmedSearchValue || undefined,
             ordering,
           },
         })
@@ -413,17 +424,19 @@ const MediaFilesPage = () => {
 
   const onSearchSubmit = (value: string) => {
     const nextQuery = value.trim()
+
     if (nextQuery === searchValue.trim()) {
       setRetryKey((current) => current + 1)
       return
     }
 
+    if (page !== 1) {
+      setPage(1)
+    }
+
     setSearchValue(nextQuery)
   }
 
-  if (isLoading) {
-    return <MediaFilesPageSkeleton />
-  }
   return (
     <>
       <CollectionPageLayout
@@ -443,6 +456,7 @@ const MediaFilesPage = () => {
         resultsRegionAriaLabel={t('media.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('media.loading')}
+        loadingContent={<MediaFilesPageSkeleton />}
         errorMessage={renderedErrorMessage}
         retryLabel={t('media.error.retry')}
         onRetry={onRetry}

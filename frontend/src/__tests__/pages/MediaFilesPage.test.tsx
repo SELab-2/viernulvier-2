@@ -25,41 +25,65 @@ jest.mock('react-i18next', () => ({
   }),
 }))
 
-jest.mock('../../components/searchbar/useSearchBarUrlState', () => ({
-  useSearchBarUrlState: jest.fn(() => ({
-    searchValue: '',
-    sortTarget: 'date',
-    sortDirection: 'desc',
-    viewMode: 'grid',
-    page: 1,
-    setSearchValue: jest.fn(),
-    setSortTarget: jest.fn(),
-    setSortDirection: jest.fn(),
-    setViewMode: jest.fn(),
-    setPage: jest.fn(),
-  })),
-}))
+jest.mock('../../components/searchbar/useSearchBarUrlState', () => {
+  const React = require('react')
+
+  return {
+    useSearchBarUrlState: jest.fn(() => {
+      const [searchValue, setSearchValue] = React.useState('')
+      const [sortTarget, setSortTarget] = React.useState('date')
+      const [sortDirection, setSortDirection] = React.useState('desc')
+      const [viewMode, setViewMode] = React.useState('grid')
+      const [page, setPage] = React.useState(1)
+
+      return {
+        searchValue,
+        sortTarget,
+        sortDirection,
+        viewMode,
+        page,
+        setSearchValue,
+        setSortTarget,
+        setSortDirection,
+        setViewMode,
+        setPage,
+      }
+    }),
+  }
+})
 
 jest.mock('../../components/CollectionPageLayout', () => ({
   __esModule: true,
   default: ({
     resultCount,
     isLoading,
+    loadingContent,
     errorMessage,
     hasResults,
     resultsContent,
     retryLabel,
     onRetry,
+    page,
+    pageSize,
+    totalItems,
+    onPageChange,
   }: any) => (
     <div>
       <div data-testid="result-count">{resultCount}</div>
       <div data-testid="is-loading">{String(isLoading)}</div>
       <div data-testid="error-message">{errorMessage ?? ''}</div>
       <div data-testid="has-results">{String(hasResults)}</div>
+      <div data-testid="current-page">{page}</div>
+      <div data-testid="page-size">{pageSize}</div>
+      <div data-testid="total-items">{totalItems}</div>
       <button type="button" onClick={onRetry}>
         {retryLabel}
       </button>
-      <div data-testid="results-content">{resultsContent}</div>
+      <button type="button" onClick={() => onPageChange(page + 1)}>
+        go-to-next-page
+      </button>
+      <div data-testid="loading-content">{isLoading ? loadingContent : null}</div>
+      <div data-testid="results-content">{!isLoading ? resultsContent : null}</div>
     </div>
   ),
 }))
@@ -151,7 +175,54 @@ describe('MediaFilesPage', () => {
     expect(screen.getByTestId('result-count')).toHaveTextContent('1')
     expect(screen.getByTestId('has-results')).toHaveTextContent('true')
     expect(screen.getByTestId('error-message')).toHaveTextContent('')
+    expect(screen.getByTestId('current-page')).toHaveTextContent('1')
+    expect(screen.getByTestId('page-size')).toHaveTextContent('12')
+    expect(screen.getByTestId('total-items')).toHaveTextContent('1')
     expect(screen.queryByTestId('floating-alert')).not.toBeInTheDocument()
+  })
+
+  it('requests the next page when pagination changes', async () => {
+    mockedGetMediaFiles
+      .mockResolvedValueOnce({
+        count: 24,
+        next: '/api/v1/media/?page=2',
+        previous: null,
+        results: [mediaFile],
+      })
+      .mockResolvedValueOnce({
+        count: 24,
+        next: null,
+        previous: '/api/v1/media/?page=1',
+        results: [
+          {
+            ...mediaFile,
+            id: '2',
+            filename: 'second-page-file.jpg',
+          },
+        ],
+      })
+
+    render(<MediaFilesPage />)
+
+    expect(await screen.findByText('poster.jpg')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'go-to-next-page' }))
+
+    await waitFor(() => {
+      expect(mockedGetMediaFiles).toHaveBeenNthCalledWith(2, {
+        page: 2,
+        pageSize: 12,
+        filters: {
+          search: undefined,
+          description: undefined,
+          ordering: '-created_at',
+        },
+      })
+    })
+
+    expect(await screen.findByText('second-page-file.jpg')).toBeInTheDocument()
+    expect(screen.getByTestId('current-page')).toHaveTextContent('2')
+    expect(screen.getByTestId('total-items')).toHaveTextContent('24')
   })
 
   it('shows the ApiError message when the request fails with an ApiError', async () => {
