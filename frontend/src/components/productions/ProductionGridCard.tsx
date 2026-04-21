@@ -59,7 +59,7 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
       to={`/productions/${production.id}`}
       sx={{
         ...commonStyles.cardBase,
-        width: 350,
+        width: tokens.card.gridCardWidthPx,
         height: '100%',
         borderRadius: tokens.card.borderRadius,
         overflow: 'hidden',

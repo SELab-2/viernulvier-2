@@ -31,7 +31,7 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
       to={`/blogs/${blog.id}`}
       sx={{
         ...commonStyles.cardBase,
-        width: 350,
+        width: tokens.card.gridCardWidthPx,
         height: '100%',
         borderRadius: tokens.card.borderRadius,
         overflow: 'hidden',
