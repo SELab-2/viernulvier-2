@@ -24,6 +24,8 @@ import {
 } from './types'
 import { tokens } from '../../theme/tokens'
 
+import type { ReactNode } from 'react'
+
 export interface SearchControlsBarProps {
   placeholder?: string
   searchValue: string
@@ -38,6 +40,7 @@ export interface SearchControlsBarProps {
   onViewModeChange?: (viewMode: SearchViewMode) => void
   showViewModeToggle?: boolean
   sortTargetOptions?: Array<{ value: SearchSortTarget; labelKey: string }>
+  extraControls?: ReactNode
 }
 
 const SORT_TARGET_LABEL_ID = 'searchbar-sort-target-label'
@@ -61,6 +64,7 @@ const SearchControlsBar = ({
   onViewModeChange = NOOP_VIEW_MODE_CHANGE,
   showViewModeToggle = true,
   sortTargetOptions = DEFAULT_SORT_TARGET_OPTIONS,
+  extraControls,
 }: SearchControlsBarProps) => {
   const { t } = useTranslation()
   const theme = useTheme()
@@ -150,6 +154,8 @@ const SearchControlsBar = ({
               )}
             </ToggleButton>
           </Tooltip>
+
+          {extraControls}
 
           {/* View mode toggle. */}
           {showViewModeToggle ? (

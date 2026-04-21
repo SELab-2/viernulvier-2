@@ -101,6 +101,7 @@
     "searchPlaceholder": "Zoek naar evenementen, artiesten of locaties...",
     "searchPlaceholderMobile": "Zoek evenementen, artiesten...",
     "search": "Zoeken",
+    "filters": "Filters",
     "resultsFound_one": "{{count}} resultaat gevonden",
     "resultsFound_other": "{{count}} resultaten gevonden",
     "sort": {
@@ -160,6 +161,35 @@
     "detailTitle": "Productie Detail",
     "detailPlaceholder": "Details van productie met ID {{id}} worden hier weergegeven.",
     "backToProductions": "Terug naar Producties",
+    "home": {
+      "loading": "Producties laden",
+      "resultsRegionLabel": "Resultaten van producties",
+      "filterPanelTitle": "Filters",
+      "filters": {
+        "clear": "Wissen",
+        "any": "Alles",
+        "attendanceMode": "Aanwezigheid",
+        "performerType": "Uitvoering",
+        "genres": "Genres",
+        "tags": "Tags",
+        "date": "Datum",
+        "startAfter": "Start na",
+        "startBefore": "Start voor",
+        "showMore": "Meer",
+        "showLess": "Minder",
+        "noGenres": "Geen genres beschikbaar.",
+        "noTags": "Geen tags beschikbaar."
+      },
+      "empty": {
+        "title": "Geen producties gevonden",
+        "description": "Pas je zoekopdracht aan en probeer opnieuw."
+      },
+      "error": {
+        "retry": "Opnieuw proberen",
+        "fallback": "Kon producties niet laden.",
+        "notification": "Er ging iets mis bij het laden van producties."
+      }
+    },
     "pagination": {
       "navigationLabel": "Paginering van producties",
       "pageXofY": "Pagina {{page}} van {{totalPages}}",

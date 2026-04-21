@@ -1,15 +1,14 @@
 import CloseIcon from '@mui/icons-material/Close'
 import { Box, Chip, useTheme } from '@mui/material'
-import { useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 
 import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
 import { getQueryKeyForChipType } from './genreAndTagChipUtils'
-import { tokens } from '../../theme/tokens'
 import { getTranslatedRecord } from '../../utils/translations'
 
 import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
+import type { MouseEvent } from 'react'
 
 /**
  * Generic chip component that supports both genre and series-tag scenarios.
@@ -41,7 +40,6 @@ const GenreAndTagChip = ({
 }: GenreAndTagChipProps) => {
   const theme = useTheme()
   const { i18n, t } = useTranslation()
-  const [hovered, setHovered] = useState(false)
 
   const label = getTranslatedRecord(labels, i18n.language, name)
 
@@ -54,11 +52,6 @@ const GenreAndTagChip = ({
         ? `/archive?${getQueryKeyForChipType(chipType)}=${encodeURIComponent(String(id))}`
         : undefined
   const showSelectedIcon = context === 'search' && selected
-  const selectedChipColor =
-    chipType === 'genre'
-      ? (theme.palette.accent?.main ?? tokens.colors.accent.main)
-      : theme.palette.primary.main
-  const iconHoverBackground = tokens.colors.neutral.white
 
   const resolvedAriaLabel =
     ariaLabel ??
@@ -105,19 +98,11 @@ const GenreAndTagChip = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 2.25,
-                height: 2.25,
-                borderRadius: '50%',
-                backgroundColor: hovered ? iconHoverBackground : 'transparent',
-                color: hovered ? selectedChipColor : 'inherit',
-                boxShadow: hovered ? `0 0 0 2px ${iconHoverBackground}` : undefined,
-                cursor: 'pointer',
-                transition: 'background 0.15s, color 0.15s',
                 flexShrink: 0,
-                opacity: 1,
+                lineHeight: 0,
               }}
             >
-              <CloseIcon fontSize="small" />
+              <CloseIcon sx={{ fontSize: 18 }} />
             </Box>
           ) : null}
         </Box>
@@ -128,8 +113,6 @@ const GenreAndTagChip = ({
       aria-pressed={context === 'search' ? selected : undefined}
       aria-label={resolvedAriaLabel}
       tabIndex={isClickable ? 0 : -1}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       {...(linkTo ? { component: RouterLink, to: linkTo } : { component: 'div' })}
     />
   )
