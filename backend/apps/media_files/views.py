@@ -29,9 +29,9 @@ class MediaFileViewSet(ApiModelViewSet):
     serializer_class = MediaFileSerializer
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     filterset_class = MediaFileFilter
-    ordering_fields = ["created_at", "size_bytes", "file_type"]
+    ordering_fields = ["created_at", "file_name"]
     ordering = ["-created_at"]
-    search_fields = ["filename", "translations__description", "mime_type"]
+    search_fields = ["filename", "translations__description", "file_type"]
 
     def get_serializer_class(self) -> type[BaseSerializer]:
         """Return the write serializer for create/update actions and read serializer otherwise."""

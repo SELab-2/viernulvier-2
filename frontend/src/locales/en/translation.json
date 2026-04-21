@@ -292,7 +292,7 @@
     "invalidId": "Invalid blog ID"
   },
   "media": {
-    "searchPlaceholder": "Search for files by name or description...",
+    "searchPlaceholder": "Search files by name, description or type...",
     "fileType": {
       "image": "Image",
       "pdf": "PDF",

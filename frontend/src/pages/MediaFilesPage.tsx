@@ -31,10 +31,19 @@ const PAGE_SIZE = 12
 
 const MEDIA_SORT_TARGET_OPTIONS: Array<{ value: SearchSortTarget; labelKey: string }> = [
   { value: 'date', labelKey: 'searchbar.sort.date' },
+  { value: 'name', labelKey: 'searchbar.sort.name' },
 ]
 
-const getOrderingValue = (sortDirection: SearchSortDirection): string =>
-  sortDirection === 'desc' ? '-created_at' : 'created_at'
+const getOrderingValue = (
+  sortTarget: SearchSortTarget,
+  sortDirection: SearchSortDirection,
+): string => {
+  if (sortTarget === 'name') {
+    return sortDirection === 'desc' ? '-filename' : 'filename'
+  }
+
+  return sortDirection === 'desc' ? '-created_at' : 'created_at'
+}
 
 const formatDate = (value: string, locale: string): string => {
   const date = new Date(value)
@@ -333,17 +342,14 @@ const MediaFilesPage = () => {
 
   const renderedErrorMessage = showFallbackError ? t('media.error.fallback') : errorMessage
   const floatingErrorMessage = t('media.error.notification')
-  const ordering = useMemo(() => getOrderingValue(sortDirection), [sortDirection])
+  const ordering = useMemo(
+    () => getOrderingValue(sortTarget, sortDirection),
+    [sortTarget, sortDirection],
+  )
 
   useEffect(() => {
     setSearchDraft(searchValue)
   }, [searchValue])
-
-  useEffect(() => {
-    if (sortTarget === 'name') {
-      setSortTarget('date')
-    }
-  }, [setSortTarget, sortTarget])
 
   useEffect(() => {
     const previousOrdering = previousOrderingRef.current
@@ -372,7 +378,6 @@ const MediaFilesPage = () => {
           pageSize: PAGE_SIZE,
           filters: {
             search: trimmedSearchValue || undefined,
-            description: trimmedSearchValue || undefined,
             ordering,
           },
         })

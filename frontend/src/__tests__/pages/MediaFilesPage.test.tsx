@@ -1,6 +1,7 @@
 import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
+import { useSearchBarUrlState } from '../../components/searchbar/useSearchBarUrlState'
 import MediaFilesPage from '../../pages/MediaFilesPage'
 import { ApiError } from '../../services/ApiTypes'
 import { getMediaFiles } from '../../services/media_files/MediaFiles'
@@ -26,26 +27,7 @@ jest.mock('react-i18next', () => ({
 }))
 
 jest.mock('../../components/searchbar/useSearchBarUrlState', () => ({
-  useSearchBarUrlState: jest.fn(() => {
-    const [searchValue, setSearchValue] = React.useState('')
-    const [sortTarget, setSortTarget] = React.useState('date')
-    const [sortDirection, setSortDirection] = React.useState('desc')
-    const [viewMode, setViewMode] = React.useState('grid')
-    const [page, setPage] = React.useState(1)
-
-    return {
-      searchValue,
-      sortTarget,
-      sortDirection,
-      viewMode,
-      page,
-      setSearchValue,
-      setSortTarget,
-      setSortDirection,
-      setViewMode,
-      setPage,
-    }
-  }),
+  useSearchBarUrlState: jest.fn(),
 }))
 
 jest.mock('../../components/CollectionPageLayout', () => ({
@@ -118,6 +100,25 @@ jest.mock('../../services/ApiTypes', () => ({
 }))
 
 const mockedGetMediaFiles = getMediaFiles as jest.MockedFunction<typeof getMediaFiles>
+const mockedUseSearchBarUrlState = useSearchBarUrlState as jest.MockedFunction<
+  typeof useSearchBarUrlState
+>
+
+function buildSearchBarState(overrides?: Record<string, unknown>) {
+  return {
+    searchValue: '',
+    sortTarget: 'date',
+    sortDirection: 'desc',
+    viewMode: 'grid',
+    page: 1,
+    setSearchValue: jest.fn(),
+    setSortTarget: jest.fn(),
+    setSortDirection: jest.fn(),
+    setViewMode: jest.fn(),
+    setPage: jest.fn(),
+    ...overrides,
+  }
+}
 
 describe('MediaFilesPage', () => {
   const mediaFile = {
@@ -135,6 +136,7 @@ describe('MediaFilesPage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    mockedUseSearchBarUrlState.mockReturnValue(buildSearchBarState() as any)
   })
 
   it('shows skeleton while loading', async () => {
@@ -161,7 +163,6 @@ describe('MediaFilesPage', () => {
         pageSize: 12,
         filters: {
           search: undefined,
-          description: undefined,
           ordering: '-created_at',
         },
       })
@@ -177,26 +178,80 @@ describe('MediaFilesPage', () => {
     expect(screen.queryByTestId('floating-alert')).not.toBeInTheDocument()
   })
 
-  it('requests the next page when pagination changes', async () => {
-    mockedGetMediaFiles
-      .mockResolvedValueOnce({
-        count: 24,
-        next: '/api/v1/media/?page=2',
-        previous: null,
-        results: [mediaFile],
+  it('uses filename ordering when sorting by name ascending', async () => {
+    mockedUseSearchBarUrlState.mockReturnValue(
+      buildSearchBarState({
+        sortTarget: 'name',
+        sortDirection: 'asc',
+      }) as any,
+    )
+
+    mockedGetMediaFiles.mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [mediaFile],
+    })
+
+    render(<MediaFilesPage />)
+
+    await waitFor(() => {
+      expect(mockedGetMediaFiles).toHaveBeenCalledWith({
+        page: 1,
+        pageSize: 12,
+        filters: {
+          search: undefined,
+          ordering: 'filename',
+        },
       })
-      .mockResolvedValueOnce({
-        count: 24,
-        next: null,
-        previous: '/api/v1/media/?page=1',
-        results: [
-          {
-            ...mediaFile,
-            id: '2',
-            filename: 'second-page-file.jpg',
-          },
-        ],
+    })
+  })
+
+  it('uses descending filename ordering when sorting by name descending', async () => {
+    mockedUseSearchBarUrlState.mockReturnValue(
+      buildSearchBarState({
+        sortTarget: 'name',
+        sortDirection: 'desc',
+      }) as any,
+    )
+
+    mockedGetMediaFiles.mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [mediaFile],
+    })
+
+    render(<MediaFilesPage />)
+
+    await waitFor(() => {
+      expect(mockedGetMediaFiles).toHaveBeenCalledWith({
+        page: 1,
+        pageSize: 12,
+        filters: {
+          search: undefined,
+          ordering: '-filename',
+        },
       })
+    })
+  })
+
+  it('calls setPage with the next page when pagination changes', async () => {
+    const setPage = jest.fn()
+
+    mockedUseSearchBarUrlState.mockReturnValue(
+      buildSearchBarState({
+        page: 1,
+        setPage,
+      }) as any,
+    )
+
+    mockedGetMediaFiles.mockResolvedValueOnce({
+      count: 24,
+      next: '/api/v1/media/?page=2',
+      previous: null,
+      results: [mediaFile],
+    })
 
     render(<MediaFilesPage />)
 
@@ -204,21 +259,43 @@ describe('MediaFilesPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'go-to-next-page' }))
 
+    expect(setPage).toHaveBeenCalledWith(2)
+  })
+
+  it('requests page 2 when the current page is 2', async () => {
+    mockedUseSearchBarUrlState.mockReturnValue(
+      buildSearchBarState({
+        page: 2,
+      }) as any,
+    )
+
+    mockedGetMediaFiles.mockResolvedValueOnce({
+      count: 24,
+      next: null,
+      previous: '/api/v1/media/?page=1',
+      results: [
+        {
+          ...mediaFile,
+          id: '2',
+          filename: 'second-page-file.jpg',
+        },
+      ],
+    })
+
+    render(<MediaFilesPage />)
+
     await waitFor(() => {
-      expect(mockedGetMediaFiles).toHaveBeenNthCalledWith(2, {
+      expect(mockedGetMediaFiles).toHaveBeenCalledWith({
         page: 2,
         pageSize: 12,
         filters: {
           search: undefined,
-          description: undefined,
           ordering: '-created_at',
         },
       })
     })
 
     expect(await screen.findByText('second-page-file.jpg')).toBeInTheDocument()
-    expect(screen.getByTestId('current-page')).toHaveTextContent('2')
-    expect(screen.getByTestId('total-items')).toHaveTextContent('24')
   })
 
   it('shows the ApiError message when the request fails with an ApiError', async () => {
