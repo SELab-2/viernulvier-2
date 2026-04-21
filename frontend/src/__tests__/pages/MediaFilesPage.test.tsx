@@ -1,5 +1,5 @@
-import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import React from 'react'
 
 import { useSearchBarUrlState } from '../../components/searchbar/useSearchBarUrlState'
 import MediaFilesPage from '../../pages/MediaFilesPage'
