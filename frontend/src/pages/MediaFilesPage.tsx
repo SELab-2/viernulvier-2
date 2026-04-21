@@ -1,14 +1,16 @@
 import DescriptionIcon from '@mui/icons-material/Description'
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import {
   Box,
+  Button,
   Card,
-  CardActionArea,
   CardContent,
   CardMedia,
   Chip,
   Stack,
+  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
@@ -85,6 +87,25 @@ const getMediaFileDescription = (mediaFile: MediaFile, locale: string): string |
   return getLocalizedValue(mediaFile.description, locale) || mediaFile.display_description || null
 }
 
+const TruncatedDescription = ({ text, lines }: { text: string; lines: number }) => (
+  <Tooltip title={text} placement="top" arrow disableInteractive>
+    <Typography
+      variant="body2"
+      color="text.secondary"
+      sx={{
+        display: '-webkit-box',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        WebkitLineClamp: lines,
+        WebkitBoxOrient: 'vertical',
+        wordBreak: 'break-word',
+      }}
+    >
+      {text}
+    </Typography>
+  </Tooltip>
+)
+
 const MediaFilePreview = ({
   mediaFile,
   t,
@@ -108,6 +129,7 @@ const MediaFilePreview = ({
           objectFit: isGrid ? 'cover' : 'contain',
           objectPosition: 'center',
           backgroundColor: 'grey.100',
+          borderRadius: isGrid ? 0 : 2,
         }}
       />
     )
@@ -124,6 +146,7 @@ const MediaFilePreview = ({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'action.hover',
+        borderRadius: isGrid ? 0 : 2,
         borderBottom: isGrid ? 1 : 0,
         borderRight: isGrid ? 0 : 1,
         borderColor: 'divider',
@@ -163,16 +186,13 @@ const MediaFileCard = ({
         overflow: 'hidden',
       }}
     >
-      <CardActionArea
-        component="a"
-        href={mediaFile.file}
-        target="_blank"
-        rel="noopener noreferrer"
+      <Box
         sx={{
           display: 'flex',
           flexDirection: isGrid ? 'column' : { xs: 'column', sm: 'row' },
           alignItems: 'stretch',
           height: '100%',
+          width: '100%',
         }}
       >
         <Box
@@ -198,13 +218,12 @@ const MediaFileCard = ({
             display: 'flex',
           }}
         >
-          <Stack spacing={1.25} sx={{ width: '100%' }}>
+          <Stack spacing={1.25} sx={{ width: '100%', alignItems: 'stretch' }}>
             <Stack
               direction="row"
               spacing={1}
               sx={{
                 alignItems: 'center',
-                justifyContent: 'space-between',
                 flexWrap: 'wrap',
                 rowGap: 1,
               }}
@@ -214,10 +233,27 @@ const MediaFileCard = ({
                 icon={<DescriptionIcon />}
                 label={getFileTypeLabel(mediaFile, t)}
               />
-              <Typography variant="caption" color="text.secondary">
-                {uploadedAt}
-              </Typography>
+
+              <Button
+                component="a"
+                href={mediaFile.file}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="outlined"
+                size="small"
+                startIcon={<OpenInNewIcon />}
+              >
+                {t('media.openFile', { defaultValue: 'Open file' })}
+              </Button>
             </Stack>
+
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', textAlign: 'left' }}
+            >
+              {uploadedAt}
+            </Typography>
 
             <Typography
               variant="h6"
@@ -233,18 +269,7 @@ const MediaFileCard = ({
             </Typography>
 
             {description ? (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  display: '-webkit-box',
-                  overflow: 'hidden',
-                  WebkitLineClamp: isGrid ? 2 : 3,
-                  WebkitBoxOrient: 'vertical',
-                }}
-              >
-                {description}
-              </Typography>
+              <TruncatedDescription text={description} lines={isGrid ? 2 : 3} />
             ) : null}
 
             {fileSize ? (
@@ -254,7 +279,7 @@ const MediaFileCard = ({
             ) : null}
           </Stack>
         </CardContent>
-      </CardActionArea>
+      </Box>
     </Card>
   )
 }

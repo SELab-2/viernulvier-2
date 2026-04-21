@@ -309,6 +309,7 @@
       "description": "Geen mediabestanden die voldoen aan de huidige zoekopdracht."
     },
     "loading": "Mediabestanden laden",
-    "resultsRegionLabel": "Resultaten van mediabestanden"
+    "resultsRegionLabel": "Resultaten van mediabestanden",
+    "openFile": "Bestand openen"
   }
 }

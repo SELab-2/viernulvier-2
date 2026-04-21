@@ -309,6 +309,7 @@
       "description": "Adjust your search and try again."
     },
     "loading": "Loading media files",
-    "resultsRegionLabel": "Media files results"
+    "resultsRegionLabel": "Media files results",
+    "openFile": "Open file"
   }
 }

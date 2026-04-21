@@ -14,6 +14,9 @@ jest.mock('@mui/material', () => {
       breakpoints: {
         down: () => 'mocked-breakpoint',
       },
+      palette: {
+        mode: 'light',
+      },
     }),
     useMediaQuery: jest.fn(() => false),
   }
@@ -176,6 +179,23 @@ describe('MediaFilesPage', () => {
     expect(screen.getByTestId('page-size')).toHaveTextContent('12')
     expect(screen.getByTestId('total-items')).toHaveTextContent('1')
     expect(screen.queryByTestId('floating-alert')).not.toBeInTheDocument()
+  })
+
+  it('renders an open file button with the correct link attributes', async () => {
+    mockedGetMediaFiles.mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [mediaFile],
+    })
+
+    render(<MediaFilesPage />)
+
+    const openLink = await screen.findByRole('link', { name: 'media.openFile' })
+
+    expect(openLink).toHaveAttribute('href', '/media/uploads/poster.jpg')
+    expect(openLink).toHaveAttribute('target', '_blank')
+    expect(openLink).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
   it('uses filename ordering when sorting by name ascending', async () => {
