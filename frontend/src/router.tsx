@@ -7,12 +7,12 @@ import Navbar from './components/Navbar'
 import BlogDetailPage from './pages/BlogDetailPage'
 import BlogsPage from './pages/BlogsPage'
 import HomePage from './pages/HomePage'
+import MediaFilesPage from './pages/MediaFilesPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ProductionDetailPage from './pages/ProductionDetailPage'
 import ProductionsPage from './pages/ProductionsPage'
 import SeriesDetailPage from './pages/SeriesDetailPage'
 import SeriesPage from './pages/SeriesPage'
-import MediaFilesPage from './pages/MediaFilesPage'
 
 type RouterProps = {
   mode: 'light' | 'dark'

@@ -25,32 +25,28 @@ jest.mock('react-i18next', () => ({
   }),
 }))
 
-jest.mock('../../components/searchbar/useSearchBarUrlState', () => {
-  const React = require('react')
+jest.mock('../../components/searchbar/useSearchBarUrlState', () => ({
+  useSearchBarUrlState: jest.fn(() => {
+    const [searchValue, setSearchValue] = React.useState('')
+    const [sortTarget, setSortTarget] = React.useState('date')
+    const [sortDirection, setSortDirection] = React.useState('desc')
+    const [viewMode, setViewMode] = React.useState('grid')
+    const [page, setPage] = React.useState(1)
 
-  return {
-    useSearchBarUrlState: jest.fn(() => {
-      const [searchValue, setSearchValue] = React.useState('')
-      const [sortTarget, setSortTarget] = React.useState('date')
-      const [sortDirection, setSortDirection] = React.useState('desc')
-      const [viewMode, setViewMode] = React.useState('grid')
-      const [page, setPage] = React.useState(1)
-
-      return {
-        searchValue,
-        sortTarget,
-        sortDirection,
-        viewMode,
-        page,
-        setSearchValue,
-        setSortTarget,
-        setSortDirection,
-        setViewMode,
-        setPage,
-      }
-    }),
-  }
-})
+    return {
+      searchValue,
+      sortTarget,
+      sortDirection,
+      viewMode,
+      page,
+      setSearchValue,
+      setSortTarget,
+      setSortDirection,
+      setViewMode,
+      setPage,
+    }
+  }),
+}))
 
 jest.mock('../../components/CollectionPageLayout', () => ({
   __esModule: true,
