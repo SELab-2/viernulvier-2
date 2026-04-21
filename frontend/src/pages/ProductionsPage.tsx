@@ -115,6 +115,7 @@ const ProductionsPage = () => {
   )
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
+  const [isSearchDraftDirty, setIsSearchDraftDirty] = useState(false)
 
   // Error message to display in the UI, preferring the translated fallback message
   const renderedErrorMessage = showFallbackError
@@ -131,10 +132,7 @@ const ProductionsPage = () => {
   const selectedPerformerType = performerType
   const selectedGenreId = selectedGenreIds[0]
   const selectedTagId = selectedTagIds[0]
-
-  useEffect(() => {
-    setSearchDraft(searchValue)
-  }, [searchValue])
+  const displayedSearchValue = isSearchDraftDirty ? searchDraft : searchValue
 
   useEffect(() => {
     let isActive = true
@@ -261,12 +259,15 @@ const ProductionsPage = () => {
   const onSearchSubmit = (value: string) => {
     const nextQuery = value.trim()
     if (nextQuery === searchValue.trim()) {
+      setSearchDraft(nextQuery)
+      setIsSearchDraftDirty(false)
       setRetryKey((current) => current + 1)
       return
     }
 
     setSearchValue(nextQuery)
     setSearchDraft(nextQuery)
+    setIsSearchDraftDirty(false)
   }
 
   // If a page navigated here with a floatingAlert in location.state, clear it once.
@@ -325,8 +326,11 @@ const ProductionsPage = () => {
         searchPlaceholder={
           isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
         }
-        searchValue={searchDraft}
-        onSearchChange={setSearchDraft}
+        searchValue={displayedSearchValue}
+        onSearchChange={(value) => {
+          setSearchDraft(value)
+          setIsSearchDraftDirty(true)
+        }}
         onSearchSubmit={onSearchSubmit}
         sortTarget={sortTarget}
         onSortTargetChange={setSortTarget}
