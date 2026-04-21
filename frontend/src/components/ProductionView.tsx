@@ -29,7 +29,6 @@ export interface ProductionViewProps {
  *
  * @param props.productions List of productions to display.
  * @param props.selectedGenreIds Genre ids currently active in the parent filter state.
- * @param props.onGenreIdsChange Callback to update the selected genre ids in the parent.
  * @param props.layout Requested layout mode; defaults to 'list'.
  * @returns The production view element.
  */
