@@ -26,6 +26,10 @@ const BlogsPage = () => {
   const location = useLocation()
   type NavState = { floatingAlert?: { open?: boolean; message?: string } }
   const nav = location as { state?: NavState }
+  const navFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
+  const navFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
+  const initialFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
+  const initialFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const {
     searchValue,
@@ -45,8 +49,10 @@ const BlogsPage = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
-  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(null)
+  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(initialFloatingAlertOpen)
+  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(
+    initialFloatingAlertMessage,
+  )
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
@@ -57,10 +63,6 @@ const BlogsPage = () => {
     () => getOrderingValue(sortTarget, sortDirection),
     [sortDirection, sortTarget],
   )
-
-  useEffect(() => {
-    setSearchDraft(searchValue)
-  }, [searchValue])
 
   useEffect(() => {
     let isActive = true
@@ -125,10 +127,6 @@ const BlogsPage = () => {
   useEffect(() => {
     const { state } = nav
     if (state?.floatingAlert?.open) {
-      setErrorMessage(null)
-      setShowFallbackError(false)
-      setFloatingAlertMessage(state.floatingAlert.message ?? null)
-      setIsFloatingErrorOpen(true)
       // Clear the history state so the alert won't reappear on back/refresh
       try {
         window.history.replaceState({}, document.title)
@@ -157,6 +155,7 @@ const BlogsPage = () => {
     }
 
     setSearchValue(nextQuery)
+    setSearchDraft(nextQuery)
   }
 
   return (
@@ -198,10 +197,10 @@ const BlogsPage = () => {
       />
 
       <FloatingAlert
-        open={isFloatingErrorOpen}
+        open={isFloatingErrorOpen || navFloatingAlertOpen}
         onClose={onFloatingErrorClose}
         severity="error"
-        message={floatingAlertMessage ?? floatingErrorMessage}
+        message={navFloatingAlertMessage ?? floatingAlertMessage ?? floatingErrorMessage}
       />
     </>
   )
