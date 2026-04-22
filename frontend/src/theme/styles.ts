@@ -88,16 +88,10 @@ export const createCommonStyles = (theme: Theme) => {
 
     /**
      * Grid container for wrapping card layouts.
-     *
-     * Uses CSS Grid with fixed-width `auto-fit` tracks so cards reflow into as
-     * many columns as actually fit and so every column has the same width as
-     * the card (`tokens.card.gridCardWidthPx`). `justifyContent: 'center'`
-     * keeps partially-filled rows visually balanced instead of clumping all
-     * cards to one edge.
      */
     gridContainer: {
       display: 'grid',
-      gridTemplateColumns: `repeat(auto-fit, ${tokens.card.gridCardWidthPx}px)`,
+      gridTemplateColumns: `repeat(auto-fit, min(${tokens.card.gridCardWidthPx}px, 100%))`,
       gap: tokens.spacing.numericLg,
       alignItems: 'stretch',
       justifyContent: 'center',

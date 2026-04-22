@@ -64,7 +64,7 @@ describe('theme/styles - createCommonStyles', () => {
 
     expect(gridContainerRecord.display).toBe('grid')
     expect(gridContainerRecord.gridTemplateColumns).toBe(
-      `repeat(auto-fit, ${tokens.card.gridCardWidthPx}px)`,
+      `repeat(auto-fit, min(${tokens.card.gridCardWidthPx}px, 100%))`,
     )
     expect(gridContainerRecord.gap).toBe(tokens.spacing.numericLg)
     expect(gridContainerRecord.justifyContent).toBe('center')

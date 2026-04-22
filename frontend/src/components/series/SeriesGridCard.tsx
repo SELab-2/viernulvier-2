@@ -53,7 +53,8 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
       component={RouterLink}
       to={`/series/${series.tag.id}`}
       sx={(theme) => ({
-        width: tokens.card.gridCardWidthPx,
+        width: '100%',
+        maxWidth: tokens.card.gridCardWidthPx,
         borderRadius: 4,
         overflow: 'hidden',
         textDecoration: 'none',
