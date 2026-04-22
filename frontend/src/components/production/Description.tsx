@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
 import { tokens } from '../../theme/tokens'
-import sanitizeHtml from '../../utils/SanitizeHtml'
+import HtmlText from '../HtmlText'
 
 interface DescriptionProps {
   teaser: string
@@ -24,34 +24,30 @@ export default function Description({ teaser, description }: DescriptionProps) {
       sx={{ color: 'text.primary', background: 'transparent' }}
     >
       {teaser && (
-        <Box
+        <HtmlText
+          html={teaser}
+          variant="body1"
+          component="div"
           sx={{
             fontSize: tokens.typography.sizes.base,
             lineHeight: 1.7,
             color: 'text.secondary',
             fontStyle: 'italic',
             mb: 2.5,
-            '& img': {
-              maxWidth: '100%',
-              height: 'auto',
-            },
           }}
-          dangerouslySetInnerHTML={{ __html: sanitizeHtml(teaser) }}
         />
       )}
 
       {description ? (
-        <Box
+        <HtmlText
+          html={description}
+          variant="body2"
+          component="div"
           sx={{
             fontSize: tokens.typography.sizes.sm,
             lineHeight: 1.8,
             color: 'text.primary',
-            '& img': {
-              maxWidth: '100%',
-              height: 'auto',
-            },
           }}
-          dangerouslySetInnerHTML={{ __html: sanitizeHtml(description) }}
         />
       ) : (
         <Typography

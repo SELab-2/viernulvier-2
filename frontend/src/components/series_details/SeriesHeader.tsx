@@ -4,6 +4,8 @@
 
 import { Stack, Typography } from '@mui/material'
 
+import HtmlText from '../HtmlText'
+
 type Props = {
   name: string
   description: string
@@ -15,9 +17,16 @@ const SeriesHeader = ({ name, description }: Props) => {
       <Typography variant="h3" sx={{ fontWeight: 800, overflowWrap: 'break-word' }}>
         {name}
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ overflowWrap: 'break-word' }}>
-        {description}
-      </Typography>
+      <HtmlText
+        html={description}
+        variant="body1"
+        component="div"
+        sx={{
+          color: 'text.secondary',
+          overflowWrap: 'break-word',
+          fontSize: 'inherit',
+        }}
+      />
     </Stack>
   )
 }
