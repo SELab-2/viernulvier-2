@@ -87,7 +87,10 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
   }
 
   // Localized text values: prefer language-specific record, fall back to display fields.
-  const title = getLocalizedValue(blog.title, lang) || blog.display_title || t('blogs.unknown')
+  const title =
+    getLocalizedValue(blog.title, lang) ||
+    blog.display_title ||
+    t('blogs.detail.noTitleAvailable', 'No title available')
   const excerpt = getLocalizedValue(blog.excerpt, lang) || blog.display_excerpt || ''
   const body = getLocalizedValue(blog.body, lang) || ''
   const cover = blog.cover_image ?? null

@@ -32,7 +32,7 @@ describe('HomePage', () => {
       productions: 1200,
       series: 80,
       years: 35,
-      stories: 120,
+      blogs: 120,
     })
 
     await i18n.changeLanguage('nl')
@@ -54,7 +54,7 @@ describe('HomePage', () => {
     expect(screen.getByRole('link', { name: 'Bekijk reeksen' }).getAttribute('href')).toBe(
       '/series',
     )
-    expect(screen.getByRole('link', { name: 'Lees verhalen' }).getAttribute('href')).toBe('/blogs')
+    expect(screen.getByRole('link', { name: 'Lees blogs' }).getAttribute('href')).toBe('/blogs')
     expect(screen.getByRole('heading', { name: 'Ontdek reeksen' })).toBeTruthy()
   })
 
@@ -78,7 +78,7 @@ describe('HomePage', () => {
       productions: 1234,
       series: 81,
       years: 36,
-      stories: 121,
+      blogs: 121,
     })
 
     renderPage()
