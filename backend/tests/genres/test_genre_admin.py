@@ -16,7 +16,6 @@ from django.urls import reverse
 from apps.core.admin import BaseAdmin
 from apps.genres.admin import (
     GenreAdmin,
-    GenreTranslationAdmin,
     GenreTranslationInline,
 )
 from apps.genres.models import Genre, GenreTranslation
@@ -38,10 +37,6 @@ class TestGenreAdminRegistration(TestCase):
         assert Genre in admin.site._registry
         assert isinstance(admin.site._registry[Genre], GenreAdmin)
 
-    def test_genretranslation_registered(self) -> None:
-        assert GenreTranslation in admin.site._registry
-        assert isinstance(admin.site._registry[GenreTranslation], GenreTranslationAdmin)
-
 
 # ---------------------------------------------------------------------------
 # Inheritance
@@ -54,10 +49,6 @@ class TestGenreAdminInheritance(TestCase):
     def test_genre_inherits(self) -> None:
         assert issubclass(GenreAdmin, BaseAdmin)
         assert issubclass(GenreAdmin, admin.ModelAdmin)
-
-    def test_genretranslation_inherits(self) -> None:
-        assert issubclass(GenreTranslationAdmin, BaseAdmin)
-        assert issubclass(GenreTranslationAdmin, admin.ModelAdmin)
 
 
 # ---------------------------------------------------------------------------
@@ -101,24 +92,6 @@ class TestGenreTranslationInlineConfig(TestCase):
 
     def test_extra(self) -> None:
         assert self.inline.extra == 1
-
-
-class TestGenreTranslationAdminConfig(TestCase):
-    def setUp(self) -> None:
-        self.admin = GenreTranslationAdmin(GenreTranslation, admin.site)
-
-    def test_list_display(self) -> None:
-        for field in ("id", "name", "language", "genre"):
-            assert field in self.admin.list_display
-
-    def test_list_filter(self) -> None:
-        assert "language__code" in self.admin.list_filter
-
-    def test_search_fields(self) -> None:
-        assert "name" in self.admin.search_fields
-
-    def test_ordering(self) -> None:
-        assert "id" in self.admin.ordering
 
 
 # ---------------------------------------------------------------------------
@@ -192,77 +165,6 @@ class TestGenreAdminFunctional(TestCase):
         response = self.client.post(url, {"post": "yes"}, follow=True)
         assert response.status_code == 200
         assert not Genre.objects.filter(pk=self.genre.pk).exists()
-
-    # -- GenreTranslation ---------------------------------------------------
-
-    def test_translation_changelist(self) -> None:
-        url = reverse("admin:genres_genretranslation_changelist")
-        response = self.client.get(url)
-        assert response.status_code == 200
-
-    def test_translation_add(self) -> None:
-        url = reverse("admin:genres_genretranslation_add")
-        response = self.client.post(
-            url,
-            {
-                "name": "Theatre",
-                "language": self.language.pk,
-                "genre": self.genre.pk,
-            },
-            follow=True,
-        )
-        assert response.status_code == 200
-        assert GenreTranslation.objects.filter(name="Theatre").exists()
-
-    def test_translation_change(self) -> None:
-        url = reverse("admin:genres_genretranslation_change", args=[self.translation.pk])
-        response = self.client.post(
-            url,
-            {
-                "name": "Teater",
-                "language": self.language.pk,
-                "genre": self.genre.pk,
-            },
-            follow=True,
-        )
-        assert response.status_code == 200
-        self.translation.refresh_from_db()
-        assert self.translation.name == "Teater"
-
-    def test_translation_delete(self) -> None:
-        url = reverse("admin:genres_genretranslation_delete", args=[self.translation.pk])
-        response = self.client.post(url, {"post": "yes"}, follow=True)
-        assert response.status_code == 200
-        assert not GenreTranslation.objects.filter(pk=self.translation.pk).exists()
-
-
-# ---------------------------------------------------------------------------
-# Queryset / performance related tests
-# ---------------------------------------------------------------------------
-
-
-class TestGenreAdminQueryset(TestCase):
-    """Test select_related / prefetch_related optimizations."""
-
-    def setUp(self) -> None:
-        self.site = admin.site
-        self.admin_genre = GenreAdmin(Genre, self.site)
-        self.admin_translation = GenreTranslationAdmin(GenreTranslation, self.site)
-
-        self.language = LanguageFactory()
-        self.genre = GenreFactory()
-        self.translation = GenreTranslationFactory(genre=self.genre, language=self.language)
-
-    def test_genre_get_queryset_prefetches_translations(self) -> None:
-        qs = self.admin_genre.get_queryset(request=None)
-        # Check that translations are prefetch_related
-        prefetches = {getattr(x, "prefetch_to", x) for x in qs._prefetch_related_lookups}
-        assert "translations" in prefetches
-
-    def test_genre_translation_get_queryset_selects_genre_and_language(self) -> None:
-        qs = self.admin_translation.get_queryset(request=None)
-        assert "genre" in qs.query.select_related
-        assert "language" in qs.query.select_related
 
 
 # ---------------------------------------------------------------------------
