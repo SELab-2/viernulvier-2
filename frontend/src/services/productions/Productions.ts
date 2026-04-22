@@ -25,7 +25,7 @@ export interface LandingStatsResponse {
   productions: number
   series: number
   years: number
-  stories: number
+  blogs: number
 }
 
 /**

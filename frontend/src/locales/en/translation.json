@@ -18,19 +18,19 @@
       "description": "Explore decades of performances, concerts, and theatre at Kunstencentrum VIERNULVIER, carefully catalogued and enriched with context.",
       "primaryCta": "Open archive",
       "seriesCta": "Browse series",
-      "secondaryCta": "Read stories",
+      "secondaryCta": "Read blogs",
       "websiteCta": "Visit official website"
     },
     "stats": {
       "productions": "Productions",
       "series": "Series",
       "years": "Years documented",
-      "stories": "Stories"
+      "blogs": "Blogs"
     },
     "statsSection": {
       "eyebrow": "Archive at a glance",
       "title": "A quick overview of the collection.",
-      "description": "Live counts for productions, series, documented years, and stories."
+      "description": "Live counts for productions, series, documented years, and blogs."
     },
     "ticker": {
       "brand": "VIERNULVIER",
@@ -52,8 +52,8 @@
         "title": "Performances, concerts & theatre",
         "description": "Search by artist, venue, or period. Every documented production in VIERNULVIER's history, searchable in one place."
       },
-      "stories": {
-        "title": "Stories and context",
+      "blogs": {
+        "title": "Blogs and context",
         "description": "Editorial pieces that deepen the archive - interviews, essays, and notes by researchers and curators."
       },
       "series": {
@@ -83,11 +83,11 @@
         "description": "Productions grouped by recurring series. Follow linked editions in chronological order.",
         "cta": "Open series"
       },
-      "stories": {
-        "eyebrow": "03 - Stories",
-        "title": "Read the stories",
+      "blogs": {
+        "eyebrow": "03 - Blogs",
+        "title": "Read the blogs",
         "description": "Interviews, essays, and research notes that add depth and context to the archive.",
-        "cta": "Read stories"
+        "cta": "Read blogs"
       },
       "prints": {
         "eyebrow": "04 - Prints",
@@ -202,6 +202,7 @@
     },
     "detail": {
       "related": "Related productions",
+      "relatedBlogs": "Related blogs",
       "meta": {
         "period": "Period",
         "venues": "Venues",
@@ -226,22 +227,25 @@
   },
   "blogs": {
     "home": {
-      "loading": "Loading stories",
+      "loading": "Loading blogs",
       "resultsRegionLabel": "Blog results",
-      "searchPlaceholder": "Search stories by title or excerpt...",
-      "searchPlaceholderMobile": "Search stories...",
+      "searchPlaceholder": "Search blogs by title or excerpt...",
+      "searchPlaceholderMobile": "Search blogs...",
       "coverAltFallback": "Blog cover image",
       "noExcerpt": "No excerpt available.",
       "unpublished": "Unpublished",
       "empty": {
-        "title": "No stories found",
+        "title": "No blogs found",
         "description": "Adjust your search and try again."
       },
       "error": {
         "retry": "Retry",
-        "fallback": "Could not load stories.",
-        "notification": "Something went wrong while loading stories."
+        "fallback": "Could not load blogs.",
+        "notification": "Something went wrong while loading blogs."
       }
+    },
+    "detail": {
+      "noTitleAvailable": "No title available"
     }
   },
   "notFound": {
