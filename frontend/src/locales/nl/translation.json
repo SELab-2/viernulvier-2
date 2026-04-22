@@ -202,6 +202,7 @@
     },
     "detail": {
       "related": "Gerelateerde producties",
+      "relatedBlogs": "Gerelateerde verhalen",
       "meta": {
         "period": "Periode",
         "venues": "Locaties",
