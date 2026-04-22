@@ -46,18 +46,3 @@ class GenreAdmin(BaseAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet[Genre]:
         """Prefetch translations to avoid N+1 queries."""
         return super().get_queryset(request).prefetch_related("translations")
-
-
-@admin.register(GenreTranslation)
-class GenreTranslationAdmin(BaseAdmin):
-    """Admin configuration for genre translations."""
-
-    list_display = ("id", "name", "language", "genre")
-    list_filter = ("language__code",)
-    search_fields = ("name",)
-    ordering = ("id",)
-    autocomplete_fields = ("language", "genre")
-
-    def get_queryset(self, request: HttpRequest) -> QuerySet[GenreTranslation]:
-        """Select related genre and language to avoid N+1 queries."""
-        return super().get_queryset(request).select_related("genre", "language")

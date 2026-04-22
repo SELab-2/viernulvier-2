@@ -82,39 +82,3 @@ class BlogAdmin(BaseAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet[Blog]:
         """Prefetch translations and productions to avoid N+1 queries."""
         return super().get_queryset(request).prefetch_related("translations__language", "productions")
-
-
-@admin.register(BlogTranslation)
-class BlogTranslationAdmin(BaseAdmin):
-    """Admin configuration for blog translations."""
-
-    list_display = ("id", "title", "language", "blog", "has_excerpt")
-    list_filter = ("language__code",)
-    search_fields = ("title", "body", "excerpt")
-    ordering = ("id",)
-    autocomplete_fields = ("language", "blog")
-
-    fieldsets = (
-        (
-            "Translation",
-            {
-                "fields": ("blog", "language"),
-            },
-        ),
-        (
-            "Content",
-            {
-                "fields": ("title", "excerpt", "body"),
-                "description": "The body supports HTML or Markdown formatting.",
-            },
-        ),
-    )
-
-    @admin.display(description="Has Excerpt", boolean=True)
-    def has_excerpt(self, obj: BlogTranslation) -> bool:
-        """Indicate whether an excerpt is provided."""
-        return bool(obj.excerpt)
-
-    def get_queryset(self, request: HttpRequest) -> QuerySet[BlogTranslation]:
-        """Select related blog and language to avoid N+1 queries."""
-        return super().get_queryset(request).select_related("blog", "language")
