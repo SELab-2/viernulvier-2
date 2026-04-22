@@ -93,21 +93,6 @@ class MediaItemAdmin(BaseAdmin):
         return super().get_queryset(request).select_related("gallery")
 
 
-@admin.register(MediaItemTranslation)
-class MediaItemTranslationAdmin(BaseAdmin):
-    """Admin configuration for MediaItem translations."""
-
-    list_display = ("id", "media_item", "language", "title", "credits")
-    list_filter = ("language__code",)
-    search_fields = ("title", "credits", "media_item__original_filename")
-    ordering = ("id",)
-    autocomplete_fields = ("media_item", "language")
-
-    def get_queryset(self, request: HttpRequest) -> QuerySet:
-        """Select related media_item and language to avoid N+1 queries."""
-        return super().get_queryset(request).select_related("media_item", "language")
-
-
 @admin.register(MediaItemCrop)
 class MediaItemCropAdmin(BaseAdmin):
     """Admin configuration for MediaItem crop variants."""
