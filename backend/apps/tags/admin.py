@@ -80,6 +80,7 @@ class TagAdmin(BaseAdmin):
 
     list_display = (
         "id",
+        "display_name",
         "type",
         "source",
         "is_enabled",
@@ -99,6 +100,11 @@ class TagAdmin(BaseAdmin):
     ordering = ("type", "id")
 
     inlines = [TagTranslationInline, TagProductionInline]
+
+    @admin.display(description="Display name")
+    def display_name(self, obj: Tag) -> str:
+        """Return the display name shown in admin lists."""
+        return str(obj)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Prefetch translations to avoid N+1 queries on the detail page."""

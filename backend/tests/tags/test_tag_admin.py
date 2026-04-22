@@ -22,6 +22,7 @@ from apps.core.admin import BaseAdmin
 from apps.productions.models import ProductionTag
 from apps.tags.admin import TagAdmin, TagProductionInline, TagTranslationInline
 from apps.tags.models import Tag, TagTranslation
+from tests.factories.language import LanguageFactory
 from tests.factories.tag import TagFactory
 
 # ---------------------------------------------------------------------------
@@ -66,6 +67,9 @@ class TestTagAdminConfiguration(TestCase):
 
     def test_list_display_contains_type(self) -> None:
         assert "type" in self.admin.list_display
+
+    def test_list_display_contains_display_name(self) -> None:
+        assert "display_name" in self.admin.list_display
 
     def test_list_display_contains_is_enabled(self) -> None:
         assert "is_enabled" in self.admin.list_display
@@ -158,3 +162,10 @@ class TestTagAdminFunctional(TestCase):
     def test_add_form_returns_200(self) -> None:
         url = reverse("admin:tags_tag_add")
         assert self.client.get(url).status_code == 200
+
+    def test_display_name_column_uses_tag_display_name(self) -> None:
+        lang = LanguageFactory(code="en", name="English")
+        tag = TagFactory.create(type="genre")
+        TagTranslation.objects.create(tag=tag, language=lang, name="Concert")
+
+        assert admin.site._registry[Tag].display_name(tag) == "Concert"
