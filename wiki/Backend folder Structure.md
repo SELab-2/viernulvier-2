@@ -3,7 +3,7 @@
 The backend follows a modular, domain-based Django structure that promotes maintainability, scalability, and a clear separation of concerns.  
 Domain logic is organized into dedicated apps under `apps/`, while project configuration and API routing are centralized.
 
-```
+```text
 viernulvier_archive/
 │
 ├── config/                          # Django project configuration
@@ -232,6 +232,7 @@ viernulvier_archive/
 ## Core Files
 
 ### `manage.py`
+
 **Purpose**: Django management entry point
 
 - Runs the development server
@@ -239,6 +240,7 @@ viernulvier_archive/
 - Runs tests and management commands
 
 **Example**:
+
 ```bash
 python manage.py runserver
 python manage.py migrate
@@ -248,6 +250,7 @@ python manage.py test
 ---
 
 ### `config/settings/base.py`
+
 **Purpose**: Shared settings used across environments
 
 - Installed apps and middleware
@@ -258,6 +261,7 @@ python manage.py test
 ---
 
 ### `config/settings/dev.py`
+
 **Purpose**: Development overrides
 
 - Debug enabled
@@ -267,6 +271,7 @@ python manage.py test
 ---
 
 ### `config/settings/test.py`
+
 **Purpose**: Test-specific overrides
 
 - Fast test database config (commonly SQLite)
@@ -275,6 +280,7 @@ python manage.py test
 ---
 
 ### `config/settings/prod.py`
+
 **Purpose**: Production settings
 
 - Debug disabled
@@ -284,6 +290,7 @@ python manage.py test
 ---
 
 ### `api/urls.py`
+
 **Purpose**: Central API router
 
 - Registers app viewsets
@@ -295,9 +302,11 @@ python manage.py test
 ## Directories
 
 ### `apps/`
+
 **Purpose**: Domain modules (Django apps)
 
 **Guidelines**:
+
 - One domain = one app (e.g. `events`, `pricing`, `locations`)
 - Keep API concerns inside the app (`serializers.py`, `views.py`, `schemas.py`)
 - Use explicit boundaries: shared logic goes to `apps/core/`
@@ -316,24 +325,29 @@ apps/<domain>/
 ---
 
 ### `apps/core/`
+
 **Purpose**: Shared base classes and reusable utilities
 
 **Use cases**:
+
 - Base models (timestamps, soft-delete patterns, common fields)
 - Reusable serializer mixins (e.g. translation helpers)
 - Shared viewsets (e.g. read-only base viewsets)
 - Common permissions/authentication helpers
 
 **Guidelines**:
+
 - Keep `core/` generic (no domain-specific logic)
 - Prefer composition/mixins over copy-paste
 
 ---
 
 ### `imports/` and `imports/scrapers/`
+
 **Purpose**: Import logging and scraping/ingestion logic
 
 **Guidelines**:
+
 - Scrapers implement a shared interface (`AbstractScraper`)
 - ImportLog models store import metadata (status, timestamps, etc.)
 - Keep external API specifics inside the scraper module
@@ -341,9 +355,11 @@ apps/<domain>/
 ---
 
 ### `api/`
+
 **Purpose**: Central DRF/OpenAPI routing and shared API configuration
 
 **Guidelines**:
+
 - Keep app-specific routes/viewsets inside apps
 - Use `api/urls.py` only to aggregate and version/prefix endpoints
 - Put cross-cutting API concerns here (pagination, versioning)
@@ -351,9 +367,11 @@ apps/<domain>/
 ---
 
 ### `tests/`
+
 **Purpose**: Pytest test suite
 
 **Guidelines**:
+
 - Mirror domain apps (tests grouped per app)
 - Keep shared fixtures in `tests/conftest.py`
 - Prefer consistent patterns across apps (models/serializers/views/admin)
@@ -379,19 +397,23 @@ tests/
 ## Configuration Files
 
 ### `.env`
+
 - Local environment variables
 - Never commit secrets
 
 ### `pyproject.toml`
+
 - Tooling configuration (formatters, linters, etc.)
 - Dependencies (if not using only `requirements/`)
 
 ### `requirements/`
+
 - `base.txt` — shared dependencies
 - `development.txt` — dev-only dependencies
 - `production.txt` — production dependencies
 
 ### `Dockerfile` / `docker-compose.yml`
+
 - Container setup for running the backend locally or in CI
 
 ---
@@ -429,7 +451,7 @@ tests/
 ## Quick Reference
 
 | Path | Purpose | Example |
-|------|---------|---------|
+| ------ | --------- | --------- |
 | `config/` | Project configuration | `config/urls.py` |
 | `config/settings/` | Settings per environment | `dev.py`, `test.py` |
 | `apps/` | Domain apps | `apps/events/` |

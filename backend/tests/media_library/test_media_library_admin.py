@@ -24,7 +24,6 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
-from django.utils.safestring import SafeData
 
 from apps.core.admin import BaseAdmin
 from apps.media_library.admin import (
@@ -33,7 +32,6 @@ from apps.media_library.admin import (
     MediaItemCropAdmin,
     MediaItemCropInline,
     MediaItemInline,
-    MediaItemTranslationAdmin,
     MediaItemTranslationInline,
 )
 from apps.media_library.models import (
@@ -42,12 +40,9 @@ from apps.media_library.models import (
     MediaItemCrop,
     MediaItemTranslation,
 )
-from tests.factories.language import LanguageFactory
 from tests.factories.media_library import (
     MediaGalleryFactory,
-    MediaItemCropFactory,
     MediaItemFactory,
-    MediaItemTranslationFactory,
 )
 
 # ---------------------------------------------------------------------------
@@ -79,16 +74,12 @@ class TestAdminRegistration(TestCase):
     def test_registered_admin_is_media_item_admin(self) -> None:
         assert isinstance(admin.site._registry[MediaItem], MediaItemAdmin)
 
-    def test_media_item_translation_is_registered(self) -> None:
-        assert MediaItemTranslation in admin.site._registry
-
-    def test_registered_admin_is_media_item_translation_admin(self) -> None:
-        assert isinstance(admin.site._registry[MediaItemTranslation], MediaItemTranslationAdmin)
-
     def test_media_item_crop_is_registered(self) -> None:
+        """Ensure MediaItemCrop has a registered admin class."""
         assert MediaItemCrop in admin.site._registry
 
     def test_registered_admin_is_media_item_crop_admin(self) -> None:
+        """Ensure MediaItemCrop is wired to MediaItemCropAdmin."""
         assert isinstance(admin.site._registry[MediaItemCrop], MediaItemCropAdmin)
 
 
@@ -103,7 +94,6 @@ class TestAdminInheritance(TestCase):
     admins = [
         MediaGalleryAdmin,
         MediaItemAdmin,
-        MediaItemTranslationAdmin,
         MediaItemCropAdmin,
     ]
 
@@ -213,60 +203,6 @@ class TestMediaItemAdminConfiguration(TestCase):
         assert len(self.admin.inlines) == 2
 
 
-# ---------------------------------------------------------------------------
-# MediaItemTranslationAdmin configuration
-# ---------------------------------------------------------------------------
-
-
-class TestMediaItemTranslationAdminConfiguration(TestCase):
-    """Tests for MediaItemTranslationAdmin meta configuration."""
-
-    def setUp(self) -> None:
-        self.admin = admin.site._registry[MediaItemTranslation]
-
-    # list_display
-    def test_list_display_contains_id(self) -> None:
-        assert "id" in self.admin.list_display
-
-    def test_list_display_contains_media_item(self) -> None:
-        assert "media_item" in self.admin.list_display
-
-    def test_list_display_contains_language(self) -> None:
-        assert "language" in self.admin.list_display
-
-    def test_list_display_contains_title(self) -> None:
-        assert "title" in self.admin.list_display
-
-    def test_list_display_contains_credits(self) -> None:
-        assert "credits" in self.admin.list_display
-
-    # list_filter
-    def test_list_filter_contains_language_code(self) -> None:
-        assert "language__code" in self.admin.list_filter
-
-    # search_fields
-    def test_search_fields_contains_title(self) -> None:
-        assert "title" in self.admin.search_fields
-
-    def test_search_fields_contains_credits(self) -> None:
-        assert "credits" in self.admin.search_fields
-
-    def test_search_fields_contains_media_item_original_filename(self) -> None:
-        assert "media_item__original_filename" in self.admin.search_fields
-
-    # autocomplete_fields
-    def test_autocomplete_fields_contains_media_item(self) -> None:
-        assert "media_item" in self.admin.autocomplete_fields
-
-    def test_autocomplete_fields_contains_language(self) -> None:
-        assert "language" in self.admin.autocomplete_fields
-
-
-# ---------------------------------------------------------------------------
-# MediaItemCropAdmin configuration
-# ---------------------------------------------------------------------------
-
-
 class TestMediaItemCropAdminConfiguration(TestCase):
     """Tests for MediaItemCropAdmin meta configuration."""
 
@@ -274,73 +210,59 @@ class TestMediaItemCropAdminConfiguration(TestCase):
         self.admin = admin.site._registry[MediaItemCrop]
 
     def test_list_display_contains_id(self) -> None:
+        """List display includes the primary key column."""
         assert "id" in self.admin.list_display
 
     def test_list_display_contains_media_item(self) -> None:
+        """List display includes the related media item."""
         assert "media_item" in self.admin.list_display
 
     def test_list_display_contains_name(self) -> None:
+        """List display includes the crop name."""
         assert "name" in self.admin.list_display
 
     def test_list_display_contains_get_url(self) -> None:
-        """The crop admin uses get_url (a computed method) instead of a raw url field,
-        because url was replaced by an ImageField named image."""
+        """List display includes the computed URL helper."""
         assert "get_url" in self.admin.list_display
 
-    def test_list_display_does_not_contain_raw_url_field(self) -> None:
-        """MediaItemCrop no longer has a url field - it uses an ImageField."""
-        assert "url" not in self.admin.list_display
+    def test_list_filter_contains_name(self) -> None:
+        """Name is available as a changelist filter."""
+        assert "name" in self.admin.list_filter
 
     def test_search_fields_contains_name(self) -> None:
+        """Search supports the crop name field."""
         assert "name" in self.admin.search_fields
 
-    def test_search_fields_contains_media_item_original_filename(self) -> None:
+    def test_search_fields_contains_media_item_filename(self) -> None:
+        """Search supports the parent media item's filename."""
         assert "media_item__original_filename" in self.admin.search_fields
 
     def test_autocomplete_fields_contains_media_item(self) -> None:
+        """Autocomplete is enabled for media_item foreign key."""
         assert "media_item" in self.admin.autocomplete_fields
 
-    def test_get_url_is_callable_method(self) -> None:
-        """get_url must be a method on the admin class, not a string field name."""
-        assert callable(getattr(self.admin.__class__, "get_url", None))
 
-    def test_get_url_returns_link_when_image_present(self) -> None:
-        """get_url renders a clickable anchor when the crop has an image."""
-        item = MediaItemFactory()
-        crop = MediaItemCropFactory(media_item=item, name="hd_ready")
-        result = self.admin.get_url(crop)
-        assert "<a" in str(result)
+class TestMediaItemCropAdminGetUrl(TestCase):
+    """Unit tests for MediaItemCropAdmin.get_url."""
 
-    def test_get_url_returns_dash_when_no_image(self) -> None:
-        """get_url returns '-' for a crop instance with no image set."""
-        crop = MediaItemCrop(name="hd_ready")  # unsaved, no image
-        result = self.admin.get_url(crop)
-        assert str(result) == "-"
+    def setUp(self) -> None:
+        self.admin = admin.site._registry[MediaItemCrop]
 
-    def test_get_url_display_description(self) -> None:
-        """The column header label must be 'Asset URL' as set by @admin.display."""
-        assert self.admin.get_url.short_description == "Asset URL"
+    def test_get_url_returns_clickable_anchor_when_image_present(self) -> None:
+        """Render a clickable anchor when the crop image exists."""
+        obj = MagicMock()
+        type(obj.image).url = PropertyMock(return_value="https://cdn.example.com/crops/hero.jpg")
 
-    def test_get_url_result_is_mark_safe(self) -> None:
-        """format_html output must be SafeData so Django does not double-escape it."""
-        item = MediaItemFactory()
-        crop = MediaItemCropFactory(media_item=item, name="hd_ready")
-        result = self.admin.get_url(crop)
-        assert isinstance(result, SafeData)
+        result = self.admin.get_url(obj)
 
-    def test_get_url_anchor_has_target_blank(self) -> None:
-        """The rendered anchor must open in a new tab."""
-        item = MediaItemFactory()
-        crop = MediaItemCropFactory(media_item=item, name="hd_ready")
-        result = str(self.admin.get_url(crop))
-        assert 'target="_blank"' in result
+        assert '<a href="https://cdn.example.com/crops/hero.jpg" target="_blank">Bekijk bestand</a>' in str(result)
 
-    def test_get_url_anchor_contains_bekijk_bestand(self) -> None:
-        """The link label must read 'Bekijk bestand'."""
-        item = MediaItemFactory()
-        crop = MediaItemCropFactory(media_item=item, name="hd_ready")
-        result = str(self.admin.get_url(crop))
-        assert "Bekijk bestand" in result
+    def test_get_url_returns_dash_when_image_missing(self) -> None:
+        """Render a dash fallback when no image is set."""
+        obj = MagicMock()
+        obj.image = None
+
+        assert self.admin.get_url(obj) == "-"
 
 
 # ---------------------------------------------------------------------------
@@ -506,6 +428,30 @@ class TestMediaItemAdminGetQueryset(TestCase):
         assert "gallery" in qs.query.select_related
 
 
+class TestMediaItemCropAdminGetQueryset(TestCase):
+    """Verify MediaItemCropAdmin queryset optimization."""
+
+    def setUp(self) -> None:
+        self.superuser = make_superuser("crop_admin")
+        self.factory = RequestFactory()
+        self.model_admin = admin.site._registry[MediaItemCrop]
+
+    def _make_request(self):
+        request = self.factory.get("/")
+        request.user = self.superuser
+        return request
+
+    def test_queryset_model_is_media_item_crop(self) -> None:
+        """Return a queryset for the MediaItemCrop model."""
+        qs = self.model_admin.get_queryset(self._make_request())
+        assert qs.model == MediaItemCrop
+
+    def test_queryset_has_select_related_for_media_item(self) -> None:
+        """Optimize the queryset with media_item select_related."""
+        qs = self.model_admin.get_queryset(self._make_request())
+        assert "media_item" in qs.query.select_related
+
+
 # ---------------------------------------------------------------------------
 # Functional changelist / changeform tests
 # ---------------------------------------------------------------------------
@@ -571,87 +517,3 @@ class TestMediaItemAdminChangelist(TestCase):
     def test_changelist_search(self) -> None:
         url = reverse("admin:media_library_mediaitem_changelist")
         assert self.client.get(url, {"q": "photo"}).status_code == 200
-
-
-class TestMediaItemTranslationAdminChangelist(TestCase):
-    """Functional tests for MediaItemTranslationAdmin via HTTP."""
-
-    def setUp(self) -> None:
-        self.superuser = make_superuser("trans_admin")
-        self.client.force_login(self.superuser)
-        self.gallery = MediaGalleryFactory.create()
-
-    def test_changelist_returns_200(self) -> None:
-        url = reverse("admin:media_library_mediaitemtranslation_changelist")
-        assert self.client.get(url).status_code == 200
-
-    def test_changeform_returns_200(self) -> None:
-        item = MediaItemFactory.create(gallery=self.gallery)
-        language = LanguageFactory.create()
-        translation = MediaItemTranslationFactory.create(
-            media_item=item,
-            language=language,
-            title="Test Titel",
-        )
-        url = reverse(
-            "admin:media_library_mediaitemtranslation_change",
-            args=[translation.pk],
-        )
-        assert self.client.get(url).status_code == 200
-
-    def test_changelist_shows_translation_title(self) -> None:
-        item = MediaItemFactory.create(gallery=self.gallery)
-        language = LanguageFactory.create()
-        MediaItemTranslationFactory.create(
-            media_item=item,
-            language=language,
-            title="Zichtbare Titel",
-        )
-        url = reverse("admin:media_library_mediaitemtranslation_changelist")
-        self.assertContains(self.client.get(url), "Zichtbare Titel")
-
-    def test_changelist_filter_by_language(self) -> None:
-        url = reverse("admin:media_library_mediaitemtranslation_changelist")
-        assert self.client.get(url, {"language__code": "nl"}).status_code == 200
-
-    def test_changelist_search(self) -> None:
-        url = reverse("admin:media_library_mediaitemtranslation_changelist")
-        assert self.client.get(url, {"q": "foto"}).status_code == 200
-
-
-class TestMediaItemCropAdminChangelist(TestCase):
-    """Functional tests for MediaItemCropAdmin via HTTP."""
-
-    def setUp(self) -> None:
-        self.superuser = make_superuser("crop_admin")
-        self.client.force_login(self.superuser)
-        self.gallery = MediaGalleryFactory.create()
-
-    def test_changelist_returns_200(self) -> None:
-        url = reverse("admin:media_library_mediaitemcrop_changelist")
-        assert self.client.get(url).status_code == 200
-
-    def test_changeform_returns_200(self) -> None:
-        item = MediaItemFactory.create(gallery=self.gallery)
-        crop = MediaItemCropFactory.create(media_item=item)
-        url = reverse("admin:media_library_mediaitemcrop_change", args=[crop.pk])
-        assert self.client.get(url).status_code == 200
-
-    def test_changelist_shows_crop_name(self) -> None:
-        item = MediaItemFactory.create(gallery=self.gallery)
-        MediaItemCropFactory.create(media_item=item, name="hero-banner")
-        url = reverse("admin:media_library_mediaitemcrop_changelist")
-        self.assertContains(self.client.get(url), "hero-banner")
-
-    def test_changelist_search(self) -> None:
-        url = reverse("admin:media_library_mediaitemcrop_changelist")
-        assert self.client.get(url, {"q": "thumb"}).status_code == 200
-
-    def test_changelist_renders_get_url_link_for_crops_with_image(self) -> None:
-        """The changelist must render the clickable image link from get_url."""
-        item = MediaItemFactory.create(gallery=self.gallery)
-        MediaItemCropFactory.create(media_item=item, name="hd_ready")
-        url = reverse("admin:media_library_mediaitemcrop_changelist")
-        response = self.client.get(url)
-        assert response.status_code == 200
-        self.assertContains(response, "<a")

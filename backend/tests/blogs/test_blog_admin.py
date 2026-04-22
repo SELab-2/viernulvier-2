@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
-from apps.blogs.admin import BlogAdmin, BlogTranslationAdmin, BlogTranslationInline
+from apps.blogs.admin import BlogAdmin, BlogTranslationInline
 from apps.blogs.models import Blog, BlogTranslation
 from apps.core.admin import BaseAdmin
 from tests.factories.blog import BlogFactory, BlogTranslationFactory
@@ -27,25 +27,16 @@ class TestBlogAdminRegistration(TestCase):
         assert Blog in admin.site._registry
         assert isinstance(admin.site._registry[Blog], BlogAdmin)
 
-    def test_blog_translation_registered(self) -> None:
-        assert BlogTranslation in admin.site._registry
-        assert isinstance(admin.site._registry[BlogTranslation], BlogTranslationAdmin)
-
 
 class TestBlogAdminInheritance(TestCase):
     def test_blog_admin_inherits_from_base_admin(self) -> None:
         assert issubclass(BlogAdmin, BaseAdmin)
         assert issubclass(BlogAdmin, admin.ModelAdmin)
 
-    def test_blog_translation_admin_inherits_from_base_admin(self) -> None:
-        assert issubclass(BlogTranslationAdmin, BaseAdmin)
-        assert issubclass(BlogTranslationAdmin, admin.ModelAdmin)
-
 
 class TestBlogAdminConfig(TestCase):
     def setUp(self) -> None:
         self.blog_admin = BlogAdmin(Blog, admin.site)
-        self.translation_admin = BlogTranslationAdmin(BlogTranslation, admin.site)
         self.inline = BlogTranslationInline(Blog, admin.site)
 
     def test_blog_list_display_contains_expected_fields(self) -> None:
@@ -72,20 +63,6 @@ class TestBlogAdminConfig(TestCase):
 
     def test_blog_autocomplete_fields(self) -> None:
         assert "productions" in self.blog_admin.autocomplete_fields
-
-    def test_translation_admin_list_display(self) -> None:
-        assert "id" in self.translation_admin.list_display
-        assert "title" in self.translation_admin.list_display
-        assert "language" in self.translation_admin.list_display
-        assert "blog" in self.translation_admin.list_display
-        assert "has_excerpt" in self.translation_admin.list_display
-
-    def test_translation_admin_list_filter(self) -> None:
-        assert "language__code" in self.translation_admin.list_filter
-
-    def test_translation_admin_autocomplete_fields(self) -> None:
-        assert "language" in self.translation_admin.autocomplete_fields
-        assert "blog" in self.translation_admin.autocomplete_fields
 
     def test_inline_config(self) -> None:
         assert self.inline.model is BlogTranslation
@@ -141,21 +118,6 @@ class TestBlogAdminMethods(TestCase):
 
         assert "translations__language" in queryset._prefetch_related_lookups
         assert "productions" in queryset._prefetch_related_lookups
-
-
-class TestBlogTranslationAdminMethods(TestCase):
-    def setUp(self) -> None:
-        self.admin = BlogTranslationAdmin(BlogTranslation, admin.site)
-
-    def test_has_excerpt_true_when_excerpt_exists(self) -> None:
-        translation = BlogTranslationFactory(excerpt="Some excerpt")
-
-        assert self.admin.has_excerpt(translation) is True
-
-    def test_has_excerpt_false_when_excerpt_empty(self) -> None:
-        translation = BlogTranslationFactory(excerpt="")
-
-        assert self.admin.has_excerpt(translation) is False
 
 
 class TestBlogAdminFunctional(TestCase):
@@ -233,51 +195,3 @@ class TestBlogAdminFunctional(TestCase):
 
         assert response.status_code == 200
         assert not Blog.objects.filter(pk=self.blog.pk).exists()
-
-    def test_blog_translation_changelist(self) -> None:
-        response = self.client.get(reverse("admin:blogs_blogtranslation_changelist"))
-
-        assert response.status_code == 200
-
-    def test_blog_translation_add(self) -> None:
-        response = self.client.post(
-            reverse("admin:blogs_blogtranslation_add"),
-            {
-                "blog": self.blog.pk,
-                "language": self.language_nl.pk,
-                "title": "Added in admin",
-                "excerpt": "Admin excerpt",
-                "body": "Admin body",
-            },
-            follow=True,
-        )
-
-        assert response.status_code == 200
-        assert BlogTranslation.objects.filter(blog=self.blog, language=self.language_nl, title="Added in admin").exists()
-
-    def test_blog_translation_change(self) -> None:
-        response = self.client.post(
-            reverse("admin:blogs_blogtranslation_change", args=[self.translation.pk]),
-            {
-                "blog": self.blog.pk,
-                "language": self.language.pk,
-                "title": "Changed in admin",
-                "excerpt": self.translation.excerpt,
-                "body": self.translation.body,
-            },
-            follow=True,
-        )
-
-        assert response.status_code == 200
-        self.translation.refresh_from_db()
-        assert self.translation.title == "Changed in admin"
-
-    def test_blog_translation_delete(self) -> None:
-        response = self.client.post(
-            reverse("admin:blogs_blogtranslation_delete", args=[self.translation.pk]),
-            {"post": "yes"},
-            follow=True,
-        )
-
-        assert response.status_code == 200
-        assert not BlogTranslation.objects.filter(pk=self.translation.pk).exists()

@@ -162,6 +162,14 @@ class TestProductionTranslation:
 
         assert ProductionTranslation.objects.count() == 0
 
+    def test_str_contains_production_id_and_language_code(self) -> None:
+        """String repr includes production id and language code."""
+        production = ProductionFactory.create()
+        language = LanguageFactory.create(code="nl")
+        translation = ProductionTranslationFactory.create(production=production, language=language)
+
+        assert str(translation) == f"Translation of Production {production.id} in nl"
+
 
 class TestProductionTag:
     """Tests for ProductionTag through model and production-tag relations."""
@@ -213,6 +221,12 @@ class TestProductionTag:
         tag.delete()
 
         assert ProductionTag.objects.count() == 0
+
+    def test_str_uses_tag_and_production_strings(self) -> None:
+        """String repr composes tag and production representations."""
+        production_tag = ProductionTagFactory.create()
+
+        assert str(production_tag) == f"Tag {production_tag.tag} for {production_tag.production}"
 
 
 class TestProductionTagTranslationCreation:

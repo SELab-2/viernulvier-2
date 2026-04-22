@@ -47,21 +47,6 @@ class PriceAdmin(BaseAdmin):
         return super().get_queryset(request).prefetch_related("translations")
 
 
-@admin.register(PriceTranslation)
-class PriceTranslationAdmin(BaseAdmin):
-    """Admin configuration for Price translations."""
-
-    list_display = ("id", "price", "language", "description")
-    list_filter = ("language__code",)
-    search_fields = ("price__id", "language__code", "description")
-    ordering = ("price", "language")
-    autocomplete_fields = ("price", "language")
-
-    def get_queryset(self, request: HttpRequest) -> QuerySet:
-        """Select related price and language to avoid N+1 queries."""
-        return super().get_queryset(request).select_related("price", "language")
-
-
 class PriceRankTranslationInline(admin.TabularInline):
     """Allows editing translations directly inside the PriceRank admin page."""
 
@@ -87,18 +72,3 @@ class PriceRankAdmin(BaseAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Prefetch translations to avoid N+1 queries on the detail page."""
         return super().get_queryset(request).prefetch_related("translations")
-
-
-@admin.register(PriceRankTranslation)
-class PriceRankTranslationAdmin(BaseAdmin):
-    """Admin configuration for PriceRank translations."""
-
-    list_display = ("id", "price_rank", "language", "description")
-    list_filter = ("language__code",)
-    search_fields = ("price_rank__id", "language__code", "description")
-    ordering = ("price_rank", "language")
-    autocomplete_fields = ("price_rank", "language")
-
-    def get_queryset(self, request: HttpRequest) -> QuerySet:
-        """Select related price_rank and language to avoid N+1 queries."""
-        return super().get_queryset(request).select_related("price_rank", "language")
