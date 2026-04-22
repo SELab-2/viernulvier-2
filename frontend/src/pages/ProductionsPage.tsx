@@ -72,7 +72,7 @@ const ProductionsPage = () => {
   const navFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
   const initialFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
   const initialFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
   const {
