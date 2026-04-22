@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
-    "format:check": "prettier --check . --list-different",
+    "format:check": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "jest",
     "test:watch": "jest --watch"
