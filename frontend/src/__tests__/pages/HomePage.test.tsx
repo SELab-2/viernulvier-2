@@ -54,7 +54,7 @@ describe('HomePage', () => {
     expect(screen.getByRole('link', { name: 'Bekijk reeksen' }).getAttribute('href')).toBe(
       '/series',
     )
-    expect(screen.getByRole('link', { name: 'Lees verhalen' }).getAttribute('href')).toBe('/blogs')
+    expect(screen.getByRole('link', { name: 'Lees blogs' }).getAttribute('href')).toBe('/blogs')
     expect(screen.getByRole('heading', { name: 'Ontdek reeksen' })).toBeTruthy()
   })
 

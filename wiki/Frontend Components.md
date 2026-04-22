@@ -34,7 +34,7 @@ The focus is on reusable UI parts in `frontend/src/components` and how they inte
 - **`/ Archive` label:** hidden on `xs`/`sm` screens to prevent overflow.
 - **Theme toggle:** single icon button showing the active mode icon (`DarkModeOutlinedIcon` / `LightModeOutlinedIcon`); calls `onToggleMode` on click.
 - **Language toggle:** single button showing the current language code (`NL`/`EN`); switches to the other language on click.
-- **Primary links:** includes Archive, Series, Artists, and Stories (`/blogs`).
+- **Primary links:** includes Archive, Series, Artists, and Blogs (`/blogs`).
 
 ---
 

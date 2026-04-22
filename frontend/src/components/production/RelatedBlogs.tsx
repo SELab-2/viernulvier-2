@@ -29,10 +29,10 @@ function RelatedBlogs({ blogs }: RelatedBlogsProps) {
           color: theme.palette.text.primary,
         })}
       >
-        {t('productions.detail.relatedBlogs', 'Related stories')}
+        {t('productions.detail.relatedBlogs', 'Related blogs')}
       </Typography>
       <Carousel
-        ariaLabel={t('productions.detail.relatedBlogs', 'Related stories')}
+        ariaLabel={t('productions.detail.relatedBlogs', 'Related blogs')}
         maxWidth="100%"
         previousLabel={t('carousel.previousSlide', 'Previous slide')}
         nextLabel={t('carousel.nextSlide', 'Next slide')}

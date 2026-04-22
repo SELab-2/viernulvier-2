@@ -275,7 +275,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         summary="Retrieve landing archive stats",
         description=(
             "Returns compact counters for the homepage stats bar: total productions, "
-            "total production series, documented years, and published stories."
+            "total production series, documented years, and published blogs."
         ),
         responses={200: ProductionLandingStatsSerializer},
     )

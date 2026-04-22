@@ -214,13 +214,13 @@ describe('ProductionDetailPage', () => {
       results: [
         {
           id: 100,
-          slug: 'story',
+          slug: 'blog',
           published_at: '2025-01-01T10:00:00Z',
           cover_image: null,
-          title: { nl: 'Verhaal' },
+          title: { nl: 'Blog' },
           body: { nl: 'Body' },
           excerpt: { nl: 'Excerpt' },
-          display_title: 'Verhaal',
+          display_title: 'Blog',
           display_excerpt: 'Excerpt',
           productions: [],
         },

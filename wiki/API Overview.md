@@ -234,4 +234,4 @@ For the homepage stats bar, the productions API exposes a compact counters endpo
 - `productions`: total number of productions
 - `series`: total number of distinct series tags linked to at least one production
 - `years`: total number of distinct documented years in event start/end timestamps
-- `stories`: total number of published blog stories (`published_at` is not null)
+- `stories`: total number of published blogs (`published_at` is not null)
