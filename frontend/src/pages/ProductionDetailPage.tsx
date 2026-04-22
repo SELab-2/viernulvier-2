@@ -10,11 +10,14 @@ import Description from '../components/production/Description'
 import EventsList from '../components/production/EventList'
 import MediaList from '../components/production/MediaList'
 import MetaPanel from '../components/production/MetaPanel'
+import RelatedBlogs from '../components/production/RelatedBlogs'
 import RelatedProductions from '../components/production/RelatedProductions'
+import { getBlogs } from '../services/blogs/Blogs'
 import { getProduction } from '../services/productions/Productions'
 import { tokens } from '../theme/tokens'
 import { getLocalizedValue } from '../utils/localization'
 
+import type { Blog } from '../types/Blogs'
 import type { Production } from '../types/Productions'
 
 /**
@@ -75,6 +78,7 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
   const lang = i18n.language
 
   const [prod, setProd] = useState<Production | null>(null)
+  const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
   // useEffect to fetch the production given the id in the URL.
@@ -92,6 +96,16 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
       try {
         const data = await getProduction(parsed, ['events', 'related'])
         setProd(data)
+
+        try {
+          const blogData = await getBlogs({
+            filters: { production: data.id, published: true },
+          })
+          setRelatedBlogs(blogData.results)
+        } catch {
+          // Keep the detail page usable even if related blog loading fails.
+          setRelatedBlogs([])
+        }
       } catch {
         const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
         navigate('/', {
@@ -213,6 +227,12 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
       {relatedProductions.length > 0 && (
         <Box sx={{ px: 2, pb: 4 }}>
           <RelatedProductions related={relatedProductions} lang={lang} />
+        </Box>
+      )}
+
+      {relatedBlogs.length > 0 && (
+        <Box sx={{ px: 2, pb: 4 }}>
+          <RelatedBlogs blogs={relatedBlogs} />
         </Box>
       )}
     </Box>
