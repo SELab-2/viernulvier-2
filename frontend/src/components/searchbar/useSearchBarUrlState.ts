@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './types'
+import type { AttendanceMode, PerformerType } from '../../types/Productions'
 
 // Default values for search parameters when they are not present in the URL
 const DEFAULT_SEARCH_SORT_TARGET: SearchSortTarget = 'date'
@@ -15,9 +16,14 @@ const PARAM_SORT_TARGET = 'st'
 const PARAM_SORT_DIRECTION = 'sd'
 const PARAM_VIEW = 'v'
 const PARAM_PAGE = 'p'
+const PARAM_ATTENDANCE_MODE = 'am'
+const PARAM_PERFORMER_TYPE = 'pt'
+const PARAM_FIRST_EVENT_START_AFTER = 'fa'
+const PARAM_FIRST_EVENT_START_BEFORE = 'fb'
 export const PARAM_GENRES = 'g'
 export const PARAM_TAGS = 't'
 const FILTER_SEPARATOR = '-'
+const DATE_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
 // Reads query parameters and supports both single value and repeated encodings.
 const readMultiParamValues = (searchParams: URLSearchParams, paramName: string): string[] => {
@@ -37,6 +43,11 @@ const toggleArrayValue = <T extends string | number>(values: T[], value: T): T[]
   }
 
   return [...values, value]
+}
+
+const normalizeDateInput = (value: string | null): string => {
+  const normalized = value?.trim() ?? ''
+  return DATE_INPUT_PATTERN.test(normalized) ? normalized : ''
 }
 
 // Parses the search sort target from the URL query parameter
@@ -92,6 +103,32 @@ const parsePage = (value: string | null): number => {
   return parsed
 }
 
+// Parses the attendance mode from the URL query parameter
+const parseOptionalAttendanceMode = (value: string | null): AttendanceMode | undefined => {
+  if (value === 'of') {
+    return 'offline'
+  }
+
+  if (value === 'on') {
+    return 'online'
+  }
+
+  return undefined
+}
+
+// Parses the performer type from the URL query parameter
+const parseOptionalPerformerType = (value: string | null): PerformerType | undefined => {
+  if (value === 'g') {
+    return 'group'
+  }
+
+  if (value === 's') {
+    return 'solo'
+  }
+
+  return undefined
+}
+
 // Parses a string of tokens separated by FILTER_SEPARATOR into an array of trimmed, non-empty strings.
 const parseTokenList = (value: string | null): string[] => {
   if (!value) {
@@ -107,6 +144,11 @@ const parseTokenList = (value: string | null): string[] => {
 // Converts array tokens to integer IDs and removes invalid values.
 const parseNumericIds = (values: string[]): number[] => {
   return values.map((part) => Number(part)).filter((part) => Number.isInteger(part))
+}
+
+const encodeOptionalString = (value: string): string | null => {
+  const normalized = value.trim()
+  return normalized || null
 }
 
 // Encode search sort target for URL query parameter, omit if default
@@ -134,6 +176,24 @@ const encodeViewMode = (value: SearchViewMode): string | null => {
   }
 
   return value === 'list' ? 'l' : 'g'
+}
+
+// Encode attendance mode for URL query parameter
+const encodeAttendanceMode = (value: AttendanceMode): string => {
+  if (value === 'offline') {
+    return 'of'
+  }
+
+  return 'on'
+}
+
+// Encode performer type for URL query parameter
+const encodePerformerType = (value: PerformerType): string => {
+  if (value === 'group') {
+    return 'g'
+  }
+
+  return 's'
 }
 
 // Encode page number for URL query parameter, omit if default (1) or invalid
@@ -165,8 +225,14 @@ type UpdateSearchParamsInput = {
   sortDirection?: SearchSortDirection
   view?: SearchViewMode
   page?: number
+  /** Pass `null` to remove the filter from the URL. */
+  attendanceMode?: AttendanceMode | null
+  /** Pass `null` to remove the filter from the URL. */
+  performerType?: PerformerType | null
   genres?: number[]
   tags?: number[]
+  firstEventStartAfter?: string
+  firstEventStartBefore?: string
 }
 
 type UseSearchBarUrlStateOptions = {
@@ -179,15 +245,30 @@ export type SearchBarUrlState = {
   sortDirection: SearchSortDirection
   viewMode: SearchViewMode
   page: number
+  attendanceMode: AttendanceMode | undefined
+  performerType: PerformerType | undefined
+  firstEventStartAfter: string
+  firstEventStartBefore: string
   selectedGenreIds: number[]
+  selectedTagIds: number[]
   selectedSeriesTagIds: number[]
   setSearchValue: (value: string) => void
   setSortTarget: (value: SearchSortTarget) => void
   setSortDirection: (value: SearchSortDirection) => void
   setViewMode: (value: SearchViewMode) => void
   setPage: (value: number) => void
+  setAttendanceMode: (value: AttendanceMode | undefined) => void
+  setPerformerType: (value: PerformerType | undefined) => void
+  setFirstEventStartAfter: (value: string) => void
+  setFirstEventStartBefore: (value: string) => void
+  setSelectedGenreIds: (ids: number[]) => void
+  setSelectedTagIds: (ids: number[]) => void
+  toggleAttendanceMode: (value: AttendanceMode) => void
+  togglePerformerType: (value: PerformerType) => void
   toggleGenreId: (id: number) => void
+  toggleTagId: (id: number) => void
   toggleSeriesTagId: (id: number) => void
+  clearFilters: () => void
 }
 
 // Custom hook to manage the search bar state synchronized with URL query parameters.
@@ -203,11 +284,15 @@ export const useSearchBarUrlState = ({
   const sortDirection = parseSearchSortDirection(searchParams.get(PARAM_SORT_DIRECTION))
   const parsedViewMode = parseSearchViewMode(searchParams.get(PARAM_VIEW))
   const page = parsePage(searchParams.get(PARAM_PAGE))
+  const attendanceMode = parseOptionalAttendanceMode(searchParams.get(PARAM_ATTENDANCE_MODE))
+  const performerType = parseOptionalPerformerType(searchParams.get(PARAM_PERFORMER_TYPE))
+  const firstEventStartAfter = normalizeDateInput(searchParams.get(PARAM_FIRST_EVENT_START_AFTER))
+  const firstEventStartBefore = normalizeDateInput(searchParams.get(PARAM_FIRST_EVENT_START_BEFORE))
   const viewMode: SearchViewMode = isMobile ? DEFAULT_SEARCH_VIEW_MODE : parsedViewMode
   const genreParamValues = [...readMultiParamValues(searchParams, PARAM_GENRES)]
   const tagParamValues = [...readMultiParamValues(searchParams, PARAM_TAGS)]
   const selectedGenreIds = parseNumericIds(genreParamValues)
-  const selectedSeriesTagIds = parseNumericIds(tagParamValues)
+  const selectedTagIds = parseNumericIds(tagParamValues)
 
   const updateSearchParams = useCallback(
     ({
@@ -216,8 +301,12 @@ export const useSearchBarUrlState = ({
       sortDirection: nextSortDirection,
       view,
       page: nextPage,
+      attendanceMode: nextAttendanceMode,
+      performerType: nextPerformerType,
       genres,
       tags,
+      firstEventStartAfter: nextFirstEventStartAfter,
+      firstEventStartBefore: nextFirstEventStartBefore,
     }: UpdateSearchParamsInput) => {
       setSearchParams(
         (currentParams) => {
@@ -269,6 +358,22 @@ export const useSearchBarUrlState = ({
             }
           }
 
+          if (nextAttendanceMode !== undefined) {
+            if (nextAttendanceMode === null) {
+              nextParams.delete(PARAM_ATTENDANCE_MODE)
+            } else {
+              nextParams.set(PARAM_ATTENDANCE_MODE, encodeAttendanceMode(nextAttendanceMode))
+            }
+          }
+
+          if (nextPerformerType !== undefined) {
+            if (nextPerformerType === null) {
+              nextParams.delete(PARAM_PERFORMER_TYPE)
+            } else {
+              nextParams.set(PARAM_PERFORMER_TYPE, encodePerformerType(nextPerformerType))
+            }
+          }
+
           if (genres !== undefined) {
             const encodedGenres = encodeTokenList(genres)
             if (encodedGenres) {
@@ -284,6 +389,28 @@ export const useSearchBarUrlState = ({
               nextParams.set(PARAM_TAGS, encodedTags)
             } else {
               nextParams.delete(PARAM_TAGS)
+            }
+          }
+
+          if (nextFirstEventStartAfter !== undefined) {
+            const encodedStartAfter = encodeOptionalString(
+              normalizeDateInput(nextFirstEventStartAfter),
+            )
+            if (encodedStartAfter) {
+              nextParams.set(PARAM_FIRST_EVENT_START_AFTER, encodedStartAfter)
+            } else {
+              nextParams.delete(PARAM_FIRST_EVENT_START_AFTER)
+            }
+          }
+
+          if (nextFirstEventStartBefore !== undefined) {
+            const encodedStartBefore = encodeOptionalString(
+              normalizeDateInput(nextFirstEventStartBefore),
+            )
+            if (encodedStartBefore) {
+              nextParams.set(PARAM_FIRST_EVENT_START_BEFORE, encodedStartBefore)
+            } else {
+              nextParams.delete(PARAM_FIRST_EVENT_START_BEFORE)
             }
           }
 
@@ -308,8 +435,13 @@ export const useSearchBarUrlState = ({
     sortDirection,
     viewMode,
     page,
+    attendanceMode,
+    performerType,
+    firstEventStartAfter,
+    firstEventStartBefore,
     selectedGenreIds,
-    selectedSeriesTagIds,
+    selectedTagIds,
+    selectedSeriesTagIds: selectedTagIds,
     // Any search/sort change can affect result ordering, so we reset to page 1.
     // View mode changes do not affect ordering, so we do not reset the page in that case.
     setSearchValue: (value: string) => updateSearchParams({ q: value.trim(), page: DEFAULT_PAGE }),
@@ -319,9 +451,41 @@ export const useSearchBarUrlState = ({
       updateSearchParams({ sortDirection: value, page: DEFAULT_PAGE }),
     setViewMode: (value: SearchViewMode) => updateSearchParams({ view: value }),
     setPage: (value: number) => updateSearchParams({ page: value }),
+    setAttendanceMode: (value: AttendanceMode | undefined) =>
+      updateSearchParams({ attendanceMode: value ?? null, page: DEFAULT_PAGE }),
+    setPerformerType: (value: PerformerType | undefined) =>
+      updateSearchParams({ performerType: value ?? null, page: DEFAULT_PAGE }),
+    setFirstEventStartAfter: (value: string) =>
+      updateSearchParams({ firstEventStartAfter: value, page: DEFAULT_PAGE }),
+    setFirstEventStartBefore: (value: string) =>
+      updateSearchParams({ firstEventStartBefore: value, page: DEFAULT_PAGE }),
+    setSelectedGenreIds: (ids: number[]) => updateSearchParams({ genres: ids, page: DEFAULT_PAGE }),
+    setSelectedTagIds: (ids: number[]) => updateSearchParams({ tags: ids, page: DEFAULT_PAGE }),
+    toggleAttendanceMode: (value: AttendanceMode) =>
+      updateSearchParams({
+        attendanceMode: attendanceMode === value ? null : value,
+        page: DEFAULT_PAGE,
+      }),
+    togglePerformerType: (value: PerformerType) =>
+      updateSearchParams({
+        performerType: performerType === value ? null : value,
+        page: DEFAULT_PAGE,
+      }),
     toggleGenreId: (id: number) =>
       updateSearchParams({ genres: toggleArrayValue(selectedGenreIds, id), page: DEFAULT_PAGE }),
+    toggleTagId: (id: number) =>
+      updateSearchParams({ tags: toggleArrayValue(selectedTagIds, id), page: DEFAULT_PAGE }),
     toggleSeriesTagId: (id: number) =>
-      updateSearchParams({ tags: toggleArrayValue(selectedSeriesTagIds, id), page: DEFAULT_PAGE }),
+      updateSearchParams({ tags: toggleArrayValue(selectedTagIds, id), page: DEFAULT_PAGE }),
+    clearFilters: () =>
+      updateSearchParams({
+        attendanceMode: null,
+        performerType: null,
+        genres: [],
+        tags: [],
+        firstEventStartAfter: '',
+        firstEventStartBefore: '',
+        page: DEFAULT_PAGE,
+      }),
   }
 }

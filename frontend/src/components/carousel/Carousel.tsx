@@ -77,9 +77,10 @@ function Carousel({
 
     emblaApi.on('select', updateControls)
     emblaApi.on('reInit', updateControls)
-    updateControls()
+    const frameId = requestAnimationFrame(updateControls)
 
     return () => {
+      cancelAnimationFrame(frameId)
       emblaApi.off('select', updateControls)
       emblaApi.off('reInit', updateControls)
     }

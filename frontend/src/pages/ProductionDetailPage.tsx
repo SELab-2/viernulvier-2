@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
 
@@ -54,6 +54,10 @@ function getProductionHeroImageUrl(production: Production): string | null {
   return null
 }
 
+type ProductionDetailContentProps = {
+  id: string
+}
+
 /**
  * Production detail page.
  *
@@ -65,33 +69,22 @@ function getProductionHeroImageUrl(production: Production): string | null {
  *   - metadata panel (with MetaPanel component)
  *   - events list, media gallery
  */
-const ProductionDetailsPage = () => {
-  const { id } = useParams() // Get the id from the URL params (e.g. /productions/123 -> id = 123)
+const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
   const navigate = useNavigate()
   const { i18n, t } = useTranslation()
   const lang = i18n.language
 
   const [prod, setProd] = useState<Production | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
-  const tRef = useRef(t)
-  tRef.current = t
 
   // useEffect to fetch the production given the id in the URL.
   useEffect(() => {
-    if (!id) {
-      return
-    }
-    setLoading(true)
-
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
-      const errMsg = tRef.current('productions.detail.error.invalidId', 'Invalid production ID')
+      const errMsg = t('productions.detail.error.invalidId', 'Invalid production ID')
       navigate('/', {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
-      setError(errMsg)
-      setLoading(false)
       return
     }
 
@@ -100,21 +93,17 @@ const ProductionDetailsPage = () => {
         const data = await getProduction(parsed, ['events', 'related'])
         setProd(data)
       } catch {
-        const errMsg = tRef.current(
-          'productions.detail.error.loadFailed',
-          'Could not load production',
-        )
+        const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
         navigate('/', {
           state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
         })
-        setError(errMsg)
       } finally {
         setLoading(false)
       }
     }
 
     fetchProduction()
-  }, [id, navigate])
+  }, [id, navigate, t])
 
   // If the page is still loading, show a full-page skeleton.
   if (loading) {
@@ -125,11 +114,7 @@ const ProductionDetailsPage = () => {
   if (!prod) {
     return (
       <Box sx={{ p: 5 }}>
-        {error ? (
-          <Box>{error}</Box>
-        ) : (
-          <Box>{tRef.current('productions.detail.notFound', 'Productie niet gevonden.')}</Box>
-        )}
+        <Box>{t('productions.detail.notFound', 'Productie niet gevonden.')}</Box>
       </Box>
     )
   }
@@ -143,10 +128,9 @@ const ProductionDetailsPage = () => {
 
   const description = getLocalizedValue(production.description, lang) || ''
   const teaser = getLocalizedValue(production.teaser, lang) || ''
-
   const heroImage = getProductionHeroImageUrl(production)
-
   const events = production.events ?? []
+  const relatedProductions = production.related ?? []
 
   return (
     <Box
@@ -226,13 +210,23 @@ const ProductionDetailsPage = () => {
         </Box>
       )}
 
-      {production.related && production.related.length > 0 && (
+      {relatedProductions.length > 0 && (
         <Box sx={{ px: 2, pb: 4 }}>
-          <RelatedProductions related={production.related ?? []} lang={lang} />
+          <RelatedProductions related={relatedProductions} lang={lang} />
         </Box>
       )}
     </Box>
   )
+}
+
+const ProductionDetailsPage = () => {
+  const { id } = useParams()
+
+  if (!id) {
+    return null
+  }
+
+  return <ProductionDetailContent key={id} id={id} />
 }
 
 export default ProductionDetailsPage
