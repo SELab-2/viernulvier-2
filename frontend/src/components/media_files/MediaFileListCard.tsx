@@ -1,8 +1,10 @@
-import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
-import { Box, Chip, Stack, Tooltip, Typography } from '@mui/material'
+import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
+import { Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
 import MediaFilePreview from './MediaFilePreview'
+import { createCommonStyles } from '../../theme/styles'
+import { tokens } from '../../theme/tokens'
 import {
   formatMediaFileDate,
   formatMediaFileSize,
@@ -17,12 +19,14 @@ export interface MediaFileListCardProps {
 }
 
 const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
+  const theme = useTheme()
+  const commonStyles = createCommonStyles(theme)
   const { i18n, t } = useTranslation()
-  const locale = i18n.language
+  const { language } = i18n
 
-  const uploadedAt = formatMediaFileDate(mediaFile.created_at, locale)
+  const uploadedAt = formatMediaFileDate(mediaFile.created_at, language)
   const fileSize = formatMediaFileSize(mediaFile.size_bytes)
-  const description = getMediaFileDescription(mediaFile, locale)
+  const description = getMediaFileDescription(mediaFile, language)
   const fileTypeLabel = getMediaFileTypeLabel(mediaFile, t)
 
   return (
@@ -31,70 +35,89 @@ const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
       href={mediaFile.file}
       target="_blank"
       rel="noopener noreferrer"
-      direction="row"
-      sx={(theme) => ({
-        gap: 3,
-        height: 170,
-        p: 3,
-        borderRadius: '4px',
+      direction={{ xs: 'column', sm: 'row' }}
+      sx={{
+        ...commonStyles.cardBase,
+        width: '100%',
+        minWidth: 0,
+        borderRadius: tokens.borderRadius.sm,
         overflow: 'hidden',
-        backgroundColor: theme.palette.background.paper,
-        border: `1px solid ${theme.palette.divider}`,
         textDecoration: 'none',
-        transition: 'box-shadow 0.2s ease',
+        color: 'inherit',
         '&:hover': {
-          boxShadow: theme.shadows[3],
+          textDecoration: 'none',
         },
-      })}
+      }}
     >
-      <Stack sx={{ height: '100%', aspectRatio: 16 / 9, borderRadius: '4px', overflow: 'hidden' }}>
-        <MediaFilePreview mediaFile={mediaFile} previewLabel={fileTypeLabel} />
+      <Stack
+        sx={{
+          p: tokens.spacing.numericMd, // 🔥 ruimte rond preview (zoals blogs)
+          flexShrink: 0,
+        }}
+      >
+        <Stack
+          sx={{
+            width: { xs: '100%', sm: 220 },
+            aspectRatio: '16 / 9',
+            borderRadius: tokens.borderRadius.sm,
+            overflow: 'hidden',
+            backgroundColor: 'action.hover',
+          }}
+        >
+          <MediaFilePreview mediaFile={mediaFile} previewLabel={fileTypeLabel} />
+        </Stack>
       </Stack>
 
       <Stack
         sx={{
           flex: 1,
-          minWidth: 0,
-          height: '100%',
           justifyContent: 'space-between',
-          gap: 1,
-          overflow: 'hidden',
+          gap: tokens.spacing.numericSm,
+          p: tokens.spacing.numericLg,
+          minWidth: 0,
         }}
       >
-        <Stack sx={{ minWidth: 0 }}>
+        <Stack spacing={1}>
           <Typography
             component="h2"
             variant="h6"
-            color="textPrimary"
-            noWrap
-            sx={{ fontWeight: 'bold' }}
+            color="text.primary"
+            sx={{
+              fontWeight: 'bold',
+              overflowWrap: 'anywhere',
+              wordBreak: 'break-word',
+            }}
           >
             {mediaFile.filename}
           </Typography>
 
-          {description ? (
-            <Tooltip title={description} placement="top" arrow disableInteractive>
-              <Typography
-                component="p"
-                color="textSecondary"
-                sx={{
-                  display: '-webkit-box',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  wordBreak: 'break-word',
-                }}
-              >
-                {description}
-              </Typography>
-            </Tooltip>
-          ) : null}
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+            }}
+          >
+            {description || fileTypeLabel}
+          </Typography>
         </Stack>
 
-        <Stack spacing={1} sx={{ color: 'text.secondary', minHeight: 48 }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minHeight: 20 }}>
-            <Chip size="small" label={fileTypeLabel} />
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
+          sx={{
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: { sm: 'space-between' },
+            color: 'text.secondary',
+            minWidth: 0,
+          }}
+        >
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
+            <DateRangeOutlinedIcon fontSize="inherit" />
             <Typography variant="body2" noWrap>
               {uploadedAt}
             </Typography>
@@ -107,10 +130,6 @@ const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
           ) : null}
         </Stack>
       </Stack>
-
-      <Box sx={{ alignSelf: 'center', pr: 2 }}>
-        <ArrowForwardOutlinedIcon color="action" />
-      </Box>
     </Stack>
   )
 }

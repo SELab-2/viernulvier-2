@@ -3,10 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
-import EntityView from '../components/entity/EntityView'
+import MediaFileView from '../components/media_files/MediaFileView'
 import FloatingAlert from '../components/FloatingAlert'
-import MediaFileGridCard from '../components/media_files/MediaFileGridCard'
-import MediaFileListCard from '../components/media_files/MediaFileListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
@@ -163,15 +161,7 @@ const MediaFilesPage = () => {
     setSearchValue(nextQuery)
   }
 
-  const resultsContent = (
-    <EntityView
-      items={mediaFiles}
-      layout={viewMode}
-      getKey={(mediaFile) => mediaFile.id}
-      renderListItem={(mediaFile) => <MediaFileListCard mediaFile={mediaFile} />}
-      renderGridItem={(mediaFile) => <MediaFileGridCard mediaFile={mediaFile} />}
-    />
-  )
+  const resultsContent = <MediaFileView mediaFiles={mediaFiles} layout={viewMode} />
 
   return (
     <>
