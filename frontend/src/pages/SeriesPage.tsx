@@ -89,7 +89,7 @@ const fetchSeriesList = async ({ search }: { search?: string }): Promise<Series[
 const SeriesPage = () => {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
 
   const {
     searchValue,

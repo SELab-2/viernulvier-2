@@ -57,15 +57,18 @@ describe('theme/styles - createCommonStyles', () => {
     expect(cardBaseRecord['&:hover']).toBeDefined()
   })
 
-  it('gridContainer should have flex layout properties', () => {
+  it('gridContainer should use an auto-fit CSS grid with card-width tracks centered on each row', () => {
     const commonStyles = createCommonStyles(lightTheme)
     const gridContainerSx = commonStyles.gridContainer as SxProps<Theme>
     const gridContainerRecord = gridContainerSx as Record<string, unknown>
 
-    expect(gridContainerRecord.display).toBe('flex')
-    expect(gridContainerRecord.flexWrap).toBe('wrap')
+    expect(gridContainerRecord.display).toBe('grid')
+    expect(gridContainerRecord.gridTemplateColumns).toBe(
+      `repeat(auto-fit, min(${tokens.card.gridCardWidthPx}px, 100%))`,
+    )
     expect(gridContainerRecord.gap).toBe(tokens.spacing.numericLg)
-    expect(gridContainerRecord.justifyContent).toBe('flex-start')
+    expect(gridContainerRecord.justifyContent).toBe('center')
+    expect(gridContainerRecord.alignItems).toBe('stretch')
   })
 
   it('navbar should have sticky positioning with dark background', () => {

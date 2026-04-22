@@ -13,15 +13,49 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import { useTheme, type SxProps, type Theme } from '@mui/material/styles'
 import { cloneElement, isValidElement, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import LoadingSpinner from './LoadingSpinner'
 import Pagination from './Pagination'
 import SearchControlsBar from './searchbar/SearchControlsBar'
+import { tokens } from '../theme/tokens'
 
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './searchbar/types'
+
+/* ------------------------------------------------------------------------- */
+/* Desktop sidebar + grid layout geometry                                    */
+/* ------------------------------------------------------------------------- */
+
+/**
+ * Card width (px) used by the `*GridCard` components. The grid container
+ * (`createCommonStyles.gridContainer`) tracks at this width, and the content
+ * column below snaps to multiples of it so a row of N cards has no leftover
+ * space and the whole sidebar+content block can center symmetrically.
+ */
+const CARD_WIDTH_PX = tokens.card.gridCardWidthPx
+/** Gap between cards within the grid (theme.spacing(3) = 24px). */
+const CARD_GAP_PX = 24
+/** Spacing units for the sidebar width (theme.spacing(39) = 312px). */
+const SIDEBAR_WIDTH_SPACING = 39
+const SIDEBAR_WIDTH_PX = SIDEBAR_WIDTH_SPACING * 8
+/** Gap between the sidebar and the content column (theme.spacing(3) = 24px). */
+const SIDEBAR_GAP_PX = 24
+/** Total horizontal padding applied by the surrounding `<Container>`. */
+const CONTAINER_PADDING_PX = 24 * 2
+
+/** Pixel width occupied by N grid cards laid out in one row. */
+const widthForCols = (n: number): number => n * CARD_WIDTH_PX + Math.max(0, n - 1) * CARD_GAP_PX
+
+/**
+ * Smallest viewport width at which the sidebar plus N grid cards fit inside
+ * the page container. Used to drive the column-count breakpoints below so the
+ * step from N to N+1 columns happens exactly when the next card would actually
+ * fit on screen rather than at an arbitrary MUI breakpoint.
+ */
+const viewportThresholdForCols = (n: number): number =>
+  widthForCols(n) + SIDEBAR_WIDTH_PX + SIDEBAR_GAP_PX + CONTAINER_PADDING_PX
 
 export interface CollectionPageLayoutProps {
   isMobile: boolean
@@ -132,6 +166,17 @@ const CollectionPageLayout = ({
   const theme = useTheme()
   const isEmpty = !isLoading && !errorMessage && !hasResults
   const shouldRenderSidebar = showSidebar && sidebarContent
+  /**
+   * On desktop, when the sidebar is visible alongside a card grid, we snap the
+   * content column to a width that fits an exact number of cards and let the
+   * full sidebar+content block center together via auto margins. This way:
+   *   - cards stay centered within the column,
+   *   - extra space appears symmetrically on both sides of the page rather
+   *     than only between the grid and the right edge,
+   *   - the column width is determined by the viewport (not by the rendered
+   *     content), so the layout doesn't jump when results are empty/loading.
+   */
+  const isDesktopSidebarGrid = Boolean(shouldRenderSidebar && !isMobile && viewMode === 'grid')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   const mobileSidebarLabel = t('searchbar.filters')
@@ -228,8 +273,37 @@ const CollectionPageLayout = ({
     </Box>
   )
 
+  /**
+   * Width of the content column.
+   *
+   * For the desktop sidebar+grid case we lock the column to N×card + gaps at
+   * three media-query breakpoints derived from the actual layout geometry
+   * (`viewportThresholdForCols`). Each step happens exactly when the next card
+   * fits next to the sidebar, so we never leave a half-card gap and the whole
+   * block can center via the wrapper's auto margins.
+   *
+   * In every other case (list view, no sidebar, or mobile dialog sidebar) the
+   * column simply fills the remaining flex space.
+   */
+  const contentColumnSx: SxProps<Theme> = isDesktopSidebarGrid
+    ? {
+        flexShrink: 0,
+        minWidth: 0,
+        // Default column width once we're on desktop (md+): one card.
+        [theme.breakpoints.up('md')]: {
+          width: `${widthForCols(1)}px`,
+        },
+        [`@media (min-width: ${viewportThresholdForCols(2)}px)`]: {
+          width: `${widthForCols(2)}px`,
+        },
+        [`@media (min-width: ${viewportThresholdForCols(3)}px)`]: {
+          width: `${widthForCols(3)}px`,
+        },
+      }
+    : { flex: 1, minWidth: 0 }
+
   const contentColumn = (
-    <Stack spacing={3} sx={{ flex: 1, minWidth: 0 }}>
+    <Stack spacing={3} sx={contentColumnSx}>
       {/* Search, sort, and view controls. */}
       <SearchControlsBar
         placeholder={searchPlaceholder}
@@ -266,26 +340,55 @@ const CollectionPageLayout = ({
     <Box sx={{ py: { xs: 3, md: 4 } }}>
       <Container maxWidth="xl">
         {shouldRenderSidebar && !isMobile ? (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              gap: 3,
-              alignItems: { xs: 'stretch', md: 'stretch' },
-            }}
-          >
+          isDesktopSidebarGrid ? (
+            // Desktop sidebar + grid: center the whole sidebar+content block
+            // via auto margins. The inner row uses `width: fit-content` so it
+            // shrinks to (sidebar + gap + content column) and the outer Box
+            // distributes any remaining space symmetrically on both sides.
+            <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  gap: 3,
+                  width: 'fit-content',
+                  maxWidth: '100%',
+                }}
+              >
+                <Box
+                  sx={{
+                    flexShrink: 0,
+                    width: theme.spacing(SIDEBAR_WIDTH_SPACING),
+                  }}
+                >
+                  {sidebarContent}
+                </Box>
+                {contentColumn}
+              </Box>
+            </Box>
+          ) : (
             <Box
               sx={{
-                flexShrink: 0,
-                width: { xs: '100%', md: theme.spacing(39) },
-                alignSelf: { md: 'flex-start' },
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                gap: 3,
+                alignItems: { xs: 'stretch', md: 'stretch' },
               }}
             >
-              {sidebarContent}
-            </Box>
+              <Box
+                sx={{
+                  flexShrink: 0,
+                  width: { xs: '100%', md: theme.spacing(SIDEBAR_WIDTH_SPACING) },
+                  alignSelf: { md: 'flex-start' },
+                }}
+              >
+                {sidebarContent}
+              </Box>
 
-            {contentColumn}
-          </Box>
+              {contentColumn}
+            </Box>
+          )
         ) : (
           contentColumn
         )}

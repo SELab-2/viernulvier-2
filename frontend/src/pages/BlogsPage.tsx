@@ -30,7 +30,7 @@ const BlogsPage = () => {
   const navFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
   const initialFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
   const initialFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
   const {
     searchValue,
     sortTarget,

@@ -227,6 +227,11 @@ export const tokens = {
     padding: 3,
     borderRadiusPx: '16px',
     paddingPx: '24px',
+    // Fixed width for grid-mode cards. Referenced by the individual
+    // `*GridCard` components and by `createCommonStyles.gridContainer` so the
+    // auto-fit CSS grid tracks, the content column sizing in
+    // `CollectionPageLayout`, and the card itself all stay in sync.
+    gridCardWidthPx: 350,
   },
 
   chip: {
