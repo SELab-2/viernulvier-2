@@ -16,4 +16,3 @@ The system consists of:
 - Import pipeline for external data sources
 
 ---
-

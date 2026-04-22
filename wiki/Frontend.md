@@ -1,196 +1,138 @@
+# Frontend
+
 ## Mockups (Figma)
 
 [![Figma Design](https://img.shields.io/badge/Bekijk%20in-Figma-F24E1E?logo=figma)](https://www.figma.com/proto/NO5K1na6jzQBVNDxNWuFHu/selab?node-id=0-1&t=s3LbIfzwLgKREpvT-1)
 
 ## Overview
 
-The frontend is built with modern React tooling and follows best practices for type safety, internationalization, and code quality:
+The frontend is a **Vite** + **React** + **TypeScript** single-page application. It uses **Material UI** for components, **i18next** for translations, and **React Router v7** for client-side navigation.
+
+At app startup, `frontend/src/App.tsx` restores the persisted theme mode from `localStorage`, creates the theme with `createAppTheme`, applies `CssBaseline`, and renders the router.
+
+## Current Structure
 
 ```text
 frontend/
+├── public/
+│   └── fonts/
 ├── src/
-│   ├── components/      # Reusable UI components
-│   ├── locales/         # i18n translation files
-│   │   ├── en/          # English translations
-│   │   └── nl/          # Dutch translations
-│   ├── pages/           # Page-level components
-│   ├── services/        # API calls ??
-│   ├── theme/           # Centralized styling
-│   ├── types/           # interfaces and types
-│   ├── utils/           # Utility functions 
-│   ├── router.tsx       # Route definitions
-│   ├── i18n.ts          # i18next configuration
-│   ├── main.tsx         # App entry point
-│   └── App.tsx          # Root component
-├── package.json         # Dependencies and scripts
-├── vite.config.ts       # Vite bundler config
-├── tsconfig.json        # TypeScript config
-├── jest.config.cjs      # Jest test config
-├── eslint.config.cjs    # ESLint flat config
-└── .prettierrc.json     # Prettier formatting config
+│   ├── __tests__/
+│   ├── components/
+|   |   ├── blogs/
+│   │   ├── carousel/
+│   │   ├── chips/
+│   │   ├── entity/
+|   |   ├── extra/
+│   │   ├── production/
+│   │   ├── productions/
+│   │   ├── searchbar/
+│   │   ├── series/
+│   │   ├── series_details/
+│   │   └── skeletons/
+│   ├── locales/
+│   │   ├── en/
+│   │   └── nl/
+│   ├── pages/
+│   ├── services/
+│   │   ├── blogs/
+│   │   ├── events/
+│   │   ├── genres/
+│   │   ├── halls/
+│   │   ├── languages/
+│   │   ├── locations/
+│   │   ├── media/
+│   │   ├── media_files/
+│   │   ├── pricing/
+│   │   ├── productions/
+│   │   ├── spaces/
+│   │   └── tags/
+│   ├── theme/
+│   ├── types/
+│   ├── utils/
+│   ├── App.tsx
+│   ├── i18n.ts
+│   ├── index.css
+│   ├── main.tsx
+│   └── router.tsx
+├── package.json
+├── vite.config.ts
+├── tsconfig.json
+├── tsconfig.node.json
+├── tsconfig.jest.json
+├── jest.config.cjs
+└── eslint.config.cjs
 ```
-
-This structure ensures clear separation of concerns, easy navigation, and maintainability.
-
----
 
 ## Tech Stack
 
 ### Core
 
-- **Vite** → Fast development server and build tool
-- **React 19** → UI library with latest features
-- **TypeScript** → Type safety and better DX
+- **Vite** for dev/build tooling
+- **React 19** for UI composition
+- **TypeScript** for type safety
 
-### UI & Styling
+### UI and Styling
 
-- **Material UI (MUI)** → Component library implementing Material Design
-- **Emotion** → CSS-in-JS (MUI peer dependency)
+- **Material UI** (`@mui/material`, `@mui/icons-material`, `@mui/system`)
+- **Emotion** (`@emotion/react`, `@emotion/styled`)
 
----
+### Routing and i18n
 
-## Styling System (Tokens + Shared Styles)
+- **react-router-dom v7**
+- **i18next** + **react-i18next**
 
-To keep styling consistent and easy to maintain, we use a layered approach:
+### Data and Utility Libraries
 
-### 1. Tokens for shared visual values
+- **axios** for API requests
+- **dompurify** for safe HTML rendering
+- **embla-carousel-react** + **embla-carousel-wheel-gestures** for carousel interactions
 
-Use design tokens as the single source of truth for values like:
+## Styling System
 
-- colors
-- spacing
-- typography
-- border radius
-- shadows
-- transitions
+Styling is intentionally split into layers:
 
-**File:** `frontend/src/theme/tokens.ts`
+1. `frontend/src/theme/tokens.ts` defines shared values (colors, spacing, typography, shadows, breakpoints).
+2. `frontend/src/theme/muiPalette.ts` converts tokens into light/dark MUI themes.
+3. `frontend/src/theme/styles.ts` contains shared `sx` recipes for common UI patterns.
+4. `frontend/src/index.css` provides global CSS variables, font-face declarations, and page-level base rules.
 
-If a style value should be reused across components, add it to tokens instead of hardcoding it.
+The current design system uses **ABC Monument Grotesk** from `public/fonts/`.
 
-### 2. Theme for MUI integration
+## Routing
 
-MUI theme creation is centralized and built from tokens.
+Routes are defined in `frontend/src/router.tsx`.
 
-**File:** `frontend/src/theme/muiPalette.ts`
+| Route | Component | Notes |
+| --- | --- | --- |
+| `/` | `HomePage` | Landing page with archive search and stats |
+| `/archive` | `ProductionsPage` | Canonical archive listing route |
+| `/productions` | redirect to `/archive` | Compatibility alias |
+| `/productions/:id` | `ProductionDetailPage` | Production detail page |
+| `/series` | `SeriesPage` | Series overview |
+| `/series/:id` | `SeriesDetailPage` | Series detail page |
+| `/blogs` | `BlogsPage` | Stories/blog listing |
+| `/blogs/:id` | `BlogDetailPage` | Story detail page |
+| `/media` | redirect to `/archive` | Temporary alias |
+| `/media/:id` | redirect to `/archive` | Temporary alias |
+| `*` | `NotFoundPage` | 404 fallback |
 
-`createAppTheme` is used at the app root so light/dark mode and component defaults stay consistent.
+The router also scrolls to top on route changes and renders shared `Navbar` + `Footer` around page content.
 
-### 3. Shared style patterns for repeated UI
+## Data Access
 
-Common `sx` patterns live in a shared helper.
+Frontend API logic is grouped by feature under `frontend/src/services/`.
 
-**File:** `frontend/src/theme/styles.ts`
-
-Use shared patterns for repeated structures (e.g., navbar/footer/card/grid). Add new shared patterns here when multiple components need the same styling structure.
-
-### 4. Component-local style helpers when behavior is component-specific
-
-Keep style logic local when it depends on component context/state and is not broadly reusable.
-
-**Example file:** `frontend/src/components/chips/genreAndTagChipStyles.ts`
-
-### 5. Global CSS only for app-wide/page-wide rules
-
-Global CSS is used for base styles, CSS variables, and layout rules that are not component-specific.
-
-**File:** `frontend/src/index.css`
-
----
-
-## Practical Rules
-
-When adding or changing styles:
-
-1. First check if a token already exists in `frontend/src/theme/tokens.ts`.
-2. If the style pattern is reused, add/use `frontend/src/theme/styles.ts`.
-3. If the style is specific to one component's behavior, keep it near that component.
-4. Avoid hardcoded colors and repeated magic numbers in components where tokens can be used.
-5. Keep `createAppTheme` as the single theme entry point in `frontend/src/App.tsx`.
-
-### Routing
-
-- **React Router v7** → Client-side routing with nested routes
-
-### Internationalization
-
-- **i18next** + **react-i18next** → English/Dutch translations
-
-### Testing
-
-- **Jest** → Test runner
-- **React Testing Library** → Component testing utilities
-- **jsdom** → Browser environment simulation
-
-### Code Quality
-
-- **ESLint** → Linting (flat config format)
-- **Prettier** → Code formatting
-- **TypeScript** → Static type checking
-
----
-
-## Dependencies
-
-### Production Dependencies (dependencies)
-
-These are shipped to production and required at runtime:
-
-```json
-{
-  "@emotion/react": "^11.11.4",
-  "@emotion/styled": "^11.11.5",
-  "@mui/icons-material": "^6.2.15",
-  "@mui/material": "^6.2.15",
-  "i18next": "^23.15.1",
-  "react": "^19.0.0",
-  "react-dom": "^19.0.0",
-  "react-i18next": "^15.4.0",
-  "react-router-dom": "^7.1.3"
-}
-```
-
-### Development Dependencies (devDependencies)
-
-These are only used during development and testing:
-
-```json
-{
-  "@testing-library/jest-dom": "^6.4.6",
-  "@testing-library/react": "^16.0.1",
-  "@testing-library/user-event": "^14.5.2",
-  "@types/jest": "^29.5.14",
-  "@types/react": "^19.0.3",
-  "@types/react-dom": "^19.0.3",
-  "@typescript-eslint/eslint-plugin": "^8.56.0",
-  "@typescript-eslint/parser": "^8.56.0",
-  "@vitejs/plugin-react": "^4.3.4",
-  "eslint": "^9.7.0",
-  "eslint-config-prettier": "^9.1.0",
-  "eslint-plugin-prettier": "^5.2.1",
-  "eslint-plugin-react": "^7.35.0",
-  "eslint-plugin-react-hooks": "^5.1.0",
-  "eslint-plugin-react-refresh": "^0.4.12",
-  "globals": "^15.9.0",
-  "identity-obj-proxy": "^3.0.0",
-  "jest": "^29.7.0",
-  "jest-environment-jsdom": "^29.7.0",
-  "jsdom": "^24.1.3",
-  "prettier": "^3.3.3",
-  "ts-jest": "^29.2.5",
-  "typescript": "^5.6.3",
-  "vite": "^7.3.1"
-}
-```
-
----
+- `Api.ts` and `ApiTypes.ts` define the Axios client and shared error shape.
+- `ApiParams.ts` centralizes list query param formatting.
+- Domain modules (blogs, productions, media, locations, pricing, tags, etc.) keep request logic close to each feature.
 
 ## Installation
 
 ### Prerequisites
 
-1. **Node.js LTS** (v20 or later)
-2. **npm** (comes with Node.js)
+1. **Node.js LTS** (v20+ recommended)
+2. **npm**
 
 ### Steps
 
@@ -201,354 +143,154 @@ cd frontend
 npm install
 ```
 
-This installs all dependencies (both production and development).
+If you need a fully clean install (for CI parity), use:
 
----
+```bash
+npm ci
+```
 
 ## Available Scripts
 
 ### Development
 
-Start the dev server with hot reload:
-
 ```bash
 npm run dev
 ```
 
-Runs on `http://localhost:5173` by default.
+Runs Vite dev server (default `http://localhost:5173`).
 
 ### Build
-
-Create an optimized production build:
 
 ```bash
 npm run build
 ```
 
-Output goes to `frontend/dist/`.
+Type-checks and builds production assets into `frontend/dist/`.
 
 ### Preview
-
-Preview the production build locally:
 
 ```bash
 npm run preview
 ```
 
-### Testing
+Preview the production build locally.
 
-Run all tests:
+### Testing
 
 ```bash
 npm test
-```
-
-Run tests in watch mode:
-
-```bash
 npm run test:watch
 ```
 
-### Linting
-
-Check for code quality issues:
+### Linting and Formatting
 
 ```bash
 npm run lint
+npm run lint:fix
+npm run format:check
+npm run format:fix
 ```
-
-### Formatting
-
-Format all files with Prettier:
-
-```bash
-npm run format
-```
-
----
-
-## Routing
-
-Routes are defined in `src/router.tsx`:
-
-| Route                | Component              | Description          |
-|----------------------|------------------------|----------------------|
-| `/`                  | `HomePage`             | Landing page         |
-| `/events`            | `EventsPage`           | Events list          |
-| `/events/:id`        | `EventDetailPage`      | Single event details |
-| `/productions`       | `ProductionsPage`      | Productions list     |
-| `/productions/:id`   | `ProductionDetailPage` | Single production    |
-
-### Adding a New Route
-
-1. Create a page component in `src/pages/`:
-
-```tsx
-// src/pages/MyNewPage.tsx
-import { Container, Typography } from '@mui/material'
-
-const MyNewPage = () => {
-  return (
-    <Container>
-      <Typography variant="h4">My New Page</Typography>
-    </Container>
-  )
-}
-
-export default MyNewPage
-```
-
-2. Import it in `src/router.tsx`:
-
-```tsx
-import MyNewPage from './pages/MyNewPage'
-```
-
-3. Add a `<Route>`:
-
-```tsx
-<Route path="/my-new-page" element={<MyNewPage />} />
-```
-
-4. Optionally add a nav link in `src/components/Navbar.tsx`:
-
-```tsx
-<Button color="inherit" component={RouterLink} to="/my-new-page">
-  {t('nav.myNewPage')}
-</Button>
-```
-
----
-
-## Internationalization (i18n)
-
-Language switching is integrated in the navbar (EN/NL buttons).
-
-### Translation Files
-
-- `src/locales/en/translation.json` → English
-- `src/locales/nl/translation.json` → Dutch
-
-### Structure
-
-```json
-{
-  "title": "...",
-  "subtitle": "...",
-  "nav": {
-    "home": "...",
-    "events": "...",
-    "productions": "..."
-  },
-  "events": {
-    "title": "...",
-    "listPlaceholder": "...",
-    "detailTitle": "...",
-    "detailPlaceholder": "...",
-    "backToEvents": "..."
-  },
-  "productions": { ... }
-}
-```
-
-### Using Translations in Components
-
-```tsx
-import { useTranslation } from 'react-i18next'
-
-const MyComponent = () => {
-  const { t } = useTranslation()
-  
-  return <Typography>{t('nav.home')}</Typography>
-}
-```
-
-### With Interpolation
-
-```tsx
-{t('events.detailPlaceholder', { id: '123' })}
-```
-
-In translation file:
-
-```json
-{
-  "detailPlaceholder": "Event details for ID {{id}} will be displayed here."
-}
-```
-
----
 
 ## Testing
 
-### Test Setup
+Frontend tests run with **Jest** + **jsdom** + **React Testing Library**.
 
-- **Config**: `jest.config.cjs`
-- **Setup file**: `src/setupTests.ts` (imports jest-dom matchers and polyfills)
-- **Test location**: `src/__tests__/` or `*.test.tsx` files
+- Main config: `frontend/jest.config.cjs`
+- Setup file: `frontend/src/setupTests.ts`
+- Tests: `frontend/src/__tests__/`
 
-### Running Tests
+Most component tests wrap with `MemoryRouter`, `ThemeProvider`, and i18n context where required.
 
-```bash
-npm test
-```
+## Configuration Files
 
-### Example Test
-
-```tsx
-import { render, screen } from '@testing-library/react'
-import App from '../App'
-import '../i18n'
-
-describe('App', () => {
-  it('renders navigation', () => {
-    render(<App />)
-    expect(screen.getByText('Archive')).toBeInTheDocument()
-  })
-})
-```
-
----
-
-## Linting & Formatting
-
-### ESLint
-
-Uses **flat config** format (`eslint.config.cjs`).
-
-Run lint checks:
-
-```bash
-npm run lint
-```
-
-### Prettier
-
-Config in `.prettierrc.json`:
-
-```json
-{
-  "semi": false,
-  "singleQuote": true,
-  "trailingComma": "all",
-  "printWidth": 100
-}
-```
-
-Format all files:
-
-```bash
-npm run format
-```
-
----
-
-## CI/CD
-
-A GitHub Actions workflow runs on every push/PR to `main` or `develop`:
-
-**File**: `.github/workflows/frontend.yml`
-
-**Steps**:
-
-1. Install dependencies
-2. Run linting
-3. Run tests
-4. Build the project
-
-Check the **Actions** tab in GitHub to see build status.
-
----
+- `package.json`: dependencies and scripts
+- `vite.config.ts`: Vite plugins/build configuration
+- `tsconfig.json`: app TypeScript config
+- `tsconfig.node.json`: TS config for tooling-side files
+- `tsconfig.jest.json`: TS config for tests
+- `eslint.config.cjs`: ESLint flat config
+- `jest.config.cjs`: Jest test config
+- `.prettierrc.json`: Prettier formatting rules
 
 ## Adding a New Package
 
-### 1. Install the package
+### Install
 
 ```bash
 cd frontend
 npm install <package-name>
 ```
 
-For development-only packages:
+For dev-only packages:
 
 ```bash
 npm install --save-dev <package-name>
 ```
 
-### 2. Verify it's added to package.json
+### Verify and Commit
 
-Check `dependencies` or `devDependencies` section.
+1. Confirm it is in `dependencies` or `devDependencies`.
+2. Commit `package.json` and lockfile changes.
 
-### 3. Commit the changes
+Guideline:
 
-```bash
-git add package.json package-lock.json
-git commit -m "Add <package-name>"
-```
-
-### Guidelines
-
-- **Production dependency** → needed at runtime (e.g., axios, date-fns)
-- **Dev dependency** → only for development/testing (e.g., @types/*, testing-library)
-
----
+- runtime package -> `dependencies`
+- tooling/test package -> `devDependencies`
 
 ## Security
 
-### Checking for Vulnerabilities
+### Dependency Audit
 
 ```bash
 npm audit --omit=dev
 ```
 
-This checks **production dependencies only** and ignores dev-only issues.
+This focuses on production dependency risk.
 
-### Current Status
+### Frontend Security Practices in This Repo
 
-Dev-only advisories may remain due to ESLint/Jest transitive dependencies. These do not affect production builds.
-
----
+- API traffic is centralized via `Api.ts`
+- HTML sanitization uses `dompurify`
+- Secrets should remain in environment variables and never be committed
 
 ## Troubleshooting
 
-### Port already in use
-
-If port 5173 is taken, Vite will auto-increment. Or specify a custom port:
+### Dev Server Port Conflict
 
 ```bash
 npm run dev -- --port 3000
 ```
 
-### Tests fail with "TextEncoder is not defined"
+### Test Environment Errors (browser APIs in Jest)
 
-Already fixed in `src/setupTests.ts` with a polyfill.
+Check `frontend/src/setupTests.ts` for polyfills/mocks (`TextEncoder`, `ResizeObserver`, `matchMedia`, etc.).
 
-### ESLint errors after upgrading
+### ESLint Issues After Dependency Updates
 
-Check `eslint.config.cjs` and ensure plugin versions match ESLint version.
+Run:
 
-### TypeScript errors with imports
+```bash
+npm run lint
+```
 
-Enable `esModuleInterop` in `tsconfig.json` (already configured).
+Then verify plugin compatibility in `eslint.config.cjs`.
 
----
+### Build or TS Resolution Errors
 
-## Best Practices
+Run:
 
-1. **Component structure**: Keep pages in `src/pages/`, reusable components in `src/components/`
-2. **Translations**: Always use `t()` for user-facing text, never hardcode strings
-3. **Types**: Define prop types with TypeScript interfaces
-4. **Testing**: Write tests for critical user flows
-5. **Commits**: Run `npm run format` before committing
+```bash
+npm run build
+```
 
----
+And verify `tsconfig*.json` consistency.
 
 ## Resources
 
 - [Vite Documentation](https://vite.dev/)
-- [React 19 Docs](https://react.dev/)
+- [React Docs](https://react.dev/)
 - [Material UI](https://mui.com/)
-- [React Router v7](https://reactrouter.com/)
+- [React Router](https://reactrouter.com/)
 - [react-i18next](https://react.i18next.com/)
 - [Jest](https://jestjs.io/)
 - [React Testing Library](https://testing-library.com/react)
