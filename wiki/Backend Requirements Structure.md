@@ -17,12 +17,15 @@ This improves maintainability, onboarding, and environment consistency.
 ## Files
 
 ### base.txt
+
 Shared dependencies required in all environments (e.g. Django, DRF, database drivers).
 
 ### development.txt
+
 Extends base: -r base.txt
 
 Adds development-only tools such as:
+
 - pytest
 - pytest-django
 - factory-boy
@@ -31,9 +34,11 @@ Adds development-only tools such as:
 - ruff
 
 ### production.txt
+
 Extends base: -r base.txt
 
 Adds production-only packages such as:
+
 - gunicorn
 
 ---
@@ -41,11 +46,13 @@ Adds production-only packages such as:
 ## Installation
 
 ### Development
+
 ```bash
 pip install -r backend/requirements/development.txt
 ```
 
 ### Production
+
 ```bash
 pip install -r backend/requirements/production.txt
 ```
@@ -53,13 +60,16 @@ pip install -r backend/requirements/production.txt
 ## Adding a New Package
 
 1. Install locally:
+
 ```bash
 pip install <package>
 ```
 
-2. Add it to the correct file:
-* `base.txt` -> needed everywhere
-* `development.txt` -> testing/debugging only
-* `production.txt` -> deployment only
+1. Add it to the correct file:
 
-3. Commit the updated file.
+- `base.txt` -> needed everywhere
+
+- `development.txt` -> testing/debugging only
+- `production.txt` -> deployment only
+
+1. Commit the updated file.
