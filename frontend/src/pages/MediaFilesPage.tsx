@@ -1,30 +1,16 @@
-import DescriptionIcon from '@mui/icons-material/Description'
-import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardMedia,
-  Chip,
-  Stack,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material'
+import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 import CollectionPageLayout from '../components/CollectionPageLayout'
+import EntityView from '../components/entity/EntityView'
 import FloatingAlert from '../components/FloatingAlert'
+import MediaFileGridCard from '../components/media_files/MediaFileGridCard'
+import MediaFileListCard from '../components/media_files/MediaFileListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
+import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
 import { getMediaFiles } from '../services/media_files/MediaFiles'
-import { getLocalizedValue } from '../utils/localization'
 
 import type { SearchSortDirection, SearchSortTarget } from '../components/searchbar/types'
 import type { MediaFile } from '../types/MediaFiles'
@@ -47,297 +33,8 @@ const getOrderingValue = (
   return sortDirection === 'desc' ? '-created_at' : 'created_at'
 }
 
-const formatDate = (value: string, locale: string): string => {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
-
-const formatSize = (value: number | null): string | null => {
-  if (value === null || value <= 0) {
-    return null
-  }
-
-  if (value < 1024) {
-    return `${value} B`
-  }
-
-  if (value < 1024 * 1024) {
-    return `${(value / 1024).toFixed(1)} KB`
-  }
-
-  return `${(value / (1024 * 1024)).toFixed(1)} MB`
-}
-
-const getFileTypeLabel = (
-  mediaFile: MediaFile,
-  t: ReturnType<typeof useTranslation>['t'],
-): string => {
-  return t(`media.fileType.${mediaFile.file_type}`)
-}
-
-const getMediaFileDescription = (mediaFile: MediaFile, locale: string): string | null => {
-  return getLocalizedValue(mediaFile.description, locale) || mediaFile.display_description || null
-}
-
-const TruncatedDescription = ({ text, lines }: { text: string; lines: number }) => (
-  <Tooltip title={text} placement="top" arrow disableInteractive>
-    <Typography
-      variant="body2"
-      color="text.secondary"
-      sx={{
-        display: '-webkit-box',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        WebkitLineClamp: lines,
-        WebkitBoxOrient: 'vertical',
-        wordBreak: 'break-word',
-      }}
-    >
-      {text}
-    </Typography>
-  </Tooltip>
-)
-
-const MediaFilePreview = ({
-  mediaFile,
-  t,
-  isGrid,
-}: {
-  mediaFile: MediaFile
-  t: ReturnType<typeof useTranslation>['t']
-  isGrid: boolean
-}) => {
-  const previewHeight = isGrid ? 220 : 160
-
-  if (mediaFile.file_type === 'image') {
-    return (
-      <CardMedia
-        component="img"
-        image={mediaFile.file}
-        alt={mediaFile.filename}
-        sx={{
-          width: '100%',
-          height: previewHeight,
-          objectFit: isGrid ? 'cover' : 'contain',
-          objectPosition: 'center',
-          backgroundColor: 'grey.100',
-          borderRadius: isGrid ? 0 : 2,
-        }}
-      />
-    )
-  }
-
-  const Icon = mediaFile.file_type === 'pdf' ? PictureAsPdfIcon : InsertDriveFileOutlinedIcon
-
-  return (
-    <Box
-      sx={{
-        width: '100%',
-        height: previewHeight,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'action.hover',
-        borderRadius: isGrid ? 0 : 2,
-        borderBottom: isGrid ? 1 : 0,
-        borderRight: isGrid ? 0 : 1,
-        borderColor: 'divider',
-      }}
-    >
-      <Stack spacing={1} sx={{ alignItems: 'center', color: 'text.secondary' }}>
-        <Icon sx={{ fontSize: 56 }} />
-        <Typography variant="body2">{getFileTypeLabel(mediaFile, t)}</Typography>
-      </Stack>
-    </Box>
-  )
-}
-
-const MediaFileCard = ({
-  mediaFile,
-  layout,
-  locale,
-  t,
-}: {
-  mediaFile: MediaFile
-  layout: 'grid' | 'list'
-  locale: string
-  t: ReturnType<typeof useTranslation>['t']
-}) => {
-  const fileSize = formatSize(mediaFile.size_bytes)
-  const uploadedAt = formatDate(mediaFile.created_at, locale)
-  const isGrid = layout === 'grid'
-  const description = getMediaFileDescription(mediaFile, locale)
-
-  return (
-    <Card
-      variant="outlined"
-      sx={{
-        height: '100%',
-        display: 'flex',
-        borderRadius: 3,
-        overflow: 'hidden',
-      }}
-    >
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: isGrid ? 'column' : { xs: 'column', sm: 'row' },
-          alignItems: 'stretch',
-          height: '100%',
-          width: '100%',
-        }}
-      >
-        <Box
-          sx={{
-            width: isGrid ? '100%' : { xs: '100%', sm: 240 },
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            alignSelf: 'stretch',
-            p: isGrid ? 0 : 2,
-          }}
-        >
-          <MediaFilePreview mediaFile={mediaFile} t={t} isGrid={isGrid} />
-        </Box>
-
-        <CardContent
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            py: 2,
-            px: 2.5,
-            display: 'flex',
-          }}
-        >
-          <Stack spacing={1.25} sx={{ width: '100%', alignItems: 'stretch' }}>
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                rowGap: 1,
-              }}
-            >
-              <Chip
-                size="small"
-                icon={<DescriptionIcon />}
-                label={getFileTypeLabel(mediaFile, t)}
-              />
-
-              <Button
-                component="a"
-                href={mediaFile.file}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="outlined"
-                size="small"
-                startIcon={<OpenInNewIcon />}
-              >
-                {t('media.openFile', { defaultValue: 'Open file' })}
-              </Button>
-            </Stack>
-
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: 'block', textAlign: 'left' }}
-            >
-              {uploadedAt}
-            </Typography>
-
-            <Typography
-              variant="h6"
-              component="h3"
-              sx={{
-                fontSize: isGrid ? '1rem' : '1.05rem',
-                fontWeight: 700,
-                lineHeight: 1.3,
-                wordBreak: 'break-word',
-              }}
-            >
-              {mediaFile.filename}
-            </Typography>
-
-            {description ? (
-              <TruncatedDescription text={description} lines={isGrid ? 2 : 3} />
-            ) : null}
-
-            {fileSize ? (
-              <Typography variant="body2" color="text.secondary">
-                {t('media.size')}: {fileSize}
-              </Typography>
-            ) : null}
-          </Stack>
-        </CardContent>
-      </Box>
-    </Card>
-  )
-}
-
-const MediaFilesResults = ({
-  items,
-  layout,
-  locale,
-  t,
-}: {
-  items: MediaFile[]
-  layout: 'grid' | 'list'
-  locale: string
-  t: ReturnType<typeof useTranslation>['t']
-}) => {
-  if (layout === 'list') {
-    return (
-      <Stack spacing={2}>
-        {items.map((mediaFile) => (
-          <MediaFileCard
-            key={mediaFile.id}
-            mediaFile={mediaFile}
-            layout="list"
-            locale={locale}
-            t={t}
-          />
-        ))}
-      </Stack>
-    )
-  }
-
-  return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: {
-          xs: '1fr',
-          sm: 'repeat(2, minmax(0, 1fr))',
-          lg: 'repeat(3, minmax(0, 1fr))',
-        },
-        gap: 2,
-      }}
-    >
-      {items.map((mediaFile) => (
-        <MediaFileCard
-          key={mediaFile.id}
-          mediaFile={mediaFile}
-          layout="grid"
-          locale={locale}
-          t={t}
-        />
-      ))}
-    </Box>
-  )
-}
-
 const MediaFilesPage = () => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
@@ -361,6 +58,7 @@ const MediaFilesPage = () => {
   const [showFallbackError, setShowFallbackError] = useState(false)
   const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
   const [retryKey, setRetryKey] = useState(0)
+  const [searchInput, setSearchInput] = useState(searchValue)
 
   const previousOrderingRef = useRef<string | null>(null)
 
@@ -379,6 +77,10 @@ const MediaFilesPage = () => {
 
     previousOrderingRef.current = ordering
   }, [ordering, page, setPage])
+
+  useEffect(() => {
+    setSearchInput(searchValue)
+  }, [searchValue])
 
   useEffect(() => {
     let isActive = true
@@ -461,13 +163,23 @@ const MediaFilesPage = () => {
     setSearchValue(nextQuery)
   }
 
+  const resultsContent = (
+    <EntityView
+      items={mediaFiles}
+      layout={viewMode}
+      getKey={(mediaFile) => mediaFile.id}
+      renderListItem={(mediaFile) => <MediaFileListCard mediaFile={mediaFile} />}
+      renderGridItem={(mediaFile) => <MediaFileGridCard mediaFile={mediaFile} />}
+    />
+  )
+
   return (
     <>
       <CollectionPageLayout
         isMobile={isMobile}
         searchPlaceholder={t('media.searchPlaceholder')}
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
+        searchValue={searchInput}
+        onSearchChange={setSearchInput}
         onSearchSubmit={onSearchSubmit}
         sortTarget={sortTarget}
         onSortTargetChange={setSortTarget}
@@ -480,16 +192,16 @@ const MediaFilesPage = () => {
         resultsRegionAriaLabel={t('media.resultsRegionLabel')}
         isLoading={isLoading}
         loadingLabel={t('media.loading')}
-        loadingContent={<MediaFilesPageSkeleton />}
+        loadingContent={
+          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+        }
         errorMessage={renderedErrorMessage}
         retryLabel={t('media.error.retry')}
         onRetry={onRetry}
         emptyTitle={t('media.empty.title')}
         emptyDescription={t('media.empty.description')}
         hasResults={mediaFiles.length > 0}
-        resultsContent={
-          <MediaFilesResults items={mediaFiles} layout={viewMode} locale={i18n.language} t={t} />
-        }
+        resultsContent={resultsContent}
         page={page}
         pageSize={PAGE_SIZE}
         totalItems={totalCount}
