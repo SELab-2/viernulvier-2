@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useParams } from 'react-router-dom'
 
+import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 import Breadcrumbs from '../components/production/Breadcrumbs'
 import ProductionView from '../components/ProductionView'
 import SeriesHeader from '../components/series_details/SeriesHeader'
@@ -16,7 +17,6 @@ import SeriesStats from '../components/series_details/SeriesStats'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
 import { getTranslatedRecord } from '../utils/translations'
-import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 
 import type { Production } from '../types/Productions'
 import type { Tag } from '../types/Tags'
@@ -39,29 +39,22 @@ function getProductionYear(production: Production): string {
   return '—'
 }
 
-const SeriesDetailPage = () => {
-  const { id } = useParams<{ id: string }>()
+type SeriesDetailContentProps = {
+  id: string
+}
+
+const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const { t, i18n } = useTranslation()
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<SeriesErrorKey>(null)
+  const numericId = Number(id)
 
   useEffect(() => {
-    const numericId = Number(id)
-
-    if (!numericId || Number.isNaN(numericId)) {
-      setError('series.invalidId')
-      setIsLoading(false)
-      return
-    }
-
     const fetchSeries = async () => {
       try {
-        setIsLoading(true)
-        setError(null)
-
         const [tag, productionsResponse] = await Promise.all([
           getTag(numericId),
           getProductions({ pageSize: 100, filters: { tag: numericId } }),
@@ -77,7 +70,7 @@ const SeriesDetailPage = () => {
     }
 
     void fetchSeries()
-  }, [id])
+  }, [numericId])
 
   /** Sorted most-recent first by start date; productions without a date fall to the end. */
   const sortedProductions = useMemo(
@@ -236,6 +229,16 @@ const SeriesDetailPage = () => {
       </Stack>
     </Container>
   )
+}
+
+const SeriesDetailPage = () => {
+  const { id } = useParams<{ id: string }>()
+
+  if (!id || Number.isNaN(Number(id))) {
+    return <Navigate to="/404" replace />
+  }
+
+  return <SeriesDetailContent key={id} id={id} />
 }
 
 export default SeriesDetailPage

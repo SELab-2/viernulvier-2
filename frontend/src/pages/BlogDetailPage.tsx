@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
 
@@ -23,16 +23,17 @@ import type { Blog } from '../types/Blogs'
  * - If the blog has related `productions`, these are shown below the content using
  *   `RelatedProductions` with `showTag={false}` (no tag chip for blog use-case).
  */
-const BlogDetailPage = () => {
-  const { id } = useParams()
+type BlogDetailContentProps = {
+  id: string
+}
+
+const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
   const navigate = useNavigate()
   const { i18n, t } = useTranslation()
   const lang = i18n.language
 
   const [blog, setBlog] = useState<Blog | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
-  const tRef = useRef(t)
-  tRef.current = t
 
   /**
    * Effect: fetch blog by id when the route param changes.
@@ -40,23 +41,17 @@ const BlogDetailPage = () => {
    * - On fetch error navigates back to the blogs listing and displays a floating alert.
    */
   useEffect(() => {
-    if (!id) {
-      return
-    }
-    setLoading(true)
-
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
-      const errMsg = tRef.current('blog.invalidId', 'Invalid blog ID')
+      const errMsg = t('blog.invalidId', 'Invalid blog ID')
       navigate('/blogs', {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
-      setLoading(false)
       return
     }
 
     const handleError = () => {
-      const errMsg = tRef.current('blog.couldNotLoad', 'Could not load blog')
+      const errMsg = t('blog.couldNotLoad', 'Could not load blog')
       navigate('/blogs', {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
@@ -81,7 +76,7 @@ const BlogDetailPage = () => {
     }
 
     fetchBlog()
-  }, [id, navigate])
+  }, [id, navigate, t])
 
   if (loading) {
     return <BlogDetailPageSkeleton />
@@ -198,6 +193,16 @@ const BlogDetailPage = () => {
       )}
     </Box>
   )
+}
+
+const BlogDetailPage = () => {
+  const { id } = useParams()
+
+  if (!id) {
+    return null
+  }
+
+  return <BlogDetailContent key={id} id={id} />
 }
 
 export default BlogDetailPage

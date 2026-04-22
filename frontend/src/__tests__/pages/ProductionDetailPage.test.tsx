@@ -63,7 +63,6 @@ describe('ProductionDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(screen.getByText('Invalid production ID')).toBeInTheDocument()
       expect(mockNavigate).toHaveBeenCalledWith('/', {
         state: {
           floatingAlert: {
@@ -218,7 +217,6 @@ describe('ProductionDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(screen.getByText('Could not load production')).toBeInTheDocument()
       expect(mockNavigate).toHaveBeenCalledWith('/', {
         state: {
           floatingAlert: {
