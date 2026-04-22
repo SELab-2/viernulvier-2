@@ -62,10 +62,10 @@ const LANDING_CARDS: LandingCard[] = [
     index: 1,
   },
   {
-    eyebrowKey: 'landing.cards.stories.eyebrow',
-    titleKey: 'landing.cards.stories.title',
-    descriptionKey: 'landing.cards.stories.description',
-    ctaKey: 'landing.cards.stories.cta',
+    eyebrowKey: 'landing.cards.blogs.eyebrow',
+    titleKey: 'landing.cards.blogs.title',
+    descriptionKey: 'landing.cards.blogs.description',
+    ctaKey: 'landing.cards.blogs.cta',
     to: '/blogs',
     index: 2,
   },
@@ -83,14 +83,14 @@ const FALLBACK_ARCHIVE_STATS: LandingStatsResponse = {
   productions: 8500,
   series: 0,
   years: 22,
-  stories: 0,
+  blogs: 0,
 }
 
 const ARCHIVE_STATS = [
   { labelKey: 'landing.stats.productions', dataKey: 'productions' },
   { labelKey: 'landing.stats.series', dataKey: 'series' },
   { labelKey: 'landing.stats.years', dataKey: 'years' },
-  { labelKey: 'landing.stats.stories', dataKey: 'stories' },
+  { labelKey: 'landing.stats.blogs', dataKey: 'blogs' },
 ] as const
 
 const formatArchiveStatValue = (value: number): string => {
@@ -108,8 +108,8 @@ const LANDING_NOTES = [
     descriptionKey: 'landing.side.series.description',
   },
   {
-    titleKey: 'landing.side.stories.title',
-    descriptionKey: 'landing.side.stories.description',
+    titleKey: 'landing.side.blogs.title',
+    descriptionKey: 'landing.side.blogs.description',
   },
   {
     titleKey: 'landing.side.prints.title',

@@ -151,14 +151,14 @@ All upload flows use one shared validation policy for media safety and consisten
 
 - **Maximum file size**: 10 MB
 - **Binary signature check**:
-    - PDF files must start with `%PDF-`
-    - Images are verified using Pillow (`JPEG`, `PNG`, `WEBP`)
+  - PDF files must start with `%PDF-`
+  - Images are verified using Pillow (`JPEG`, `PNG`, `WEBP`)
 - **Declared-vs-content mismatch detection**:
-    - If request `content_type` says image but binary payload is PDF (or vice versa), the upload is rejected
+  - If request `content_type` says image but binary payload is PDF (or vice versa), the upload is rejected
 - **Extension-vs-MIME consistency check**:
-    - Example: `poster.pdf` with PNG content is rejected
+  - Example: `poster.pdf` with PNG content is rejected
 - **Filename normalization**:
-    - Client-side paths are stripped and only the basename is used
+  - Client-side paths are stripped and only the basename is used
 
 ### Endpoints and Fields Covered
 
@@ -183,13 +183,13 @@ The productions list endpoint supports composable filtering:
 
 - `genre` and `tag` accept one or multiple IDs
 - Multiple values use **AND semantics**
-    - only productions that contain **all** selected genres/tags are returned
+  - only productions that contain **all** selected genres/tags are returned
 
 Supported formats:
 
 - Comma-separated values
-    - `?genre=2,9`
-    - `?tag=5,8`
+  - `?genre=2,9`
+  - `?tag=5,8`
 
 Example combined request:
 
@@ -234,4 +234,4 @@ For the homepage stats bar, the productions API exposes a compact counters endpo
 - `productions`: total number of productions
 - `series`: total number of distinct series tags linked to at least one production
 - `years`: total number of distinct documented years in event start/end timestamps
-- `stories`: total number of published blog stories (`published_at` is not null)
+- `blogs`: total number of published blogs (`published_at` is not null)

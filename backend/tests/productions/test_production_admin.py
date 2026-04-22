@@ -19,12 +19,9 @@ from django.urls import reverse
 from apps.core.admin import BaseAdmin
 from apps.productions.admin import (
     ProductionAdmin,
-    ProductionGenreAdmin,
     ProductionGenreInline,
-    ProductionTagAdmin,
     ProductionTagInline,
     ProductionTagTranslationInline,
-    ProductionTranslationAdmin,
     ProductionTranslationInline,
     UitDatabaseTypeAdmin,
 )
@@ -36,14 +33,10 @@ from apps.productions.models import (
     ProductionTranslation,
     UitDatabaseType,
 )
-from tests.factories.language import LanguageFactory
 from tests.factories.production import (
     ProductionFactory,
-    ProductionTagFactory,
-    ProductionTranslationFactory,
     UitDatabaseTypeFactory,
 )
-from tests.factories.tag import TagFactory
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -66,29 +59,19 @@ class TestAdminRegistration(TestCase):
     def test_registered_admin_is_production_admin(self) -> None:
         assert isinstance(admin.site._registry[Production], ProductionAdmin)
 
-    def test_production_translation_is_registered(self) -> None:
-        assert ProductionTranslation in admin.site._registry
-
-    def test_registered_admin_is_production_translation_admin(self) -> None:
-        assert isinstance(admin.site._registry[ProductionTranslation], ProductionTranslationAdmin)
-
     def test_uit_database_type_is_registered(self) -> None:
         assert UitDatabaseType in admin.site._registry
 
     def test_registered_admin_is_uit_database_type_admin(self) -> None:
         assert isinstance(admin.site._registry[UitDatabaseType], UitDatabaseTypeAdmin)
 
-    def test_production_genre_is_registered(self) -> None:
-        assert ProductionGenre in admin.site._registry
-
-    def test_registered_admin_is_production_genre_admin(self) -> None:
-        assert isinstance(admin.site._registry[ProductionGenre], ProductionGenreAdmin)
-
-    def test_production_tag_is_registered(self) -> None:
-        assert ProductionTag in admin.site._registry
-
-    def test_registered_admin_is_production_tag_admin(self) -> None:
-        assert isinstance(admin.site._registry[ProductionTag], ProductionTagAdmin)
+    def test_production_inlines_present_on_production_admin(self) -> None:
+        # Models that no longer have top-level admins should still be available
+        # as inlines on the Production admin.
+        inline_models = [inline.model for inline in admin.site._registry[Production].inlines]
+        assert ProductionTranslation in inline_models
+        assert ProductionGenre in inline_models
+        assert ProductionTag in inline_models
 
 
 # ---------------------------------------------------------------------------
@@ -97,13 +80,7 @@ class TestAdminRegistration(TestCase):
 
 
 class TestAdminInheritance(TestCase):
-    admins = [
-        ProductionAdmin,
-        ProductionTranslationAdmin,
-        UitDatabaseTypeAdmin,
-        ProductionGenreAdmin,
-        ProductionTagAdmin,
-    ]
+    admins = [ProductionAdmin, UitDatabaseTypeAdmin]
 
     def test_all_admins_inherit_from_base_admin(self) -> None:
         for admin_class in self.admins:
@@ -202,104 +179,6 @@ class TestProductionAdminConfiguration(TestCase):
         assert len(self.admin.inlines) == 3
 
 
-# ---------------------------------------------------------------------------
-# ProductionTranslationAdmin configuration
-# ---------------------------------------------------------------------------
-
-
-class TestProductionTranslationAdminConfiguration(TestCase):
-    def setUp(self) -> None:
-        self.admin = admin.site._registry[ProductionTranslation]
-
-    # list_display
-    def test_list_display_contains_id(self) -> None:
-        assert "id" in self.admin.list_display
-
-    def test_list_display_contains_production(self) -> None:
-        assert "production" in self.admin.list_display
-
-    def test_list_display_contains_language(self) -> None:
-        assert "language" in self.admin.list_display
-
-    def test_list_display_contains_title(self) -> None:
-        assert "title" in self.admin.list_display
-
-    def test_list_display_contains_artist_name(self) -> None:
-        assert "artist_name" in self.admin.list_display
-
-    # list_filter - now uses language__code, not language
-    def test_list_filter_contains_language_code(self) -> None:
-        """list_filter must use 'language__code', not plain 'language'."""
-        assert "language__code" in self.admin.list_filter
-
-    def test_list_filter_does_not_contain_plain_language(self) -> None:
-        assert "language" not in self.admin.list_filter
-
-    # search_fields
-    def test_search_fields_contains_title(self) -> None:
-        assert "title" in self.admin.search_fields
-
-    def test_search_fields_contains_production_id(self) -> None:
-        assert "production__id" in self.admin.search_fields
-
-    # autocomplete_fields
-    def test_autocomplete_fields_contains_production(self) -> None:
-        assert "production" in self.admin.autocomplete_fields
-
-    def test_autocomplete_fields_contains_language(self) -> None:
-        assert "language" in self.admin.autocomplete_fields
-
-
-# ---------------------------------------------------------------------------
-# ProductionGenreAdmin configuration
-# ---------------------------------------------------------------------------
-
-
-class TestProductionGenreAdminConfiguration(TestCase):
-    def setUp(self) -> None:
-        self.admin = admin.site._registry[ProductionGenre]
-
-    def test_list_display_contains_id(self) -> None:
-        assert "id" in self.admin.list_display
-
-    def test_list_display_contains_production(self) -> None:
-        assert "production" in self.admin.list_display
-
-    def test_list_display_contains_genre(self) -> None:
-        assert "genre" in self.admin.list_display
-
-    def test_list_display_contains_position(self) -> None:
-        assert "position" in self.admin.list_display
-
-    def test_autocomplete_fields_contains_production(self) -> None:
-        assert "production" in self.admin.autocomplete_fields
-
-
-# ---------------------------------------------------------------------------
-# ProductionTagAdmin configuration
-# ---------------------------------------------------------------------------
-
-
-class TestProductionTagAdminConfiguration(TestCase):
-    def setUp(self) -> None:
-        self.admin = admin.site._registry[ProductionTag]
-
-    def test_list_display_contains_id(self) -> None:
-        assert "id" in self.admin.list_display
-
-    def test_list_display_contains_production(self) -> None:
-        assert "production" in self.admin.list_display
-
-    def test_list_display_contains_tag(self) -> None:
-        assert "tag" in self.admin.list_display
-
-    def test_autocomplete_fields_contains_production(self) -> None:
-        assert "production" in self.admin.autocomplete_fields
-
-    def test_autocomplete_fields_contains_tag(self) -> None:
-        assert "tag" in self.admin.autocomplete_fields
-
-
 class TestProductionTagTranslationInlineClass(TestCase):
     def test_model_is_production_tag_translation(self) -> None:
         assert ProductionTagTranslationInline.model == ProductionTagTranslation
@@ -323,21 +202,26 @@ class TestProductionTagTranslationInlineClass(TestCase):
         assert issubclass(ProductionTagTranslationInline, admin.TabularInline)
 
 
-class TestProductionTagAdminHasTranslationInline(TestCase):
+class TestProductionTagTranslationInlineGetQueryset(TestCase):
     def setUp(self) -> None:
-        self.admin = admin.site._registry[ProductionTag]
+        self.superuser = make_superuser("tag_translation_inline_admin")
+        self.factory = RequestFactory()
+        self.inline = ProductionTagTranslationInline(parent_model=ProductionTag, admin_site=admin.site)
 
-    def test_production_tag_translation_inline_is_registered_on_tag_admin(self) -> None:
-        inline_models = [inline.model for inline in self.admin.inlines]
-        assert ProductionTagTranslation in inline_models
+    def _make_request(self):
+        request = self.factory.get("/")
+        request.user = self.superuser
+        return request
 
-    def test_get_queryset_selects_related_language_via_inline(self) -> None:
-        """
-        The inline's get_queryset must select_related('language') to avoid
-        N+1 queries when the inline rows are rendered.
-        """
-        inline_instance = next(i for i in self.admin.inlines if i.model is ProductionTagTranslation)
-        assert hasattr(inline_instance, "get_queryset"), "ProductionTagTranslationInline must override get_queryset"
+    def test_queryset_model_is_production_tag_translation(self) -> None:
+        """Inline queryset should target ProductionTagTranslation."""
+        qs = self.inline.get_queryset(self._make_request())
+        assert qs.model == ProductionTagTranslation
+
+    def test_queryset_has_select_related_for_language(self) -> None:
+        """Inline queryset should select_related language for efficiency."""
+        qs = self.inline.get_queryset(self._make_request())
+        assert "language" in qs.query.select_related
 
 
 # ---------------------------------------------------------------------------
@@ -473,59 +357,3 @@ class TestProductionAdminChangelist(TestCase):
     def test_changelist_search(self) -> None:
         url = reverse("admin:productions_production_changelist")
         assert self.client.get(url, {"q": "test"}).status_code == 200
-
-
-class TestProductionTranslationAdminChangelist(TestCase):
-    def setUp(self) -> None:
-        self.superuser = make_superuser("trans_admin")
-        self.client.force_login(self.superuser)
-
-    def test_changelist_returns_200(self) -> None:
-        url = reverse("admin:productions_productiontranslation_changelist")
-        assert self.client.get(url).status_code == 200
-
-    def test_changeform_returns_200(self) -> None:
-        production = ProductionFactory.create()
-        language = LanguageFactory.create(code="en", name="English")
-        translation = ProductionTranslationFactory.create(production=production, language=language, title="Test Title")
-        url = reverse("admin:productions_productiontranslation_change", args=[translation.pk])
-        assert self.client.get(url).status_code == 200
-
-    def test_changelist_shows_translation_title(self) -> None:
-        production = ProductionFactory.create()
-        language = LanguageFactory.create(code="en", name="English")
-        ProductionTranslationFactory.create(production=production, language=language, title="Visible Title")
-        url = reverse("admin:productions_productiontranslation_changelist")
-        self.assertContains(self.client.get(url), "Visible Title")
-
-    def test_changelist_filter_by_language_code(self) -> None:
-        """Changelist filter must use language__code lookup."""
-        url = reverse("admin:productions_productiontranslation_changelist")
-        assert self.client.get(url, {"language__code": "en"}).status_code == 200
-
-
-class TestProductionGenreAdminChangelist(TestCase):
-    def setUp(self) -> None:
-        self.superuser = make_superuser("genre_admin")
-        self.client.force_login(self.superuser)
-
-    def test_changelist_returns_200(self) -> None:
-        url = reverse("admin:productions_productiongenre_changelist")
-        assert self.client.get(url).status_code == 200
-
-
-class TestProductionTagAdminChangelist(TestCase):
-    def setUp(self) -> None:
-        self.superuser = make_superuser("tag_admin")
-        self.client.force_login(self.superuser)
-
-    def test_changelist_returns_200(self) -> None:
-        url = reverse("admin:productions_productiontag_changelist")
-        assert self.client.get(url).status_code == 200
-
-    def test_changeform_returns_200(self) -> None:
-        production = ProductionFactory.create()
-        tag = TagFactory.create()
-        production_tag = ProductionTagFactory.create(production=production, tag=tag)
-        url = reverse("admin:productions_productiontag_change", args=[production_tag.pk])
-        assert self.client.get(url).status_code == 200

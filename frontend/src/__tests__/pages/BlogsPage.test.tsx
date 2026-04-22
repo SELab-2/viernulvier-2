@@ -23,13 +23,13 @@ const LocationProbe = () => {
 
 const buildBlog = (id: number): Blog => ({
   id,
-  slug: `story-${id}`,
+  slug: `blog-${id}`,
   published_at: '2026-01-01T19:00:00Z',
   cover_image: null,
-  title: { nl: `Verhaal ${id}`, en: `Story ${id}` },
+  title: { nl: `Blog ${id}`, en: `Blog ${id}` },
   body: { nl: `Body ${id}` },
   excerpt: { nl: `Samenvatting ${id}` },
-  display_title: `Verhaal ${id}`,
+  display_title: `Blog ${id}`,
   display_excerpt: `Samenvatting ${id}`,
   productions: [],
 })
@@ -84,8 +84,8 @@ describe('BlogsPage', () => {
       })
     })
 
-    expect(await screen.findByRole('heading', { name: 'Verhaal 1' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Verhaal 2' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Blog 1' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Blog 2' })).toBeInTheDocument()
   })
 
   it('shows empty state when API returns no blogs', async () => {
@@ -98,7 +98,7 @@ describe('BlogsPage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('Geen verhalen gevonden')).toBeInTheDocument()
+    expect(await screen.findByText('Geen blogs gevonden')).toBeInTheDocument()
     expect(screen.getByText('Pas je zoekopdracht aan en probeer opnieuw.')).toBeInTheDocument()
   })
 
@@ -112,13 +112,13 @@ describe('BlogsPage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('Kon verhalen niet laden.')).toBeInTheDocument()
+    expect(await screen.findByText('Kon blogs niet laden.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Opnieuw proberen' }))
 
     await waitFor(() => {
       expect(mockedGetBlogs).toHaveBeenCalledTimes(2)
     })
-    expect(await screen.findByRole('heading', { name: 'Verhaal 3' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Blog 3' })).toBeInTheDocument()
   })
 
   it('shows localized fallback copy when API returns a non-localized error message', async () => {
@@ -126,7 +126,7 @@ describe('BlogsPage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('Kon verhalen niet laden.')).toBeInTheDocument()
+    expect(await screen.findByText('Kon blogs niet laden.')).toBeInTheDocument()
     expect(screen.queryByText('Something failed on server')).not.toBeInTheDocument()
   })
 
@@ -162,7 +162,7 @@ describe('BlogsPage', () => {
 
     renderPage()
 
-    await screen.findByRole('heading', { name: 'Verhaal 4' })
+    await screen.findByRole('heading', { name: 'Blog 4' })
     fireEvent.click(screen.getByRole('button', { name: 'Lijst' }))
 
     expect(screen.getByTestId('url-search')).toHaveTextContent('v=l')
@@ -185,10 +185,10 @@ describe('BlogsPage', () => {
 
     renderPage()
 
-    await screen.findByRole('heading', { name: 'Verhaal 5' })
+    await screen.findByRole('heading', { name: 'Blog 5' })
     expect(mockedGetBlogs).toHaveBeenCalledTimes(1)
 
-    fireEvent.change(screen.getByPlaceholderText('Zoek verhalen op titel of samenvatting...'), {
+    fireEvent.change(screen.getByPlaceholderText('Zoek blogs op titel of samenvatting...'), {
       target: { value: 'vooruit' },
     })
 
@@ -220,9 +220,9 @@ describe('BlogsPage', () => {
 
     renderPage('/blogs?q=vooruit')
 
-    expect(await screen.findByText('Kon verhalen niet laden.')).toBeInTheDocument()
+    expect(await screen.findByText('Kon blogs niet laden.')).toBeInTheDocument()
 
-    fireEvent.keyDown(screen.getByPlaceholderText('Zoek verhalen op titel of samenvatting...'), {
+    fireEvent.keyDown(screen.getByPlaceholderText('Zoek blogs op titel of samenvatting...'), {
       key: 'Enter',
       code: 'Enter',
     })
@@ -230,6 +230,6 @@ describe('BlogsPage', () => {
     await waitFor(() => {
       expect(mockedGetBlogs).toHaveBeenCalledTimes(2)
     })
-    expect(await screen.findByRole('heading', { name: 'Verhaal 9' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Blog 9' })).toBeInTheDocument()
   })
 })

@@ -20,6 +20,7 @@ For pre-API historical data, a dedicated CSV importer is available in `backend/a
 This modular design improves maintainability, testability, and separation of concerns.
 
 **Benefits of the refactoring**:
+
 - Each module has a clear, single responsibility
 - Lower cyclomatic complexity enables all modules to comply with ruff linting rules
 - Easier to test individual components in isolation
@@ -126,7 +127,7 @@ Each prefix supports two types of boundaries:
 
 1. **Inclusive boundaries** (`--{prefix}-after`, `--{prefix}-before`)
    - Includes records at the exact timestamp
-   
+
 2. **Exclusive boundaries** (`--{prefix}-after-x`, `--{prefix}-before-x`)
    - Excludes records at the exact timestamp
 
@@ -134,7 +135,7 @@ Each prefix supports two types of boundaries:
 
 All timestamp filters accept ISO 8601 formatted datetime strings:
 
-```
+```text
 YYYY-MM-DDTHH:MM:SSZ
 YYYY-MM-DDTHH:MM:SS+HH:MM
 ```
@@ -346,7 +347,7 @@ This section explains where to make changes for different types of modifications
 
 If you get an error like:
 
-```
+```text
 Unknown step 'event'. Choices: uitdatabank_types, genres, ...
 ```
 
@@ -473,4 +474,3 @@ Or test a single step interactively:
 ```bash
 python manage.py sync_viernulvier --only <step_name> --dry-run
 ```
-
