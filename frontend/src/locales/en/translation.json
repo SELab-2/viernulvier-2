@@ -25,7 +25,7 @@
       "productions": "Productions",
       "series": "Series",
       "years": "Years documented",
-      "stories": "Blogs"
+      "blogs": "Blogs"
     },
     "statsSection": {
       "eyebrow": "Archive at a glance",
@@ -52,7 +52,7 @@
         "title": "Performances, concerts & theatre",
         "description": "Search by artist, venue, or period. Every documented production in VIERNULVIER's history, searchable in one place."
       },
-      "stories": {
+      "blogs": {
         "title": "Blogs and context",
         "description": "Editorial pieces that deepen the archive - interviews, essays, and notes by researchers and curators."
       },
@@ -83,7 +83,7 @@
         "description": "Productions grouped by recurring series. Follow linked editions in chronological order.",
         "cta": "Open series"
       },
-      "stories": {
+      "blogs": {
         "eyebrow": "03 - Blogs",
         "title": "Read the blogs",
         "description": "Interviews, essays, and research notes that add depth and context to the archive.",

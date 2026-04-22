@@ -265,7 +265,7 @@ class TestProductionLandingStatsAction(TestCase):
             "productions": 2,
             "series": 2,
             "years": 3,
-            "stories": 2,
+            "blogs": 2,
         }
 
     def test_landing_stats_allows_public_and_internal_keys(self) -> None:

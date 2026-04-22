@@ -32,7 +32,7 @@ describe('HomePage', () => {
       productions: 1200,
       series: 80,
       years: 35,
-      stories: 120,
+      blogs: 120,
     })
 
     await i18n.changeLanguage('nl')
@@ -78,7 +78,7 @@ describe('HomePage', () => {
       productions: 1234,
       series: 81,
       years: 36,
-      stories: 121,
+      blogs: 121,
     })
 
     renderPage()

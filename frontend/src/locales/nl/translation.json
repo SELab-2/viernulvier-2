@@ -25,7 +25,7 @@
       "productions": "Producties",
       "series": "Reeksen",
       "years": "Gedocumenteerde jaren",
-      "stories": "Blogs"
+      "blogs": "Blogs"
     },
     "statsSection": {
       "eyebrow": "Archief in cijfers",
@@ -52,7 +52,7 @@
         "title": "Voorstellingen, concerten & theater",
         "description": "Zoek op artiest, locatie of periode. Elke gedocumenteerde productie uit de geschiedenis van VIERNULVIER, doorzoekbaar op een plek."
       },
-      "stories": {
+      "blogs": {
         "title": "Blogs en context",
         "description": "Redactionele stukken die het archief verdiepen: interviews, essays en notities van onderzoekers en curatoren."
       },
@@ -83,7 +83,7 @@
         "description": "Producties gegroepeerd per terugkerende reeks. Volg gekoppelde edities in chronologische volgorde.",
         "cta": "Open reeksen"
       },
-      "stories": {
+      "blogs": {
         "eyebrow": "03 - Blogs",
         "title": "Lees de blogs",
         "description": "Interviews, essays en onderzoeksnotities die extra context geven aan het archief.",

@@ -286,7 +286,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
             "productions": Production.objects.count(),
             "series": Tag.objects.filter(productions__isnull=False).distinct().count(),
             "years": self._get_documented_years_count(),
-            "stories": Blog.objects.filter(published_at__isnull=False).count(),
+            "blogs": Blog.objects.filter(published_at__isnull=False).count(),
         }
 
         serializer = ProductionLandingStatsSerializer(payload)
