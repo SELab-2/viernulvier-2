@@ -21,7 +21,9 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
   const { i18n, t } = useTranslation()
   const { language } = i18n
 
-  const title = getTranslatedRecord(blog.title, language, blog.display_title)
+  const title =
+    getTranslatedRecord(blog.title, language, blog.display_title) ||
+    t('blogs.detail.noTitleAvailable', 'No title available')
   const excerpt = getTranslatedRecord(blog.excerpt, language, blog.display_excerpt)
   const publishedDate = formatBlogPublishedDate(blog.published_at, language)
 
