@@ -15,7 +15,6 @@ import {
 import { useTranslation } from 'react-i18next'
 import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa'
 
-import { tokens } from '../../theme/tokens'
 import SearchBar from './SearchBar'
 import {
   DEFAULT_SORT_TARGET_OPTIONS,
@@ -23,6 +22,7 @@ import {
   type SearchSortTarget,
   type SearchViewMode,
 } from './types'
+import { tokens } from '../../theme/tokens'
 
 import type { ReactNode } from 'react'
 

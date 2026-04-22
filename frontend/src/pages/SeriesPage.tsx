@@ -115,11 +115,6 @@ const SeriesPage = () => {
   const renderedErrorMessage = showFallbackError ? t('series.home.error.fallback') : errorMessage
   const floatingErrorMessage = t('series.home.error.notification')
 
-  // Keep the draft search input aligned with the URL state.
-  useEffect(() => {
-    setSearchDraft(searchValue)
-  }, [searchValue])
-
   // Force the page back to name sorting because the series page only supports that option.
   useEffect(() => {
     if (sortTarget === 'date') {
@@ -217,7 +212,9 @@ const SeriesPage = () => {
 
   // Normalize the search input before pushing it into the URL state.
   const onSearchSubmit = (value: string) => {
-    setSearchValue(value.trim())
+    const nextValue = value.trim()
+    setSearchValue(nextValue)
+    setSearchDraft(nextValue)
   }
 
   // Reuse the shared entity view to switch between list and grid cards.
