@@ -251,6 +251,7 @@
       "previousPage": "Go to previous page",
       "currentPage": "Current page, page {{page}}",
       "ofPages": "of {{count}}"
+    },
     "detail": {
       "noTitleAvailable": "No title available"
     }

@@ -251,6 +251,7 @@
       "previousPage": "Ga naar vorige pagina",
       "currentPage": "Huidige pagina, pagina {{page}}",
       "ofPages": "van {{count}}"
+    },
     "detail": {
       "noTitleAvailable": "Geen titel beschikbaar"
     }
