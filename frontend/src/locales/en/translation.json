@@ -192,13 +192,11 @@
     },
     "pagination": {
       "navigationLabel": "Production pagination",
-      "pageXofY": "Page {{page}} of {{totalPages}}",
       "firstPage": "Go to first page",
       "lastPage": "Go to last page",
       "nextPage": "Go to next page",
       "previousPage": "Go to previous page",
       "currentPage": "Current page, page {{page}}",
-      "goToPage": "Go to page {{page}}",
       "ofPages": "of {{count}}"
     },
     "detail": {
@@ -243,6 +241,15 @@
         "fallback": "Could not load stories.",
         "notification": "Something went wrong while loading stories."
       }
+    },
+    "pagination": {
+      "navigationLabel": "Blog pagination",
+      "firstPage": "Go to first page",
+      "lastPage": "Go to last page",
+      "nextPage": "Go to next page",
+      "previousPage": "Go to previous page",
+      "currentPage": "Current page, page {{page}}",
+      "ofPages": "of {{count}}"
     }
   },
   "notFound": {
@@ -309,13 +316,12 @@
     },
     "pagination": {
       "navigationLabel": "Series pagination",
-      "pageXofY": "Page {{page}} of {{totalPages}}",
       "firstPage": "Go to first page",
       "lastPage": "Go to last page",
       "nextPage": "Go to next page",
       "previousPage": "Go to previous page",
       "currentPage": "Current page, page {{page}}",
-      "goToPage": "Go to page {{page}}"
+      "ofPages": "of {{count}}"
     }
   },
   "blog": {

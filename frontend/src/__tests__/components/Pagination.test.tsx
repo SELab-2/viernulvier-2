@@ -35,7 +35,7 @@ describe('Pagination', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('renders navigation and marks the current page when multiple pages exist', () => {
+  it('renders navigation, page input, and total pages label when multiple pages exist', () => {
     renderPagination({
       page: 2,
       pageSize: 10,
@@ -46,13 +46,11 @@ describe('Pagination', () => {
     expect(
       screen.getByRole('navigation', { name: 'Paginering van producties' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Huidige pagina, pagina 2' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    )
+    expect(screen.getByRole('textbox', { name: 'Huidige pagina, pagina 2' })).toHaveValue('2')
+    expect(screen.getByText('van 4')).toBeInTheDocument()
   })
 
-  it('emits selected page when user clicks a page button', () => {
+  it('emits selected page when user clicks the next button', () => {
     const onPageChange = jest.fn()
 
     renderPagination({
@@ -62,9 +60,48 @@ describe('Pagination', () => {
       onPageChange,
     })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ga naar pagina 2' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ga naar volgende pagina' }))
 
     expect(onPageChange).toHaveBeenCalledWith(2)
+  })
+
+  it('does not emit on change while typing and commits on Enter', () => {
+    const onPageChange = jest.fn()
+
+    renderPagination({
+      page: 2,
+      pageSize: 10,
+      totalItems: 50,
+      onPageChange,
+    })
+
+    const input = screen.getByRole('textbox', { name: 'Huidige pagina, pagina 2' })
+    fireEvent.change(input, { target: { value: '5' } })
+
+    expect(onPageChange).not.toHaveBeenCalled()
+    expect(input).toHaveValue('5')
+
+    fireEvent.keyDown(input, { key: 'Enter' })
+
+    expect(onPageChange).toHaveBeenCalledWith(5)
+  })
+
+  it('resets invalid page input to the active page on blur', () => {
+    const onPageChange = jest.fn()
+
+    renderPagination({
+      page: 3,
+      pageSize: 10,
+      totalItems: 50,
+      onPageChange,
+    })
+
+    const input = screen.getByRole('textbox', { name: 'Huidige pagina, pagina 3' })
+    fireEvent.change(input, { target: { value: 'abc' } })
+    fireEvent.blur(input)
+
+    expect(onPageChange).not.toHaveBeenCalled()
+    expect(input).toHaveValue('3')
   })
 
   it('disables pagination controls when disabled is true', () => {
@@ -76,6 +113,10 @@ describe('Pagination', () => {
       disabled: true,
     })
 
-    expect(screen.getByRole('button', { name: 'Ga naar pagina 2' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Ga naar eerste pagina' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Ga naar vorige pagina' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Ga naar volgende pagina' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Ga naar laatste pagina' })).toBeDisabled()
+    expect(screen.getByRole('textbox', { name: 'Huidige pagina, pagina 1' })).toBeDisabled()
   })
 })

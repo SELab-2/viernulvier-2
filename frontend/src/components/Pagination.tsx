@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
-import { Box, IconButton, OutlinedInput, Typography } from '@mui/material'
 import {
   FirstPage as FirstPageIcon,
   LastPage as LastPageIcon,
   NavigateBefore as PrevIcon,
   NavigateNext as NextIcon,
 } from '@mui/icons-material'
+import { Box, IconButton, OutlinedInput, Typography } from '@mui/material'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export interface PaginationProps {
@@ -14,8 +14,6 @@ export interface PaginationProps {
   totalItems: number
   onPageChange: (page: number) => void
   disabled?: boolean
-  siblingCount?: number
-  boundaryCount?: number
   i18nKeyPrefix?: string
 }
 
@@ -30,8 +28,6 @@ export interface PaginationProps {
  * @param props.totalItems Total number of items across all pages (must be >= 0).
  * @param props.onPageChange Callback function that receives the newly selected page number (1-based index).
  * @param props.disabled Optional boolean to disable the pagination controls.
- * @param props.siblingCount Optional number of sibling pages to show around the current page (default: 1).
- * @param props.boundaryCount Optional number of boundary pages to show at the start and end (default: 1).
  * @param props.i18nKeyPrefix Optional prefix for internationalization keys used in the Pagination component (default: 'productions.pagination').
  * @returns A React component that renders pagination controls based on the provided props. *
  */
@@ -41,8 +37,6 @@ const Pagination = ({
   totalItems,
   onPageChange,
   disabled = false,
-  siblingCount = 1,
-  boundaryCount = 1,
   i18nKeyPrefix = 'productions.pagination',
 }: PaginationProps) => {
   const { t } = useTranslation()
@@ -52,14 +46,10 @@ const Pagination = ({
   const hasPagination = totalPages > 1
   const activePage = hasPagination ? Math.min(Math.max(page, 1), totalPages) : 1
 
-  // Local input state so user can type freely before change
-  const [inputValue, setInputValue] = useState(String(activePage))
+  // Local draft state so users can type freely before commit on blur/Enter.
+  const [inputDraft, setInputDraft] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-
-  // Keep input in sync with active page changes
-  useEffect(() => {
-    setInputValue(String(activePage))
-  }, [activePage])
+  const inputValue = inputDraft ?? String(activePage)
 
   if (!hasPagination) {
     return null
@@ -69,13 +59,13 @@ const Pagination = ({
     const parsed = parseInt(raw, 10)
     if (!isNaN(parsed)) {
       const clamped = Math.min(Math.max(parsed, 1), totalPages)
-      setInputValue(String(clamped))
+      setInputDraft(null)
       if (clamped !== activePage) {
         onPageChange(clamped)
       }
     } else {
       // Reset to current page if input is invalid
-      setInputValue(String(activePage))
+      setInputDraft(null)
     }
   }
 
@@ -144,7 +134,7 @@ const Pagination = ({
         disabled={disabled}
         value={inputValue}
         aria-label={t(`${i18nKeyPrefix}.currentPage`, { page: activePage })}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={(e) => setInputDraft(e.target.value)}
         onBlur={handleInputBlur}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
@@ -154,13 +144,13 @@ const Pagination = ({
           if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
             e.preventDefault()
             const nextPage = Math.min(activePage + 1, totalPages)
-            setInputValue(String(nextPage))
+            setInputDraft(null)
             onPageChange(nextPage)
           }
           if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
             e.preventDefault()
             const prevPage = Math.max(activePage - 1, 1)
-            setInputValue(String(prevPage))
+            setInputDraft(null)
             onPageChange(prevPage)
           }
         }}

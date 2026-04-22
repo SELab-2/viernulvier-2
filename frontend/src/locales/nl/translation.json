@@ -192,13 +192,11 @@
     },
     "pagination": {
       "navigationLabel": "Paginering van producties",
-      "pageXofY": "Pagina {{page}} van {{totalPages}}",
       "firstPage": "Ga naar eerste pagina",
       "lastPage": "Ga naar laatste pagina",
       "nextPage": "Ga naar volgende pagina",
       "previousPage": "Ga naar vorige pagina",
       "currentPage": "Huidige pagina, pagina {{page}}",
-      "goToPage": "Ga naar pagina {{page}}",
       "ofPages": "van {{count}}"
     },
     "detail": {
@@ -243,6 +241,15 @@
         "fallback": "Kon verhalen niet laden.",
         "notification": "Er ging iets mis bij het laden van verhalen."
       }
+    },
+    "pagination": {
+      "navigationLabel": "Paginering van blogs",
+      "firstPage": "Ga naar eerste pagina",
+      "lastPage": "Ga naar laatste pagina",
+      "nextPage": "Ga naar volgende pagina",
+      "previousPage": "Ga naar vorige pagina",
+      "currentPage": "Huidige pagina, pagina {{page}}",
+      "ofPages": "van {{count}}"
     }
   },
   "notFound": {
@@ -309,13 +316,12 @@
     },
     "pagination": {
       "navigationLabel": "Paginering van reeksen",
-      "pageXofY": "Pagina {{page}} van {{totalPages}}",
       "firstPage": "Ga naar eerste pagina",
       "lastPage": "Ga naar laatste pagina",
       "nextPage": "Ga naar volgende pagina",
       "previousPage": "Ga naar vorige pagina",
       "currentPage": "Huidige pagina, pagina {{page}}",
-      "goToPage": "Ga naar pagina {{page}}"
+      "ofPages": "van {{count}}"
     }
   },
   "blog": {
