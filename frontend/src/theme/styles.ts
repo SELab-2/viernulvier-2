@@ -88,13 +88,26 @@ export const createCommonStyles = (theme: Theme) => {
 
     /**
      * Grid container for wrapping card layouts.
+     *
+     * `auto-fill` preserves empty tracks, so when the parent column is sized
+     * to exactly N card widths a single card naturally lands in the first
+     * track with no bespoke `justify-content` switching required. When the
+     * parent column falls back to 100% width (viewports that can't fit two
+     * card columns), only one track fits and the alignment of that lone card
+     * becomes visible - centered by default, which suits mobile and narrow
+     * sidebar-less layouts.
+     *
+     * Ancestors (e.g. the collection page's content column when a filter
+     * sidebar is visible) can opt into start alignment by setting the
+     * `--grid-align` CSS custom property to `start`, which cascades down
+     * without requiring prop plumbing.
      */
     gridContainer: {
       display: 'grid',
-      gridTemplateColumns: `repeat(auto-fit, min(${tokens.card.gridCardWidthPx}px, 100%))`,
+      gridTemplateColumns: `repeat(auto-fill, min(${tokens.card.gridCardWidthPx}px, 100%))`,
       gap: tokens.spacing.numericLg,
       alignItems: 'stretch',
-      justifyContent: 'center',
+      justifyContent: 'var(--grid-align, center)',
     } as SxProps<Theme>,
 
     /**
