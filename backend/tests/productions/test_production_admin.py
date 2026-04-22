@@ -178,6 +178,9 @@ class TestProductionAdminConfiguration(TestCase):
     def test_three_inlines_registered(self) -> None:
         assert len(self.admin.inlines) == 3
 
+    def test_uses_custom_change_list_template(self) -> None:
+        assert self.admin.change_list_template == "admin/productions/production/change_list.html"
+
 
 class TestProductionTagTranslationInlineClass(TestCase):
     def test_model_is_production_tag_translation(self) -> None:

@@ -1,0 +1,226 @@
+{% extends "admin/change_list.html" %}
+
+{% block result_list %}
+  {{ block.super }}
+
+  <style>
+    #changelist-form .actions .action-counter {
+      display: none;
+    }
+
+    #changelist-form .actions .persistent-selection-inline {
+      margin-left: 10px;
+      color: #417690;
+      font-weight: 600;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    #changelist-form .actions .persistent-selection-clear {
+      margin-left: 8px;
+      background: none;
+      border: 0;
+      color: #b94a48;
+      cursor: pointer;
+      text-decoration: underline;
+      font: inherit;
+      padding: 0;
+      vertical-align: middle;
+    }
+  </style>
+
+  {% if persistent_selected_ids %}
+    {{ persistent_selected_ids|json_script:"persistent-selected-ids" }}
+  {% else %}
+    <script id="persistent-selected-ids" type="application/json">[]</script>
+  {% endif %}
+
+  <script>
+    (function () {
+      var actionCheckboxName = '_selected_action';
+      var changelistForm = document.getElementById('changelist-form');
+      if (!changelistForm) {
+        return;
+      }
+
+      var persistedScript = document.getElementById('persistent-selected-ids');
+      var persistedIds = new Set();
+      if (persistedScript && persistedScript.textContent) {
+        try {
+          JSON.parse(persistedScript.textContent).forEach(function (id) {
+            persistedIds.add(String(id));
+          });
+        } catch (error) {
+          // Keep default empty set when JSON parsing fails.
+        }
+      }
+
+      function getActionCheckboxes() {
+        return Array.from(changelistForm.querySelectorAll('input.action-select'));
+      }
+
+      function ensureInlineSummary() {
+        document.querySelectorAll('#changelist-form .actions').forEach(function (actionsEl) {
+          if (!actionsEl.querySelector('.persistent-selection-inline')) {
+            var summaryEl = document.createElement('span');
+            summaryEl.className = 'persistent-selection-inline';
+            summaryEl.textContent = 'Selected: 0 on this page, 0 total across pages';
+            actionsEl.appendChild(summaryEl);
+          }
+
+          if (!actionsEl.querySelector('.persistent-selection-clear')) {
+            var clearButton = document.createElement('button');
+            clearButton.type = 'button';
+            clearButton.className = 'persistent-selection-clear';
+            clearButton.textContent = 'Deselect all';
+            clearButton.addEventListener('click', clearAllSelections);
+            actionsEl.appendChild(clearButton);
+          }
+        });
+      }
+
+      function updateSelectionSummary() {
+        var selectedOnPage = getActionCheckboxes().filter(function (checkbox) {
+          return checkbox.checked;
+        }).length;
+
+        document.querySelectorAll('#changelist-form .actions .persistent-selection-inline').forEach(function (el) {
+          el.textContent =
+            'Selected: ' + selectedOnPage + ' on this page, ' + persistedIds.size + ' total across pages';
+        });
+      }
+
+      function setCheckedByPersistedIds() {
+        getActionCheckboxes().forEach(function (checkbox) {
+          if (persistedIds.has(String(checkbox.value))) {
+            checkbox.checked = true;
+            var row = checkbox.closest('tr');
+            if (row) {
+              row.classList.add('selected');
+            }
+          }
+        });
+      }
+
+      function getCsrfToken() {
+        var csrfInput = changelistForm.querySelector('input[name="csrfmiddlewaretoken"]');
+        return csrfInput ? csrfInput.value : '';
+      }
+
+      function syncPersistedSelection(options) {
+        var opts = options || {};
+        var visibleIds = getActionCheckboxes().map(function (checkbox) {
+          return String(checkbox.value);
+        });
+
+        var selectedIds = getActionCheckboxes()
+          .filter(function (checkbox) {
+            return checkbox.checked;
+          })
+          .map(function (checkbox) {
+            return String(checkbox.value);
+          });
+
+        var payload = new URLSearchParams();
+        if (opts.clearAll) {
+          payload.append('clear_persistent_selection', '1');
+        } else {
+          payload.append('persist_selection', '1');
+        }
+        visibleIds.forEach(function (id) {
+          payload.append('visible_ids', id);
+        });
+        selectedIds.forEach(function (id) {
+          payload.append('selected_ids', id);
+        });
+
+        return fetch(window.location.href, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+            'X-CSRFToken': getCsrfToken(),
+          },
+          body: payload.toString(),
+          credentials: 'same-origin',
+        })
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            if (data && typeof data.count === 'number') {
+              // Keep in sync with server session source of truth.
+              if (opts.clearAll) {
+                persistedIds.clear();
+              }
+              updateSelectionSummary();
+            }
+          })
+          .catch(function () {
+            // Keep UI functional even if sync request fails.
+          });
+      }
+
+      function clearAllSelections() {
+        persistedIds.clear();
+        getActionCheckboxes().forEach(function (checkbox) {
+          checkbox.checked = false;
+          var row = checkbox.closest('tr');
+          if (row) {
+            row.classList.remove('selected');
+          }
+        });
+
+        var allToggle = document.getElementById('action-toggle');
+        if (allToggle) {
+          allToggle.checked = false;
+        }
+
+        updateSelectionSummary();
+        syncPersistedSelection({ clearAll: true });
+      }
+
+      ensureInlineSummary();
+      setCheckedByPersistedIds();
+      updateSelectionSummary();
+
+      changelistForm.addEventListener('change', function (event) {
+        var target = event.target;
+        if (!target || !target.classList.contains('action-select')) {
+          return;
+        }
+
+        if (target.checked) {
+          persistedIds.add(String(target.value));
+        } else {
+          persistedIds.delete(String(target.value));
+        }
+        updateSelectionSummary();
+        syncPersistedSelection();
+      });
+
+      var allToggle = document.getElementById('action-toggle');
+      if (allToggle) {
+        allToggle.addEventListener('click', function () {
+          window.setTimeout(function () {
+            getActionCheckboxes().forEach(function (checkbox) {
+              if (checkbox.checked) {
+                persistedIds.add(String(checkbox.value));
+              } else {
+                persistedIds.delete(String(checkbox.value));
+              }
+            });
+            updateSelectionSummary();
+            syncPersistedSelection();
+          }, 0);
+        });
+      }
+
+      document.querySelectorAll('div.actions span.clear a').forEach(function (clearLink) {
+        clearLink.addEventListener('click', function () {
+          persistedIds.clear();
+          clearAllSelections();
+        });
+      });
+    })();
+  </script>
+{% endblock %}

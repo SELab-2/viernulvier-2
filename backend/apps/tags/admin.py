@@ -17,6 +17,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin
+from apps.productions.models import ProductionTag
 
 from .models import Tag, TagTranslation
 
@@ -41,6 +42,18 @@ class TagTranslationInline(admin.TabularInline):
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("language")
+
+
+class TagProductionInline(admin.TabularInline):
+    """Inline for attaching productions directly on a Tag change page."""
+
+    model = ProductionTag
+    extra = 1
+    autocomplete_fields = ("production",)
+    fields = ("production",)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).select_related("production")
 
 
 # ===========================================================================
@@ -85,7 +98,7 @@ class TagAdmin(BaseAdmin):
 
     ordering = ("type", "id")
 
-    inlines = [TagTranslationInline]
+    inlines = [TagTranslationInline, TagProductionInline]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Prefetch translations to avoid N+1 queries on the detail page."""

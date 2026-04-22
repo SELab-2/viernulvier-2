@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.db.models import Max, QuerySet
 from django.http import HttpRequest
 
-from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
+from apps.core.admin import BaseAdmin, PersistentSelectionMixin, TwoStepBulkActionMixin
 from apps.genres.models import Genre
 from apps.tags.models import Tag
 
@@ -153,7 +153,7 @@ class UitDatabaseTypeAdmin(BaseAdmin):
 
 
 @admin.register(Production)
-class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
+class ProductionAdmin(PersistentSelectionMixin, TwoStepBulkActionMixin, BaseAdmin):
     """
     Admin configuration for the Production model.
 
@@ -172,6 +172,7 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
 
     list_display = (
         "id",
+        "display_title",
         "attendance_mode",
         "performer_type",
         "uit_database_type",
@@ -212,6 +213,18 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         ProductionTagInline,
     ]
 
+    change_list_template = "admin/productions/production/change_list.html"
+
+    @admin.display(description="Title")
+    def display_title(self, obj: Production) -> str:
+        """Return the best available title for changelist display."""
+        title = obj.get_base_display_name(
+            related_name="translations",
+            name_field="title",
+            fallback=None,
+        )
+        return title or f"Production #{obj.id}"
+
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Optimise the queryset with select_related and prefetch_related."""
         return (
@@ -225,6 +238,13 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         )
 
     two_step_empty_selection_message = "No productions selected."
+
+    def _selected_productions_from_request(self, request: HttpRequest, fallback_qs: QuerySet) -> QuerySet:
+        """Resolve selected productions from POST ids, independent of current changelist filters."""
+        selected_ids = request.POST.getlist("_selected_action")
+        if not selected_ids:
+            return fallback_qs
+        return self.model.objects.filter(pk__in=selected_ids)
 
     def _apply_add_tag_to_productions(self, selected_qs: QuerySet, cleaned_data: dict) -> str:
         tag = cleaned_data["tag"]
@@ -280,9 +300,11 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
     def add_tag_to_selected_productions(self, request: HttpRequest, queryset: QuerySet) -> HttpRequest:
         """Two-step admin action to attach one tag to selected productions."""
 
+        selected_qs = self._selected_productions_from_request(request, queryset)
+
         return self._run_two_step_bulk_action(
             request,
-            queryset,
+            selected_qs,
             form_class=AddTagToProductionsForm,
             action_name="add_tag_to_selected_productions",
             title="Add tag to selected productions",
@@ -294,9 +316,11 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
     def add_genre_to_selected_productions(self, request: HttpRequest, queryset: QuerySet) -> HttpRequest:
         """Two-step admin action to attach one genre to selected productions."""
 
+        selected_qs = self._selected_productions_from_request(request, queryset)
+
         return self._run_two_step_bulk_action(
             request,
-            queryset,
+            selected_qs,
             form_class=AddGenreToProductionsForm,
             action_name="add_genre_to_selected_productions",
             title="Add genre to selected productions",
