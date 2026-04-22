@@ -7,9 +7,9 @@
     "dev": "vite --mode dev",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --check . --list-different",
     "format:fix": "prettier --write .",
     "test": "jest",
     "test:watch": "jest --watch"
