@@ -2,6 +2,121 @@
 {% load i18n %}
 
 {% block content %}
+  <style>
+    .two-step-action-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(3px);
+    }
+
+    .two-step-action-card-wrapper {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .two-step-action-card {
+      background: #fff;
+      color: #111;
+      width: min(560px, 100%);
+      border-radius: 10px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+      padding: 24px;
+      max-height: calc(100vh - 80px);
+      overflow: auto;
+    }
+
+    .two-step-action-card h1 {
+      margin-top: 0;
+    }
+
+    .two-step-action-card p {
+      color: #333;
+    }
+
+    .dark .two-step-action-card,
+    body.dark .two-step-action-card,
+    html.dark .two-step-action-card,
+    .two-step-action-card.dark,
+    .two-step-action-card.two-step-action-card--dark {
+      background: #1f2937;
+      color: #f8fafc;
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+    }
+
+    .dark .two-step-action-card p,
+    body.dark .two-step-action-card p,
+    html.dark .two-step-action-card p,
+    .two-step-action-card.dark p,
+    .two-step-action-card.two-step-action-card--dark p {
+      color: #cbd5e1;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .two-step-action-card {
+        background: #1f2937;
+        color: #f8fafc;
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+      }
+
+      .two-step-action-card p {
+        color: #cbd5e1;
+      }
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var card = document.querySelector('.two-step-action-card');
+      if (!card) {
+        return;
+      }
+
+      function parseRgb(value) {
+        var result = /rgba?\(([^)]+)\)/.exec(value);
+        if (!result) {
+          return null;
+        }
+        var parts = result[1].split(',').map(function (item) {
+          return parseInt(item.trim(), 10);
+        });
+        return parts.length >= 3 ? parts.slice(0, 3) : null;
+      }
+
+      function brightness(rgb) {
+        return (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+      }
+
+      var root = document.documentElement;
+      var body = document.body;
+      var bgColor = window.getComputedStyle(root).backgroundColor;
+      if (!bgColor || bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)') {
+        bgColor = window.getComputedStyle(body).backgroundColor;
+      }
+
+      function wasAlreadyDark() {
+        var darkClassNames = ['dark', 'theme-dark', 'admin-dark'];
+        return darkClassNames.some(function (name) {
+          return root.classList.contains(name) || body.classList.contains(name);
+        });
+      }
+
+      var rgb = parseRgb(bgColor);
+      if (wasAlreadyDark() || (rgb && brightness(rgb) < 150)) {
+        card.classList.add('two-step-action-card--dark');
+      }
+    });
+  </script>
+
   <div style="position: fixed; inset: 0; z-index: 1;">
     <iframe
       src="{{ changelist_url }}"
@@ -10,11 +125,11 @@
     ></iframe>
   </div>
 
-  <div style="position: fixed; inset: 0; z-index: 2; background: rgba(0, 0, 0, 0.20);"></div>
+  <div class="two-step-action-backdrop"></div>
 
-  <div style="position: fixed; inset: 0; z-index: 3; display:flex; align-items:center; justify-content:center; padding:24px;">
-    <div style="background:#fff; width:min(560px, 100%); border-radius:8px; box-shadow:0 12px 30px rgba(0,0,0,.25); padding:20px;">
-      <h1 style="margin-top:0;">{{ title }}</h1>
+  <div class="two-step-action-card-wrapper">
+    <div class="two-step-action-card">
+      <h1>{{ title }}</h1>
       <p>{{ selected_label|default:_('Selected items') }}: {{ queryset|length }}</p>
 
       <form method="post">

@@ -54,6 +54,7 @@ tests/
 ```
 
 Example:
+
 - App: `languages`
 - Tests: `tests/languages/test_language_admin.py`, `tests/languages/test_language_models.py`, ...
 
@@ -62,34 +63,35 @@ Example:
 `schemas.py` is documentation-only and generally does not need dedicated tests.
 
 - **Models**
-   - Field constraints (`null/blank/default/choices/unique`)
-   - `clean()` and `save()` behavior
-   - DB constraints and cascade behavior
-   - `__str__` output and model helpers
+  - Field constraints (`null/blank/default/choices/unique`)
+  - `clean()` and `save()` behavior
+  - DB constraints and cascade behavior
+  - `__str__` output and model helpers
 
 - **Admin**
-   - Model registration
-   - `list_display`, `list_filter`, `search_fields`, `ordering`
-   - Inlines, readonly fields, custom display helpers
-   - Custom actions and permission behavior (if overridden)
+  - Model registration
+  - `list_display`, `list_filter`, `search_fields`, `ordering`
+  - Inlines, readonly fields, custom display helpers
+  - Custom actions and permission behavior (if overridden)
 
 - **Serializers**
-   - Required/optional fields
-   - Validation rules + error messages
-   - Output shape and computed fields
+  - Required/optional fields
+  - Validation rules + error messages
+  - Output shape and computed fields
 
 - **Views / API**
-   - Auth + permissions (`401/403` behavior)
-   - CRUD success and failure paths
-   - Pagination/filtering/ordering
-   - Not found / invalid payload handling
-   - Query efficiency where relevant (e.g. no N+1 regressions)
+  - Auth + permissions (`401/403` behavior)
+  - CRUD success and failure paths
+  - Pagination/filtering/ordering
+  - Not found / invalid payload handling
+  - Query efficiency where relevant (e.g. no N+1 regressions)
 
 #### 5) Factories
 
 Shared factories live in `tests/factories/`.
 
 Use factories by default instead of manual object creation to keep tests:
+
 - concise,
 - consistent,
 - reusable across suites.
@@ -136,36 +138,43 @@ npm test -- --runInBand
 # Lint (must pass in CI)
 npm run lint
 
+# Auto-fix lint issues
+npm run lint:fix
+
 # Check formatting without writing
-npx prettier --check src
+npm run format:check
 
 # Auto-fix formatting
-npx prettier --write src
+npm run format:fix
 ```
 
 #### 3) Test Folder Structure
 
-Tests live in `frontend/src/__tests__/` and mirror the component/page structure.
+Tests live in `frontend/src/__tests__/` and mirror the component, page, service, and theme structure.
 
 ```text
 src/
   __tests__/
-    App.test.tsx
-    Navbar.test.tsx
-    ...
+      components/
+      pages/
+      services/
+      theme/
 ```
 
 #### 4) What to Test Per Layer
 
 - **Components** — render output, interaction behavior, aria attributes, and i18n label correctness.
-- **Pages** — route rendering and basic content presence.
-- **State/callbacks** — that passed-in callbacks are called on user interaction.
+- **Pages** — route rendering, fetch orchestration, and loading/error/empty state transitions.
+- **Services** — request paths, query parameters, and error propagation.
+- **Theme helpers** — token mapping, palette creation, and shared style objects.
 
 Use `data-testid` attributes for stable element selection; prefer them over CSS class names or positional queries.
 
 #### 5) Testing Guidelines
 
 - Use `MemoryRouter` when testing components that use `useLocation` or `Link`.
+- Use `ThemeProvider` when the component depends on MUI theme values or breakpoints.
+- Use `I18nextProvider` or the shared test i18n instance when asserting translations.
 - Use `fireEvent` for simple interactions; use `userEvent` when pointer/keyboard fidelity matters.
 - Avoid asserting on CSS class names or MUI internals — assert on accessible attributes (`aria-label`, `aria-current`) and visible text.
 - Set the i18n language in `beforeEach` so translation assertions are deterministic.
@@ -216,6 +225,6 @@ This ensures that all code merged via PRs is clean before it lands.
 #### Summary
 
 | Event | Job | Behaviour |
-|---|---|---|
+| --- | --- | --- |
 | Push to `main` / `dev` / `backend` | `autofix` | Runs `ruff check --fix` + `ruff format`, commits changes if any |
 | Pull request to `main` / `dev` / `backend` | `lint` | Runs `ruff check` + `ruff format --check`, fails on any issue |
