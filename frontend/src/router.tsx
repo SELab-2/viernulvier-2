@@ -23,7 +23,7 @@ const ScrollToTop = () => {
 
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0 })
-  }, [location.pathname])
+  }, [location.pathname, location.search])
 
   return null
 }
