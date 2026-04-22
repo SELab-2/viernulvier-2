@@ -198,7 +198,8 @@
       "nextPage": "Ga naar volgende pagina",
       "previousPage": "Ga naar vorige pagina",
       "currentPage": "Huidige pagina, pagina {{page}}",
-      "goToPage": "Ga naar pagina {{page}}"
+      "goToPage": "Ga naar pagina {{page}}",
+      "ofPages": "van {{count}}"
     },
     "detail": {
       "related": "Gerelateerde producties",

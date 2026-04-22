@@ -198,7 +198,8 @@
       "nextPage": "Go to next page",
       "previousPage": "Go to previous page",
       "currentPage": "Current page, page {{page}}",
-      "goToPage": "Go to page {{page}}"
+      "goToPage": "Go to page {{page}}",
+      "ofPages": "of {{count}}"
     },
     "detail": {
       "related": "Related productions",

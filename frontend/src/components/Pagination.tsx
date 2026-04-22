@@ -1,4 +1,11 @@
-import { Box, Pagination as MuiPagination } from '@mui/material'
+import { useState, useEffect, useRef } from 'react'
+import { Box, IconButton, OutlinedInput, Typography } from '@mui/material'
+import {
+  FirstPage as FirstPageIcon,
+  LastPage as LastPageIcon,
+  NavigateBefore as PrevIcon,
+  NavigateNext as NextIcon,
+} from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 
 export interface PaginationProps {
@@ -42,12 +49,57 @@ const Pagination = ({
 
   const safePageSize = Math.max(1, pageSize)
   const totalPages = Math.ceil(totalItems / safePageSize)
+  const hasPagination = totalPages > 1
+  const activePage = hasPagination ? Math.min(Math.max(page, 1), totalPages) : 1
 
-  if (totalPages <= 1) {
+  // Local input state so user can type freely before change
+  const [inputValue, setInputValue] = useState(String(activePage))
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Keep input in sync with active page changes
+  useEffect(() => {
+    setInputValue(String(activePage))
+  }, [activePage])
+
+  if (!hasPagination) {
     return null
   }
 
-  const activePage = Math.min(Math.max(page, 1), totalPages)
+  const commitPage = (raw: string) => {
+    const parsed = parseInt(raw, 10)
+    if (!isNaN(parsed)) {
+      const clamped = Math.min(Math.max(parsed, 1), totalPages)
+      setInputValue(String(clamped))
+      if (clamped !== activePage) {
+        onPageChange(clamped)
+      }
+    } else {
+      // Reset to current page if input is invalid
+      setInputValue(String(activePage))
+    }
+  }
+
+  const handleInputBlur = () => {
+    commitPage(inputRef.current?.value ?? inputValue)
+  }
+
+  const navButtonSx = {
+    borderRadius: 1,
+    border: '1px solid',
+    borderColor: 'divider',
+    width: 32,
+    height: 32,
+    color: disabled ? 'action.disabled' : 'action.secondary',
+    '&:hover:not(:disabled)': {
+      backgroundColor: 'action.hover',
+      borderColor: 'primary.main',
+      color: 'primary.main',
+    },
+    '&.Mui-disabled': {
+      borderColor: 'divider',
+    },
+    transition: 'border-color 0.15s, color 0.15s, background-color 0.15s',
+  }
 
   return (
     <Box
@@ -55,39 +107,119 @@ const Pagination = ({
       aria-label={t(`${i18nKeyPrefix}.navigationLabel`)}
       sx={{
         display: 'flex',
-        flexDirection: { xs: 'column', sm: 'row' },
+        flexDirection: 'row',
+        flexWrap: { xs: 'wrap', sm: 'nowrap' },
         alignItems: 'center',
-        justifyContent: 'flex-end',
-        gap: 2,
+        justifyContent: { xs: 'center', sm: 'flex-end' },
+        columnGap: 1,
+        rowGap: 0.75,
       }}
     >
-      <MuiPagination
-        color="primary"
-        shape="rounded"
-        page={activePage}
-        count={totalPages}
+      {/* First Page Button */}
+      <IconButton
+        size="small"
+        disabled={disabled || activePage === 1}
+        onClick={() => onPageChange(1)}
+        aria-label={t(`${i18nKeyPrefix}.firstPage`)}
+        sx={navButtonSx}
+      >
+        <FirstPageIcon fontSize="small" />
+      </IconButton>
+
+      {/* Previous Page Button */}
+      <IconButton
+        size="small"
+        disabled={disabled || activePage === 1}
+        onClick={() => onPageChange(activePage - 1)}
+        aria-label={t(`${i18nKeyPrefix}.previousPage`)}
+        sx={navButtonSx}
+      >
+        <PrevIcon fontSize="small" />
+      </IconButton>
+
+      {/* Page Input */}
+      <OutlinedInput
+        inputRef={inputRef}
+        size="small"
         disabled={disabled}
-        siblingCount={siblingCount}
-        boundaryCount={boundaryCount}
-        onChange={(_event, value) => onPageChange(value)}
-        getItemAriaLabel={(type, itemPage, selected) => {
-          if (type === 'first') {
-            return t(`${i18nKeyPrefix}.firstPage`)
+        value={inputValue}
+        aria-label={t(`${i18nKeyPrefix}.currentPage`, { page: activePage })}
+        onChange={(e) => setInputValue(e.target.value)}
+        onBlur={handleInputBlur}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            commitPage(e.currentTarget.value)
+            inputRef.current?.blur()
           }
-          if (type === 'last') {
-            return t(`${i18nKeyPrefix}.lastPage`)
+          if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+            e.preventDefault()
+            const nextPage = Math.min(activePage + 1, totalPages)
+            setInputValue(String(nextPage))
+            onPageChange(nextPage)
           }
-          if (type === 'next') {
-            return t(`${i18nKeyPrefix}.nextPage`)
+          if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+            e.preventDefault()
+            const prevPage = Math.max(activePage - 1, 1)
+            setInputValue(String(prevPage))
+            onPageChange(prevPage)
           }
-          if (type === 'previous') {
-            return t(`${i18nKeyPrefix}.previousPage`)
-          }
-          return selected
-            ? t(`${i18nKeyPrefix}.currentPage`, { page: itemPage })
-            : t(`${i18nKeyPrefix}.goToPage`, { page: itemPage })
+        }}
+        inputProps={{
+          'aria-label': t(`${i18nKeyPrefix}.currentPage`, { page: activePage }),
+          style: { textAlign: 'center', padding: '4px 0' },
+        }}
+        sx={{
+          width: `${Math.max(String(totalPages).length, 2) + 2}ch`,
+          minWidth: 40,
+          height: 32,
+          borderRadius: '8px',
+          fontSize: '0.875rem',
+          fontWeight: 500,
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'divider',
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'primary.main',
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'primary.main',
+            borderWidth: 2,
+          },
         }}
       />
+
+      {/* Of N label */}
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ userSelect: 'none', whiteSpace: 'nowrap' }}
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {t(`${i18nKeyPrefix}.ofPages`, { count: totalPages })}
+      </Typography>
+
+      {/* Next Page Button */}
+      <IconButton
+        size="small"
+        disabled={disabled || activePage === totalPages}
+        onClick={() => onPageChange(activePage + 1)}
+        aria-label={t(`${i18nKeyPrefix}.nextPage`)}
+        sx={navButtonSx}
+      >
+        <NextIcon fontSize="small" />
+      </IconButton>
+
+      {/* Last Page Button */}
+      <IconButton
+        size="small"
+        disabled={disabled || activePage === totalPages}
+        onClick={() => onPageChange(totalPages)}
+        aria-label={t(`${i18nKeyPrefix}.lastPage`)}
+        sx={navButtonSx}
+      >
+        <LastPageIcon fontSize="small" />
+      </IconButton>
     </Box>
   )
 }
