@@ -100,60 +100,73 @@ const SearchControlsBar = ({
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel id={SORT_TARGET_LABEL_ID}>{t('searchbar.sort.targetLabel')}</InputLabel>
-            {/* Sort target selector. */}
-            <Select
-              labelId={SORT_TARGET_LABEL_ID}
-              value={effectiveSortTarget}
-              label={t('searchbar.sort.targetLabel')}
-              onChange={(event) => onSortTargetChange(event.target.value as SearchSortTarget)}
-              sx={{
-                height: 40,
-                backgroundColor: theme.palette.background.default,
-              }}
-            >
-              {sortTargetOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {t(option.labelKey)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Sort direction toggle. */}
-          <Tooltip
-            title={
-              nextSortDirection === 'asc'
-                ? t('searchbar.sort.switchToAscending')
-                : t('searchbar.sort.switchToDescending')
-            }
+          {/* Sort target + direction: tight visual group */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.75,
+              flexShrink: 0,
+            }}
           >
-            <ToggleButton
-              value={sortDirection}
-              aria-label={
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel id={SORT_TARGET_LABEL_ID}>{t('searchbar.sort.targetLabel')}</InputLabel>
+              {/* Sort target selector. */}
+              <Select
+                labelId={SORT_TARGET_LABEL_ID}
+                value={effectiveSortTarget}
+                label={t('searchbar.sort.targetLabel')}
+                onChange={(event) => onSortTargetChange(event.target.value as SearchSortTarget)}
+                sx={{
+                  height: 40,
+                  backgroundColor: theme.palette.background.default,
+                }}
+              >
+                {sortTargetOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {t(option.labelKey)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Sort direction toggle — fixed square so it aligns with the 40px-tall select */}
+            <Tooltip
+              title={
                 nextSortDirection === 'asc'
                   ? t('searchbar.sort.switchToAscending')
                   : t('searchbar.sort.switchToDescending')
               }
-              onClick={() => onSortDirectionChange(nextSortDirection)}
-              sx={{
-                height: 40,
-                px: 1.2,
-                backgroundColor: theme.palette.background.default,
-                '&:hover': {
-                  borderColor: interactionColor,
-                  backgroundColor: interactionHoverBackground,
-                },
-              }}
             >
-              {sortDirection === 'asc' ? (
-                <FaSortAmountUp size={16} />
-              ) : (
-                <FaSortAmountDown size={16} />
-              )}
-            </ToggleButton>
-          </Tooltip>
+              <ToggleButton
+                value={sortDirection}
+                aria-label={
+                  nextSortDirection === 'asc'
+                    ? t('searchbar.sort.switchToAscending')
+                    : t('searchbar.sort.switchToDescending')
+                }
+                onClick={() => onSortDirectionChange(nextSortDirection)}
+                sx={{
+                  width: 40,
+                  minWidth: 40,
+                  height: 40,
+                  p: 0,
+                  flexShrink: 0,
+                  backgroundColor: theme.palette.background.default,
+                  '&:hover': {
+                    borderColor: interactionColor,
+                    backgroundColor: interactionHoverBackground,
+                  },
+                }}
+              >
+                {sortDirection === 'asc' ? (
+                  <FaSortAmountUp size={16} />
+                ) : (
+                  <FaSortAmountDown size={16} />
+                )}
+              </ToggleButton>
+            </Tooltip>
+          </Box>
 
           {extraControls}
 

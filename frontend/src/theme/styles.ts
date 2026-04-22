@@ -88,14 +88,13 @@ export const createCommonStyles = (theme: Theme) => {
 
     /**
      * Grid container for wrapping card layouts.
-     * Responsive gap and flex-wrap for reflow.
      */
     gridContainer: {
-      display: 'flex',
-      flexWrap: 'wrap',
+      display: 'grid',
+      gridTemplateColumns: `repeat(auto-fit, min(${tokens.card.gridCardWidthPx}px, 100%))`,
       gap: tokens.spacing.numericLg,
       alignItems: 'stretch',
-      justifyContent: 'flex-start',
+      justifyContent: 'center',
     } as SxProps<Theme>,
 
     /**

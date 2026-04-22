@@ -3,6 +3,7 @@ import { Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 
+import { tokens } from '../../theme/tokens'
 import { formatDate } from '../../utils/dateUtils'
 import { getTranslatedRecord } from '../../utils/translations'
 import ImageWithFallback from '../ImageWithFallback'
@@ -52,7 +53,8 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
       component={RouterLink}
       to={`/series/${series.tag.id}`}
       sx={(theme) => ({
-        width: 350,
+        width: '100%',
+        maxWidth: tokens.card.gridCardWidthPx,
         borderRadius: 4,
         overflow: 'hidden',
         textDecoration: 'none',
