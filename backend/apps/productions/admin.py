@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.db.models import Max, QuerySet
 from django.http import HttpRequest
 
-from apps.core.admin import BaseAdmin, PersistentSelectionMixin, TwoStepBulkActionMixin
+from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
 from apps.genres.models import Genre
 from apps.tags.models import Tag
 
@@ -153,7 +153,7 @@ class UitDatabaseTypeAdmin(BaseAdmin):
 
 
 @admin.register(Production)
-class ProductionAdmin(PersistentSelectionMixin, TwoStepBulkActionMixin, BaseAdmin):
+class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
     """
     Admin configuration for the Production model.
 
@@ -212,8 +212,6 @@ class ProductionAdmin(PersistentSelectionMixin, TwoStepBulkActionMixin, BaseAdmi
         ProductionGenreInline,
         ProductionTagInline,
     ]
-
-    change_list_template = "admin/productions/production/change_list.html"
 
     @admin.display(description="Title")
     def display_title(self, obj: Production) -> str:

@@ -73,6 +73,11 @@ class TestBaseAdmin(TestCase):
         instance = BaseAdmin(User, admin.site)
         assert not instance.show_full_result_count
 
+    def test_change_list_template_default(self) -> None:
+        """BaseAdmin should use the global persistent selection changelist template."""
+        instance = BaseAdmin(User, admin.site)
+        assert instance.change_list_template == "admin/persistent_change_list.html"
+
     def test_show_full_result_count_can_be_overridden(self) -> None:
         """Subclasses should be able to override show_full_result_count."""
 

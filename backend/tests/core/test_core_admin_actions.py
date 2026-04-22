@@ -8,7 +8,7 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory, TestCase
 
-from apps.core.admin import BaseAdmin, PersistentSelectionMixin, TwoStepBulkActionMixin
+from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
 from apps.productions.models import Production
 from tests.factories.production import ProductionFactory
 
@@ -17,7 +17,7 @@ class _DummyTwoStepAdmin(TwoStepBulkActionMixin, BaseAdmin):
     pass
 
 
-class _DummyPersistentSelectionAdmin(PersistentSelectionMixin, BaseAdmin):
+class _DummyPersistentSelectionAdmin(BaseAdmin):
     actions = ("remember_selected",)
 
     @admin.action(description="Remember selected")
