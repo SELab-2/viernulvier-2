@@ -48,7 +48,7 @@ export default function HtmlText({
   sx,
   ...props
 }: HtmlTextProps) {
-  if (!html) {
+  if (!html?.trim())
     // Render fallback if html is empty
     if (fallback) {
       // If fallback is already a node, return it as-is
