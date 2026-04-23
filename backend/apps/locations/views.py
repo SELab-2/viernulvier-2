@@ -1,5 +1,4 @@
-"""
-ViewSets for the Locations app.
+"""ViewSets for the Locations app.
 
 Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
@@ -18,8 +17,7 @@ _TAG = "Locations"
 @extend_schema(tags=[_TAG])
 @location_schema
 class LocationViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Location objects.
+    """CRUD endpoints for Location objects.
 
     A location represents a physical venue or address. It is the top of the
     three-level hierarchy: Location -> Space -> Hall.
@@ -59,7 +57,7 @@ class LocationViewSet(ApiModelViewSet):
         and translated names.
     """
 
-    queryset = Location.objects.prefetch_related("translations__language").order_by("id")
+    queryset = Location.objects.prefetch_related("translations__language").order_by("id").distinct()
     serializer_class = LocationSerializer
 
     filterset_class = LocationFilter
@@ -71,8 +69,7 @@ class LocationViewSet(ApiModelViewSet):
 @extend_schema(tags=[_TAG])
 @space_schema
 class SpaceViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Space objects.
+    """CRUD endpoints for Space objects.
 
     A space is a distinct physical area (building, wing, …) within a location.
     It groups one or more halls.
@@ -99,7 +96,15 @@ class SpaceViewSet(ApiModelViewSet):
         Full-text search across translated space names.
     """
 
-    queryset = Space.objects.select_related("location").prefetch_related("translations__language").order_by("id")
+    queryset = (
+        Space.objects.select_related("location")
+        .prefetch_related(
+            "translations__language",
+            "location__translations__language",
+            "halls__translations__language",
+        )
+        .order_by("id")
+    )
     serializer_class = SpaceSerializer
 
     filterset_class = SpaceFilter
@@ -111,8 +116,7 @@ class SpaceViewSet(ApiModelViewSet):
 @extend_schema(tags=[_TAG])
 @hall_schema
 class HallViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Hall objects.
+    """CRUD endpoints for Hall objects.
 
     A hall is a specific room or auditorium within a space. It carries
     seating configuration flags and supports localised ``name`` and
@@ -147,7 +151,13 @@ class HallViewSet(ApiModelViewSet):
     """
 
     queryset = (
-        Hall.objects.select_related("space", "space__location").prefetch_related("translations__language").order_by("id")
+        Hall.objects.select_related("space", "space__location")
+        .prefetch_related(
+            "translations__language",
+            "space__translations__language",
+            "space__location__translations__language",
+        )
+        .order_by("id")
     )
     serializer_class = HallSerializer
 

@@ -100,6 +100,9 @@ jobs:
       SECRET_KEY: django-insecure-test-key-only-for-github-actions
       INTERNAL_API_KEY: test-internal-key
       PUBLIC_API_KEY: test-public-key
+      POSTGRES_DB: test_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
 
     steps:
       - name: Checkout
@@ -124,7 +127,7 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
 
       - name: Run tests with coverage
-        run: pytest -q --cov=. --cov-report=term-missing --cov-report=html
+        run: pytest -q --cov=. --cov-report=term-missing:skip-covered --cov-report=html
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v7

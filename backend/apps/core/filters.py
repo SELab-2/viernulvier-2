@@ -1,5 +1,4 @@
-"""
-Base filter classes for the core app.
+"""Base filter classes for the core app.
 
 ``BaseModelFilter`` is the shared abstract FilterSet that every app-level
 FilterSet should inherit from. It provides filtering on the ``external_id``
@@ -22,8 +21,7 @@ import django_filters
 
 
 class BaseModelFilter(django_filters.FilterSet):
-    """
-    Abstract base FilterSet for all models that inherit from ``BaseModel``.
+    """Abstract base FilterSet for all models that inherit from ``BaseModel``.
 
     Provides filtering on the ``external_id`` field that is present on every
     model in the project. App-level FilterSets inherit from this class and

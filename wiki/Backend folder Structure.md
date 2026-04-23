@@ -3,7 +3,7 @@
 The backend follows a modular, domain-based Django structure that promotes maintainability, scalability, and a clear separation of concerns.  
 Domain logic is organized into dedicated apps under `apps/`, while project configuration and API routing are centralized.
 
-```
+```text
 viernulvier_archive/
 │
 ├── config/                          # Django project configuration
@@ -28,6 +28,7 @@ viernulvier_archive/
 │   │   ├── openapi.py               # Reusable responses
 │   │   ├── views.py                 # ApiModelViewSet and ApiReadOnlyViewSet
 │   │   ├── models.py                # BaseModel base
+│   │   ├── media_validation.py       # Shared media MIME/signature/size validation helpers
 │   │   ├── spectacular_extensions.py # Defines OpenAPI schema extension for API-key authentication
 │   │   └── throttles.py             # Implements DRF rate-limiting classes for public and internal API keys
 │   │
@@ -39,7 +40,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── productions/                 # PRODUCTION + PRODUCTION_TRANSLATION + UITDATABANK tables
+│   ├── productions/                 # PRODUCTION + PRODUCTION_TRANSLATION + production classification tables
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── models.py
@@ -47,7 +48,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── genres/                      # GENRE + GENRE_USE_AS + GENRE_TRANSLATION tables
+│   ├── genres/                      # GENRE + GENRE_TRANSLATION tables
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── models.py
@@ -87,6 +88,15 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
+│   ├── media_files/                 # Uploaded files (images/PDF) with derived metadata
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── filters.py
+│   │   ├── models.py
+│   │   ├── schemas.py
+│   │   ├── serializers.py
+│   │   └── views.py
+│   │
 │   ├── pricing/                     # PRICE + PRICE_RANK + translations 
 │   │   ├── __init__.py
 │   │   ├── admin.py
@@ -105,17 +115,25 @@ viernulvier_archive/
 │   |        
 │   └── imports/                        # Scraping logic
 │       ├── __init__.py
+│       ├── csv_importer/
+│       │   ├── __init__.py
+│       │   └── legacy_csv.py              # Legacy pre-API CSV importer (productions/events)
 │       ├── management/
 │       |   ├── __init__.py
 │       |   └── commands/
 │       |       ├── __init__.py
+│       |       ├── import_legacy_csv.py   # Imports bundled legacy CSV exports
 │       |       └── sync_viernulvier.py
 |       |
 │       └── scrapers/
 │           ├── __init__.py
-│           └──  viernulvier.py
-│               ├── __init__.py
-│               └── sync_viernulvier.py
+│           ├── viernulvier.py                 # Compatibility facade
+│           ├── viernulvier_constants.py       # API config, exceptions, dataclasses
+│           ├── viernulvier_http.py            # HTTP, retry, pagination
+│           ├── viernulvier_normalize.py       # Value normalization & coercion
+│           ├── viernulvier_relations.py       # FK resolution, translations, M2M
+│           ├── viernulvier_sync.py            # Core sync loop & upsert logic
+│           └── viernulvier_media.py           # Media gallery & crop sync
 │
 ├── api/                             # OpenAPI / DRF router
 │   ├── __init__.py
@@ -187,6 +205,8 @@ viernulvier_archive/
 │   │   ├── __init__.py
 │   │   ├── test_sync_configs.py
 │   │   └── test_viernulvier.py
+│   ├── imports_csv/
+│   │   └── test_legacy_csv_importer.py
 │   └── tags/
 │       ├── test_tag_admin.py
 │       ├── test_tag_models.py
@@ -212,6 +232,7 @@ viernulvier_archive/
 ## Core Files
 
 ### `manage.py`
+
 **Purpose**: Django management entry point
 
 - Runs the development server
@@ -219,6 +240,7 @@ viernulvier_archive/
 - Runs tests and management commands
 
 **Example**:
+
 ```bash
 python manage.py runserver
 python manage.py migrate
@@ -228,6 +250,7 @@ python manage.py test
 ---
 
 ### `config/settings/base.py`
+
 **Purpose**: Shared settings used across environments
 
 - Installed apps and middleware
@@ -238,6 +261,7 @@ python manage.py test
 ---
 
 ### `config/settings/dev.py`
+
 **Purpose**: Development overrides
 
 - Debug enabled
@@ -247,6 +271,7 @@ python manage.py test
 ---
 
 ### `config/settings/test.py`
+
 **Purpose**: Test-specific overrides
 
 - Fast test database config (commonly SQLite)
@@ -255,6 +280,7 @@ python manage.py test
 ---
 
 ### `config/settings/prod.py`
+
 **Purpose**: Production settings
 
 - Debug disabled
@@ -264,6 +290,7 @@ python manage.py test
 ---
 
 ### `api/urls.py`
+
 **Purpose**: Central API router
 
 - Registers app viewsets
@@ -275,9 +302,11 @@ python manage.py test
 ## Directories
 
 ### `apps/`
+
 **Purpose**: Domain modules (Django apps)
 
 **Guidelines**:
+
 - One domain = one app (e.g. `events`, `pricing`, `locations`)
 - Keep API concerns inside the app (`serializers.py`, `views.py`, `schemas.py`)
 - Use explicit boundaries: shared logic goes to `apps/core/`
@@ -296,24 +325,29 @@ apps/<domain>/
 ---
 
 ### `apps/core/`
+
 **Purpose**: Shared base classes and reusable utilities
 
 **Use cases**:
+
 - Base models (timestamps, soft-delete patterns, common fields)
 - Reusable serializer mixins (e.g. translation helpers)
 - Shared viewsets (e.g. read-only base viewsets)
 - Common permissions/authentication helpers
 
 **Guidelines**:
+
 - Keep `core/` generic (no domain-specific logic)
 - Prefer composition/mixins over copy-paste
 
 ---
 
 ### `imports/` and `imports/scrapers/`
+
 **Purpose**: Import logging and scraping/ingestion logic
 
 **Guidelines**:
+
 - Scrapers implement a shared interface (`AbstractScraper`)
 - ImportLog models store import metadata (status, timestamps, etc.)
 - Keep external API specifics inside the scraper module
@@ -321,9 +355,11 @@ apps/<domain>/
 ---
 
 ### `api/`
+
 **Purpose**: Central DRF/OpenAPI routing and shared API configuration
 
 **Guidelines**:
+
 - Keep app-specific routes/viewsets inside apps
 - Use `api/urls.py` only to aggregate and version/prefix endpoints
 - Put cross-cutting API concerns here (pagination, versioning)
@@ -331,9 +367,11 @@ apps/<domain>/
 ---
 
 ### `tests/`
+
 **Purpose**: Pytest test suite
 
 **Guidelines**:
+
 - Mirror domain apps (tests grouped per app)
 - Keep shared fixtures in `tests/conftest.py`
 - Prefer consistent patterns across apps (models/serializers/views/admin)
@@ -359,19 +397,23 @@ tests/
 ## Configuration Files
 
 ### `.env`
+
 - Local environment variables
 - Never commit secrets
 
 ### `pyproject.toml`
+
 - Tooling configuration (formatters, linters, etc.)
 - Dependencies (if not using only `requirements/`)
 
 ### `requirements/`
+
 - `base.txt` — shared dependencies
 - `development.txt` — dev-only dependencies
 - `production.txt` — production dependencies
 
 ### `Dockerfile` / `docker-compose.yml`
+
 - Container setup for running the backend locally or in CI
 
 ---
@@ -409,7 +451,7 @@ tests/
 ## Quick Reference
 
 | Path | Purpose | Example |
-|------|---------|---------|
+| ------ | --------- | --------- |
 | `config/` | Project configuration | `config/urls.py` |
 | `config/settings/` | Settings per environment | `dev.py`, `test.py` |
 | `apps/` | Domain apps | `apps/events/` |

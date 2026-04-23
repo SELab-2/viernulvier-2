@@ -8,6 +8,9 @@ Covers:
 - MediaItemSerializer serialization of scalar fields (type, format, original_filename,
   position, width, height)
 - Nested MediaItemCropSerializer output on MediaItemSerializer
+- image_url is a computed field derived from the ImageField
+- image_url returns None when no image is stored
+- image_url builds an absolute URI when a request is in serializer context
 - Translated fields (title, description, credits, link) returned as dicts
 - Translated fields return empty dict when no translations exist
 - Translated fields omit blank/falsy values per language
@@ -17,12 +20,14 @@ Covers:
 - MediaGallerySerializer media_items are ordered by position
 """
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase, override_settings
+from rest_framework.request import Request
 
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.media_library.models import (
     MediaGallery,
     MediaItem,
+    MediaItemCrop,
 )
 from apps.media_library.serializers import (
     MediaGallerySerializer,
@@ -36,6 +41,10 @@ from tests.factories.media_library import (
     MediaItemFactory,
     MediaItemTranslationFactory,
 )
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 
 def serialize_item(item):
@@ -57,40 +66,86 @@ def serialize_gallery(gallery):
     return MediaGallerySerializer(gallery_qs).data
 
 
+def _make_request(url="http://testserver/"):
+    """Return a minimal DRF-compatible request object."""
+    factory = RequestFactory()
+    request = factory.get(url)
+
+    # Wrap in DRF request so build_absolute_uri works as expected in serializer context
+    return Request(request)
+
+
 # ---------------------------------------------------------------------------
-# MediaItemCropSerializer
+# MediaItemCropSerializer - field presence
 # ---------------------------------------------------------------------------
 
 
 class TestMediaItemCropSerializerFields(TestCase):
     """Verify field presence and output of MediaItemCropSerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         gallery = MediaGalleryFactory.create()
         item = MediaItemFactory.create(gallery=gallery)
+        # ImageField stores a file path; the URL is derived via storage.
+        # In tests with default FileSystemStorage, image.url == MEDIA_URL + name.
         self.crop = MediaItemCropFactory.create(
             media_item=item,
             name="banner",
-            url="https://example.com/banner.jpg",
         )
 
-    def test_expected_fields_are_present(self):
+    def test_expected_fields_are_present(self) -> None:
         data = MediaItemCropSerializer(self.crop).data
-        for field in ("id", "name", "url"):
+        for field in ("id", "name", "image_url"):
             with self.subTest(field=field):
-                self.assertIn(field, data)
+                assert field in data
 
-    def test_no_extra_fields_are_exposed(self):
+    def test_no_extra_fields_are_exposed(self) -> None:
         data = MediaItemCropSerializer(self.crop).data
-        self.assertEqual(set(data.keys()), {"id", "name", "url"})
+        assert set(data.keys()) == {"id", "name", "image_url"}
 
-    def test_name_value_is_correct(self):
+    def test_url_field_not_in_output(self) -> None:
+        """The old 'url' field no longer exists; only 'image_url' is exposed."""
         data = MediaItemCropSerializer(self.crop).data
-        self.assertEqual(data["name"], "banner")
+        assert "url" not in data
 
-    def test_url_value_is_correct(self):
+    def test_image_field_not_exposed_directly(self) -> None:
+        """The raw 'image' ImageField is not in the serializer output."""
         data = MediaItemCropSerializer(self.crop).data
-        self.assertEqual(data["url"], "https://example.com/banner.jpg")
+        assert "image" not in data
+
+    def test_name_value_is_correct(self) -> None:
+        data = MediaItemCropSerializer(self.crop).data
+        assert data["name"] == "banner"
+
+    def test_image_url_is_none_when_no_image(self) -> None:
+        """A crop with no image stored returns None for image_url."""
+        crop = MediaItemCrop(name="empty")
+        data = MediaItemCropSerializer(crop).data
+        assert data["image_url"] is None
+
+    @override_settings(MEDIA_URL="/media/")
+    def test_image_url_contains_path_when_image_set(self) -> None:
+        """When an image path is stored, image_url returns a non-empty string."""
+        data = MediaItemCropSerializer(self.crop).data
+        # The crop factory assigns an image; image_url must not be None
+        if self.crop.image:
+            assert data["image_url"] is not None
+            assert isinstance(data["image_url"], str)
+
+    def test_image_url_builds_absolute_uri_with_request_in_context(self) -> None:
+        """When a request is in the serializer context, image_url is absolute."""
+        request = _make_request()
+        data = MediaItemCropSerializer(self.crop, context={"request": request}).data
+        image_url = data["image_url"]
+        assert image_url is not None
+        assert image_url.startswith("http"), f"Expected absolute URL, got: {image_url}"
+
+    def test_image_url_without_request_in_context_is_relative_or_absolute(self) -> None:
+        """Without a request in context, image_url is still a non-empty string."""
+        data = MediaItemCropSerializer(self.crop, context={}).data
+        assert data["image_url"] is not None
+        assert isinstance(data["image_url"], str)
+        assert len(data["image_url"]) > 0
 
 
 # ---------------------------------------------------------------------------
@@ -101,14 +156,15 @@ class TestMediaItemCropSerializerFields(TestCase):
 class TestMediaItemSerializerFields(TestCase):
     """Verify all expected fields are present on MediaItemSerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         gallery = MediaGalleryFactory.create()
         self.item = MediaItemFactory.create(gallery=gallery)
 
-    def test_expected_fields_are_present(self):
+    def test_expected_fields_are_present(self) -> None:
         data = serialize_item(self.item)
         expected = {
             "id",
+            "gallery",
             "type",
             "format",
             "original_filename",
@@ -124,9 +180,9 @@ class TestMediaItemSerializerFields(TestCase):
         }
         for field in expected:
             with self.subTest(field=field):
-                self.assertIn(field, data)
+                assert field in data
 
-    def test_no_extra_fields_are_exposed(self):
+    def test_no_extra_fields_are_exposed(self) -> None:
         data = serialize_item(self.item)
         expected = {
             "id",
@@ -144,7 +200,7 @@ class TestMediaItemSerializerFields(TestCase):
             "link",
             "crops",
         }
-        self.assertEqual(set(data.keys()), expected)
+        assert set(data.keys()) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -155,7 +211,7 @@ class TestMediaItemSerializerFields(TestCase):
 class TestMediaItemSerializerScalarFields(TestCase):
     """Verify scalar fields are serialized correctly on MediaItemSerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         gallery = MediaGalleryFactory.create()
         self.item = MediaItemFactory.create(
             gallery=gallery,
@@ -168,25 +224,25 @@ class TestMediaItemSerializerScalarFields(TestCase):
         )
         self.data = serialize_item(self.item)
 
-    def test_type_is_correct(self):
-        self.assertEqual(self.data["type"], "video")
+    def test_type_is_correct(self) -> None:
+        assert self.data["type"] == "video"
 
-    def test_format_is_correct(self):
-        self.assertEqual(self.data["format"], "mp4")
+    def test_format_is_correct(self) -> None:
+        assert self.data["format"] == "mp4"
 
-    def test_original_filename_is_correct(self):
-        self.assertEqual(self.data["original_filename"], "clip.mp4")
+    def test_original_filename_is_correct(self) -> None:
+        assert self.data["original_filename"] == "clip.mp4"
 
-    def test_position_is_correct(self):
-        self.assertEqual(self.data["position"], 3)
+    def test_position_is_correct(self) -> None:
+        assert self.data["position"] == 3
 
-    def test_width_is_correct(self):
-        self.assertEqual(self.data["width"], 1920)
+    def test_width_is_correct(self) -> None:
+        assert self.data["width"] == 1920
 
-    def test_height_is_correct(self):
-        self.assertEqual(self.data["height"], 1080)
+    def test_height_is_correct(self) -> None:
+        assert self.data["height"] == 1080
 
-    def test_width_is_none_when_not_set(self):
+    def test_width_is_none_when_not_set(self) -> None:
         gallery = MediaGalleryFactory.create(name="no-dims")
         item = MediaItemFactory.create(
             gallery=gallery,
@@ -194,9 +250,9 @@ class TestMediaItemSerializerScalarFields(TestCase):
             width=None,
         )
         data = serialize_item(item)
-        self.assertIsNone(data["width"])
+        assert data["width"] is None
 
-    def test_height_is_none_when_not_set(self):
+    def test_height_is_none_when_not_set(self) -> None:
         gallery = MediaGalleryFactory.create(name="no-dims-2")
         item = MediaItemFactory.create(
             gallery=gallery,
@@ -204,7 +260,7 @@ class TestMediaItemSerializerScalarFields(TestCase):
             height=None,
         )
         data = serialize_item(item)
-        self.assertIsNone(data["height"])
+        assert data["height"] is None
 
 
 # ---------------------------------------------------------------------------
@@ -215,49 +271,57 @@ class TestMediaItemSerializerScalarFields(TestCase):
 class TestMediaItemSerializerCrops(TestCase):
     """Verify nested crops are serialized correctly."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         gallery = MediaGalleryFactory.create()
         self.item = MediaItemFactory.create(gallery=gallery)
 
-    def test_crops_is_empty_list_when_no_crops(self):
+    def test_crops_is_empty_list_when_no_crops(self) -> None:
         data = serialize_item(self.item)
-        self.assertEqual(data["crops"], [])
+        assert data["crops"] == []
 
-    def test_crops_contains_one_crop(self):
+    def test_crops_contains_one_crop(self) -> None:
         MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
         data = serialize_item(self.item)
-        self.assertEqual(len(data["crops"]), 1)
+        assert len(data["crops"]) == 1
 
-    def test_crops_contains_multiple_crops(self):
-        MediaItemCropFactory.create(
-            media_item=self.item,
-            name="thumbnail",
-            url="https://example.com/thumb.jpg",
-        )
-        MediaItemCropFactory.create(
-            media_item=self.item,
-            name="banner",
-            url="https://example.com/banner.jpg",
-        )
+    def test_crops_contains_multiple_crops(self) -> None:
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
+        MediaItemCropFactory.create(media_item=self.item, name="banner")
         data = serialize_item(self.item)
-        self.assertEqual(len(data["crops"]), 2)
+        assert len(data["crops"]) == 2
 
-    def test_crop_fields_are_correct(self):
-        MediaItemCropFactory.create(
-            media_item=self.item,
-            name="thumbnail",
-            url="https://example.com/thumb.jpg",
-        )
+    def test_crop_name_field_is_correct(self) -> None:
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
         data = serialize_item(self.item)
         crop = data["crops"][0]
-        self.assertEqual(crop["name"], "thumbnail")
-        self.assertEqual(crop["url"], "https://example.com/thumb.jpg")
-        self.assertIn("id", crop)
+        assert crop["name"] == "thumbnail"
 
-    def test_crop_uses_media_item_crop_serializer_fields(self):
-        MediaItemCropFactory.create(media_item=self.item)
+    def test_crop_has_id_field(self) -> None:
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
         data = serialize_item(self.item)
-        self.assertEqual(set(data["crops"][0].keys()), {"id", "name", "url"})
+        assert "id" in data["crops"][0]
+
+    def test_crop_has_image_url_field(self) -> None:
+        """Crops expose image_url, not url or image directly."""
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
+        data = serialize_item(self.item)
+        assert "image_url" in data["crops"][0]
+
+    def test_crop_does_not_expose_raw_url_field(self) -> None:
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
+        data = serialize_item(self.item)
+        assert "url" not in data["crops"][0]
+
+    def test_crop_does_not_expose_raw_image_field(self) -> None:
+        """The raw ImageField path must not be directly exposed."""
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
+        data = serialize_item(self.item)
+        assert "image" not in data["crops"][0]
+
+    def test_crop_uses_media_item_crop_serializer_fields(self) -> None:
+        MediaItemCropFactory.create(media_item=self.item, name="thumbnail")
+        data = serialize_item(self.item)
+        assert set(data["crops"][0].keys()) == {"id", "name", "image_url"}
 
 
 # ---------------------------------------------------------------------------
@@ -268,12 +332,12 @@ class TestMediaItemSerializerCrops(TestCase):
 class TestMediaItemSerializerTranslatedFields(TestCase):
     """Verify translated fields are returned as language-keyed dicts."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.gallery = MediaGalleryFactory.create()
         self.nl = LanguageFactory.create(code="nl", name="Dutch")
         self.en = LanguageFactory.create(code="en", name="English")
 
-    def test_title_is_dict(self):
+    def test_title_is_dict(self) -> None:
         item = MediaItemFactory.create(gallery=self.gallery)
         MediaItemTranslationFactory.create(
             media_item=item,
@@ -281,9 +345,9 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
             title="NL Titel",
         )
         data = serialize_item(item)
-        self.assertIsInstance(data["title"], dict)
+        assert isinstance(data["title"], dict)
 
-    def test_title_contains_correct_value(self):
+    def test_title_contains_correct_value(self) -> None:
         item = MediaItemFactory.create(gallery=self.gallery)
         MediaItemTranslationFactory.create(
             media_item=item,
@@ -291,9 +355,9 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
             title="NL Titel",
         )
         data = serialize_item(item)
-        self.assertEqual(data["title"]["nl"], "NL Titel")
+        assert data["title"]["nl"] == "NL Titel"
 
-    def test_description_contains_correct_value(self):
+    def test_description_contains_correct_value(self) -> None:
         item = MediaItemFactory.create(gallery=self.gallery)
         MediaItemTranslationFactory.create(
             media_item=item,
@@ -301,9 +365,9 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
             description="Omschrijving",
         )
         data = serialize_item(item)
-        self.assertEqual(data["description"]["nl"], "Omschrijving")
+        assert data["description"]["nl"] == "Omschrijving"
 
-    def test_credits_contains_correct_value(self):
+    def test_credits_contains_correct_value(self) -> None:
         item = MediaItemFactory.create(gallery=self.gallery)
         MediaItemTranslationFactory.create(
             media_item=item,
@@ -311,9 +375,9 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
             credits="Foto: Jan",
         )
         data = serialize_item(item)
-        self.assertEqual(data["credits"]["nl"], "Foto: Jan")
+        assert data["credits"]["nl"] == "Foto: Jan"
 
-    def test_link_contains_correct_value(self):
+    def test_link_contains_correct_value(self) -> None:
         item = MediaItemFactory.create(gallery=self.gallery)
         MediaItemTranslationFactory.create(
             media_item=item,
@@ -321,17 +385,17 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
             link="https://example.com/nl",
         )
         data = serialize_item(item)
-        self.assertEqual(data["link"]["nl"], "https://example.com/nl")
+        assert data["link"]["nl"] == "https://example.com/nl"
 
-    def test_translated_field_returns_empty_dict_when_no_translations(self):
+    def test_translated_field_returns_empty_dict_when_no_translations(self) -> None:
         item = MediaItemFactory.create(gallery=self.gallery)
         data = serialize_item(item)
-        self.assertEqual(data["title"], {})
-        self.assertEqual(data["description"], {})
-        self.assertEqual(data["credits"], {})
-        self.assertEqual(data["link"], {})
+        assert data["title"] == {}
+        assert data["description"] == {}
+        assert data["credits"] == {}
+        assert data["link"] == {}
 
-    def test_blank_field_is_omitted_from_dict(self):
+    def test_blank_field_is_omitted_from_dict(self) -> None:
         item = MediaItemFactory.create(gallery=self.gallery)
         MediaItemTranslationFactory.create(
             media_item=item,
@@ -340,10 +404,10 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
             description="Omschrijving",
         )
         data = serialize_item(item)
-        self.assertNotIn("nl", data["title"])
-        self.assertIn("nl", data["description"])
+        assert "nl" not in data["title"]
+        assert "nl" in data["description"]
 
-    def test_multiple_languages_are_included(self):
+    def test_multiple_languages_are_included(self) -> None:
         item = MediaItemFactory.create(gallery=self.gallery)
         MediaItemTranslationFactory.create(
             media_item=item,
@@ -356,10 +420,10 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
             title="EN Title",
         )
         data = serialize_item(item)
-        self.assertIn("nl", data["title"])
-        self.assertIn("en", data["title"])
+        assert "nl" in data["title"]
+        assert "en" in data["title"]
 
-    def test_multiple_languages_have_correct_values(self):
+    def test_multiple_languages_have_correct_values(self) -> None:
         item = MediaItemFactory.create(gallery=self.gallery)
         MediaItemTranslationFactory.create(
             media_item=item,
@@ -372,10 +436,10 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
             title="EN Title",
         )
         data = serialize_item(item)
-        self.assertEqual(data["title"]["nl"], "NL Titel")
-        self.assertEqual(data["title"]["en"], "EN Title")
+        assert data["title"]["nl"] == "NL Titel"
+        assert data["title"]["en"] == "EN Title"
 
-    def test_only_languages_with_values_are_included(self):
+    def test_only_languages_with_values_are_included(self) -> None:
         item = MediaItemFactory.create(gallery=self.gallery)
         MediaItemTranslationFactory.create(
             media_item=item,
@@ -388,8 +452,8 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
             title="",
         )
         data = serialize_item(item)
-        self.assertIn("nl", data["title"])
-        self.assertNotIn("en", data["title"])
+        assert "nl" in data["title"]
+        assert "en" not in data["title"]
 
 
 # ---------------------------------------------------------------------------
@@ -400,8 +464,8 @@ class TestMediaItemSerializerTranslatedFields(TestCase):
 class TestMediaItemSerializerInheritance(TestCase):
     """MediaItemSerializer must inherit from TranslatableSerializerMixin."""
 
-    def test_inherits_from_translatable_serializer_mixin(self):
-        self.assertTrue(issubclass(MediaItemSerializer, TranslatableSerializerMixin))
+    def test_inherits_from_translatable_serializer_mixin(self) -> None:
+        assert issubclass(MediaItemSerializer, TranslatableSerializerMixin)
 
 
 # ---------------------------------------------------------------------------
@@ -412,22 +476,22 @@ class TestMediaItemSerializerInheritance(TestCase):
 class TestMediaGallerySerializerFields(TestCase):
     """Verify all expected fields are present on MediaGallerySerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.gallery = MediaGalleryFactory.create(name="My Gallery")
 
-    def test_expected_fields_are_present(self):
+    def test_expected_fields_are_present(self) -> None:
         data = serialize_gallery(self.gallery)
         for field in ("id", "name", "media_items"):
             with self.subTest(field=field):
-                self.assertIn(field, data)
+                assert field in data
 
-    def test_no_extra_fields_are_exposed(self):
+    def test_no_extra_fields_are_exposed(self) -> None:
         data = serialize_gallery(self.gallery)
-        self.assertEqual(set(data.keys()), {"id", "name", "media_items"})
+        assert set(data.keys()) == {"id", "name", "media_items"}
 
-    def test_name_value_is_correct(self):
+    def test_name_value_is_correct(self) -> None:
         data = serialize_gallery(self.gallery)
-        self.assertEqual(data["name"], "My Gallery")
+        assert data["name"] == "My Gallery"
 
 
 # ---------------------------------------------------------------------------
@@ -438,25 +502,25 @@ class TestMediaGallerySerializerFields(TestCase):
 class TestMediaGallerySerializerMediaItems(TestCase):
     """Verify nested media_items are serialized correctly on MediaGallerySerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.gallery = MediaGalleryFactory.create()
 
-    def test_media_items_is_empty_list_when_no_items(self):
+    def test_media_items_is_empty_list_when_no_items(self) -> None:
         data = serialize_gallery(self.gallery)
-        self.assertEqual(data["media_items"], [])
+        assert data["media_items"] == []
 
-    def test_media_items_contains_one_item(self):
+    def test_media_items_contains_one_item(self) -> None:
         MediaItemFactory.create(gallery=self.gallery)
         data = serialize_gallery(self.gallery)
-        self.assertEqual(len(data["media_items"]), 1)
+        assert len(data["media_items"]) == 1
 
-    def test_media_items_contains_multiple_items(self):
+    def test_media_items_contains_multiple_items(self) -> None:
         MediaItemFactory.create(gallery=self.gallery, position=0, original_filename="a.jpg")
         MediaItemFactory.create(gallery=self.gallery, position=1, original_filename="b.jpg")
         data = serialize_gallery(self.gallery)
-        self.assertEqual(len(data["media_items"]), 2)
+        assert len(data["media_items"]) == 2
 
-    def test_media_items_uses_media_item_serializer_fields(self):
+    def test_media_items_uses_media_item_serializer_fields(self) -> None:
         MediaItemFactory.create(gallery=self.gallery)
         data = serialize_gallery(self.gallery)
         expected = {
@@ -475,27 +539,33 @@ class TestMediaGallerySerializerMediaItems(TestCase):
             "link",
             "crops",
         }
-        self.assertEqual(set(data["media_items"][0].keys()), expected)
+        assert set(data["media_items"][0].keys()) == expected
 
-    def test_media_items_are_ordered_by_position(self):
+    def test_media_items_are_ordered_by_position(self) -> None:
         MediaItemFactory.create(gallery=self.gallery, position=2, original_filename="second.jpg")
         MediaItemFactory.create(gallery=self.gallery, position=0, original_filename="first.jpg")
         MediaItemFactory.create(gallery=self.gallery, position=1, original_filename="middle.jpg")
         data = serialize_gallery(self.gallery)
         positions = [item["position"] for item in data["media_items"]]
-        self.assertEqual(positions, sorted(positions))
+        assert positions == sorted(positions)
 
-    def test_nested_item_includes_crops(self):
+    def test_nested_item_includes_crops(self) -> None:
         item = MediaItemFactory.create(gallery=self.gallery)
-        MediaItemCropFactory.create(
-            media_item=item,
-            name="thumb",
-            url="https://example.com/t.jpg",
-        )
+        MediaItemCropFactory.create(media_item=item, name="thumb")
         data = serialize_gallery(self.gallery)
-        self.assertEqual(len(data["media_items"][0]["crops"]), 1)
+        assert len(data["media_items"][0]["crops"]) == 1
 
-    def test_nested_item_includes_translated_title(self):
+    def test_nested_crop_exposes_image_url_not_url(self) -> None:
+        """Nested crops must use the image_url field, not the old url field."""
+        item = MediaItemFactory.create(gallery=self.gallery)
+        MediaItemCropFactory.create(media_item=item, name="thumb")
+        data = serialize_gallery(self.gallery)
+        crop_data = data["media_items"][0]["crops"][0]
+        assert "image_url" in crop_data
+        assert "url" not in crop_data
+        assert "image" not in crop_data
+
+    def test_nested_item_includes_translated_title(self) -> None:
         nl = LanguageFactory.create(code="nl")
         item = MediaItemFactory.create(gallery=self.gallery)
         MediaItemTranslationFactory.create(
@@ -504,4 +574,4 @@ class TestMediaGallerySerializerMediaItems(TestCase):
             title="Geneste Titel",
         )
         data = serialize_gallery(self.gallery)
-        self.assertEqual(data["media_items"][0]["title"]["nl"], "Geneste Titel")
+        assert data["media_items"][0]["title"]["nl"] == "Geneste Titel"

@@ -1,5 +1,4 @@
-"""
-ViewSets for the Tags app.
+"""ViewSets for the Tags app.
 
 Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
@@ -29,8 +28,7 @@ _TAG = "Tags"
 @extend_schema(tags=[_TAG])
 @tag_schema
 class TagViewSet(ApiModelViewSet):
-    """
-    CRUD endpoints for Tag objects.
+    """CRUD endpoints for Tag objects.
 
     Tags are classification labels attached to productions. They support
     localised names and descriptions via the ``TagTranslation`` model.
@@ -41,10 +39,6 @@ class TagViewSet(ApiModelViewSet):
         Substring match on the internal type / category.
     ``?source=uitdatabank``
         Substring match on the originating system identifier.
-    ``?source_type=targetAudience``
-        Substring match on the source sub-classification.
-    ``?is_external=true``
-        Only tags imported from an external system.
     ``?is_enabled=true``
         Only active (enabled) tags.
     ``?name=contemporary``
@@ -64,7 +58,7 @@ class TagViewSet(ApiModelViewSet):
     Search
     ------
     ``?search=contemporary``
-        Full-text search across ``type``, ``source``, ``source_type``,
+        Full-text search across ``type``, ``source``,
         and translated tag names.
     """
 
@@ -77,6 +71,6 @@ class TagViewSet(ApiModelViewSet):
     ).order_by("id")
 
     filterset_class = TagFilter
-    ordering_fields = ["id", "type", "source", "is_enabled", "is_external"]
+    ordering_fields = ["id", "type", "source", "is_enabled"]
     ordering = ["id"]
-    search_fields = ["type", "source", "source_type", "translations__name"]
+    search_fields = ["type", "source", "translations__name"]

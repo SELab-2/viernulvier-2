@@ -1,39 +1,40 @@
-"""
-This module defines custom pagination classes for the API endpoints.
-Each class inherits from Django REST Framework's PageNumberPagination and sets
-specific defaults for page size and maximum page size to suit different types
-of datasets (small, standard, large). These pagination classes can be used in
-views to control how results are paginated when returned to clients.
+"""Pagination classes for the viernulvier_archive API.
+
+Three preset classes cover the full range of response sizes. Select the
+right one per viewset via ``pagination_class``, or rely on the project
+default (``StandardResultsSetPagination``) configured in
+``settings.REST_FRAMEWORK``.
+
+    Small    - lookups, dropdowns, short reference lists  (max 50)
+    Standard - default for most resources                 (max 100)
+    Large    - bulk exports, import logs                  (max 500)
+
+Clients control the page size via ``?page_size=N``, capped at the class
+maximum to prevent runaway queries.
 """
 
 from rest_framework.pagination import PageNumberPagination
 
 
 class SmallResultsSetPagination(PageNumberPagination):
-    """
-    Pagination class for endpoints that return small datasets.
-    """
+    """For short reference lists such as languages, price ranks, or tags."""
 
-    page_size = 10  # Default number of items per page for small datasets
-    page_size_query_param = "page_size"  # Allow clients to set page size via query parameter
-    max_page_size = 50  # Maximum number of items per page to prevent abuse
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 50
 
 
 class StandardResultsSetPagination(PageNumberPagination):
-    """
-    Standard pagination class for API responses.
-    """
+    """Default pagination for most API resources."""
 
-    page_size = 20  # Default number of items per page
-    page_size_query_param = "page_size"  # Allow clients to set page size via query parameter
-    max_page_size = 100  # Maximum number of items per page to prevent abuse
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 100
 
 
 class LargeResultsSetPagination(PageNumberPagination):
-    """
-    Pagination class for endpoints that return large datasets.
-    """
+    """For bulk or export-oriented endpoints such as import logs."""
 
-    page_size = 100  # Default number of items per page for large datasets
-    page_size_query_param = "page_size"  # Allow clients to set page size via query parameter
-    max_page_size = 500  # Maximum number of items per page to prevent abuse
+    page_size = 100
+    page_size_query_param = "page_size"
+    max_page_size = 500

@@ -1,7 +1,7 @@
 from datetime import timedelta
 
-import factory
 from django.utils import timezone
+import factory
 from factory.declarations import LazyAttribute, LazyFunction, SubFactory
 from faker import Faker
 

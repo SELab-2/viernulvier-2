@@ -1,14 +1,33 @@
-from . import base as base_settings
+"""Test settings for the viernulvier_archive project.
 
-for setting_name in dir(base_settings):
-    if setting_name.isupper():
-        globals()[setting_name] = getattr(base_settings, setting_name)
+Extends base.py with:
+- In-memory SQLite so tests run without a Postgres instance
+- All throttling disabled so tests never fail due to rate limits
+- Password hashing replaced with a trivial hasher for speed
+- Media files written to a temp directory
 
-REST_FRAMEWORK = globals().get("REST_FRAMEWORK", {})
+Usage (via pytest.ini):
 
-# Test settings for the Django project. These settings are used when running tests.
+    [pytest]
+    DJANGO_SETTINGS_MODULE = config.settings.test
+"""
 
-# Use an in-memory SQLite database for faster tests
+import tempfile
+
+from .base import *  # noqa: F403
+from .base import REST_FRAMEWORK
+
+# ---------------------------------------------------------------------------
+# Core
+# ---------------------------------------------------------------------------
+
+DEBUG = False
+ALLOWED_HOSTS = ["testserver", "localhost"]
+
+# ---------------------------------------------------------------------------
+# Database - in-memory SQLite for fast, isolated test runs
+# ---------------------------------------------------------------------------
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -16,14 +35,48 @@ DATABASES = {
     }
 }
 
-# Test settings: throttling is disabled to avoid interference with test cases
+# ---------------------------------------------------------------------------
+# REST Framework - all throttling disabled during tests
+# ---------------------------------------------------------------------------
+
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
-    "DEFAULT_THROTTLE_CLASSES": [],  # No throttling during tests
+    "DEFAULT_THROTTLE_CLASSES": [],
     "DEFAULT_THROTTLE_RATES": {
-        "internal": None,
-        "public_min": "1/minute",
-        "public_hour": None,
         "public": None,
+        "public_min": None,
+        "public_hour": None,
+        "anon": None,
+        "internal": None,
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Password hashing - use the fastest hasher available in tests
+# ---------------------------------------------------------------------------
+
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.MD5PasswordHasher",
+]
+
+# ---------------------------------------------------------------------------
+# Media files - use a temp directory so uploads don't pollute the repo
+# ---------------------------------------------------------------------------
+
+MEDIA_ROOT = tempfile.mkdtemp()
+
+# ---------------------------------------------------------------------------
+# Logging - silence everything below ERROR in tests to keep output clean
+# ---------------------------------------------------------------------------
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "null": {"class": "logging.NullHandler"},
+    },
+    "root": {
+        "handlers": ["null"],
+        "level": "ERROR",
     },
 }

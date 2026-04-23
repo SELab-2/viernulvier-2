@@ -1,10 +1,256 @@
+/**
+ * Global Styles
+ *
+ * Contains:
+ * - Font definitions
+ * - CSS custom properties (aligned with design tokens)
+ * - Base element styles
+ * - Page-specific utility classes
+ */
+
+/* ============================================================================
+   FONTS
+   ============================================================================ */
+
+@font-face {
+  font-family: 'ABC Monument Grotesk';
+  src: url('/fonts/ABCMonumentGrotesk-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'ABC Monument Grotesk';
+  src: url('/fonts/ABCMonumentGrotesk-Heavy.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* ============================================================================
+   ROOT & THEME VARIABLES (Light Mode, MUI-compatible)
+   ============================================================================ */
+
+:root {
+  /* Colors - Light Mode (fallback when not using MUI theme) */
+  --bg: #f4f5f7;
+  --page-bg: #ffffff;
+  --text: #1f1f1f;
+  --text-muted: #666666;
+  --panel-bg: #ffffff;
+  --border: #ebebeb;
+  --card-bg: #ffffff;
+
+  /* Spacing (scale: 4px base unit) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Navigation */
+  --navbar-height: 64px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+}
+
+/* ============================================================================
+   DARK MODE OVERRIDES (data-theme attribute or MUI mode)
+   ============================================================================ */
+
+[data-theme='dark'],
+body.dark-theme {
+  --bg: #0e1021;
+  --page-bg: #181b2f;
+  --text: #e6e9fb;
+  --text-muted: #b8bed8;
+  --panel-bg: #1f2141;
+  --border: #2c2f52;
+  --card-bg: #1a1f3b;
+}
+
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
+
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
-  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
-  background: #f4f5f7;
-  color: #1f1f1f;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: 'ABC Monument Grotesk', 'Helvetica', 'Arial', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+.app {
+  padding: 48px 0;
+}
+
+.app-card {
+  padding: 32px;
+}
+
+/* ============================================================================
+   PRODUCTION DETAILS PAGE STYLES
+   ============================================================================ */
+
+.production-details-page {
+  font-family: 'ABC Monument Grotesk', 'Helvetica', 'Arial', sans-serif;
+  background-color: var(--page-bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.production-details-container,
+.production-details-right,
+.meta-panel {
+  background: var(--panel-bg);
+  color: var(--text);
+}
+
+.production-details-left,
+.production-description,
+.breadcrumbs,
+.hero-image {
+  background: transparent;
+}
+
+.production-details-right {
+  border-left: 1px solid var(--border);
+}
+
+.breadcrumbs {
+  border-bottom: 1px solid var(--border);
+}
+
+.meta-panel {
+  border-left: none;
+}
+
+.production-details-container {
+  display: grid;
+  grid-template-columns: 1.3fr minmax(320px, 460px);
+  gap: 0;
+  max-width: 1250px;
+  margin: 0 auto;
+  padding: 0 40px 60px;
+}
+
+.production-details-right {
+  max-width: 460px;
+}
+
+.production-details-left {
+  padding-right: 48px;
+  padding-top: 32px;
+}
+
+.production-details-right {
+  padding-top: 24px;
+  padding-left: 16px;
+}
+
+.meta-panel {
+  padding-top: 24px;
+  border-left: 1px solid var(--border);
+  padding-left: 16px;
+}
+
+.breadcrumbs {
+  padding-bottom: 12px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  font-family: 'ABC Monument Grotesk', 'Helvetica', 'Arial', sans-serif;
+}
+
+.hero-image {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  background-color: #1a1a1a;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.production-description {
+  margin-top: 0;
+}
+
+.meta-panel {
+  padding-top: 32px;
+}
+
+@media (max-width: 900px) {
+  .production-details-container {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .production-details-left,
+  .production-details-right {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .production-details-right {
+    border-left: none !important;
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+    padding-top: 24px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 460px;
+  }
+
+  .meta-panel {
+    border-left: none !important;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 460px;
+  }
+
+  .production-details-page {
+    min-height: auto;
+  }
+
+  .meta-panel h1 {
+    font-size: 1.65rem;
+  }
+
+  .meta-panel {
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .production-details-left {
+    padding-top: 20px;
+    padding-right: 0;
+  }
+
+  .breadcrumbs button {
+    font-size: 0.85rem;
+  }
 }

@@ -1,5 +1,4 @@
-"""
-Models for the Productions app.
+"""Models for the Productions app.
 
 Productions are the core catalogue entity in the archive. The hierarchy is:
 
@@ -27,37 +26,8 @@ from apps.media_library.models import MediaGallery
 from apps.tags.models import Tag
 
 
-class UitDatabaseTheme(BaseModel):
-    """
-    A theme classification imported from the UIT Database.
-
-    UIT Database themes are used to broadly categorise productions
-    (e.g. "Theater", "Muziek", "Dans"). They are typically synced from an
-    external source and referenced by productions as a read-mostly FK.
-
-    Attributes:
-        name: Human-readable name of the theme.
-    """
-
-    name = models.CharField(
-        max_length=200,
-        help_text="Human-readable name of the UIT Database theme (e.g. `Theater`, `Muziek`).",
-        db_comment="The name of the theme.",
-    )
-
-    class Meta(BaseModel.Meta):
-        db_table = "uit_database_theme"
-        verbose_name = "UIT Database Theme"
-        verbose_name_plural = "UIT Database Themes"
-        ordering = ["name"]
-
-    def __str__(self) -> str:
-        return self.name
-
-
 class UitDatabaseType(BaseModel):
-    """
-    A type classification imported from the UIT Database.
+    """A type classification imported from the UIT Database.
 
     UIT Database types provide a more granular classification than themes
     (e.g. "Voorstelling", "Concert", "Tentoonstelling"). Like themes they
@@ -80,12 +50,12 @@ class UitDatabaseType(BaseModel):
         ordering = ["name"]
 
     def __str__(self) -> str:
+        """String representation of the UIT Database type, showing the name."""
         return self.name
 
 
 class Production(BaseModel):
-    """
-    The central catalogue record representing a performance work.
+    """The central catalogue record representing a performance work.
 
     A production groups one or more :class:`~apps.events.models.Event`
     instances and carries structural metadata. All human-readable text
@@ -93,13 +63,13 @@ class Production(BaseModel):
     :class:`ProductionTranslation` to support multiple languages.
 
     Attributes:
-        uit_database_theme: Optional FK to a UIT Database theme classification.
         uit_database_type:  Optional FK to a UIT Database type classification.
         media_gallery:      Optional FK to the associated media gallery.
         attendance_mode:    How the audience attends - ``offline`` or ``online``.
         performer_type:     Whether the act is a ``group`` or ``solo`` artist.
         genres:             Ordered M2M to :class:`~apps.genres.models.Genre`
-                            via :class:`ProductionGenre`.
+                            via :class:`ProductionGenre`. UITdatabank themes
+                            are also represented as genres.
         tags:               Unordered M2M to :class:`~apps.tags.models.Tag`
                             via :class:`ProductionTag`.
     """
@@ -115,16 +85,6 @@ class Production(BaseModel):
 
         GROUP = "group", "Group"
         SOLO = "solo", "Solo"
-
-    uit_database_theme = models.ForeignKey(
-        UitDatabaseTheme,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="productions",
-        help_text="UIT Database theme classification. `null` when not assigned.",
-        db_comment="The theme of the production as defined in the UIT database.",
-    )
 
     uit_database_type = models.ForeignKey(
         UitDatabaseType,
@@ -185,17 +145,25 @@ class Production(BaseModel):
         ordering = ["-id"]
 
     def __str__(self) -> str:
+        """String representation used in admin lists and autocomplete widgets.
+
+        Include the numeric id so records with identical titles can still be
+        distinguished quickly in CMS selectors.
+        """
         title = self.get_base_display_name(
             related_name="translations",
             name_field="title",
             fallback=None,
         )
-        return title or f"Production {self.id}"
+
+        if title:
+            return f"{title} (#{self.id})"
+
+        return f"Production #{self.id}"
 
 
 class ProductionTranslation(BaseModel):
-    """
-    Localised text fields for a Production.
+    """Localised text fields for a Production.
 
     Each production can have at most one translation per language. All
     human-readable content that must be presented in multiple languages is
@@ -324,7 +292,7 @@ class ProductionTranslation(BaseModel):
     meta_description = models.TextField(
         max_length=500,
         blank=True,
-        help_text="SEO meta description. Ideally 120–160 characters.",
+        help_text="SEO meta description. Ideally 120-160 characters.",
         db_comment="The meta description of the production in the given language.",
     )
 
@@ -341,12 +309,12 @@ class ProductionTranslation(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """String representation of the production translation, showing the title and language."""
         return f"Translation of Production {self.production.id} in {self.language.code}"
 
 
 class ProductionTag(BaseModel):
-    """
-    Through-table for the many-to-many relation between Productions and Tags.
+    """Through-table for the many-to-many relation between Productions and Tags.
 
     Each combination of production and tag must be unique. There is no
     ordering requirement - tags are an unordered set on a production.
@@ -383,13 +351,73 @@ class ProductionTag(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """String representation of the production tag, showing the tag name."""
         return f"Tag {self.tag} for {self.production}"
 
 
-class ProductionGenre(BaseModel):
+class ProductionTagTranslation(BaseModel):
+    """Localised text fields for a ProductionTag through-table record.
+
+    Each production-tag link can have at most one translation per language,
+    allowing editors to provide multilingual descriptions or context notes for
+    a tag as it appears within a specific production.
+
+    Text fields that may contain HTML (``description``) should be sanitised
+    before saving to prevent XSS attacks.
+
+    Attributes:
+        production_tag: The production-tag link this translation belongs to.
+        language:       The language of this translation.
+        description:    Optional human-readable description or context note for
+                        this tag in the scope of the parent production.
     """
-    Ordered through-table for the many-to-many relation between Productions
-    and Genres.
+
+    production_tag = models.ForeignKey(
+        ProductionTag,
+        on_delete=models.CASCADE,
+        related_name="translations",
+        help_text="Production-tag link this translation belongs to.",
+        db_comment="FK to ProductionTag.",
+    )
+
+    language = models.ForeignKey(
+        Language,
+        on_delete=models.CASCADE,
+        related_name="production_tag_translations",
+        help_text="Language of this translation.",
+        db_comment="The language of the translation.",
+        db_column="language_code",
+    )
+
+    description = models.TextField(
+        max_length=1000,
+        blank=True,
+        help_text=(
+            "Multilingual description or context note for this tag within the production. "
+            "May contain HTML - sanitise before saving."
+        ),
+        db_comment="The description of the production tag in the given language.",
+    )
+
+    class Meta(BaseModel.Meta):
+        db_table = "production_tag_translation"
+        verbose_name = "Production Tag Translation"
+        verbose_name_plural = "Production Tag Translations"
+        ordering = ["language__code"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["production_tag", "language"],
+                name="unique_production_tag_language",
+            )
+        ]
+
+    def __str__(self) -> str:
+        """String representation of the production-tag translation, showing the parent tag and language."""
+        return f"Translation of ProductionTag {self.production_tag_id} in {self.language.code}"
+
+
+class ProductionGenre(BaseModel):
+    """Ordered through-table for the many-to-many relation between Productions and Genres.
 
     The ``position`` field controls the display order of genres within a
     production. Lower values appear first. Unlike :class:`ProductionTag`,
@@ -434,4 +462,5 @@ class ProductionGenre(BaseModel):
         ]
 
     def __str__(self) -> str:
+        """String representation of the production genre, showing the genre name."""
         return str(self.genre)

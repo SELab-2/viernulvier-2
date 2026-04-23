@@ -1,119 +1,120 @@
 name: viernulvier-staging
 
 services:
-    database:
-        container_name: database
-        image: postgres:16-alpine
-        restart: unless-stopped
-        healthcheck:
-            test:
-                [
-                    "CMD-SHELL",
-                    "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
-                ]
-            interval: 10s
-            timeout: 5s
-            retries: 5
-            start_period: 10s
-        volumes:
-            - postgres_data:/var/lib/postgresql/data
-        env_file:
-            - .env.staging
-        networks:
-            - viernulvier
+  database:
+    container_name: database
+    image: postgres:16-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - viernulvier
 
-    backend:
-        container_name: backend
-        image: viernulvier/backend:staging
-        build:
-            context: ../backend
-            args:
-                DJANGO_SETTINGS_MODULE: config.settings.staging
-                REQUIREMENTS_FILE: requirements/production.txt
-        restart: unless-stopped
-        healthcheck:
-            test:
-                [
-                    "CMD",
-                    "python",
-                    "-c",
-                    "import http.client,sys; c=http.client.HTTPConnection('127.0.0.1',8000,timeout=3); c.request('GET','/health'); r=c.getresponse(); sys.exit(0 if r.status in (200,301,302,307,308) else 1)",
-                ]
-            interval: 15s
-            timeout: 5s
-            retries: 5
-            start_period: 30s
-        depends_on:
-            database:
-                condition: service_healthy
-        env_file:
-            - .env.staging
-        volumes:
-            - static_files:/app/staticfiles
-            - media_files:/app/media
-        networks:
-            - viernulvier
-        command: >
-            sh -c "python manage.py migrate --noinput &&
-                   python manage.py collectstatic --noinput &&
-                   gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+  backend:
+    container_name: backend
+    image: viernulvier/backend:staging
+    build:
+      context: ../backend
+      args:
+        DJANGO_SETTINGS_MODULE: config.settings.staging
+        REQUIREMENTS_FILE: requirements/production.txt
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import http.client,sys; c=http.client.HTTPConnection('127.0.0.1',8000,timeout=3); c.request('GET','/health'); r=c.getresponse(); sys.exit(0 if r.status in (200,301,302,307,308) else 1)",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DOMAIN: localhost
+      POSTGRES_HOST: database
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      VIERNULVIER_API_KEY: ${VIERNULVIER_API_KEY}
+      PUBLIC_API_KEY: ${PUBLIC_API_KEY}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+    volumes:
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+    networks:
+      - viernulvier
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
 
-    frontend:
-        container_name: frontend
-        image: viernulvier/frontend:staging
-        build: ../frontend
-        restart: "no"
-        healthcheck:
-            test: ["CMD", "test", "-f", "/frontend_build/index.html"]
-            interval: 5s
-            timeout: 3s
-            retries: 3
-            start_period: 2s
-        volumes:
-            - frontend_build:/frontend_build
+  frontend:
+    container_name: frontend
+    image: viernulvier/frontend:staging
+    build:
+      context: ../frontend
+      args:
+        PUBLIC_API_KEY: ${PUBLIC_API_KEY}
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "test", "-f", "/frontend_build/index.html"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 2s
+    volumes:
+      - frontend_build:/frontend_build
 
-    nginx:
-        container_name: nginx
-        image: nginx:alpine
-        restart: unless-stopped
-        healthcheck:
-            test:
-                [
-                    "CMD",
-                    "wget",
-                    "-q",
-                    "-O",
-                    "/dev/null",
-                    "http://127.0.0.1/health",
-                ]
-            interval: 15s
-            timeout: 5s
-            retries: 5
-            start_period: 15s
-        ports:
-            - "80:80"
-        volumes:
-            - ./nginx/nginx.staging.conf:/etc/nginx/conf.d/default.conf:ro
-            - frontend_build:/usr/share/nginx/html:ro
-            - static_files:/app/staticfiles:ro
-            - media_files:/app/media:ro
-        depends_on:
-            backend:
-                condition: service_healthy
-            frontend:
-                condition: service_completed_successfully
-        networks:
-            - viernulvier
+  nginx:
+    container_name: nginx
+    image: nginx:alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.staging.conf:/etc/nginx/conf.d/default.conf:ro
+      - frontend_build:/usr/share/nginx/html:ro
+      - static_files:/app/staticfiles:ro
+      - media_files:/app/media:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_completed_successfully
+    networks:
+      - viernulvier
 
 volumes:
-    postgres_data:
-    static_files:
-    media_files:
-    frontend_build:
+  postgres_data:
+  static_files:
+  media_files:
+  frontend_build:
 
 networks:
-    viernulvier:
-        driver: bridge
-        ipam:
-            config:
-                - subnet: 10.0.0.0/24
+  viernulvier:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24

@@ -11,6 +11,7 @@ from apps.pricing.models import (
     PriceRankTranslation,
     PriceTranslation,
 )
+from apps.pricing.serializers import PriceRankSerializer, PriceSerializer
 from apps.pricing.views import PriceRankViewSet, PriceViewSet
 from tests.factories.language import LanguageFactory
 from tests.factories.pricing import (
@@ -19,31 +20,13 @@ from tests.factories.pricing import (
     PriceRankTranslationFactory,
     PriceTranslationFactory,
 )
+from tests.helpers.api import internal_headers as int_headers
+from tests.helpers.api import paginated_results as results_list
+from tests.helpers.api import public_headers as pub_headers
+from tests.helpers.api import wrong_headers
 
 PUB_KEY = "pub-view-test-key"
 INT_KEY = "int-view-test-key"
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def int_headers():
-    return {"HTTP_X_API_KEY": INT_KEY}
-
-
-def pub_headers():
-    return {"HTTP_X_API_KEY": PUB_KEY}
-
-
-def wrong_headers():
-    return {"HTTP_X_API_KEY": "completely-wrong-key"}
-
-
-def results_list(response):
-    """Support both paginated and non-paginated responses."""
-    return response.data.get("results", response.data)
 
 
 # ---------------------------------------------------------------------------
@@ -52,35 +35,31 @@ def results_list(response):
 
 
 class TestPriceViewSetClass(TestCase):
-    def test_inherits_from_api_model_viewset(self):
+    def test_inherits_from_api_model_viewset(self) -> None:
         """Test case for test_inherits_from_api_model_viewset."""
-        self.assertTrue(issubclass(PriceViewSet, ApiModelViewSet))
+        assert issubclass(PriceViewSet, ApiModelViewSet)
 
-    def test_queryset_model(self):
+    def test_queryset_model(self) -> None:
         """Test case for test_queryset_model."""
-        self.assertEqual(PriceViewSet.queryset.model, Price)
+        assert PriceViewSet.queryset.model == Price
 
-    def test_serializer_class(self):
+    def test_serializer_class(self) -> None:
         """Test case for test_serializer_class."""
-        from apps.pricing.serializers import PriceSerializer
-
-        self.assertEqual(PriceViewSet.serializer_class, PriceSerializer)
+        assert PriceViewSet.serializer_class == PriceSerializer
 
 
 class TestPriceRankViewSetClass(TestCase):
-    def test_inherits_from_api_model_viewset(self):
+    def test_inherits_from_api_model_viewset(self) -> None:
         """Test case for test_inherits_from_api_model_viewset."""
-        self.assertTrue(issubclass(PriceRankViewSet, ApiModelViewSet))
+        assert issubclass(PriceRankViewSet, ApiModelViewSet)
 
-    def test_queryset_model(self):
+    def test_queryset_model(self) -> None:
         """Test case for test_queryset_model."""
-        self.assertEqual(PriceRankViewSet.queryset.model, PriceRank)
+        assert PriceRankViewSet.queryset.model == PriceRank
 
-    def test_serializer_class(self):
+    def test_serializer_class(self) -> None:
         """Test case for test_serializer_class."""
-        from apps.pricing.serializers import PriceRankSerializer
-
-        self.assertEqual(PriceRankViewSet.serializer_class, PriceRankSerializer)
+        assert PriceRankViewSet.serializer_class == PriceRankSerializer
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +71,7 @@ class TestPriceRankViewSetClass(TestCase):
 class TestPriceRankViewSetPrefetch(TestCase):
     """Ensure price rank list stays bounded when translations exist."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = APIClient()
         self.lang_en = LanguageFactory.create(code="en", name="English", is_active=True)
         self.lang_nl = LanguageFactory.create(code="nl", name="Nederlands", is_active=True)
@@ -102,13 +81,13 @@ class TestPriceRankViewSetPrefetch(TestCase):
             PriceRankTranslationFactory(price_rank=rank, language=self.lang_en, description=f"Rank {idx} en")
             PriceRankTranslationFactory(price_rank=rank, language=self.lang_nl, description=f"Rank {idx} nl")
 
-    def test_price_rank_list_bounded_queries(self):
+    def test_price_rank_list_bounded_queries(self) -> None:
         with CaptureQueriesContext(connection) as ctx:
-            response = self.client.get("/api/price-ranks/?ordering=id", **pub_headers())
+            response = self.client.get("/api/v1/price-ranks/?ordering=id", **pub_headers())
 
-        self.assertEqual(response.status_code, 200)
-        self.assertGreaterEqual(len(results_list(response)), 5)
-        self.assertLessEqual(len(ctx), 3)
+        assert response.status_code == 200
+        assert len(results_list(response)) >= 5
+        assert len(ctx) <= 3
 
 
 # ---------------------------------------------------------------------------
@@ -118,7 +97,7 @@ class TestPriceRankViewSetPrefetch(TestCase):
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class _PriceSetupMixin(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = APIClient()
 
         PriceTranslation.objects.all().delete()
@@ -159,115 +138,115 @@ class _PriceSetupMixin(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/prices/ - list
+# GET /api/v1/prices/ - list
 # ---------------------------------------------------------------------------
 
 
 class TestPriceViewSetList(_PriceSetupMixin):
-    def test_list_with_public_key_returns_200(self):
+    def test_list_with_public_key_returns_200(self) -> None:
         """Test case for test_list_with_public_key_returns_200."""
-        response = self.client.get("/api/prices/?ordering=id", **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        response = self.client.get("/api/v1/prices/?ordering=id", **pub_headers())
+        assert response.status_code == 200
 
-    def test_list_with_internal_key_also_returns_200(self):
+    def test_list_with_internal_key_also_returns_200(self) -> None:
         """Test case for test_list_with_internal_key_also_returns_200."""
-        response = self.client.get("/api/prices/?ordering=id", **int_headers())
-        self.assertEqual(response.status_code, 200)
+        response = self.client.get("/api/v1/prices/?ordering=id", **int_headers())
+        assert response.status_code == 200
 
-    def test_list_returns_prices(self):
+    def test_list_returns_prices(self) -> None:
         """Test case for test_list_returns_prices."""
-        response = self.client.get("/api/prices/?ordering=id", **pub_headers())
+        response = self.client.get("/api/v1/prices/?ordering=id", **pub_headers())
         items = results_list(response)
         types = [item["type"] for item in items]
-        self.assertIn("A", types)
-        self.assertIn("B", types)
+        assert "A" in types
+        assert "B" in types
 
-    def test_list_response_has_expected_fields(self):
+    def test_list_response_has_expected_fields(self) -> None:
         """Test case for test_list_response_has_expected_fields."""
-        response = self.client.get("/api/prices/?ordering=id", **pub_headers())
+        response = self.client.get("/api/v1/prices/?ordering=id", **pub_headers())
         item = results_list(response)[0]
 
         # Core fields from Price model
-        self.assertIn("id", item)
-        self.assertIn("type", item)
-        self.assertIn("visibility", item)
-        self.assertIn("membership", item)
-        self.assertIn("minimum", item)
-        self.assertIn("maximum", item)
-        self.assertIn("step", item)
-        self.assertIn("sort_order", item)
-        self.assertIn("cineville_box", item)
+        assert "id" in item
+        assert "type" in item
+        assert "visibility" in item
+        assert "membership" in item
+        assert "minimum" in item
+        assert "maximum" in item
+        assert "step" in item
+        assert "sort_order" in item
+        assert "cineville_box" in item
 
         # Serializer computed field
-        self.assertIn("description", item)
+        assert "description" in item
 
-    def test_list_without_auth_returns_401(self):
+    def test_list_without_auth_returns_401(self) -> None:
         """Test case for test_list_without_auth_returns_401."""
-        response = self.client.get("/api/prices/")
-        self.assertEqual(response.status_code, 401)
+        response = self.client.get("/api/v1/prices/")
+        assert response.status_code == 401
 
-    def test_list_with_wrong_key_returns_401(self):
+    def test_list_with_wrong_key_returns_401(self) -> None:
         """Test case for test_list_with_wrong_key_returns_401."""
-        response = self.client.get("/api/prices/", **wrong_headers())
-        self.assertEqual(response.status_code, 401)
+        response = self.client.get("/api/v1/prices/", **wrong_headers())
+        assert response.status_code == 401
 
-    def test_list_prefetches_translations_bounded_queries(self):
+    def test_list_prefetches_translations_bounded_queries(self) -> None:
         with CaptureQueriesContext(connection) as ctx:
-            response = self.client.get("/api/prices/?ordering=id", **pub_headers())
+            response = self.client.get("/api/v1/prices/?ordering=id", **pub_headers())
 
-        self.assertEqual(response.status_code, 200)
-        self.assertGreaterEqual(len(results_list(response)), 4)
-        self.assertLessEqual(len(ctx), 10)
+        assert response.status_code == 200
+        assert len(results_list(response)) >= 4
+        assert len(ctx) <= 10
 
 
 # ---------------------------------------------------------------------------
-# GET /api/prices/<id>/ - retrieve
+# GET /api/v1/prices/<id>/ - retrieve
 # ---------------------------------------------------------------------------
 
 
 class TestPriceViewSetRetrieve(_PriceSetupMixin):
-    def test_retrieve_with_public_key_returns_200(self):
+    def test_retrieve_with_public_key_returns_200(self) -> None:
         """Test case for test_retrieve_with_public_key_returns_200."""
-        response = self.client.get(f"/api/prices/{self.p1.id}/", **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        response = self.client.get(f"/api/v1/prices/{self.p1.id}/", **pub_headers())
+        assert response.status_code == 200
 
-    def test_retrieve_with_internal_key_also_returns_200(self):
+    def test_retrieve_with_internal_key_also_returns_200(self) -> None:
         """Test case for test_retrieve_with_internal_key_also_returns_200."""
-        response = self.client.get(f"/api/prices/{self.p1.id}/", **int_headers())
-        self.assertEqual(response.status_code, 200)
+        response = self.client.get(f"/api/v1/prices/{self.p1.id}/", **int_headers())
+        assert response.status_code == 200
 
-    def test_retrieve_returns_correct_price(self):
+    def test_retrieve_returns_correct_price(self) -> None:
         """Test case for test_retrieve_returns_correct_price."""
-        response = self.client.get(f"/api/prices/{self.p1.id}/", **pub_headers())
-        self.assertEqual(response.data["id"], self.p1.id)
-        self.assertEqual(response.data["type"], "A")
+        response = self.client.get(f"/api/v1/prices/{self.p1.id}/", **pub_headers())
+        assert response.data["id"] == self.p1.id
+        assert response.data["type"] == "A"
 
-    def test_retrieve_nonexistent_returns_404(self):
+    def test_retrieve_nonexistent_returns_404(self) -> None:
         """Test case for test_retrieve_nonexistent_returns_404."""
-        response = self.client.get("/api/prices/999999/", **pub_headers())
-        self.assertEqual(response.status_code, 404)
+        response = self.client.get("/api/v1/prices/999999/", **pub_headers())
+        assert response.status_code == 404
 
-    def test_retrieve_without_auth_returns_401(self):
+    def test_retrieve_without_auth_returns_401(self) -> None:
         """Test case for test_retrieve_without_auth_returns_401."""
-        response = self.client.get(f"/api/prices/{self.p1.id}/")
-        self.assertEqual(response.status_code, 401)
+        response = self.client.get(f"/api/v1/prices/{self.p1.id}/")
+        assert response.status_code == 401
 
-    def test_retrieve_with_wrong_key_returns_401(self):
+    def test_retrieve_with_wrong_key_returns_401(self) -> None:
         """Test case for test_retrieve_with_wrong_key_returns_401."""
-        response = self.client.get(f"/api/prices/{self.p1.id}/", **wrong_headers())
-        self.assertEqual(response.status_code, 401)
+        response = self.client.get(f"/api/v1/prices/{self.p1.id}/", **wrong_headers())
+        assert response.status_code == 401
 
 
 # ---------------------------------------------------------------------------
-# POST /api/prices/ - create (internal only)
+# POST /api/v1/prices/ - create (internal only)
 # ---------------------------------------------------------------------------
 
 
 class TestPriceViewSetCreate(_PriceSetupMixin):
-    def test_create_with_internal_key_returns_201(self):
+    def test_create_with_internal_key_returns_201(self) -> None:
         """Test case for test_create_with_internal_key_returns_201."""
         response = self.client.post(
-            "/api/prices/",
+            "/api/v1/prices/",
             {
                 "type": "C",
                 "visibility": "public",
@@ -281,12 +260,12 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 201)
+        assert response.status_code == 201
 
-    def test_create_adds_price_to_db(self):
+    def test_create_adds_price_to_db(self) -> None:
         """Test case for test_create_adds_price_to_db."""
         self.client.post(
-            "/api/prices/",
+            "/api/v1/prices/",
             {
                 "type": "C",
                 "visibility": "public",
@@ -300,12 +279,12 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertTrue(Price.objects.filter(type="C").exists())
+        assert Price.objects.filter(type="C").exists()
 
-    def test_create_with_public_key_returns_403(self):
+    def test_create_with_public_key_returns_403(self) -> None:
         """Test case for test_create_with_public_key_returns_403."""
         response = self.client.post(
-            "/api/prices/",
+            "/api/v1/prices/",
             {
                 "type": "C",
                 "visibility": "public",
@@ -319,12 +298,12 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
             format="json",
             **pub_headers(),
         )
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
-    def test_create_without_auth_returns_401(self):
+    def test_create_without_auth_returns_401(self) -> None:
         """Test case for test_create_without_auth_returns_401."""
         response = self.client.post(
-            "/api/prices/",
+            "/api/v1/prices/",
             {
                 "type": "C",
                 "visibility": "public",
@@ -333,12 +312,12 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
             },
             format="json",
         )
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
-    def test_create_with_wrong_key_returns_401(self):
+    def test_create_with_wrong_key_returns_401(self) -> None:
         """Test case for test_create_with_wrong_key_returns_401."""
         response = self.client.post(
-            "/api/prices/",
+            "/api/v1/prices/",
             {
                 "type": "C",
                 "visibility": "public",
@@ -348,12 +327,12 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
             format="json",
             **wrong_headers(),
         )
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
-    def test_create_missing_required_field_returns_400(self):
-        """Test case for test_create_missing_required_field_returns_400."""
+    def test_create_missing_required_field_returns_422(self) -> None:
+        """Test case for test_create_missing_required_field_returns_422."""
         response = self.client.post(
-            "/api/prices/",
+            "/api/v1/prices/",
             {
                 "visibility": "public",
                 "sort_order": 10,
@@ -362,19 +341,19 @@ class TestPriceViewSetCreate(_PriceSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 400)
+        assert response.status_code == 422
 
 
 # ---------------------------------------------------------------------------
-# PUT /api/prices/<id>/ - full update (internal only)
+# PUT /api/v1/prices/<id>/ - full update (internal only)
 # ---------------------------------------------------------------------------
 
 
 class TestPriceViewSetUpdate(_PriceSetupMixin):
-    def test_put_with_internal_key_returns_200(self):
+    def test_put_with_internal_key_returns_200(self) -> None:
         """Test case for test_put_with_internal_key_returns_200."""
         response = self.client.put(
-            f"/api/prices/{self.p1.id}/",
+            f"/api/v1/prices/{self.p1.id}/",
             {
                 "type": "A-new",
                 "visibility": "public",
@@ -388,12 +367,12 @@ class TestPriceViewSetUpdate(_PriceSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_put_updates_price_in_db(self):
+    def test_put_updates_price_in_db(self) -> None:
         """Test case for test_put_updates_price_in_db."""
         self.client.put(
-            f"/api/prices/{self.p1.id}/",
+            f"/api/v1/prices/{self.p1.id}/",
             {
                 "type": "A-new",
                 "visibility": "public",
@@ -408,12 +387,12 @@ class TestPriceViewSetUpdate(_PriceSetupMixin):
             **int_headers(),
         )
         self.p1.refresh_from_db()
-        self.assertEqual(self.p1.type, "A-new")
+        assert self.p1.type == "A-new"
 
-    def test_put_with_public_key_returns_403(self):
+    def test_put_with_public_key_returns_403(self) -> None:
         """Test case for test_put_with_public_key_returns_403."""
         response = self.client.put(
-            f"/api/prices/{self.p1.id}/",
+            f"/api/v1/prices/{self.p1.id}/",
             {
                 "type": "A-new",
                 "visibility": "public",
@@ -427,12 +406,12 @@ class TestPriceViewSetUpdate(_PriceSetupMixin):
             format="json",
             **pub_headers(),
         )
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
-    def test_put_nonexistent_returns_404(self):
+    def test_put_nonexistent_returns_404(self) -> None:
         """Test case for test_put_nonexistent_returns_404."""
         response = self.client.put(
-            "/api/prices/999999/",
+            "/api/v1/prices/999999/",
             {
                 "type": "X",
                 "visibility": "public",
@@ -446,96 +425,96 @@ class TestPriceViewSetUpdate(_PriceSetupMixin):
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
 
 # ---------------------------------------------------------------------------
-# PATCH /api/prices/<id>/ - partial update (internal only)
+# PATCH /api/v1/prices/<id>/ - partial update (internal only)
 # ---------------------------------------------------------------------------
 
 
 class TestPriceViewSetPartialUpdate(_PriceSetupMixin):
-    def test_patch_with_internal_key_returns_200(self):
+    def test_patch_with_internal_key_returns_200(self) -> None:
         """Test case for test_patch_with_internal_key_returns_200."""
         response = self.client.patch(
-            f"/api/prices/{self.p1.id}/",
+            f"/api/v1/prices/{self.p1.id}/",
             {"type": "A-updated"},
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
-    def test_patch_updates_only_specified_fields(self):
+    def test_patch_updates_only_specified_fields(self) -> None:
         """Test case for test_patch_updates_only_specified_fields."""
         self.client.patch(
-            f"/api/prices/{self.p1.id}/",
+            f"/api/v1/prices/{self.p1.id}/",
             {"type": "A-updated"},
             format="json",
             **int_headers(),
         )
         self.p1.refresh_from_db()
-        self.assertEqual(self.p1.type, "A-updated")
+        assert self.p1.type == "A-updated"
 
-    def test_patch_with_public_key_returns_403(self):
+    def test_patch_with_public_key_returns_403(self) -> None:
         """Test case for test_patch_with_public_key_returns_403."""
         response = self.client.patch(
-            f"/api/prices/{self.p1.id}/",
+            f"/api/v1/prices/{self.p1.id}/",
             {"type": "A-updated"},
             format="json",
             **pub_headers(),
         )
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
-    def test_patch_without_auth_returns_401(self):
+    def test_patch_without_auth_returns_401(self) -> None:
         """Test case for test_patch_without_auth_returns_401."""
         response = self.client.patch(
-            f"/api/prices/{self.p1.id}/",
+            f"/api/v1/prices/{self.p1.id}/",
             {"type": "A-updated"},
             format="json",
         )
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
-    def test_patch_with_wrong_key_returns_401(self):
+    def test_patch_with_wrong_key_returns_401(self) -> None:
         """Test case for test_patch_with_wrong_key_returns_401."""
         response = self.client.patch(
-            f"/api/prices/{self.p1.id}/",
+            f"/api/v1/prices/{self.p1.id}/",
             {"type": "A-updated"},
             format="json",
             **wrong_headers(),
         )
-        self.assertEqual(response.status_code, 401)
+        assert response.status_code == 401
 
 
 # ---------------------------------------------------------------------------
-# DELETE /api/prices/<id>/ - destroy (internal only)
+# DELETE /api/v1/prices/<id>/ - destroy (internal only)
 # ---------------------------------------------------------------------------
 
 
 class TestPriceViewSetDelete(_PriceSetupMixin):
-    def test_delete_with_internal_key_returns_204(self):
+    def test_delete_with_internal_key_returns_204(self) -> None:
         """Test case for test_delete_with_internal_key_returns_204."""
-        response = self.client.delete(f"/api/prices/{self.p1.id}/", **int_headers())
-        self.assertEqual(response.status_code, 204)
+        response = self.client.delete(f"/api/v1/prices/{self.p1.id}/", **int_headers())
+        assert response.status_code == 204
 
-    def test_delete_removes_price_from_db(self):
+    def test_delete_removes_price_from_db(self) -> None:
         """Test case for test_delete_removes_price_from_db."""
-        self.client.delete(f"/api/prices/{self.p1.id}/", **int_headers())
-        self.assertFalse(Price.objects.filter(id=self.p1.id).exists())
+        self.client.delete(f"/api/v1/prices/{self.p1.id}/", **int_headers())
+        assert not Price.objects.filter(id=self.p1.id).exists()
 
-    def test_delete_with_public_key_returns_403(self):
+    def test_delete_with_public_key_returns_403(self) -> None:
         """Test case for test_delete_with_public_key_returns_403."""
-        response = self.client.delete(f"/api/prices/{self.p1.id}/", **pub_headers())
-        self.assertEqual(response.status_code, 403)
+        response = self.client.delete(f"/api/v1/prices/{self.p1.id}/", **pub_headers())
+        assert response.status_code == 403
 
-    def test_delete_without_auth_returns_401(self):
+    def test_delete_without_auth_returns_401(self) -> None:
         """Test case for test_delete_without_auth_returns_401."""
-        response = self.client.delete(f"/api/prices/{self.p1.id}/")
-        self.assertEqual(response.status_code, 401)
+        response = self.client.delete(f"/api/v1/prices/{self.p1.id}/")
+        assert response.status_code == 401
 
-    def test_delete_nonexistent_returns_404(self):
+    def test_delete_nonexistent_returns_404(self) -> None:
         """Test case for test_delete_nonexistent_returns_404."""
-        response = self.client.delete("/api/prices/999999/", **int_headers())
-        self.assertEqual(response.status_code, 404)
+        response = self.client.delete("/api/v1/prices/999999/", **int_headers())
+        assert response.status_code == 404
 
 
 # ---------------------------------------------------------------------------
@@ -545,7 +524,7 @@ class TestPriceViewSetDelete(_PriceSetupMixin):
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class _PriceRankSetupMixin(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = APIClient()
 
         PriceRankTranslation.objects.all().delete()
@@ -560,72 +539,72 @@ class _PriceRankSetupMixin(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/price-ranks/ - list
+# GET /api/v1/price-ranks/ - list
 # ---------------------------------------------------------------------------
 
 
 class TestPriceRankViewSetList(_PriceRankSetupMixin):
-    def test_list_with_public_key_returns_200(self):
+    def test_list_with_public_key_returns_200(self) -> None:
         """Test case for test_list_with_public_key_returns_200."""
-        response = self.client.get("/api/price-ranks/?ordering=id", **pub_headers())
-        self.assertEqual(response.status_code, 200)
+        response = self.client.get("/api/v1/price-ranks/?ordering=id", **pub_headers())
+        assert response.status_code == 200
 
-    def test_list_with_internal_key_also_returns_200(self):
+    def test_list_with_internal_key_also_returns_200(self) -> None:
         """Test case for test_list_with_internal_key_also_returns_200."""
-        response = self.client.get("/api/price-ranks/?ordering=id", **int_headers())
-        self.assertEqual(response.status_code, 200)
+        response = self.client.get("/api/v1/price-ranks/?ordering=id", **int_headers())
+        assert response.status_code == 200
 
-    def test_list_returns_ranks(self):
+    def test_list_returns_ranks(self) -> None:
         """Test case for test_list_returns_ranks."""
-        response = self.client.get("/api/price-ranks/?ordering=id", **pub_headers())
+        response = self.client.get("/api/v1/price-ranks/?ordering=id", **pub_headers())
         items = results_list(response)
         positions = [item["position"] for item in items]
-        self.assertIn(1, positions)
-        self.assertIn(2, positions)
+        assert 1 in positions
+        assert 2 in positions
 
-    def test_list_without_auth_returns_401(self):
+    def test_list_without_auth_returns_401(self) -> None:
         """Test case for test_list_without_auth_returns_401."""
-        response = self.client.get("/api/price-ranks/")
-        self.assertEqual(response.status_code, 401)
+        response = self.client.get("/api/v1/price-ranks/")
+        assert response.status_code == 401
 
-    def test_list_with_wrong_key_returns_401(self):
+    def test_list_with_wrong_key_returns_401(self) -> None:
         """Test case for test_list_with_wrong_key_returns_401."""
-        response = self.client.get("/api/price-ranks/", **wrong_headers())
-        self.assertEqual(response.status_code, 401)
+        response = self.client.get("/api/v1/price-ranks/", **wrong_headers())
+        assert response.status_code == 401
 
 
 # ---------------------------------------------------------------------------
-# POST /api/price-ranks/ - create (internal only)
+# POST /api/v1/price-ranks/ - create (internal only)
 # ---------------------------------------------------------------------------
 
 
 class TestPriceRankViewSetCreate(_PriceRankSetupMixin):
-    def test_create_with_internal_key_returns_201(self):
+    def test_create_with_internal_key_returns_201(self) -> None:
         """Test case for test_create_with_internal_key_returns_201."""
         response = self.client.post(
-            "/api/price-ranks/",
+            "/api/v1/price-ranks/",
             {"position": 3, "sold_out_buffer": 0},
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 201)
+        assert response.status_code == 201
 
-    def test_create_with_public_key_returns_403(self):
+    def test_create_with_public_key_returns_403(self) -> None:
         """Test case for test_create_with_public_key_returns_403."""
         response = self.client.post(
-            "/api/price-ranks/",
+            "/api/v1/price-ranks/",
             {"position": 3, "sold_out_buffer": 0},
             format="json",
             **pub_headers(),
         )
-        self.assertEqual(response.status_code, 403)
+        assert response.status_code == 403
 
-    def test_create_duplicate_position_returns_400(self):
-        """Test case for test_create_duplicate_position_returns_400."""
+    def test_create_duplicate_position_returns_422(self) -> None:
+        """Test case for test_create_duplicate_position_returns_422."""
         response = self.client.post(
-            "/api/price-ranks/",
+            "/api/v1/price-ranks/",
             {"position": 1, "sold_out_buffer": 0},
             format="json",
             **int_headers(),
         )
-        self.assertEqual(response.status_code, 400)
+        assert response.status_code == 422

@@ -1,23 +1,16 @@
 """
 OpenAPI schema decorators for the Tags app.
-
-Tags are classification labels that can be attached to productions.
-They support translated fields (name, short description, URL title)
-returned as language-code dictionaries.
 """
 
-from drf_spectacular.utils import (
-    OpenApiExample,
-    extend_schema,
-    extend_schema_view,
-)
+from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 
 from apps.core.openapi import (
+    DELETE_ERRORS,
+    ITEM_ERRORS,
+    MUTATE_ERRORS,
+    READ_ERRORS,
     RESPONSE_204_DELETED,
-    RESPONSE_400,
-    RESPONSE_401,
-    RESPONSE_403,
-    RESPONSE_404,
+    WRITE_ERRORS,
 )
 
 from .serializers import TagSerializer
@@ -33,9 +26,7 @@ _TAG_RESPONSE = OpenApiExample(
         "id": 12,
         "url": "https://example.com/tags/hedendaags",
         "source": "uitdatabank",
-        "source_type": "theme",
         "type": "theme",
-        "is_external": True,
         "is_enabled": True,
         "name": "Contemporary",
         "short_description": "Contemporary performing arts and theatre.",
@@ -51,9 +42,7 @@ _TAG_INTERNAL_RESPONSE = OpenApiExample(
         "id": 5,
         "url": "",
         "source": "",
-        "source_type": "",
         "type": "audience",
-        "is_external": False,
         "is_enabled": True,
         "name": "Family friendly",
         "short_description": None,
@@ -68,9 +57,7 @@ _TAG_INPUT = OpenApiExample(
     value={
         "url": "",
         "source": "",
-        "source_type": "",
         "type": "audience",
-        "is_external": False,
         "is_enabled": True,
     },
     request_only=True,
@@ -96,11 +83,7 @@ _TAG_LIST = extend_schema(
         "returned as language-code dictionaries "
         '(e.g. {"en": "Contemporary", "fr": "Contemporain"}).'
     ),
-    responses={
-        200: TagSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={200: TagSerializer, **READ_ERRORS},
     examples=[_TAG_RESPONSE, _TAG_INTERNAL_RESPONSE],
 )
 
@@ -111,12 +94,7 @@ _TAG_RETRIEVE = extend_schema(
         "Translated fields are returned as language-code dictionaries "
         '(e.g. {"en": "Contemporary", "fr": "Contemporain"}).'
     ),
-    responses={
-        200: TagSerializer,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: TagSerializer, **ITEM_ERRORS},
     examples=[_TAG_RESPONSE],
 )
 
@@ -125,19 +103,12 @@ _TAG_CREATE = extend_schema(
     description=(
         "Creates a new **Tag**.\n\n"
         "- `type` is used as a classification label (e.g. `theme`, `audience`).\n"
-        "- Set `is_external` to `true` for tags imported from an external system "
-        "  such as UiTdatabank.\n"
         "- Localised fields (`name`, `short_description`, `url_title`) must be added "
-        "  via the **Tag Translation** endpoints after creation.\n\n"
+        "via the **Tag Translation** endpoints after creation.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=TagSerializer,
-    responses={
-        201: TagSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-    },
+    responses={201: TagSerializer, **WRITE_ERRORS},
     examples=[_TAG_INPUT, _TAG_RESPONSE],
 )
 
@@ -147,13 +118,7 @@ _TAG_UPDATE = extend_schema(
         "Fully replaces an existing **Tag**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
     ),
     request=TagSerializer,
-    responses={
-        200: TagSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: TagSerializer, **MUTATE_ERRORS},
     examples=[_TAG_INPUT, _TAG_RESPONSE],
 )
 
@@ -165,13 +130,7 @@ _TAG_PARTIAL_UPDATE = extend_schema(
         "> **Requires an internal API key.**"
     ),
     request=TagSerializer,
-    responses={
-        200: TagSerializer,
-        400: RESPONSE_400,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={200: TagSerializer, **MUTATE_ERRORS},
     examples=[_TAG_PARTIAL_INPUT, _TAG_RESPONSE],
 )
 
@@ -183,12 +142,7 @@ _TAG_DESTROY = extend_schema(
         "also deleted. This action is irreversible.\n\n"
         "> **Requires an internal API key.**"
     ),
-    responses={
-        204: RESPONSE_204_DELETED,
-        401: RESPONSE_401,
-        403: RESPONSE_403,
-        404: RESPONSE_404,
-    },
+    responses={204: RESPONSE_204_DELETED, **DELETE_ERRORS},
 )
 
 

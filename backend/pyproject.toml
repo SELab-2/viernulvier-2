@@ -1,7 +1,186 @@
 [tool.ruff]
 line-length = 125
 target-version = "py311"
-extend-exclude = ["**/migrations/*.py"]
+extend-exclude = [
+    "**/migrations/*.py",
+    "manage.py",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]  # E/F ~= pycodestyle/pyflakes, I = isort(imports)
+select = [
+    # Core
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings (e.g. trailing whitespace, blank lines)
+    "F",    # pyflakes (unused imports, undefined names, ...)
+    "I",    # isort (import ordering)
+
+    # Quality & bugs
+    "B",    # flake8-bugbear: common mistakes and suboptimal patterns
+    "B9",   # extra bugbear: opinionated but valuable (e.g. str.format vs f-string)
+    "C4",   # flake8-comprehensions: unnecessary list/set/dict constructions
+    "C90",  # mccabe: cyclomatic complexity per function
+    "SIM",  # flake8-simplify: simplifiable if/else, with, return patterns
+    "RET",  # flake8-return: unnecessary return statements, early returns
+    "FLY",  # flynt: f-strings instead of % or .format()
+    "FURB", # refurb: more modern Python idioms
+
+    # Security
+    "S",    # flake8-bandit: security issues (SQL injection, hardcoded secrets, ...)
+
+    # Type annotations
+    "ANN",  # flake8-annotations: enforce type hints on functions and methods
+
+    # Django-specific
+    "DJ",   # flake8-django: Django anti-patterns (e.g. null=True on CharField)
+
+    # Cleanup
+    "ARG",  # flake8-unused-arguments: unused function parameters
+    "ERA",  # eradicate: commented-out code
+    "PIE",  # flake8-pie: misc improvements (e.g. unnecessary spread, pass in except)
+    "TID",  # flake8-tidy-imports: restrict relative imports
+    "TCH",  # flake8-type-checking: move type-hint-only imports into TYPE_CHECKING block
+
+    # Naming
+    "N",    # pep8-naming: class, function and variable names per PEP 8
+
+    # Pylint subset
+    "PL",   # pylint: broad set of checks
+    "PLR",  # pylint refactor: magic numbers, too-many-arguments, ...
+    "PLC",  # pylint convention
+    "PLE",  # pylint error
+
+    # Python upgrades
+    "UP",   # pyupgrade: modernise to Python 3.11+ syntax
+
+    # Documentation
+    "D",    # pydocstyle: docstring conventions (google style configured below)
+
+    # Miscellaneous
+    "PT",   # flake8-pytest-style: pytest best practices
+    "Q",    # flake8-quotes: consistent quote style
+    "RSE",  # flake8-raise: unnecessary raise from None, ...
+    "SLOT", # flake8-slots: missing __slots__ on heavily instantiated classes
+    "TRY",  # tryceratops: exception handling patterns
+    "LOG",  # flake8-logging: logging best practices (e.g. no f-strings in log calls)
+    "G",    # flake8-logging-format: logging format strings
+    "ISC",  # flake8-implicit-str-concat: adjacent string literals
+    "ICN",  # flake8-import-conventions: standard aliases (e.g. import numpy as np)
+    "RUF",  # ruff-specific rules (e.g. mutable class vars, noqa validation)
+]
+
+ignore = [
+    # ANN exceptions
+    "ANN401",  # Any is sometimes legitimate (e.g. DRF serializer.data)
+
+    # D exceptions
+    "D100",    # module-level docstring not required
+    "D104",    # package-level docstring not required
+    "D106",    # nested class docstring (e.g. Meta in serializer/model)
+    "D107",    # __init__ docstring not required when class is already documented
+    "D203",    # conflicts with D211 (blank line before class docstring)
+    "D213",    # conflicts with D212 (multi-line docstring summary on second line)
+
+    # Django exceptions
+    "DJ001",   # null=True on CharField: sometimes intentional during migrations
+
+    # S (security) exceptions
+    "S101",    # assert is fine in tests
+    "S311",    # random in non-crypto context is acceptable (e.g. test factories)
+
+    # TRY exceptions
+    "TRY003",  # long inline exception messages are acceptable
+    "TRY300",  # else block in try: personal preference
+
+    # PLR exceptions
+    "PLR2004", # magic numbers: too strict for Django settings and HTTP status codes
+    "PLR0913", # too-many-arguments: DRF views and serializers often need several
+
+    # Miscellaneous
+    "RUF012",  # mutable class attributes: factory_boy and DRF patterns break here
+    "ISC001",  # conflicts with the ruff formatter
+    "E501",    # line length: already handled by the line-length setting above
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "ANN",     # type hints not required in tests
+    "D",       # docstrings not required in tests
+    "S105",    # hardcoded passwords are acceptable in test fixtures
+    "S106",
+    "PLR2004", # magic numbers in assertions are acceptable
+    "ARG001",  # fixture parameters are not always used directly
+    "DJ008",   # no __str__ method in tests needed
+    "N801",    # Class name should use CapWords (sometimes this is needed in tests)
+    "N806",    # Allow Uppercase variable names in functions (useful for mocking Classes in tests)
+    "N818",    # Allow Exception names without "Error" suffix (required for Django's DoesNotExist)
+]
+"**/admin.py" = [
+    "D",       # Django admin classes rarely need full docstrings
+]
+"**/settings/*.py" = [
+    "S",       # security checks do not apply to settings files
+    "ERA001",  # commented-out settings are common practice
+    "F401",    # wildcard imports in settings (e.g. from .base import *)
+]
+"**/schemas.py" = [
+    "D",       # drf-spectacular schema classes do not require docstrings
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10  # functions exceeding this complexity threshold will be flagged
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"  # Google style: Args:, Returns:, Raises: sections
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "api", "config"]
+known-third-party = ["rest_framework", "django", "django_filters", "drf_spectacular"]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
+force-sort-within-sections = true
+split-on-trailing-comma = true
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"  # disallow relative imports from parent packages (.. imports)
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "django.db.models.Field",
+]
+
+[tool.ruff.lint.flake8-type-checking]
+strict = true  # move type-only imports into TYPE_CHECKING blocks automatically
+
+[tool.ruff.lint.pylint]
+max-args = 8         # max parameters per function (DRF views quickly reach 5-6)
+max-branches = 12    # max if/elif branches per function
+max-returns = 6      # max return statements per function
+max-statements = 50  # max statements per function
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "double"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true  # also formats code examples inside docstrings
+
+[tool.coverage.run]
+omit = [
+    "*/migrations/*.py",
+]
+
+[tool.coverage.report]
+omit = [
+    "*/migrations/*.py",
+]

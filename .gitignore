@@ -1,3 +1,17 @@
 # Environment variables
-infrastructure/.env.*
-!infrastructure/.env.*.example
+.env
+!.env.example
+
+.env
+infrastructure/.env
+
+# Virtual environment
+/venv/
+venv/
+./venv/
+
+# macOS files
+.DS_Store
+
+# VSCode files
+.vscode/

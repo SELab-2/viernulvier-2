@@ -1,25 +1,328 @@
 {
-    "title": "Archiefomgeving",
-    "subtitle": "Catalogiseer en bewaar items.",
-    "english": "Engels",
-    "dutch": "Nederlands",
-    "nav": {
-        "home": "Home",
-        "events": "Evenementen",
-        "productions": "Producties"
+  "nav": {
+    "home": "Home",
+    "archive": "Archief",
+    "series": "Reeksen",
+    "blogs": "Blogs",
+    "media": "Media",
+    "mainNav": "Hoofdnavigatie",
+    "openMenu": "Menu openen",
+    "closeMenu": "Menu sluiten",
+    "switchToLightMode": "Donkere modus",
+    "switchToDarkMode": "Lichte modus"
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "VIERNULVIER-ARCHIEF",
+      "title": "Het levende archief van VIERNULVIER.",
+      "description": "Verken decennia aan voorstellingen, concerten en theater van Kunstencentrum VIERNULVIER, zorgvuldig gecatalogiseerd en verrijkt met context.",
+      "primaryCta": "Open het archief",
+      "seriesCta": "Bekijk reeksen",
+      "secondaryCta": "Lees blogs",
+      "websiteCta": "Bezoek de officiële website"
     },
-    "events": {
-        "title": "Evenementen",
-        "listPlaceholder": "Lijst met evenementen wordt hier weergegeven.",
-        "detailTitle": "Evenement Detail",
-        "detailPlaceholder": "Details van evenement met ID {{id}} worden hier weergegeven.",
-        "backToEvents": "Terug naar Evenementen"
+    "stats": {
+      "productions": "Producties",
+      "series": "Reeksen",
+      "years": "Gedocumenteerde jaren",
+      "blogs": "Blogs"
     },
-    "productions": {
-        "title": "Producties",
-        "listPlaceholder": "Lijst met producties wordt hier weergegeven.",
-        "detailTitle": "Productie Detail",
-        "detailPlaceholder": "Details van productie met ID {{id}} worden hier weergegeven.",
-        "backToProductions": "Terug naar Producties"
+    "statsSection": {
+      "eyebrow": "Archief in cijfers",
+      "title": "Een snel overzicht van de collectie.",
+      "description": "Live tellingen van producties, reeksen, gedocumenteerde jaren en blogs."
+    },
+    "ticker": {
+      "brand": "VIERNULVIER",
+      "city": "GENT",
+      "archive": "ARCHIEF",
+      "years": "{{value}} JAAR",
+      "productions": "{{value}} PRODUCTIES",
+      "center": "KUNSTENCENTRUM",
+      "collection": "COLLECTIE",
+      "performances": "VOORSTELLINGEN",
+      "theatre": "THEATER",
+      "concert": "CONCERT",
+      "dance": "DANS"
+    },
+    "side": {
+      "eyebrow": "Wat je hier vindt",
+      "title": "Vier heldere ingangen in de collectie.",
+      "archive": {
+        "title": "Voorstellingen, concerten & theater",
+        "description": "Zoek op artiest, locatie of periode. Elke gedocumenteerde productie uit de geschiedenis van VIERNULVIER, doorzoekbaar op een plek."
+      },
+      "blogs": {
+        "title": "Blogs en context",
+        "description": "Redactionele stukken die het archief verdiepen: interviews, essays en notities van onderzoekers en curatoren."
+      },
+      "series": {
+        "title": "Reeksen en edities",
+        "description": "Producties gegroepeerd per terugkerende reeks. Volg hoe edities door de jaren heen evolueren."
+      },
+      "prints": {
+        "title": "Affiches en drukwerk",
+        "description": "Gescande affiches, programmaboekjes en brochures uit de fysieke collectie."
+      }
+    },
+    "cardsSection": {
+      "eyebrow": "Verken de collectie",
+      "title": "Waar wil je beginnen?",
+      "description": "Verken het VIERNULVIER-archief via een van de vier invalshoeken. Elke toegangspoort onthult een unieke laag van onze rijke collectie."
+    },
+    "cards": {
+      "archive": {
+        "eyebrow": "01 - Archief",
+        "title": "Verken het archief",
+        "description": "Zoek producties op artiest, locatie of periode. De volledige productiegeschiedenis van VIERNULVIER.",
+        "cta": "Open het archief"
+      },
+      "series": {
+        "eyebrow": "02 - Reeksen",
+        "title": "Ontdek reeksen",
+        "description": "Producties gegroepeerd per terugkerende reeks. Volg gekoppelde edities in chronologische volgorde.",
+        "cta": "Open reeksen"
+      },
+      "blogs": {
+        "eyebrow": "03 - Blogs",
+        "title": "Lees de blogs",
+        "description": "Interviews, essays en onderzoeksnotities die extra context geven aan het archief.",
+        "cta": "Lees blogs"
+      },
+      "prints": {
+        "eyebrow": "04 - Drukwerk",
+        "title": "Ontdek drukwerk",
+        "description": "Affiches, programmaboekjes en brochures uit de fysieke collectie.",
+        "cta": "Bekijk drukwerk"
+      }
     }
+  },
+  "searchbar": {
+    "searchPlaceholder": "Zoek naar evenementen, artiesten of locaties...",
+    "searchPlaceholderMobile": "Zoek evenementen, artiesten...",
+    "search": "Zoeken",
+    "filters": "Filters",
+    "resultsFound_one": "{{count}} resultaat gevonden",
+    "resultsFound_other": "{{count}} resultaten gevonden",
+    "sort": {
+      "targetLabel": "Sorteer op",
+      "name": "Naam",
+      "date": "Datum",
+      "switchToAscending": "Schakel naar oplopend",
+      "switchToDescending": "Schakel naar aflopend"
+    },
+    "layout": {
+      "label": "Weergave",
+      "list": "Lijst",
+      "grid": "Raster"
+    }
+  },
+  "apiErrors": {
+    "network": "Er is een netwerkfout opgetreden. Controleer je verbinding.",
+    "status": {
+      "400": "Ongeldige aanvraagparameters.",
+      "401": "Niet geauthenticeerd. Log in om verder te gaan.",
+      "403": "Je hebt geen toestemming om deze actie uit te voeren.",
+      "404": "De gevraagde resource werd niet gevonden.",
+      "500": "Er trad een interne serverfout op. Probeer later opnieuw.",
+      "genericWithCode": "Aanvraag mislukt met status {{status}}."
+    }
+  },
+  "genreChip": {
+    "filterByGenre": "Filter op {{genre}}"
+  },
+  "events": {
+    "priceType": "Type",
+    "price": "Prijs",
+    "available": "Beschikbaar",
+    "availableQuantity": "{{count}} beschikbaar"
+  },
+  "archive": {
+    "home": {
+      "loading": "Archief laden",
+      "resultsRegionLabel": "Resultaten van het archief",
+      "filterPanelLabel": "Archieffilters",
+      "filterPanelTitle": "Filters",
+      "filterPanelPlaceholder": "Gebruik zoeken en sorteren om het archief te verkennen.",
+      "empty": {
+        "title": "Geen archiefitems gevonden",
+        "description": "Pas je zoekopdracht aan en probeer opnieuw."
+      },
+      "error": {
+        "retry": "Opnieuw proberen",
+        "fallback": "Kon het archief niet laden.",
+        "notification": "Er ging iets mis bij het laden van het archief."
+      }
+    }
+  },
+  "productions": {
+    "title": "Producties",
+    "listPlaceholder": "Lijst met producties wordt hier weergegeven.",
+    "detailTitle": "Productie Detail",
+    "detailPlaceholder": "Details van productie met ID {{id}} worden hier weergegeven.",
+    "backToProductions": "Terug naar Producties",
+    "home": {
+      "loading": "Producties laden",
+      "resultsRegionLabel": "Resultaten van producties",
+      "filterPanelTitle": "Filters",
+      "filters": {
+        "clear": "Wissen",
+        "any": "Alles",
+        "attendanceMode": "Aanwezigheid",
+        "performerType": "Uitvoering",
+        "genres": "Genres",
+        "tags": "Tags",
+        "date": "Datum",
+        "startAfter": "Start na",
+        "startBefore": "Start voor",
+        "showMore": "Meer",
+        "showLess": "Minder",
+        "noGenres": "Geen genres beschikbaar.",
+        "noTags": "Geen tags beschikbaar."
+      },
+      "empty": {
+        "title": "Geen producties gevonden",
+        "description": "Pas je zoekopdracht aan en probeer opnieuw."
+      },
+      "error": {
+        "retry": "Opnieuw proberen",
+        "fallback": "Kon producties niet laden.",
+        "notification": "Er ging iets mis bij het laden van producties."
+      }
+    },
+    "pagination": {
+      "navigationLabel": "Paginering van producties",
+      "pageXofY": "Pagina {{page}} van {{totalPages}}",
+      "firstPage": "Ga naar eerste pagina",
+      "lastPage": "Ga naar laatste pagina",
+      "nextPage": "Ga naar volgende pagina",
+      "previousPage": "Ga naar vorige pagina",
+      "currentPage": "Huidige pagina, pagina {{page}}",
+      "goToPage": "Ga naar pagina {{page}}"
+    },
+    "detail": {
+      "related": "Gerelateerde producties",
+      "relatedBlogs": "Gerelateerde blogs",
+      "meta": {
+        "period": "Periode",
+        "venues": "Locaties",
+        "genre": "Genre",
+        "type": "Type",
+        "performerType": "Uitvoering",
+        "group": "Groep",
+        "solo": "Solo",
+        "attendance": "Aanwezigheid",
+        "offline": "Fysiek",
+        "online": "Online"
+      },
+      "notFound": "Productie niet gevonden.",
+      "unknownProduction": "Onbekende productie",
+      "noDescription": "Geen beschrijving beschikbaar.",
+      "error": {
+        "invalidId": "Ongeldige productie-id",
+        "loadFailed": "Kon productie niet laden"
+      },
+      "events": "Evenementen"
+    }
+  },
+  "blogs": {
+    "home": {
+      "loading": "Blogs laden",
+      "resultsRegionLabel": "Resultaten van blogs",
+      "searchPlaceholder": "Zoek blogs op titel of samenvatting...",
+      "searchPlaceholderMobile": "Zoek blogs...",
+      "coverAltFallback": "Omslagafbeelding van blog",
+      "noExcerpt": "Geen samenvatting beschikbaar.",
+      "unpublished": "Niet gepubliceerd",
+      "empty": {
+        "title": "Geen blogs gevonden",
+        "description": "Pas je zoekopdracht aan en probeer opnieuw."
+      },
+      "error": {
+        "retry": "Opnieuw proberen",
+        "fallback": "Kon blogs niet laden.",
+        "notification": "Er ging iets mis bij het laden van blogs."
+      }
+    },
+    "detail": {
+      "noTitleAvailable": "Geen titel beschikbaar"
+    }
+  },
+  "notFound": {
+    "title": "Pagina niet gevonden",
+    "description": "De pagina die je zoekt bestaat niet of is verplaatst.",
+    "backHome": "Terug naar home"
+  },
+  "footer": {
+    "address": {
+      "org": "Kunstencentrum VIERNULVIER vzw",
+      "street": "Sint-Pietersnieuwstraat 23",
+      "city": "9000 Gent",
+      "phone": "T. 09 267 28 20",
+      "email": "info@viernulvier.gent",
+      "vat": "BTW BE 0423.063.619"
+    },
+    "nav": {
+      "home": "Home",
+      "archive": "Archief",
+      "series": "Reeksen",
+      "blogs": "Blogs",
+      "media": "Media"
+    },
+    "newsletter": {
+      "cta": "blijf op de hoogte"
+    }
+  },
+  "series": {
+    "backToSeries": "Terug naar reeksen",
+    "listPlaceholder": "Lijst met reeksen wordt hier weergegeven.",
+    "allEditions": "Alle edities",
+    "allEditionsSubtitle": "Chronologisch overzicht van de producties binnen deze reeks.",
+    "noDescription": "Geen beschrijving beschikbaar.",
+    "noProductions": "Er zijn geen producties gekoppeld aan deze reeks.",
+    "loading": "Reeks laden",
+    "invalidId": "Ongeldig reeks-ID.",
+    "fetchError": "Kon de reeks niet ophalen.",
+    "untitled": "Naamloze reeks",
+    "untitledProduction": "Naamloze productie",
+    "stats": {
+      "editions": "Edities",
+      "period": "Periode",
+      "type": "Type"
+    },
+    "home": {
+      "loading": "Reeksen laden",
+      "resultsRegionLabel": "Resultaten van reeksen",
+      "filterPanelLabel": "Filterpaneel voor reeksen",
+      "filterPanelTitle": "Reeksen",
+      "filterPanelDescription": "Selecteer een of meerdere reekslabels om de bundels te filteren.",
+      "tagFilterLabel": "Reeksfilters",
+      "empty": {
+        "title": "Geen reeksen gevonden",
+        "description": "Pas je zoekopdracht aan en probeer opnieuw."
+      },
+      "card": {
+        "productionCount": "{{count}} producties"
+      },
+      "error": {
+        "retry": "Opnieuw proberen",
+        "fallback": "Kon reeksen niet laden.",
+        "notification": "Er ging iets mis bij het laden van reeksen."
+      }
+    },
+    "pagination": {
+      "navigationLabel": "Paginering van reeksen",
+      "pageXofY": "Pagina {{page}} van {{totalPages}}",
+      "firstPage": "Ga naar eerste pagina",
+      "lastPage": "Ga naar laatste pagina",
+      "nextPage": "Ga naar volgende pagina",
+      "previousPage": "Ga naar vorige pagina",
+      "currentPage": "Huidige pagina, pagina {{page}}",
+      "goToPage": "Ga naar pagina {{page}}"
+    }
+  },
+  "blog": {
+    "couldNotLoad": "Kon de blog niet laden",
+    "invalidId": "Ongeldig blog ID"
+  }
 }

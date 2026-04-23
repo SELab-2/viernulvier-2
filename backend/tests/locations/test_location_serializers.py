@@ -7,8 +7,8 @@ Covers:
 - Queryset serialization for many=True
 """
 
-import pytest
 from django.test import TestCase, override_settings
+import pytest
 from rest_framework.test import APIRequestFactory
 
 from apps.languages.models import Language
@@ -32,99 +32,104 @@ from tests.factories.location import (
 class TestLocationSerializerFields(TestCase):
     """Field exposure for LocationSerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.location = LocationFactory()
 
-    def test_expected_fields_present(self):
+    def test_expected_fields_present(self) -> None:
         data = LocationSerializer(self.location).data
-        self.assertEqual(
-            set(data.keys()),
-            {
-                "id",
-                "street",
-                "number",
-                "postal_code",
-                "city",
-                "country",
-                "phone_1",
-                "phone_2",
-                "is_own_location",
-                "name",
-                "display_name",
-            },
-        )
+        assert set(data.keys()) == {
+            "id",
+            "street",
+            "number",
+            "postal_code",
+            "city",
+            "country",
+            "phone_1",
+            "phone_2",
+            "is_own_location",
+            "name",
+            "display_name",
+        }
 
 
 class TestLocationSerializerTranslations(TestCase):
     """Translation rendering for LocationSerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.lang_en = LanguageFactory(code="en", name="English")
         self.lang_nl = LanguageFactory(code="nl", name="Dutch")
         self.location = LocationFactory()
         LocationTranslationFactory(location=self.location, language=self.lang_en, name="Main Hall")
         LocationTranslationFactory(location=self.location, language=self.lang_nl, name="Hoofdzaal")
 
-    def test_translated_name_dict(self):
+    def test_translated_name_dict(self) -> None:
         data = LocationSerializer(self.location).data
-        self.assertEqual(data["name"], {"en": "Main Hall", "nl": "Hoofdzaal"})
+        assert data["name"] == {"en": "Main Hall", "nl": "Hoofdzaal"}
 
-    def test_queryset_serialization_many(self):
+    def test_queryset_serialization_many(self) -> None:
         data = LocationSerializer(Location.objects.all(), many=True).data
-        self.assertIsInstance(data, list)
-        self.assertIsInstance(data[0]["name"], dict)
+        assert isinstance(data, list)
+        assert isinstance(data[0]["name"], dict)
 
 
 class TestSpaceSerializerFields(TestCase):
     """Field exposure for SpaceSerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.space = SpaceFactory()
 
-    def test_expected_fields_present(self):
+    def test_expected_fields_present(self) -> None:
         data = SpaceSerializer(self.space).data
-        self.assertEqual(set(data.keys()), {"id", "location", "name", "display_name"})
+        assert set(data.keys()) == {"id", "location", "name", "display_name", "halls"}
+        assert isinstance(data["location"], dict)
+        assert isinstance(data["halls"], list)
 
 
 class TestSpaceSerializerTranslations(TestCase):
     """Translation rendering for SpaceSerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.lang = LanguageFactory(code="en")
         self.space = SpaceFactory()
         SpaceTranslationFactory(space=self.space, language=self.lang, name="Room A")
 
-    def test_translated_name_dict(self):
+    def test_translated_name_dict(self) -> None:
         data = SpaceSerializer(self.space).data
-        self.assertEqual(data["name"], {"en": "Room A"})
+        assert data["name"] == {"en": "Room A"}
+
+    def test_nested_halls_include_translated_fields(self) -> None:
+        hall = HallFactory(space=self.space)
+        HallTranslationFactory(
+            hall=hall,
+            language=self.lang,
+            name="Blue Hall",
+            remark="Front stage",
+        )
+
+        data = SpaceSerializer(self.space).data
+
+        assert len(data["halls"]) == 1
+        assert data["halls"][0]["name"] == {"en": "Blue Hall"}
+        assert data["halls"][0]["display_name"] == "Blue Hall"
+        assert data["halls"][0]["remark"] == {"en": "Front stage"}
 
 
 class TestHallSerializerFields(TestCase):
     """Field exposure for HallSerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.hall = HallFactory()
 
-    def test_expected_fields_present(self):
+    def test_expected_fields_present(self) -> None:
         data = HallSerializer(self.hall).data
-        self.assertEqual(
-            set(data.keys()),
-            {
-                "id",
-                "space",
-                "seat_selection",
-                "open_seating",
-                "name",
-                "display_name",
-                "remark",
-            },
-        )
+        assert set(data.keys()) == {"id", "space", "seat_selection", "open_seating", "name", "display_name", "remark"}
+        assert isinstance(data["space"], dict)
 
 
 class TestHallSerializerTranslations(TestCase):
     """Translation rendering for HallSerializer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.lang_en = LanguageFactory(code="en")
         self.lang_fr = LanguageFactory(code="fr")
         self.hall = HallFactory()
@@ -141,10 +146,10 @@ class TestHallSerializerTranslations(TestCase):
             remark="Avant scène",
         )
 
-    def test_translated_name_and_remark_dicts(self):
+    def test_translated_name_and_remark_dicts(self) -> None:
         data = HallSerializer(self.hall).data
-        self.assertEqual(data["name"], {"en": "Blue Hall", "fr": "Salle Bleue"})
-        self.assertEqual(data["remark"], {"en": "Front stage", "fr": "Avant scène"})
+        assert data["name"] == {"en": "Blue Hall", "fr": "Salle Bleue"}
+        assert data["remark"] == {"en": "Front stage", "fr": "Avant scène"}
 
 
 def _make_hall():
@@ -172,7 +177,7 @@ class TestHallDisplayNameBaseLanguage:
 
     @pytest.mark.django_db
     @override_settings(LANGUAGE_CODE="en-us")
-    def test_uses_base_language_when_present(self):
+    def test_uses_base_language_when_present(self) -> None:
         en = Language.objects.create(code="en", name="English")
         nl = Language.objects.create(code="nl", name="Dutch")
 

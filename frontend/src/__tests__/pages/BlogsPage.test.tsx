@@ -1,0 +1,235 @@
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { I18nextProvider } from 'react-i18next'
+import { MemoryRouter, useLocation } from 'react-router-dom'
+
+import i18n from '../../i18n'
+import BlogsPage from '../../pages/BlogsPage'
+import { ApiError } from '../../services/ApiTypes'
+import { getBlogs } from '../../services/blogs/Blogs'
+
+import type { Blog } from '../../types/Blogs'
+
+jest.mock('../../services/blogs/Blogs', () => ({
+  getBlogs: jest.fn(),
+}))
+
+const mockedGetBlogs = getBlogs as jest.MockedFunction<typeof getBlogs>
+
+const LocationProbe = () => {
+  const location = useLocation()
+  return <div data-testid="url-search">{location.search}</div>
+}
+
+const buildBlog = (id: number): Blog => ({
+  id,
+  slug: `blog-${id}`,
+  published_at: '2026-01-01T19:00:00Z',
+  cover_image: null,
+  title: { nl: `Blog ${id}`, en: `Blog ${id}` },
+  body: { nl: `Body ${id}` },
+  excerpt: { nl: `Samenvatting ${id}` },
+  display_title: `Blog ${id}`,
+  display_excerpt: `Samenvatting ${id}`,
+  productions: [],
+})
+
+const renderPage = (
+  initialEntry:
+    | string
+    | {
+        pathname: string
+        state?: { floatingAlert?: { open?: boolean; message?: string } }
+      } = '/blogs',
+) =>
+  render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <I18nextProvider i18n={i18n}>
+        <ThemeProvider theme={createTheme()}>
+          <BlogsPage />
+          <LocationProbe />
+        </ThemeProvider>
+      </I18nextProvider>
+    </MemoryRouter>,
+  )
+
+describe('BlogsPage', () => {
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
+  beforeEach(async () => {
+    await i18n.changeLanguage('nl')
+  })
+
+  it('loads blogs from API with default params and renders results', async () => {
+    mockedGetBlogs.mockResolvedValueOnce({
+      count: 2,
+      next: null,
+      previous: null,
+      results: [buildBlog(1), buildBlog(2)],
+    })
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(mockedGetBlogs).toHaveBeenCalledWith({
+        page: 1,
+        pageSize: 12,
+        filters: {
+          published: true,
+          search: undefined,
+          ordering: '-published_at',
+        },
+      })
+    })
+
+    expect(await screen.findByRole('heading', { name: 'Blog 1' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Blog 2' })).toBeInTheDocument()
+  })
+
+  it('shows empty state when API returns no blogs', async () => {
+    mockedGetBlogs.mockResolvedValueOnce({
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('Geen blogs gevonden')).toBeInTheDocument()
+    expect(screen.getByText('Pas je zoekopdracht aan en probeer opnieuw.')).toBeInTheDocument()
+  })
+
+  it('shows error state and retries after failure', async () => {
+    mockedGetBlogs.mockRejectedValueOnce(new Error('network down')).mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildBlog(3)],
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('Kon blogs niet laden.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Opnieuw proberen' }))
+
+    await waitFor(() => {
+      expect(mockedGetBlogs).toHaveBeenCalledTimes(2)
+    })
+    expect(await screen.findByRole('heading', { name: 'Blog 3' })).toBeInTheDocument()
+  })
+
+  it('shows localized fallback copy when API returns a non-localized error message', async () => {
+    mockedGetBlogs.mockRejectedValueOnce(new ApiError(500, 'Something failed on server'))
+
+    renderPage()
+
+    expect(await screen.findByText('Kon blogs niet laden.')).toBeInTheDocument()
+    expect(screen.queryByText('Something failed on server')).not.toBeInTheDocument()
+  })
+
+  it('shows floating alert message passed through navigation state', async () => {
+    mockedGetBlogs.mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildBlog(10)],
+    })
+
+    renderPage({
+      pathname: '/blogs',
+      state: {
+        floatingAlert: {
+          open: true,
+          message: 'Kon blog niet laden',
+        },
+      },
+    })
+
+    expect(await screen.findByText('Kon blog niet laden')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Opnieuw proberen' })).not.toBeInTheDocument()
+  })
+
+  it('updates URL state when list view is selected', async () => {
+    mockedGetBlogs.mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildBlog(4)],
+    })
+
+    renderPage()
+
+    await screen.findByRole('heading', { name: 'Blog 4' })
+    fireEvent.click(screen.getByRole('button', { name: 'Lijst' }))
+
+    expect(screen.getByTestId('url-search')).toHaveTextContent('v=l')
+  })
+
+  it('does not refetch while typing and only searches on explicit submit', async () => {
+    mockedGetBlogs
+      .mockResolvedValueOnce({
+        count: 1,
+        next: null,
+        previous: null,
+        results: [buildBlog(5)],
+      })
+      .mockResolvedValueOnce({
+        count: 1,
+        next: null,
+        previous: null,
+        results: [buildBlog(6)],
+      })
+
+    renderPage()
+
+    await screen.findByRole('heading', { name: 'Blog 5' })
+    expect(mockedGetBlogs).toHaveBeenCalledTimes(1)
+
+    fireEvent.change(screen.getByPlaceholderText('Zoek blogs op titel of samenvatting...'), {
+      target: { value: 'vooruit' },
+    })
+
+    expect(mockedGetBlogs).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Zoeken' }))
+
+    await waitFor(() => {
+      expect(mockedGetBlogs).toHaveBeenCalledTimes(2)
+      expect(mockedGetBlogs).toHaveBeenLastCalledWith({
+        page: 1,
+        pageSize: 12,
+        filters: {
+          published: true,
+          search: 'vooruit',
+          ordering: '-published_at',
+        },
+      })
+    })
+  })
+
+  it('retries fetch when submitting the same query after an error', async () => {
+    mockedGetBlogs.mockRejectedValueOnce(new Error('network down')).mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildBlog(9)],
+    })
+
+    renderPage('/blogs?q=vooruit')
+
+    expect(await screen.findByText('Kon blogs niet laden.')).toBeInTheDocument()
+
+    fireEvent.keyDown(screen.getByPlaceholderText('Zoek blogs op titel of samenvatting...'), {
+      key: 'Enter',
+      code: 'Enter',
+    })
+
+    await waitFor(() => {
+      expect(mockedGetBlogs).toHaveBeenCalledTimes(2)
+    })
+    expect(await screen.findByRole('heading', { name: 'Blog 9' })).toBeInTheDocument()
+  })
+})

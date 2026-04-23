@@ -1,5 +1,4 @@
-"""
-Serializers for the Imports app.
+"""Serializers for the Imports app.
 
 ``ImportLogSerializer`` is a read-only serializer that adds a computed
 ``duration`` field to the standard model fields. Write operations are
@@ -17,8 +16,7 @@ from .models import ImportLog
 
 
 class ImportLogSerializer(serializers.ModelSerializer):
-    """
-    Read-only representation of an ImportLog.
+    """Read-only representation of an ImportLog.
 
     Exposes the full audit trail of an import run, including record counts,
     status, timestamps, and a computed ``duration`` field. All fields are
@@ -34,12 +32,24 @@ class ImportLogSerializer(serializers.ModelSerializer):
         Total wall-clock time of the import run, formatted as ``HH:MM:SS``.
         ``null`` when either ``started_at`` or ``finished_at`` is not yet set
         (i.e. the run has not started or has not finished).
+    ``warning``
+        Warning message if ``imported + failed != total``, indicating that
+        some records were skipped (e.g., filtered or duplicates).
+        ``null`` when the counts are consistent.
     """
 
     duration = serializers.SerializerMethodField(
         help_text=(
             "Total wall-clock time of the import run, formatted as `HH:MM:SS`. "
             "`null` when the run has not started or has not finished yet."
+        ),
+    )
+
+    warning = serializers.SerializerMethodField(
+        help_text=(
+            "Warning message if imported + failed does not equal total. "
+            "This indicates records were skipped (e.g., filtered or duplicates). "
+            "`null` when the counts are consistent."
         ),
     )
 
@@ -55,6 +65,7 @@ class ImportLogSerializer(serializers.ModelSerializer):
             "started_at",
             "finished_at",
             "duration",
+            "warning",
             "error_message",
         ]
         read_only_fields = fields
@@ -97,8 +108,7 @@ class ImportLogSerializer(serializers.ModelSerializer):
     # ---------------------------------------------------------------------------
 
     def get_duration(self, obj: ImportLog) -> str | None:
-        """
-        Return the total processing time as an ``HH:MM:SS`` string.
+        """Return the total processing time as an ``HH:MM:SS`` string.
 
         Microseconds are stripped by splitting on ``.`` so the value is
         human-readable at a glance. Returns ``None`` when either timestamp
@@ -109,14 +119,29 @@ class ImportLogSerializer(serializers.ModelSerializer):
             return str(delta).split(".")[0]  # Strip microseconds -> HH:MM:SS
         return None
 
+    def get_warning(self, obj: ImportLog) -> str | None:
+        """Return a warning if imported + failed != total.
+
+        This indicates that some records were skipped (e.g., filtered or
+        duplicates). Returns ``None`` when the counts are consistent.
+        """
+        accounted = obj.records_imported + obj.records_failed
+        if accounted != obj.records_total:
+            skipped = obj.records_total - accounted
+            return (
+                f"{skipped} record(s) were skipped (not imported or failed). "
+                f"This typically indicates filtered or duplicate records."
+            )
+        return None
+
     # ---------------------------------------------------------------------------
     # Explicit write guards
     # ---------------------------------------------------------------------------
 
-    def create(self, validated_data: dict) -> None:
+    def create(self, _validated_data: dict) -> None:
         """Prevent creation of import logs via the API."""
         raise serializers.ValidationError("Import logs cannot be created via the API.")
 
-    def update(self, instance: ImportLog, validated_data: dict) -> None:
+    def update(self, _instance: ImportLog, _validated_data: dict) -> None:
         """Prevent modification of import logs via the API."""
         raise serializers.ValidationError("Import logs cannot be updated via the API.")

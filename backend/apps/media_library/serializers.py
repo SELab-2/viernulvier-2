@@ -1,5 +1,4 @@
-"""
-Serializers for the Media app.
+"""Serializers for the Media app.
 
 Field-level `help_text` and `extra_kwargs` are picked up automatically
 by drf-spectacular and rendered in the Swagger UI, so descriptions do
@@ -18,33 +17,55 @@ from .models import MediaGallery, MediaItem, MediaItemCrop
 
 
 class MediaItemCropSerializer(serializers.ModelSerializer):
-    """
-    Represents a named crop variant of a MediaItem.
+    """Represents a named crop variant of a MediaItem.
 
-    Read-only - crops are managed via the Media Item Crop endpoints.
+    ``image_url`` is a read-only computed field that returns the publicly
+    accessible URL of the stored image file. It is derived from the
+    ``image`` ImageField via Django's storage backend so the URL stays
+    correct regardless of which storage backend is configured (local,
+    S3, etc.).
+
+    Read-only - crops are managed via the scraper sync pipeline.
     """
+
+    image_url = serializers.SerializerMethodField(
+        help_text="Publicly accessible URL of the cropped asset.",
+    )
 
     class Meta:
         model = MediaItemCrop
         fields = [
             "id",
             "name",
-            "url",
+            "image_url",
         ]
-        read_only_fields = ["id"]
+        read_only_fields = ["id", "image_url"]
         extra_kwargs = {
             "name": {
-                "help_text": "Crop variant identifier (e.g. `thumbnail`, `banner`, `square`).",
-            },
-            "url": {
-                "help_text": "Publicly accessible URL of the cropped asset.",
+                "help_text": "Crop variant identifier (e.g. `hd_ready`, `FE3_header`).",
             },
         }
 
+    def get_image_url(self, obj: MediaItemCrop) -> str | None:
+        """Return the storage URL of the crop image, or None if no image is stored."""
+        if obj.image:
+            request = self.context.get("request")
+            if request is not None:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+
+class MediaGalleryReferenceSerializer(serializers.ModelSerializer):
+    """Lightweight nested representation used for FK expansion."""
+
+    class Meta:
+        model = MediaGallery
+        fields = ["id", "name"]
+
 
 class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
-    """
-    Represents a MediaItem with its translated metadata and nested crops.
+    """Represents a MediaItem with its translated metadata and nested crops.
 
     Translated fields (`title`, `description`, `credits`, `link`) return all
     available translations as dictionaries (e.g. {"en": "Poster", "fr": "Affiche"}).
@@ -94,6 +115,14 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
         ),
     )
 
+    gallery_id = serializers.PrimaryKeyRelatedField(
+        queryset=MediaGallery.objects.all(),
+        source="gallery",
+        write_only=True,
+        required=True,
+        help_text="ID of the parent MediaGallery (write-only).",
+    )
+    gallery = MediaGalleryReferenceSerializer(read_only=True)
     crops = MediaItemCropSerializer(many=True, read_only=True)
 
     class Meta:
@@ -101,6 +130,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
         fields = [
             "id",
             "gallery",
+            "gallery_id",
             "type",
             "format",
             "original_filename",
@@ -124,11 +154,8 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
             "crops",
         ]
         extra_kwargs = {
-            "gallery": {
-                "help_text": "Primary key of the parent **MediaGallery** this item belongs to.",
-            },
             "type": {
-                "help_text": "Media type: `image`, `video`, or `audio`.",
+                "help_text": "Media type: `foto`, `video`, `audio`, or `other`.",
             },
             "format": {
                 "help_text": "File format / extension (e.g. `jpg`, `mp4`, `mp3`).",
@@ -169,8 +196,7 @@ class MediaItemSerializer(TranslatableSerializerMixin, serializers.ModelSerializ
 
 
 class MediaGallerySerializer(serializers.ModelSerializer):
-    """
-    Represents a MediaGallery with its nested media items.
+    """Represents a MediaGallery with its nested media items.
 
     The `media_items` field is a read-only nested list of all items in the
     gallery, ordered by `position`. Each item includes its translated metadata
