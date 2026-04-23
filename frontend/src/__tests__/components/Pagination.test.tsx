@@ -76,6 +76,9 @@ describe('Pagination', () => {
     })
 
     const input = screen.getByRole('textbox', { name: 'Huidige pagina, pagina 2' })
+    fireEvent.focus(input)
+    expect(input).toHaveValue('')
+
     fireEvent.change(input, { target: { value: '5' } })
 
     expect(onPageChange).not.toHaveBeenCalled()
@@ -83,7 +86,9 @@ describe('Pagination', () => {
 
     fireEvent.keyDown(input, { key: 'Enter' })
 
+    expect(onPageChange).toHaveBeenCalledTimes(1)
     expect(onPageChange).toHaveBeenCalledWith(5)
+    expect(input).toHaveValue('2')
   })
 
   it('resets invalid page input to the active page on blur', () => {
@@ -97,11 +102,32 @@ describe('Pagination', () => {
     })
 
     const input = screen.getByRole('textbox', { name: 'Huidige pagina, pagina 3' })
-    fireEvent.change(input, { target: { value: 'abc' } })
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: '2abc' } })
     fireEvent.blur(input)
 
     expect(onPageChange).not.toHaveBeenCalled()
     expect(input).toHaveValue('3')
+  })
+
+  it('resets stale draft when page changes via navigation buttons', () => {
+    const onPageChange = jest.fn()
+
+    renderPagination({
+      page: 2,
+      pageSize: 10,
+      totalItems: 50,
+      onPageChange,
+    })
+
+    const input = screen.getByRole('textbox', { name: 'Huidige pagina, pagina 2' })
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: '99' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ga naar volgende pagina' }))
+
+    expect(onPageChange).toHaveBeenCalledWith(3)
+    expect(input).toHaveValue('2')
   })
 
   it('disables pagination controls when disabled is true', () => {

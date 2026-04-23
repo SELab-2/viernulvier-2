@@ -5,7 +5,7 @@ import {
   NavigateNext as NextIcon,
 } from '@mui/icons-material'
 import { Box, IconButton, OutlinedInput, Typography } from '@mui/material'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export interface PaginationProps {
@@ -46,31 +46,31 @@ const Pagination = ({
   const hasPagination = totalPages > 1
   const activePage = hasPagination ? Math.min(Math.max(page, 1), totalPages) : 1
 
-  // Local draft state so users can type freely before commit on blur/Enter.
-  const [inputDraft, setInputDraft] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const inputValue = inputDraft ?? String(activePage)
+  // Keep a local draft while editing and show canonical active page otherwise.
+  const [inputDraft, setInputDraft] = useState('')
+  const [isEditingInput, setIsEditingInput] = useState(false)
+  const inputValue = isEditingInput ? inputDraft : String(activePage)
 
   if (!hasPagination) {
     return null
   }
 
   const commitPage = (raw: string) => {
-    const parsed = parseInt(raw, 10)
-    if (!isNaN(parsed)) {
-      const clamped = Math.min(Math.max(parsed, 1), totalPages)
-      setInputDraft(null)
-      if (clamped !== activePage) {
-        onPageChange(clamped)
-      }
-    } else {
-      // Reset to current page if input is invalid
-      setInputDraft(null)
-    }
-  }
+    const trimmed = raw.trim()
+    const isIntegerInput = /^\d+$/.test(trimmed)
 
-  const handleInputBlur = () => {
-    commitPage(inputRef.current?.value ?? inputValue)
+    setIsEditingInput(false)
+    setInputDraft('')
+
+    if (!isIntegerInput) {
+      return
+    }
+
+    const parsed = Number.parseInt(trimmed, 10)
+    const clamped = Math.min(Math.max(parsed, 1), totalPages)
+    if (clamped !== activePage) {
+      onPageChange(clamped)
+    }
   }
 
   const navButtonSx = {
@@ -109,7 +109,11 @@ const Pagination = ({
       <IconButton
         size="small"
         disabled={disabled || activePage === 1}
-        onClick={() => onPageChange(1)}
+        onClick={() => {
+          setIsEditingInput(false)
+          setInputDraft('')
+          onPageChange(1)
+        }}
         aria-label={t(`${i18nKeyPrefix}.firstPage`)}
         sx={navButtonSx}
       >
@@ -120,7 +124,11 @@ const Pagination = ({
       <IconButton
         size="small"
         disabled={disabled || activePage === 1}
-        onClick={() => onPageChange(activePage - 1)}
+        onClick={() => {
+          setIsEditingInput(false)
+          setInputDraft('')
+          onPageChange(activePage - 1)
+        }}
         aria-label={t(`${i18nKeyPrefix}.previousPage`)}
         sx={navButtonSx}
       >
@@ -129,33 +137,25 @@ const Pagination = ({
 
       {/* Page Input */}
       <OutlinedInput
-        inputRef={inputRef}
         size="small"
         disabled={disabled}
         value={inputValue}
         aria-label={t(`${i18nKeyPrefix}.currentPage`, { page: activePage })}
+        onFocus={() => {
+          setIsEditingInput(true)
+          setInputDraft('')
+        }}
         onChange={(e) => setInputDraft(e.target.value)}
-        onBlur={handleInputBlur}
+        onBlur={(e) => commitPage(e.currentTarget.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             commitPage(e.currentTarget.value)
-            inputRef.current?.blur()
-          }
-          if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
-            e.preventDefault()
-            const nextPage = Math.min(activePage + 1, totalPages)
-            setInputDraft(null)
-            onPageChange(nextPage)
-          }
-          if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
-            e.preventDefault()
-            const prevPage = Math.max(activePage - 1, 1)
-            setInputDraft(null)
-            onPageChange(prevPage)
           }
         }}
         inputProps={{
           'aria-label': t(`${i18nKeyPrefix}.currentPage`, { page: activePage }),
+          inputMode: 'numeric',
+          pattern: '[0-9]*',
           style: { textAlign: 'center', padding: '4px 0' },
         }}
         sx={{
@@ -193,7 +193,11 @@ const Pagination = ({
       <IconButton
         size="small"
         disabled={disabled || activePage === totalPages}
-        onClick={() => onPageChange(activePage + 1)}
+        onClick={() => {
+          setIsEditingInput(false)
+          setInputDraft('')
+          onPageChange(activePage + 1)
+        }}
         aria-label={t(`${i18nKeyPrefix}.nextPage`)}
         sx={navButtonSx}
       >
@@ -204,7 +208,11 @@ const Pagination = ({
       <IconButton
         size="small"
         disabled={disabled || activePage === totalPages}
-        onClick={() => onPageChange(totalPages)}
+        onClick={() => {
+          setIsEditingInput(false)
+          setInputDraft('')
+          onPageChange(totalPages)
+        }}
         aria-label={t(`${i18nKeyPrefix}.lastPage`)}
         sx={navButtonSx}
       >
