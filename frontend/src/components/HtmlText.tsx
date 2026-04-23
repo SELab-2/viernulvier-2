@@ -2,7 +2,7 @@ import { Box, Typography, type TypographyProps } from '@mui/material'
 
 import sanitizeHtml from '../utils/SanitizeHtml'
 
-import type { ReactNode } from 'react'
+import type { ReactNode,  isValidElement } from 'react'
 
 interface HtmlTextProps extends Omit<TypographyProps, 'children'> {
   /**
