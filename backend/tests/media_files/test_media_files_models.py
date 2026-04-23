@@ -80,9 +80,6 @@ class TestMediaFileDerivedMethods:
         obj = MediaFile(file=make_uploaded_file(name="poster.unknownext", content_type=None))
         assert obj._derive_mime_type() == "application/octet-stream"
 
-    def test_derive_file_type_recognizes_image(self) -> None:
-        assert MediaFile()._derive_file_type("image/webp") == MediaFile.FileType.IMAGE
-
     def test_derive_file_type_recognizes_pdf(self) -> None:
         assert MediaFile()._derive_file_type("application/pdf") == MediaFile.FileType.PDF
 
@@ -156,10 +153,6 @@ class TestMediaFileModel:
 
     def test_jpeg_mime_type_sets_image_file_type(self) -> None:
         obj = MediaFile.objects.create(file=make_uploaded_file(name="poster.jpg", content_type="image/jpeg"))
-        assert obj.file_type == MediaFile.FileType.IMAGE
-
-    def test_webp_mime_type_sets_image_file_type(self) -> None:
-        obj = MediaFile.objects.create(file=make_uploaded_file(name="poster.webp", content_type="image/webp"))
         assert obj.file_type == MediaFile.FileType.IMAGE
 
     def test_unknown_mime_type_is_rejected(self) -> None:

@@ -133,7 +133,6 @@ class TestMediaFileUploadSerializerValidation(TestCase):
             ("brochure.pdf", "application/pdf"),
             ("poster.png", "image/png"),
             ("poster.jpg", "image/jpeg"),
-            ("poster.webp", "image/webp"),
         ):
             with self.subTest(content_type=content_type):
                 serializer = MediaFileUploadSerializer(

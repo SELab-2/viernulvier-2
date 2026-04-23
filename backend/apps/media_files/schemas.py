@@ -141,7 +141,6 @@ _MEDIA_FILE_CREATE = extend_schema(
         "Supported file types:\n"
         "- JPEG\n"
         "- PNG\n"
-        "- WEBP\n"
         "- PDF\n\n"
         "The backend derives and stores metadata such as the original filename, "
         "MIME type, file size, and normalized internal file type.\n\n"
