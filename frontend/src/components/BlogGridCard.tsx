@@ -3,6 +3,7 @@ import { Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 
+import HtmlText from './HtmlText'
 import ImageWithFallback from './ImageWithFallback'
 import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
@@ -69,19 +70,21 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
           >
             {title}
           </Typography>
-          <Typography
+          <HtmlText
+            html={excerpt}
             variant="body2"
-            color="text.secondary"
+            component="div"
+            fallback={t('blogs.home.noExcerpt')}
             sx={{
               display: '-webkit-box',
               WebkitLineClamp: 3,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
               minHeight: 60,
+              fontSize: 'inherit',
+              color: 'text.secondary',
             }}
-          >
-            {excerpt || t('blogs.home.noExcerpt')}
-          </Typography>
+          />
         </Stack>
 
         <Stack

@@ -6,6 +6,7 @@ import { Link as RouterLink } from 'react-router-dom'
 import { tokens } from '../../theme/tokens'
 import { formatDate } from '../../utils/dateUtils'
 import { getTranslatedRecord } from '../../utils/translations'
+import HtmlText from '../HtmlText'
 import ImageWithFallback from '../ImageWithFallback'
 
 import type { Series } from '../../types/Series'
@@ -85,9 +86,18 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
           </Typography>
 
           {description ? (
-            <Typography component="p" color="textSecondary" noWrap>
-              {description}
-            </Typography>
+            <HtmlText
+              html={description}
+              variant="body2"
+              component="div"
+              sx={{
+                fontSize: 'inherit',
+                color: 'text.secondary',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            />
           ) : null}
         </Stack>
 

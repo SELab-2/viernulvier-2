@@ -253,6 +253,31 @@ This focuses on production dependency risk.
 - HTML sanitization uses `dompurify`
 - Secrets should remain in environment variables and never be committed
 
+## HTML Support in Text Sections
+
+All text sections in the frontend (descriptions, excerpts, teaser text, etc.) support **safe HTML rendering** via the `HtmlText` component.
+
+### How It Works
+
+- The `HtmlText` component (`frontend/src/components/HtmlText.tsx`) wraps the `SanitizeHtml` utility to safely render HTML.
+- All HTML is sanitized using **DOMPurify** to prevent XSS attacks.
+- Dangerous attributes (`on*`, `script`, `style`, etc.) are stripped.
+- Images are automatically constrained to responsive sizing (`max-width: 100%`, `height: auto`).
+- If content is empty, an optional fallback message is displayed.
+
+### Components Using HTML Rendering
+
+The following components now support HTML:
+
+| Component | Field | Notes |
+| --- | --- | --- |
+| `BlogGridCard` | `excerpt` | Blog excerpt displayed in grid layout |
+| `BlogListCard` | `excerpt` | Blog excerpt displayed in list layout |
+| `SeriesGridCard` | `description` | Series description in grid layout |
+| `SeriesListCard` | `description` | Series description in list layout |
+| `SeriesHeader` | `description` | Series description on detail page |
+| `Description` (production) | `teaser`, `description` | Production teaser and full description |
+
 ## Troubleshooting
 
 ### Dev Server Port Conflict
