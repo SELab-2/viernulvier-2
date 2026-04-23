@@ -52,9 +52,9 @@ export default function HtmlText({
     // Render fallback if html is empty
     if (fallback) {
       // If fallback is already a node, return it as-is
-      if (typeof fallback === 'object' && 'type' in fallback) {
-        return fallback
-      }
+      if (React.isValidElement(fallback)) {
+   return fallback
+}
       // Otherwise wrap fallback string in Typography
       return (
         <Typography
