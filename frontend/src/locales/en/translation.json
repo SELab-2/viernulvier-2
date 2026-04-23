@@ -245,7 +245,9 @@
       }
     },
     "detail": {
-      "noTitleAvailable": "No title available"
+      "noTitleAvailable": "No title available",
+      "publishedOn": "Published on",
+      "notPublished": "Not published"
     }
   },
   "notFound": {

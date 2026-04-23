@@ -10,6 +10,7 @@ import Description from '../components/production/Description'
 import RelatedProductions from '../components/production/RelatedProductions'
 import { getBlog } from '../services/blogs/Blogs'
 import { tokens } from '../theme/tokens'
+import { formatBlogPublishedDate } from '../utils/blogs'
 import { getLocalizedValue } from '../utils/localization'
 
 import type { Blog } from '../types/Blogs'
@@ -95,9 +96,7 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
   const body = getLocalizedValue(blog.body, lang) || ''
   const cover = blog.cover_image ?? null
 
-  const published = blog.published_at
-    ? new Date(blog.published_at).toLocaleDateString(i18n.language)
-    : null
+  const published = formatBlogPublishedDate(blog.published_at, i18n.language)
 
   return (
     <Box
