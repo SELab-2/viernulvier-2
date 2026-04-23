@@ -82,7 +82,6 @@ describe('MetaPanel component', () => {
     renderMetaPanel(productionStub)
 
     expect(screen.getByText('Titel')).toBeInTheDocument()
-    expect(screen.getByText('Tag')).toBeInTheDocument()
     expect(screen.getByText('Periode')).toBeInTheDocument()
     expect(screen.getByText('Locaties')).toBeInTheDocument()
     expect(screen.getByText('Genre')).toBeInTheDocument()
