@@ -13,7 +13,8 @@ import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlSta
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
 import { getAllGenres } from '../services/genres/Genres'
-import { getProductions, getProductionSeries } from '../services/productions/Productions'
+import { getProductions } from '../services/productions/Productions'
+import { getAllTags } from '../services/tags/Tags'
 
 import type { Genre } from '../types/Genres'
 import type { Production } from '../types/Productions'
@@ -21,7 +22,6 @@ import type { Tag } from '../types/Tags'
 
 // Page size for pagination.
 const PAGE_SIZE = 12
-const SERIES_TAG_FETCH_SIZE = 250
 
 // Function to determine the ordering parameter for the API based on the current sort target and direction.
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
@@ -36,28 +36,6 @@ const toIsoDateBoundary = (value: string, boundary: 'start' | 'end'): string | u
 
   const suffix = boundary === 'start' ? 'T00:00:00.000Z' : 'T23:59:59.999Z'
   return new Date(`${value}${suffix}`).toISOString()
-}
-
-const fetchSeriesTags = async (): Promise<Tag[]> => {
-  const tagsById = new Map<number, Tag>()
-  let page = 1
-  let hasMore = true
-
-  while (hasMore) {
-    const response = await getProductionSeries({
-      page,
-      pageSize: SERIES_TAG_FETCH_SIZE,
-    })
-
-    response.results.forEach((series) => {
-      tagsById.set(series.tag.id, series.tag)
-    })
-
-    hasMore = response.next !== null
-    page += 1
-  }
-
-  return Array.from(tagsById.values())
 }
 
 // Productions page component that displays a list of productions with search, sorting, and pagination functionality.
@@ -139,14 +117,14 @@ const ProductionsPage = () => {
 
     const fetchFilterMetadata = async () => {
       try {
-        const [genreResponse, seriesTags] = await Promise.all([getAllGenres(), fetchSeriesTags()])
+        const [allGenres, allTags] = await Promise.all([getAllGenres(), getAllTags()])
 
         if (!isActive) {
           return
         }
 
-        setGenres(genreResponse)
-        setTags(seriesTags)
+        setGenres(allGenres)
+        setTags(allTags)
       } catch {
         if (!isActive) {
           return

@@ -6,8 +6,9 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import i18n from '../../i18n'
 import ProductionsPage from '../../pages/ProductionsPage'
 import { ApiError } from '../../services/ApiTypes'
-import { getGenres } from '../../services/genres/Genres'
-import { getProductions, getProductionSeries } from '../../services/productions/Productions'
+import { getAllGenres } from '../../services/genres/Genres'
+import { getProductions } from '../../services/productions/Productions'
+import { getAllTags } from '../../services/tags/Tags'
 
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
@@ -15,18 +16,19 @@ import type { Tag } from '../../types/Tags'
 
 jest.mock('../../services/productions/Productions', () => ({
   getProductions: jest.fn(),
-  getProductionSeries: jest.fn(),
 }))
 
 jest.mock('../../services/genres/Genres', () => ({
-  getGenres: jest.fn(),
+  getAllGenres: jest.fn(),
+}))
+
+jest.mock('../../services/tags/Tags', () => ({
+  getAllTags: jest.fn(),
 }))
 
 const mockedGetProductions = getProductions as jest.MockedFunction<typeof getProductions>
-const mockedGetProductionSeries = getProductionSeries as jest.MockedFunction<
-  typeof getProductionSeries
->
-const mockedGetGenres = getGenres as jest.MockedFunction<typeof getGenres>
+const mockedGetAllGenres = getAllGenres as jest.MockedFunction<typeof getAllGenres>
+const mockedGetAllTags = getAllTags as jest.MockedFunction<typeof getAllTags>
 
 const genreFixtures: Genre[] = [
   {
@@ -138,23 +140,8 @@ describe('ProductionsPage', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('nl')
     setMatchMediaMatches(false)
-    mockedGetGenres.mockResolvedValue({
-      count: genreFixtures.length,
-      next: null,
-      previous: null,
-      results: genreFixtures,
-    })
-    mockedGetProductionSeries.mockResolvedValue({
-      count: tagFixtures.length,
-      next: null,
-      previous: null,
-      results: tagFixtures.map((tag) => ({
-        tag,
-        firstProductionStart: null,
-        lastProductionEnd: null,
-        lastProductionImage: null,
-      })),
-    })
+    mockedGetAllGenres.mockResolvedValue(genreFixtures)
+    mockedGetAllTags.mockResolvedValue(tagFixtures)
   })
 
   it('loads productions from API with default params and renders results', async () => {
@@ -177,6 +164,9 @@ describe('ProductionsPage', () => {
         },
       })
     })
+
+    expect(mockedGetAllGenres).toHaveBeenCalledTimes(1)
+    expect(mockedGetAllTags).toHaveBeenCalledTimes(1)
 
     expect(await screen.findByRole('heading', { name: 'Productie 1' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Productie 2' })).toBeInTheDocument()
