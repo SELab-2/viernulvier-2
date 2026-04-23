@@ -330,9 +330,9 @@
     },
     "size": "Size",
     "error": {
-        "retry": "Retry",
-        "fallback": "Could not load media files.",
-        "notification": "Something went wrong while loading media files."
+      "retry": "Retry",
+      "fallback": "Could not load media files.",
+      "notification": "Something went wrong while loading media files."
     },
     "empty": {
       "title": "No media files found.",
