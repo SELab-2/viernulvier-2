@@ -245,7 +245,9 @@
       }
     },
     "detail": {
-      "noTitleAvailable": "Geen titel beschikbaar"
+      "noTitleAvailable": "Geen titel beschikbaar",
+      "publishedOn": "Gepubliceerd op",
+      "notPublished": "Niet gepubliceerd"
     }
   },
   "notFound": {
