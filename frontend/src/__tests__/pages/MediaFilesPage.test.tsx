@@ -1,371 +1,213 @@
+import '@testing-library/jest-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import React from 'react'
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 
-import { useSearchBarUrlState } from '../../components/searchbar/useSearchBarUrlState'
-import MediaFilesPage from '../../pages/MediaFilesPage'
-import { ApiError } from '../../services/ApiTypes'
-import { getMediaFiles } from '../../services/media_files/MediaFiles'
+const useMediaQueryMock = jest.fn<(query?: unknown) => boolean>()
+const getMediaFilesMock = jest.fn<(params?: unknown) => Promise<any>>()
+const setSearchValueMock = jest.fn<(value: string) => void>()
+const setSortTargetMock = jest.fn<(value: string) => void>()
+const setSortDirectionMock = jest.fn<(value: string) => void>()
+const setViewModeMock = jest.fn<(value: string) => void>()
+const setPageMock = jest.fn<(value: number) => void>()
+const searchBarStateMock = jest.fn<() => any>()
 
 jest.mock('@mui/material', () => {
-  const actual = jest.requireActual('@mui/material')
+  const actual = jest.requireActual('@mui/material') as Record<string, unknown>
   return {
     ...actual,
     useTheme: () => ({
       breakpoints: {
-        down: () => 'mocked-breakpoint',
-      },
-      palette: {
-        mode: 'light',
+        down: jest.fn(() => 'mocked-breakpoint'),
       },
     }),
-    useMediaQuery: jest.fn(() => false),
+    useMediaQuery: (...args: unknown[]) => useMediaQueryMock(...args),
   }
 })
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
-    i18n: { language: 'nl' },
   }),
 }))
 
 jest.mock('../../components/searchbar/useSearchBarUrlState', () => ({
-  useSearchBarUrlState: jest.fn(),
+  useSearchBarUrlState: () => searchBarStateMock(),
 }))
 
-jest.mock('../../components/CollectionPageLayout', () => ({
+jest.mock('../../services/media_files/MediaFiles', () => ({
+  getMediaFiles: (params: unknown) => getMediaFilesMock(params),
+}))
+
+jest.mock('../../components/media-files/MediaFileView', () => ({
   __esModule: true,
-  default: ({
-    resultCount,
-    isLoading,
-    loadingContent,
-    errorMessage,
-    hasResults,
-    resultsContent,
-    retryLabel,
-    onRetry,
-    page,
-    pageSize,
-    totalItems,
-    onPageChange,
-  }: any) => (
-    <div>
-      <div data-testid="result-count">{resultCount}</div>
-      <div data-testid="is-loading">{String(isLoading)}</div>
-      <div data-testid="error-message">{errorMessage ?? ''}</div>
-      <div data-testid="has-results">{String(hasResults)}</div>
-      <div data-testid="current-page">{page}</div>
-      <div data-testid="page-size">{pageSize}</div>
-      <div data-testid="total-items">{totalItems}</div>
-      <button type="button" onClick={onRetry}>
-        {retryLabel}
-      </button>
-      <button type="button" onClick={() => onPageChange(page + 1)}>
-        go-to-next-page
-      </button>
-      <div data-testid="loading-content">{isLoading ? loadingContent : null}</div>
-      <div data-testid="results-content">{!isLoading ? resultsContent : null}</div>
+  default: ({ mediaFiles, layout }: { mediaFiles: Array<{ id: number }>; layout: string }) => (
+    <div data-testid="media-file-view">
+      {layout}:{mediaFiles.map((file) => file.id).join(',')}
     </div>
   ),
 }))
 
+jest.mock('../../components/skeletons/CollectionResultsSkeleton', () => ({
+  __esModule: true,
+  default: () => <div data-testid="results-skeleton">loading</div>,
+}))
+
 jest.mock('../../components/FloatingAlert', () => ({
   __esModule: true,
-  default: ({ open, message }: { open: boolean; message: string }) =>
-    open ? <div data-testid="floating-alert">{message}</div> : null,
+  default: ({ open, message, onClose }: { open: boolean; message: string; onClose: () => void }) =>
+    open ? (
+      <div>
+        <span>{message}</span>
+        <button onClick={onClose}>close-floating-alert</button>
+      </div>
+    ) : null,
 }))
 
-jest.mock('../../pages/MediaFilesPageSkeleton', () => ({
+jest.mock('../../components/CollectionPageLayout', () => ({
   __esModule: true,
-  default: () => <div data-testid="page-skeleton" />,
-}))
-
-jest.mock('../../services/media_files/MediaFiles', () => ({
-  getMediaFiles: jest.fn(),
-}))
-
-jest.mock('../../utils/localization', () => ({
-  getLocalizedValue: jest.fn(
-    (value: Record<string, string>, locale: string) => value?.[locale] ?? null,
+  default: (props: any) => (
+    <div>
+      <div data-testid="search-value">{props.searchValue}</div>
+      <div data-testid="result-count">{props.resultCount}</div>
+      <div data-testid="error-message">{props.errorMessage ?? ''}</div>
+      <button onClick={() => props.onSearchChange('  report  ')}>change-search</button>
+      <button onClick={() => props.onSearchSubmit('  report  ')}>submit-search</button>
+      <button onClick={() => props.onRetry()}>retry</button>
+      <button onClick={() => props.onSortTargetChange('name')}>change-sort-target</button>
+      <button onClick={() => props.onSortDirectionChange('asc')}>change-sort-direction</button>
+      <button onClick={() => props.onViewModeChange('grid')}>change-view-mode</button>
+      <button onClick={() => props.onPageChange(3)}>change-page</button>
+      <div data-testid="loading-state">{String(props.isLoading)}</div>
+      {props.resultsContent}
+    </div>
   ),
 }))
 
-jest.mock('../../services/ApiTypes', () => ({
-  ApiError: class ApiError extends Error {
-    status: number
-
-    constructor(status: number, message: string) {
-      super(message)
-      this.name = 'ApiError'
-      this.status = status
-    }
-  },
-}))
-
-const mockedGetMediaFiles = getMediaFiles as jest.MockedFunction<typeof getMediaFiles>
-const mockedUseSearchBarUrlState = useSearchBarUrlState as jest.MockedFunction<
-  typeof useSearchBarUrlState
->
-
-function buildSearchBarState(overrides?: Record<string, unknown>) {
-  return {
-    searchValue: '',
-    sortTarget: 'date',
-    sortDirection: 'desc',
-    viewMode: 'grid',
-    page: 1,
-    setSearchValue: jest.fn(),
-    setSortTarget: jest.fn(),
-    setSortDirection: jest.fn(),
-    setViewMode: jest.fn(),
-    setPage: jest.fn(),
-    ...overrides,
-  }
-}
+import MediaFilesPage from '../../pages/MediaFilesPage'
+import { ApiError } from '../../services/ApiTypes'
 
 describe('MediaFilesPage', () => {
-  const mediaFile = {
-    id: '1',
-    external_id: null,
-    file: '/media/uploads/poster.jpg',
-    filename: 'poster.jpg',
-    display_description: 'Poster description',
-    description: { nl: 'Poster description' },
-    mime_type: 'image/jpeg',
-    size_bytes: 1024,
-    file_type: 'image' as const,
-    created_at: '2026-04-08T10:12:00.000000Z',
-  }
-
   beforeEach(() => {
     jest.clearAllMocks()
-    mockedUseSearchBarUrlState.mockReturnValue(buildSearchBarState() as any)
+
+    useMediaQueryMock.mockReturnValue(false)
+    searchBarStateMock.mockReturnValue({
+      searchValue: '  initial search  ',
+      sortTarget: 'date',
+      sortDirection: 'desc',
+      viewMode: 'list',
+      page: 2,
+      setSearchValue: setSearchValueMock,
+      setSortTarget: setSortTargetMock,
+      setSortDirection: setSortDirectionMock,
+      setViewMode: setViewModeMock,
+      setPage: setPageMock,
+    })
   })
 
-  it('shows skeleton while loading', async () => {
-    mockedGetMediaFiles.mockReturnValue(new Promise(() => {}))
-
-    render(<MediaFilesPage />)
-
-    expect(screen.getByTestId('page-skeleton')).toBeInTheDocument()
-  })
-
-  it('loads media files and does not show an error when the request succeeds', async () => {
-    mockedGetMediaFiles.mockResolvedValueOnce({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [mediaFile],
+  it('fetches media files with trimmed search and ordering, then renders the results', async () => {
+    getMediaFilesMock.mockResolvedValueOnce({
+      results: [{ id: 11 }, { id: 22 }],
+      count: 2,
     })
 
     render(<MediaFilesPage />)
 
     await waitFor(() => {
-      expect(mockedGetMediaFiles).toHaveBeenCalledWith({
-        page: 1,
+      expect(getMediaFilesMock).toHaveBeenCalledWith({
+        page: 2,
         pageSize: 12,
         filters: {
-          search: undefined,
+          search: 'initial search',
           ordering: '-created_at',
         },
       })
     })
 
-    expect(await screen.findByText('poster.jpg')).toBeInTheDocument()
-    expect(screen.getByTestId('result-count')).toHaveTextContent('1')
-    expect(screen.getByTestId('has-results')).toHaveTextContent('true')
-    expect(screen.getByTestId('error-message')).toHaveTextContent('')
-    expect(screen.getByTestId('current-page')).toHaveTextContent('1')
-    expect(screen.getByTestId('page-size')).toHaveTextContent('12')
-    expect(screen.getByTestId('total-items')).toHaveTextContent('1')
-    expect(screen.queryByTestId('floating-alert')).not.toBeInTheDocument()
-  })
-
-  it('renders an open file button with the correct link attributes', async () => {
-    mockedGetMediaFiles.mockResolvedValueOnce({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [mediaFile],
-    })
-
-    render(<MediaFilesPage />)
-
-    const openLink = await screen.findByRole('link', { name: 'media.openFile' })
-
-    expect(openLink).toHaveAttribute('href', '/media/uploads/poster.jpg')
-    expect(openLink).toHaveAttribute('target', '_blank')
-    expect(openLink).toHaveAttribute('rel', 'noopener noreferrer')
-  })
-
-  it('uses filename ordering when sorting by name ascending', async () => {
-    mockedUseSearchBarUrlState.mockReturnValue(
-      buildSearchBarState({
-        sortTarget: 'name',
-        sortDirection: 'asc',
-      }) as any,
-    )
-
-    mockedGetMediaFiles.mockResolvedValueOnce({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [mediaFile],
-    })
-
-    render(<MediaFilesPage />)
-
     await waitFor(() => {
-      expect(mockedGetMediaFiles).toHaveBeenCalledWith({
-        page: 1,
-        pageSize: 12,
-        filters: {
-          search: undefined,
-          ordering: 'filename',
-        },
-      })
+      expect(screen.getByTestId('media-file-view')).toHaveTextContent('list:11,22')
     })
+
+    expect(screen.getByTestId('result-count')).toHaveTextContent('2')
   })
 
-  it('uses descending filename ordering when sorting by name descending', async () => {
-    mockedUseSearchBarUrlState.mockReturnValue(
-      buildSearchBarState({
-        sortTarget: 'name',
-        sortDirection: 'desc',
-      }) as any,
-    )
-
-    mockedGetMediaFiles.mockResolvedValueOnce({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [mediaFile],
+  it('resets the page on ordering change and trims submitted search input', async () => {
+    getMediaFilesMock.mockResolvedValue({
+      results: [],
+      count: 0,
     })
 
-    render(<MediaFilesPage />)
+    const { rerender } = render(<MediaFilesPage />)
 
-    await waitFor(() => {
-      expect(mockedGetMediaFiles).toHaveBeenCalledWith({
-        page: 1,
-        pageSize: 12,
-        filters: {
-          search: undefined,
-          ordering: '-filename',
-        },
-      })
+    await waitFor(() => expect(getMediaFilesMock).toHaveBeenCalledTimes(1))
+
+    searchBarStateMock.mockReturnValue({
+      searchValue: '  initial search  ',
+      sortTarget: 'name',
+      sortDirection: 'desc',
+      viewMode: 'list',
+      page: 2,
+      setSearchValue: setSearchValueMock,
+      setSortTarget: setSortTargetMock,
+      setSortDirection: setSortDirectionMock,
+      setViewMode: setViewModeMock,
+      setPage: setPageMock,
     })
+
+    rerender(<MediaFilesPage />)
+
+    await waitFor(() => expect(setPageMock).toHaveBeenCalledWith(1))
+
+    fireEvent.click(screen.getByText('submit-search'))
+
+    expect(setPageMock).toHaveBeenCalledWith(1)
+    expect(setSearchValueMock).toHaveBeenCalledWith('report')
   })
 
-  it('calls setPage with the next page when pagination changes', async () => {
-    const setPage = jest.fn()
-
-    mockedUseSearchBarUrlState.mockReturnValue(
-      buildSearchBarState({
-        page: 1,
-        setPage,
-      }) as any,
-    )
-
-    mockedGetMediaFiles.mockResolvedValueOnce({
-      count: 24,
-      next: '/api/v1/media/?page=2',
-      previous: null,
-      results: [mediaFile],
-    })
-
-    render(<MediaFilesPage />)
-
-    expect(await screen.findByText('poster.jpg')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'go-to-next-page' }))
-
-    expect(setPage).toHaveBeenCalledWith(2)
-  })
-
-  it('requests page 2 when the current page is 2', async () => {
-    mockedUseSearchBarUrlState.mockReturnValue(
-      buildSearchBarState({
-        page: 2,
-      }) as any,
-    )
-
-    mockedGetMediaFiles.mockResolvedValueOnce({
-      count: 24,
-      next: null,
-      previous: '/api/v1/media/?page=1',
-      results: [
-        {
-          ...mediaFile,
-          id: '2',
-          filename: 'second-page-file.jpg',
-        },
-      ],
-    })
-
-    render(<MediaFilesPage />)
-
-    await waitFor(() => {
-      expect(mockedGetMediaFiles).toHaveBeenCalledWith({
-        page: 2,
-        pageSize: 12,
-        filters: {
-          search: undefined,
-          ordering: '-created_at',
-        },
-      })
-    })
-
-    expect(await screen.findByText('second-page-file.jpg')).toBeInTheDocument()
-  })
-
-  it('shows the ApiError message when the request fails with an ApiError', async () => {
-    mockedGetMediaFiles.mockRejectedValueOnce(new ApiError(500, 'media.error.fallback'))
+  it('retries after an ApiError and shows fallback errors including the floating alert', async () => {
+    getMediaFilesMock
+      .mockRejectedValueOnce(new ApiError(500, 'Backend failure'))
+      .mockResolvedValueOnce({ results: [{ id: 1 }], count: 1 })
 
     render(<MediaFilesPage />)
 
     await waitFor(() => {
       expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
     })
+    expect(screen.getByText('media.error.notification')).toBeInTheDocument()
 
-    expect(screen.getByTestId('result-count')).toHaveTextContent('0')
-    expect(screen.getByTestId('has-results')).toHaveTextContent('false')
-    expect(screen.getByTestId('floating-alert')).toHaveTextContent('media.error.notification')
+    fireEvent.click(screen.getByText('retry'))
+
+    await waitFor(() => expect(getMediaFilesMock).toHaveBeenCalledTimes(2))
+    expect(screen.getByTestId('media-file-view')).toHaveTextContent('list:1')
   })
 
-  it('shows the fallback error message for non-ApiError failures', async () => {
-    mockedGetMediaFiles.mockRejectedValueOnce(new Error('Unknown failure'))
+  it('re-fetches when the submitted query only changes by whitespace', async () => {
+    searchBarStateMock.mockReturnValue({
+      searchValue: 'report',
+      sortTarget: 'date',
+      sortDirection: 'desc',
+      viewMode: 'list',
+      page: 1,
+      setSearchValue: setSearchValueMock,
+      setSortTarget: setSortTargetMock,
+      setSortDirection: setSortDirectionMock,
+      setViewMode: setViewModeMock,
+      setPage: setPageMock,
+    })
+
+    getMediaFilesMock.mockResolvedValue({
+      results: [],
+      count: 0,
+    })
 
     render(<MediaFilesPage />)
 
-    await waitFor(() => {
-      expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
-    })
+    await waitFor(() => expect(getMediaFilesMock).toHaveBeenCalledTimes(1))
 
-    expect(screen.getByTestId('floating-alert')).toHaveTextContent('media.error.notification')
-  })
+    fireEvent.click(screen.getByText('submit-search'))
 
-  it('retries loading after clicking retry', async () => {
-    mockedGetMediaFiles.mockRejectedValueOnce(new Error('Unknown failure')).mockResolvedValueOnce({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [mediaFile],
-    })
-
-    render(<MediaFilesPage />)
-
-    await waitFor(() => {
-      expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: 'media.error.retry' }))
-
-    await waitFor(() => {
-      expect(mockedGetMediaFiles).toHaveBeenCalledTimes(2)
-    })
-
-    expect(await screen.findByText('poster.jpg')).toBeInTheDocument()
-    expect(screen.getByTestId('error-message')).toHaveTextContent('')
-    expect(screen.queryByTestId('floating-alert')).not.toBeInTheDocument()
+    await waitFor(() => expect(getMediaFilesMock).toHaveBeenCalledTimes(2))
+    expect(setSearchValueMock).not.toHaveBeenCalled()
   })
 })

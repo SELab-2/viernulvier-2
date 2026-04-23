@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
-import MediaFileView from '../components/media_files/MediaFileView'
+import MediaFileView from '../components/media-files/MediaFileView'
 import FloatingAlert from '../components/FloatingAlert'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
