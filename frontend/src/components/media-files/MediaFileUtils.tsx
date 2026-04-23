@@ -36,6 +36,15 @@ export const getMediaFileTypeLabel = (mediaFile: MediaFile, t: TFunction): strin
   return t(`media.fileType.${mediaFile.file_type}`)
 }
 
-export const getMediaFileDescription = (mediaFile: MediaFile, locale: string): string | null => {
-  return getLocalizedValue(mediaFile.description, locale) || mediaFile.display_description || null
+export const getMediaFileDescription = (
+  mediaFile: MediaFile,
+  language: string,
+  t: (key: string) => string,
+) => {
+  const localized = getLocalizedValue(mediaFile.description, language)
+
+  if (localized) return localized
+  if (mediaFile.display_description) return mediaFile.display_description
+
+  return t('media.noDescription')
 }

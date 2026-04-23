@@ -1,9 +1,14 @@
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
-import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined'
 import { Box, Stack, Typography } from '@mui/material'
+import { Document, Page, pdfjs } from 'react-pdf'
 
 import type { MediaFile } from '../../types/MediaFiles'
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString()
 
 export interface MediaFilePreviewProps {
   mediaFile: MediaFile
@@ -28,6 +33,37 @@ const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) =>
     )
   }
 
+  if (mediaFile.file_type === 'pdf') {
+    return (
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          backgroundColor: 'grey.100',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          '& canvas': {
+            width: '100% !important',
+            height: '100% !important',
+            objectFit: 'cover',
+            display: 'block',
+          },
+        }}
+      >
+        <Document
+          file={mediaFile.file}
+          loading={<Typography variant="body2">{previewLabel}</Typography>}
+          error={<Typography variant="body2">{previewLabel}</Typography>}
+          noData={<Typography variant="body2">{previewLabel}</Typography>}
+        >
+          <Page pageNumber={1} renderTextLayer={false} renderAnnotationLayer={false} width={240} />
+        </Document>
+      </Box>
+    )
+  }
+
   return (
     <Stack
       spacing={1}
@@ -40,9 +76,7 @@ const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) =>
         backgroundColor: 'action.hover',
       }}
     >
-      {mediaFile.file_type === 'pdf' ? (
-        <PictureAsPdfOutlinedIcon sx={{ fontSize: 54 }} />
-      ) : mediaFile.file_type === 'other' ? (
+      {mediaFile.file_type === 'other' ? (
         <InsertDriveFileOutlinedIcon sx={{ fontSize: 54 }} />
       ) : (
         <DescriptionOutlinedIcon sx={{ fontSize: 54 }} />

@@ -340,6 +340,6 @@
     },
     "loading": "Mediabestanden laden",
     "resultsRegionLabel": "Resultaten van mediabestanden",
-    "openFile": "Bestand openen"
+    "noDescription": "Geen beschrijving beschikbaar."
   }
 }

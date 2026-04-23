@@ -21,12 +21,12 @@ export interface MediaFileGridCardProps {
 const MediaFileGridCard = ({ mediaFile }: MediaFileGridCardProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
-  const { i18n, t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { language } = i18n
 
   const uploadedAt = formatMediaFileDate(mediaFile.created_at, language)
   const fileSize = formatMediaFileSize(mediaFile.size_bytes)
-  const description = getMediaFileDescription(mediaFile, language)
+  const description = getMediaFileDescription(mediaFile, i18n.language, t)
   const fileTypeLabel = getMediaFileTypeLabel(mediaFile, t)
 
   return (

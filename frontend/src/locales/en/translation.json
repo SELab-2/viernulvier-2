@@ -340,6 +340,6 @@
     },
     "loading": "Loading media files",
     "resultsRegionLabel": "Media files results",
-    "openFile": "Open file"
+    "noDescription": "No description available."
   }
 }
