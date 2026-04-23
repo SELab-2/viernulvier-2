@@ -1,8 +1,7 @@
 import { Box, Typography, type TypographyProps } from '@mui/material'
+import { isValidElement, type ReactNode } from 'react'
 
 import sanitizeHtml from '../utils/SanitizeHtml'
-
-import type { ReactNode,  isValidElement } from 'react'
 
 interface HtmlTextProps extends Omit<TypographyProps, 'children'> {
   /**
@@ -48,13 +47,13 @@ export default function HtmlText({
   sx,
   ...props
 }: HtmlTextProps) {
-  if (!html?.trim())
+  if (!html?.trim()) {
     // Render fallback if html is empty
     if (fallback) {
       // If fallback is already a node, return it as-is
-      if (React.isValidElement(fallback)) {
-   return fallback
-}
+      if (isValidElement(fallback)) {
+        return fallback
+      }
       // Otherwise wrap fallback string in Typography
       return (
         <Typography
