@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 
 import Router from './router'
 import { createAppTheme } from './theme/muiPalette'
+import {preload} from "react-dom";
 
 const STORAGE_KEY = 'vnv-theme-mode'
 
@@ -26,6 +27,8 @@ const App = () => {
       return nextMode
     })
   }
+
+  preload("vnv_archive_logo.png", {as: "image", fetchPriority: "high"})
 
   return (
     <ThemeProvider theme={theme}>
