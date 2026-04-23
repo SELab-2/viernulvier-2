@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
-import MediaFileView from '../components/media-files/MediaFileView'
 import FloatingAlert from '../components/FloatingAlert'
+import MediaFileView from '../components/media-files/MediaFileView'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
@@ -56,7 +56,6 @@ const MediaFilesPage = () => {
   const [showFallbackError, setShowFallbackError] = useState(false)
   const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
   const [retryKey, setRetryKey] = useState(0)
-  const [searchInput, setSearchInput] = useState(searchValue)
 
   const previousOrderingRef = useRef<string | null>(null)
 
@@ -75,10 +74,6 @@ const MediaFilesPage = () => {
 
     previousOrderingRef.current = ordering
   }, [ordering, page, setPage])
-
-  useEffect(() => {
-    setSearchInput(searchValue)
-  }, [searchValue])
 
   useEffect(() => {
     let isActive = true
@@ -168,8 +163,8 @@ const MediaFilesPage = () => {
       <CollectionPageLayout
         isMobile={isMobile}
         searchPlaceholder={t('media.searchPlaceholder')}
-        searchValue={searchInput}
-        onSearchChange={setSearchInput}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
         onSearchSubmit={onSearchSubmit}
         sortTarget={sortTarget}
         onSortTargetChange={setSortTarget}

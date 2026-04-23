@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 const useMediaQueryMock = jest.fn<(query?: unknown) => boolean>()
 const getMediaFilesMock = jest.fn<(params?: unknown) => Promise<any>>()

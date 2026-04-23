@@ -3,14 +3,14 @@ import { Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
 import MediaFilePreview from './MediaFilePreview'
-import { createCommonStyles } from '../../theme/styles'
-import { tokens } from '../../theme/tokens'
 import {
   formatMediaFileDate,
   formatMediaFileSize,
   getMediaFileDescription,
   getMediaFileTypeLabel,
 } from './MediaFileUtils'
+import { createCommonStyles } from '../../theme/styles'
+import { tokens } from '../../theme/tokens'
 
 import type { MediaFile } from '../../types/MediaFiles'
 
