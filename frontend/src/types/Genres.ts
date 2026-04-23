@@ -1,3 +1,5 @@
+import type { ListResponse } from './Common'
+
 /**
  * Genre object returned by the backend `/genres/` endpoints.
  */
@@ -12,9 +14,4 @@ export interface Genre {
 /**
  * Paginated response shape for `GET /genres/`.
  */
-export interface GenreListResponse {
-  count: number
-  next: string | null
-  previous: string | null
-  results: Genre[]
-}
+export type GenreListResponse = ListResponse<Genre>

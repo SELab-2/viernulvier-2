@@ -12,7 +12,7 @@ import ProductionListCard from '../components/productions/ProductionListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
-import { getGenres } from '../services/genres/Genres'
+import { getAllGenres } from '../services/genres/Genres'
 import { getProductions, getProductionSeries } from '../services/productions/Productions'
 
 import type { Genre } from '../types/Genres'
@@ -139,13 +139,13 @@ const ProductionsPage = () => {
 
     const fetchFilterMetadata = async () => {
       try {
-        const [genreResponse, seriesTags] = await Promise.all([getGenres(), fetchSeriesTags()])
+        const [genreResponse, seriesTags] = await Promise.all([getAllGenres(), fetchSeriesTags()])
 
         if (!isActive) {
           return
         }
 
-        setGenres(genreResponse.results)
+        setGenres(genreResponse)
         setTags(seriesTags)
       } catch {
         if (!isActive) {

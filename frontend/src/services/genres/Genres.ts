@@ -1,4 +1,5 @@
 import { api } from '../Api'
+import { fetchAllPages } from '../ApiPagination'
 import { buildListParams } from '../ApiParams'
 
 import type { GetGenresOptions } from './GenreOptions'
@@ -68,4 +69,20 @@ export const getGenre = async (id: number): Promise<Genre> => {
 export const getGenres = async (options?: GetGenresOptions): Promise<GenreListResponse> => {
   const res = await api.get<GenreListResponse>('/genres/', { params: buildListParams(options) })
   return res.data
+}
+
+/**
+ * Retrieve all genres, so all items across all paginated pages. This is a convenience wrapper around `getGenres` that uses `fetchAllPages` to automatically paginate through results until all items have been retrieved.
+ *
+ * @returns A promise that resolves to an array of all genres returned by the API.
+ *
+ * @example
+ * const allGenres = await getAllGenres(
+ *  { filters: { type: 'theater' } }
+ * );
+ *
+ * @throws {ApiError} When any of the requests fail.
+ */
+export const getAllGenres = async (options?: GetGenresOptions): Promise<Genre[]> => {
+  return await fetchAllPages((page, pageSize) => getGenres({ page, pageSize, ...options }))
 }

@@ -1,4 +1,5 @@
 import { api } from '../Api'
+import { fetchAllPages } from '../ApiPagination'
 import { buildListParams } from '../ApiParams'
 
 import type { GetTagsOptions } from './TagOptions'
@@ -70,4 +71,20 @@ export const getTags = async (options?: GetTagsOptions): Promise<TagListResponse
     params: buildListParams(options),
   })
   return res.data
+}
+
+/**
+ * Retrieve all tags, so all items across all paginated pages. This is a convenience wrapper around `getTags` that uses `fetchAllPages` to automatically paginate through results until all items have been retrieved.
+ *
+ * @returns A promise that resolves to an array of all tags returned by the API.
+ *
+ * @example
+ * const allTags = await getAllTags(
+ *  { filters: { type: "theme" } }
+ * );
+ *
+ * @throws {ApiError} When any of the requests fail.
+ */
+export const getAllTags = async (options?: GetTagsOptions): Promise<Tag[]> => {
+  return await fetchAllPages((page, pageSize) => getTags({ page, pageSize, ...options }))
 }
