@@ -20,22 +20,22 @@ import type { ListResponse } from '../types/Common'
  * )
  */
 export async function fetchAllPages<T, O extends object = object>(
-    fetcher: (page: number, pageSize: number, options?: O) => Promise<ListResponse<T>>,
-    options?: O,
-    pageSize = 100,
+  fetcher: (page: number, pageSize: number, options?: O) => Promise<ListResponse<T>>,
+  options?: O,
+  pageSize = 100,
 ): Promise<T[]> {
-    const results: T[] = []
-    let page = 1
+  const results: T[] = []
+  let page = 1
 
-    while (true) {
-        const res = await fetcher(page, pageSize, options)
-        results.push(...res.results)
+  while (true) {
+    const res = await fetcher(page, pageSize, options)
+    results.push(...res.results)
 
-        if (!res.next) {
-            break
-        }
-        page++
+    if (!res.next) {
+      break
     }
+    page++
+  }
 
-    return results
+  return results
 }

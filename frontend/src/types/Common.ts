@@ -5,8 +5,8 @@
  * such as the standard structure of paginated list responses from the API.
  */
 export interface ListResponse<T> {
-    count: number
-    next: string | null
-    previous: string | null
-    results: T[]
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
 }
