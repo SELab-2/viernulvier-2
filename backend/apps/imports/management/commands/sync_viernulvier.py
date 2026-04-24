@@ -21,9 +21,9 @@ import logging
 import time
 from typing import Any
 
-from django.core.cache import cache
 from django.core.management.base import BaseCommand
 
+from api.cache import clear_api_cache
 from apps.events.models import Event, EventPrice
 from apps.genres.models import Genre, GenreTranslation
 from apps.imports.scrapers.viernulvier import (
@@ -583,8 +583,9 @@ class Command(BaseCommand):
 
         total_elapsed = time.monotonic() - wall_start
         suffix = " [DRY RUN]" if dry_run else ""
+
         if not dry_run:
-            cache.clear()
+            clear_api_cache()
             self.stdout.write(self.style.SUCCESS("Cleared API cache"))
 
         self.stdout.write(self.style.SUCCESS(f"\nDone{suffix}. Total: {total_saved} records in {total_elapsed:.1f}s"))
