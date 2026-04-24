@@ -105,7 +105,9 @@ Routes are defined in `frontend/src/router.tsx`.
 
 The SPA uses a language segment as the first URL part (`/nl/...` or `/en/...`).
 The active UI language is derived from that segment.
-Unprefixed URLs are redirected to the current/default language path.
+Unprefixed URLs are redirected to a localized path.
+When possible, the language is inferred from the typed slug (for example `/archive` -> `/en/archive`, `/archief` -> `/nl/archief`).
+If no slug-specific inference is possible, the app falls back to the current/default language.
 Within that segment, Dutch routes use translated slugs where available (for example `/nl/archief` and `/nl/reeksen`).
 
 | Route | Component | Notes |
@@ -118,8 +120,8 @@ Within that segment, Dutch routes use translated slugs where available (for exam
 | `/:lang/series/:id` (EN), `/:lang/reeksen/:id` (NL) | `SeriesDetailPage` | Series detail page |
 | `/:lang/blogs` | `BlogsPage` | Stories/blog listing |
 | `/:lang/blogs/:id` | `BlogDetailPage` | Story detail page |
-| `/:lang/media` | redirect to `/:lang/archive` | Temporary alias |
-| `/:lang/media/:id` | redirect to `/:lang/archive` | Temporary alias |
+| `/:lang/media` | redirect to localized archive route | Temporary alias |
+| `/:lang/media/:id` | redirect to localized archive route | Temporary alias |
 | `/:lang/*` | `NotFoundPage` | 404 fallback |
 | `/` and unprefixed paths | redirect to localized path | Keeps old links working |
 
