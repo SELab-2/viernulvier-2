@@ -21,6 +21,7 @@ import { useLocation, Link, useNavigate } from 'react-router-dom'
 
 import { createCommonStyles, createNavbarStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
+import { DarkMode, type ModeToggleProps } from '../types/Theme'
 import {
   DEFAULT_LANGUAGE,
   getLanguageFromPathname,
@@ -29,8 +30,6 @@ import {
   toLocalizedPath,
   type SupportedLanguage,
 } from '../utils/localizedRoutes'
-
-import type { ModeToggleProps } from '../types/Theme'
 
 const NAV_LINKS = [
   { labelKey: 'nav.home', to: '/' },
@@ -60,7 +59,8 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
     DEFAULT_LANGUAGE
   const nextLanguage: SupportedLanguage = currentLanguage === 'en' ? 'nl' : 'en'
   const currentPathWithoutLanguage = stripLanguagePrefix(location.pathname)
-  const themeSwitchLabel = mode === 'dark' ? t('nav.switchToLightMode') : t('nav.switchToDarkMode')
+  const themeSwitchLabel =
+    mode === DarkMode ? t('nav.switchToLightMode') : t('nav.switchToDarkMode')
 
   // Switch active UI language by swapping the URL language segment.
   const switchLanguage = (language: SupportedLanguage) => {
@@ -218,7 +218,7 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
                     backgroundColor: 'transparent',
                   }}
                 >
-                  {mode === 'dark' ? (
+                  {mode === DarkMode ? (
                     <DarkModeOutlinedIcon
                       sx={{
                         fontSize: { xs: '1.15rem', sm: '1.5rem' },

@@ -19,6 +19,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { tokens } from '../../theme/tokens'
+import { DarkMode } from '../../types/Theme'
 import { formatDate, formatTime } from '../../utils/dateUtils'
 import { getHallDisplayName } from '../../utils/hall'
 
@@ -186,7 +187,7 @@ export default function EventsList({ events }: EventsListProps) {
                               variant="body2"
                               sx={(theme) => ({
                                 color:
-                                  theme.palette.mode === 'dark'
+                                  theme.palette.mode === DarkMode
                                     ? tokens.colors.dark.textMuted
                                     : tokens.colors.light.textMuted,
                               })}
