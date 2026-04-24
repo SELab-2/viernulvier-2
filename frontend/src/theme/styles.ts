@@ -47,8 +47,10 @@ export const createNavbarStyles = () => {
     } as SystemStyleObject<Theme>,
 
     brandLogo: {
-      height: '2.45em',
-      width: 'auto',
+      maxHeight: '2.45em',
+      width: '100%',
+      minWidth: '185px',
+      height: 'auto',
       flexShrink: 0,
       display: 'block',
       filter: 'brightness(0) invert(1)',
