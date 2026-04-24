@@ -3,12 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { tokens } from '../../theme/tokens'
-import {
-  DEFAULT_LANGUAGE,
-  getLanguageFromPathname,
-  normalizeLanguage,
-  toLocalizedPath,
-} from '../../utils/localizedRoutes'
+import { resolveCurrentLanguage, toLocalizedPath } from '../../utils/localizedRoutes'
 
 export interface BreadcrumbItem {
   label: string
@@ -37,10 +32,11 @@ export default function Breadcrumbs({ items, separator = ' / ' }: BreadcrumbsPro
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
   const location = useLocation()
-  const currentLanguage =
-    getLanguageFromPathname(location.pathname) ??
-    normalizeLanguage(i18n.resolvedLanguage ?? i18n.language) ??
-    DEFAULT_LANGUAGE
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
 
   const renderText = (item: BreadcrumbItem) => {
     if (item.translationKey) {

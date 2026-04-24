@@ -20,12 +20,7 @@ import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import { getLandingStats, type LandingStatsResponse } from '../services/productions/Productions'
 import { createHomePageStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
-import {
-  DEFAULT_LANGUAGE,
-  getLanguageFromPathname,
-  normalizeLanguage,
-  toLocalizedPath,
-} from '../utils/localizedRoutes'
+import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 
 // ─── Animations ────────────────────────────────────────────────────────────────
 
@@ -218,10 +213,11 @@ const HomePage = () => {
   const location = useLocation()
   const [searchQuery, setSearchQuery] = useState('')
   const [archiveStats, setArchiveStats] = useState<LandingStatsResponse>(FALLBACK_ARCHIVE_STATS)
-  const currentLanguage =
-    getLanguageFromPathname(location.pathname) ??
-    normalizeLanguage(i18n.resolvedLanguage ?? i18n.language) ??
-    DEFAULT_LANGUAGE
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
   const localizedPath = (path: string) => toLocalizedPath(path, currentLanguage)
 
   useEffect(() => {

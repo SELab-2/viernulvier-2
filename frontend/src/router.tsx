@@ -1,5 +1,5 @@
 import { Box } from '@mui/material'
-import { useEffect, useLayoutEffect } from 'react'
+import { useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 
@@ -18,6 +18,7 @@ import {
   getLocalizedSegment,
   inferLanguageFromPathname,
   normalizeLanguage,
+  resolveCurrentLanguage,
   toLocalizedPath,
 } from './utils/localizedRoutes'
 
@@ -33,15 +34,19 @@ const ScrollToTop = () => {
   return null
 }
 
-const LanguagePathRedirect = () => {
+type LanguagePathRedirectProps = {
+  sourcePathname?: string
+}
+
+const LanguagePathRedirect = ({ sourcePathname }: LanguagePathRedirectProps) => {
   const location = useLocation()
   const { i18n } = useTranslation()
-  const inferredLanguage = inferLanguageFromPathname(location.pathname)
+  const redirectSourcePath = sourcePathname ?? location.pathname
+  const inferredLanguage = inferLanguageFromPathname(redirectSourcePath)
   const currentLanguage =
     inferredLanguage ??
-    normalizeLanguage(i18n.resolvedLanguage ?? i18n.language) ??
-    DEFAULT_LANGUAGE
-  const targetPath = `${toLocalizedPath(location.pathname, currentLanguage)}${location.search}${location.hash}`
+    resolveCurrentLanguage(redirectSourcePath, i18n.language, i18n.resolvedLanguage)
+  const targetPath = `${toLocalizedPath(redirectSourcePath, currentLanguage)}${location.search}${location.hash}`
 
   return <Navigate to={targetPath} replace />
 }
@@ -64,9 +69,10 @@ const AliasDetailRedirect = ({ language, targetBasePath }: AliasDetailRedirectPr
 const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
   const { lang } = useParams<{ lang: string }>()
   const { i18n } = useTranslation()
+  const location = useLocation()
   const normalizedLanguage = normalizeLanguage(lang)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!normalizedLanguage || i18n.resolvedLanguage === normalizedLanguage) {
       return
     }
@@ -75,7 +81,11 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
   }, [i18n, normalizedLanguage])
 
   if (!normalizedLanguage) {
-    return <LanguagePathRedirect />
+    const pathSegments = location.pathname.split('/').filter(Boolean)
+    const pathWithoutInvalidLanguage =
+      pathSegments.length > 1 ? `/${pathSegments.slice(1).join('/')}` : '/'
+
+    return <LanguagePathRedirect sourcePathname={pathWithoutInvalidLanguage} />
   }
 
   const localizedPath = (path: string) => toLocalizedPath(path, normalizedLanguage)

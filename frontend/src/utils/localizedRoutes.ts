@@ -52,6 +52,15 @@ export const getLanguageFromPathname = (pathname: string): SupportedLanguage | n
   return normalizeLanguage(firstSegment)
 }
 
+export const resolveCurrentLanguage = (
+  pathname: string,
+  i18nLanguage: string | null | undefined,
+  i18nResolvedLanguage?: string | null,
+): SupportedLanguage =>
+  getLanguageFromPathname(pathname) ??
+  normalizeLanguage(i18nResolvedLanguage ?? i18nLanguage) ??
+  DEFAULT_LANGUAGE
+
 export const getLocalizedSegment = (
   canonicalSegment: CanonicalRouteSegment,
   language: SupportedLanguage,

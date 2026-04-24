@@ -23,9 +23,7 @@ import { createCommonStyles, createNavbarStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
 import { DarkMode, type ModeToggleProps } from '../types/Theme'
 import {
-  DEFAULT_LANGUAGE,
-  getLanguageFromPathname,
-  normalizeLanguage,
+  resolveCurrentLanguage,
   stripLanguagePrefix,
   toLocalizedPath,
   type SupportedLanguage,
@@ -53,10 +51,11 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
   const [menuOpenedAtPath, setMenuOpenedAtPath] = useState<string | null>(null)
   // Menu is open only on the route where it was triggered.
   const isEffectivelyOpen = mobileMenuOpen && menuOpenedAtPath === location.pathname
-  const currentLanguage: SupportedLanguage =
-    getLanguageFromPathname(location.pathname) ??
-    normalizeLanguage(i18n.resolvedLanguage ?? i18n.language) ??
-    DEFAULT_LANGUAGE
+  const currentLanguage: SupportedLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
   const nextLanguage: SupportedLanguage = currentLanguage === 'en' ? 'nl' : 'en'
   const currentPathWithoutLanguage = stripLanguagePrefix(location.pathname)
   const themeSwitchLabel =

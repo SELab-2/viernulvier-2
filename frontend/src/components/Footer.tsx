@@ -5,12 +5,7 @@ import { siFacebook, siInstagram, siTiktok, siYoutube } from 'simple-icons'
 
 import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
-import {
-  DEFAULT_LANGUAGE,
-  getLanguageFromPathname,
-  normalizeLanguage,
-  toLocalizedPath,
-} from '../utils/localizedRoutes'
+import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 
 const FOOTER_NAV_LINKS = [
   { labelKey: 'footer.nav.home', to: '/' },
@@ -53,10 +48,11 @@ const Footer = () => {
   const commonStyles = createCommonStyles(theme)
   const { t, i18n } = useTranslation()
   const location = useLocation()
-  const currentLanguage =
-    getLanguageFromPathname(location.pathname) ??
-    normalizeLanguage(i18n.resolvedLanguage ?? i18n.language) ??
-    DEFAULT_LANGUAGE
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
 
   const email = t('footer.address.email')
   const phone = t('footer.address.phone')

@@ -159,6 +159,7 @@ src/
       pages/
       services/
       theme/
+      utils/
 ```
 
 #### 4) What to Test Per Layer
@@ -167,6 +168,7 @@ src/
 - **Pages** — route rendering, fetch orchestration, and loading/error/empty state transitions.
 - **Services** — request paths, query parameters, and error propagation.
 - **Theme helpers** — token mapping, palette creation, and shared style objects.
+- **Utility helpers** — pure transformation logic (for example route localization and date/string helpers), including edge cases and fallback behavior.
 
 Use `data-testid` attributes for stable element selection; prefer them over CSS class names or positional queries.
 
