@@ -3,6 +3,7 @@
 from argparse import ArgumentParser
 from typing import Any
 
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 
 from apps.imports.csv_importer.legacy_csv_sync import import_bundled_legacy_csv_files
@@ -34,7 +35,7 @@ class Command(BaseCommand):
             help="Import only one legacy CSV dataset.",
         )
 
-    def handle(self, *_args: tuple, **options: Any) -> None:
+    def handle(self, *_args: tuple, **options: dict) -> None:
         """Run the legacy CSV import command."""
         dry_run_value = options.get("dry_run", False)
         dry_run = dry_run_value if isinstance(dry_run_value, bool) else False  # type: ignore[reportGeneralTypeIssues]
@@ -70,4 +71,8 @@ class Command(BaseCommand):
                 progress_bar.close()
 
         suffix = " [DRY RUN]" if dry_run else ""
+        if not dry_run:
+            cache.clear()
+            self.stdout.write(self.style.SUCCESS("Cleared API cache"))
+
         self.stdout.write(self.style.SUCCESS(f"Imported {total} legacy CSV records{suffix}"))

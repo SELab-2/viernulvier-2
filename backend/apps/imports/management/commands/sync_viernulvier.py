@@ -21,6 +21,7 @@ import logging
 import time
 from typing import Any
 
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 
 from apps.events.models import Event, EventPrice
@@ -489,7 +490,7 @@ class Command(BaseCommand):
                     ),
                 )
 
-    def handle(self, *_args: tuple, **options: dict) -> None:  # noqa: PLR0915, C901
+    def handle(self, *_args: tuple, **options: dict) -> None:  # noqa: PLR0912, PLR0915, C901
         """Run the sync process for the specified steps and options."""
         only: str | None = options.get("only")
         dry_run: bool = options.get("dry_run", False)
@@ -582,6 +583,10 @@ class Command(BaseCommand):
 
         total_elapsed = time.monotonic() - wall_start
         suffix = " [DRY RUN]" if dry_run else ""
+        if not dry_run:
+            cache.clear()
+            self.stdout.write(self.style.SUCCESS("Cleared API cache"))
+
         self.stdout.write(self.style.SUCCESS(f"\nDone{suffix}. Total: {total_saved} records in {total_elapsed:.1f}s"))
 
     def _make_progress_callback(self, name: str) -> Callable[[int, int], None]:
