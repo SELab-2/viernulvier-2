@@ -47,7 +47,6 @@ def media_file_admin(admin_site: AdminSite) -> MediaFileAdmin:
     return MediaFileAdmin(MediaFile, admin_site)
 
 
-
 @pytest.fixture
 def media_file(dutch_language: Language) -> MediaFile:
     obj = MediaFile.objects.create(file=make_uploaded_file())
