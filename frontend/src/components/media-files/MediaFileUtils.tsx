@@ -43,8 +43,13 @@ export const getMediaFileDescription = (
 ) => {
   const localized = getLocalizedValue(mediaFile.description, language)
 
-  if (localized) return localized
-  if (mediaFile.display_description) return mediaFile.display_description
+  if (localized) {
+    return localized
+  }
+
+  if (mediaFile.display_description) {
+    return mediaFile.display_description
+  }
 
   return t('media.noDescription')
 }

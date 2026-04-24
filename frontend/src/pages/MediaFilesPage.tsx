@@ -2,6 +2,7 @@ import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
 import MediaFileView from '../components/media-files/MediaFileView'
@@ -11,7 +12,6 @@ import { getMediaFiles } from '../services/media_files/MediaFiles'
 
 import type { SearchSortDirection, SearchSortTarget } from '../components/searchbar/types'
 import type { MediaFile } from '../types/MediaFiles'
-import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 
 const PAGE_SIZE = 12
 
