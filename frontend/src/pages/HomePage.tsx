@@ -122,6 +122,7 @@ const LANDING_NOTES = [
 /** Thin horizontal rule with optional label */
 const RuleLabel = ({ label }: { label: string }) => {
   const theme = useTheme()
+  const homepageStyles = createHomePageStyles(theme)
   return (
     <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
       <Box sx={{ flex: 1, height: '1px', bgcolor: theme.palette.divider }} />
@@ -130,7 +131,7 @@ const RuleLabel = ({ label }: { label: string }) => {
         sx={{
           fontSize: '0.72rem',
           letterSpacing: '0.18em',
-          color: 'text.disabled',
+          color: homepageStyles.heroPanelEyebrowText,
           whiteSpace: 'nowrap',
         }}
       >
@@ -362,7 +363,9 @@ const HomePage = () => {
                     placeholder={t('searchbar.searchPlaceholder')}
                     startAdornment={
                       <InputAdornment position="start">
-                        <SearchOutlinedIcon sx={{ color: 'text.disabled', fontSize: 20 }} />
+                        <SearchOutlinedIcon
+                          sx={{ color: homepageStyles.heroPanelEyebrowText, fontSize: 20 }}
+                        />
                       </InputAdornment>
                     }
                     endAdornment={
@@ -434,7 +437,11 @@ const HomePage = () => {
                 <Stack spacing={0.5}>
                   <Typography
                     variant="overline"
-                    sx={{ fontSize: '0.74rem', letterSpacing: '0.16em', color: 'text.disabled' }}
+                    sx={{
+                      fontSize: '0.74rem',
+                      letterSpacing: '0.16em',
+                      color: homepageStyles.heroPanelEyebrowText,
+                    }}
                   >
                     {t('landing.side.eyebrow')}
                   </Typography>
@@ -543,7 +550,7 @@ const HomePage = () => {
                         fontSize: '0.72rem',
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
-                        color: 'text.disabled',
+                        color: homepageStyles.heroPanelEyebrowText,
                       }}
                     >
                       {t(stat.labelKey)}
@@ -619,7 +626,7 @@ const HomePage = () => {
                       sx={{
                         fontSize: '0.72rem',
                         letterSpacing: '0.16em',
-                        color: 'text.disabled',
+                        color: homepageStyles.heroPanelEyebrowText,
                       }}
                     >
                       {t(card.eyebrowKey)}

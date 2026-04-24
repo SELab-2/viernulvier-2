@@ -223,6 +223,9 @@ export const createHomePageStyles = (theme: Theme) => {
     heroPanelBackground: isDark
       ? alpha(theme.palette.common.white, 0.03)
       : alpha(theme.palette.common.white, 0.82),
+    heroPanelEyebrowText: isDark
+      ? alpha(theme.palette.common.white, 0.5)
+      : alpha(theme.palette.common.black, 0.56),
     inputBackground: isDark
       ? alpha(theme.palette.common.white, 0.04)
       : theme.palette.background.paper,
