@@ -1,6 +1,11 @@
 import '@testing-library/jest-dom'
-import { describe, expect, it, jest } from '@jest/globals'
+import { describe, expect, it, jest, beforeEach } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
+
+const formatMediaFileDateMock = jest.fn()
+const formatMediaFileSizeMock = jest.fn()
+const getMediaFileDescriptionMock = jest.fn()
+const getMediaFileTypeLabelMock = jest.fn()
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -30,16 +35,24 @@ jest.mock('../../../components/media-files/MediaFilePreview', () => ({
 }))
 
 jest.mock('../../../components/media-files/MediaFileUtils', () => ({
-  formatMediaFileDate: jest.fn(() => '23 apr 2026'),
-  formatMediaFileSize: jest.fn(() => null),
-  getMediaFileDescription: jest.fn(() => 'Lange beschrijving'),
-  getMediaFileTypeLabel: jest.fn(() => 'Afbeelding'),
+  formatMediaFileDate: (...args: unknown[]) => formatMediaFileDateMock(...args),
+  formatMediaFileSize: (...args: unknown[]) => formatMediaFileSizeMock(...args),
+  getMediaFileDescription: (...args: unknown[]) => getMediaFileDescriptionMock(...args),
+  getMediaFileTypeLabel: (...args: unknown[]) => getMediaFileTypeLabelMock(...args),
 }))
 
 import MediaFileListCard from '../../../components/media-files/MediaFileListCard'
 
 describe('MediaFileListCard', () => {
-  it('renders filename, description and preview', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    formatMediaFileDateMock.mockReturnValue('23 apr 2026')
+    formatMediaFileSizeMock.mockReturnValue('1.5 MB')
+    getMediaFileDescriptionMock.mockReturnValue('Lange beschrijving')
+    getMediaFileTypeLabelMock.mockReturnValue('Afbeelding')
+  })
+
+  it('renders filename, description, preview and metadata', () => {
     render(
       <MediaFileListCard
         mediaFile={
@@ -47,7 +60,7 @@ describe('MediaFileListCard', () => {
             filename: 'photo.jpg',
             file: 'https://example.com/photo.jpg',
             created_at: '2026-04-23T10:00:00Z',
-            size_bytes: null,
+            size_bytes: 1572864,
             file_type: 'image',
           } as never
         }
@@ -57,13 +70,37 @@ describe('MediaFileListCard', () => {
     expect(screen.getByRole('heading', { name: 'photo.jpg' })).toBeInTheDocument()
     expect(screen.getByText('Lange beschrijving')).toBeInTheDocument()
     expect(screen.getByText('23 apr 2026')).toBeInTheDocument()
-    expect(screen.getByTestId('media-preview')).toHaveTextContent('Afbeelding')
-    expect(screen.queryByText(/t:media.size/)).not.toBeInTheDocument()
+    expect(screen.getByText('t:media.size: 1.5 MB')).toBeInTheDocument()
+    expect(screen.getByTestId('media-preview')).toHaveTextContent('preview:Afbeelding')
+
+    const link = screen.getByRole('link')
+    expect(link).toHaveAttribute('href', 'https://example.com/photo.jpg')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
-  it('falls back to the file type label when no description is available', async () => {
-    const utils = await import('../../../components/media-files/MediaFileUtils')
-    ;(utils.getMediaFileDescription as jest.Mock).mockReturnValueOnce(null)
+  it('falls back to the file type label when no description is available', () => {
+    getMediaFileDescriptionMock.mockReturnValueOnce('')
+
+    render(
+      <MediaFileListCard
+        mediaFile={
+          {
+            filename: 'photo.jpg',
+            file: 'https://example.com/photo.jpg',
+            created_at: '2026-04-23T10:00:00Z',
+            size_bytes: 1572864,
+            file_type: 'image',
+          } as never
+        }
+      />,
+    )
+
+    expect(screen.getByText('Afbeelding')).toBeInTheDocument()
+  })
+
+  it('hides the size label when no formatted size is available', () => {
+    formatMediaFileSizeMock.mockReturnValueOnce(null)
 
     render(
       <MediaFileListCard
@@ -79,6 +116,6 @@ describe('MediaFileListCard', () => {
       />,
     )
 
-    expect(screen.getByText('Afbeelding')).toBeInTheDocument()
+    expect(screen.queryByText(/t:media.size/)).not.toBeInTheDocument()
   })
 })

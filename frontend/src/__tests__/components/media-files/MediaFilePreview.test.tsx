@@ -2,6 +2,16 @@ import '@testing-library/jest-dom'
 import { describe, expect, it, jest } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 
+jest.mock('react-pdf', () => ({
+  Document: ({ children }: any) => <div data-testid="pdf-doc">{children}</div>,
+  Page: () => <div data-testid="pdf-page" />,
+  pdfjs: {
+    GlobalWorkerOptions: { workerSrc: '' },
+    version: '5.4.296',
+  },
+}))
+
+// Mock icons
 jest.mock('@mui/icons-material/DescriptionOutlined', () => ({
   __esModule: true,
   default: () => <svg data-testid="description-icon" />,
@@ -34,19 +44,24 @@ describe('MediaFilePreview', () => {
 
     const image = screen.getByRole('img', { name: 'summer.jpg' })
     expect(image).toHaveAttribute('src', 'https://example.com/image.jpg')
-    expect(screen.queryByText('Afbeelding')).not.toBeInTheDocument()
   })
 
-  it('renders the pdf icon and label for pdf files', () => {
+  it('renders pdf preview (first page)', () => {
     render(
       <MediaFilePreview
-        mediaFile={{ file_type: 'pdf', filename: 'manual.pdf' } as never}
+        mediaFile={
+          {
+            file_type: 'pdf',
+            file: 'https://example.com/file.pdf',
+            filename: 'manual.pdf',
+          } as never
+        }
         previewLabel="PDF"
       />,
     )
 
-    expect(screen.getByTestId('pdf-icon')).toBeInTheDocument()
-    expect(screen.getByText('PDF')).toBeInTheDocument()
+    expect(screen.getByTestId('pdf-doc')).toBeInTheDocument()
+    expect(screen.getByTestId('pdf-page')).toBeInTheDocument()
   })
 
   it('renders the generic file icon for other files', () => {

@@ -50,6 +50,14 @@ describe('MediaFileView', () => {
     expect(screen.getByTestId('grid-view')).toHaveTextContent('grid:2')
   })
 
+  it('defaults to list layout on desktop when no layout is provided', () => {
+    useMediaQueryMock.mockReturnValue(false)
+
+    render(<MediaFileView mediaFiles={[{ id: 1 } as never]} />)
+
+    expect(screen.getByTestId('list-view')).toHaveTextContent('list:1')
+  })
+
   it('forces grid layout on small screens even when list is requested', () => {
     useMediaQueryMock.mockReturnValue(true)
 

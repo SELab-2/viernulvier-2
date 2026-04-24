@@ -6,12 +6,12 @@ import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
 import MediaFileView from '../components/media-files/MediaFileView'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
-import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
 import { getMediaFiles } from '../services/media_files/MediaFiles'
 
 import type { SearchSortDirection, SearchSortTarget } from '../components/searchbar/types'
 import type { MediaFile } from '../types/MediaFiles'
+import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 
 const PAGE_SIZE = 12
 
@@ -178,7 +178,7 @@ const MediaFilesPage = () => {
         isLoading={isLoading}
         loadingLabel={t('media.loading')}
         loadingContent={
-          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+          <MediaFilesPageSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
         }
         errorMessage={renderedErrorMessage}
         retryLabel={t('media.error.retry')}
