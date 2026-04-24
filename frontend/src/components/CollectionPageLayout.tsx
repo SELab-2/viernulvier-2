@@ -13,15 +13,44 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import { useTheme, type SxProps, type Theme } from '@mui/material/styles'
 import { cloneElement, isValidElement, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import LoadingSpinner from './LoadingSpinner'
 import Pagination from './Pagination'
+import { tokens } from '../theme/tokens'
 import SearchControlsBar from './searchbar/SearchControlsBar'
 
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './searchbar/types'
+
+/* ------------------------------------------------------------------------- */
+/* Layout geometry                                                           */
+/* ------------------------------------------------------------------------- */
+
+/** Card width (px) shared with `createCommonStyles.gridContainer` tracks. */
+const CARD_WIDTH_PX = tokens.card.gridCardWidthPx
+/** Gap between cards within the grid (theme.spacing(3) = 24px). */
+const CARD_GAP_PX = 24
+/** Spacing units for the sidebar width (theme.spacing(39) = 312px). */
+const SIDEBAR_WIDTH_SPACING = 39
+const SIDEBAR_WIDTH_PX = SIDEBAR_WIDTH_SPACING * 8
+/** Gap between the sidebar and the content column (theme.spacing(3) = 24px). */
+const SIDEBAR_GAP_PX = 24
+/** Total horizontal padding applied by the surrounding `<Container>`. */
+const CONTAINER_PADDING_PX = 24 * 2
+
+/** Pixel width occupied by N grid cards laid out in one row. */
+const widthForCols = (n: number): number => n * CARD_WIDTH_PX + Math.max(0, n - 1) * CARD_GAP_PX
+
+/**
+ * Smallest viewport width at which N grid cards still fit next to the
+ * (optional) sidebar inside the page container. Drives the column-count
+ * breakpoints below so the step from N to N+1 happens exactly when the next
+ * card would actually fit on screen.
+ */
+const viewportThresholdForCols = (n: number, withSidebar: boolean): number =>
+  widthForCols(n) + (withSidebar ? SIDEBAR_WIDTH_PX + SIDEBAR_GAP_PX : 0) + CONTAINER_PADDING_PX
 
 export interface CollectionPageLayoutProps {
   isMobile: boolean
@@ -131,7 +160,13 @@ const CollectionPageLayout = ({
   const { t } = useTranslation()
   const theme = useTheme()
   const isEmpty = !isLoading && !errorMessage && !hasResults
-  const shouldRenderSidebar = showSidebar && sidebarContent
+  const shouldRenderSidebar = Boolean(showSidebar && sidebarContent)
+  /**
+   * The sidebar lives next to the content column on desktop. On mobile the
+   * same content becomes a full-screen dialog triggered by a filter button,
+   * so at that breakpoint the content column takes over the full width.
+   */
+  const sidebarInline = shouldRenderSidebar && !isMobile
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   const mobileSidebarLabel = t('searchbar.filters')
@@ -228,71 +263,100 @@ const CollectionPageLayout = ({
     </Box>
   )
 
-  const contentColumn = (
-    <Stack spacing={3} sx={{ flex: 1, minWidth: 0 }}>
-      {/* Search, sort, and view controls. */}
-      <SearchControlsBar
-        placeholder={searchPlaceholder}
-        searchValue={searchValue}
-        onSearchChange={onSearchChange}
-        onSearchSubmit={onSearchSubmit}
-        sortTarget={sortTarget}
-        onSortTargetChange={onSortTargetChange}
-        sortDirection={sortDirection}
-        onSortDirectionChange={onSortDirectionChange}
-        sortTargetOptions={sortTargetOptions}
-        extraControls={mobileSidebarButton}
-        viewMode={viewMode}
-        onViewModeChange={onViewModeChange}
-        resultCount={resultCount}
-        showViewModeToggle={!isMobile}
-      />
-
-      {resultsSection}
-
-      {/* Pagination controls. */}
-      <Pagination
-        page={page}
-        pageSize={pageSize}
-        totalItems={totalItems}
-        onPageChange={onPageChange}
-        disabled={isLoading}
-        i18nKeyPrefix={paginationI18nKeyPrefix}
-      />
-    </Stack>
-  )
+  /**
+   * Width of the content column (search bar + results + pagination).
+   *
+   * In grid view the column snaps to whole numbers of card tracks so a row
+   * never leaves a half-card gap: 100% below the two-column threshold, then
+   * two and three card widths as more cards fit next to the (optional)
+   * sidebar. At the narrowest step the grid itself centers its lone track
+   * via `commonStyles.gridContainer`.
+   *
+   * In list view rows don't need fixed tracks, so the column just scales
+   * gradually and caps at the three-card width - matching the grid's
+   * largest footprint without introducing an intermediate step.
+   */
+  const contentColumnSx: SxProps<Theme> = {
+    flex: 1,
+    minWidth: 0,
+    // When the sidebar is visible we want cards, search bar, and list rows
+    // to hug its right edge rather than re-centering inside the column, so
+    // propagate the intent to `commonStyles.gridContainer` via a CSS
+    // custom property.
+    ...(sidebarInline ? { '--grid-align': 'start' } : null),
+    ...(viewMode === 'grid'
+      ? {
+          maxWidth: '100%',
+          [`@media (min-width: ${viewportThresholdForCols(2, sidebarInline)}px)`]: {
+            maxWidth: `${widthForCols(2)}px`,
+          },
+          [`@media (min-width: ${viewportThresholdForCols(3, sidebarInline)}px)`]: {
+            maxWidth: `${widthForCols(3)}px`,
+          },
+        }
+      : {
+          maxWidth: `${widthForCols(3)}px`,
+        }),
+  }
 
   return (
     <Box sx={{ py: { xs: 3, md: 4 } }}>
       <Container maxWidth="xl">
-        {shouldRenderSidebar && !isMobile ? (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              gap: 3,
-              alignItems: { xs: 'stretch', md: 'stretch' },
-            }}
-          >
-            <Box
-              sx={{
-                flexShrink: 0,
-                width: { xs: '100%', md: theme.spacing(39) },
-                alignSelf: { md: 'flex-start' },
-              }}
-            >
+        {/*
+          Single layout for every page: the (optional) sidebar and the
+          content column live in one flex row. When the sidebar is visible
+          we left-align the block so the filter panel hugs the container's
+          left edge; otherwise the content column (and any free space from
+          its stepped cap) center horizontally in the container.
+        */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: sidebarInline ? 'flex-start' : 'center',
+            gap: 3,
+          }}
+        >
+          {sidebarInline ? (
+            <Box sx={{ flexShrink: 0, width: theme.spacing(SIDEBAR_WIDTH_SPACING) }}>
               {sidebarContent}
             </Box>
+          ) : null}
 
-            {contentColumn}
-          </Box>
-        ) : (
-          contentColumn
-        )}
+          <Stack spacing={3} sx={contentColumnSx}>
+            <SearchControlsBar
+              placeholder={searchPlaceholder}
+              searchValue={searchValue}
+              onSearchChange={onSearchChange}
+              onSearchSubmit={onSearchSubmit}
+              sortTarget={sortTarget}
+              onSortTargetChange={onSortTargetChange}
+              sortDirection={sortDirection}
+              onSortDirectionChange={onSortDirectionChange}
+              sortTargetOptions={sortTargetOptions}
+              extraControls={mobileSidebarButton}
+              viewMode={viewMode}
+              onViewModeChange={onViewModeChange}
+              resultCount={resultCount}
+              showViewModeToggle={!isMobile}
+            />
+
+            {resultsSection}
+
+            <Pagination
+              page={page}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={onPageChange}
+              disabled={isLoading}
+              i18nKeyPrefix={paginationI18nKeyPrefix}
+            />
+          </Stack>
+        </Box>
 
         {shouldRenderSidebar && isMobile ? (
           <Dialog
-            open={isMobile && isMobileSidebarOpen}
+            open={isMobileSidebarOpen}
             onClose={() => setIsMobileSidebarOpen(false)}
             fullScreen
             slotProps={{
@@ -307,11 +371,7 @@ const CollectionPageLayout = ({
               },
             }}
           >
-            <DialogContent
-              sx={{
-                p: 0,
-              }}
-            >
+            <DialogContent sx={{ p: 0 }}>
               <Box
                 sx={{
                   '& > .MuiPaper-root': {

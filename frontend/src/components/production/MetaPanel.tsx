@@ -131,6 +131,7 @@ interface MetaPanelProps {
   production: Production
   language?: string
   sx?: SxProps<Theme>
+  showHeader?: boolean
 }
 
 function MetaRow({ label, value }: { label: string; value: string }) {
@@ -188,14 +189,16 @@ function MetaRow({ label, value }: { label: string; value: string }) {
  * - genres/type/etc. are derived and displayed in MetaRow
  * - tags are normalized via formatAllTags and rendered as Tag chips
  */
-export default function MetaPanel({ production, language = 'nl', sx }: MetaPanelProps) {
+export default function MetaPanel({
+  production,
+  language = 'nl',
+  sx,
+  showHeader = true,
+}: MetaPanelProps) {
   const { t } = useTranslation()
 
   const resolvedTitle =
     getLocalizedValue(production.title, language) || production.display_title || ''
-  const resolvedTagline = getLocalizedValue(production.tagline, language)
-  const resolvedArtistName =
-    getLocalizedValue(production.artist_name, language) || production.display_artist_name || ''
 
   const resolvedDateRange = getDateRange(production.events, language)
   const resolvedVenues = getUniqueVenues(production.events, language)
@@ -227,34 +230,24 @@ export default function MetaPanel({ production, language = 'nl', sx }: MetaPanel
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}
     >
-      <Typography
-        component="h1"
-        sx={{
-          fontSize: tokens.typography.sizes['3xl'],
-          fontWeight: tokens.typography.weights.bold,
-          lineHeight: 1.15,
-          mb: 1,
-          letterSpacing: '-0.02em',
-        }}
-      >
-        {resolvedTitle}
-      </Typography>
+      {showHeader && (
+        <>
+          <Typography
+            component="h1"
+            sx={{
+              fontSize: tokens.typography.sizes['3xl'],
+              fontWeight: tokens.typography.weights.bold,
+              lineHeight: 1.15,
+              mb: 1,
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {resolvedTitle}
+          </Typography>
 
-      {(resolvedTagline || resolvedArtistName) && (
-        <Typography
-          component="p"
-          sx={{
-            fontSize: tokens.typography.sizes.sm,
-            color: 'text.secondary',
-            mb: 3,
-            fontStyle: 'italic',
-          }}
-        >
-          {resolvedTagline || resolvedArtistName}
-        </Typography>
+          <Box sx={(theme) => ({ borderTop: `1px solid ${theme.palette.divider}`, mb: 0.5 })} />
+        </>
       )}
-
-      <Box sx={(theme) => ({ borderTop: `1px solid ${theme.palette.divider}`, mb: 0.5 })} />
 
       <Box sx={{ fontFamily: tokens.typography.fontFamily }}>
         {resolvedDateRange && (

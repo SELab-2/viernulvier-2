@@ -18,19 +18,19 @@
       "description": "Verken decennia aan voorstellingen, concerten en theater van Kunstencentrum VIERNULVIER, zorgvuldig gecatalogiseerd en verrijkt met context.",
       "primaryCta": "Open het archief",
       "seriesCta": "Bekijk reeksen",
-      "secondaryCta": "Lees verhalen",
+      "secondaryCta": "Lees blogs",
       "websiteCta": "Bezoek de officiële website"
     },
     "stats": {
       "productions": "Producties",
       "series": "Reeksen",
       "years": "Gedocumenteerde jaren",
-      "stories": "Verhalen"
+      "blogs": "Blogs"
     },
     "statsSection": {
       "eyebrow": "Archief in cijfers",
       "title": "Een snel overzicht van de collectie.",
-      "description": "Live tellingen van producties, reeksen, gedocumenteerde jaren en verhalen."
+      "description": "Live tellingen van producties, reeksen, gedocumenteerde jaren en blogs."
     },
     "ticker": {
       "brand": "VIERNULVIER",
@@ -52,8 +52,8 @@
         "title": "Voorstellingen, concerten & theater",
         "description": "Zoek op artiest, locatie of periode. Elke gedocumenteerde productie uit de geschiedenis van VIERNULVIER, doorzoekbaar op een plek."
       },
-      "stories": {
-        "title": "Verhalen en context",
+      "blogs": {
+        "title": "Blogs en context",
         "description": "Redactionele stukken die het archief verdiepen: interviews, essays en notities van onderzoekers en curatoren."
       },
       "series": {
@@ -83,11 +83,11 @@
         "description": "Producties gegroepeerd per terugkerende reeks. Volg gekoppelde edities in chronologische volgorde.",
         "cta": "Open reeksen"
       },
-      "stories": {
-        "eyebrow": "03 - Verhalen",
-        "title": "Lees de verhalen",
+      "blogs": {
+        "eyebrow": "03 - Blogs",
+        "title": "Lees de blogs",
         "description": "Interviews, essays en onderzoeksnotities die extra context geven aan het archief.",
-        "cta": "Lees verhalen"
+        "cta": "Lees blogs"
       },
       "prints": {
         "eyebrow": "04 - Drukwerk",
@@ -202,6 +202,7 @@
     },
     "detail": {
       "related": "Gerelateerde producties",
+      "relatedBlogs": "Gerelateerde blogs",
       "meta": {
         "period": "Periode",
         "venues": "Locaties",
@@ -226,22 +227,27 @@
   },
   "blogs": {
     "home": {
-      "loading": "Verhalen laden",
-      "resultsRegionLabel": "Resultaten van verhalen",
-      "searchPlaceholder": "Zoek verhalen op titel of samenvatting...",
-      "searchPlaceholderMobile": "Zoek verhalen...",
+      "loading": "Blogs laden",
+      "resultsRegionLabel": "Resultaten van blogs",
+      "searchPlaceholder": "Zoek blogs op titel of samenvatting...",
+      "searchPlaceholderMobile": "Zoek blogs...",
       "coverAltFallback": "Omslagafbeelding van blog",
       "noExcerpt": "Geen samenvatting beschikbaar.",
       "unpublished": "Niet gepubliceerd",
       "empty": {
-        "title": "Geen verhalen gevonden",
+        "title": "Geen blogs gevonden",
         "description": "Pas je zoekopdracht aan en probeer opnieuw."
       },
       "error": {
         "retry": "Opnieuw proberen",
-        "fallback": "Kon verhalen niet laden.",
-        "notification": "Er ging iets mis bij het laden van verhalen."
+        "fallback": "Kon blogs niet laden.",
+        "notification": "Er ging iets mis bij het laden van blogs."
       }
+    },
+    "detail": {
+      "noTitleAvailable": "Geen titel beschikbaar",
+      "publishedOn": "Gepubliceerd op",
+      "notPublished": "Niet gepubliceerd"
     }
   },
   "notFound": {

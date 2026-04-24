@@ -4,6 +4,7 @@ import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 
+import HtmlText from './HtmlText'
 import ImageWithFallback from './ImageWithFallback'
 import { tokens } from '../theme/tokens'
 import { formatBlogPublishedDate } from '../utils/blogs'
@@ -19,7 +20,9 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
   const { i18n, t } = useTranslation()
   const { language } = i18n
 
-  const title = getTranslatedRecord(blog.title, language, blog.display_title)
+  const title =
+    getTranslatedRecord(blog.title, language, blog.display_title) ||
+    t('blogs.detail.noTitleAvailable', 'No title available')
   const excerpt = getTranslatedRecord(blog.excerpt, language, blog.display_excerpt)
   const publishedDate = formatBlogPublishedDate(blog.published_at, language)
 
@@ -73,18 +76,20 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
             {title}
           </Typography>
 
-          <Typography
+          <HtmlText
+            html={excerpt}
             variant="body2"
-            color="text.secondary"
+            component="div"
+            fallback={t('blogs.home.noExcerpt')}
             sx={{
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
+              fontSize: 'inherit',
+              color: 'text.secondary',
             }}
-          >
-            {excerpt || t('blogs.home.noExcerpt')}
-          </Typography>
+          />
         </Stack>
 
         {publishedDate ? (

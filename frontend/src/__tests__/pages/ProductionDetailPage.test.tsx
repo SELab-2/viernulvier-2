@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 import ProductionDetailPage from '../../pages/ProductionDetailPage'
+import { getBlogs } from '../../services/blogs/Blogs'
 import { getProduction } from '../../services/productions/Productions'
 
 import type { Event } from '../../types/Events'
@@ -30,9 +31,18 @@ jest.mock('../../services/productions/Productions', () => ({
   getProduction: jest.fn(),
 }))
 
+jest.mock('../../services/blogs/Blogs', () => ({
+  getBlogs: jest.fn(),
+}))
+
 jest.mock('../../components/production/RelatedProductions', () => ({
   __esModule: true,
   default: () => <div data-testid="related-productions-mock" />,
+}))
+
+jest.mock('../../components/production/RelatedBlogs', () => ({
+  __esModule: true,
+  default: () => <div data-testid="related-blogs-mock" />,
 }))
 
 beforeEach(() => {
@@ -40,6 +50,24 @@ beforeEach(() => {
 })
 
 const mockedGetProduction = getProduction as jest.MockedFunction<typeof getProduction>
+const mockedGetBlogs = getBlogs as jest.MockedFunction<typeof getBlogs>
+
+const setMatchMediaMatches = (matches: boolean) => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation((query: string) => ({
+      matches,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  })
+}
 
 const renderPage = () =>
   render(
@@ -54,7 +82,9 @@ describe('ProductionDetailPage', () => {
   afterEach(() => {
     jest.clearAllMocks()
     mockedGetProduction.mockReset()
+    mockedGetBlogs.mockReset()
     languageState.current = 'nl'
+    setMatchMediaMatches(false)
   })
 
   it('shows invalid id error and navigates to home for non-numeric ID', async () => {
@@ -195,24 +225,47 @@ describe('ProductionDetailPage', () => {
     } as Production
 
     mockedGetProduction.mockResolvedValue(productionData as Production)
+    mockedGetBlogs.mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [
+        {
+          id: 100,
+          slug: 'blog',
+          published_at: '2025-01-01T10:00:00Z',
+          cover_image: null,
+          title: { nl: 'Blog' },
+          body: { nl: 'Body' },
+          excerpt: { nl: 'Excerpt' },
+          display_title: 'Blog',
+          display_excerpt: 'Excerpt',
+          productions: [],
+        },
+      ],
+    })
 
     renderPage()
 
     await waitFor(() => {
       expect(screen.getAllByText('Productie NL')).toHaveLength(2)
-      expect(screen.getByText('Tagline NL')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Productie NL' })).toBeInTheDocument()
+      expect(screen.queryByText('Tagline NL')).not.toBeInTheDocument()
       expect(screen.getByText('Teaser NL')).toBeInTheDocument()
       expect(screen.getByText('Omschrijving NL')).toBeInTheDocument()
       expect(screen.getByText('Events')).toBeInTheDocument()
       expect(screen.getByText('Media')).toBeInTheDocument()
+      expect(screen.getByTestId('related-blogs-mock')).toBeInTheDocument()
     })
 
+    expect(mockedGetBlogs).toHaveBeenCalledWith({ filters: { production: 42, published: true } })
     expect(mockNavigate).not.toHaveBeenCalled()
   })
 
   it('shows load failed if getProduction throws and navigates to home', async () => {
     mockUseParams.mockReturnValue({ id: '42' })
     mockedGetProduction.mockRejectedValue(new Error('network error'))
+    mockedGetBlogs.mockResolvedValue({ count: 0, next: null, previous: null, results: [] })
 
     renderPage()
 
@@ -226,6 +279,76 @@ describe('ProductionDetailPage', () => {
           },
         },
       })
+    })
+  })
+
+  it('keeps rendering production details when related blog loading fails', async () => {
+    mockUseParams.mockReturnValue({ id: '42' })
+
+    mockedGetProduction.mockResolvedValue({
+      id: 42,
+      title: { nl: 'Productie NL' },
+      display_title: 'Display production',
+      artist_name: {},
+      display_artist_name: null,
+      tagline: { nl: 'Tagline NL' },
+      description: { nl: 'Omschrijving NL' },
+      teaser: { nl: 'Teaser NL' },
+      media_gallery: { id: 1, name: 'Primary media', media_items: [] },
+      events: [],
+      genres: [],
+      tags: [],
+      uit_database_type: null,
+      performer_type: 'group',
+      attendance_mode: 'offline',
+      first_event_start: null,
+      last_event_end: null,
+    } as Production)
+    mockedGetBlogs.mockRejectedValue(new Error('blog error'))
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.queryByText('Tagline NL')).not.toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Productie NL' })).toBeInTheDocument()
+      expect(screen.getByText('Events')).toBeInTheDocument()
+    })
+
+    expect(screen.queryByTestId('related-blogs-mock')).not.toBeInTheDocument()
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
+
+  it('renders title at top and hides meta header on mobile', async () => {
+    setMatchMediaMatches(true)
+    mockUseParams.mockReturnValue({ id: '42' })
+
+    mockedGetProduction.mockResolvedValue({
+      id: 42,
+      title: { nl: 'Productie NL' },
+      display_title: 'Display production',
+      artist_name: {},
+      display_artist_name: null,
+      tagline: { nl: 'Tagline NL' },
+      description: { nl: 'Omschrijving NL' },
+      teaser: { nl: 'Teaser NL' },
+      media_gallery: { id: 1, name: 'Primary media', media_items: [] },
+      events: [],
+      genres: [],
+      tags: [],
+      uit_database_type: null,
+      performer_type: 'group',
+      attendance_mode: 'offline',
+      first_event_start: null,
+      last_event_end: null,
+    } as Production)
+    mockedGetBlogs.mockResolvedValue({ count: 0, next: null, previous: null, results: [] })
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Productie NL' })).toBeInTheDocument()
+      expect(screen.queryByText('Tagline NL')).not.toBeInTheDocument()
+      expect(screen.getByText('Teaser NL')).toBeInTheDocument()
     })
   })
 })

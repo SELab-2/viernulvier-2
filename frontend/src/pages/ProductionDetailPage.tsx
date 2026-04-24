@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, useMediaQuery } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -10,11 +10,14 @@ import Description from '../components/production/Description'
 import EventsList from '../components/production/EventList'
 import MediaList from '../components/production/MediaList'
 import MetaPanel from '../components/production/MetaPanel'
+import RelatedBlogs from '../components/production/RelatedBlogs'
 import RelatedProductions from '../components/production/RelatedProductions'
+import { getBlogs } from '../services/blogs/Blogs'
 import { getProduction } from '../services/productions/Productions'
 import { tokens } from '../theme/tokens'
 import { getLocalizedValue } from '../utils/localization'
 
+import type { Blog } from '../types/Blogs'
 import type { Production } from '../types/Productions'
 
 /**
@@ -72,9 +75,11 @@ type ProductionDetailContentProps = {
 const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
   const navigate = useNavigate()
   const { i18n, t } = useTranslation()
+  const isMobile = useMediaQuery('(max-width:900px)')
   const lang = i18n.language
 
   const [prod, setProd] = useState<Production | null>(null)
+  const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
   // useEffect to fetch the production given the id in the URL.
@@ -92,6 +97,16 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
       try {
         const data = await getProduction(parsed, ['events', 'related'])
         setProd(data)
+
+        try {
+          const blogData = await getBlogs({
+            filters: { production: data.id, published: true },
+          })
+          setRelatedBlogs(blogData.results)
+        } catch {
+          // Keep the detail page usable even if related blog loading fails.
+          setRelatedBlogs([])
+        }
       } catch {
         const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
         navigate('/', {
@@ -156,6 +171,22 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
               { label: title },
             ]}
           />
+          {isMobile && (
+            <Typography
+              component="h1"
+              sx={{
+                fontSize: tokens.typography.sizes['3xl'],
+                fontWeight: tokens.typography.weights.bold,
+                lineHeight: 1.15,
+                letterSpacing: '-0.02em',
+                color: 'text.primary',
+                mt: 3,
+                mb: 3,
+              }}
+            >
+              {title}
+            </Typography>
+          )}
           <Box
             className="hero-image"
             sx={{
@@ -183,7 +214,12 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
             borderLeft: `1px solid ${theme.palette.divider}`,
           })}
         >
-          <MetaPanel production={production} language={lang} sx={{ borderLeft: 'none' }} />
+          <MetaPanel
+            production={production}
+            language={lang}
+            showHeader={!isMobile}
+            sx={{ borderLeft: 'none' }}
+          />
           <Box
             sx={(theme) => ({
               mt: 3,
@@ -213,6 +249,12 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
       {relatedProductions.length > 0 && (
         <Box sx={{ px: 2, pb: 4 }}>
           <RelatedProductions related={relatedProductions} lang={lang} />
+        </Box>
+      )}
+
+      {relatedBlogs.length > 0 && (
+        <Box sx={{ px: 2, pb: 4 }}>
+          <RelatedBlogs blogs={relatedBlogs} />
         </Box>
       )}
     </Box>

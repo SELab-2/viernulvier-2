@@ -3,6 +3,7 @@ import { Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 
+import HtmlText from './HtmlText'
 import ImageWithFallback from './ImageWithFallback'
 import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
@@ -21,7 +22,9 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
   const { i18n, t } = useTranslation()
   const { language } = i18n
 
-  const title = getTranslatedRecord(blog.title, language, blog.display_title)
+  const title =
+    getTranslatedRecord(blog.title, language, blog.display_title) ||
+    t('blogs.detail.noTitleAvailable', 'No title available')
   const excerpt = getTranslatedRecord(blog.excerpt, language, blog.display_excerpt)
   const publishedDate = formatBlogPublishedDate(blog.published_at, language)
 
@@ -31,7 +34,8 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
       to={`/blogs/${blog.id}`}
       sx={{
         ...commonStyles.cardBase,
-        width: 350,
+        width: '100%',
+        maxWidth: tokens.card.gridCardWidthPx,
         height: '100%',
         borderRadius: tokens.card.borderRadius,
         overflow: 'hidden',
@@ -66,19 +70,21 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
           >
             {title}
           </Typography>
-          <Typography
+          <HtmlText
+            html={excerpt}
             variant="body2"
-            color="text.secondary"
+            component="div"
+            fallback={t('blogs.home.noExcerpt')}
             sx={{
               display: '-webkit-box',
               WebkitLineClamp: 3,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
               minHeight: 60,
+              fontSize: 'inherit',
+              color: 'text.secondary',
             }}
-          >
-            {excerpt || t('blogs.home.noExcerpt')}
-          </Typography>
+          />
         </Stack>
 
         <Stack

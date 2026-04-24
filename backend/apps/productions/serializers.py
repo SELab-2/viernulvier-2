@@ -35,7 +35,7 @@ class ProductionLandingStatsSerializer(serializers.Serializer):
     productions = serializers.IntegerField(min_value=0)
     series = serializers.IntegerField(min_value=0)
     years = serializers.IntegerField(min_value=0)
-    stories = serializers.IntegerField(min_value=0)
+    blogs = serializers.IntegerField(min_value=0)
 
 
 class ProductionSeriesSerializer(serializers.ModelSerializer):
