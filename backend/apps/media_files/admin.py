@@ -17,6 +17,7 @@ class MediaFileTranslationInline(admin.TabularInline):
     extra = 1
     autocomplete_fields = ("language",)
     fields = ("language", "description")
+    classes = ("collapse",)
     ordering = ("language__code",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
@@ -104,24 +105,3 @@ class MediaFileAdmin(BaseAdmin):
             '<a href="{}" target="_blank" rel="noopener noreferrer">Open file</a>',
             obj.file.url,
         )
-
-
-@admin.register(MediaFileTranslation)
-class MediaFileTranslationAdmin(BaseAdmin):
-    """Standalone admin for MediaFileTranslation."""
-
-    list_display = (
-        "id",
-        "media_file",
-        "language",
-        "description",
-    )
-
-    list_filter = ("language__code",)
-    search_fields = ("description", "media_file__filename")
-    autocomplete_fields = ("media_file", "language")
-    ordering = ("media_file", "language__code")
-
-    def get_queryset(self, request: HttpRequest) -> QuerySet:
-        """Select related objects to avoid N+1 queries."""
-        return super().get_queryset(request).select_related("media_file", "language")

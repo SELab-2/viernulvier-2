@@ -12,7 +12,6 @@ from apps.core.admin import BaseAdmin
 from apps.languages.models import Language
 from apps.media_files.admin import (
     MediaFileAdmin,
-    MediaFileTranslationAdmin,
     MediaFileTranslationInline,
 )
 from apps.media_files.models import MediaFile, MediaFileTranslation
@@ -48,10 +47,6 @@ def media_file_admin(admin_site: AdminSite) -> MediaFileAdmin:
     return MediaFileAdmin(MediaFile, admin_site)
 
 
-@pytest.fixture
-def media_file_translation_admin(admin_site: AdminSite) -> MediaFileTranslationAdmin:
-    return MediaFileTranslationAdmin(MediaFileTranslation, admin_site)
-
 
 @pytest.fixture
 def media_file(dutch_language: Language) -> MediaFile:
@@ -80,23 +75,14 @@ class TestMediaFileAdminRegistration:
     def test_model_is_registered_in_admin_site(self) -> None:
         assert MediaFile in admin.site._registry
 
-    def test_translation_model_is_registered_in_admin_site(self) -> None:
-        assert MediaFileTranslation in admin.site._registry
+    def test_translation_model_is_not_registered_as_standalone_admin(self) -> None:
+        assert MediaFileTranslation not in admin.site._registry
 
     def test_registered_admin_is_media_file_admin(self) -> None:
         assert isinstance(admin.site._registry[MediaFile], MediaFileAdmin)
 
-    def test_registered_translation_admin_is_media_file_translation_admin(self) -> None:
-        assert isinstance(admin.site._registry[MediaFileTranslation], MediaFileTranslationAdmin)
-
     def test_admin_inherits_from_base_admin(self, media_file_admin: MediaFileAdmin) -> None:
         assert isinstance(media_file_admin, BaseAdmin)
-
-    def test_translation_admin_inherits_from_base_admin(
-        self,
-        media_file_translation_admin: MediaFileTranslationAdmin,
-    ) -> None:
-        assert isinstance(media_file_translation_admin, BaseAdmin)
 
 
 class TestMediaFileAdminConfiguration:
@@ -163,43 +149,6 @@ class TestMediaFileAdminConfiguration:
         assert media_file_admin.file_link.short_description == "File"
 
 
-class TestMediaFileTranslationAdminConfiguration:
-    def test_list_display_matches_expected_fields(
-        self,
-        media_file_translation_admin: MediaFileTranslationAdmin,
-    ) -> None:
-        assert media_file_translation_admin.list_display == (
-            "id",
-            "media_file",
-            "language",
-            "description",
-        )
-
-    def test_list_filter_matches_expected_fields(
-        self,
-        media_file_translation_admin: MediaFileTranslationAdmin,
-    ) -> None:
-        assert media_file_translation_admin.list_filter == ("language__code",)
-
-    def test_search_fields_match_expected_fields(
-        self,
-        media_file_translation_admin: MediaFileTranslationAdmin,
-    ) -> None:
-        assert media_file_translation_admin.search_fields == ("description", "media_file__filename")
-
-    def test_autocomplete_fields_match_expected_fields(
-        self,
-        media_file_translation_admin: MediaFileTranslationAdmin,
-    ) -> None:
-        assert media_file_translation_admin.autocomplete_fields == ("media_file", "language")
-
-    def test_ordering_matches_expected_fields(
-        self,
-        media_file_translation_admin: MediaFileTranslationAdmin,
-    ) -> None:
-        assert media_file_translation_admin.ordering == ("media_file", "language__code")
-
-
 class TestMediaFileTranslationInlineConfiguration:
     def test_inline_model_is_translation(self) -> None:
         assert MediaFileTranslationInline.model is MediaFileTranslation
@@ -246,14 +195,6 @@ class TestMediaFileAdminQuerysets:
     ) -> None:
         inline = MediaFileTranslationInline(MediaFile, admin_site)
         qs = inline.get_queryset(admin_request)
-        assert qs is not None
-
-    def test_media_file_translation_admin_get_queryset_selects_related(
-        self,
-        admin_request,
-        media_file_translation_admin: MediaFileTranslationAdmin,
-    ) -> None:
-        qs = media_file_translation_admin.get_queryset(admin_request)
         assert qs is not None
 
     def test_media_file_admin_get_queryset_prefetches_translations_language(
