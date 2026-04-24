@@ -1,10 +1,16 @@
 import { Box, Container, Link as MuiLink, Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { siFacebook, siInstagram, siTiktok, siYoutube } from 'simple-icons'
 
 import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
+import {
+  DEFAULT_LANGUAGE,
+  getLanguageFromPathname,
+  normalizeLanguage,
+  toLocalizedPath,
+} from '../utils/localizedRoutes'
 
 const FOOTER_NAV_LINKS = [
   { labelKey: 'footer.nav.home', to: '/' },
@@ -45,10 +51,16 @@ const SOCIAL_LINKS: readonly SocialLink[] = [
 const Footer = () => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const location = useLocation()
+  const currentLanguage =
+    getLanguageFromPathname(location.pathname) ??
+    normalizeLanguage(i18n.resolvedLanguage ?? i18n.language) ??
+    DEFAULT_LANGUAGE
 
   const email = t('footer.address.email')
   const phone = t('footer.address.phone')
+  const localizedPath = (path: string) => toLocalizedPath(path, currentLanguage)
 
   return (
     <Box component="footer" sx={commonStyles.footer}>
@@ -101,7 +113,7 @@ const Footer = () => {
             <MuiLink
               key={to}
               component={RouterLink}
-              to={to}
+              to={localizedPath(to)}
               color="inherit"
               underline="none"
               sx={commonStyles.linkHover}

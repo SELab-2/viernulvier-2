@@ -8,7 +8,6 @@ describe('App', () => {
   beforeEach(async () => {
     window.history.pushState({}, '', '/')
     localStorage.clear()
-    localStorage.setItem('i18nextLng', 'nl')
     await i18n.changeLanguage('nl')
   })
 

@@ -103,19 +103,24 @@ The current design system uses **ABC Monument Grotesk** from `public/fonts/`.
 
 Routes are defined in `frontend/src/router.tsx`.
 
+The SPA uses a language segment as the first URL part (`/nl/...` or `/en/...`).
+The active UI language is derived from that segment.
+Unprefixed URLs are redirected to the current/default language path.
+
 | Route | Component | Notes |
 | --- | --- | --- |
-| `/` | `HomePage` | Landing page with archive search and stats |
-| `/archive` | `ProductionsPage` | Canonical archive listing route |
-| `/productions` | redirect to `/archive` | Compatibility alias |
-| `/productions/:id` | `ProductionDetailPage` | Production detail page |
-| `/series` | `SeriesPage` | Series overview |
-| `/series/:id` | `SeriesDetailPage` | Series detail page |
-| `/blogs` | `BlogsPage` | Stories/blog listing |
-| `/blogs/:id` | `BlogDetailPage` | Story detail page |
-| `/media` | redirect to `/archive` | Temporary alias |
-| `/media/:id` | redirect to `/archive` | Temporary alias |
-| `*` | `NotFoundPage` | 404 fallback |
+| `/:lang` | `HomePage` | Language-aware landing page (`lang` is `nl` or `en`) |
+| `/:lang/archive` | `ProductionsPage` | Canonical archive listing route |
+| `/:lang/productions` | redirect to `/:lang/archive` | Compatibility alias |
+| `/:lang/productions/:id` | `ProductionDetailPage` | Production detail page |
+| `/:lang/series` | `SeriesPage` | Series overview |
+| `/:lang/series/:id` | `SeriesDetailPage` | Series detail page |
+| `/:lang/blogs` | `BlogsPage` | Stories/blog listing |
+| `/:lang/blogs/:id` | `BlogDetailPage` | Story detail page |
+| `/:lang/media` | redirect to `/:lang/archive` | Temporary alias |
+| `/:lang/media/:id` | redirect to `/:lang/archive` | Temporary alias |
+| `/:lang/*` | `NotFoundPage` | 404 fallback |
+| `/` and unprefixed paths | redirect to localized path | Keeps old links working |
 
 The router also scrolls to top on route changes and renders shared `Navbar` + `Footer` around page content.
 
