@@ -17,6 +17,7 @@ responses still include all translations in a single payload.
 from django.db.models import Max, Min, OuterRef, Prefetch, Q, QuerySet, Subquery
 from django.db.models.functions import Coalesce, Lower
 from django.http import HttpRequest
+from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.request import Request
@@ -24,7 +25,7 @@ from rest_framework.response import Response
 
 from apps.blogs.models import Blog
 from apps.core.mixins import LanguageAwareMixin
-from apps.core.views import ApiModelViewSet
+from apps.core.views import ApiModelViewSet, cache_api_view
 from apps.events.models import Event, EventPrice
 from apps.locations.models import HallTranslation, LocationTranslation, SpaceTranslation
 from apps.media_library.models import MediaItem
@@ -164,20 +165,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
     ]
 
     def get_queryset(self) -> QuerySet[Production]:
-        """Annotate language-aware title and search fields for ordering and search.
-
-        ``title_sort`` is a single annotation reused for both alphabetical
-        ordering (``?ordering=title_sort``) and full-text search
-        (``?search=...``). It resolves to the title in the preferred request
-        language and falls back to any available translation when none exists
-        for that language.
-
-        ``artist_name_search`` and ``tagline_search`` follow the same
-        language-preference logic and are used only for full-text search.
-
-        Items without any translation at all resolve to NULL and are placed
-        last by :class:`~apps.core.ordering.NullsLastOrderingFilter`.
-        """
+        """Annotate language-aware title and search fields for ordering and search."""
         language_code = self._get_request_language_code()
         queryset = super().get_queryset()
 
@@ -223,12 +211,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         return super().get_serializer(*args, **kwargs)
 
     def retrieve(self, request: HttpRequest, *args: tuple, **kwargs: dict) -> HttpRequest:
-        """Retrieve a production by its ID, with optional inclusion of related events.
-
-        When events are included, the queryset is extended with additional
-        prefetches for prices, hall, space, and location translations to
-        avoid N+1 queries on the detail response.
-        """
+        """Retrieve a production by its ID, with optional inclusion of related events."""
         if "events" in self.includes:
             self.queryset = self.queryset.prefetch_related(
                 Prefetch(
@@ -279,6 +262,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         ),
         responses={200: ProductionLandingStatsSerializer},
     )
+    @method_decorator(cache_api_view())
     @action(detail=False, methods=["get"], url_path="landing-stats")
     def landing_stats(self, _request: Request) -> Response:
         """Return pre-aggregated counters used by the frontend homepage."""
@@ -292,6 +276,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         serializer = ProductionLandingStatsSerializer(payload)
         return Response(serializer.data)
 
+    @method_decorator(cache_api_view())
     @action(detail=False, methods=["get"], url_path="series")
     def series(self, request: Request) -> Response:
         """Return production-tag series summaries in a single aggregated endpoint.
