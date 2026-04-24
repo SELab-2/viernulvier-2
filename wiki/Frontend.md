@@ -106,15 +106,16 @@ Routes are defined in `frontend/src/router.tsx`.
 The SPA uses a language segment as the first URL part (`/nl/...` or `/en/...`).
 The active UI language is derived from that segment.
 Unprefixed URLs are redirected to the current/default language path.
+Within that segment, Dutch routes use translated slugs where available (for example `/nl/archief` and `/nl/reeksen`).
 
 | Route | Component | Notes |
 | --- | --- | --- |
 | `/:lang` | `HomePage` | Language-aware landing page (`lang` is `nl` or `en`) |
-| `/:lang/archive` | `ProductionsPage` | Canonical archive listing route |
-| `/:lang/productions` | redirect to `/:lang/archive` | Compatibility alias |
-| `/:lang/productions/:id` | `ProductionDetailPage` | Production detail page |
-| `/:lang/series` | `SeriesPage` | Series overview |
-| `/:lang/series/:id` | `SeriesDetailPage` | Series detail page |
+| `/:lang/archive` (EN), `/:lang/archief` (NL) | `ProductionsPage` | Canonical archive listing route per language |
+| `/:lang/productions` (EN), `/:lang/producties` (NL) | redirect to archive route | Compatibility alias |
+| `/:lang/productions/:id` (EN), `/:lang/producties/:id` (NL) | `ProductionDetailPage` | Production detail page |
+| `/:lang/series` (EN), `/:lang/reeksen` (NL) | `SeriesPage` | Series overview |
+| `/:lang/series/:id` (EN), `/:lang/reeksen/:id` (NL) | `SeriesDetailPage` | Series detail page |
 | `/:lang/blogs` | `BlogsPage` | Stories/blog listing |
 | `/:lang/blogs/:id` | `BlogDetailPage` | Story detail page |
 | `/:lang/media` | redirect to `/:lang/archive` | Temporary alias |

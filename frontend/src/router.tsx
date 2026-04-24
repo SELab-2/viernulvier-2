@@ -13,12 +13,15 @@ import ProductionDetailPage from './pages/ProductionDetailPage'
 import ProductionsPage from './pages/ProductionsPage'
 import SeriesDetailPage from './pages/SeriesDetailPage'
 import SeriesPage from './pages/SeriesPage'
-import { DEFAULT_LANGUAGE, normalizeLanguage, toLocalizedPath } from './utils/localizedRoutes'
+import {
+  DEFAULT_LANGUAGE,
+  getLocalizedSegment,
+  inferLanguageFromPathname,
+  normalizeLanguage,
+  toLocalizedPath,
+} from './utils/localizedRoutes'
 
-type RouterProps = {
-  mode: 'light' | 'dark'
-  onToggleMode: () => void
-}
+import type { ModeToggleProps } from './types/Theme'
 
 const ScrollToTop = () => {
   const location = useLocation()
@@ -33,19 +36,32 @@ const ScrollToTop = () => {
 const LanguagePathRedirect = () => {
   const location = useLocation()
   const { i18n } = useTranslation()
+  const inferredLanguage = inferLanguageFromPathname(location.pathname)
   const currentLanguage =
-    normalizeLanguage(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LANGUAGE
+    inferredLanguage ??
+    normalizeLanguage(i18n.resolvedLanguage ?? i18n.language) ??
+    DEFAULT_LANGUAGE
   const targetPath = `${toLocalizedPath(location.pathname, currentLanguage)}${location.search}${location.hash}`
 
   return <Navigate to={targetPath} replace />
 }
 
-type LocalizedLayoutProps = {
-  mode: 'light' | 'dark'
-  onToggleMode: () => void
+type AliasDetailRedirectProps = {
+  language: string
+  targetBasePath: string
 }
 
-const LocalizedLayout = ({ mode, onToggleMode }: LocalizedLayoutProps) => {
+const AliasDetailRedirect = ({ language, targetBasePath }: AliasDetailRedirectProps) => {
+  const { id } = useParams<{ id: string }>()
+  const normalizedLanguage = normalizeLanguage(language) ?? DEFAULT_LANGUAGE
+  const targetPath = id
+    ? toLocalizedPath(`${targetBasePath}/${id}`, normalizedLanguage)
+    : toLocalizedPath(targetBasePath, normalizedLanguage)
+
+  return <Navigate to={targetPath} replace />
+}
+
+const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
   const { lang } = useParams<{ lang: string }>()
   const { i18n } = useTranslation()
   const normalizedLanguage = normalizeLanguage(lang)
@@ -63,6 +79,11 @@ const LocalizedLayout = ({ mode, onToggleMode }: LocalizedLayoutProps) => {
   }
 
   const localizedPath = (path: string) => toLocalizedPath(path, normalizedLanguage)
+  const archiveSlug = getLocalizedSegment('archive', normalizedLanguage)
+  const seriesSlug = getLocalizedSegment('series', normalizedLanguage)
+  const blogsSlug = getLocalizedSegment('blogs', normalizedLanguage)
+  const mediaSlug = getLocalizedSegment('media', normalizedLanguage)
+  const productionsSlug = getLocalizedSegment('productions', normalizedLanguage)
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -70,17 +91,90 @@ const LocalizedLayout = ({ mode, onToggleMode }: LocalizedLayoutProps) => {
       <Box component="main" sx={{ flexGrow: 1 }}>
         <Routes>
           <Route index element={<HomePage />} />
-          <Route path="archive" element={<ProductionsPage />} />
-          <Route path="productions" element={<Navigate to={localizedPath('/archive')} replace />} />
-          <Route path="productions/:id" element={<ProductionDetailPage />} />
-          <Route path="series" element={<SeriesPage />} />
-          <Route path="series/:id" element={<SeriesDetailPage />} />
-          <Route path="blogs" element={<BlogsPage />} />
-          <Route path="blogs/:id" element={<BlogDetailPage />} />
-          <Route path="media" element={<Navigate to={localizedPath('/archive')} replace />} />
+          <Route path={archiveSlug} element={<ProductionsPage />} />
+          <Route
+            path={productionsSlug}
+            element={<Navigate to={localizedPath('/archive')} replace />}
+          />
+          <Route path={`${productionsSlug}/:id`} element={<ProductionDetailPage />} />
+          <Route path={seriesSlug} element={<SeriesPage />} />
+          <Route path={`${seriesSlug}/:id`} element={<SeriesDetailPage />} />
+          <Route path={blogsSlug} element={<BlogsPage />} />
+          <Route path={`${blogsSlug}/:id`} element={<BlogDetailPage />} />
+          <Route path={mediaSlug} element={<Navigate to={localizedPath('/archive')} replace />} />
           {/* TODO: Remove after media page is implemented */}
-          <Route path="media/:id" element={<Navigate to={localizedPath('/archive')} replace />} />
+          <Route
+            path={`${mediaSlug}/:id`}
+            element={<Navigate to={localizedPath('/archive')} replace />}
+          />
           {/* TODO: Remove after media page is implemented */}
+          {/* Compatibility aliases from untranslated slug paths. */}
+          {archiveSlug !== 'archive' && (
+            <Route path="archive" element={<Navigate to={localizedPath('/archive')} replace />} />
+          )}
+          {archiveSlug !== 'archief' && (
+            <Route path="archief" element={<Navigate to={localizedPath('/archive')} replace />} />
+          )}
+          {productionsSlug !== 'productions' && (
+            <Route
+              path="productions"
+              element={<Navigate to={localizedPath('/archive')} replace />}
+            />
+          )}
+          {productionsSlug !== 'producties' && (
+            <Route
+              path="producties"
+              element={<Navigate to={localizedPath('/archive')} replace />}
+            />
+          )}
+          {productionsSlug !== 'productions' && (
+            <Route
+              path="productions/:id"
+              element={
+                <AliasDetailRedirect language={normalizedLanguage} targetBasePath="/productions" />
+              }
+            />
+          )}
+          {productionsSlug !== 'producties' && (
+            <Route
+              path="producties/:id"
+              element={
+                <AliasDetailRedirect language={normalizedLanguage} targetBasePath="/productions" />
+              }
+            />
+          )}
+          {seriesSlug !== 'series' && (
+            <Route path="series" element={<Navigate to={localizedPath('/series')} replace />} />
+          )}
+          {seriesSlug !== 'reeksen' && (
+            <Route path="reeksen" element={<Navigate to={localizedPath('/series')} replace />} />
+          )}
+          {seriesSlug !== 'series' && (
+            <Route
+              path="series/:id"
+              element={
+                <AliasDetailRedirect language={normalizedLanguage} targetBasePath="/series" />
+              }
+            />
+          )}
+          {seriesSlug !== 'reeksen' && (
+            <Route
+              path="reeksen/:id"
+              element={
+                <AliasDetailRedirect language={normalizedLanguage} targetBasePath="/series" />
+              }
+            />
+          )}
+          {blogsSlug !== 'blogs' && (
+            <Route path="blogs" element={<Navigate to={localizedPath('/blogs')} replace />} />
+          )}
+          {blogsSlug !== 'blogs' && <Route path="blogs/:id" element={<BlogDetailPage />} />}
+          {mediaSlug !== 'media' && (
+            <Route path="media" element={<Navigate to={localizedPath('/archive')} replace />} />
+          )}
+          {mediaSlug !== 'media' && (
+            <Route path="media/:id" element={<Navigate to={localizedPath('/archive')} replace />} />
+          )}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Box>
@@ -89,7 +183,7 @@ const LocalizedLayout = ({ mode, onToggleMode }: LocalizedLayoutProps) => {
   )
 }
 
-const Router = ({ mode, onToggleMode }: RouterProps) => {
+const Router = ({ mode, onToggleMode }: ModeToggleProps) => {
   const defaultRoot = toLocalizedPath('/', DEFAULT_LANGUAGE)
 
   return (

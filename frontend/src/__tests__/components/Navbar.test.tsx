@@ -37,7 +37,7 @@ describe('Navbar', () => {
   })
 
   it('marks the active route with aria-current="page"', () => {
-    renderNavbar('/nl/archive')
+    renderNavbar('/nl/archief')
     expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current')
   })

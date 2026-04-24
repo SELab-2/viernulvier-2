@@ -25,8 +25,8 @@ describe('Footer', () => {
 
     expect(screen.getByText('Kunstencentrum VIERNULVIER vzw')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/nl')
-    expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('href', '/nl/archive')
-    expect(screen.getByRole('link', { name: 'Reeksen' })).toHaveAttribute('href', '/nl/series')
+    expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('href', '/nl/archief')
+    expect(screen.getByRole('link', { name: 'Reeksen' })).toHaveAttribute('href', '/nl/reeksen')
     expect(screen.getByRole('link', { name: 'Blogs' })).toHaveAttribute('href', '/nl/blogs')
     expect(screen.getByRole('link', { name: 'Media' })).toHaveAttribute('href', '/nl/media')
     expect(screen.getByText('blijf op de hoogte')).toBeInTheDocument()

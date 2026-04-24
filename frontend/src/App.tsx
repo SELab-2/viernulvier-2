@@ -4,16 +4,18 @@ import { useMemo, useState } from 'react'
 import Router from './router'
 import { createAppTheme } from './theme/muiPalette'
 
+import type { AppThemeMode } from './types/Theme'
+
 const STORAGE_KEY = 'vnv-theme-mode'
 
 // Restore the last selected mode on reload; default to light when unset.
-const getInitialMode = (): 'light' | 'dark' => {
+const getInitialMode = (): AppThemeMode => {
   const saved = window.localStorage.getItem(STORAGE_KEY)
   return saved === 'dark' ? 'dark' : 'light'
 }
 
 const App = () => {
-  const [mode, setMode] = useState<'light' | 'dark'>(getInitialMode)
+  const [mode, setMode] = useState<AppThemeMode>(getInitialMode)
 
   // Recreate the MUI theme only when mode changes.
   const theme = useMemo(() => createAppTheme(mode), [mode])

@@ -30,6 +30,8 @@ import {
   type SupportedLanguage,
 } from '../utils/localizedRoutes'
 
+import type { ModeToggleProps } from '../types/Theme'
+
 const NAV_LINKS = [
   { labelKey: 'nav.home', to: '/' },
   { labelKey: 'nav.archive', to: '/archive' },
@@ -38,13 +40,8 @@ const NAV_LINKS = [
   { labelKey: 'nav.media', to: '/media' },
 ] as const
 
-type NavbarProps = {
-  mode: 'light' | 'dark'
-  onToggleMode: () => void
-}
-
 // Sticky navbar with responsive desktop/mobile navigation.
-const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
+const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
   const navbarStyles = createNavbarStyles()
