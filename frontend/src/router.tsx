@@ -83,7 +83,11 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
   if (!normalizedLanguage) {
     const pathSegments = location.pathname.split('/').filter(Boolean)
     const pathWithoutInvalidLanguage =
-      pathSegments.length > 1 ? `/${pathSegments.slice(1).join('/')}` : '/'
+      pathSegments.length > 1
+        ? `/${pathSegments.slice(1).join('/')}`
+        : pathSegments.length === 1
+          ? `/${pathSegments[0]}`
+          : '/'
 
     return <LanguagePathRedirect sourcePathname={pathWithoutInvalidLanguage} />
   }
