@@ -77,10 +77,6 @@ const MediaFilesPage = () => {
   }, [ordering, page, setPage])
 
   useEffect(() => {
-    setSearchInputValue(searchValue)
-  }, [searchValue])
-
-  useEffect(() => {
     let isActive = true
 
     const fetchMediaFiles = async () => {
