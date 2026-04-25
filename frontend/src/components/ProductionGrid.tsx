@@ -6,6 +6,7 @@ import type { Production } from '../types/Productions'
 export interface ProductionGridProps {
   productions: Production[]
   selectedGenreIds?: number[]
+  selectedTagIds?: number[]
 }
 
 /**
@@ -19,13 +20,17 @@ export interface ProductionGridProps {
  * @param props.selectedGenreIds Genre ids currently active in the parent filter state.
  * @returns The grid container element.
  */
-const ProductionGrid = ({ productions, selectedGenreIds }: ProductionGridProps) => {
+const ProductionGrid = ({ productions, selectedGenreIds, selectedTagIds }: ProductionGridProps) => {
   return (
     <GenericGrid
       items={productions}
       getKey={(production) => production.id}
       renderItem={(production) => (
-        <ProductionGridCard production={production} selectedGenreIds={selectedGenreIds} />
+        <ProductionGridCard
+          production={production}
+          selectedGenreIds={selectedGenreIds}
+          selectedTagIds={selectedTagIds}
+        />
       )}
     />
   )
