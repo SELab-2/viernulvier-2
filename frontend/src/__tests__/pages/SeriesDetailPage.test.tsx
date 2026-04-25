@@ -53,10 +53,10 @@ describe('SeriesDetailPage', () => {
 
   const renderPage = (id = '1') => {
     return render(
-      <MemoryRouter initialEntries={[`/series/${id}`]}>
+      <MemoryRouter initialEntries={[`/nl/reeksen/${id}`]}>
         <Routes>
-          <Route path="/series/:id" element={<SeriesDetailPage />} />
-          <Route path="/productions/:id" element={<div>PRODUCTION DETAIL</div>} />
+          <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
+          <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
           <Route path="/404" element={<div>404 PAGE</div>} />
         </Routes>
       </MemoryRouter>,
