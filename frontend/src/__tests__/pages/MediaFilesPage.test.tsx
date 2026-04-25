@@ -150,7 +150,7 @@ describe('MediaFilesPage', () => {
     expect(screen.getByTestId('total-items')).toHaveTextContent('2')
   })
 
-  it('passes through search, sort, view and pagination callbacks', async () => {
+  it('passes through local search input, submitted search, sort, view and pagination callbacks', async () => {
     getMediaFilesMock.mockResolvedValueOnce({
       results: [],
       count: 0,
@@ -161,12 +161,19 @@ describe('MediaFilesPage', () => {
     await waitFor(() => expect(getMediaFilesMock).toHaveBeenCalledTimes(1))
 
     fireEvent.click(screen.getByText('change-search'))
+
+    expect(screen.getByTestId('search-value')).toHaveTextContent('report')
+    expect(setSearchValueMock).not.toHaveBeenCalled()
+    expect(getMediaFilesMock).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByText('submit-search'))
     fireEvent.click(screen.getByText('change-sort-target'))
     fireEvent.click(screen.getByText('change-sort-direction'))
     fireEvent.click(screen.getByText('change-view-mode'))
     fireEvent.click(screen.getByText('change-page'))
 
-    expect(setSearchValueMock).toHaveBeenCalledWith('  report  ')
+    expect(setSearchValueMock).toHaveBeenCalledWith('report')
+    expect(setPageMock).toHaveBeenCalledWith(1)
     expect(setSortTargetMock).toHaveBeenCalledWith('name')
     expect(setSortDirectionMock).toHaveBeenCalledWith('asc')
     expect(setViewModeMock).toHaveBeenCalledWith('grid')

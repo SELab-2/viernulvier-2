@@ -27,7 +27,7 @@ const NAV_LINKS = [
   { labelKey: 'nav.archive', to: '/archive' },
   { labelKey: 'nav.series', to: '/series' },
   { labelKey: 'nav.blogs', to: '/blogs' },
-  { labelKey: 'nav.media', to: '/media' },
+  { labelKey: 'nav.media', to: '/media-files' },
 ] as const
 
 type SupportedLanguage = 'en' | 'nl'

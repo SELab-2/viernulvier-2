@@ -56,6 +56,7 @@ const MediaFilesPage = () => {
   const [showFallbackError, setShowFallbackError] = useState(false)
   const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
   const [retryKey, setRetryKey] = useState(0)
+  const [searchInputValue, setSearchInputValue] = useState(searchValue)
 
   const previousOrderingRef = useRef<string | null>(null)
 
@@ -74,6 +75,10 @@ const MediaFilesPage = () => {
 
     previousOrderingRef.current = ordering
   }, [ordering, page, setPage])
+
+  useEffect(() => {
+    setSearchInputValue(searchValue)
+  }, [searchValue])
 
   useEffect(() => {
     let isActive = true
@@ -163,8 +168,8 @@ const MediaFilesPage = () => {
       <CollectionPageLayout
         isMobile={isMobile}
         searchPlaceholder={t('media.searchPlaceholder')}
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
+        searchValue={searchInputValue}
+        onSearchChange={setSearchInputValue}
         onSearchSubmit={onSearchSubmit}
         sortTarget={sortTarget}
         onSortTargetChange={setSortTarget}
