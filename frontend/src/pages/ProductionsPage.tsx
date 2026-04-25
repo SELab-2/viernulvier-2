@@ -289,10 +289,18 @@ const ProductionsPage = () => {
       layout={viewMode}
       getKey={(production) => production.id}
       renderListItem={(production) => (
-        <ProductionListCard production={production} selectedGenreIds={selectedGenreIds} />
+        <ProductionListCard
+          production={production}
+          selectedGenreIds={selectedGenreIds}
+          selectedTagIds={selectedTagIds}
+        />
       )}
       renderGridItem={(production) => (
-        <ProductionGridCard production={production} selectedGenreIds={selectedGenreIds} />
+        <ProductionGridCard
+          production={production}
+          selectedGenreIds={selectedGenreIds}
+          selectedTagIds={selectedTagIds}
+        />
       )}
     />
   )
