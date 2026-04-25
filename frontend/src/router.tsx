@@ -44,9 +44,9 @@ const Router = ({ mode, onToggleMode }: RouterProps) => {
             <Route path="/series/:id" element={<SeriesDetailPage />} />
             <Route path="/blogs" element={<BlogsPage />} />
             <Route path="/blogs/:id" element={<BlogDetailPage />} />
-            <Route path="/media" element={<Navigate to="/archive" replace />} />
+            <Route path="/media" element={<Navigate to="/" replace />} />
             {/* TODO: Remove after media page is implemented */}
-            <Route path="/media/:id" element={<Navigate to="/archive" replace />} />
+            <Route path="/media/:id" element={<Navigate to="/" replace />} />
             {/* TODO: Remove after media page is implemented */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
