@@ -165,7 +165,20 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
     ]
 
     def get_queryset(self) -> QuerySet[Production]:
-        """Annotate language-aware title and search fields for ordering and search."""
+        """Annotate language-aware title and search fields for ordering and search.
+
+        ``title_sort`` is a single annotation reused for both alphabetical
+        ordering (``?ordering=title_sort``) and full-text search
+        (``?search=...``). It resolves to the title in the preferred request
+        language and falls back to any available translation when none exists
+        for that language.
+
+        ``artist_name_search`` and ``tagline_search`` follow the same
+        language-preference logic and are used only for full-text search.
+
+        Items without any translation at all resolve to NULL and are placed
+        last by :class:`~apps.core.ordering.NullsLastOrderingFilter`.
+        """
         language_code = self._get_request_language_code()
         queryset = super().get_queryset()
 
@@ -211,7 +224,12 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         return super().get_serializer(*args, **kwargs)
 
     def retrieve(self, request: HttpRequest, *args: tuple, **kwargs: dict) -> HttpRequest:
-        """Retrieve a production by its ID, with optional inclusion of related events."""
+        """Retrieve a production by its ID, with optional inclusion of related events.
+
+        When events are included, the queryset is extended with additional
+        prefetches for prices, hall, space, and location translations to
+        avoid N+1 queries on the detail response.
+        """
         if "events" in self.includes:
             self.queryset = self.queryset.prefetch_related(
                 Prefetch(
