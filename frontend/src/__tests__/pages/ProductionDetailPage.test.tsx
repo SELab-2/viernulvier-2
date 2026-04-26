@@ -93,7 +93,7 @@ describe('ProductionDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl', {
         state: {
           floatingAlert: {
             open: true,
@@ -270,7 +270,7 @@ describe('ProductionDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl', {
         state: {
           floatingAlert: {
             open: true,

@@ -57,15 +57,15 @@ describe('SeriesDetailPage', () => {
         <Routes>
           <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
           <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
-          <Route path="/404" element={<div>404 PAGE</div>} />
+          <Route path="/:lang/not-found" element={<div>404 PAGE</div>} />
         </Routes>
       </MemoryRouter>,
     )
   }
 
   it('shows loading state initially', () => {
-    mockedGetTag.mockImplementation(() => new Promise(() => {}))
-    mockedGetProductions.mockImplementation(() => new Promise(() => {}))
+    mockedGetTag.mockImplementation(() => new Promise(() => { }))
+    mockedGetProductions.mockImplementation(() => new Promise(() => { }))
 
     renderPage()
 
