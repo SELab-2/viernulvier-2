@@ -1,9 +1,11 @@
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom/jest-globals'
 import { describe, expect, it, jest } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 
+import type { ReactNode } from 'react'
+
 jest.mock('react-pdf', () => ({
-  Document: ({ children }: any) => <div data-testid="pdf-doc">{children}</div>,
+  Document: ({ children }: { children: ReactNode }) => <div data-testid="pdf-doc">{children}</div>,
   Page: () => <div data-testid="pdf-page" />,
   pdfjs: {
     GlobalWorkerOptions: { workerSrc: '' },
