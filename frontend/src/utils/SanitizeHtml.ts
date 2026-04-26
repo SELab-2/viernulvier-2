@@ -13,8 +13,9 @@ function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true },
     FORBID_TAGS: ['br', 'script'],
+    ADD_TAGS: ['img'],
+    ADD_ATTR: ['alt', 'height', 'src', 'style', 'title', 'width'],
     FORBID_ATTR: [
-      'height',
       'onblur',
       'onclick',
       'onerror',
@@ -26,8 +27,6 @@ function sanitizeHtml(html: string): string {
       'onmouseenter',
       'onmouseover',
       'onload',
-      'style',
-      'width',
     ].sort(),
   })
 }

@@ -19,6 +19,7 @@ from django.db.models import Max, QuerySet
 from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
+from apps.core.admin_widgets import enable_rich_text_for_fields
 from apps.genres.models import Genre
 from apps.tags.models import Tag
 
@@ -54,7 +55,8 @@ class AddGenreToProductionsForm(forms.Form):
 # ===========================================================================
 
 
-class ProductionTranslationInline(admin.TabularInline):
+@enable_rich_text_for_fields("teaser", "description")
+class ProductionTranslationInline(admin.StackedInline):
     """
     Inline for editing localised text fields directly inside the
     Production change page.
@@ -73,6 +75,7 @@ class ProductionTranslationInline(admin.TabularInline):
         "artist_name",
         "tagline",
         "teaser",
+        "description",
     )
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:

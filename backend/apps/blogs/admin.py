@@ -6,15 +6,18 @@ from django.http import HttpRequest
 from django.utils.html import format_html
 
 from apps.core.admin import BaseAdmin
+from apps.core.admin_widgets import enable_rich_text_for_fields
 
 from .models import Blog, BlogTranslation
 
 
-class BlogTranslationInline(admin.TabularInline):
+@enable_rich_text_for_fields("excerpt", "body")
+class BlogTranslationInline(admin.StackedInline):
     """Inline admin for blog translations."""
 
     model = BlogTranslation
     extra = 1
+    classes = ("collapse",)
     fields = ("language", "title", "excerpt", "body")
     autocomplete_fields = ("language",)
 
