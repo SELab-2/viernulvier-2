@@ -64,8 +64,8 @@ describe('SeriesDetailPage', () => {
   }
 
   it('shows loading state initially', () => {
-    mockedGetTag.mockImplementation(() => new Promise(() => { }))
-    mockedGetProductions.mockImplementation(() => new Promise(() => { }))
+    mockedGetTag.mockImplementation(() => new Promise(() => {}))
+    mockedGetProductions.mockImplementation(() => new Promise(() => {}))
 
     renderPage()
 
