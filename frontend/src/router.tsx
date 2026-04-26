@@ -45,7 +45,7 @@ const Router = ({ mode, onToggleMode }: RouterProps) => {
             <Route path="/series/:id" element={<SeriesDetailPage />} />
             <Route path="/blogs" element={<BlogsPage />} />
             <Route path="/blogs/:id" element={<BlogDetailPage />} />
-            <Route path="/media-files" element={<MediaFilesPage />} />
+            <Route path="/media" element={<MediaFilesPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Box>
