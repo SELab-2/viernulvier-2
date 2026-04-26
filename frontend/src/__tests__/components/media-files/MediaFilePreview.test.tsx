@@ -29,7 +29,6 @@ jest.mock('@mui/icons-material/PictureAsPdfOutlined', () => ({
   default: () => <svg data-testid="pdf-icon" />,
 }))
 
-
 describe('MediaFilePreview', () => {
   it('renders an image preview for image files', () => {
     render(
