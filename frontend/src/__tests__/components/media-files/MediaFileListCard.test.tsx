@@ -1,4 +1,3 @@
-import '@testing-library/jest-dom/jest-globals'
 import { describe, expect, it, jest, beforeEach } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 
