@@ -315,7 +315,18 @@ class TestMediaFileViewSetFilteringOrderingSearch(TestCase):
     def test_ordering_by_size_bytes(self) -> None:
         response = self.client.get("/api/v1/media/?ordering=size_bytes", **pub_headers())
         sizes = [item["size_bytes"] for item in results_list(response)]
+    def test_ordering_by_size_bytes(self) -> None:
+        response = self.client.get("/api/v1/media/?ordering=size_bytes", **pub_headers())
+        sizes = [item["size_bytes"] for item in results_list(response)]
         assert sizes == sorted(sizes)
+
+    def test_ordering_by_filename(self) -> None:
+        MediaFile.objects.create(file=make_file("aardvark.pdf"))
+
+        response = self.client.get("/api/v1/media/?ordering=filename", **pub_headers())
+        filenames = [item["filename"] for item in results_list(response)]
+
+        assert filenames == sorted(filenames)
 
     def test_search_by_filename(self) -> None:
         response = self.client.get("/api/v1/media/?search=poster", **pub_headers())
