@@ -2,6 +2,8 @@ import '@testing-library/jest-dom/jest-globals'
 import { describe, expect, it, jest } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 
+import MediaFilePreview from '../../../components/media-files/MediaFilePreview'
+
 import type { ReactNode } from 'react'
 
 jest.mock('react-pdf', () => ({
@@ -27,7 +29,6 @@ jest.mock('@mui/icons-material/PictureAsPdfOutlined', () => ({
   default: () => <svg data-testid="pdf-icon" />,
 }))
 
-import MediaFilePreview from '../../../components/media-files/MediaFilePreview'
 
 describe('MediaFilePreview', () => {
   it('renders an image preview for image files', () => {
