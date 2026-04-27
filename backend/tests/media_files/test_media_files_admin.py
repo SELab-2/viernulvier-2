@@ -38,11 +38,6 @@ def dutch_language() -> Language:
 
 
 @pytest.fixture
-def english_language() -> Language:
-    return Language.objects.create(code="en", name="English", is_active=True)
-
-
-@pytest.fixture
 def media_file_admin(admin_site: AdminSite) -> MediaFileAdmin:
     return MediaFileAdmin(MediaFile, admin_site)
 
