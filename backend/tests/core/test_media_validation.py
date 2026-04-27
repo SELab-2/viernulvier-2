@@ -311,11 +311,11 @@ class TestDetectImageMime:
         mime = _detect_image_mime(file_obj)
         assert mime == "image/jpeg"
 
-    def test_detects_valid_webp(self) -> None:
+    def test_returns_none_for_valid_webp(self) -> None:
         content = make_webp_bytes()
         file_obj = BytesIO(content)
         mime = _detect_image_mime(file_obj)
-        assert mime == "image/webp"
+        assert mime is None
 
     def test_returns_none_for_invalid_image(self) -> None:
         file_obj = BytesIO(b"not an image")
@@ -433,9 +433,6 @@ class TestValidateExtensionForMime:
 
     def test_accepts_matching_png_extension(self) -> None:
         _validate_extension_for_mime("poster.png", "image/png")
-
-    def test_accepts_matching_webp_extension(self) -> None:
-        _validate_extension_for_mime("poster.webp", "image/webp")
 
     def test_accepts_matching_pdf_extension(self) -> None:
         _validate_extension_for_mime("document.pdf", "application/pdf")
@@ -694,18 +691,19 @@ class TestValidateMediaFile:
         )
         assert result.mime_type == "image/jpeg"
 
-    def test_accepts_valid_webp(self) -> None:
+    def test_rejects_valid_webp(self) -> None:
         file_obj = SimpleUploadedFile(
             "image.webp",
             make_webp_bytes(),
             content_type="image/webp",
         )
-        result = validate_media_file(
-            file_obj,
-            allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,
-            max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
-        )
-        assert result.mime_type == "image/webp"
+
+        with pytest.raises(MediaValidationError, match="Unsupported file type"):
+            validate_media_file(
+                file_obj,
+                allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,
+                max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
+            )
 
     def test_allows_images_only_when_restricted(self) -> None:
         """Validate respects allowed_mime_types restrictions."""
@@ -752,16 +750,18 @@ class TestValidateMediaFile:
     def test_guesses_mime_from_extension_when_no_signature(self) -> None:
         """Fallback to guessing MIME from extension."""
         file_obj = SimpleUploadedFile(
-            "poster.webp",
-            b"unknown content",  # Not detectable as WEBP
+            "poster.jpg",
+            b"unknown content",
             content_type=None,
         )
+
         result = validate_media_file(
             file_obj,
             allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,
             max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
         )
-        assert result.mime_type == "image/webp"
+
+        assert result.mime_type == "image/jpeg"
 
     def test_error_message_lists_allowed_types(self) -> None:
         """Error should list all allowed MIME types."""
@@ -779,7 +779,7 @@ class TestValidateMediaFile:
         error_msg = str(exc_info.value)
         assert "image/jpeg" in error_msg
         assert "image/png" in error_msg
-        assert "image/webp" in error_msg
+        assert "image/webp" not in error_msg
 
     def test_handles_file_without_size_attribute(self) -> None:
         """Handle file objects missing size attribute - falls back to 0."""
