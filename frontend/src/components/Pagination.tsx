@@ -145,11 +145,11 @@ const Pagination = ({
           setIsEditingInput(true)
           setInputDraft('')
         }}
-        onChange={(e) => setInputDraft(e.target.value)}
-        onBlur={(e) => commitPage(e.currentTarget.value)}
+        onChange={(e) => setInputDraft(e ? e.target.value : '')}
+        onBlur={(e) => commitPage(e ? e.currentTarget.value : '')}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
-            commitPage(e.currentTarget.value)
+            commitPage(e ? e.currentTarget.value : '')
           }
         }}
         inputProps={{
