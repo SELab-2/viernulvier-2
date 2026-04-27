@@ -13,7 +13,6 @@ def test_cache_api_view_decorator_wraps_function():
     def dummy_view(request):
         return "ok"
 
-    # execute the view once so the `return` line is covered by coverage
     dummy_view(None)
 
     decorator = cache_api_view(60)
