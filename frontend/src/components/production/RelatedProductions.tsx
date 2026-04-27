@@ -8,6 +8,7 @@ import GenreAndTagChip from '../chips/GenreAndTagChip'
 import ProductionGridCard from '../productions/ProductionGridCard'
 
 import type { ProductionRelated, RelatedTag } from '../../types/Productions'
+import type { Genre } from '../../types/Genres'
 
 /**
  * Define the props for the RelatedProductions component:
@@ -101,6 +102,53 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                     production.display_artist_name,
                   ) || ''
 
+                const normalizedGenres: Genre[] = (production.genres ?? []).map((genre) => ({
+                  ...genre,
+                  // ProductionGridCard only renders genres when display_name exists.
+                  display_name:
+                    genre.display_name ??
+                    getTranslatedRecord(genre.name, language, String(genre.id)) ??
+                    String(genre.id),
+                }))
+
+                const normalizedTags = (production.tags ?? []).map((tag) => ({
+                  ...tag,
+                  // ProductionGridCard only renders tags when display_name exists.
+                  display_name:
+                    tag.display_name ??
+                    getTranslatedRecord(tag.name, language, String(tag.id)) ??
+                    String(tag.id),
+                }))
+
+                const tagsForChips =
+                  production.tags && production.tags.length > 0
+                    ? production.tags
+                    : [
+                        {
+                          id: entry.tag.id,
+                          url: '',
+                          source: 'related',
+                          type: 'series',
+                          is_enabled: true,
+                          display_name: entry.tag.display_name,
+                          display_short_description: null,
+                          display_url_title: null,
+                          name: entry.tag.name,
+                          short_description: null,
+                          url_title: null,
+                        },
+                      ]
+
+                const tagChipsAsGenres: Genre[] = tagsForChips.map((tag) => ({
+                  id: Number(`${tag.id}0001`),
+                  type: 'series-tag',
+                  name: tag.name ?? tag.url_title ?? null,
+                  display_name: tag.display_name ?? tag.type,
+                  vendor_id: null,
+                }))
+
+                const combinedChips = [...normalizedGenres, ...tagChipsAsGenres]
+
                 // TODO:
                 // Related productions don't have all the values of a production
                 // It only contains the values required for the frontend to show the cards
@@ -130,18 +178,21 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                         ...production,
                         attendance_mode: '',
                         performer_type: '',
-                        first_event_start: null,
-                        last_event_end: null,
+                        first_event_start:
+                          production.first_event_start ?? production.last_event_end ?? null,
+                        last_event_end:
+                          production.last_event_end ?? production.first_event_start ?? null,
                         uit_database_type: null,
                         artist_name: production.artist_name ?? {},
                         tagline: {},
                         teaser: {},
                         description: {},
-                        tags: [],
-                        genres: [],
+                        tags: normalizedTags,
+                        genres: normalizedGenres,
                         display_title: normalizedTitle,
                         display_artist_name: normalizedArtist,
                       }}
+                      selectedGenreIds={[]}
                     />
                   </Box>
                 )
