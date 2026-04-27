@@ -15,23 +15,27 @@ MAX_MEDIA_FILE_SIZE_BYTES = 10 * 1024 * 1024
 ALLOWED_MEDIA_MIME_TYPES = {
     "image/jpeg",
     "image/png",
+    "image/webp",
     "application/pdf",
 }
 
 ALLOWED_IMAGE_MIME_TYPES = {
     "image/jpeg",
     "image/png",
+    "image/webp",
 }
 
 MIME_EXTENSIONS: dict[str, set[str]] = {
     "image/jpeg": {".jpg", ".jpeg"},
     "image/png": {".png"},
+    "image/webp": {".webp"},
     "application/pdf": {".pdf"},
 }
 
 IMAGE_FORMAT_TO_MIME = {
     "JPEG": "image/jpeg",
     "PNG": "image/png",
+    "WEBP": "image/webp",
 }
 
 
