@@ -1,5 +1,15 @@
 import DOMPurify from 'dompurify'
 
+function decodeHtmlEntities(html: string): string {
+  const element = document.createElement('textarea')
+  element.innerHTML = html
+  return element.value
+}
+
+function looksLikeEscapedHtml(html: string): boolean {
+  return /&lt;|&gt;|&#\d+;|&amp;/i.test(html)
+}
+
 /**
  * Sanitize HTML content from the backend before rendering with dangerouslySetInnerHTML.
  *
@@ -10,7 +20,9 @@ import DOMPurify from 'dompurify'
  * @returns Cleaned HTML safe for insertion into React DOM.
  */
 function sanitizeHtml(html: string): string {
-  return DOMPurify.sanitize(html, {
+  const normalizedHtml = looksLikeEscapedHtml(html) ? decodeHtmlEntities(html) : html
+
+  return DOMPurify.sanitize(normalizedHtml, {
     USE_PROFILES: { html: true },
     FORBID_TAGS: ['br', 'script'],
     ADD_TAGS: ['img'],

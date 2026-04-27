@@ -15,23 +15,30 @@ describe('sanitizeHtml', () => {
     expect(sanitizeHtml('<br>')).toBe('')
   })
 
-  it('removes style and common event handler attributes (FORBID_ATTR)', () => {
+  it('removes common event handler attributes while keeping safe style attributes', () => {
     const input = '<div onclick="alert(1)" onmouseover="bad()" style="color:red">Test</div>'
     const output = sanitizeHtml(input)
     expect(output).not.toContain('onclick')
     expect(output).not.toContain('onmouseover')
-    expect(output).not.toContain('style')
+    expect(output).toContain('style')
     expect(output).toContain('Test')
   })
 
-  it('strips onerror and dimensions from images while keeping safe src', () => {
+  it('keeps safe image markup while stripping event handlers', () => {
     const input =
-      '<img src="https://example.com/x.png" width="999" height="1" onerror="alert(1)" alt="pic">'
+      '<img src="https://example.com/x.png" width="999" height="1" onerror="alert(1)" alt="pic" style="float:left;">'
     const output = sanitizeHtml(input)
-    expect(output).toBe('<img src="https://example.com/x.png" alt="pic">')
+    expect(output).toBe(
+      '<img src="https://example.com/x.png" width="999" height="1" alt="pic" style="float:left;">',
+    )
     expect(output).not.toContain('onerror')
-    expect(output).not.toContain('width')
-    expect(output).not.toContain('height')
+  })
+
+  it('decodes escaped html before sanitizing so images render correctly', () => {
+    const input =
+      '&lt;p&gt;&lt;img src="https://example.com/x.png" alt="pic" width="100" height="80" /&gt;&lt;/p&gt;'
+    const output = sanitizeHtml(input)
+    expect(output).toBe('<p><img src="https://example.com/x.png" alt="pic" width="100" height="80"></p>')
   })
 
   it('allows safe inline formatting tags', () => {

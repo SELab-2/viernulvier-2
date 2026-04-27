@@ -13,3 +13,7 @@ db.sqlite3
 .media/
 staticfiles/
 static/
+!apps/core/static/
+!apps/core/static/admin/
+!apps/core/static/admin/js/
+!apps/core/static/admin/js/*.js

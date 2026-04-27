@@ -246,7 +246,7 @@ class TestProductionTranslationInline(TestCase):
         assert "collapse" in ProductionTranslationInline.classes
 
     def test_is_tabular_inline(self) -> None:
-        assert issubclass(ProductionTranslationInline, admin.TabularInline)
+        assert issubclass(ProductionTranslationInline, admin.StackedInline)
 
 
 class TestProductionGenreInline(TestCase):
