@@ -36,6 +36,9 @@ export interface RelatedProduction {
   last_event_end?: string | null
   tags?: Tag[]
   genres?: Genre[]
+  uit_database_type?: ProductionClassification | null
+  performer_type?: PerformerType | ''
+  attendance_mode?: AttendanceMode | ''
 }
 
 /** Shape of a single related entry (grouped by tag). */

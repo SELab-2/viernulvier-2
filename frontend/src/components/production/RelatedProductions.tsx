@@ -25,10 +25,12 @@ interface RelatedProductionsProps {
  * Renders related productions grouped by tag from the production detail payload.
  */
 function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedProductionsProps) {
+  console.log('RelatedProductions render', { related, lang, showTag })
   const { t, i18n } = useTranslation()
   const language = i18n.language || lang
 
   const visibleResults = related.filter((entry) => entry.productions.length > 0)
+  console.log('Visible related productions entries', { visibleResults })
 
   /**
    * Resolves the tag label for the active locale without reloading the production list.
@@ -89,66 +91,7 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
               sx={{ width: '100%' }}
             >
               {entry.productions.map((production) => {
-                const normalizedTitle = getTranslatedRecord(
-                  production.title,
-                  language,
-                  production.display_title,
-                )
-
-                const normalizedArtist =
-                  getTranslatedRecord(
-                    production.artist_name,
-                    language,
-                    production.display_artist_name,
-                  ) || ''
-
-                const normalizedGenres: Genre[] = (production.genres ?? []).map((genre) => ({
-                  ...genre,
-                  // ProductionGridCard only renders genres when display_name exists.
-                  display_name:
-                    genre.display_name ??
-                    getTranslatedRecord(genre.name, language, String(genre.id)) ??
-                    String(genre.id),
-                }))
-
-                const normalizedTags = (production.tags ?? []).map((tag) => ({
-                  ...tag,
-                  // ProductionGridCard only renders tags when display_name exists.
-                  display_name:
-                    tag.display_name ??
-                    getTranslatedRecord(tag.name, language, String(tag.id)) ??
-                    String(tag.id),
-                }))
-
-                const tagsForChips =
-                  production.tags && production.tags.length > 0
-                    ? production.tags
-                    : [
-                        {
-                          id: entry.tag.id,
-                          url: '',
-                          source: 'related',
-                          type: 'series',
-                          is_enabled: true,
-                          display_name: entry.tag.display_name,
-                          display_short_description: null,
-                          display_url_title: null,
-                          name: entry.tag.name,
-                          short_description: null,
-                          url_title: null,
-                        },
-                      ]
-
-                const tagChipsAsGenres: Genre[] = tagsForChips.map((tag) => ({
-                  id: Number(`${tag.id}0001`),
-                  type: 'series-tag',
-                  name: tag.name ?? tag.url_title ?? null,
-                  display_name: tag.display_name ?? tag.type,
-                  vendor_id: null,
-                }))
-
-                const combinedChips = [...normalizedGenres, ...tagChipsAsGenres]
-
+                console.log('Rendering related production', { production })
                 // TODO:
                 // Related productions don't have all the values of a production
                 // It only contains the values required for the frontend to show the cards
@@ -176,23 +119,21 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                     <ProductionGridCard
                       production={{
                         ...production,
-                        attendance_mode: '',
-                        performer_type: '',
-                        first_event_start:
-                          production.first_event_start ?? production.last_event_end ?? null,
-                        last_event_end:
-                          production.last_event_end ?? production.first_event_start ?? null,
-                        uit_database_type: null,
+                        attendance_mode: production.attendance_mode ?? '',
+                        performer_type: production.performer_type ?? '',
+                        first_event_start: production.first_event_start ?? null,
+                        last_event_end: production.last_event_end ?? null,
+                        uit_database_type: production.uit_database_type ?? null,
                         artist_name: production.artist_name ?? {},
+                        title: production.title ?? {},
                         tagline: {},
                         teaser: {},
                         description: {},
-                        tags: normalizedTags,
-                        genres: normalizedGenres,
-                        display_title: normalizedTitle,
-                        display_artist_name: normalizedArtist,
+                        tags: production.tags ?? [],
+                        genres: production.genres ?? [],
+                        display_title: production.display_title ?? null,
+                        display_artist_name: production.display_artist_name ?? null,
                       }}
-                      selectedGenreIds={[]}
                     />
                   </Box>
                 )
