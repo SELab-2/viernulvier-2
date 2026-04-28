@@ -303,18 +303,11 @@ const CollectionPageLayout = ({
   return (
     <Box sx={{ py: { xs: 3, md: 4 } }}>
       <Container maxWidth="xl">
-        {/*
-          Single layout for every page: the (optional) sidebar and the
-          content column live in one flex row. When the sidebar is visible
-          we left-align the block so the filter panel hugs the container's
-          left edge; otherwise the content column (and any free space from
-          its stepped cap) center horizontally in the container.
-        */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'flex-start',
-            justifyContent: sidebarInline ? 'flex-start' : 'center',
+            justifyContent: 'center',
             gap: 3,
           }}
         >
