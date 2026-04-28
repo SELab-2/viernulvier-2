@@ -72,7 +72,7 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
         help_text=(
-            "Binary file upload. Supported types: JPEG, PNG, PDF. "
+            "Binary file upload. Supported types: JPEG, PNG, WebP, PDF. "
             "Validation: max 10 MB, binary signature verification (PDF %25PDF- header, image Pillow verify), "
             "content-type vs declared MIME mismatch detection, extension-MIME consistency check."
         ),
