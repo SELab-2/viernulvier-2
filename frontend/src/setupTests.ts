@@ -1,4 +1,5 @@
 /* eslint-disable no-undef */
+import '@testing-library/jest-dom/jest-globals'
 import '@testing-library/jest-dom'
 import { TextDecoder, TextEncoder } from 'util'
 import './i18n'

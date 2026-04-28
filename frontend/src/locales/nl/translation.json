@@ -333,5 +333,26 @@
   "blog": {
     "couldNotLoad": "Kon de blog niet laden",
     "invalidId": "Ongeldig blog ID"
+  },
+  "media": {
+    "searchPlaceholder": "Zoek bestanden op naam, beschrijving of type...",
+    "fileType": {
+      "image": "Afbeelding",
+      "pdf": "PDF",
+      "file": "Bestand"
+    },
+    "size": "Grootte",
+    "error": {
+      "retry": "Opnieuw proberen",
+      "fallback": "Kon mediabestanden niet laden.",
+      "notification": "Er ging iets mis bij het laden van de mediabestanden."
+    },
+    "empty": {
+      "title": "Geen mediabestanden gevonden.",
+      "description": "Geen mediabestanden die voldoen aan de huidige zoekopdracht."
+    },
+    "loading": "Mediabestanden laden",
+    "resultsRegionLabel": "Resultaten van mediabestanden",
+    "noDescription": "Geen beschrijving beschikbaar."
   }
 }
