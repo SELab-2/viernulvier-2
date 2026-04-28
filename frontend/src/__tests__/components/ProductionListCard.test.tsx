@@ -67,17 +67,12 @@ const baseProduction = (overrides: Partial<Production> = {}): Production => ({
 const renderListCard = (props: {
   production: Production
   selectedGenreIds?: number[]
-  selectedTagIds?: number[]
   onGenreClick?: (id: number) => void
 }) => {
-  const { production, selectedGenreIds = [], selectedTagIds } = props
+  const { production, selectedGenreIds = [] } = props
 
   const ui: ReactElement = (
-    <ProductionListCard
-      production={production}
-      selectedGenreIds={selectedGenreIds}
-      selectedTagIds={selectedTagIds}
-    />
+    <ProductionListCard production={production} selectedGenreIds={selectedGenreIds} />
   )
 
   return render(
@@ -279,23 +274,6 @@ describe('ProductionListCard', () => {
 
     expect(screen.getByText('Festivalreeks')).toBeInTheDocument()
     expect(screen.getByText('Dans')).toBeInTheDocument()
-  })
-
-  it('marks selected series tag chips as static selected chips', () => {
-    const production = baseProduction({
-      tags: [minimalTag(11, 'Festivalreeks'), minimalTag(12, 'Andere reeks')],
-    })
-
-    renderListCard({ production, selectedTagIds: [11] })
-
-    const selectedTagChip = screen.getByText('Festivalreeks').closest('.MuiChip-root')
-    const unselectedTagChip = screen.getByText('Andere reeks').closest('.MuiChip-root')
-
-    expect(selectedTagChip).not.toBeNull()
-    expect(unselectedTagChip).not.toBeNull()
-    expect(selectedTagChip).toHaveStyle({ backgroundColor: '#1976d2' })
-    expect(unselectedTagChip).not.toHaveStyle({ backgroundColor: '#1976d2' })
-    expect(selectedTagChip?.tagName).toBe('DIV')
   })
 
   it('does not render a genre row when there are no genres', () => {

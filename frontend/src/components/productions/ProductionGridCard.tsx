@@ -15,7 +15,6 @@ import type { Production } from '../../types/Productions'
 export interface ProductionGridCardProps {
   production: Production
   selectedGenreIds?: number[]
-  selectedTagIds?: number[]
 }
 
 /**
@@ -26,19 +25,14 @@ export interface ProductionGridCardProps {
  * first crop of the first gallery image when present; otherwise {@link ImageWithFallback} shows the
  * branded placeholder.
  *
- * Genre and tag chips use `context="static"` (non-interactive) whenever their selected ids are
- * defined, so filtering is controlled exclusively by the parent rather than navigating away.
+ * Genre chips use `context="static"` (non-interactive) whenever `selectedGenreIds` is defined,
+ * so that genre filtering is controlled exclusively by the parent rather than navigating away.
  *
  * @param props.production Full API payload (title, artist, media gallery, genres, events, etc.).
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
- * @param props.selectedTagIds Tag ids selected in parent filter state (drives chip style).
  * @returns The grid card element.
  */
-const ProductionGridCard = ({
-  production,
-  selectedGenreIds,
-  selectedTagIds,
-}: ProductionGridCardProps) => {
+const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCardProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
   const { i18n } = useTranslation()
@@ -128,9 +122,8 @@ const ProductionGridCard = ({
                   )}
                   labels={tag.name || tag.url_title || {}}
                   chipType="seriesTag"
-                  context={selectedTagIds !== undefined ? 'static' : 'series'}
+                  context="series"
                   id={tag.id}
-                  selected={selectedTagIds?.includes(tag.id) || false}
                 />
               ))}
               {genres.map((genre) => (
