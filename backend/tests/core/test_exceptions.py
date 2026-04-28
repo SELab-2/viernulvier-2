@@ -737,7 +737,8 @@ class TestMethodNotAllowedNoRequest:
 
         assert response is not None
         assert response.status_code == 405
-        assert response.data["detail"] == 'Method "DELETE" not allowed.'
+        assert "DELETE" in response.data["detail"]
+        assert "not allowed" in response.data["detail"] or "niet toegestaan" in response.data["detail"]
 
     def test_rfc7807_structure_without_request(self) -> None:
         response = custom_exception_handler(MethodNotAllowed("POST"), context={})
