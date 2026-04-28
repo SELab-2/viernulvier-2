@@ -26,6 +26,20 @@ class BlogTranslationInline(admin.StackedInline):
         return super().get_queryset(request).select_related("language")
 
 
+class BlogProductionInline(admin.TabularInline):
+    """Inline for attaching productions directly on a Blog change page."""
+
+    model = Blog.productions.through
+    verbose_name = "Production"
+    verbose_name_plural = "Linked Productions"
+    extra = 1
+    autocomplete_fields = ("production",)
+    fields = ("production",)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).select_related("production")
+
+
 @admin.register(Blog)
 class BlogAdmin(BaseAdmin):
     """Admin configuration for blog posts."""
@@ -45,21 +59,13 @@ class BlogAdmin(BaseAdmin):
         "translations__body",
     )
     ordering = ("-published_at", "-id")
-    autocomplete_fields = ("productions",)
-    inlines = [BlogTranslationInline]
+    inlines = [BlogTranslationInline, BlogProductionInline]
 
     fieldsets = (
         (
             "Basic Information",
             {
                 "fields": ("slug", "published_at", "cover_image"),
-            },
-        ),
-        (
-            "Linked Productions",
-            {
-                "fields": ("productions",),
-                "description": "Link this blog post to one or more productions to display them together on the frontend.",
             },
         ),
     )
