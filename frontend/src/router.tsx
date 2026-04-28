@@ -116,13 +116,11 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
           <Route path={`${seriesSlug}/:id`} element={<SeriesDetailPage />} />
           <Route path={blogsSlug} element={<BlogsPage />} />
           <Route path={`${blogsSlug}/:id`} element={<BlogDetailPage />} />
-          <Route path={mediaSlug} element={<Navigate to={localizedPath('/archive')} replace />} />
-          {/* TODO: Remove after media page is implemented */}
+          <Route path={mediaSlug} element={<MediaFilesPage />} />
           <Route
             path={`${mediaSlug}/:id`}
-            element={<Navigate to={localizedPath('/archive')} replace />}
+            element={<Navigate to={localizedPath('/media')} replace />}
           />
-          {/* TODO: Remove after media page is implemented */}
           {/* Compatibility aliases from untranslated slug paths. */}
           {archiveSlug !== 'archive' && (
             <Route path="archive" element={<Navigate to={localizedPath('/archive')} replace />} />
@@ -185,10 +183,10 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
           )}
           {blogsSlug !== 'blogs' && <Route path="blogs/:id" element={<BlogDetailPage />} />}
           {mediaSlug !== 'media' && (
-            <Route path="media" element={<Navigate to={localizedPath('/archive')} replace />} />
+            <Route path="media" element={<Navigate to={localizedPath('/media')} replace />} />
           )}
           {mediaSlug !== 'media' && (
-            <Route path="media/:id" element={<Navigate to={localizedPath('/archive')} replace />} />
+            <Route path="media/:id" element={<Navigate to={localizedPath('/media')} replace />} />
           )}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
