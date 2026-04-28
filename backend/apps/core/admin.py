@@ -82,7 +82,7 @@ class PersistentSelectionMixin:
         self._set_persisted_selected_ids(request, merged_ids)
         return merged_ids
 
-    def changelist_view(self, request: any, extra_context: dict | None = None):
+    def changelist_view(self, request: any, extra_context: dict | None = None) -> JsonResponse:
         if request.method == "POST" and request.POST.get("clear_persistent_selection") == "1":
             self._clear_persisted_selected_ids(request)
             return JsonResponse({"ok": True, "count": 0})
@@ -112,7 +112,7 @@ class PersistentSelectionMixin:
 
         return super().changelist_view(request, extra_context=extra_context)
 
-    def response_action(self, request: any, queryset: any):
+    def response_action(self, request: any, queryset: any) -> HttpResponseRedirect:
         """Apply actions on persisted+posted selections, not only current changelist page queryset."""
         merged_ids: set[str] = set()
         is_select_across = False
