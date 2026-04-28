@@ -47,6 +47,8 @@ class TagTranslationInline(admin.TabularInline):
 class TagProductionInline(admin.TabularInline):
     """Inline for attaching productions directly on a Tag change page."""
 
+    verbose_name = "Production"
+    verbose_name_plural = "Add Productions to this Tag"
     model = ProductionTag
     extra = 1
     autocomplete_fields = ("production",)
