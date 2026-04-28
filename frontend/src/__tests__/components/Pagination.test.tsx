@@ -65,7 +65,7 @@ describe('Pagination', () => {
     expect(onPageChange).toHaveBeenCalledWith(2)
   })
 
-  it('does not emit on change while typing and commits on Enter', () => {
+  it('empties the field on focus and closes it on Enter after a changed valid page', () => {
     const onPageChange = jest.fn()
 
     renderPagination({
@@ -88,10 +88,11 @@ describe('Pagination', () => {
 
     expect(onPageChange).toHaveBeenCalledTimes(1)
     expect(onPageChange).toHaveBeenCalledWith(5)
+    expect(input).not.toHaveFocus()
     expect(input).toHaveValue('2')
   })
 
-  it('resets invalid page input to the active page on blur', () => {
+  it('allows only digits in the page field and resets on blur', () => {
     const onPageChange = jest.fn()
 
     renderPagination({
@@ -103,11 +104,37 @@ describe('Pagination', () => {
 
     const input = screen.getByRole('textbox', { name: 'Huidige pagina, pagina 3' })
     fireEvent.focus(input)
-    fireEvent.change(input, { target: { value: '2abc' } })
+    fireEvent.change(input, { target: { value: '2abc4' } })
+
+    expect(input).toHaveValue('24')
+
     fireEvent.blur(input)
 
-    expect(onPageChange).not.toHaveBeenCalled()
+    expect(onPageChange).toHaveBeenCalledWith(5)
     expect(input).toHaveValue('3')
+  })
+
+  it('keeps the field editable when Enter does not change the current page', () => {
+    const onPageChange = jest.fn()
+
+    renderPagination({
+      page: 2,
+      pageSize: 10,
+      totalItems: 50,
+      onPageChange,
+    })
+
+    const input = screen.getByRole('textbox', { name: 'Huidige pagina, pagina 2' })
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: '2' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+
+    expect(onPageChange).not.toHaveBeenCalled()
+    expect(input).toHaveValue('2')
+
+    fireEvent.change(input, { target: { value: '23' } })
+
+    expect(input).toHaveValue('23')
   })
 
   it('resets stale draft when page changes via navigation buttons', () => {

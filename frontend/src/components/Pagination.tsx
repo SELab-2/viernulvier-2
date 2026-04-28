@@ -5,7 +5,7 @@ import {
   NavigateNext as NextIcon,
 } from '@mui/icons-material'
 import { Box, IconButton, OutlinedInput, Typography } from '@mui/material'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export interface PaginationProps {
@@ -49,28 +49,34 @@ const Pagination = ({
   // Keep a local draft while editing and show canonical active page otherwise.
   const [inputDraft, setInputDraft] = useState('')
   const [isEditingInput, setIsEditingInput] = useState(false)
+  const skipBlurCommitRef = useRef(false)
   const inputValue = isEditingInput ? inputDraft : String(activePage)
+
+  const sanitizePageInput = (value: string) => value.replace(/\D/g, '')
+  const closeInputEditor = () => {
+    setIsEditingInput(false)
+    setInputDraft('')
+  }
 
   if (!hasPagination) {
     return null
   }
 
   const commitPage = (raw: string) => {
-    const trimmed = raw.trim()
+    const trimmed = sanitizePageInput(raw.trim())
     const isIntegerInput = /^\d+$/.test(trimmed)
 
-    setIsEditingInput(false)
-    setInputDraft('')
-
     if (!isIntegerInput) {
-      return
+      return false
     }
 
     const parsed = Number.parseInt(trimmed, 10)
     const clamped = Math.min(Math.max(parsed, 1), totalPages)
     if (clamped !== activePage) {
       onPageChange(clamped)
+      return true
     }
+    return false
   }
 
   const navButtonSx = {
@@ -144,18 +150,36 @@ const Pagination = ({
         onFocus={() => {
           setIsEditingInput(true)
           setInputDraft('')
+          skipBlurCommitRef.current = false
         }}
-        onChange={(e) => setInputDraft(e ? e.target.value : '')}
-        onBlur={(e) => commitPage(e ? e.currentTarget.value : '')}
+        onChange={(e) => setInputDraft(sanitizePageInput(e ? e.target.value : ''))}
+        onBlur={(e) => {
+          if (skipBlurCommitRef.current) {
+            skipBlurCommitRef.current = false
+            return
+          }
+
+          closeInputEditor()
+          commitPage(e ? e.target.value : '')
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
-            commitPage(e ? e.currentTarget.value : '')
+            e.preventDefault()
+            const committed = commitPage(e ? e.currentTarget.value : '')
+
+            if (committed) {
+              skipBlurCommitRef.current = true
+              closeInputEditor()
+              e.currentTarget.blur()
+            }
           }
         }}
         inputProps={{
           'aria-label': t(`${i18nKeyPrefix}.currentPage`, { page: activePage }),
           inputMode: 'numeric',
           pattern: '[0-9]*',
+          min: 1,
+          max: totalPages,
           style: { textAlign: 'center', padding: '4px 0' },
         }}
         sx={{
