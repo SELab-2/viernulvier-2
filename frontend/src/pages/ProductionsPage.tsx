@@ -21,7 +21,6 @@ import type { Tag } from '../types/Tags'
 
 // Page size for pagination.
 const PAGE_SIZE = 12
-const SERIES_TAG_FETCH_SIZE = 250
 
 // Function to determine the ordering parameter for the API based on the current sort target and direction.
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
@@ -38,7 +37,25 @@ const toIsoDateBoundary = (value: string, boundary: 'start' | 'end'): string | u
   return new Date(`${value}${suffix}`).toISOString()
 }
 
-const fetchSeriesTags = async (): Promise<Tag[]> => {
+const fetchGenres = async (): Promise<Genre[]> => {
+  const genres: Genre[] = []
+  let page = 1
+  let hasMore = true
+
+  while (hasMore) {
+    const response = await getGenres({
+      page,
+    })
+
+    genres.push(...response.results)
+    hasMore = response.next !== null
+    page += 1
+  }
+
+  return genres
+}
+
+const fetchTags = async (): Promise<Tag[]> => {
   const tagsById = new Map<number, Tag>()
   let page = 1
   let hasMore = true
@@ -46,7 +63,6 @@ const fetchSeriesTags = async (): Promise<Tag[]> => {
   while (hasMore) {
     const response = await getProductionSeries({
       page,
-      pageSize: SERIES_TAG_FETCH_SIZE,
     })
 
     response.results.forEach((series) => {
@@ -139,14 +155,14 @@ const ProductionsPage = () => {
 
     const fetchFilterMetadata = async () => {
       try {
-        const [genreResponse, seriesTags] = await Promise.all([getGenres(), fetchSeriesTags()])
+        const [genres, tags] = await Promise.all([fetchGenres(), fetchTags()])
 
         if (!isActive) {
           return
         }
 
-        setGenres(genreResponse.results)
-        setTags(seriesTags)
+        setGenres(genres)
+        setTags(tags)
       } catch {
         if (!isActive) {
           return
