@@ -15,6 +15,7 @@ from apps.core.media_validation import (
     validate_media_file,
 )
 from apps.core.models import BaseModel
+from apps.languages.models import Language
 
 DESCRIPTION_MAX_LENGTH = 200
 
@@ -22,11 +23,14 @@ DESCRIPTION_MAX_LENGTH = 200
 def upload_to_media(instance: Any, filename: str) -> str:  # noqa: ARG001
     """Return a unique upload path for a media file."""
     ext = os.path.splitext(filename)[1]
-    return f"media/uploads/{uuid.uuid4()}{ext}"
+    return f"uploads/{uuid.uuid4()}{ext}"
 
 
 class MediaFile(BaseModel):
-    """Stored uploaded media asset such as a poster, brochure, or PDF."""
+    """Stored uploaded media asset such as a poster, brochure, or PDF.
+
+    Localised descriptions are stored in :class:`MediaFileTranslation`.
+    """
 
     class FileType(models.TextChoices):
         IMAGE = "image", "Image"
@@ -37,7 +41,6 @@ class MediaFile(BaseModel):
     file = models.FileField(upload_to=upload_to_media)
 
     filename = models.CharField(max_length=255, blank=True)
-    description = models.CharField(max_length=DESCRIPTION_MAX_LENGTH, blank=True)
     mime_type = models.CharField(max_length=100, blank=True, editable=False)
     size_bytes = models.PositiveBigIntegerField(blank=True, null=True, editable=False)
 
@@ -51,6 +54,12 @@ class MediaFile(BaseModel):
     created_at = models.DateTimeField(auto_now_add=True)
 
     MAX_FILE_SIZE = MAX_MEDIA_FILE_SIZE_BYTES
+
+    class Meta(BaseModel.Meta):
+        db_table = "media_file"
+        verbose_name = "Media file"
+        verbose_name_plural = "Media files"
+        ordering = ["-created_at"]
 
     def _derive_filename(self) -> str:
         """Prefer the client filename over the generated storage path."""
@@ -156,3 +165,52 @@ class MediaFile(BaseModel):
     def __str__(self) -> str:
         """Return the original uploaded filename."""
         return self.filename
+
+
+class MediaFileTranslation(BaseModel):
+    """Localised description for a MediaFile.
+
+    Each media file can have at most one description per language.
+    """
+
+    media_file = models.ForeignKey(
+        MediaFile,
+        on_delete=models.CASCADE,
+        related_name="translations",
+        help_text="Media file this translation belongs to.",
+        db_comment="The media file that this translation belongs to.",
+    )
+
+    language = models.ForeignKey(
+        Language,
+        on_delete=models.CASCADE,
+        related_name="media_file_translations",
+        help_text="Language of this translation.",
+        db_comment="The language of the translation.",
+    )
+
+    description = models.CharField(
+        max_length=DESCRIPTION_MAX_LENGTH,
+        blank=True,
+        help_text="Localised description of the media file.",
+        db_comment="Description of the media file in the specified language.",
+    )
+
+    class Meta(BaseModel.Meta):
+        db_table = "media_file_translation"
+        verbose_name = "Media file translation"
+        verbose_name_plural = "Media file translations"
+        ordering = ["language__code"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["media_file", "language"],
+                name="unique_media_file_language",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["media_file", "language"], name="idx_media_file_lang"),
+        ]
+
+    def __str__(self) -> str:
+        """String representation includes the language code and file name."""
+        return f"{self.language.code} - {self.media_file.filename}"

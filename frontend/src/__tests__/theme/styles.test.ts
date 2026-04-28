@@ -57,17 +57,17 @@ describe('theme/styles - createCommonStyles', () => {
     expect(cardBaseRecord['&:hover']).toBeDefined()
   })
 
-  it('gridContainer should use an auto-fit CSS grid with card-width tracks centered on each row', () => {
+  it('gridContainer should use an auto-fill CSS grid whose alignment follows the `--grid-align` custom property', () => {
     const commonStyles = createCommonStyles(lightTheme)
     const gridContainerSx = commonStyles.gridContainer as SxProps<Theme>
     const gridContainerRecord = gridContainerSx as Record<string, unknown>
 
     expect(gridContainerRecord.display).toBe('grid')
     expect(gridContainerRecord.gridTemplateColumns).toBe(
-      `repeat(auto-fit, min(${tokens.card.gridCardWidthPx}px, 100%))`,
+      `repeat(auto-fill, min(${tokens.card.gridCardWidthPx}px, 100%))`,
     )
     expect(gridContainerRecord.gap).toBe(tokens.spacing.numericLg)
-    expect(gridContainerRecord.justifyContent).toBe('center')
+    expect(gridContainerRecord.justifyContent).toBe('var(--grid-align, center)')
     expect(gridContainerRecord.alignItems).toBe('stretch')
   })
 
