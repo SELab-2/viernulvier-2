@@ -59,9 +59,20 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
     i18n.changeLanguage(language)
   }
 
-  // Home route is exact; others use prefix match for nested pages.
-  const isActive = (to: string) =>
-    to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
+  // Home route is exact; archive also covers compatibility production URLs.
+  const isActive = (to: string) => {
+    if (to === '/') {
+      return location.pathname === '/'
+    }
+
+    if (to === '/archive') {
+      return (
+        location.pathname.startsWith('/archive') || location.pathname.startsWith('/productions')
+      )
+    }
+
+    return location.pathname.startsWith(to)
+  }
 
   // Close mobile menu and clear route marker.
   const closeMobileMenu = () => {

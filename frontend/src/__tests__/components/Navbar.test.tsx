@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import '@testing-library/jest-dom/jest-globals'
 import { MemoryRouter } from 'react-router-dom'
 
 import Navbar from '../../components/Navbar'
@@ -40,6 +39,11 @@ describe('Navbar', () => {
     renderNavbar('/archive')
     expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('keeps Archive active on production detail routes', () => {
+    renderNavbar('/productions/123')
+    expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('shows target language and toggles to it when clicking the language button', () => {

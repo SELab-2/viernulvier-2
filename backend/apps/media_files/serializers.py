@@ -10,12 +10,32 @@ from apps.core.media_validation import (
     MAX_MEDIA_FILE_SIZE_BYTES,
     validate_media_file,
 )
+from apps.core.serializers import TranslatableSerializerMixin
 
 from .models import MediaFile
 
 
-class MediaFileSerializer(serializers.ModelSerializer):
-    """Read serializer for media files."""
+class MediaFileSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
+    """Read serializer for media files.
+
+    The ``description`` field returns all available translations as a
+    language-code dictionary.
+    """
+
+    description = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary of all available description translations for the media file "
+            '(e.g. {"nl": "Nederlandse brochure", "en": "English brochure"}). '
+            "Read-only - use the translation endpoints or admin to manage translations."
+        ),
+    )
+
+    display_description = serializers.SerializerMethodField(
+        help_text=(
+            "Description in the project's base language (derived from settings.LANGUAGE_CODE). "
+            "Falls back to the first available translation when missing."
+        ),
+    )
 
     class Meta:
         model = MediaFile
@@ -24,6 +44,7 @@ class MediaFileSerializer(serializers.ModelSerializer):
             "external_id",
             "file",
             "filename",
+            "display_description",
             "description",
             "mime_type",
             "size_bytes",
@@ -31,6 +52,14 @@ class MediaFileSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = fields
+
+    def get_description(self, obj: MediaFile) -> dict[str, str]:
+        """Return all available translations as a language-code dictionary."""
+        return self.get_translated_field(obj, "description")
+
+    def get_display_description(self, obj: MediaFile) -> str | None:
+        """Return the base-language description (with fallback)."""
+        return self.get_base_translated_value(obj, field_name="description")
 
 
 class MediaFileUploadSerializer(serializers.ModelSerializer):
@@ -43,16 +72,10 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
         help_text=(
-            "Binary file upload. Supported types: JPEG, PNG, WEBP, PDF. "
+            "Binary file upload. Supported types: JPEG, PNG, PDF. "
             "Validation: max 10 MB, binary signature verification (PDF %25PDF- header, image Pillow verify), "
             "content-type vs declared MIME mismatch detection, extension-MIME consistency check."
         ),
-    )
-    description = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        max_length=MediaFile._meta.get_field("description").max_length,
-        help_text="Optional contextual note about the content of the media file.",
     )
 
     class Meta:
@@ -62,7 +85,6 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
             "external_id",
             "file",
             "filename",
-            "description",
             "mime_type",
             "size_bytes",
             "file_type",
@@ -76,6 +98,13 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
             "file_type",
             "created_at",
         ]
+        extra_kwargs = {
+            "external_id": {
+                "help_text": "Optional external identifier for linking this media file to another system.",
+                "required": False,
+                "allow_null": True,
+            },
+        }
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         """Require a file on create, but allow metadata-only updates."""
@@ -101,7 +130,6 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
         instance = MediaFile(
             file=validated_data["file"],
             external_id=validated_data.get("external_id"),
-            description=validated_data.get("description", ""),
         )
         instance.full_clean()
         instance.save()
@@ -109,9 +137,8 @@ class MediaFileUploadSerializer(serializers.ModelSerializer):
 
     def update(self, instance: MediaFile, validated_data: dict[str, Any]) -> MediaFile:
         """Update file and editable metadata on an existing media file."""
-        for field in ("external_id", "description"):
-            if field in validated_data:
-                setattr(instance, field, validated_data[field])
+        if "external_id" in validated_data:
+            instance.external_id = validated_data["external_id"]
 
         if "file" in validated_data:
             instance.file = validated_data["file"]

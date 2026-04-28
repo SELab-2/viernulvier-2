@@ -27,7 +27,7 @@ export default ({ mode }) => {
           target: 'http://localhost:8000',
           changeOrigin: true,
         },
-        '/media': {
+        '^/media/.*': {
           target: 'http://localhost:8000',
           changeOrigin: true,
         },
