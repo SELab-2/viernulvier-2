@@ -1,6 +1,7 @@
 """
 Tests for PersistentSelectionMixin — covering lines 56-62, 71, 101.
 """
+
 import json
 from unittest.mock import patch
 
@@ -35,7 +36,7 @@ class TestPersistentSelectionMixin(TestCase):
         request.session = _make_session()
         return request
 
-    def _get_post_request(self, posted_ids=None, extra_data=None):
+    def _get_post_request(self, posted_ids=None):
         data = {ACTION_CHECKBOX_NAME: posted_ids or []}
 
         request = self.factory.post("/", data=data)
@@ -141,4 +142,3 @@ class TestPersistentSelectionMixin(TestCase):
         super_view.assert_called_once()
         assert self.admin._get_persisted_selected_ids(request) == {"1", "2"}
         assert json.loads(response.content) == {"ok": True}
-

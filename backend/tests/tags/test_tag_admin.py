@@ -107,6 +107,7 @@ class TestTagAdminConfiguration(TestCase):
     def test_inlines_contains_tag_production_inline(self) -> None:
         assert TagProductionInline in self.admin.inlines
 
+
 # ---------------------------------------------------------------------------
 # TagTranslationInline configuration
 # ---------------------------------------------------------------------------

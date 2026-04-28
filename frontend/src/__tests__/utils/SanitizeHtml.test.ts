@@ -38,7 +38,9 @@ describe('sanitizeHtml', () => {
     const input =
       '&lt;p&gt;&lt;img src="https://example.com/x.png" alt="pic" width="100" height="80" /&gt;&lt;/p&gt;'
     const output = sanitizeHtml(input)
-    expect(output).toBe('<p><img src="https://example.com/x.png" alt="pic" width="100" height="80"></p>')
+    expect(output).toBe(
+      '<p><img src="https://example.com/x.png" alt="pic" width="100" height="80"></p>',
+    )
   })
 
   it('allows safe inline formatting tags', () => {

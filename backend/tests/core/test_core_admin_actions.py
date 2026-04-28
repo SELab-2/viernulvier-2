@@ -21,9 +21,8 @@ class _DummyPersistentSelectionAdmin(BaseAdmin):
     actions = ("remember_selected",)
 
     @admin.action(description="Remember selected")
-    def remember_selected(self, request, queryset):
-        self.captured_ids = sorted(list(queryset.values_list("id", flat=True)))
-        return None
+    def remember_selected(self, _request, queryset):
+        self.captured_ids = sorted(queryset.values_list("id", flat=True))
 
 
 class DummyForm(forms.Form):
