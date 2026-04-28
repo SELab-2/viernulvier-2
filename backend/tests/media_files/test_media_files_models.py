@@ -130,8 +130,8 @@ class TestMediaFileModel:
 
     def test_media_file_meta_configuration(self) -> None:
         assert MediaFile._meta.db_table == "media_file"
-        assert MediaFile._meta.verbose_name == "Media file"
-        assert MediaFile._meta.verbose_name_plural == "Media files"
+        assert MediaFile._meta.verbose_name == "Media File"
+        assert MediaFile._meta.verbose_name_plural == "Media Files"
         assert list(MediaFile._meta.ordering) == ["-created_at"]
 
     def test_str_returns_filename(self) -> None:
@@ -239,8 +239,8 @@ class TestMediaFileModel:
 class TestMediaFileTranslationModel:
     def test_translation_meta_configuration(self) -> None:
         assert MediaFileTranslation._meta.db_table == "media_file_translation"
-        assert MediaFileTranslation._meta.verbose_name == "Media file translation"
-        assert MediaFileTranslation._meta.verbose_name_plural == "Media file translations"
+        assert MediaFileTranslation._meta.verbose_name == "Media File Translation"
+        assert MediaFileTranslation._meta.verbose_name_plural == "Media File Translations"
         assert list(MediaFileTranslation._meta.ordering) == ["language__code"]
 
     def test_description_max_length_constant_matches_translation_field(self) -> None:
