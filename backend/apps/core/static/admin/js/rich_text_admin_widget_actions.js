@@ -48,15 +48,36 @@
         api.toggleInlineTag(editor, 'A', { href: href });
     };
 
-    // Apply a block tag (H3 or P) to the current block element.
+    // Apply a block tag (H2/H3/H4 or P) to the current block element.
     api.formatCurrentBlock = function formatCurrentBlock(editor, tagName) {
         var currentBlock = api.getCurrentBlockElement(editor);
+        var selection = window.getSelection ? window.getSelection() : null;
+        var range;
+        var caretOffset = null;
+        var replacement;
 
         if (!currentBlock) {
+            if (!selection || selection.rangeCount === 0) {
+                return;
+            }
+
+            range = selection.getRangeAt(0);
+            if (!editor.contains(range.commonAncestorContainer)) {
+                return;
+            }
+
             currentBlock = document.createElement('p');
-            currentBlock.innerHTML = editor.innerHTML || '&nbsp;';
-            editor.innerHTML = '';
-            editor.appendChild(currentBlock);
+
+            if (range.collapsed) {
+                currentBlock.innerHTML = '&nbsp;';
+                range.insertNode(currentBlock);
+            } else {
+                var content = range.extractContents();
+                currentBlock.appendChild(content);
+                range.insertNode(currentBlock);
+            }
+
+            api.setCaretInsideElement(currentBlock);
         }
 
         if (currentBlock.tagName === tagName) {
@@ -67,7 +88,14 @@
             currentBlock = currentBlock.parentElement;
         }
 
-        api.replaceElementTagName(currentBlock, tagName);
+        caretOffset = api.getCaretOffset(editor, currentBlock);
+        replacement = api.replaceElementTagName(currentBlock, tagName);
+
+        if (caretOffset !== null) {
+            api.setCaretAtOffset(replacement, caretOffset);
+        } else {
+            api.setCaretInsideElement(replacement);
+        }
     };
 
     // Convert list items back into paragraphs.
@@ -101,6 +129,7 @@
         var currentList = api.getCurrentListElement(editor);
         var currentBlock = api.getCurrentBlockElement(editor);
 
+        // If we are already in a list: either unwrap or change type
         if (currentList) {
             if (currentList.tagName === listTagName) {
                 api.unwrapList(currentList);
@@ -110,35 +139,27 @@
             return;
         }
 
+        // If we don't have a block element at the cursor position, we need to create one to wrap in a list.
         if (!currentBlock) {
-            currentBlock = document.createElement('p');
-            currentBlock.innerHTML = editor.innerHTML || '&nbsp;';
-            editor.innerHTML = '';
-            editor.appendChild(currentBlock);
+            var sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                var range = sel.getRangeAt(0);
+                currentBlock = document.createElement('p');
+                
+                if (range.collapsed) {
+                    currentBlock.innerHTML = '<br>';
+                    range.insertNode(currentBlock);
+                } else {
+                    currentBlock.appendChild(range.extractContents());
+                    range.insertNode(currentBlock);
+                }
+            }
         }
 
-        api.wrapCurrentBlockInList(currentBlock, listTagName);
+        // If we have a block element at the cursor position, wrap it in a list.
+        if (currentBlock) {
+            api.wrapCurrentBlockInList(currentBlock, listTagName);
+        }
     };
 
-    // Remove formatting by replacing the selected fragment with plain text.
-    api.clearFormatting = function clearFormatting(editor) {
-        var selection = window.getSelection ? window.getSelection() : null;
-        var range;
-        var text;
-
-        if (!selection || selection.rangeCount === 0) {
-            return;
-        }
-
-        range = selection.getRangeAt(0);
-        if (!editor.contains(range.commonAncestorContainer) || range.collapsed) {
-            return;
-        }
-
-        // Strip the selected fragment down to plain text without depending on browser commands.
-        text = range.toString();
-        range.deleteContents();
-        range.insertNode(document.createTextNode(text));
-        api.selectNodeContents(range.endContainer.parentElement || editor);
-    };
 })(window);

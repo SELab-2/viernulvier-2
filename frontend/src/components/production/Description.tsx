@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 
 import { tokens } from '../../theme/tokens'
 import HtmlText from '../HtmlText'
+import { sanitizeHtml, forbidImagesRule, forbidEmbedsRule, sanitizeImagesStrictRule } from '../../utils/SanitizeHtml'
+
 
 interface DescriptionProps {
   teaser: string
@@ -25,7 +27,7 @@ export default function Description({ teaser, description }: DescriptionProps) {
     >
       {teaser && (
         <HtmlText
-          html={teaser}
+          html={sanitizeHtml(teaser, [forbidImagesRule, forbidEmbedsRule])}
           variant="body1"
           component="div"
           sx={{
@@ -40,7 +42,7 @@ export default function Description({ teaser, description }: DescriptionProps) {
 
       {description ? (
         <HtmlText
-          html={description}
+          html={sanitizeHtml(description, [sanitizeImagesStrictRule])}
           variant="body2"
           component="div"
           sx={{

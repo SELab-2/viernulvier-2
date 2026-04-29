@@ -8,6 +8,7 @@ import { formatDate } from '../../utils/dateUtils'
 import { getTranslatedRecord } from '../../utils/translations'
 import HtmlText from '../HtmlText'
 import ImageWithFallback from '../ImageWithFallback'
+import { sanitizeHtml, forbidImagesRule, forbidEmbedsRule } from '../../utils/SanitizeHtml'
 
 import type { Series } from '../../types/Series'
 
@@ -99,7 +100,7 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
 
           {description ? (
             <HtmlText
-              html={description}
+              html={sanitizeHtml(description, [forbidImagesRule, forbidEmbedsRule])}
               variant="body2"
               component="div"
               sx={{

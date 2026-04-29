@@ -55,7 +55,11 @@ class AddGenreToProductionsForm(forms.Form):
 # ===========================================================================
 
 
-@enable_rich_text_for_fields("teaser", "description")
+@enable_rich_text_for_fields(
+    "teaser",
+    "description",
+    widget_attrs={"data-richtext-headings": "h1,h2,h3,h4"},
+)
 class ProductionTranslationInline(admin.StackedInline):
     """
     Inline for editing localised text fields directly inside the

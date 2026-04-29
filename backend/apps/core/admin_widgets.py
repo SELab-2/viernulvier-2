@@ -19,6 +19,7 @@ class RichTextAdminWidget(forms.Textarea):
     def __init__(self, attrs: dict[str, Any] | None = None) -> None:
         base_attrs = {
             "data-richtext-editor": "1",
+            "data-richtext-headings": "h1,h2,h3,h4",
             "class": "vLargeTextField richtext-admin-input",
         }
         if attrs:

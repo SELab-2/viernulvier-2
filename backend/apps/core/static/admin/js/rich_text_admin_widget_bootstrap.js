@@ -37,7 +37,7 @@
         return button;
     }
 
-    // Update toolbar active states based on the current DOM selection.
+        // Update toolbar active states based on the current DOM selection.
     function updateToolbarState(toolbar, editor) {
         var activeBlock = api.getCurrentBlockElement(editor);
         var activeList = api.getCurrentListElement(editor);
@@ -59,10 +59,9 @@
                 isActive = isUnderlineActive;
             } else if (command === 'link') {
                 isActive = isLinkActive;
-            } else if (command === 'heading-h3') {
-                isActive = !!activeBlock && activeBlock.tagName === 'H3';
-            } else if (command === 'paragraph') {
-                isActive = !!activeBlock && activeBlock.tagName === 'P';
+            } else if (command.indexOf('heading-') === 0) {
+                var headingTag = command.replace('heading-', '').toUpperCase();
+                isActive = !!activeBlock && activeBlock.tagName === headingTag;
             } else if (command === 'bullet-list') {
                 isActive = !!activeList && activeList.tagName === 'UL';
             } else if (command === 'numbered-list') {
@@ -107,10 +106,15 @@
                 api.toggleInlineTag(editor, 'I');
             } else if (command === 'underline') {
                 api.toggleInlineTag(editor, 'U');
-            } else if (command === 'heading-h3') {
-                api.formatCurrentBlock(editor, 'H3');
-            } else if (command === 'paragraph') {
-                api.formatCurrentBlock(editor, 'P');
+            } else if (command.indexOf('heading-') === 0) {
+                var targetTag = command.replace('heading-', '').toUpperCase();
+                var activeBlock = api.getCurrentBlockElement(editor);
+
+                if (activeBlock && activeBlock.tagName === targetTag) {
+                    api.formatCurrentBlock(editor, 'P');
+                } else {
+                    api.formatCurrentBlock(editor, targetTag);
+                }
             } else if (command === 'bullet-list') {
                 api.toggleList(editor, 'UL');
             } else if (command === 'numbered-list') {
@@ -136,12 +140,21 @@
         toolbar.appendChild(createToolbarButton('U', 'Underline', 'underline', function () {
             applyCommand('underline');
         }));
-        toolbar.appendChild(createToolbarButton('H3', 'Heading', 'heading-h3', function () {
-            applyCommand('heading-h3');
-        }));
-        toolbar.appendChild(createToolbarButton('P', 'Paragraph', 'paragraph', function () {
-            applyCommand('paragraph');
-        }));
+        var headingConfig = textarea.dataset.richtextHeadings;
+        if (!headingConfig || !headingConfig.trim()) {
+            headingConfig = 'h1,h2,h3,h4';
+        }
+        var headingTags = headingConfig.split(',').map(function (tag) {
+            return tag.trim().toLowerCase();
+        }).filter(Boolean);
+
+        headingTags.forEach(function (tag) {
+            var label = tag.toUpperCase();
+            var command = 'heading-' + tag;
+            toolbar.appendChild(createToolbarButton(label, 'Heading ' + label, command, function () {
+                applyCommand(command);
+            }));
+        });
         toolbar.appendChild(createToolbarButton('UL', 'Bullet list', 'bullet-list', function () {
             applyCommand('bullet-list');
         }));
@@ -151,13 +164,14 @@
         toolbar.appendChild(createToolbarButton('Link', 'Insert link', 'link', function () {
             applyCommand('link');
         }));
-        toolbar.appendChild(createToolbarButton('Clean', 'Remove formatting', 'clean', function () {
-            applyCommand('clean');
-        }));
 
-        editor.innerHTML = api.looksLikeHtml(textarea.value) || api.looksLikeEscapedHtml(textarea.value)
-            ? api.buildPreviewHtml(textarea.value)
-            : api.escapeHtml(textarea.value);
+        if (api.looksLikeHtml(textarea.value)) {
+            editor.innerHTML = api.buildPreviewHtml(textarea.value);
+        } else if (api.looksLikeEscapedHtml(textarea.value)) {
+            editor.innerHTML = api.decodeHtmlEntities(textarea.value);
+        } else {
+            editor.innerHTML = api.escapeHtml(textarea.value);
+        }
 
         // Normalize pasted HTML while letting plain text fall back to the browser.
         editor.addEventListener('paste', function (event) {

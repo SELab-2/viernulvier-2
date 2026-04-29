@@ -9,6 +9,7 @@ import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
 import { formatBlogPublishedDate } from '../utils/blogs'
 import { getTranslatedRecord } from '../utils/translations'
+import { sanitizeHtml, forbidImagesRule, forbidEmbedsRule } from '../utils/SanitizeHtml'
 
 import type { Blog } from '../types/Blogs'
 
@@ -71,7 +72,7 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
             {title}
           </Typography>
           <HtmlText
-            html={excerpt}
+            html={sanitizeHtml(excerpt, [forbidImagesRule, forbidEmbedsRule])}
             variant="body2"
             component="div"
             fallback={t('blogs.home.noExcerpt')}
