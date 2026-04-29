@@ -16,8 +16,8 @@ import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
-import { getTranslatedRecord } from '../utils/translations'
 import { sanitizeHtml, sanitizeImagesStrictRule } from '../utils/SanitizeHtml'
+import { getTranslatedRecord } from '../utils/translations'
 
 import type { Production } from '../types/Productions'
 import type { Tag } from '../types/Tags'
@@ -152,7 +152,10 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
           ]}
         />
 
-        <SeriesHeader name={seriesName} description={sanitizeHtml(seriesDescription, [sanitizeImagesStrictRule])} />
+        <SeriesHeader
+          name={seriesName}
+          description={sanitizeHtml(seriesDescription, [sanitizeImagesStrictRule])}
+        />
         <SeriesStats stats={stats} />
         <Divider />
 

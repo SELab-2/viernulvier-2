@@ -1,4 +1,4 @@
-import DOMPurify, { Config } from 'dompurify'
+import DOMPurify, { type Config } from 'dompurify'
 
 /**
  * A composable rule that mutates / extends a DOMPurify config.
@@ -16,9 +16,7 @@ export type SanitizeHtmlRule = (config: Config) => Config
  *
  * into a string[] so we can safely spread and extend it without errors.
  */
-function asArray(
-  value: string[] | ((...args: any[]) => boolean) | undefined,
-): string[] {
+function asArray(value: string[] | ((...args: unknown[]) => boolean) | undefined): string[] {
   return Array.isArray(value) ? value : []
 }
 
@@ -45,15 +43,7 @@ const defaultRules: SanitizeHtmlRule[] = [
   (config) => ({
     ...config,
     ADD_TAGS: [...asArray(config.ADD_TAGS), 'img'],
-    ADD_ATTR: [
-      ...asArray(config.ADD_ATTR),
-      'alt',
-      'height',
-      'src',
-      'style',
-      'title',
-      'width',
-    ],
+    ADD_ATTR: [...asArray(config.ADD_ATTR), 'alt', 'height', 'src', 'style', 'title', 'width'],
   }),
 
   (config) => ({
@@ -87,19 +77,13 @@ export const forbidImagesRule: SanitizeHtmlRule = (config) => ({
 })
 
 /*
-* Rule that forces all `<img>` tags to have no styling or dimensions, so they render as simple elements.
-* This is used to fix a bug where images get rendered next to the text, disturbing the layout.
-*/
+ * Rule that forces all `<img>` tags to have no styling or dimensions, so they render as simple elements.
+ * This is used to fix a bug where images get rendered next to the text, disturbing the layout.
+ */
 export const sanitizeImagesStrictRule: SanitizeHtmlRule = (config) => ({
   ...config,
 
-  FORBID_ATTR: [
-    ...asArray(config.FORBID_ATTR),
-    'style',
-    'width',
-    'height',
-    'align',
-  ],
+  FORBID_ATTR: [...asArray(config.FORBID_ATTR), 'style', 'width', 'height', 'align'],
 })
 
 /**
@@ -111,7 +95,6 @@ export const forbidEmbedsRule: SanitizeHtmlRule = (config) => ({
   ...config,
   FORBID_TAGS: [...asArray(config.FORBID_TAGS), 'iframe'],
 })
-
 
 function decodeHtmlEntities(html: string): string {
   const element = document.createElement('textarea')
@@ -140,13 +123,8 @@ function looksLikeEscapedHtml(html: string): boolean {
  * @param extraRules Optional additional rules applied after the default rules.
  * @returns Cleaned HTML string safe to inject into the React DOM.
  */
-export function sanitizeHtml(
-  html: string,
-  extraRules: SanitizeHtmlRule[] = [],
-): string {
-  const normalizedHtml = looksLikeEscapedHtml(html)
-    ? decodeHtmlEntities(html)
-    : html
+export function sanitizeHtml(html: string, extraRules: SanitizeHtmlRule[] = []): string {
+  const normalizedHtml = looksLikeEscapedHtml(html) ? decodeHtmlEntities(html) : html
 
   let config: Config = {}
 

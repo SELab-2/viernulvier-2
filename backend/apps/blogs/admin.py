@@ -63,7 +63,9 @@ class BlogAdmin(BaseAdmin):
         "translations__body",
     )
     ordering = ("-published_at", "-id")
+
     inlines = [BlogTranslationInline, BlogProductionInline]
+    autocomplete_fields = ("productions",)
 
     fieldsets = (
         (

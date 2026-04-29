@@ -5,10 +5,10 @@ import { Link as RouterLink } from 'react-router-dom'
 
 import { tokens } from '../../theme/tokens'
 import { formatDate } from '../../utils/dateUtils'
+import { sanitizeHtml, forbidImagesRule, forbidEmbedsRule } from '../../utils/SanitizeHtml'
 import { getTranslatedRecord } from '../../utils/translations'
 import HtmlText from '../HtmlText'
 import ImageWithFallback from '../ImageWithFallback'
-import { sanitizeHtml, forbidImagesRule, forbidEmbedsRule } from '../../utils/SanitizeHtml'
 
 import type { Series } from '../../types/Series'
 

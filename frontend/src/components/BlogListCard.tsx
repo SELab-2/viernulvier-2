@@ -8,9 +8,8 @@ import HtmlText from './HtmlText'
 import ImageWithFallback from './ImageWithFallback'
 import { tokens } from '../theme/tokens'
 import { formatBlogPublishedDate } from '../utils/blogs'
-import { getTranslatedRecord } from '../utils/translations'
 import { sanitizeHtml, forbidImagesRule, forbidEmbedsRule } from '../utils/SanitizeHtml'
-
+import { getTranslatedRecord } from '../utils/translations'
 
 import type { Blog } from '../types/Blogs'
 

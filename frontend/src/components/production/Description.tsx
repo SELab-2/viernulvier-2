@@ -2,9 +2,13 @@ import { Box, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
 import { tokens } from '../../theme/tokens'
+import {
+  sanitizeHtml,
+  forbidImagesRule,
+  forbidEmbedsRule,
+  sanitizeImagesStrictRule,
+} from '../../utils/SanitizeHtml'
 import HtmlText from '../HtmlText'
-import { sanitizeHtml, forbidImagesRule, forbidEmbedsRule, sanitizeImagesStrictRule } from '../../utils/SanitizeHtml'
-
 
 interface DescriptionProps {
   teaser: string

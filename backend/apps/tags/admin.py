@@ -17,14 +17,15 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin
-from apps.productions.models import ProductionTag
 from apps.core.admin_widgets import enable_rich_text_for_fields
+from apps.productions.models import ProductionTag
 
 from .models import Tag, TagTranslation
 
 # ===========================================================================
 # Inline
 # ===========================================================================
+
 
 @enable_rich_text_for_fields(
     "short_description",
