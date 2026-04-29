@@ -120,6 +120,8 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     fetchProduction()
   }, [id, navigate, t])
 
+  console.log('ProductionDetailContent render', { prod })
+
   // If the page is still loading, show a full-page skeleton.
   if (loading) {
     return <ProductionDetailPageSkeleton />

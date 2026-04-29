@@ -79,6 +79,8 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     fetchBlog()
   }, [id, navigate, t])
 
+  console.log('BlogDetailContent render', { blog })
+
   if (loading) {
     return <BlogDetailPageSkeleton />
   }
