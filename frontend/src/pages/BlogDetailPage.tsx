@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useLocation, useParams, useNavigate } from 'react-router-dom'
 
 import BlogDetailPageSkeleton from './BlogDetailPageSkeleton'
 import ImageWithFallback from '../components/ImageWithFallback'
@@ -12,6 +12,7 @@ import { getBlog } from '../services/blogs/Blogs'
 import { tokens } from '../theme/tokens'
 import { formatBlogPublishedDate } from '../utils/blogs'
 import { getLocalizedValue } from '../utils/localization'
+import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 
 import type { Blog } from '../types/Blogs'
 
@@ -30,8 +31,15 @@ type BlogDetailContentProps = {
 
 const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { i18n, t } = useTranslation()
   const lang = i18n.language
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const blogsPath = toLocalizedPath('/blogs', currentLanguage)
 
   const [blog, setBlog] = useState<Blog | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
@@ -45,7 +53,7 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
       const errMsg = t('blog.invalidId', 'Invalid blog ID')
-      navigate('/blogs', {
+      navigate(blogsPath, {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
       return
@@ -53,7 +61,7 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
 
     const handleError = () => {
       const errMsg = t('blog.couldNotLoad', 'Could not load blog')
-      navigate('/blogs', {
+      navigate(blogsPath, {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
     }
@@ -77,7 +85,7 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     }
 
     fetchBlog()
-  }, [id, navigate, t])
+  }, [blogsPath, id, navigate, t])
 
   if (loading) {
     return <BlogDetailPageSkeleton />

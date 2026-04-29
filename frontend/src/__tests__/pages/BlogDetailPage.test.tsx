@@ -58,7 +58,7 @@ describe('BlogDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/blogs', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl/blogs', {
         state: {
           floatingAlert: {
             open: true,
@@ -123,7 +123,7 @@ describe('BlogDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/blogs', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl/blogs', {
         state: {
           floatingAlert: {
             open: true,
@@ -142,7 +142,7 @@ describe('BlogDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/blogs', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl/blogs', {
         state: {
           floatingAlert: {
             open: true,

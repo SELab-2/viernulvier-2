@@ -2,10 +2,11 @@ import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { tokens } from '../../theme/tokens'
 import { getProductionDateLabel } from '../../utils/dateUtils'
+import { resolveCurrentLanguage, toLocalizedPath } from '../../utils/localizedRoutes'
 import { getTranslatedRecord } from '../../utils/translations'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
 import ImageWithFallback from '../ImageWithFallback'
@@ -15,6 +16,7 @@ import type { Production } from '../../types/Productions'
 export interface ProductionListCardProps {
   production: Production
   selectedGenreIds?: number[]
+  selectedTagIds?: number[]
 }
 
 /**
@@ -32,9 +34,21 @@ export interface ProductionListCardProps {
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
  * @returns The list row element.
  */
-const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCardProps) => {
+const ProductionListCard = ({
+  production,
+  selectedGenreIds,
+  selectedTagIds,
+}: ProductionListCardProps) => {
   const { i18n } = useTranslation()
+  const location = useLocation()
+  const navigate = useNavigate()
   const { language } = i18n
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const detailPath = toLocalizedPath(`/productions/${production.id}`, currentLanguage)
 
   const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url
   const title = getTranslatedRecord(production.title, language, production.display_title)
@@ -53,9 +67,19 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
 
   return (
     <Stack
-      component={RouterLink}
-      to={`/productions/${production.id}`}
       direction="row"
+      role="link"
+      tabIndex={0}
+      data-to={detailPath}
+      onClick={() => {
+        navigate(detailPath)
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          navigate(detailPath)
+        }
+      }}
       sx={(theme) => ({
         gap: 3,
         height: 170,
@@ -66,6 +90,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
         border: `1px solid ${theme.palette.divider}`,
         textDecoration: 'none',
         transition: 'box-shadow 0.2s ease',
+        cursor: 'pointer',
         '&:hover': {
           boxShadow: theme.shadows[3],
         },
@@ -135,6 +160,7 @@ const ProductionListCard = ({ production, selectedGenreIds }: ProductionListCard
                   chipType="seriesTag"
                   context="series"
                   id={tag.id}
+                  selected={selectedTagIds?.includes(tag.id) || false}
                 />
               ))}
               {genres.map((genre) => (

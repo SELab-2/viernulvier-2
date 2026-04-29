@@ -21,6 +21,7 @@ import LoadingSpinner from './LoadingSpinner'
 import Pagination from './Pagination'
 import { tokens } from '../theme/tokens'
 import SearchControlsBar from './searchbar/SearchControlsBar'
+import { DarkMode } from '../types/Theme'
 
 import type { SearchSortDirection, SearchSortTarget, SearchViewMode } from './searchbar/types'
 
@@ -188,7 +189,7 @@ const CollectionPageLayout = ({
             '&:hover': {
               borderColor: 'text.primary',
               backgroundColor:
-                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                theme.palette.mode === DarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
             },
           }}
         >
