@@ -1,4 +1,4 @@
-import {sanitizeHtml} from '../../utils/SanitizeHtml'
+import { sanitizeHtml } from '../../utils/SanitizeHtml'
 
 describe('sanitizeHtml', () => {
   it('returns empty string for empty input', () => {
