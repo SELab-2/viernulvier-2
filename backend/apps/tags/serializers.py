@@ -76,6 +76,13 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "Falls back to the first available translation when missing."
         ),
     )
+        image = serializers.SerializerMethodField(
+            help_text=(
+                "URL of the uploaded image for this tag. "
+                "If not set, falls back to the image of the most recent production using this tag. "
+                "Read-only."
+            ),
+        )
 
     class Meta:
         model = Tag
@@ -85,6 +92,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "source",
             "type",
             "is_enabled",
+            "image",
             "display_name",
             "display_short_description",
             "display_url_title",

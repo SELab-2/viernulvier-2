@@ -16,6 +16,14 @@ from apps.core.models import BaseModel
 from apps.languages.models import Language
 
 
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
+from apps.core.media_validation import (
+    ALLOWED_IMAGE_MIME_TYPES,
+    MAX_MEDIA_FILE_SIZE_BYTES,
+    validate_media_file,
+)
+
 class Tag(BaseModel):
     """A classification label that can be attached to one or more productions.
 
@@ -57,6 +65,28 @@ class Tag(BaseModel):
         help_text="Internal category of the tag used for grouping (e.g. `theme`, `audience`).",
         db_comment="Type/category of the tag.",
     )
+
+    image = models.ImageField(
+        upload_to="tag_images/",
+        null=True,
+        blank=True,
+        help_text="Upload an image for this tag.",
+        db_comment="Optional image for the tag.",
+    )
+
+    def clean(self) -> None:
+        """Validate uploaded image files."""
+        super().clean()
+        uploaded_image = getattr(self.image, "_file", None)
+        if isinstance(uploaded_image, UploadedFile):
+            try:
+                validate_media_file(
+                    uploaded_image,
+                    allowed_mime_types=ALLOWED_IMAGE_MIME_TYPES,
+                    max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
+                )
+            except ValueError as exc:
+                raise ValidationError({"image": str(exc)}) from exc
 
     class Meta(BaseModel.Meta):
         db_table = "tag"
@@ -110,6 +140,14 @@ class TagTranslation(BaseModel):
         max_length=255,
         help_text="Localised display name of the tag (e.g. `Contemporary`, `Family friendly`).",
         db_comment="The name of the tag in the specified language.",
+    )
+
+
+    excerpt = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Optional short excerpt or summary of the tag in this language.",
+        db_comment="Translated excerpt.",
     )
 
     short_description = models.TextField(
