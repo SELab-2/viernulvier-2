@@ -2,13 +2,14 @@ import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 import HtmlText from './HtmlText'
 import ImageWithFallback from './ImageWithFallback'
 import { tokens } from '../theme/tokens'
 import { formatBlogPublishedDate } from '../utils/blogs'
 import { sanitizeHtml, forbidImagesRule, forbidEmbedsRule } from '../utils/SanitizeHtml'
+import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 import { getTranslatedRecord } from '../utils/translations'
 
 import type { Blog } from '../types/Blogs'
@@ -19,7 +20,14 @@ export interface BlogListCardProps {
 
 const BlogListCard = ({ blog }: BlogListCardProps) => {
   const { i18n, t } = useTranslation()
+  const location = useLocation()
   const { language } = i18n
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const detailPath = toLocalizedPath(`/blogs/${blog.id}`, currentLanguage)
 
   const title =
     getTranslatedRecord(blog.title, language, blog.display_title) ||
@@ -30,7 +38,7 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
   return (
     <Stack
       component={RouterLink}
-      to={`/blogs/${blog.id}`}
+      to={detailPath}
       direction="row"
       sx={(theme) => ({
         gap: 3,

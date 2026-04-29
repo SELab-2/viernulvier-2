@@ -36,21 +36,23 @@ describe('Navbar', () => {
   })
 
   it('marks the active route with aria-current="page"', () => {
-    renderNavbar('/archive')
+    renderNavbar('/nl/archief')
     expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current')
   })
 
   it('keeps Archive active on production detail routes', () => {
-    renderNavbar('/productions/123')
+    renderNavbar('/nl/productions/123')
     expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('shows target language and toggles to it when clicking the language button', () => {
     renderNavbar()
     const langButton = screen.getByTestId('language-toggle-inline')
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/nl')
     expect(langButton).toHaveTextContent('EN')
     fireEvent.click(langButton)
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/en')
     expect(screen.getByTestId('language-toggle-inline')).toHaveTextContent('NL')
   })
 

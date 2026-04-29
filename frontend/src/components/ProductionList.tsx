@@ -6,6 +6,7 @@ import type { Production } from '../types/Productions'
 export interface ProductionListProps {
   productions: Production[]
   selectedGenreIds?: number[]
+  selectedTagIds?: number[]
 }
 
 /**
@@ -18,13 +19,17 @@ export interface ProductionListProps {
  * @param props.selectedGenreIds Genre ids currently active in the parent filter state.
  * @returns The list container element.
  */
-const ProductionList = ({ productions, selectedGenreIds }: ProductionListProps) => {
+const ProductionList = ({ productions, selectedGenreIds, selectedTagIds }: ProductionListProps) => {
   return (
     <GenericList
       items={productions}
       getKey={(production) => production.id}
       renderItem={(production) => (
-        <ProductionListCard production={production} selectedGenreIds={selectedGenreIds} />
+        <ProductionListCard
+          production={production}
+          selectedGenreIds={selectedGenreIds}
+          selectedTagIds={selectedTagIds}
+        />
       )}
     />
   )

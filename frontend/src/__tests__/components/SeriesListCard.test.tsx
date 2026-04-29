@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 import SeriesListCard from '../../components/series/SeriesListCard'
 import i18n from '../../i18n'
+import { toLocalizedPath } from '../../utils/localizedRoutes'
 
 import type { Series } from '../../types/Series'
 
@@ -55,7 +56,7 @@ describe('SeriesListCard', () => {
     expect(screen.getByRole('heading', { name: 'Reeks Alpha' })).toBeInTheDocument()
     expect(screen.getByText('Een reeks voor testing')).toBeInTheDocument()
     expect(screen.getByText('1 jan 2026 - 31 jan 2026')).toBeInTheDocument()
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/series/10')
+    expect(screen.getByRole('link')).toHaveAttribute('href', toLocalizedPath('/series/10', 'nl'))
     expect(screen.getByRole('img', { name: 'Reeks Alpha' })).toHaveAttribute(
       'src',
       'https://example.test/series.jpg',

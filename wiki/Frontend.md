@@ -103,19 +103,27 @@ The current design system uses **ABC Monument Grotesk** from `public/fonts/`.
 
 Routes are defined in `frontend/src/router.tsx`.
 
+The SPA uses a language segment as the first URL part (`/nl/...` or `/en/...`).
+The active UI language is derived from that segment.
+Unprefixed URLs are redirected to a localized path.
+When possible, the language is inferred from the typed slug (for example `/archive` -> `/en/archive`, `/archief` -> `/nl/archief`).
+If no slug-specific inference is possible, the app falls back to the current/default language.
+Within that segment, Dutch routes use translated slugs where available (for example `/nl/archief` and `/nl/reeksen`).
+
 | Route | Component | Notes |
 | --- | --- | --- |
-| `/` | `HomePage` | Landing page with archive search and stats |
-| `/archive` | `ProductionsPage` | Canonical archive listing route |
-| `/productions` | redirect to `/archive` | Compatibility alias |
-| `/productions/:id` | `ProductionDetailPage` | Production detail page |
-| `/series` | `SeriesPage` | Series overview |
-| `/series/:id` | `SeriesDetailPage` | Series detail page |
-| `/blogs` | `BlogsPage` | Stories/blog listing |
-| `/blogs/:id` | `BlogDetailPage` | Story detail page |
-| `/media` | redirect to `/archive` | Temporary alias |
-| `/media/:id` | redirect to `/archive` | Temporary alias |
-| `*` | `NotFoundPage` | 404 fallback |
+| `/:lang` | `HomePage` | Language-aware landing page (`lang` is `nl` or `en`) |
+| `/:lang/archive` (EN), `/:lang/archief` (NL) | `ProductionsPage` | Canonical archive listing route per language |
+| `/:lang/productions` (EN), `/:lang/producties` (NL) | redirect to archive route | Compatibility alias |
+| `/:lang/productions/:id` (EN), `/:lang/producties/:id` (NL) | `ProductionDetailPage` | Production detail page |
+| `/:lang/series` (EN), `/:lang/reeksen` (NL) | `SeriesPage` | Series overview |
+| `/:lang/series/:id` (EN), `/:lang/reeksen/:id` (NL) | `SeriesDetailPage` | Series detail page |
+| `/:lang/blogs` | `BlogsPage` | Stories/blog listing |
+| `/:lang/blogs/:id` | `BlogDetailPage` | Story detail page |
+| `/:lang/media` | redirect to localized archive route | Temporary alias |
+| `/:lang/media/:id` | redirect to localized archive route | Temporary alias |
+| `/:lang/*` | `NotFoundPage` | 404 fallback |
+| `/` and unprefixed paths | redirect to localized path | Keeps old links working |
 
 The router also scrolls to top on route changes and renders shared `Navbar` + `Footer` around page content.
 

@@ -1,10 +1,11 @@
 import CloseIcon from '@mui/icons-material/Close'
 import { Box, Chip, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
 import { getQueryKeyForChipType } from './genreAndTagChipUtils'
+import { resolveCurrentLanguage, toLocalizedPath } from '../../utils/localizedRoutes'
 import { getTranslatedRecord } from '../../utils/translations'
 
 import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
@@ -40,16 +41,22 @@ const GenreAndTagChip = ({
 }: GenreAndTagChipProps) => {
   const theme = useTheme()
   const { i18n, t } = useTranslation()
+  const location = useLocation()
 
   const label = getTranslatedRecord(labels, i18n.language, name)
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
 
   const isClickable = context !== 'static'
   const isSearchContext = context === 'search'
   const linkTo =
     context === 'series'
-      ? `/series/${String(id)}`
+      ? toLocalizedPath(`/series/${String(id)}`, currentLanguage)
       : context === 'description'
-        ? `/archive?${getQueryKeyForChipType(chipType)}=${encodeURIComponent(String(id))}`
+        ? `${toLocalizedPath('/archive', currentLanguage)}?${getQueryKeyForChipType(chipType)}=${encodeURIComponent(String(id))}`
         : undefined
   const showSelectedIcon = context === 'search' && selected
 
@@ -64,6 +71,16 @@ const GenreAndTagChip = ({
     event.stopPropagation()
     onToggle?.(id, chipType)
   }
+
+  const handleLinkClick = (event: MouseEvent) => {
+    event.stopPropagation()
+  }
+
+  const chipOnClick = isSearchContext
+    ? handleSearchClick
+    : isClickable
+      ? handleLinkClick
+      : undefined
 
   return (
     <Chip
@@ -108,7 +125,7 @@ const GenreAndTagChip = ({
         </Box>
       }
       clickable={isClickable}
-      onClick={isSearchContext ? handleSearchClick : undefined}
+      onClick={chipOnClick}
       sx={getGenreAndTagChipStyles({ theme, selected, context, chipType })}
       aria-pressed={context === 'search' ? selected : undefined}
       aria-label={resolvedAriaLabel}

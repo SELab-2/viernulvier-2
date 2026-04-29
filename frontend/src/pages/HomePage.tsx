@@ -15,11 +15,12 @@ import {
 import { keyframes } from '@mui/material/styles'
 import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 
 import { getLandingStats, type LandingStatsResponse } from '../services/productions/Productions'
 import { createHomePageStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
+import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 
 // ─── Animations ────────────────────────────────────────────────────────────────
 
@@ -205,12 +206,19 @@ const TickerStrip = ({ items }: { items: string[] }) => {
 // ─── Page ───────────────────────────────────────────────────────────────────────
 
 const HomePage = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const theme = useTheme()
   const homepageStyles = createHomePageStyles(theme)
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchQuery, setSearchQuery] = useState('')
   const [archiveStats, setArchiveStats] = useState<LandingStatsResponse>(FALLBACK_ARCHIVE_STATS)
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const localizedPath = (path: string) => toLocalizedPath(path, currentLanguage)
 
   useEffect(() => {
     let isActive = true
@@ -243,9 +251,9 @@ const HomePage = () => {
   const handleSearch = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      navigate(`/archive?q=${encodeURIComponent(searchQuery.trim())}`)
+      navigate(`${localizedPath('/archive')}?q=${encodeURIComponent(searchQuery.trim())}`)
     } else {
-      navigate('/archive')
+      navigate(localizedPath('/archive'))
     }
   }
 
@@ -391,17 +399,27 @@ const HomePage = () => {
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
                   <Button
                     component={RouterLink}
-                    to="/archive"
+                    to={localizedPath('/archive')}
                     variant="contained"
                     size="large"
                     sx={{ fontWeight: 700 }}
                   >
                     {t('landing.hero.primaryCta')}
                   </Button>
-                  <Button component={RouterLink} to="/series" variant="outlined" size="large">
+                  <Button
+                    component={RouterLink}
+                    to={localizedPath('/series')}
+                    variant="outlined"
+                    size="large"
+                  >
                     {t('landing.hero.seriesCta')}
                   </Button>
-                  <Button component={RouterLink} to="/blogs" variant="outlined" size="large">
+                  <Button
+                    component={RouterLink}
+                    to={localizedPath('/blogs')}
+                    variant="outlined"
+                    size="large"
+                  >
                     {t('landing.hero.secondaryCta')}
                   </Button>
                   <Button
@@ -589,7 +607,7 @@ const HomePage = () => {
                 <Paper
                   key={card.to}
                   component={RouterLink}
-                  to={card.to}
+                  to={localizedPath(card.to)}
                   elevation={0}
                   sx={{
                     minHeight: 200,

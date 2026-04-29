@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 import ProductionList from '../../components/ProductionList'
 import i18n from '../../i18n'
+import { toLocalizedPath } from '../../utils/localizedRoutes'
 
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
@@ -102,8 +103,12 @@ describe('ProductionList', () => {
     renderList({ productions })
 
     const links = screen.getAllByRole('link')
-    expect(links.some((l) => l.getAttribute('href') === '/productions/10')).toBe(true)
-    expect(links.some((l) => l.getAttribute('href') === '/productions/20')).toBe(true)
+    expect(
+      links.some((l) => l.getAttribute('data-to') === toLocalizedPath('/productions/10', 'nl')),
+    ).toBe(true)
+    expect(
+      links.some((l) => l.getAttribute('data-to') === toLocalizedPath('/productions/20', 'nl')),
+    ).toBe(true)
   })
 
   it('forwards selectedGenreIds to every card', () => {

@@ -1,6 +1,8 @@
 import { Box, type BoxProps } from '@mui/material'
 import { useState } from 'react'
 
+import { DarkMode } from '../types/Theme'
+
 export type ImageWithFallbackProps = Omit<BoxProps<'img'>, 'component' | 'src' | 'alt'> & {
   src?: string | null
   alt: string
@@ -62,7 +64,7 @@ const ImageWithFallback = ({ src, alt, sx, onError, ...props }: ImageWithFallbac
           maxWidth: '42%',
           maxHeight: '42%',
           objectFit: 'contain',
-          filter: theme.palette.mode === 'dark' ? 'brightness(0) invert(1)' : undefined,
+          filter: theme.palette.mode === DarkMode ? 'brightness(0) invert(1)' : undefined,
           opacity: 0.55,
         })}
       />

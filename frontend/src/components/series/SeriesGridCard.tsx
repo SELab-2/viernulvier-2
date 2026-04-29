@@ -1,11 +1,12 @@
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 import { tokens } from '../../theme/tokens'
 import { formatDate } from '../../utils/dateUtils'
 import { sanitizeHtml, forbidImagesRule, forbidEmbedsRule } from '../../utils/SanitizeHtml'
+import { resolveCurrentLanguage, toLocalizedPath } from '../../utils/localizedRoutes'
 import { getTranslatedRecord } from '../../utils/translations'
 import HtmlText from '../HtmlText'
 import ImageWithFallback from '../ImageWithFallback'
@@ -34,7 +35,14 @@ const getLocalizedSeriesDescription = (series: Series, language: string): string
 
 const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
   const { i18n } = useTranslation()
+  const location = useLocation()
   const { language } = i18n
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const detailPath = toLocalizedPath(`/series/${series.tag.id}`, currentLanguage)
 
   const title = getLocalizedSeriesName(series, language)
   const description = getLocalizedSeriesDescription(series, language)
@@ -53,7 +61,7 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
     // Render the series as a compact card-sized link.
     <Stack
       component={RouterLink}
-      to={`/series/${series.tag.id}`}
+      to={detailPath}
       sx={(theme) => ({
         width: '100%',
         maxWidth: tokens.card.gridCardWidthPx,
