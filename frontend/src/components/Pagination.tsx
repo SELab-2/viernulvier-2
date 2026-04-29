@@ -5,7 +5,7 @@ import {
   NavigateNext as NextIcon,
 } from '@mui/icons-material'
 import { Box, IconButton, OutlinedInput, Typography } from '@mui/material'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export interface PaginationProps {
@@ -46,17 +46,9 @@ const Pagination = ({
   const hasPagination = totalPages > 1
   const activePage = hasPagination ? Math.min(Math.max(page, 1), totalPages) : 1
 
-  // Keep a local draft while editing and show canonical active page otherwise.
   const [inputDraft, setInputDraft] = useState('')
-  const [isEditingInput, setIsEditingInput] = useState(false)
-  const skipBlurCommitRef = useRef(false)
-  const inputValue = isEditingInput ? inputDraft : String(activePage)
 
   const sanitizePageInput = (value: string) => value.replace(/\D/g, '')
-  const closeInputEditor = () => {
-    setIsEditingInput(false)
-    setInputDraft('')
-  }
 
   if (!hasPagination) {
     return null
@@ -116,7 +108,6 @@ const Pagination = ({
         size="small"
         disabled={disabled || activePage === 1}
         onClick={() => {
-          setIsEditingInput(false)
           setInputDraft('')
           onPageChange(1)
         }}
@@ -131,7 +122,6 @@ const Pagination = ({
         size="small"
         disabled={disabled || activePage === 1}
         onClick={() => {
-          setIsEditingInput(false)
           setInputDraft('')
           onPageChange(activePage - 1)
         }}
@@ -145,33 +135,18 @@ const Pagination = ({
       <OutlinedInput
         size="small"
         disabled={disabled}
-        value={inputValue}
+        value={inputDraft}
+        placeholder={String(activePage)}
         aria-label={t(`${i18nKeyPrefix}.currentPage`, { page: activePage })}
-        onFocus={() => {
-          setIsEditingInput(true)
-          setInputDraft('')
-          skipBlurCommitRef.current = false
-        }}
         onChange={(e) => setInputDraft(sanitizePageInput(e ? e.target.value : ''))}
         onBlur={(e) => {
-          if (skipBlurCommitRef.current) {
-            skipBlurCommitRef.current = false
-            return
-          }
-
-          closeInputEditor()
           commitPage(e ? e.target.value : '')
+          setInputDraft('')
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.preventDefault()
-            const committed = commitPage(e ? e.currentTarget.value : '')
-
-            if (committed) {
-              skipBlurCommitRef.current = true
-              closeInputEditor()
-              e.currentTarget.blur()
-            }
+            e.currentTarget.blur()
           }
         }}
         inputProps={{
@@ -199,6 +174,13 @@ const Pagination = ({
             borderColor: 'primary.main',
             borderWidth: 2,
           },
+          '& input::placeholder': {
+            color: 'text.primary',
+            opacity: 1,
+          },
+          '&.Mui-focused input::placeholder': {
+            opacity: 0,
+          },
         }}
       />
 
@@ -218,7 +200,6 @@ const Pagination = ({
         size="small"
         disabled={disabled || activePage === totalPages}
         onClick={() => {
-          setIsEditingInput(false)
           setInputDraft('')
           onPageChange(activePage + 1)
         }}
@@ -233,7 +214,6 @@ const Pagination = ({
         size="small"
         disabled={disabled || activePage === totalPages}
         onClick={() => {
-          setIsEditingInput(false)
           setInputDraft('')
           onPageChange(totalPages)
         }}
