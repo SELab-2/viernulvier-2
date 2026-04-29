@@ -85,7 +85,7 @@ export const getGenreAndTagChipStyles = ({
     ...base,
     backgroundColor: theme.palette.background.paper,
     color: theme.palette.text.primary,
-    borderColor: theme.palette.text.primary,
+    borderColor: selectedBg,
     ...unselectedHoverStyles,
   }
 }

@@ -8,7 +8,6 @@ describe('App', () => {
   beforeEach(async () => {
     window.history.pushState({}, '', '/')
     localStorage.clear()
-    localStorage.setItem('i18nextLng', 'nl')
     await i18n.changeLanguage('nl')
   })
 
@@ -37,7 +36,7 @@ describe('App', () => {
     expect(
       screen.getByText('De pagina die je zoekt bestaat niet of is verplaatst.'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Terug naar home' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Terug naar home' })).toHaveAttribute('href', '/nl')
   })
 
   it('initializes with light theme by default', () => {
