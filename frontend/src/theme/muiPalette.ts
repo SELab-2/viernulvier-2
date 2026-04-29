@@ -8,6 +8,7 @@
 import { alpha, createTheme, type ThemeOptions } from '@mui/material/styles'
 
 import { tokens } from './tokens'
+import { DarkMode, LightMode, type AppThemeMode } from '../types/Theme'
 
 // Type augmentation for custom accent palette
 declare module '@mui/material/styles' {
@@ -32,8 +33,8 @@ declare module '@mui/material/Button' {
  * @param mode - 'light' or 'dark'
  * @returns MUI Theme object ready to use with ThemeProvider
  */
-export const createAppTheme = (mode: 'light' | 'dark' = 'light') => {
-  const isDark = mode === 'dark'
+export const createAppTheme = (mode: AppThemeMode = LightMode) => {
+  const isDark = mode === DarkMode
   const colorSet = isDark ? tokens.colors.dark : tokens.colors.light
   const primaryMain = isDark ? tokens.colors.neutral.white : tokens.colors.neutral.black
   const primaryContrastText = isDark ? tokens.colors.neutral.black : tokens.colors.neutral.white

@@ -42,7 +42,9 @@ This page documents the main frontend components and how they fit together. The 
 - Mobile navigation collapses into a slide-down panel opened with a menu button.
 - The active route is highlighted via `aria-current="page"`.
 - The theme toggle switches between light and dark mode.
-- The language toggle switches between English and Dutch.
+- The language toggle switches between English and Dutch by updating the URL language segment.
+- Links are generated with localized slugs (for example EN: `/en/archive`, NL: `/nl/archief`).
+- Compatibility slugs are normalized to canonical localized URLs.
 - The primary nav items are Home, Archive, Series, Blogs, and Media.
 
 ## Footer

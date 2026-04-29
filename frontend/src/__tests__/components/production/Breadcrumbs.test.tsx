@@ -36,7 +36,7 @@ describe('Breadcrumbs component', () => {
     expect(screen.getByText('Production')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Home'))
-    expect(mockNavigate).toHaveBeenCalledWith('/home')
+    expect(mockNavigate).toHaveBeenCalledWith('/nl/home')
   })
 
   it('does not navigate for item without link when not last item', () => {
