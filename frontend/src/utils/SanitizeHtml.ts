@@ -16,7 +16,7 @@ export type SanitizeHtmlRule = (config: Config) => Config
  *
  * into a string[] so we can safely spread and extend it without errors.
  */
-function asArray(value: string[] | ((...args: unknown[]) => boolean) | undefined): string[] {
+function asArray(value: string[] | ((...args: string[]) => boolean) | undefined): string[] {
   return Array.isArray(value) ? value : []
 }
 
@@ -140,5 +140,3 @@ export function sanitizeHtml(html: string, extraRules: SanitizeHtmlRule[] = []):
 
   return DOMPurify.sanitize(normalizedHtml, config)
 }
-
-export default sanitizeHtml

@@ -8,7 +8,9 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('../../../utils/SanitizeHtml', () => ({
   __esModule: true,
-  default: (html: string) => html,
+  sanitizeHtml: (html: string) => html,
+  forbidImagesRule: jest.fn(),
+  forbidEmbedsRule: jest.fn(),
 }))
 
 describe('Description component', () => {
