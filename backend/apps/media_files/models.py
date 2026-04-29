@@ -57,8 +57,8 @@ class MediaFile(BaseModel):
 
     class Meta(BaseModel.Meta):
         db_table = "media_file"
-        verbose_name = "Media file"
-        verbose_name_plural = "Media files"
+        verbose_name = "Media File"
+        verbose_name_plural = "Media Files"
         ordering = ["-created_at"]
 
     def _derive_filename(self) -> str:
@@ -198,8 +198,8 @@ class MediaFileTranslation(BaseModel):
 
     class Meta(BaseModel.Meta):
         db_table = "media_file_translation"
-        verbose_name = "Media file translation"
-        verbose_name_plural = "Media file translations"
+        verbose_name = "Media File Translation"
+        verbose_name_plural = "Media File Translations"
         ordering = ["language__code"]
         constraints = [
             models.UniqueConstraint(
