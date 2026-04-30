@@ -4,11 +4,12 @@ from apps.media_files import schemas
 from apps.media_files.serializers import MediaFileSerializer, MediaFileUploadSerializer
 
 
-def test_response_examples_include_description_and_not_uploaded_by() -> None:
+def test_response_examples_include_translated_description_and_display_description() -> None:
+    assert "display_description" in schemas._MEDIA_FILE_RESPONSE.value
     assert "description" in schemas._MEDIA_FILE_RESPONSE.value
-    assert "description" in schemas._MEDIA_FILE_IMAGE_RESPONSE.value
-    assert "uploaded_by" not in schemas._MEDIA_FILE_RESPONSE.value
-    assert "uploaded_by" not in schemas._MEDIA_FILE_IMAGE_RESPONSE.value
+    assert schemas._MEDIA_FILE_RESPONSE.value["description"]["nl"]
+    assert "display_description" in schemas._MEDIA_FILE_IMAGE_RESPONSE.value
+    assert schemas._MEDIA_FILE_IMAGE_RESPONSE.value["description"]["fr"]
 
 
 def test_examples_use_filename_field() -> None:
@@ -19,20 +20,21 @@ def test_examples_use_filename_field() -> None:
 def test_request_examples_only_include_expected_payloads() -> None:
     assert schemas._MEDIA_FILE_INPUT.value == {
         "file": "<binary file>",
-        "description": "Optional context about the file contents.",
+        "external_id": "print-archive-2026-001",
     }
     assert schemas._MEDIA_FILE_PARTIAL_INPUT.value == {
         "external_id": "print-archive-2026-001",
-        "description": "Final Dutch brochure version for the 2026 season.",
     }
     assert schemas._MEDIA_FILE_PUT_INPUT.value == {
         "file": "<binary file>",
-        "description": "Updated file with revised print margins.",
+        "external_id": "print-archive-2026-001",
     }
 
 
-def test_partial_update_example_mentions_description() -> None:
-    assert "description" in schemas._MEDIA_FILE_PARTIAL_INPUT.value
+def test_request_examples_no_longer_include_description() -> None:
+    assert "description" not in schemas._MEDIA_FILE_INPUT.value
+    assert "description" not in schemas._MEDIA_FILE_PARTIAL_INPUT.value
+    assert "description" not in schemas._MEDIA_FILE_PUT_INPUT.value
 
 
 def test_schema_objects_reference_expected_serializers() -> None:

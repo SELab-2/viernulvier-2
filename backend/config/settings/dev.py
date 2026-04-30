@@ -65,3 +65,13 @@ CORS_ALLOWED_ORIGINS = [
     if origin.strip()
 ]
 CORS_ALLOW_HEADERS = [*default_headers, "x-api-key"]
+
+# ---------------------------------------------------------------------------
+# Security - relaxed for local development
+# ---------------------------------------------------------------------------
+
+# Django's SecurityMiddleware sets X-Content-Type-Options: nosniff by default.
+# In development this causes browsers to download WebP files instead of
+# displaying them inline when served cross-origin (Django :8000 → Vite :5173).
+# Safe to disable locally: in production media is served via S3/Nginx, not Django.
+SECURE_CONTENT_TYPE_NOSNIFF = False

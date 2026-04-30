@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 import GenreAndTagChip from '../../components/chips/GenreAndTagChip'
 import i18n from '../../i18n'
+import { toLocalizedPath } from '../../utils/localizedRoutes'
 import { getTranslatedRecord } from '../../utils/translations'
 
 import type { ReactElement } from 'react'
@@ -215,7 +216,10 @@ describe('GenreAndTagChip in genre mode', () => {
       <GenreAndTagChip name="Dans" labels={{}} chipType="genre" id={7} context="description" />,
     )
 
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/archive?g=7')
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      `${toLocalizedPath('/archive', 'nl')}?g=7`,
+    )
   })
 
   it('renders static context as non-clickable', () => {
@@ -271,7 +275,10 @@ describe('GenreAndTagChip in series tag mode', () => {
       />,
     )
 
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/archive?t=12')
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      `${toLocalizedPath('/archive', 'nl')}?t=12`,
+    )
   })
 
   it('navigates to the series page in series context', () => {
@@ -279,6 +286,15 @@ describe('GenreAndTagChip in series tag mode', () => {
       <GenreAndTagChip name="reekstag" labels={{}} chipType="seriesTag" id={12} context="series" />,
     )
 
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/series/12')
+    expect(screen.getByRole('link')).toHaveAttribute('href', toLocalizedPath('/series/12', 'nl'))
+  })
+
+  it('gives static chips a colored border', () => {
+    const { container } = renderChip(
+      <GenreAndTagChip name="Statisch" labels={{}} id={7} context="static" />,
+    )
+
+    const chip = container.querySelector('.MuiChip-root')
+    expect(chip).toHaveStyle({ borderColor: '#8224E3' })
   })
 })

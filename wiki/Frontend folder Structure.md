@@ -155,8 +155,8 @@ The test tree mirrors the source tree so component, page, service, and theme tes
 
 ## Practical Notes
 
-- The canonical public route for the archive is `/archive`.
-- `/productions` and `/media` remain as redirects for compatibility.
+- Public routes are language-prefixed (`/:lang/...`), for example `/en/archive` and `/nl/archief`.
+- Compatibility aliases such as `/productions`, `/producties`, and `/media` are redirected to canonical localized routes.
 - Keep new code close to the feature folder it belongs to so imports stay manageable.
 - Add or update tests in the matching `__tests__` subfolder when behavior changes.
 

@@ -9,6 +9,7 @@
 import { alpha } from '@mui/material/styles'
 
 import { tokens } from './tokens'
+import { DarkMode } from '../types/Theme'
 
 import type { SxProps, SystemStyleObject, Theme } from '@mui/system'
 
@@ -211,7 +212,7 @@ export const createCommonStyles = (theme: Theme) => {
 }
 
 export const createHomePageStyles = (theme: Theme) => {
-  const isDark = theme.palette.mode === 'dark'
+  const isDark = theme.palette.mode === DarkMode
 
   return {
     heroBackground: isDark

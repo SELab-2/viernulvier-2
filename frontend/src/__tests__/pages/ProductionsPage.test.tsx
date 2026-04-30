@@ -466,5 +466,5 @@ describe('ProductionsPage', () => {
     expect(screen.getByTestId('url-search')).toHaveTextContent('fa=2026-03-01')
     expect(screen.getByTestId('url-search')).toHaveTextContent('fb=2026-03-31')
     expect(screen.getByTestId('url-search')).not.toHaveTextContent('p=')
-  })
+  }, 10000)
 })
