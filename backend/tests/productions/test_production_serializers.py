@@ -139,7 +139,18 @@ class TestRelatedProductionSerializerFields(TestCase):
 
     def test_expected_fields_are_present(self) -> None:
         data = RelatedProductionSerializer(self.production).data
-        assert set(data.keys()) == {"id", "title", "display_title", "artist_name", "display_artist_name", "media_gallery"}
+        assert set(data.keys()) == {
+            "id",
+            "title",
+            "display_title",
+            "artist_name",
+            "display_artist_name",
+            "media_gallery",
+            "first_event_start",
+            "last_event_end",
+            "tags",
+            "genres",
+        }
 
     def test_display_title_uses_base_language_fallback(self) -> None:
         data = RelatedProductionSerializer(self.production).data
@@ -263,6 +274,16 @@ class TestProductionSerializerRelated(TestCase):
         assert "related" in data
         assert data["related"] == []
         filter_mock.assert_not_called()
+
+    def test_related_includes_event_timestamps_for_related_productions(self) -> None:
+        EventFactory.create(production=self.related_production, starts_at=_dt(2025, 9, 20), ends_at=_dt(2025, 9, 20, 22))
+        EventFactory.create(production=self.related_production, starts_at=_dt(2025, 9, 15), ends_at=_dt(2025, 9, 15, 21))
+
+        data = ProductionSerializer(self.production, context={"include": {"related"}}).data
+
+        related_items = data["related"][0]["productions"]
+        assert related_items[0]["first_event_start"] == "2025-09-15T00:00:00.000000Z"
+        assert related_items[0]["last_event_end"] == "2025-09-20T22:00:00.000000Z"
 
 
 # ---------------------------------------------------------------------------

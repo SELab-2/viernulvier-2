@@ -16,7 +16,7 @@ Nested relations
 - ``TagSerializer`` - nested many-to-many, carries its own translated fields.
 """
 
-from django.db.models import Prefetch
+from django.db.models import Max, Min, Prefetch
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
@@ -26,7 +26,7 @@ from apps.media_library.serializers import MediaGallerySerializer
 from apps.tags.models import Tag
 from apps.tags.serializers import TagSerializer
 
-from .models import Production, ProductionTag, UitDatabaseType
+from .models import Production, ProductionGenre, ProductionTag, UitDatabaseType
 
 
 class ProductionLandingStatsSerializer(serializers.Serializer):
@@ -414,25 +414,71 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             return []
 
         tag_ids = [tag.id for tag in tags]
-        related_rows = (
+
+        related_rows = list(
             ProductionTag.objects.filter(tag_id__in=tag_ids)
             .exclude(production_id=obj.id)
-            .select_related("production", "production__media_gallery")
+            .order_by("tag__type", "id")
+        )
+
+        related_production_ids = []
+        seen_related_production_ids: set[int] = set()
+
+        for row in related_rows:
+            production_id = getattr(row, "production_id", getattr(row.production, "id", None))
+            if production_id is None:
+                continue
+
+            if production_id in seen_related_production_ids:
+                continue
+
+            seen_related_production_ids.add(production_id)
+            related_production_ids.append(production_id)
+
+        related_productions_by_id = {
+            production.id: production
+            for production in Production.objects.filter(id__in=related_production_ids)
+            .select_related("uit_database_type", "media_gallery")
             .prefetch_related(
-                "production__translations__language",
+                "translations__language",
                 Prefetch(
-                    "production__media_gallery__media_items",
+                    "productiongenre_set",
+                    queryset=ProductionGenre.objects.select_related("genre").order_by("position"),
+                    to_attr="prefetched_production_genres",
+                ),
+                Prefetch(
+                    "productiontag_set",
+                    queryset=ProductionTag.objects.select_related("tag")
+                    .prefetch_related(
+                        "translations__language",
+                        "tag__translations__language",
+                    )
+                    .order_by("tag__type", "id"),
+                    to_attr="prefetched_production_tags",
+                ),
+                Prefetch(
+                    "media_gallery__media_items",
                     queryset=MediaItem.objects.prefetch_related("translations__language", "crops").order_by("position"),
                 ),
             )
-            .order_by("tag__type", "id")
-        )
+            .annotate(
+                first_event_start=Min("events__starts_at"),
+                last_event_end=Max("events__ends_at"),
+            )
+        }
 
         grouped_productions: dict[int, list[Production]] = {tag.id: [] for tag in tags}
         seen_production_ids: dict[int, set[int]] = {tag.id: set() for tag in tags}
 
         for row in related_rows:
-            production = row.production
+            production_id = getattr(row, "production_id", getattr(row.production, "id", None))
+            if production_id is None:
+                continue
+
+            production = related_productions_by_id.get(production_id)
+            if production is None:
+                continue
+
             if production.id in seen_production_ids[row.tag_id]:
                 continue
             grouped_productions[row.tag_id].append(production)
