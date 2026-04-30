@@ -416,9 +416,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         tag_ids = [tag.id for tag in tags]
 
         related_rows = list(
-            ProductionTag.objects.filter(tag_id__in=tag_ids)
-            .exclude(production_id=obj.id)
-            .order_by("tag__type", "id")
+            ProductionTag.objects.filter(tag_id__in=tag_ids).exclude(production_id=obj.id).order_by("tag__type", "id")
         )
 
         related_production_ids = []

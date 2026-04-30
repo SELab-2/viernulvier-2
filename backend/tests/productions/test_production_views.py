@@ -647,6 +647,10 @@ class TestProductionViewSetResponseStructure(TestCase):
             "artist_name",
             "display_artist_name",
             "media_gallery",
+            "first_event_start",
+            "last_event_end",
+            "tags",
+            "genres",
         }
 
 

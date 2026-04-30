@@ -86,7 +86,9 @@ class BlogSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         help_text="List of production IDs to link to this blog post (write-only).",
     )
 
-    productions = RelatedProductionSerializer(many=True, read_only=True, help_text="List of linked production objects (read-only).")
+    productions = RelatedProductionSerializer(
+        many=True, read_only=True, help_text="List of linked production objects (read-only)."
+    )
 
     translations_data = BlogTranslationInlineSerializer(
         many=True,
