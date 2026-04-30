@@ -122,7 +122,7 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
                   )}
                   labels={tag.name || tag.url_title || {}}
                   chipType="seriesTag"
-                  context="series"
+                  context="static"
                   id={tag.id}
                 />
               ))}
@@ -136,7 +136,7 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
                   )}
                   labels={genre.name || {}}
                   chipType="genre"
-                  context={selectedGenreIds !== undefined ? 'static' : 'description'}
+                  context={selectedGenreIds !== undefined ? 'static' : 'static'}
                   id={genre.id}
                   selected={selectedGenreIds?.includes(genre.id) || false}
                 />

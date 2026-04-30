@@ -8,7 +8,6 @@ import GenreAndTagChip from '../chips/GenreAndTagChip'
 import ProductionGridCard from '../productions/ProductionGridCard'
 
 import type { ProductionRelated, RelatedTag } from '../../types/Productions'
-import type { Genre } from '../../types/Genres'
 
 /**
  * Define the props for the RelatedProductions component:
@@ -25,12 +24,10 @@ interface RelatedProductionsProps {
  * Renders related productions grouped by tag from the production detail payload.
  */
 function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedProductionsProps) {
-  console.log('RelatedProductions render', { related, lang, showTag })
   const { t, i18n } = useTranslation()
   const language = i18n.language || lang
 
   const visibleResults = related.filter((entry) => entry.productions.length > 0)
-  console.log('Visible related productions entries', { visibleResults })
 
   /**
    * Resolves the tag label for the active locale without reloading the production list.
@@ -91,13 +88,14 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
               sx={{ width: '100%' }}
             >
               {entry.productions.map((production) => {
-                console.log('Rendering related production', { production })
                 // TODO:
                 // Related productions don't have all the values of a production
                 // It only contains the values required for the frontend to show the cards
                 // We could change the API to return complete productions to avoid this normalization
                 // Or we could make the ProductionGridCard work with the related production types
                 // For now just use normalization, but maybe this should be looked at again?
+
+                // Currently we just get the needed values for the card and pass them, nulling the rest.
                 return (
                   <Box
                     key={production.id}
