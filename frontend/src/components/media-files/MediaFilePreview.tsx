@@ -1,8 +1,8 @@
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
 import { Box, Stack, Typography } from '@mui/material'
-import { Document, Page, pdfjs } from 'react-pdf'
 import { useEffect, useRef, useState } from 'react'
+import { Document, Page, pdfjs } from 'react-pdf'
 
 import type { MediaFile } from '../../types/MediaFiles'
 
@@ -17,20 +17,13 @@ const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) =>
   const previewRef = useRef<HTMLDivElement | null>(null)
   const [shouldRenderPdf, setShouldRenderPdf] = useState(
     () =>
-      process.env.NODE_ENV === 'test' || typeof window === 'undefined' || !('IntersectionObserver' in window),
+      process.env.NODE_ENV === 'test' ||
+      typeof window === 'undefined' ||
+      !('IntersectionObserver' in window),
   )
 
   useEffect(() => {
     if (mediaFile.file_type !== 'pdf' || shouldRenderPdf) {
-      return
-    }
-
-    if (
-      process.env.NODE_ENV === 'test' ||
-      typeof window === 'undefined' ||
-      !('IntersectionObserver' in window)
-    ) {
-      setShouldRenderPdf(true)
       return
     }
 
@@ -100,7 +93,12 @@ const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) =>
             error={<Typography variant="body2">{previewLabel}</Typography>}
             noData={<Typography variant="body2">{previewLabel}</Typography>}
           >
-            <Page pageNumber={1} renderTextLayer={false} renderAnnotationLayer={false} width={240} />
+            <Page
+              pageNumber={1}
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
+              width={240}
+            />
           </Document>
         ) : (
           <Typography variant="body2">{previewLabel}</Typography>
