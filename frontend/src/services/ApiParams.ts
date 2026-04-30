@@ -9,6 +9,9 @@ import type { FilteredListOptions } from './ApiTypes'
  * repeating the spread logic inline.
  *
  * @param options The pagination and filter options from the service call.
+ * Arrays are encoded as comma-separated values because several backend filters
+ * accept multi-value query parameters in that format.
+ *
  * @returns A plain object ready to pass as Axios `params`.
  */
 export function buildListParams<TFilters extends object>(
@@ -22,7 +25,13 @@ export function buildListParams<TFilters extends object>(
   }
 
   if (filters) {
-    Object.assign(params, filters)
+    Object.entries(filters).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        params[key] = value.join(',')
+      } else {
+        params[key] = value
+      }
+    })
   }
 
   return params
