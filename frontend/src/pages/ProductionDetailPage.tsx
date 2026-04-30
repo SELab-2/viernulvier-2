@@ -209,6 +209,7 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
             <ImageWithFallback
               src={heroImage ?? null}
               alt={title}
+              loading="eager"
               sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </Box>

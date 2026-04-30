@@ -21,6 +21,7 @@ import type { Tag } from '../types/Tags'
 
 // Page size for pagination.
 const PAGE_SIZE = 12
+const FILTER_METADATA_PAGE_SIZE = 250
 
 // Function to determine the ordering parameter for the API based on the current sort target and direction.
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
@@ -38,39 +39,59 @@ const toIsoDateBoundary = (value: string, boundary: 'start' | 'end'): string | u
 }
 
 const fetchGenres = async (): Promise<Genre[]> => {
-  const genres: Genre[] = []
-  let page = 1
-  let hasMore = true
+  const firstPage = await getGenres({
+    page: 1,
+    pageSize: FILTER_METADATA_PAGE_SIZE,
+  })
 
-  while (hasMore) {
-    const response = await getGenres({
-      page,
-    })
-
-    genres.push(...response.results)
-    hasMore = response.next !== null
-    page += 1
+  const pageSize = Math.max(1, firstPage.results.length || FILTER_METADATA_PAGE_SIZE)
+  const totalPages = Math.max(1, Math.ceil(firstPage.count / pageSize))
+  if (totalPages === 1) {
+    return firstPage.results
   }
 
-  return genres
+  const remainingPages = Array.from({ length: totalPages - 1 }, (_, index) => index + 2)
+  const remainingResponses = await Promise.all(
+    remainingPages.map((page) =>
+      getGenres({
+        page,
+        pageSize: FILTER_METADATA_PAGE_SIZE,
+      }),
+    ),
+  )
+
+  return [...firstPage.results, ...remainingResponses.flatMap((response) => response.results)]
 }
 
 const fetchTags = async (): Promise<Tag[]> => {
+  const firstPage = await getProductionSeries({
+    page: 1,
+    pageSize: FILTER_METADATA_PAGE_SIZE,
+  })
+
   const tagsById = new Map<number, Tag>()
-  let page = 1
-  let hasMore = true
+  firstPage.results.forEach((series) => {
+    tagsById.set(series.tag.id, series.tag)
+  })
 
-  while (hasMore) {
-    const response = await getProductionSeries({
-      page,
+  const pageSize = Math.max(1, firstPage.results.length || FILTER_METADATA_PAGE_SIZE)
+  const totalPages = Math.max(1, Math.ceil(firstPage.count / pageSize))
+  if (totalPages > 1) {
+    const remainingPages = Array.from({ length: totalPages - 1 }, (_, index) => index + 2)
+    const remainingResponses = await Promise.all(
+      remainingPages.map((page) =>
+        getProductionSeries({
+          page,
+          pageSize: FILTER_METADATA_PAGE_SIZE,
+        }),
+      ),
+    )
+
+    remainingResponses.forEach((response) => {
+      response.results.forEach((series) => {
+        tagsById.set(series.tag.id, series.tag)
+      })
     })
-
-    response.results.forEach((series) => {
-      tagsById.set(series.tag.id, series.tag)
-    })
-
-    hasMore = response.next !== null
-    page += 1
   }
 
   return Array.from(tagsById.values())

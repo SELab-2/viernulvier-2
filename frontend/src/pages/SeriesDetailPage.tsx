@@ -80,28 +80,29 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     void fetchSeries()
   }, [numericId])
 
-  /** Sorted most-recent first by start date; productions without a date fall to the end. */
-  const sortedProductions = useMemo(
-    () =>
-      [...productions].sort((a, b) => {
-        if (a.first_event_start && b.first_event_start) {
-          return new Date(b.first_event_start).getTime() - new Date(a.first_event_start).getTime()
-        }
-        if (a.first_event_start) {
-          return -1
-        }
-        if (b.first_event_start) {
-          return 1
-        }
-        return b.id - a.id
-      }),
-    [productions],
-  )
+  /**
+   * Sort once, then derive the yearly grouping and stats in a single pass so the
+   * detail view avoids repeatedly traversing large production lists.
+   */
+  const { sortedProductions, productionsByYear, stats } = useMemo(() => {
+    const sorted = [...productions].sort((a, b) => {
+      if (a.first_event_start && b.first_event_start) {
+        return new Date(b.first_event_start).getTime() - new Date(a.first_event_start).getTime()
+      }
+      if (a.first_event_start) {
+        return -1
+      }
+      if (b.first_event_start) {
+        return 1
+      }
+      return b.id - a.id
+    })
 
-  /** Productions grouped by year in display order, preserving sort within each group. */
-  const productionsByYear = useMemo(() => {
     const groups = new Map<string, Production[]>()
-    for (const production of sortedProductions) {
+    let minYear: number | null = null
+    let maxYear: number | null = null
+
+    for (const production of sorted) {
       const year = getProductionYear(production)
       const existing = groups.get(year)
       if (existing) {
@@ -109,28 +110,27 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
       } else {
         groups.set(year, [production])
       }
+
+      if (/^\d{4}$/.test(year)) {
+        const yearNumber = Number(year)
+        minYear = minYear === null ? yearNumber : Math.min(minYear, yearNumber)
+        maxYear = maxYear === null ? yearNumber : Math.max(maxYear, yearNumber)
+      }
     }
-    return Array.from(groups.entries())
-  }, [sortedProductions])
 
-  const stats = useMemo<SeriesStat[]>(() => {
-    const years = sortedProductions
-      .map(getProductionYear)
-      .filter((year) => /^\d{4}$/.test(year))
-      .map(Number)
-
-    const minYear = years.length ? Math.min(...years) : null
-    const maxYear = years.length ? Math.max(...years) : null
-
-    return [
-      { value: String(sortedProductions.length), label: t('series.stats.editions') },
-      {
-        value: minYear && maxYear ? `${minYear}–${maxYear}` : '—',
-        label: t('series.stats.period'),
-      },
-      { value: seriesTag?.type || '—', label: t('series.stats.type') },
-    ]
-  }, [seriesTag?.type, sortedProductions, t])
+    return {
+      sortedProductions: sorted,
+      productionsByYear: Array.from(groups.entries()),
+      stats: [
+        { value: String(sorted.length), label: t('series.stats.editions') },
+        {
+          value: minYear !== null && maxYear !== null ? `${minYear}–${maxYear}` : '—',
+          label: t('series.stats.period'),
+        },
+        { value: seriesTag?.type || '—', label: t('series.stats.type') },
+      ] satisfies SeriesStat[],
+    }
+  }, [productions, seriesTag?.type, t])
 
   if (isLoading) {
     return <SeriesDetailPageSkeleton />

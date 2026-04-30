@@ -2,6 +2,7 @@ import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
 import { Box, Stack, Typography } from '@mui/material'
 import { Document, Page, pdfjs } from 'react-pdf'
+import { useEffect, useRef, useState } from 'react'
 
 import type { MediaFile } from '../../types/MediaFiles'
 
@@ -13,6 +14,48 @@ export interface MediaFilePreviewProps {
 }
 
 const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) => {
+  const previewRef = useRef<HTMLDivElement | null>(null)
+  const [shouldRenderPdf, setShouldRenderPdf] = useState(
+    () =>
+      process.env.NODE_ENV === 'test' || typeof window === 'undefined' || !('IntersectionObserver' in window),
+  )
+
+  useEffect(() => {
+    if (mediaFile.file_type !== 'pdf' || shouldRenderPdf) {
+      return
+    }
+
+    if (
+      process.env.NODE_ENV === 'test' ||
+      typeof window === 'undefined' ||
+      !('IntersectionObserver' in window)
+    ) {
+      setShouldRenderPdf(true)
+      return
+    }
+
+    const node = previewRef.current
+    if (!node) {
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldRenderPdf(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '200px' },
+    )
+
+    observer.observe(node)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [mediaFile.file_type, shouldRenderPdf])
+
   if (mediaFile.file_type === 'image') {
     return (
       <Box
@@ -33,6 +76,7 @@ const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) =>
   if (mediaFile.file_type === 'pdf') {
     return (
       <Box
+        ref={previewRef}
         sx={{
           width: '100%',
           height: '100%',
@@ -49,14 +93,18 @@ const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) =>
           },
         }}
       >
-        <Document
-          file={mediaFile.file}
-          loading={<Typography variant="body2">{previewLabel}</Typography>}
-          error={<Typography variant="body2">{previewLabel}</Typography>}
-          noData={<Typography variant="body2">{previewLabel}</Typography>}
-        >
-          <Page pageNumber={1} renderTextLayer={false} renderAnnotationLayer={false} width={240} />
-        </Document>
+        {shouldRenderPdf ? (
+          <Document
+            file={mediaFile.file}
+            loading={<Typography variant="body2">{previewLabel}</Typography>}
+            error={<Typography variant="body2">{previewLabel}</Typography>}
+            noData={<Typography variant="body2">{previewLabel}</Typography>}
+          >
+            <Page pageNumber={1} renderTextLayer={false} renderAnnotationLayer={false} width={240} />
+          </Document>
+        ) : (
+          <Typography variant="body2">{previewLabel}</Typography>
+        )}
       </Box>
     )
   }

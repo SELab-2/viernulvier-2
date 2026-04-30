@@ -65,25 +65,34 @@ const sortSeries = ({
 
 // Fetch all aggregated series rows from the backend endpoint.
 const fetchSeriesList = async ({ search }: { search?: string }): Promise<Series[]> => {
-  const seriesList: Series[] = []
-  let page = 1
-  let hasMore = true
+  const firstPage = await getProductionSeries({
+    page: 1,
+    pageSize: SERIES_FETCH_SIZE,
+    filters: {
+      search,
+    },
+  })
 
-  while (hasMore) {
-    const response = await getProductionSeries({
-      page,
-      pageSize: SERIES_FETCH_SIZE,
-      filters: {
-        search,
-      },
-    })
-
-    seriesList.push(...response.results)
-    hasMore = response.next !== null
-    page += 1
+  const pageSize = Math.max(1, firstPage.results.length || SERIES_FETCH_SIZE)
+  const totalPages = Math.max(1, Math.ceil(firstPage.count / pageSize))
+  if (totalPages === 1) {
+    return firstPage.results
   }
 
-  return seriesList
+  const remainingPages = Array.from({ length: totalPages - 1 }, (_, index) => index + 2)
+  const remainingResponses = await Promise.all(
+    remainingPages.map((page) =>
+      getProductionSeries({
+        page,
+        pageSize: SERIES_FETCH_SIZE,
+        filters: {
+          search,
+        },
+      }),
+    ),
+  )
+
+  return [...firstPage.results, ...remainingResponses.flatMap((response) => response.results)]
 }
 
 const SeriesPage = () => {
