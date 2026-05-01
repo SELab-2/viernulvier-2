@@ -17,6 +17,7 @@ File path:
 
 from argparse import ArgumentParser
 from collections.abc import Callable
+from datetime import datetime, timedelta
 import logging
 import time
 from typing import Any
@@ -25,6 +26,7 @@ from django.core.management.base import BaseCommand
 
 from apps.events.models import Event, EventPrice
 from apps.genres.models import Genre, GenreTranslation
+from apps.import_log.models import ImportLog
 from apps.imports.scrapers.viernulvier import (
     M2MConfig,
     ModelSyncConfig,
@@ -435,6 +437,23 @@ CUSTOM_STEPS = {"media_item_gallery_links", "media_item_crops"}
 ALL_STEP_NAMES = [name for name, *_ in SYNC_STEPS] + sorted(CUSTOM_STEPS)
 
 
+SINCE_LAST_SUCCESS_SAFETY_BUFFER = timedelta(hours=1)
+
+
+def get_last_successful_sync_started_at() -> datetime | None:
+    """Return `started_at` of the latest SUCCESS/PARTIAL_SUCCESS viernulvier ImportLog, or None."""
+    return (
+        ImportLog.objects.filter(
+            source__startswith="viernulvier:",
+            status__in=(ImportLog.Status.SUCCESS, ImportLog.Status.PARTIAL_SUCCESS),
+            started_at__isnull=False,
+        )
+        .order_by("-started_at")
+        .values_list("started_at", flat=True)
+        .first()
+    )
+
+
 # ---------------------------------------------------------------------------
 # Management command
 # ---------------------------------------------------------------------------
@@ -466,6 +485,15 @@ class Command(BaseCommand):
             default=False,
             help="Fetch and parse data but do not write anything to the database.",
         )
+        parser.add_argument(
+            "--since-last-success",
+            action="store_true",
+            default=False,
+            help=(
+                "Set --updated-after from the last non-failed Viernulvier ImportLog, "
+                "minus 1h. Cannot combine with --updated-after/-x."
+            ),
+        )
 
         for prefix in self.FILTER_FIELDS:
             for bound in ("after", "before"):
@@ -489,13 +517,20 @@ class Command(BaseCommand):
                     ),
                 )
 
-    def handle(self, *_args: tuple, **options: dict) -> None:  # noqa: PLR0915, C901
+    def handle(self, *_args: tuple, **options: dict) -> None:  # noqa: PLR0912, PLR0915, C901
         """Run the sync process for the specified steps and options."""
         only: str | None = options.get("only")
         dry_run: bool = options.get("dry_run", False)
+        since_last_success: bool = options.get("since_last_success", False)
 
         if only and only not in ALL_STEP_NAMES:
             self.stderr.write(self.style.ERROR(f"Unknown step '{only}'. Choices: {', '.join(ALL_STEP_NAMES)}"))
+            return
+
+        if since_last_success and (options.get("updated_after") or options.get("updated_after_x")):
+            self.stderr.write(
+                self.style.ERROR("--since-last-success cannot be combined with --updated-after or --updated-after-x.")
+            )
             return
 
         params = {}
@@ -507,6 +542,15 @@ class Command(BaseCommand):
                 strict = options.get(f"{prefix}_{bound}_x")
                 if strict:
                     params[f"{api_field}[strictly_{bound}]"] = strict
+
+        if since_last_success:
+            last_started_at = get_last_successful_sync_started_at()
+            if last_started_at is None:
+                self.stderr.write(self.style.ERROR("No prior successful Viernulvier import found. Run a full sync first."))
+                return
+            updated_after = (last_started_at - SINCE_LAST_SUCCESS_SAFETY_BUFFER).strftime("%Y-%m-%dT%H:%M:%SZ")
+            params["updated_at[after]"] = updated_after
+            self.stdout.write(self.style.NOTICE(f"--since-last-success: using --updated-after {updated_after}"))
 
         steps_to_run = [
             (name, model, config, endpoint) for name, model, config, endpoint in SYNC_STEPS if only is None or name == only
