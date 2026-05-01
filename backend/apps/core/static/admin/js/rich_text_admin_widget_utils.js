@@ -16,13 +16,13 @@
         var style = document.createElement('style');
         style.id = api.STYLE_ID;
         style.textContent = [
-            '.richtext-admin-wrapper { border: 1px solid #d0d7de; border-radius: 6px; background: #fff; width: 100%; max-width: 920px; box-sizing: border-box; }',
-            '.richtext-admin-toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border-bottom: 1px solid #e5e7eb; background: #f8fafc; }',
-            '.richtext-admin-toolbar button { border: 1px solid #d1d5db; background: #fff; border-radius: 4px; padding: 3px 8px; cursor: pointer; font-size: 12px; }',
-            '.richtext-admin-toolbar button:hover { background: #f3f4f6; }',
-            '.richtext-admin-toolbar button.is-active { background: #dbeafe; border-color: #60a5fa; color: #1e3a8a; }',
-            '.richtext-admin-editor { min-height: 180px; max-height: 460px; overflow: auto; padding: 10px; line-height: 1.5; width: 100%; box-sizing: border-box; outline: none; }',
-            '.richtext-admin-editor:focus { outline: 2px solid #79aec8; outline-offset: -2px; }',
+            '.richtext-admin-wrapper { border: 1px solid var(--border-color, #d0d7de); border-radius: 6px; background: var(--body-bg, #fff); color: var(--body-fg, #1f2937); width: 100%; max-width: 920px; box-sizing: border-box; }',
+            '.richtext-admin-toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border-bottom: 1px solid var(--hairline-color, #e5e7eb); background: var(--darkened-bg, #f8fafc); }',
+            '.richtext-admin-toolbar button { border: 1px solid var(--border-color, #d1d5db); background: var(--body-bg, #fff); color: var(--body-fg, #1f2937); border-radius: 4px; padding: 3px 8px; cursor: pointer; font-size: 12px; }',
+            '.richtext-admin-toolbar button:hover { background: var(--button-hover-bg, #f3f4f6); }',
+            '.richtext-admin-toolbar button.is-active { background: var(--selected-bg, #dbeafe); border-color: var(--selected-row, #60a5fa); color: var(--selected-fg, #1e3a8a); }',
+            '.richtext-admin-editor { min-height: 180px; max-height: 460px; overflow: auto; padding: 10px; line-height: 1.5; width: 100%; box-sizing: border-box; outline: none; background: var(--body-bg, #fff); color: var(--body-fg, #1f2937); }',
+            '.richtext-admin-editor:focus { outline: 2px solid var(--primary, #79aec8); outline-offset: -2px; }',
             '.richtext-admin-editor p { margin: 0.4em 0; }',
             '.richtext-admin-editor ul { display: block !important; list-style: none !important; margin: 0.5em 0 !important; padding-left: 0 !important; }',
             '.richtext-admin-editor ol { display: block !important; list-style: none !important; margin: 0.5em 0 !important; padding-left: 0 !important; counter-reset: richtext-list-item !important; }',
