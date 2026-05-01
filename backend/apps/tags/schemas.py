@@ -21,13 +21,14 @@ from .serializers import TagSerializer
 
 _TAG_RESPONSE = OpenApiExample(
     "Tag - response",
-    summary="A tag with localised fields",
+    summary="A tag with localised fields and optional image",
     value={
         "id": 12,
         "url": "https://example.com/tags/hedendaags",
         "source": "uitdatabank",
         "type": "theme",
         "is_enabled": True,
+        "image": "/media/tag_images/hedendaags.jpg",
         "name": "Contemporary",
         "short_description": "Contemporary performing arts and theatre.",
         "url_title": "contemporary",
@@ -37,13 +38,14 @@ _TAG_RESPONSE = OpenApiExample(
 
 _TAG_INTERNAL_RESPONSE = OpenApiExample(
     "Tag - internal (system) response",
-    summary="A tag created internally without an external source",
+    summary="A tag created internally without an external source (image fallback example)",
     value={
         "id": 5,
         "url": "",
         "source": "",
         "type": "audience",
         "is_enabled": True,
+        "image": "/media/productions/most-recent-image.jpg",
         "name": "Family friendly",
         "short_description": None,
         "url_title": "family-friendly",
@@ -79,6 +81,7 @@ _TAG_LIST = extend_schema(
     summary="List all tags",
     description=(
         "Returns a paginated list of all **Tag** objects ordered by `id`.\n\n"
+        "The `image` field contains the uploaded image for the tag, or if not set, the image of the most recent production using this tag (if available).\n\n"
         "Translated fields (`name`, `short_description`, `url_title`) are "
         "returned as language-code dictionaries "
         '(e.g. {"en": "Contemporary", "fr": "Contemporain"}).'
@@ -91,6 +94,7 @@ _TAG_RETRIEVE = extend_schema(
     summary="Retrieve a tag",
     description=(
         "Returns the full representation of a single **Tag**.\n\n"
+        "The `image` field contains the uploaded image for the tag, or if not set, the image of the most recent production using this tag (if available).\n\n"
         "Translated fields are returned as language-code dictionaries "
         '(e.g. {"en": "Contemporary", "fr": "Contemporain"}).'
     ),

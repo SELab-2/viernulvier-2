@@ -7,10 +7,13 @@ as language-code dictionaries
 """
 
 from rest_framework import serializers
+from django.db.models import Prefetch
+from django.apps import apps
 
 from apps.core.serializers import TranslatableSerializerMixin
 
 from .models import Tag
+from apps.media_library.models import MediaItem
 
 
 class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
@@ -76,13 +79,14 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "Falls back to the first available translation when missing."
         ),
     )
-        image = serializers.SerializerMethodField(
-            help_text=(
-                "URL of the uploaded image for this tag. "
-                "If not set, falls back to the image of the most recent production using this tag. "
-                "Read-only."
-            ),
-        )
+    
+    image = serializers.SerializerMethodField(
+        help_text=(
+            "URL of the uploaded image for this tag. "
+            "If not set, falls back to the image of the most recent production using this tag. "
+            "Read-only."
+        ),
+    )
 
     class Meta:
         model = Tag
@@ -108,7 +112,8 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "display_short_description",
             "display_url_title",
             "url_title",
-        ]
+            "image",
+            ]
         extra_kwargs = {
             "url": {
                 "help_text": "Public URL of the tag in the originating system. Empty string when not applicable.",
@@ -151,3 +156,52 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     def get_display_url_title(self, obj: Tag) -> str | None:
         """Return the base-language URL title (with fallback)."""
         return self.get_base_translated_value(obj, field_name="url_title")
+
+    def get_image(self, obj: Tag) -> str | None:
+        """Return the absolute URL of the tag's uploaded image.
+
+        If the Tag has no `image`, fall back to the image of the most
+        recent Production that uses this Tag and has a media gallery with
+        at least one media item crop image. This fallback is applied only
+        when serializing (GET responses) and is not stored on the Tag.
+        """
+        request = self.context.get("request") if hasattr(self, "context") else None
+
+        # Direct image on the tag
+        if obj.image:
+            try:
+                url = obj.image.url
+            except Exception:
+                return None
+            return request.build_absolute_uri(url) if request else url
+
+        # Fallback: find most recent production with this tag and an image
+        Production = apps.get_model("productions", "Production")
+        MediaItemModel = MediaItem
+
+        prod_qs = (
+            Production.objects.filter(tags=obj, media_gallery__isnull=False)
+            .select_related("media_gallery")
+            .prefetch_related(
+                Prefetch(
+                    "media_gallery__media_items",
+                    queryset=MediaItemModel.objects.prefetch_related("crops").order_by("position"),
+                )
+            )
+            .order_by("-id")
+        )
+
+        for production in prod_qs:
+            media_items = production.media_gallery.media_items.all() if production.media_gallery else []
+            if not media_items:
+                continue
+            first_item = media_items[0]
+            first_crop = next(iter(first_item.crops.all()), None)
+            if first_crop and getattr(first_crop, "image", None):
+                try:
+                    url = first_crop.image.url
+                except Exception:
+                    return None
+                return request.build_absolute_uri(url) if request else url
+
+        return None
