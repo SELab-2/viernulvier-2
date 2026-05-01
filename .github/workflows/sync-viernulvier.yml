@@ -1,0 +1,38 @@
+name: Sync Viernulvier data
+
+on:
+  schedule:
+    - cron: "30 1 * * *"
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Limit to a single sync step (e.g. events). Empty = all steps."
+        default: ""
+      full_sync:
+        description: "Re-fetch everything (skip --since-last-success)."
+        type: boolean
+        default: false
+
+concurrency:
+  group: sync-viernulvier
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: self-hosted
+    steps:
+      - env:
+          ONLY: ${{ inputs.only }}
+          FULL_SYNC: ${{ inputs.full_sync }}
+        run: |
+          args=(python manage.py sync_viernulvier)
+
+          if [ -n "$ONLY" ];
+            then args+=(--only "$ONLY");
+          fi
+
+          if [ "$FULL_SYNC" != "true" ]; then
+            args+=(--since-last-success);
+          fi
+
+          docker exec backend "${args[@]}"

@@ -415,7 +415,7 @@ describe('ProductionsPage', () => {
     expect(await screen.findByRole('heading', { name: 'Productie 9' })).toBeInTheDocument()
   })
 
-  it('applies sidebar filters to the URL and forwards one attendance and one performer mode to the backend', async () => {
+  it('applies sidebar filters to the URL and forwards selected genre and tag ids to the backend', async () => {
     mockedGetProductions.mockResolvedValue({
       count: 1,
       next: null,
@@ -451,8 +451,8 @@ describe('ProductionsPage', () => {
           ordering: '-first_event_start',
           attendance_mode: 'offline',
           performer_type: 'solo',
-          genre: 5,
-          tag: 8,
+          genre: [5, 9],
+          tag: [8, 12],
           first_event_start_after: '2026-03-01T00:00:00.000Z',
           first_event_start_before: '2026-03-31T23:59:59.999Z',
         },

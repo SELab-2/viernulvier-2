@@ -62,8 +62,20 @@ const ProductionListCard = ({
     production.last_event_end,
     language,
   )
-  const genres = production.genres.filter((genre) => genre.display_name)
-  const tags = production.tags.filter((tag) => tag.display_name || tag.name || tag.url_title)
+  const genres = production.genres
+    .filter((genre) => genre.display_name)
+    .sort((a, b) => {
+      const aSelected = selectedGenreIds?.includes(a.id) ? 1 : 0
+      const bSelected = selectedGenreIds?.includes(b.id) ? 1 : 0
+      return bSelected - aSelected
+    })
+  const tags = production.tags
+    .filter((tag) => tag.display_name || tag.name || tag.url_title)
+    .sort((a, b) => {
+      const aSelected = selectedTagIds?.includes(a.id) ? 1 : 0
+      const bSelected = selectedTagIds?.includes(b.id) ? 1 : 0
+      return bSelected - aSelected
+    })
 
   return (
     <Stack
