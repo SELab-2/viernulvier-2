@@ -5,6 +5,7 @@ from typing import Any
 
 from django.core.management.base import BaseCommand
 
+from api.cache import clear_api_cache
 from apps.imports.csv_importer.legacy_csv_sync import import_bundled_legacy_csv_files
 
 try:
@@ -70,4 +71,9 @@ class Command(BaseCommand):
                 progress_bar.close()
 
         suffix = " [DRY RUN]" if dry_run else ""
+
+        if not dry_run:
+            clear_api_cache()
+            self.stdout.write(self.style.SUCCESS("Cleared API cache"))
+
         self.stdout.write(self.style.SUCCESS(f"Imported {total} legacy CSV records{suffix}"))
