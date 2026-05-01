@@ -1,14 +1,22 @@
 import { Button, Container, Paper, Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
+import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 
 const NotFoundPage = () => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
-  const { t } = useTranslation()
+  const location = useLocation()
+  const { t, i18n } = useTranslation()
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const homePath = toLocalizedPath('/', currentLanguage)
 
   return (
     <Container
@@ -38,7 +46,7 @@ const NotFoundPage = () => {
 
           <Button
             component={RouterLink}
-            to="/"
+            to={homePath}
             variant="outlined"
             sx={(theme) => ({
               px: tokens.spacing.numericLg,

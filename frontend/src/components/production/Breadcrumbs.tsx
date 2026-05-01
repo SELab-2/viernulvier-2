@@ -1,8 +1,9 @@
 import { Box } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { tokens } from '../../theme/tokens'
+import { resolveCurrentLanguage, toLocalizedPath } from '../../utils/localizedRoutes'
 
 export interface BreadcrumbItem {
   label: string
@@ -29,7 +30,13 @@ interface BreadcrumbsProps {
  */
 export default function Breadcrumbs({ items, separator = ' / ' }: BreadcrumbsProps) {
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const location = useLocation()
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
 
   const renderText = (item: BreadcrumbItem) => {
     if (item.translationKey) {
@@ -69,7 +76,7 @@ export default function Breadcrumbs({ items, separator = ' / ' }: BreadcrumbsPro
               component="button"
               onClick={() => {
                 if (item.to) {
-                  navigate(item.to)
+                  navigate(toLocalizedPath(item.to, currentLanguage))
                 }
               }}
               disabled={!item.to}

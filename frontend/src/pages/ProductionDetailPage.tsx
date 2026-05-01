@@ -1,7 +1,7 @@
 import { Box, Typography, useMediaQuery } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useLocation, useParams, useNavigate } from 'react-router-dom'
 
 import ProductionDetailPageSkeleton from './ProductionDetailPageSkeleton'
 import ImageWithFallback from '../components/ImageWithFallback'
@@ -16,6 +16,7 @@ import { getBlogs } from '../services/blogs/Blogs'
 import { getProduction } from '../services/productions/Productions'
 import { tokens } from '../theme/tokens'
 import { getLocalizedValue } from '../utils/localization'
+import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 
 import type { Blog } from '../types/Blogs'
 import type { Production } from '../types/Productions'
@@ -74,9 +75,16 @@ type ProductionDetailContentProps = {
  */
 const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { i18n, t } = useTranslation()
   const isMobile = useMediaQuery('(max-width:900px)')
   const lang = i18n.language
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const homePath = toLocalizedPath('/', currentLanguage)
 
   const [prod, setProd] = useState<Production | null>(null)
   const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([])
@@ -87,7 +95,7 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
       const errMsg = t('productions.detail.error.invalidId', 'Invalid production ID')
-      navigate('/', {
+      navigate(homePath, {
         state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
       })
       return
@@ -109,7 +117,7 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
         }
       } catch {
         const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
-        navigate('/', {
+        navigate(homePath, {
           state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
         })
       } finally {
@@ -118,7 +126,7 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     }
 
     fetchProduction()
-  }, [id, navigate, t])
+  }, [homePath, id, navigate, t])
 
   // If the page is still loading, show a full-page skeleton.
   if (loading) {

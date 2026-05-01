@@ -3,6 +3,7 @@ import { Box, IconButton, Modal, Typography } from '@mui/material'
 import { useState, type KeyboardEvent } from 'react'
 
 import { tokens } from '../../theme/tokens'
+import { DarkMode } from '../../types/Theme'
 import Carousel from '../carousel/Carousel'
 
 import type { MediaItem } from '../../types/Media'
@@ -133,7 +134,7 @@ export default function MediaList({ mediaItems }: MediaListProps) {
                   overflow: 'hidden',
                   borderRadius: tokens.borderRadius.md,
                   backgroundColor:
-                    theme.palette.mode === 'dark'
+                    theme.palette.mode === DarkMode
                       ? tokens.colors.media.darkBackground
                       : tokens.colors.media.lightBackground,
                   border: `1px solid ${theme.palette.divider}`,
@@ -168,7 +169,7 @@ export default function MediaList({ mediaItems }: MediaListProps) {
           backdrop: {
             sx: (theme) => ({
               backgroundColor:
-                theme.palette.mode === 'dark'
+                theme.palette.mode === DarkMode
                   ? tokens.colors.overlay.modalBackdropDark
                   : tokens.colors.overlay.modalBackdropLight,
             }),

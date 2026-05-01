@@ -7,7 +7,7 @@
 import { Alert, Box, Container, Divider, Stack, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useParams } from 'react-router-dom'
+import { Navigate, useLocation, useParams } from 'react-router-dom'
 
 import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 import Breadcrumbs from '../components/production/Breadcrumbs'
@@ -16,6 +16,7 @@ import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
+import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 import { getTranslatedRecord } from '../utils/translations'
 
 import type { Production } from '../types/Productions'
@@ -44,7 +45,14 @@ type SeriesDetailContentProps = {
 }
 
 const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
+  const location = useLocation()
   const { t, i18n } = useTranslation()
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
@@ -128,7 +136,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return <SeriesDetailPageSkeleton />
   }
   if (error || !seriesTag) {
-    return <Navigate to="/404" replace />
+    return <Navigate to={notFoundPath} replace />
   }
 
   const lang = i18n.language.startsWith('en') ? 'en' : 'nl'
@@ -232,10 +240,18 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 }
 
 const SeriesDetailPage = () => {
+  const location = useLocation()
+  const { i18n } = useTranslation()
   const { id } = useParams<{ id: string }>()
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
 
   if (!id || Number.isNaN(Number(id))) {
-    return <Navigate to="/404" replace />
+    return <Navigate to={notFoundPath} replace />
   }
 
   return <SeriesDetailContent key={id} id={id} />

@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='mediafile',
-            options={'ordering': ['-created_at'], 'verbose_name': 'Media file', 'verbose_name_plural': 'Media files'},
+            options={'ordering': ['-created_at'], 'verbose_name': 'Media File', 'verbose_name_plural': 'Media Files'},
         ),
         migrations.RemoveField(
             model_name='mediafile',
@@ -34,8 +34,8 @@ class Migration(migrations.Migration):
                 ('media_file', models.ForeignKey(db_comment='The media file that this translation belongs to.', help_text='Media file this translation belongs to.', on_delete=django.db.models.deletion.CASCADE, related_name='translations', to='media_files.mediafile')),
             ],
             options={
-                'verbose_name': 'Media file translation',
-                'verbose_name_plural': 'Media file translations',
+                'verbose_name': 'Media File Translation',
+                'verbose_name_plural': 'Media File Translations',
                 'db_table': 'media_file_translation',
                 'ordering': ['language__code'],
                 'abstract': False,

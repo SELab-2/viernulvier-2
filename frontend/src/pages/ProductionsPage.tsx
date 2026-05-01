@@ -37,6 +37,14 @@ const toIsoDateBoundary = (value: string, boundary: 'start' | 'end'): string | u
   return new Date(`${value}${suffix}`).toISOString()
 }
 
+const parseCommaSeparatedIds = (value: string): number[] | undefined => {
+  if (!value) {
+    return undefined
+  }
+
+  return value.split(',').map(Number)
+}
+
 const fetchGenres = async (): Promise<Genre[]> => {
   const genres: Genre[] = []
   let page = 1
@@ -146,8 +154,8 @@ const ProductionsPage = () => {
   )
   const selectedAttendanceMode = attendanceMode
   const selectedPerformerType = performerType
-  const selectedGenreId = selectedGenreIds[0]
-  const selectedTagId = selectedTagIds[0]
+  const selectedGenres = selectedGenreIds.join(',')
+  const selectedTags = selectedTagIds.join(',')
   const displayedSearchValue = isSearchDraftDirty ? searchDraft : searchValue
 
   useEffect(() => {
@@ -200,10 +208,8 @@ const ProductionsPage = () => {
             ordering,
             attendance_mode: selectedAttendanceMode,
             performer_type: selectedPerformerType,
-            // TODO: Forward all selected genre ids once the backend supports multi-value filtering.
-            genre: selectedGenreId,
-            // TODO: Forward all selected tag ids once the backend supports multi-value filtering.
-            tag: selectedTagId,
+            genre: parseCommaSeparatedIds(selectedGenres),
+            tag: parseCommaSeparatedIds(selectedTags),
             first_event_start_after: toIsoDateBoundary(firstEventStartAfter, 'start'),
             first_event_start_before: toIsoDateBoundary(firstEventStartBefore, 'end'),
           },
@@ -253,9 +259,9 @@ const ProductionsPage = () => {
     retryKey,
     searchValue,
     selectedAttendanceMode,
-    selectedGenreId,
+    selectedGenres,
     selectedPerformerType,
-    selectedTagId,
+    selectedTags,
   ])
 
   // Handler for retrying the data fetch when an error occurs, triggered by the retry button in the UI.
@@ -305,10 +311,18 @@ const ProductionsPage = () => {
       layout={viewMode}
       getKey={(production) => production.id}
       renderListItem={(production) => (
-        <ProductionListCard production={production} selectedGenreIds={selectedGenreIds} />
+        <ProductionListCard
+          production={production}
+          selectedGenreIds={selectedGenreIds}
+          selectedTagIds={selectedTagIds}
+        />
       )}
       renderGridItem={(production) => (
-        <ProductionGridCard production={production} selectedGenreIds={selectedGenreIds} />
+        <ProductionGridCard
+          production={production}
+          selectedGenreIds={selectedGenreIds}
+          selectedTagIds={selectedTagIds}
+        />
       )}
     />
   )
