@@ -4,8 +4,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
 
 from apps.core.filters import BaseModelFilter
+from apps.languages.models import Language
 from apps.media_files.filters import MediaFileFilter
-from apps.media_files.models import MediaFile
+from apps.media_files.models import MediaFile, MediaFileTranslation
 
 pytestmark = pytest.mark.django_db
 
@@ -19,30 +20,45 @@ def make_uploaded_file(
 
 
 @pytest.fixture
-def pdf_file() -> MediaFile:
-    return MediaFile.objects.create(
+def languages() -> tuple[Language, Language]:
+    return (
+        Language.objects.create(code="nl", name="Dutch", is_active=True),
+        Language.objects.create(code="en", name="English", is_active=True),
+    )
+
+
+@pytest.fixture
+def pdf_file(languages: tuple[Language, Language]) -> MediaFile:
+    nl, en = languages
+    obj = MediaFile.objects.create(
         file=make_uploaded_file(name="season-brochure.pdf", content_type="application/pdf"),
-        description="Programmabrochure voor het voorjaar.",
         external_id="ext-pdf-001",
     )
+    MediaFileTranslation.objects.create(media_file=obj, language=nl, description="Programmabrochure voor het voorjaar.")
+    MediaFileTranslation.objects.create(media_file=obj, language=en, description="Spring season brochure.")
+    return obj
 
 
 @pytest.fixture
-def png_file() -> MediaFile:
-    return MediaFile.objects.create(
+def png_file(languages: tuple[Language, Language]) -> MediaFile:
+    nl, _ = languages
+    obj = MediaFile.objects.create(
         file=make_uploaded_file(name="MainPoster.PNG", content_type="image/png"),
-        description="Premièreposter voor social campagne.",
         external_id="ext-img-001",
     )
+    MediaFileTranslation.objects.create(media_file=obj, language=nl, description="Premièreposter voor social campagne.")
+    return obj
 
 
 @pytest.fixture
-def jpg_file() -> MediaFile:
-    return MediaFile.objects.create(
+def jpg_file(languages: tuple[Language, Language]) -> MediaFile:
+    _, en = languages
+    obj = MediaFile.objects.create(
         file=make_uploaded_file(name="press-photo.jpg", content_type="image/jpeg"),
-        description="Persfoto met cast.",
         external_id="ext-img-002",
     )
+    MediaFileTranslation.objects.create(media_file=obj, language=en, description="Press photo with cast.")
+    return obj
 
 
 class TestMediaFileFilterDefinition:
@@ -54,6 +70,12 @@ class TestMediaFileFilterDefinition:
 
     def test_meta_fields_match_expected_fields(self) -> None:
         assert MediaFileFilter._meta.fields == ["file_type", "mime_type", "filename", "description", "external_id"]
+
+    def test_description_filter_targets_translations_field(self) -> None:
+        assert MediaFileFilter.base_filters["description"].field_name == "translations__description"
+
+    def test_description_filter_is_distinct(self) -> None:
+        assert MediaFileFilter.base_filters["description"].distinct is True
 
 
 class TestMediaFileFilterWorkingFields:
@@ -81,13 +103,21 @@ class TestMediaFileFilterWorkingFields:
         qs = MediaFileFilter(data={"filename": "Poster"}, queryset=MediaFile.objects.all()).qs
         assert list(qs) == [png_file]
 
-    def test_filters_by_description_contains(self, pdf_file: MediaFile) -> None:
+    def test_filters_by_translated_description_contains(self, pdf_file: MediaFile) -> None:
         qs = MediaFileFilter(data={"description": "voorjaar"}, queryset=MediaFile.objects.all()).qs
+        assert list(qs) == [pdf_file]
+
+    def test_description_filter_matches_any_language(self, pdf_file: MediaFile) -> None:
+        qs = MediaFileFilter(data={"description": "Spring season"}, queryset=MediaFile.objects.all()).qs
         assert list(qs) == [pdf_file]
 
     def test_description_filter_is_case_insensitive(self, png_file: MediaFile) -> None:
         qs = MediaFileFilter(data={"description": "SOCIAL"}, queryset=MediaFile.objects.all()).qs
         assert list(qs) == [png_file]
+
+    def test_description_filter_distinct_prevents_duplicates(self, pdf_file: MediaFile) -> None:
+        qs = MediaFileFilter(data={"description": "brochure"}, queryset=MediaFile.objects.all()).qs
+        assert list(qs) == [pdf_file]
 
     def test_combined_filters_narrow_results(self, pdf_file: MediaFile) -> None:
         qs = MediaFileFilter(

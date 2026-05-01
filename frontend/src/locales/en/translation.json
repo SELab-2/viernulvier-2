@@ -326,5 +326,26 @@
   "blog": {
     "couldNotLoad": "Could not load blog",
     "invalidId": "Invalid blog ID"
+  },
+  "media": {
+    "searchPlaceholder": "Search files by name, description or type...",
+    "fileType": {
+      "image": "Image",
+      "pdf": "PDF",
+      "file": "File"
+    },
+    "size": "Size",
+    "error": {
+      "retry": "Retry",
+      "fallback": "Could not load media files.",
+      "notification": "Something went wrong while loading media files."
+    },
+    "empty": {
+      "title": "No media files found.",
+      "description": "Adjust your search and try again."
+    },
+    "loading": "Loading media files",
+    "resultsRegionLabel": "Media files results",
+    "noDescription": "No description available."
   }
 }

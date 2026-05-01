@@ -27,7 +27,11 @@ _MEDIA_FILE_RESPONSE = OpenApiExample(
         "external_id": None,
         "file": "/media/uploads/4f7ec8d0-6fd4-4d89-8f65-9d8d1f79b4b3.pdf",
         "filename": "season-brochure-2026.pdf",
-        "description": "Final Dutch brochure version for the 2026 season.",
+        "display_description": "Final Dutch brochure version for the 2026 season.",
+        "description": {
+            "nl": "Final Dutch brochure version for the 2026 season.",
+            "en": "Final English brochure version for the 2026 season.",
+        },
         "mime_type": "application/pdf",
         "size_bytes": 2843921,
         "file_type": "pdf",
@@ -44,7 +48,11 @@ _MEDIA_FILE_IMAGE_RESPONSE = OpenApiExample(
         "external_id": None,
         "file": "/media/uploads/9a7a3b8a-3bb6-4179-a52d-4f0a8fa9d921.png",
         "filename": "poster-premiere.png",
-        "description": "Main campaign poster for the premiere weekend.",
+        "display_description": "Main campaign poster for the premiere weekend.",
+        "description": {
+            "en": "Main campaign poster for the premiere weekend.",
+            "fr": "Affiche principale de la campagne pour le week-end de première.",
+        },
         "mime_type": "image/png",
         "size_bytes": 918273,
         "file_type": "image",
@@ -58,7 +66,7 @@ _MEDIA_FILE_INPUT = OpenApiExample(
     summary="Multipart upload payload for a new media file",
     value={
         "file": "<binary file>",
-        "description": "Optional context about the file contents.",
+        "external_id": "print-archive-2026-001",
     },
     request_only=True,
 )
@@ -68,7 +76,6 @@ _MEDIA_FILE_PARTIAL_INPUT = OpenApiExample(
     summary="Only the fields you want to change",
     value={
         "external_id": "print-archive-2026-001",
-        "description": "Final Dutch brochure version for the 2026 season.",
     },
     request_only=True,
 )
@@ -78,7 +85,7 @@ _MEDIA_FILE_PUT_INPUT = OpenApiExample(
     summary="Full replacement payload for a media file",
     value={
         "file": "<binary file>",
-        "description": "Updated file with revised print margins.",
+        "external_id": "print-archive-2026-001",
     },
     request_only=True,
 )
@@ -95,10 +102,13 @@ _MEDIA_FILE_LIST = extend_schema(
         "and other print materials.\n\n"
         "Filtering examples:\n"
         "- `?file_type=pdf`\n"
-        "- `?filename=poster`\n\n"
+        "- `?filename=poster`\n"
+        "- `?description=brochure`\n\n"
         "Search examples:\n"
-        "- `?search=poster`\n\n"
-        "Each item can include an optional `description` with extra context about the file contents."
+        "- `?search=poster`\n"
+        "- `?search=brochure`\n\n"
+        "Translated `description` values are returned as language-code dictionaries "
+        '(e.g. `{"nl": "Nederlandse brochure", "en": "English brochure"}`).'
     ),
     parameters=[
         OpenApiParameter(
@@ -117,7 +127,8 @@ _MEDIA_FILE_LIST = extend_schema(
 _MEDIA_FILE_RETRIEVE = extend_schema(
     summary="Retrieve a media file",
     description=(
-        "Returns the full representation of a single **MediaFile** object, including its stored file URL and metadata."
+        "Returns the full representation of a single **MediaFile** object, including its stored file URL, "
+        "derived metadata, and all available description translations."
     ),
     responses={200: MediaFileSerializer, **ITEM_ERRORS},
     examples=[_MEDIA_FILE_RESPONSE],
@@ -130,10 +141,11 @@ _MEDIA_FILE_CREATE = extend_schema(
         "Supported file types:\n"
         "- JPEG\n"
         "- PNG\n"
-        "- WEBP\n"
+        "- WebP\n"
         "- PDF\n\n"
         "The backend derives and stores metadata such as the original filename, "
-        "description, MIME type, file size, and normalized internal file type.\n\n"
+        "MIME type, file size, and normalized internal file type.\n\n"
+        "Localised descriptions must be added separately via the **Media File Translation** model/endpoints.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=MediaFileUploadSerializer,
@@ -147,6 +159,7 @@ _MEDIA_FILE_UPDATE = extend_schema(
         "Fully replaces an existing **MediaFile**.\n\n"
         "Use this endpoint when you want to replace the stored file and overwrite "
         "the writable fields of the resource in a single request.\n\n"
+        "Description translations are managed separately from the binary file resource.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=MediaFileUploadSerializer,
@@ -159,8 +172,8 @@ _MEDIA_FILE_PARTIAL_UPDATE = extend_schema(
     description=(
         "Updates one or more writable fields of an existing **MediaFile** without "
         "requiring a full payload.\n\n"
-        "Use this endpoint for small metadata changes such as setting or updating "
-        "`external_id` or `description`.\n\n"
+        "Use this endpoint for small metadata changes such as setting or updating `external_id`.\n\n"
+        "Description translations are managed separately from the binary file resource.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=MediaFileUploadSerializer,
@@ -172,7 +185,7 @@ _MEDIA_FILE_DESTROY = extend_schema(
     summary="Delete a media file",
     description=(
         "Permanently removes a **MediaFile** from the system.\n\n"
-        "> **Warning:** This also removes the underlying stored file. "
+        "> **Warning:** This also removes the underlying stored file and all associated description translations. "
         "This action is irreversible.\n\n"
         "> **Requires an internal API key.**"
     ),

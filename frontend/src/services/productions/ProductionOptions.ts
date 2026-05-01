@@ -11,8 +11,8 @@ export interface ProductionFilters {
   attendance_mode?: AttendanceMode
   performer_type?: PerformerType
   uit_database_type?: number
-  genre?: number
-  tag?: number
+  genre?: number | number[]
+  tag?: number | number[]
   has_media?: boolean
   title?: string
   artist_name?: string

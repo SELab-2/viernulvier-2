@@ -11,6 +11,7 @@ Covers:
 
 from unittest.mock import MagicMock
 
+from django.conf import settings
 from django.test import TestCase
 
 from apps.core.serializers import TranslatableSerializerMixin
@@ -140,3 +141,57 @@ class TestTranslatableSerializerMixin(TestCase):
         obj = make_obj(translations)
         result = self.mixin.get_translated_field(obj, "title")
         assert result["nl"] == "Second"
+
+
+def test_get_base_language_code_default():
+    settings.LANGUAGE_CODE = None
+    mixin = TranslatableSerializerMixin()
+    assert mixin.get_base_language_code() == "en"
+
+
+def test_get_base_language_code_with_region():
+    settings.LANGUAGE_CODE = "fr-BE"
+    mixin = TranslatableSerializerMixin()
+    assert mixin.get_base_language_code() == "fr"
+
+
+def test_get_base_translated_value_prefers_base_language():
+    mixin = TranslatableSerializerMixin()
+
+    translations = [
+        make_translation("en", title="English"),
+        make_translation("nl", title="Nederlands"),
+    ]
+    obj = make_obj(translations)
+
+    settings.LANGUAGE_CODE = "nl"
+
+    result = mixin.get_base_translated_value(obj, "title")
+    assert result == "Nederlands"
+
+
+def test_get_base_translated_value_fallback_first():
+    mixin = TranslatableSerializerMixin()
+
+    translations = [
+        make_translation("fr", title="FR"),
+        make_translation("de", title="DE"),
+    ]
+    obj = make_obj(translations)
+
+    settings.LANGUAGE_CODE = "nl"
+
+    result = mixin.get_base_translated_value(obj, "title")
+    assert result == "FR"
+
+
+def test_get_base_translated_value_returns_fallback():
+    mixin = TranslatableSerializerMixin()
+
+    translations = [
+        make_translation("fr", title=None),
+    ]
+    obj = make_obj(translations)
+
+    result = mixin.get_base_translated_value(obj, "title", fallback="DEFAULT")
+    assert result == "DEFAULT"

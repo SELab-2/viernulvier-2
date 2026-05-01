@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 import ProductionGridCard from '../../components/productions/ProductionGridCard'
 import i18n from '../../i18n'
+import { toLocalizedPath } from '../../utils/localizedRoutes'
 
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
@@ -67,12 +68,17 @@ const baseProduction = (overrides: Partial<Production> = {}): Production => ({
 const renderGridCard = (props: {
   production: Production
   selectedGenreIds?: number[]
+  selectedTagIds?: number[]
   onGenreClick?: (id: number) => void
 }) => {
-  const { production, selectedGenreIds = [] } = props
+  const { production, selectedGenreIds = [], selectedTagIds = [] } = props
 
   const ui: ReactElement = (
-    <ProductionGridCard production={production} selectedGenreIds={selectedGenreIds} />
+    <ProductionGridCard
+      production={production}
+      selectedGenreIds={selectedGenreIds}
+      selectedTagIds={selectedTagIds}
+    />
   )
 
   return render(
@@ -134,8 +140,8 @@ describe('ProductionGridCard', () => {
     renderGridCard({ production })
 
     expect(screen.getByRole('link', { name: /Voorstelling/ })).toHaveAttribute(
-      'href',
-      '/productions/7',
+      'data-to',
+      toLocalizedPath('/productions/7', 'nl'),
     )
   })
 
@@ -144,7 +150,9 @@ describe('ProductionGridCard', () => {
     renderGridCard({ production })
 
     const links = screen.getAllByRole('link')
-    expect(links.some((l) => l.getAttribute('href') === '/productions/42')).toBe(true)
+    expect(
+      links.some((l) => l.getAttribute('data-to') === toLocalizedPath('/productions/42', 'nl')),
+    ).toBe(true)
   })
 
   it('omits the artist line when there is no artist translation or display fallback', () => {
@@ -328,6 +336,19 @@ describe('ProductionGridCard', () => {
     expect(screen.getByText('Dans')).toBeInTheDocument()
   })
 
+  it('highlights selected series tags with the series color', () => {
+    const production = baseProduction({
+      tags: [minimalTag(11, 'Festivalreeks')],
+    })
+
+    renderGridCard({ production, selectedTagIds: [11] })
+
+    expect(screen.getByRole('link', { name: 'Festivalreeks' })).toHaveStyle({
+      backgroundColor: '#1976d2',
+      borderColor: '#1976d2',
+    })
+  })
+
   it('does not render a genre row when there are no genres', () => {
     const production = baseProduction({ genres: [] })
     renderGridCard({ production })
@@ -377,7 +398,9 @@ describe('ProductionGridCard', () => {
     expect(onGenreClick).not.toHaveBeenCalled()
 
     const links = screen.getAllByRole('link')
-    expect(links.some((l) => l.getAttribute('href') === '/productions/1')).toBe(true)
+    expect(
+      links.some((l) => l.getAttribute('data-to') === toLocalizedPath('/productions/1', 'nl')),
+    ).toBe(true)
   })
 
   it('uses English copy when the locale is en', async () => {

@@ -49,12 +49,12 @@ describe('HomePage', () => {
       }),
     ).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Open het archief' }).getAttribute('href')).toBe(
-      '/archive',
+      '/nl/archief',
     )
     expect(screen.getByRole('link', { name: 'Bekijk reeksen' }).getAttribute('href')).toBe(
-      '/series',
+      '/nl/reeksen',
     )
-    expect(screen.getByRole('link', { name: 'Lees blogs' }).getAttribute('href')).toBe('/blogs')
+    expect(screen.getByRole('link', { name: 'Lees blogs' }).getAttribute('href')).toBe('/nl/blogs')
     expect(screen.getByRole('heading', { name: 'Ontdek reeksen' })).toBeTruthy()
   })
 

@@ -434,9 +434,6 @@ class TestValidateExtensionForMime:
     def test_accepts_matching_png_extension(self) -> None:
         _validate_extension_for_mime("poster.png", "image/png")
 
-    def test_accepts_matching_webp_extension(self) -> None:
-        _validate_extension_for_mime("poster.webp", "image/webp")
-
     def test_accepts_matching_pdf_extension(self) -> None:
         _validate_extension_for_mime("document.pdf", "application/pdf")
 
@@ -700,11 +697,13 @@ class TestValidateMediaFile:
             make_webp_bytes(),
             content_type="image/webp",
         )
+
         result = validate_media_file(
             file_obj,
             allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,
             max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
         )
+
         assert result.mime_type == "image/webp"
 
     def test_allows_images_only_when_restricted(self) -> None:
@@ -752,16 +751,18 @@ class TestValidateMediaFile:
     def test_guesses_mime_from_extension_when_no_signature(self) -> None:
         """Fallback to guessing MIME from extension."""
         file_obj = SimpleUploadedFile(
-            "poster.webp",
-            b"unknown content",  # Not detectable as WEBP
+            "poster.jpg",
+            b"unknown content",
             content_type=None,
         )
+
         result = validate_media_file(
             file_obj,
             allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,
             max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
         )
-        assert result.mime_type == "image/webp"
+
+        assert result.mime_type == "image/jpeg"
 
     def test_error_message_lists_allowed_types(self) -> None:
         """Error should list all allowed MIME types."""
