@@ -267,11 +267,22 @@ class TestLocationViewSet(TestCase):
         assert cities == sorted(cities)
 
     def test_search_by_city(self):
-        LocationFactory(city="Gent")
-        LocationFactory(city="Brussel")
+        LocationFactory(
+            city="Gent",
+            street="Main Street",
+            country="BE",
+        )
+        LocationFactory(
+            city="Brussel",
+            street="Another Street",
+            country="BE",
+        )
+
         response = self.client.get(self.list_url(), {"search": "Gent"}, **pub_headers())
         results = response.data.get("results", response.data)
+
         assert len(results) == 1
+        assert results[0]["city"] == "Gent"
 
 
 # =====================================================

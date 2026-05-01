@@ -122,6 +122,16 @@ The production deployment is intended for a Linux server that runs a self-hosted
 - `nginx`: serves the frontend, `/api/`, `/admin/`, `/static/`, and `/media/`
 - `certbot`: renews Let's Encrypt certificates automatically
 
+In addition to the long-running containers above, two GitHub Actions
+workflows execute on the self-hosted runner that lives on the server:
+
+- `.github/workflows/deploy.yml` rebuilds and restarts the stack on every
+  push to `main` (and via manual dispatch).
+- `.github/workflows/sync-viernulvier.yml` runs the scraper on a daily
+  schedule against the running `backend` container. See the
+  [Scraper page](./Scraper.md#scheduled-runs) for schedule, manual
+  trigger, and log locations.
+
 ### Prerequisites
 
 Before the first deployment, make sure you have:
