@@ -330,8 +330,8 @@ describe('ProductionsPage', () => {
 
     renderPage()
 
-    await screen.findByRole('button', { name: 'Ga naar pagina 2' })
-    fireEvent.click(screen.getByRole('button', { name: 'Ga naar pagina 2' }))
+    await screen.findByRole('button', { name: 'Ga naar volgende pagina' })
+    fireEvent.click(screen.getByRole('button', { name: 'Ga naar volgende pagina' }))
 
     await waitFor(() => {
       expect(mockedGetProductions).toHaveBeenLastCalledWith({
