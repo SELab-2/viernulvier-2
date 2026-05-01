@@ -21,8 +21,10 @@ Covers:
 from datetime import UTC, datetime
 from unittest.mock import patch
 
+from django.db import connection
 from django.db.models import Min
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
@@ -329,29 +331,58 @@ class TestProductionViewSetDetail(TestCase):
     def test_retrieve_with_include_related_no_n_plus_one(self) -> None:
         """Related productions + hun translations mogen geen N+1 veroorzaken."""
         nl = LanguageFactory.create(code="nl", name="Dutch")
+        en = LanguageFactory.create(code="en", name="English")
         tag = TagFactory.create(type="theme")
         ProductionTagFactory.create(production=self.production, tag=tag)
 
-        for _ in range(5):
+        def create_related(index: int) -> Production:
             related = ProductionFactory.create()
             ProductionTranslationFactory.create(
                 production=related,
                 language=nl,
-                title="Gerelateerde titel",
-                artist_name="",
-                tagline="",
-                teaser="",
+                title=f"Gerelateerde productie {index}",
                 description="",
+                teaser="",
+                artist_name=f"Artiest {index}",
+                tagline="",
             )
-            ProductionTagFactory.create(production=related, tag=tag)
+            ProductionTranslationFactory.create(
+                production=related,
+                language=en,
+                title=f"Related production {index}",
+                description="",
+                teaser="",
+                artist_name=f"Artist {index}",
+                tagline="",
+            )
+            production_tag = ProductionTagFactory.create(production=related, tag=tag)
+            ProductionTagTranslationFactory.create(
+                production_tag=production_tag,
+                language=nl,
+                description=f"Context {index}",
+            )
+            return related
 
-        with self.assertNumQueries(11):
-            response = self.client.get(
-                f"/api/v1/productions/{self.production.id}/?include=related",
-                **pub_headers(),
-            )
+        create_related(1)
+        url = f"/api/v1/productions/{self.production.pk}/?include=related"
+
+        with CaptureQueriesContext(connection) as one_related_queries:
+            response = self.client.get(url, **pub_headers())
+
         assert response.status_code == 200
+        assert len(response.data["related"]) == 1
+        assert len(response.data["related"][0]["productions"]) == 1
+
+        for index in range(2, 6):
+            create_related(index)
+
+        with CaptureQueriesContext(connection) as five_related_queries:
+            response = self.client.get(url, **pub_headers())
+
+        assert response.status_code == 200
+        assert len(response.data["related"]) == 1
         assert len(response.data["related"][0]["productions"]) == 5
+        assert len(five_related_queries) == len(one_related_queries)
 
 
 # ---------------------------------------------------------------------------

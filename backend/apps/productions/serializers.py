@@ -399,41 +399,54 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
         return ProductionTagSerializer(production_tags, many=True).data
 
-    def get_related(self, obj: Production) -> list | None:
-        """Return related productions grouped by the tags on this production."""
-        if "related" not in self.context.get("include", set()):
-            return None
-
+    def _get_related_tags(self, obj: Production) -> list[Tag]:
+        """Return tags for related grouping without extra queries when prefetched."""
         production_tags = getattr(obj, "prefetched_production_tags", None)
         if production_tags is not None:
-            tags = [production_tag.tag for production_tag in production_tags]
-        else:
-            tags = list(obj.tags.all())
+            return [production_tag.tag for production_tag in production_tags]
 
-        if not tags:
-            return []
+        return list(obj.tags.all())
 
-        tag_ids = [tag.id for tag in tags]
+    @staticmethod
+    def _get_row_production_id(row: ProductionTag) -> int | None:
+        """Return FK id without fetching ``row.production`` for ORM rows.
 
-        related_rows = list(
+        Unit tests may use lightweight row doubles with ``production`` but
+        without Django's ``production_id`` FK attribute. Real ORM rows must
+        use ``production_id`` to avoid one query per related row.
+        """
+        if hasattr(row, "production_id"):
+            return row.production_id
+
+        production = getattr(row, "production", None)
+        return getattr(production, "id", None)
+
+    @staticmethod
+    def _get_related_rows(obj: Production, tag_ids: list[int]) -> list[ProductionTag]:
+        """Return production-tag rows for related productions."""
+        return list(
             ProductionTag.objects.filter(tag_id__in=tag_ids).exclude(production_id=obj.id).order_by("tag__type", "id")
         )
 
+    def _get_related_production_ids(self, related_rows: list[ProductionTag]) -> list[int]:
+        """Return deduplicated related production ids in row order."""
         related_production_ids = []
         seen_related_production_ids: set[int] = set()
 
         for row in related_rows:
-            production_id = getattr(row, "production_id", getattr(row.production, "id", None))
-            if production_id is None:
-                continue
-
-            if production_id in seen_related_production_ids:
+            production_id = self._get_row_production_id(row)
+            if production_id is None or production_id in seen_related_production_ids:
                 continue
 
             seen_related_production_ids.add(production_id)
             related_production_ids.append(production_id)
 
-        related_productions_by_id = {
+        return related_production_ids
+
+    @staticmethod
+    def _get_related_productions_by_id(related_production_ids: list[int]) -> dict[int, Production]:
+        """Fetch related productions with all serializer dependencies prefetched."""
+        return {
             production.id: production
             for production in Production.objects.filter(id__in=related_production_ids)
             .select_related("uit_database_type", "media_gallery")
@@ -465,38 +478,56 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             )
         }
 
+    def _group_related_productions(
+        self,
+        tags: list[Tag],
+        related_rows: list[ProductionTag],
+        related_productions_by_id: dict[int, Production],
+    ) -> dict[int, list[Production]]:
+        """Group deduplicated related productions by tag id."""
         grouped_productions: dict[int, list[Production]] = {tag.id: [] for tag in tags}
         seen_production_ids: dict[int, set[int]] = {tag.id: set() for tag in tags}
 
         for row in related_rows:
-            production_id = getattr(row, "production_id", getattr(row.production, "id", None))
-            if production_id is None:
-                continue
-
+            production_id = self._get_row_production_id(row)
             production = related_productions_by_id.get(production_id)
-            if production is None:
+            if production is None or production.id in seen_production_ids[row.tag_id]:
                 continue
 
-            if production.id in seen_production_ids[row.tag_id]:
-                continue
             grouped_productions[row.tag_id].append(production)
             seen_production_ids[row.tag_id].add(production.id)
 
-        result = []
+        return grouped_productions
 
-        for tag in tags:
-            result.append(
-                {
-                    "tag": RelatedTagSerializer(tag, context=self.context).data,
-                    "productions": RelatedProductionSerializer(
-                        grouped_productions.get(tag.id, []),
-                        many=True,
-                        context=self.context,
-                    ).data,
-                },
-            )
+    def _serialize_related_groups(self, tags: list[Tag], grouped_productions: dict[int, list[Production]]) -> list[dict]:
+        """Serialize grouped related productions."""
+        return [
+            {
+                "tag": RelatedTagSerializer(tag, context=self.context).data,
+                "productions": RelatedProductionSerializer(
+                    grouped_productions.get(tag.id, []),
+                    many=True,
+                    context=self.context,
+                ).data,
+            }
+            for tag in tags
+        ]
 
-        return result
+    def get_related(self, obj: Production) -> list | None:
+        """Return related productions grouped by the tags on this production."""
+        if "related" not in self.context.get("include", set()):
+            return None
+
+        tags = self._get_related_tags(obj)
+        if not tags:
+            return []
+
+        related_rows = self._get_related_rows(obj, [tag.id for tag in tags])
+        related_production_ids = self._get_related_production_ids(related_rows)
+        related_productions_by_id = self._get_related_productions_by_id(related_production_ids)
+        grouped_productions = self._group_related_productions(tags, related_rows, related_productions_by_id)
+
+        return self._serialize_related_groups(tags, grouped_productions)
 
     def get_events(self, obj: Production) -> list:
         """Return a list of events for this production, if included in the serializer context."""
