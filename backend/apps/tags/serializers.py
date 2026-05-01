@@ -6,14 +6,12 @@ as language-code dictionaries
 (e.g. {"en": "Contemporary", "fr": "Contemporain"}).
 """
 
+from django.core.files.storage import default_storage
 from rest_framework import serializers
-from django.db.models import Prefetch
-from django.apps import apps
 
 from apps.core.serializers import TranslatableSerializerMixin
 
 from .models import Tag
-from apps.media_library.models import MediaItem
 
 
 class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
@@ -162,8 +160,11 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
 
         If the Tag has no `image`, fall back to the image of the most
         recent Production that uses this Tag and has a media gallery with
-        at least one media item crop image. This fallback is applied only
-        when serializing (GET responses) and is not stored on the Tag.
+        at least one media item crop image.
+
+        The fallback value is expected to be pre-annotated in queryset
+        as `fallback_crop_path` by TagViewSet, which keeps list/detail
+        responses free from N+1 queries.
         """
         request = self.context.get("request") if hasattr(self, "context") else None
 
@@ -175,33 +176,13 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
                 return None
             return request.build_absolute_uri(url) if request else url
 
-        # Fallback: find most recent production with this tag and an image
-        Production = apps.get_model("productions", "Production")
-        MediaItemModel = MediaItem
+        fallback_crop_path = getattr(obj, "fallback_crop_path", None)
+        if not fallback_crop_path:
+            return None
 
-        prod_qs = (
-            Production.objects.filter(tags=obj, media_gallery__isnull=False)
-            .select_related("media_gallery")
-            .prefetch_related(
-                Prefetch(
-                    "media_gallery__media_items",
-                    queryset=MediaItemModel.objects.prefetch_related("crops").order_by("position"),
-                )
-            )
-            .order_by("-id")
-        )
+        try:
+            url = default_storage.url(fallback_crop_path)
+        except Exception:
+            return None
 
-        for production in prod_qs:
-            media_items = production.media_gallery.media_items.all() if production.media_gallery else []
-            if not media_items:
-                continue
-            first_item = media_items[0]
-            first_crop = next(iter(first_item.crops.all()), None)
-            if first_crop and getattr(first_crop, "image", None):
-                try:
-                    url = first_crop.image.url
-                except Exception:
-                    return None
-                return request.build_absolute_uri(url) if request else url
-
-        return None
+        return request.build_absolute_uri(url) if request else url

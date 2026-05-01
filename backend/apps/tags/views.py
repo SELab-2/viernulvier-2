@@ -12,10 +12,11 @@ All translated fields are returned as dictionaries mapping language codes
 to their values (e.g., {"nl": "...", "en": "..."}).
 """
 
-from django.db.models import Prefetch
+from django.db.models import OuterRef, Prefetch, Subquery
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
+from apps.media_library.models import MediaItemCrop
 
 from .filters import TagFilter
 from .models import Tag, TagTranslation
@@ -63,12 +64,28 @@ class TagViewSet(ApiModelViewSet):
     """
 
     serializer_class = TagSerializer
-    queryset = Tag.objects.prefetch_related(
-        Prefetch(
-            "translations",
-            queryset=TagTranslation.objects.select_related("language"),
+    queryset = (
+        Tag.objects.annotate(
+            fallback_crop_path=Subquery(
+                MediaItemCrop.objects.filter(
+                    media_item__gallery__productions__tags=OuterRef("pk"),
+                )
+                .order_by(
+                    "-media_item__gallery__productions__id",
+                    "media_item__position",
+                    "id",
+                )
+                .values("image")[:1]
+            )
         )
-    ).order_by("id")
+        .prefetch_related(
+            Prefetch(
+                "translations",
+                queryset=TagTranslation.objects.select_related("language"),
+            )
+        )
+        .order_by("id")
+    )
 
     filterset_class = TagFilter
     ordering_fields = ["id", "type", "source", "is_enabled"]

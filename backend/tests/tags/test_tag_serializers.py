@@ -56,6 +56,7 @@ class TestTagSerializerFields(TestCase):
             "source",
             "type",
             "is_enabled",
+            "image",
             "name",
             "display_name",
             "display_short_description",
