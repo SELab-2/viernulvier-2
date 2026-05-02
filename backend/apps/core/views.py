@@ -16,6 +16,9 @@ as their ordering backend, which ensures that items without a value for the
 sorted field (e.g. no title translation, no event date) always appear last,
 regardless of whether the sort direction is ascending or descending.
 
+Read endpoints are cached for a short period. The cache is applied only to
+``list`` and ``retrieve`` handlers, so write routes are never cached.
+
 Access matrix
 -------------
 +------------------+---------------------+---------------------+
@@ -29,6 +32,12 @@ Access matrix
 +------------------+---------------------+---------------------+
 """
 
+from collections.abc import Callable
+from typing import Any
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
@@ -39,7 +48,28 @@ from apps.core.ordering import NullsLastOrderingFilter
 from .authentications import ApiKeyAuthentication
 from .permissions import ApiKeyPermission
 
+CACHE_TTL_API = 60 * 15
+API_CACHE_KEY_PREFIX = "api"
+API_CACHE_VARY_HEADERS = ("Accept-Language",)
 
+
+def cache_api_view(timeout: int = CACHE_TTL_API) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Cache an API handler while keeping language-aware responses separate.
+
+    Django's ``cache_page`` caches per URL, including query parameters. The
+    additional ``Vary: Accept-Language`` ensures endpoints with language-aware
+    ordering/search annotations do not reuse a response generated for another
+    preferred language.
+    """
+
+    def decorator(view_func: Callable[..., Any]) -> Callable[..., Any]:
+        return cache_page(timeout, key_prefix=API_CACHE_KEY_PREFIX)(vary_on_headers(*API_CACHE_VARY_HEADERS)(view_func))
+
+    return decorator
+
+
+@method_decorator(cache_api_view(), name="list")
+@method_decorator(cache_api_view(), name="retrieve")
 class ApiModelViewSet(ModelViewSet):
     """Base ViewSet for full CRUD operations.
 
@@ -69,6 +99,8 @@ class ApiModelViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, NullsLastOrderingFilter]
 
 
+@method_decorator(cache_api_view(), name="list")
+@method_decorator(cache_api_view(), name="retrieve")
 class ApiReadOnlyViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     """Base ViewSet for read-only access.
 
