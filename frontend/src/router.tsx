@@ -3,10 +3,11 @@ import { lazy, Suspense, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 
-import Footer from './components/Footer'
 import LoadingSpinner from './components/LoadingSpinner'
-import Navbar from './components/Navbar'
-import HomePage from './pages/HomePage'
+// Lazy-load UI chrome (navbar/footer) and the home page to reduce initial bundle size.
+const Navbar = lazy(() => import('./components/Navbar'))
+const Footer = lazy(() => import('./components/Footer'))
+const HomePage = lazy(() => import('./pages/HomePage'))
 import {
   DEFAULT_LANGUAGE,
   getLocalizedSegment,
@@ -105,7 +106,9 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar mode={mode} onToggleMode={onToggleMode} />
+      <Suspense fallback={null}>
+        <Navbar mode={mode} onToggleMode={onToggleMode} />
+      </Suspense>
       <Box component="main" sx={{ flexGrow: 1 }}>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
@@ -202,7 +205,9 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
           </Routes>
         </Suspense>
       </Box>
-      <Footer />
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
     </Box>
   )
 }
