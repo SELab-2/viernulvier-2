@@ -20,7 +20,7 @@ mountShell()
 
 function scheduleAppLoad(cb: () => void) {
   if ('requestIdleCallback' in window) {
-    ;(window as any).requestIdleCallback(cb, { timeout: 1500 })
+    ;(window as Window).requestIdleCallback(cb, { timeout: 1500 })
   } else if ('requestAnimationFrame' in window) {
     requestAnimationFrame(() => setTimeout(cb, 0))
   } else {

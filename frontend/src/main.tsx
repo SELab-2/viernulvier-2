@@ -10,7 +10,7 @@ function loadIndexCssDeferred() {
   const link = document.createElement('link')
   // preload first, then switch to stylesheet on load to apply styles
   link.rel = 'preload'
-  ;(link as any).as = 'style'
+  ;(link as HTMLLinkElement).as = 'style'
   link.href = href
   link.onload = () => {
     link.rel = 'stylesheet'
