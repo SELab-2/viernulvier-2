@@ -31,12 +31,13 @@ Note: "wrong key" triggers AuthenticationFailed -> 403 (DRF default when
 from unittest.mock import MagicMock
 
 from django.test import TestCase, override_settings
+from rest_framework.response import Response
 from rest_framework.test import APIClient
 from rest_framework.viewsets import ModelViewSet
 
 from apps.core.authentications import ApiKeyAuthentication
 from apps.core.permissions import ApiKeyPermission
-from apps.core.views import ApiModelViewSet
+from apps.core.views import ApiModelViewSet, ApiReadOnlyViewSet
 from apps.languages.models import Language
 from tests.helpers.api import internal_headers as int_headers
 from tests.helpers.api import public_headers as pub_headers
@@ -285,3 +286,19 @@ class TestApiModelViewSetDelete(TestCase):
     def test_delete_nonexistent_returns_404(self):
         response = self.client.delete("/api/v1/languages/xx/", **int_headers())
         assert response.status_code == 404
+
+
+def test_read_only_viewset_finalize_response_sets_cache_control_headers() -> None:
+    viewset = ApiReadOnlyViewSet()
+    viewset.headers = {}
+
+    request = MagicMock()
+    response = Response({"ok": True})
+
+    result = viewset.finalize_response(request, response)
+
+    cache_control = result["Cache-Control"]
+    assert "max-age=0" in cache_control
+    assert "no-cache" in cache_control
+    assert "private" in cache_control
+    assert "must-revalidate" in cache_control
