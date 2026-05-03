@@ -7,7 +7,8 @@ import i18n from '../../i18n'
 import ProductionsPage from '../../pages/ProductionsPage'
 import { ApiError } from '../../services/ApiTypes'
 import { getGenres } from '../../services/genres/Genres'
-import { getProductions, getProductionSeries } from '../../services/productions/Productions'
+import { getProductions } from '../../services/productions/Productions'
+import { getTags } from '../../services/tags/Tags'
 
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
@@ -15,7 +16,10 @@ import type { Tag } from '../../types/Tags'
 
 jest.mock('../../services/productions/Productions', () => ({
   getProductions: jest.fn(),
-  getProductionSeries: jest.fn(),
+}))
+
+jest.mock('../../services/tags/Tags', () => ({
+  getTags: jest.fn(),
 }))
 
 jest.mock('../../services/genres/Genres', () => ({
@@ -23,9 +27,7 @@ jest.mock('../../services/genres/Genres', () => ({
 }))
 
 const mockedGetProductions = getProductions as jest.MockedFunction<typeof getProductions>
-const mockedGetProductionSeries = getProductionSeries as jest.MockedFunction<
-  typeof getProductionSeries
->
+const mockedGetTags = getTags as jest.MockedFunction<typeof getTags>
 const mockedGetGenres = getGenres as jest.MockedFunction<typeof getGenres>
 
 const genreFixtures: Genre[] = [
@@ -52,10 +54,15 @@ const tagFixtures: Tag[] = [
     source: 'manual',
     type: 'series',
     is_enabled: true,
+    image: null,
     display_name: 'Premiere',
     display_short_description: null,
+    display_excerpt: null,
     display_url_title: null,
+    firstProductionStart: null,
+    lastProductionEnd: null,
     name: { nl: 'Premiere' },
+    excerpt: null,
     short_description: {},
     url_title: {},
   },
@@ -65,10 +72,15 @@ const tagFixtures: Tag[] = [
     source: 'manual',
     type: 'series',
     is_enabled: true,
+    image: null,
     display_name: 'Festival',
     display_short_description: null,
+    display_excerpt: null,
     display_url_title: null,
+    firstProductionStart: null,
+    lastProductionEnd: null,
     name: { nl: 'Festival' },
+    excerpt: null,
     short_description: {},
     url_title: {},
   },
@@ -144,16 +156,11 @@ describe('ProductionsPage', () => {
       previous: null,
       results: genreFixtures,
     })
-    mockedGetProductionSeries.mockResolvedValue({
+    mockedGetTags.mockResolvedValue({
       count: tagFixtures.length,
       next: null,
       previous: null,
-      results: tagFixtures.map((tag) => ({
-        tag,
-        firstProductionStart: null,
-        lastProductionEnd: null,
-        lastProductionImage: null,
-      })),
+      results: tagFixtures,
     })
   })
 

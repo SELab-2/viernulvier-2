@@ -13,7 +13,8 @@ import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlSta
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
 import { getGenres } from '../services/genres/Genres'
-import { getProductions, getProductionSeries } from '../services/productions/Productions'
+import { getProductions } from '../services/productions/Productions'
+import { getTags } from '../services/tags/Tags'
 
 import type { Genre } from '../types/Genres'
 import type { Production } from '../types/Productions'
@@ -61,12 +62,16 @@ const fetchTags = async (): Promise<Tag[]> => {
   let hasMore = true
 
   while (hasMore) {
-    const response = await getProductionSeries({
+    const response = await getTags({
       page,
+      pageSize: 250,
+      filters: {
+        is_enabled: true,
+      },
     })
 
-    response.results.forEach((series) => {
-      tagsById.set(series.tag.id, series.tag)
+    response.results.forEach((tag) => {
+      tagsById.set(tag.id, tag)
     })
 
     hasMore = response.next !== null

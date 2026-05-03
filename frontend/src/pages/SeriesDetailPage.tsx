@@ -114,23 +114,22 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   }, [sortedProductions])
 
   const stats = useMemo<SeriesStat[]>(() => {
-    const years = sortedProductions
-      .map(getProductionYear)
-      .filter((year) => /^\d{4}$/.test(year))
-      .map(Number)
-
-    const minYear = years.length ? Math.min(...years) : null
-    const maxYear = years.length ? Math.max(...years) : null
+    const startYear = seriesTag?.firstProductionStart
+      ? new Date(seriesTag.firstProductionStart).getFullYear()
+      : null
+    const endYear = seriesTag?.lastProductionEnd
+      ? new Date(seriesTag.lastProductionEnd).getFullYear()
+      : null
 
     return [
       { value: String(sortedProductions.length), label: t('series.stats.editions') },
       {
-        value: minYear && maxYear ? `${minYear}–${maxYear}` : '—',
+        value: startYear && endYear ? `${startYear}–${endYear}` : '—',
         label: t('series.stats.period'),
       },
       { value: seriesTag?.type || '—', label: t('series.stats.type') },
     ]
-  }, [seriesTag?.type, sortedProductions, t])
+  }, [seriesTag?.firstProductionStart, seriesTag?.lastProductionEnd, seriesTag?.type, sortedProductions.length, t])
 
   if (isLoading) {
     return <SeriesDetailPageSkeleton />
@@ -143,6 +142,9 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
   const seriesName =
     getTranslatedRecord(seriesTag.name, lang, seriesTag.display_name) || t('series.untitled')
+
+  const seriesExcerpt =
+    getTranslatedRecord(seriesTag.excerpt, lang, seriesTag.display_excerpt) || ''
 
   const seriesDescription =
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
@@ -159,7 +161,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
           ]}
         />
 
-        <SeriesHeader name={seriesName} description={seriesDescription} />
+        <SeriesHeader name={seriesName} excerpt={seriesExcerpt} description={seriesDescription} />
         <SeriesStats stats={stats} />
         <Divider />
 

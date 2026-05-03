@@ -1,10 +1,6 @@
 import { api } from '../../services/Api'
 import { ApiError } from '../../services/ApiTypes'
-import {
-  getProduction,
-  getProductions,
-  getProductionSeries,
-} from '../../services/productions/Productions'
+import { getProduction, getProductions } from '../../services/productions/Productions'
 
 import type { AttendanceMode, PerformerType } from '../../types/Productions'
 
@@ -224,51 +220,4 @@ describe('productions service', () => {
     })
   })
 
-  describe('getProductionSeries', () => {
-    it('fetches aggregated series rows and maps snake_case to camelCase', async () => {
-      mockedGet.mockResolvedValue({
-        data: {
-          count: 1,
-          next: null,
-          previous: null,
-          results: [
-            {
-              tag: mockProduction.tags[0],
-              first_production_start: '2026-01-01T10:00:00Z',
-              last_production_end: '2026-04-01T10:00:00Z',
-              last_production_image: 'https://example.test/image.jpg',
-            },
-          ],
-        },
-      })
-
-      const result = await getProductionSeries({
-        page: 2,
-        pageSize: 25,
-        filters: { search: 'alpha' },
-      })
-
-      expect(mockedGet).toHaveBeenCalledWith('/productions/series/', {
-        params: {
-          page: 2,
-          page_size: 25,
-          search: 'alpha',
-        },
-      })
-
-      expect(result).toEqual({
-        count: 1,
-        next: null,
-        previous: null,
-        results: [
-          {
-            tag: mockProduction.tags[0],
-            firstProductionStart: '2026-01-01T10:00:00Z',
-            lastProductionEnd: '2026-04-01T10:00:00Z',
-            lastProductionImage: 'https://example.test/image.jpg',
-          },
-        ],
-      })
-    })
-  })
 })

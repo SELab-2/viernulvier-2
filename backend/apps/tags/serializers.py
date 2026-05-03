@@ -87,6 +87,26 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
+    firstProductionStart = serializers.DateTimeField(
+        source="first_production_start",
+        read_only=True,
+        allow_null=True,
+        help_text=(
+            "Start time of the earliest production linked to this tag (UTC). "
+            "`null` when the tag is not linked to any productions."
+        ),
+    )
+
+    lastProductionEnd = serializers.DateTimeField(
+        source="last_production_end",
+        read_only=True,
+        allow_null=True,
+        help_text=(
+            "End time of the latest production linked to this tag (UTC). "
+            "`null` when the tag is not linked to any productions."
+        ),
+    )
+
     display_url_title = serializers.SerializerMethodField(
         help_text=(
             "URL-safe title in the project's base language (derived from settings.LANGUAGE_CODE). "
@@ -115,6 +135,8 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "display_short_description",
             "display_excerpt",
             "display_url_title",
+            "firstProductionStart",
+            "lastProductionEnd",
             "name",
             "excerpt",
             "short_description",
@@ -128,6 +150,8 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "display_short_description",
             "display_excerpt",
             "display_url_title",
+            "firstProductionStart",
+            "lastProductionEnd",
             "url_title",
             "image",
             ]
