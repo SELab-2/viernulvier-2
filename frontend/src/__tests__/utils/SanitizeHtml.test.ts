@@ -1,4 +1,4 @@
-import { sanitizeHtml } from '../../utils/SanitizeHtml'
+import { htmlToPlainText, sanitizeHtml } from '../../utils/SanitizeHtml'
 
 describe('sanitizeHtml', () => {
   it('returns empty string for empty input', () => {
@@ -46,5 +46,19 @@ describe('sanitizeHtml', () => {
   it('allows safe inline formatting tags', () => {
     const input = '<strong>Bold</strong> <em>Italic</em>'
     expect(sanitizeHtml(input)).toBe('<strong>Bold</strong> <em>Italic</em>')
+  })
+})
+
+describe('htmlToPlainText', () => {
+  it('strips markup and collapses whitespace', () => {
+    const input = '<h4>&nbsp;zxcvzxcv</h4><div><br></div><div><p>Line 1</p><p>Line 2</p></div>'
+
+    expect(htmlToPlainText(input)).toBe('zxcvzxcv Line 1 Line 2')
+  })
+
+  it('decodes escaped html before stripping markup', () => {
+    const input = '&lt;p&gt;Hello &amp; goodbye&lt;/p&gt;'
+
+    expect(htmlToPlainText(input)).toBe('Hello & goodbye')
   })
 })

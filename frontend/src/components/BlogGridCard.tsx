@@ -3,13 +3,12 @@ import { Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 
-import HtmlText from './HtmlText'
 import ImageWithFallback from './ImageWithFallback'
 import { createCommonStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
 import { formatBlogPublishedDate } from '../utils/blogs'
+import { htmlToPlainText } from '../utils/SanitizeHtml'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
-import { sanitizeHtml, forbidImagesRule, forbidEmbedsRule } from '../utils/SanitizeHtml'
 import { getTranslatedRecord } from '../utils/translations'
 
 import type { Blog } from '../types/Blogs'
@@ -34,7 +33,7 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
   const title =
     getTranslatedRecord(blog.title, language, blog.display_title) ||
     t('blogs.detail.noTitleAvailable', 'No title available')
-  const excerpt = getTranslatedRecord(blog.excerpt, language, blog.display_excerpt)
+  const excerpt = htmlToPlainText(getTranslatedRecord(blog.excerpt, language, blog.display_excerpt))
   const publishedDate = formatBlogPublishedDate(blog.published_at, language)
 
   return (
@@ -79,11 +78,9 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
           >
             {title}
           </Typography>
-          <HtmlText
-            html={sanitizeHtml(excerpt, [forbidImagesRule, forbidEmbedsRule])}
+          <Typography
             variant="body2"
             component="div"
-            fallback={t('blogs.home.noExcerpt')}
             sx={{
               display: '-webkit-box',
               WebkitLineClamp: 3,
@@ -93,7 +90,9 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
               fontSize: 'inherit',
               color: 'text.secondary',
             }}
-          />
+          >
+            {excerpt || t('blogs.home.noExcerpt')}
+          </Typography>
         </Stack>
 
         <Stack

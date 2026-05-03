@@ -5,10 +5,9 @@ import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 import { formatDate } from '../../utils/dateUtils'
+import { htmlToPlainText } from '../../utils/SanitizeHtml'
 import { resolveCurrentLanguage, toLocalizedPath } from '../../utils/localizedRoutes'
-import { sanitizeHtml, forbidImagesRule, forbidEmbedsRule } from '../../utils/SanitizeHtml'
 import { getTranslatedRecord } from '../../utils/translations'
-import HtmlText from '../HtmlText'
 import ImageWithFallback from '../ImageWithFallback'
 
 import type { Series } from '../../types/Series'
@@ -45,7 +44,7 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
   const detailPath = toLocalizedPath(`/series/${series.tag.id}`, currentLanguage)
 
   const title = getLocalizedSeriesName(series, language)
-  const description = getLocalizedSeriesDescription(series, language)
+  const description = htmlToPlainText(getLocalizedSeriesDescription(series, language))
   const startLabel = formatDate(series.firstProductionStart, language)
   const endLabel = formatDate(series.lastProductionEnd, language)
 
@@ -107,8 +106,7 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
           </Typography>
 
           {description ? (
-            <HtmlText
-              html={sanitizeHtml(description, [forbidImagesRule, forbidEmbedsRule])}
+            <Typography
               variant="body2"
               component="div"
               sx={{
@@ -118,7 +116,9 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
               }}
-            />
+            >
+              {description}
+            </Typography>
           ) : null}
         </Stack>
 

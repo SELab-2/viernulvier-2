@@ -96,6 +96,25 @@ export const forbidEmbedsRule: SanitizeHtmlRule = (config) => ({
   FORBID_TAGS: [...asArray(config.FORBID_TAGS), 'iframe'],
 })
 
+/**
+ * Converts backend HTML snippets into plain text for compact UI surfaces.
+ *
+ * This is intended for cards, list rows and other summary layouts where the
+ * content should stay readable but never render markup.
+ */
+export function htmlToPlainText(html: string): string {
+  const normalizedHtml = looksLikeEscapedHtml(html) ? decodeHtmlEntities(html) : html
+  const blockSeparatedHtml = normalizedHtml.replace(
+    /<\/?(p|div|h[1-6]|li|ul|ol|section|article|header|footer|blockquote|tr|td|th|table|br)[^>]*>/gi,
+    ' ',
+  )
+
+  const element = document.createElement('div')
+  element.innerHTML = blockSeparatedHtml
+
+  return (element.textContent ?? element.innerText ?? '').replace(/\s+/g, ' ').trim()
+}
+
 function decodeHtmlEntities(html: string): string {
   const element = document.createElement('textarea')
   element.innerHTML = html
