@@ -5,8 +5,8 @@ import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 import { tokens } from '../../theme/tokens'
 import { formatDate } from '../../utils/dateUtils'
-import { htmlToPlainText } from '../../utils/SanitizeHtml'
 import { resolveCurrentLanguage, toLocalizedPath } from '../../utils/localizedRoutes'
+import { htmlToPlainText } from '../../utils/SanitizeHtml'
 import { getTranslatedRecord } from '../../utils/translations'
 import ImageWithFallback from '../ImageWithFallback'
 
