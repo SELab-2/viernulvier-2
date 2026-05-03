@@ -157,7 +157,9 @@ describe('productions service', () => {
       { performer_type: 'solo' as PerformerType },
       { uit_database_type: 7 },
       { genre: 3 },
+      { genre: [3, 4] },
       { tag: 9 },
+      { tag: [8, 9] },
       { has_media: true },
       { title: 'hamlet' },
       { artist_name: 'royal' },
@@ -169,7 +171,12 @@ describe('productions service', () => {
 
       await getProductions({ filters })
 
-      expect(mockedGet).toHaveBeenCalledWith('/productions/', { params: filters })
+      const expectedParams = {
+        ...filters,
+        ...(Array.isArray(filters.genre) ? { genre: filters.genre.join(',') } : {}),
+        ...(Array.isArray(filters.tag) ? { tag: filters.tag.join(',') } : {}),
+      }
+      expect(mockedGet).toHaveBeenCalledWith('/productions/', { params: expectedParams })
     })
 
     it('combines pagination and filters in params', async () => {
@@ -182,8 +189,8 @@ describe('productions service', () => {
           attendance_mode: 'online' as AttendanceMode,
           performer_type: 'group' as PerformerType,
           uit_database_type: 5,
-          genre: 3,
-          tag: 8,
+          genre: [3, 4],
+          tag: [8, 9],
           has_media: false,
           title: 'concert',
           artist_name: 'ensemble',
@@ -200,8 +207,8 @@ describe('productions service', () => {
           attendance_mode: 'online',
           performer_type: 'group',
           uit_database_type: 5,
-          genre: 3,
-          tag: 8,
+          genre: '3,4',
+          tag: '8,9',
           has_media: false,
           title: 'concert',
           artist_name: 'ensemble',

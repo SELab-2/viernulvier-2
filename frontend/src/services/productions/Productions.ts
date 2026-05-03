@@ -51,8 +51,8 @@ export const getProduction = async (id: number, include?: string[]): Promise<Pro
  * - `attendance_mode`: filter by attendance mode (`offline` or `online`)
  * - `performer_type`: filter by performer type (`group` or `solo`)
  * - `uit_database_type`: filter by UIT Database type ID
- * - `genre`: filter by attached genre ID
- * - `tag`: filter by attached tag ID
+ * - `genre`: filter by one or more attached genre IDs
+ * - `tag`: filter by one or more attached tag IDs
  * - `has_media`: filter by whether a media gallery is assigned
  * - `title`: filter by translated production title
  * - `artist_name`: filter by translated artist or company name
