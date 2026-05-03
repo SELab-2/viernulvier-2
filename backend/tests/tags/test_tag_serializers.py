@@ -12,6 +12,8 @@ Covers:
 - Field types
 """
 
+from unittest.mock import patch
+
 from django.test import TestCase, override_settings
 import pytest
 from rest_framework.test import APIRequestFactory
@@ -415,3 +417,51 @@ class TestTagDisplayNameBaseLanguage:
 
         data = TagSerializer(tag, context=_display_ctx()).data
         assert data["display_name"] == "Thema"
+
+
+class TestTagSerializerGetImageFailures:
+    def test_returns_none_when_direct_image_url_resolution_fails(self) -> None:
+        class BrokenImage:
+            @property
+            def url(self):
+                raise RuntimeError("cannot build url")
+
+        class Obj:
+            image = BrokenImage()
+            fallback_crop_path = None
+
+        serializer = TagSerializer(context={})
+
+        assert serializer.get_image(Obj()) is None
+
+    def test_returns_none_when_fallback_storage_url_resolution_fails(self) -> None:
+        class Obj:
+            image = None
+            fallback_crop_path = "media_crops/fallback.jpg"
+
+        serializer = TagSerializer(context={})
+
+        with patch("apps.tags.serializers.default_storage.url", side_effect=RuntimeError("storage down")):
+            assert serializer.get_image(Obj()) is None
+
+    def test_returns_direct_image_url_without_request_context(self) -> None:
+        class ImageObj:
+            url = "/media/tag_images/tag.png"
+
+        class Obj:
+            image = ImageObj()
+            fallback_crop_path = None
+
+        serializer = TagSerializer(context={})
+
+        assert serializer.get_image(Obj()) == "/media/tag_images/tag.png"
+
+    def test_returns_fallback_storage_url_without_request_context(self) -> None:
+        class Obj:
+            image = None
+            fallback_crop_path = "media_crops/fallback.jpg"
+
+        serializer = TagSerializer(context={})
+
+        with patch("apps.tags.serializers.default_storage.url", return_value="/media/media_crops/fallback.jpg"):
+            assert serializer.get_image(Obj()) == "/media/media_crops/fallback.jpg"
