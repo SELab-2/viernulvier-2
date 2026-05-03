@@ -4,7 +4,7 @@ Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
 
 Tags are classification labels used for filtering and categorising productions.
-They support localised fields (name, short_description, url_title).
+They support localised fields (name, excerpt, short_description, url_title).
 
 Translation Format
 ------------------
@@ -44,6 +44,8 @@ class TagViewSet(ApiModelViewSet):
         Only active (enabled) tags.
     ``?name=contemporary``
         Substring match across all translated tag names.
+    ``?excerpt=contemporary arts``
+        Substring match across all translated tag excerpts.
     ``?external_id=abc``
         Exact match on the external identifier.
 

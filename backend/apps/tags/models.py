@@ -6,23 +6,22 @@ Tags are classification labels that can be attached to productions:
 
 - A **Tag** defines a label with optional source metadata (useful for tags
   imported from external systems such as UiTdatabank).
-- A **TagTranslation** carries the localised name, short description, and
-  URL title for a specific language.
+- A **TagTranslation** carries the localised name, excerpt, short description,
+  and URL title for a specific language.
 """
-
-from django.db import models
-
-from apps.core.models import BaseModel
-from apps.languages.models import Language
-
 
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
+from django.db import models
+
 from apps.core.media_validation import (
     ALLOWED_IMAGE_MIME_TYPES,
     MAX_MEDIA_FILE_SIZE_BYTES,
     validate_media_file,
 )
+from apps.core.models import BaseModel
+from apps.languages.models import Language
+
 
 class Tag(BaseModel):
     """A classification label that can be attached to one or more productions.
@@ -109,13 +108,14 @@ class TagTranslation(BaseModel):
     """Localised text fields for a Tag.
 
     Each tag can have at most one translation per language. The ``name``
-    field is the primary display label; ``short_description`` and
-    ``url_title`` are optional supplementary fields.
+    field is the primary display label; ``excerpt``, ``short_description``
+    and ``url_title`` are optional supplementary fields.
 
     Attributes:
         tag:               The tag this translation belongs to.
         language:          The language of this translation.
         name:              Localised display name of the tag.
+        excerpt:          Optional excerpt or summary of the tag.
         short_description: Optional short description of the tag.
         url_title:         URL-safe title used in slugs or links.
     """

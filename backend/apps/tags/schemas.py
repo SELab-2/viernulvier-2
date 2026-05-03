@@ -29,8 +29,13 @@ _TAG_RESPONSE = OpenApiExample(
         "type": "theme",
         "is_enabled": True,
         "image": "/media/tag_images/hedendaags.jpg",
+        "display_name": "Contemporary",
+        "display_short_description": "Contemporary performing arts and theatre.",
+        "display_excerpt": "Contemporary arts overview.",
+        "display_url_title": "contemporary",
         "name": "Contemporary",
         "short_description": "Contemporary performing arts and theatre.",
+        "excerpt": "Contemporary arts overview.",
         "url_title": "contemporary",
     },
     response_only=True,
@@ -46,8 +51,13 @@ _TAG_INTERNAL_RESPONSE = OpenApiExample(
         "type": "audience",
         "is_enabled": True,
         "image": "/media/productions/most-recent-image.jpg",
+        "display_name": "Family friendly",
+        "display_short_description": None,
+        "display_excerpt": None,
+        "display_url_title": "family-friendly",
         "name": "Family friendly",
         "short_description": None,
+        "excerpt": None,
         "url_title": "family-friendly",
     },
     response_only=True,
@@ -82,7 +92,7 @@ _TAG_LIST = extend_schema(
     description=(
         "Returns a paginated list of all **Tag** objects ordered by `id`.\n\n"
         "The `image` field contains the uploaded image for the tag, or if not set, the image of the most recent production using this tag (if available).\n\n"
-        "Translated fields (`name`, `short_description`, `url_title`) are "
+        "Translated fields (`name`, `excerpt`, `short_description`, `url_title`) are "
         "returned as language-code dictionaries "
         '(e.g. {"en": "Contemporary", "fr": "Contemporain"}).'
     ),
@@ -107,7 +117,7 @@ _TAG_CREATE = extend_schema(
     description=(
         "Creates a new **Tag**.\n\n"
         "- `type` is used as a classification label (e.g. `theme`, `audience`).\n"
-        "- Localised fields (`name`, `short_description`, `url_title`) must be added "
+        "- Localised fields (`name`, `excerpt`, `short_description`, `url_title`) must be added "
         "via the **Tag Translation** endpoints after creation.\n\n"
         "> **Requires an internal API key.**"
     ),

@@ -1,6 +1,6 @@
 """Serializers for the Tags app.
 
-Translated fields on ``TagSerializer`` (``name``,
+Translated fields on ``TagSerializer`` (``name``, ``excerpt``,
 ``short_description``, ``url_title``) return all available translations
 as language-code dictionaries
 (e.g. {"en": "Contemporary", "fr": "Contemporain"}).
@@ -23,6 +23,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     language-code dictionaries:
 
     - ``name``
+    - ``excerpt``
     - ``short_description``
     - ``url_title``
 
@@ -49,6 +50,14 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
+    excerpt = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary of all available translations for the tag excerpt "
+            '(e.g. {"en": "A short summary", "fr": "Un court résumé"}). '
+            "Read-only - use the translation endpoints to manage translations."
+        ),
+    )
+
     url_title = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the URL-safe title "
@@ -71,13 +80,20 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
+    display_excerpt = serializers.SerializerMethodField(
+        help_text=(
+            "Excerpt in the project's base language (derived from settings.LANGUAGE_CODE). "
+            "Falls back to the first available translation when missing."
+        ),
+    )
+
     display_url_title = serializers.SerializerMethodField(
         help_text=(
             "URL-safe title in the project's base language (derived from settings.LANGUAGE_CODE). "
             "Falls back to the first available translation when missing."
         ),
     )
-    
+
     image = serializers.SerializerMethodField(
         help_text=(
             "URL of the uploaded image for this tag. "
@@ -97,8 +113,10 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "image",
             "display_name",
             "display_short_description",
+            "display_excerpt",
             "display_url_title",
             "name",
+            "excerpt",
             "short_description",
             "url_title",
         ]
@@ -108,6 +126,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "short_description",
             "display_name",
             "display_short_description",
+            "display_excerpt",
             "display_url_title",
             "url_title",
             "image",
@@ -139,6 +158,10 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "short_description")
 
+    def get_excerpt(self, obj: Tag) -> str:
+        """Return all available translations as a language-code dictionary."""
+        return self.get_translated_field(obj, "excerpt")
+
     def get_url_title(self, obj: Tag) -> str:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "url_title")
@@ -150,6 +173,10 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     def get_display_short_description(self, obj: Tag) -> str | None:
         """Return the base-language short description (with fallback)."""
         return self.get_base_translated_value(obj, field_name="short_description")
+
+    def get_display_excerpt(self, obj: Tag) -> str | None:
+        """Return the base-language excerpt (with fallback)."""
+        return self.get_base_translated_value(obj, field_name="excerpt")
 
     def get_display_url_title(self, obj: Tag) -> str | None:
         """Return the base-language URL title (with fallback)."""
