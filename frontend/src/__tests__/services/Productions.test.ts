@@ -219,5 +219,4 @@ describe('productions service', () => {
       await expect(getProductions({ filters: { title: 'hamlet' } })).rejects.toBe(error)
     })
   })
-
 })

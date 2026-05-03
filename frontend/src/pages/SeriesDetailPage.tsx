@@ -113,23 +113,21 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return Array.from(groups.entries())
   }, [sortedProductions])
 
-  const stats = useMemo<SeriesStat[]>(() => {
-    const startYear = seriesTag?.firstProductionStart
-      ? new Date(seriesTag.firstProductionStart).getFullYear()
-      : null
-    const endYear = seriesTag?.lastProductionEnd
-      ? new Date(seriesTag.lastProductionEnd).getFullYear()
-      : null
+  const startYear = seriesTag?.firstProductionStart
+    ? new Date(seriesTag.firstProductionStart).getFullYear()
+    : null
+  const endYear = seriesTag?.lastProductionEnd
+    ? new Date(seriesTag.lastProductionEnd).getFullYear()
+    : null
 
-    return [
-      { value: String(sortedProductions.length), label: t('series.stats.editions') },
-      {
-        value: startYear && endYear ? `${startYear}–${endYear}` : '—',
-        label: t('series.stats.period'),
-      },
-      { value: seriesTag?.type || '—', label: t('series.stats.type') },
-    ]
-  }, [seriesTag?.firstProductionStart, seriesTag?.lastProductionEnd, seriesTag?.type, sortedProductions.length, t])
+  const stats: SeriesStat[] = [
+    { value: String(sortedProductions.length), label: t('series.stats.editions') },
+    {
+      value: startYear && endYear ? `${startYear}–${endYear}` : '—',
+      label: t('series.stats.period'),
+    },
+    { value: seriesTag?.type || '—', label: t('series.stats.type') },
+  ]
 
   if (isLoading) {
     return <SeriesDetailPageSkeleton />

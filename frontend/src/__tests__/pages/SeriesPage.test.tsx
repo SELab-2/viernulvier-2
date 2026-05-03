@@ -173,14 +173,12 @@ describe('SeriesPage', () => {
   it('shows error state and retries successfully', async () => {
     const seriesTag = buildTag(10, 'Reeks Alpha')
 
-    mockedGetTags
-      .mockRejectedValueOnce(new Error('network down'))
-      .mockResolvedValueOnce({
-        count: 1,
-        next: null,
-        previous: null,
-        results: [seriesTag],
-      })
+    mockedGetTags.mockRejectedValueOnce(new Error('network down')).mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [seriesTag],
+    })
 
     renderPage()
 
