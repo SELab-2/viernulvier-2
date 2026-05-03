@@ -94,7 +94,6 @@ The following sync steps are available (listed in dependency order):
 |------------------------|--------------------|-------------------------|---------------------------------------|
 | `uitdatabank_types`    | UitDatabaseType    | `/uitdatabank/types`    | UiTdatabank types                     |
 | `genres`               | Genre              | `/genres`               | Production genres                     |
-| `tags`                 | Tag                | `/tags`                 | Tags for categorization               |
 | `locations`            | Location           | `/locations`            | Physical locations/venues             |
 | `spaces`               | Space              | `/spaces`               | Spaces within locations               |
 | `halls`                | Hall               | `/halls`                | Halls within spaces                   |
