@@ -365,7 +365,14 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "IGNORE_EXCEPTIONS": True,
+            "SOCKET_CONNECT_TIMEOUT": 1,
+            "SOCKET_TIMEOUT": 1,
+            "RETRY_ON_TIMEOUT": False,
         },
         "KEY_PREFIX": "viernulvier",
-    }
+    },
+    "throttling": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "throttling",
+    },
 }
