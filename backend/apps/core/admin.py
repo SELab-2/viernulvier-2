@@ -62,12 +62,10 @@ class BaseAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
         clear_api_cache()
 
-
     def delete_model(self, request: HttpRequest, obj: Model) -> None:
         """Delete a model instance and invalidate API cache."""
         super().delete_model(request, obj)
         clear_api_cache()
-
 
     def delete_queryset(self, request: HttpRequest, queryset: QuerySet) -> None:
         """Delete multiple model instances and invalidate API cache."""

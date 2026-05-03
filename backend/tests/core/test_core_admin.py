@@ -105,7 +105,6 @@ class TestBaseAdmin(TestCase):
 
         clear_cache.assert_called_once()
 
-
     def test_delete_model_clears_api_cache(self) -> None:
         instance = BaseAdmin(User, admin.site)
         request = self.factory.get("/admin/auth/user/")
@@ -115,7 +114,6 @@ class TestBaseAdmin(TestCase):
             instance.delete_model(request, obj)
 
         clear_cache.assert_called_once()
-
 
     def test_delete_queryset_clears_api_cache(self) -> None:
         instance = BaseAdmin(User, admin.site)
