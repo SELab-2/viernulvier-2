@@ -12,7 +12,10 @@ Usage (via pytest.ini):
     DJANGO_SETTINGS_MODULE = config.settings.test
 """
 
+import os
 import tempfile
+
+os.environ.setdefault("REDIS_URL", "redis://127.0.0.1:6379/1")
 
 from .base import *  # noqa: F403
 from .base import REST_FRAMEWORK
