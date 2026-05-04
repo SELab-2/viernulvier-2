@@ -142,7 +142,6 @@ class TagTranslation(BaseModel):
         db_comment="The name of the tag in the specified language.",
     )
 
-
     excerpt = models.TextField(
         blank=True,
         null=True,

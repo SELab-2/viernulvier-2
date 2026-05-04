@@ -80,7 +80,7 @@ class TagViewSet(ApiModelViewSet):
                     "id",
                 )
                 .values("image")[:1]
-            )
+            ),
         )
         .prefetch_related(
             Prefetch(

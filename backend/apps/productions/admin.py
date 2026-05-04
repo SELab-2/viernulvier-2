@@ -295,16 +295,24 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         items = gallery.media_items.all()
         if not items:
             add_url = reverse("admin:media_library_mediaitem_add") + f"?gallery={gallery.id}"
-            return format_html('<div>No images in gallery.</div><div style="margin-top:0.5em"><a class="button" href="{}">Add image</a></div>', add_url)
+            return format_html(
+                '<div>No images in gallery.</div><div style="margin-top:0.5em"><a class="button" href="{}">Add image</a></div>',
+                add_url,
+            )
 
         rows = format_html_join(
             "\n",
-            "<div><a href=\"{}\">{}</a></div>",
-            ((reverse("admin:media_library_mediaitem_change", args=(i.id,)), i.original_filename or str(i.id)) for i in items),
+            '<div><a href="{}">{}</a></div>',
+            (
+                (reverse("admin:media_library_mediaitem_change", args=(i.id,)), i.original_filename or str(i.id))
+                for i in items
+            ),
         )
 
         add_url = reverse("admin:media_library_mediaitem_add") + f"?gallery={gallery.id}"
-        return format_html("{}<div style=\"margin-top:0.5em\"><a class=\"button\" href=\"{}\">Add image to gallery</a></div>", rows, add_url)
+        return format_html(
+            '{}<div style="margin-top:0.5em"><a class="button" href="{}">Add image to gallery</a></div>', rows, add_url
+        )
 
     @admin.action(description="Add tag to selected productions")
     def add_tag_to_selected_productions(self, request: HttpRequest, queryset: QuerySet) -> HttpRequest:

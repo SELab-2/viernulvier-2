@@ -87,8 +87,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
-    firstProductionStart = serializers.DateTimeField(
-        source="first_production_start",
+    first_production_start = serializers.DateTimeField(
         read_only=True,
         allow_null=True,
         help_text=(
@@ -97,8 +96,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
-    lastProductionEnd = serializers.DateTimeField(
-        source="last_production_end",
+    last_production_end = serializers.DateTimeField(
         read_only=True,
         allow_null=True,
         help_text=(
@@ -135,8 +133,8 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "display_short_description",
             "display_excerpt",
             "display_url_title",
-            "firstProductionStart",
-            "lastProductionEnd",
+            "first_production_start",
+            "last_production_end",
             "name",
             "excerpt",
             "short_description",
@@ -150,11 +148,11 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "display_short_description",
             "display_excerpt",
             "display_url_title",
-            "firstProductionStart",
-            "lastProductionEnd",
+            "first_production_start",
+            "last_production_end",
             "url_title",
             "image",
-            ]
+        ]
         extra_kwargs = {
             "url": {
                 "help_text": "Public URL of the tag in the originating system. Empty string when not applicable.",

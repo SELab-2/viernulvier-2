@@ -137,8 +137,8 @@ class TestTagViewSetList(TestCase):
             "display_short_description",
             "display_excerpt",
             "display_url_title",
-            "firstProductionStart",
-            "lastProductionEnd",
+            "first_production_start",
+            "last_production_end",
             "name",
             "excerpt",
             "short_description",
@@ -204,8 +204,8 @@ class TestTagViewSetRetrieve(TestCase):
         assert "nl" in response.data["name"]
         assert isinstance(response.data["excerpt"], dict)
         assert "nl" in response.data["excerpt"]
-        assert "firstProductionStart" in response.data
-        assert "lastProductionEnd" in response.data
+        assert "first_production_start" in response.data
+        assert "last_production_end" in response.data
 
 
 # ---------------------------------------------------------------------------

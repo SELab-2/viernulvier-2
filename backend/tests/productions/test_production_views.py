@@ -19,7 +19,6 @@ Covers:
 """
 
 from datetime import UTC, datetime
-from unittest.mock import patch
 
 from django.db.models import Min
 from django.test import TestCase, override_settings
@@ -32,7 +31,6 @@ from apps.productions.views import ProductionViewSet
 from tests.factories.blog import BlogFactory
 from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
-from tests.factories.media_library import MediaGalleryFactory, MediaItemCropFactory, MediaItemFactory
 from tests.factories.production import (
     ProductionFactory,
     ProductionTagFactory,
@@ -40,7 +38,7 @@ from tests.factories.production import (
     ProductionTranslationFactory,
     UitDatabaseTypeFactory,
 )
-from tests.factories.tag import TagFactory, TagTranslationFactory
+from tests.factories.tag import TagFactory
 from tests.helpers.api import internal_headers as int_headers
 from tests.helpers.api import public_headers as pub_headers
 from tests.helpers.api import wrong_headers
@@ -1092,5 +1090,3 @@ class TestProductionOrderingEdgeCases(TestCase):
         )
 
         assert ids.index(self.prod_alpha.id) < ids.index(self.prod_zulu.id)
-
-

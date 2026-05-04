@@ -292,4 +292,3 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
 
         serializer = ProductionLandingStatsSerializer(payload)
         return Response(serializer.data)
-

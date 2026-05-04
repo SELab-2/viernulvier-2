@@ -33,11 +33,11 @@ from apps.productions.models import (
     ProductionTranslation,
     UitDatabaseType,
 )
+from tests.factories.media_library import MediaItemFactory
 from tests.factories.production import (
     ProductionFactory,
     UitDatabaseTypeFactory,
 )
-from tests.factories.media_library import MediaItemFactory
 
 # ---------------------------------------------------------------------------
 # Helpers
