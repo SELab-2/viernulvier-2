@@ -43,8 +43,8 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
 
   const title = getLocalizedTagName(tag, language)
   const excerpt = getLocalizedTagExcerpt(tag, language)
-  const startLabel = formatDate(tag.firstProductionStart, language)
-  const endLabel = formatDate(tag.lastProductionEnd, language)
+  const startLabel = formatDate(tag.first_production_start, language)
+  const endLabel = formatDate(tag.last_production_end, language)
 
   // Keep the date label compact when both endpoints are available.
   const dateLabel =

@@ -14,8 +14,8 @@ export interface Tag {
   display_short_description: string | null
   display_excerpt: string | null
   display_url_title: string | null
-  firstProductionStart: string | null
-  lastProductionEnd: string | null
+  first_production_start: string | null
+  last_production_end: string | null
   name: Record<string, string> | null
   excerpt: Record<string, string> | null
   short_description: Record<string, string> | null

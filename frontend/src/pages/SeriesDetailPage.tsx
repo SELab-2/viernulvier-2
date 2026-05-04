@@ -113,11 +113,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return Array.from(groups.entries())
   }, [sortedProductions])
 
-  const startYear = seriesTag?.firstProductionStart
-    ? new Date(seriesTag.firstProductionStart).getFullYear()
+  const startYear = seriesTag?.first_production_start
+    ? new Date(seriesTag.first_production_start).getFullYear()
     : null
-  const endYear = seriesTag?.lastProductionEnd
-    ? new Date(seriesTag.lastProductionEnd).getFullYear()
+  const endYear = seriesTag?.last_production_end
+    ? new Date(seriesTag.last_production_end).getFullYear()
     : null
 
   const stats: SeriesStat[] = [

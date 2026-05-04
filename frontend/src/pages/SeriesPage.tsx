@@ -31,7 +31,7 @@ const getLocalizedTagName = (tag: Tag, language: string): string => {
 
 // Function to derive the timestamp used for date sorting.
 const getTagSortTimestamp = (tag: Tag): number => {
-  return Date.parse(tag.lastProductionEnd ?? '') || Date.parse(tag.firstProductionStart ?? '')
+  return Date.parse(tag.last_production_end ?? '') || Date.parse(tag.first_production_start ?? '')
 }
 
 // Function to sort the tag list based on the selected sort target and direction.

@@ -31,8 +31,8 @@ const buildTag = (id: number, name: string): Tag => ({
   display_short_description: null,
   display_excerpt: null,
   display_url_title: null,
-  firstProductionStart: '2026-01-01T19:00:00Z',
-  lastProductionEnd: '2026-01-31T20:00:00Z',
+  first_production_start: '2026-01-01T19:00:00Z',
+  last_production_end: '2026-01-31T20:00:00Z',
   name: { nl: name, en: name },
   excerpt: null,
   short_description: null,
@@ -84,7 +84,8 @@ describe('SeriesPage', () => {
     })
 
     expect(await screen.findByRole('heading', { name: 'Reeks Alpha' })).toBeInTheDocument()
-    expect(screen.getByText('1 jan 2026')).toBeInTheDocument()
+
+    expect(screen.getByText(/1\s+jan\.?\s+2026/i)).toBeInTheDocument()
   })
 
   it('renders the collection skeleton while loading', async () => {
@@ -153,7 +154,7 @@ describe('SeriesPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Reeks Alpha' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Reeks Beta' })).toBeInTheDocument()
-    expect(screen.getAllByText('1 jan 2026').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/1\s+jan\.?\s+2026/i).length).toBeGreaterThan(0)
   })
 
   it('shows empty state when there are no series bundles', async () => {
