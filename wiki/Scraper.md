@@ -90,21 +90,20 @@ python manage.py sync_viernulvier --only events
 
 The following sync steps are available (listed in dependency order):
 
-| Step Name           | Model           | API Endpoint         | Description                           |
-| ------------------- | --------------- | -------------------- | ------------------------------------- |
-| `uitdatabank_types` | UitDatabaseType | `/uitdatabank/types` | UiTdatabank types                     |
-| `genres`            | Genre           | `/genres`            | Production genres                     |
-| `tags`              | Tag             | `/tags`              | Tags for categorization               |
-| `locations`         | Location        | `/locations`         | Physical locations/venues             |
-| `spaces`            | Space           | `/spaces`            | Spaces within locations               |
-| `halls`             | Hall            | `/halls`             | Halls within spaces                   |
-| `media_galleries`   | MediaGallery    | `/media/galleries`   | Media galleries                       |
-| `media_items`       | MediaItem       | `/media/items`       | Individual media items (images, etc.) |
-| `prices`            | Price           | `/prices`            | Base price definitions                |
-| `price_ranks`       | PriceRank       | `/prices/ranks`      | Price rank categories                 |
-| `productions`       | Production      | `/productions`       | Productions/shows                     |
-| `events`            | Event           | `/events`            | Specific event instances              |
-| `event_prices`      | EventPrice      | `/events/prices`     | Pricing for specific events           |
+| Step Name              | Model              | API Endpoint            | Description                           |
+|------------------------|--------------------|-------------------------|---------------------------------------|
+| `uitdatabank_types`    | UitDatabaseType    | `/uitdatabank/types`    | UiTdatabank types                     |
+| `genres`               | Genre              | `/genres`               | Production genres                     |
+| `locations`            | Location           | `/locations`            | Physical locations/venues             |
+| `spaces`               | Space              | `/spaces`               | Spaces within locations               |
+| `halls`                | Hall               | `/halls`                | Halls within spaces                   |
+| `media_galleries`      | MediaGallery       | `/media/galleries`      | Media galleries                       |
+| `media_items`          | MediaItem          | `/media/items`          | Individual media items (images, etc.) |
+| `prices`               | Price              | `/prices`               | Base price definitions                |
+| `price_ranks`          | PriceRank          | `/prices/ranks`         | Price rank categories                 |
+| `productions`          | Production         | `/productions`          | Productions/shows                     |
+| `events`               | Event              | `/events`               | Specific event instances              |
+| `event_prices`         | EventPrice         | `/events/prices`        | Pricing for specific events           |
 
 **Note:** Steps are executed in dependency order. For example, `events` depends on `productions` and `halls`, so those must be synced first.
 

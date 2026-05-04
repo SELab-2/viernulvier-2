@@ -92,6 +92,19 @@ class MediaItemAdmin(BaseAdmin):
         """Select related gallery to avoid N+1 queries on the list page."""
         return super().get_queryset(request).select_related("gallery")
 
+    def get_changeform_initial_data(self, request: HttpRequest) -> dict:
+        """Prefill the add-form with a `gallery` GET parameter when present.
+
+        This allows other admins (for example `ProductionAdmin`) to provide
+        a direct "Add image" link that opens the MediaItem add form with the
+        correct gallery preselected.
+        """
+        initial = super().get_changeform_initial_data(request)
+        gallery_id = request.GET.get("gallery")
+        if gallery_id:
+            initial["gallery"] = gallery_id
+        return initial
+
 
 @admin.register(MediaItemCrop)
 class MediaItemCropAdmin(BaseAdmin):

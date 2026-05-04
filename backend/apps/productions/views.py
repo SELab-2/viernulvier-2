@@ -14,7 +14,7 @@ containing all available translations (e.g., {"nl": "...", "en": "..."}).
 responses still include all translations in a single payload.
 """
 
-from django.db.models import Max, Min, OuterRef, Prefetch, Q, QuerySet, Subquery
+from django.db.models import Max, Min, Prefetch, Q, QuerySet
 from django.db.models.functions import Coalesce, Lower
 from django.http import HttpRequest
 from django.utils.decorators import method_decorator
@@ -30,7 +30,7 @@ from apps.events.models import Event, EventPrice
 from apps.locations.models import HallTranslation, LocationTranslation, SpaceTranslation
 from apps.media_library.models import MediaItem
 from apps.pricing.models import PriceRankTranslation, PriceTranslation
-from apps.tags.models import Tag, TagTranslation
+from apps.tags.models import Tag
 
 from .filters import ProductionFilter
 from .models import Production, ProductionGenre, ProductionTag
@@ -38,7 +38,6 @@ from .schemas import production_schema
 from .serializers import (
     ProductionLandingStatsSerializer,
     ProductionSerializer,
-    ProductionSeriesSerializer,
 )
 
 _TAG = "Productions"
@@ -292,90 +291,4 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         }
 
         serializer = ProductionLandingStatsSerializer(payload)
-        return Response(serializer.data)
-
-    @method_decorator(cache_api_view())
-    @action(detail=False, methods=["get"], url_path="series")
-    def series(self, request: Request) -> Response:
-        """Return production-tag series summaries in a single aggregated endpoint.
-
-        Each result item contains:
-        - the tag payload (`tag`)
-        - first production start date across the bundle
-        - last production end date across the bundle
-        - image URL from the most recent production in the bundle
-        """
-        search_query = (request.query_params.get("search") or "").strip()
-
-        latest_production_id = Subquery(
-            Production.objects.filter(tags__id=OuterRef("pk"))
-            .annotate(
-                latest_end=Max("events__ends_at"),
-                latest_start=Max("events__starts_at"),
-                latest_timestamp=Coalesce("latest_end", "latest_start"),
-            )
-            .order_by("-latest_timestamp", "-id")
-            .values("id")[:1]
-        )
-
-        queryset = (
-            Tag.objects.filter(productions__isnull=False)
-            .prefetch_related(
-                Prefetch(
-                    "translations",
-                    queryset=TagTranslation.objects.select_related("language"),
-                )
-            )
-            .annotate(
-                first_production_start=Min("productions__events__starts_at"),
-                last_production_end=Max("productions__events__ends_at"),
-                last_production_id=latest_production_id,
-            )
-            .distinct()
-            .order_by("id")
-        )
-
-        if search_query:
-            queryset = queryset.filter(translations__name__icontains=search_query).distinct()
-
-        page = self.paginate_queryset(queryset)
-        series_items = page if page is not None else queryset
-
-        production_ids = [item.last_production_id for item in series_items if item.last_production_id is not None]
-        image_by_production_id: dict[int, str | None] = {}
-
-        if production_ids:
-            image_query = (
-                Production.objects.filter(id__in=production_ids)
-                .select_related("media_gallery")
-                .prefetch_related(
-                    Prefetch(
-                        "media_gallery__media_items",
-                        queryset=MediaItem.objects.prefetch_related("crops").order_by("position"),
-                    )
-                )
-                .only("id", "media_gallery")
-            )
-
-            for production in image_query:
-                image_url = None
-                media_items = production.media_gallery.media_items.all() if production.media_gallery else []
-                if media_items:
-                    first_item = media_items[0]
-                    first_crop = next(iter(first_item.crops.all()), None)
-                    if first_crop and first_crop.image:
-                        image_url = request.build_absolute_uri(first_crop.image.url)
-                image_by_production_id[production.id] = image_url
-
-        serializer = ProductionSeriesSerializer(
-            series_items,
-            many=True,
-            context={
-                **self.get_serializer_context(),
-                "last_production_image_by_production_id": image_by_production_id,
-            },
-        )
-
-        if page is not None:
-            return self.get_paginated_response(serializer.data)
         return Response(serializer.data)

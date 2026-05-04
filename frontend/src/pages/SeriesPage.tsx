@@ -10,11 +10,11 @@ import SeriesGridCard from '../components/series/SeriesGridCard'
 import SeriesListCard from '../components/series/SeriesListCard'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
-import { getProductionSeries } from '../services/productions/Productions'
+import { getTags } from '../services/tags/Tags'
 import { getTranslatedRecord } from '../utils/translations'
 
 import type { SearchSortTarget, SearchSortDirection } from '../components/searchbar/types'
-import type { Series } from '../types/Series'
+import type { Tag } from '../types/Tags'
 
 // Page size for pagination.
 const PAGE_SIZE = 12
@@ -23,67 +23,68 @@ const SERIES_SORT_TARGET_OPTIONS: Array<{ value: SearchSortTarget; labelKey: str
   { value: 'name', labelKey: 'searchbar.sort.name' },
 ]
 
-// Function to get the localized series name based on the current language.
-const getLocalizedSeriesName = (series: Series, language: string): string => {
+// Function to get the localized tag name based on the current language.
+const getLocalizedTagName = (tag: Tag, language: string): string => {
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
-  return getTranslatedRecord(series.tag.name, normalizedLanguage, series.tag.display_name)
+  return getTranslatedRecord(tag.name, normalizedLanguage, tag.display_name)
 }
 
 // Function to derive the timestamp used for date sorting.
-const getSeriesSortTimestamp = (series: Series): number => {
-  return Date.parse(series.lastProductionEnd ?? '') || Date.parse(series.firstProductionStart ?? '')
+const getTagSortTimestamp = (tag: Tag): number => {
+  return Date.parse(tag.last_production_end ?? '') || Date.parse(tag.first_production_start ?? '')
 }
 
-// Function to sort the series list based on the selected sort target and direction.
-const sortSeries = ({
-  seriesList,
+// Function to sort the tag list based on the selected sort target and direction.
+const sortTags = ({
+  tagList,
   sortTarget,
   sortDirection,
   language,
 }: {
-  seriesList: Series[]
+  tagList: Tag[]
   sortTarget: SearchSortTarget
   sortDirection: SearchSortDirection
   language: string
-}): Series[] => {
-  const sorted = [...seriesList]
+}): Tag[] => {
+  const sorted = [...tagList]
 
   sorted.sort((left, right) => {
     if (sortTarget === 'name') {
-      const leftName = getLocalizedSeriesName(left, language)
-      const rightName = getLocalizedSeriesName(right, language)
+      const leftName = getLocalizedTagName(left, language)
+      const rightName = getLocalizedTagName(right, language)
       const comparison = leftName.localeCompare(rightName, language)
       return sortDirection === 'asc' ? comparison : -comparison
     }
 
-    const comparison = getSeriesSortTimestamp(left) - getSeriesSortTimestamp(right)
+    const comparison = getTagSortTimestamp(left) - getTagSortTimestamp(right)
     return sortDirection === 'asc' ? comparison : -comparison
   })
 
   return sorted
 }
 
-// Fetch all aggregated series rows from the backend endpoint.
-const fetchSeriesList = async ({ search }: { search?: string }): Promise<Series[]> => {
-  const seriesList: Series[] = []
+// Fetch all enabled tags from the backend endpoint.
+const fetchTagList = async ({ search }: { search?: string }): Promise<Tag[]> => {
+  const tagList: Tag[] = []
   let page = 1
   let hasMore = true
 
   while (hasMore) {
-    const response = await getProductionSeries({
+    const response = await getTags({
       page,
       pageSize: SERIES_FETCH_SIZE,
       filters: {
+        is_enabled: true,
         search,
       },
     })
 
-    seriesList.push(...response.results)
+    tagList.push(...response.results)
     hasMore = response.next !== null
     page += 1
   }
 
-  return seriesList
+  return tagList
 }
 
 const SeriesPage = () => {
@@ -105,7 +106,7 @@ const SeriesPage = () => {
   } = useSearchBarUrlState({ isMobile })
 
   const [isLoading, setIsLoading] = useState(true)
-  const [seriesList, setSeriesList] = useState<Series[]>([])
+  const [seriesList, setSeriesList] = useState<Tag[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
   const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
@@ -133,7 +134,7 @@ const SeriesPage = () => {
       setIsFloatingErrorOpen(false)
 
       try {
-        const response = await fetchSeriesList({
+        const response = await fetchTagList({
           search: searchValue.trim() || undefined,
         })
 
@@ -174,8 +175,8 @@ const SeriesPage = () => {
   // Sort the derived series list in memory so the UI stays responsive.
   const sortedSeries = useMemo(
     () =>
-      sortSeries({
-        seriesList,
+      sortTags({
+        tagList: seriesList,
         sortTarget,
         sortDirection,
         language: i18n.language,
@@ -222,9 +223,9 @@ const SeriesPage = () => {
     <EntityView
       items={pagedSeries}
       layout={viewMode}
-      getKey={(series) => series.tag.id}
-      renderListItem={(series) => <SeriesListCard series={series} />}
-      renderGridItem={(series) => <SeriesGridCard series={series} />}
+      getKey={(tag) => tag.id}
+      renderListItem={(tag) => <SeriesListCard tag={tag} />}
+      renderGridItem={(tag) => <SeriesGridCard tag={tag} />}
     />
   )
 

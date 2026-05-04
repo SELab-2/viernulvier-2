@@ -203,6 +203,28 @@ class TestMediaItemAdminConfiguration(TestCase):
         assert len(self.admin.inlines) == 2
 
 
+class TestMediaItemAdminInitialData(TestCase):
+    """Unit tests for MediaItemAdmin.get_changeform_initial_data."""
+
+    def setUp(self) -> None:
+        self.model_admin = admin.site._registry[MediaItem]
+        self.factory = RequestFactory()
+
+    def test_prefills_gallery_when_query_param_is_present(self) -> None:
+        request = self.factory.get("/admin/media_library/mediaitem/add/?gallery=42")
+
+        initial = self.model_admin.get_changeform_initial_data(request)
+
+        assert initial["gallery"] == "42"
+
+    def test_does_not_prefill_gallery_without_query_param(self) -> None:
+        request = self.factory.get("/admin/media_library/mediaitem/add/")
+
+        initial = self.model_admin.get_changeform_initial_data(request)
+
+        assert "gallery" not in initial
+
+
 class TestMediaItemCropAdminConfiguration(TestCase):
     """Tests for MediaItemCropAdmin meta configuration."""
 
