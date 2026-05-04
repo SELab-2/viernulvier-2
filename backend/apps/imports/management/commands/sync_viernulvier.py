@@ -56,7 +56,6 @@ from apps.productions.models import (
     ProductionTranslation,
     UitDatabaseType,
 )
-from apps.tags.models import Tag, TagTranslation
 
 logger = logging.getLogger(__name__)
 
@@ -124,31 +123,6 @@ GENRE_CONFIG = ModelSyncConfig(
     value_transforms={"vendor_id": clean_vendor_id},
     translations=[
         TranslationConfig("name", GenreTranslation, "genre", "name", "language_id"),
-    ],
-)
-
-TAG_CONFIG = ModelSyncConfig(
-    field_map={
-        "@id": "external_id",
-        "source": "source",
-        "sourceType": None,
-        "enable": "is_enabled",
-        "external": None,
-        "url": "url",
-        "type": "type",
-        "code": None,
-        "name": None,
-        "short_description": None,
-        "url_title": None,
-        "gallery": None,
-        "expires_after": None,
-        "automatically_assigned": None,
-    },
-    value_transforms={"is_enabled": nee_ja_to_bool},
-    translations=[
-        TranslationConfig("name", TagTranslation, "tag", "name", "language_id"),
-        TranslationConfig("short_description", TagTranslation, "tag", "short_description", "language_id"),
-        TranslationConfig("url_title", TagTranslation, "tag", "url_title", "language_id"),
     ],
 )
 
@@ -418,7 +392,6 @@ EVENT_PRICE_CONFIG = ModelSyncConfig(
 SYNC_STEPS = [
     ("uitdatabank_types", UitDatabaseType, UITDATABASE_TYPE_CONFIG, "/uitdatabank/types"),
     ("genres", Genre, GENRE_CONFIG, "/genres"),
-    ("tags", Tag, TAG_CONFIG, "/tags"),
     ("locations", Location, LOCATION_CONFIG, "/locations"),
     ("spaces", Space, SPACE_CONFIG, "/spaces"),
     ("halls", Hall, HALL_CONFIG, "/halls"),

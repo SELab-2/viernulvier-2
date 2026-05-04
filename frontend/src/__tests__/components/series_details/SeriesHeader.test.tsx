@@ -6,14 +6,16 @@ import SeriesHeader from '../../../components/series_details/SeriesHeader'
 describe('SeriesHeader', () => {
   const defaultProps = {
     name: 'VIDEODROOM',
+    excerpt: 'Korte samenvatting van de reeks.',
     description:
       'Het audiovisuele festival dat de grenzen tussen muziek, beeld en performance verkent.',
   }
 
-  it('renders name and description', () => {
+  it('renders name, excerpt and description', () => {
     render(<SeriesHeader {...defaultProps} />)
 
     expect(screen.getByText(defaultProps.name)).toBeInTheDocument()
+    expect(screen.getByText(defaultProps.excerpt)).toBeInTheDocument()
     expect(screen.getByText(defaultProps.description)).toBeInTheDocument()
   })
 

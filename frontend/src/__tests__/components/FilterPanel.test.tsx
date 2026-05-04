@@ -141,14 +141,19 @@ const buildTag = (overrides: Partial<Tag> = {}): Tag => ({
   source: overrides.source ?? 'manual',
   type: overrides.type ?? 'series',
   is_enabled: overrides.is_enabled ?? true,
+  image: overrides.image ?? null,
   display_name: Object.prototype.hasOwnProperty.call(overrides, 'display_name')
     ? (overrides.display_name ?? null)
     : null,
   display_short_description: overrides.display_short_description ?? null,
+  display_excerpt: overrides.display_excerpt ?? null,
   display_url_title: overrides.display_url_title ?? null,
+  first_production_start: overrides.first_production_start ?? null,
+  last_production_end: overrides.last_production_end ?? null,
   name: Object.prototype.hasOwnProperty.call(overrides, 'name')
     ? (overrides.name ?? null)
     : { nl: `Tag ${String(overrides.id ?? 1)}` },
+  excerpt: overrides.excerpt ?? null,
   short_description: overrides.short_description ?? {},
   url_title: overrides.url_title ?? {},
 })
