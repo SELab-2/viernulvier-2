@@ -45,6 +45,7 @@ jobs:
         run: |
           docker compose -f infrastructure/docker-compose.prod.yml build
           docker compose -f infrastructure/docker-compose.prod.yml up -d
+          docker compose -f infrastructure/docker-compose.prod.yml up -d --force-recreate nginx
 
       - name: Verify deployment
         env:

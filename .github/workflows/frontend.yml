@@ -15,7 +15,7 @@ concurrency:
 jobs:
   ci:
     name: Lint / Test / Build
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend

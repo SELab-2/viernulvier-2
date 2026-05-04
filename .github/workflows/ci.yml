@@ -17,7 +17,7 @@ concurrency:
 jobs:
   autofix:
     name: Ruff auto-fix
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
     permissions:
       contents: write
@@ -61,7 +61,7 @@ jobs:
 
   lint:
     name: Ruff lint check
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     defaults:
       run:
@@ -90,7 +90,7 @@ jobs:
 
   test:
     name: Django check + Pytest
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
