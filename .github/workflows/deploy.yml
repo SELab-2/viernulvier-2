@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Create infrastructure/.env from secrets
+      - name: Validate deployment secrets
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           DOMAIN: ${{ secrets.DOMAIN }}
@@ -32,23 +32,30 @@ jobs:
           : "${PUBLIC_API_KEY:?Missing PUBLIC_API_KEY}"
           : "${INTERNAL_API_KEY:?Missing INTERNAL_API_KEY}"
 
-          cat > infrastructure/.env <<EOF
-          SECRET_KEY=${SECRET_KEY}
-          DOMAIN=${DOMAIN}
-          POSTGRES_DB=${POSTGRES_DB}
-          POSTGRES_USER=${POSTGRES_USER}
-          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-          VIERNULVIER_API_KEY=${VIERNULVIER_API_KEY}
-          PUBLIC_API_KEY=${PUBLIC_API_KEY}
-          INTERNAL_API_KEY=${INTERNAL_API_KEY}
-          EOF
-
       - name: Build and start containers
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DOMAIN: ${{ secrets.DOMAIN }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          VIERNULVIER_API_KEY: ${{ secrets.VIERNULVIER_API_KEY }}
+          PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
+          INTERNAL_API_KEY: ${{ secrets.INTERNAL_API_KEY }}
         run: |
-          docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml build
-          docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml up -d
+          docker compose -f infrastructure/docker-compose.prod.yml build
+          docker compose -f infrastructure/docker-compose.prod.yml up -d
 
       - name: Verify deployment
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DOMAIN: ${{ secrets.DOMAIN }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          VIERNULVIER_API_KEY: ${{ secrets.VIERNULVIER_API_KEY }}
+          PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
+          INTERNAL_API_KEY: ${{ secrets.INTERNAL_API_KEY }}
         run: |
           sleep 5
-          docker compose --env-file infrastructure/.env -f infrastructure/docker-compose.prod.yml ps
+          docker compose -f infrastructure/docker-compose.prod.yml ps
