@@ -17,7 +17,6 @@ import SeriesStats from '../components/series_details/SeriesStats'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
-import { sanitizeHtml, sanitizeImagesStrictRule } from '../utils/SanitizeHtml'
 import { getTranslatedRecord } from '../utils/translations'
 
 import type { Production } from '../types/Productions'

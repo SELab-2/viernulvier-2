@@ -1,5 +1,5 @@
 /*
- * Rich Text Admin - Actions (rewrite)
+ * Rich Text Admin Widget - Actions
  */
 (function (root) {
     'use strict';
@@ -14,10 +14,10 @@
      * Otherwise → wrap the selection.
      *
      * This handles every case:
-     *   • Collapsed caret inside <b>  → unwrap that single <b>
-     *   • Selection fully inside one <b>  → unwrap that <b>
-     *   • Selection spanning multiple <b>foo</b> <b>bar</b>  → unwrap both
-     *   • Selection not yet bold  → wrap in new <b>
+     *   - Collapsed caret inside <b>  -> unwrap that single <b>
+     *   - Selection fully inside one <b>  -> unwrap that <b>
+     *   - Selection spanning multiple <b>foo</b> <b>bar</b>  -> unwrap both
+     *   - Selection not yet bold  -> wrap in new <b>
      */
     api.toggleInlineTag = function toggleInlineTag(editor, tagName, attributes) {
         var isActive = api.isInlineTagActive(editor, tagName);
@@ -25,7 +25,6 @@
         var tagNames = api.getInlineTagAliases(tagName);
 
         if (isActive) {
-            /* ── Unwrap ─────────────────────────────────────────────────── */
             if (!range) return;
 
             if (range.collapsed) {
@@ -95,7 +94,6 @@
             return;
         }
 
-        /* ── Wrap ───────────────────────────────────────────────────────── */
         if (!range) return;
 
         var element = document.createElement(tagName);
@@ -130,9 +128,7 @@
         api.wrapRangeWithElement(range, element);
     };
 
-    /* ------------------------------------------------------------------ */
-    /* Block formatting                                                     */
-    /* ------------------------------------------------------------------ */
+    // Block formatting
     api.formatCurrentBlock = function formatCurrentBlock(editor, tagName) {
         var currentBlock = api.getCurrentBlockElement(editor);
         var selection    = window.getSelection ? window.getSelection() : null;
@@ -167,9 +163,7 @@
         }
     };
 
-    /* ------------------------------------------------------------------ */
-    /* List helpers                                                         */
-    /* ------------------------------------------------------------------ */
+    // List Helpers
     api.unwrapList = function unwrapList(listElement) {
         var fragment = document.createDocumentFragment();
         Array.prototype.slice.call(listElement.children).forEach(function (item) {

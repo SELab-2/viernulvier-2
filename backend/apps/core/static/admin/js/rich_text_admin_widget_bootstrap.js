@@ -45,7 +45,7 @@
         var isItalicActive = api.isInlineTagPresent(editor, 'I');
         var isUnderlineActive = api.isInlineTagPresent(editor, 'U');
 
-        // FIX BUG 3: The link button is never shown as "active" — it is a
+        // FIX BUG 3: The link button is never shown as "active" - it is a
         // one-shot insert action, not a toggle. We still compute isLinkActive
         // for potential future use but do not apply it to the button state.
         var isLinkActive = false; // always off
@@ -209,7 +209,7 @@
         });
 
         // Keep textarea and toolbar state in sync on edits.
-        // FIX BUG 2: After each input event, sweep the editor for empty inline
+        // After each input event, sweep the editor for empty inline
         // elements that the browser leaves behind when the user backspaces all
         // content out of a formatted run. Without this cleanup, the caret ends
         // up inside an empty <b></b> and the bold button lights up even though

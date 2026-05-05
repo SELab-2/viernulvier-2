@@ -1,5 +1,5 @@
 /*
- * Rich Text Admin - Utilities (rewrite)
+ * Rich Text Admin - Utilities
  */
 (function (root) {
     'use strict';
@@ -9,9 +9,8 @@
     api.STYLE_ID  = 'richtext-admin-widget-style';
     api.SELECTOR  = 'textarea[data-richtext-editor="1"]';
 
-    /* ------------------------------------------------------------------ */
-    /* Styles                                                               */
-    /* ------------------------------------------------------------------ */
+    // Styles
+    // This is required to overwrite the styles forced by django cms
     api.ensureStyles = function () {
         if (document.getElementById(api.STYLE_ID)) return;
         var style = document.createElement('style');
@@ -39,9 +38,7 @@
         document.body.appendChild(style);
     };
 
-    /* ------------------------------------------------------------------ */
-    /* HTML helpers                                                         */
-    /* ------------------------------------------------------------------ */
+    // HTML helpers
     api.escapeHtml = function (v) {
         return String(v || '')
             .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -87,9 +84,7 @@
         return Array.prototype.map.call(c.childNodes, serializeNode).join('');
     };
 
-    /* ------------------------------------------------------------------ */
-    /* Selection / range helpers                                            */
-    /* ------------------------------------------------------------------ */
+    // Selection / range helpers
     api.getSelectionRange = function (editor) {
         var sel = window.getSelection ? window.getSelection() : null;
         if (!sel || sel.rangeCount === 0) return null;
@@ -126,10 +121,6 @@
         }, editor);
     };
 
-    /* ------------------------------------------------------------------ */
-    /* Core inline detection — completely rewritten                         */
-    /* ------------------------------------------------------------------ */
-
     /*
      * Collect every text node that overlaps `range`.
      * Uses Range boundary comparison which is reliable cross-browser.
@@ -153,11 +144,9 @@
     }
 
     /*
-     * isInlineTagActive — the single source of truth for "is this format on?"
-     *
-     * Collapsed caret: walk up from anchorNode; ignore empty wrappers.
+     * Collapsed caret: walk up from anchorNode, ignore empty wrappers.
      * Real selection:  every text node inside the range must be a descendant
-     *                  of a `tagName` element. Zero text nodes → ancestor walk.
+     *                  of a `tagName` element. Zero text nodes -> ancestor walk.
      */
     api.isInlineTagActive = function (editor, tagName) {
         var sel = window.getSelection ? window.getSelection() : null;
@@ -194,7 +183,7 @@
     };
 
     /*
-     * isInlineTagPresent — looser match for toolbar state.
+     * isInlineTagPresent - looser match for toolbar state.
      * Returns true when any part of the selection is within the tag.
      */
     api.isInlineTagPresent = function (editor, tagName) {
@@ -225,7 +214,7 @@
     };
 
     /*
-     * getCurrentInlineElement — kept for callers in actions.js that need a
+     * getCurrentInlineElement - kept for callers in actions.js that need a
      * DOM handle (e.g. for single-element unwrap).
      * Returns the nearest tagName ancestor of anchorNode, but ONLY when the
      * whole selection is already active according to isInlineTagActive.
@@ -240,13 +229,10 @@
         }, editor);
     };
 
-    /* ------------------------------------------------------------------ */
-    /* Empty inline cleanup (fixes ghost bold-button after backspace)       */
-    /* ------------------------------------------------------------------ */
+    // Empty inline cleanup
     api.removeEmptyInlineElements = function (editor) {
         var tags = ['B','I','U','A','EM','STRONG'];
         tags.forEach(function (tag) {
-            // snapshot to array first — live querySelectorAll + unwrap = chaos
             var els = Array.prototype.slice.call(editor.querySelectorAll(tag));
             els.forEach(function (el) {
                 if (el.parentNode && el.textContent.replace(/\u200B/g, '').trim() === '') {
@@ -256,9 +242,7 @@
         });
     };
 
-    /* ------------------------------------------------------------------ */
-    /* Caret helpers                                                         */
-    /* ------------------------------------------------------------------ */
+    // Caret helpers
     api.setCaretInsideElement = function (element) {
         var sel = window.getSelection ? window.getSelection() : null;
         if (!sel) return;
@@ -416,9 +400,7 @@
         return true;
     };
 
-    /* ------------------------------------------------------------------ */
-    /* DOM mutation helpers                                                  */
-    /* ------------------------------------------------------------------ */
+    // DOM mutation helpers
     api.replaceElementTagName = function (element, tagName) {
         var replacement = document.createElement(tagName);
         Array.prototype.forEach.call(element.attributes, function (attr) {
