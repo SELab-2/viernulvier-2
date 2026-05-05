@@ -7,7 +7,8 @@ import i18n from '../../i18n'
 import ProductionsPage from '../../pages/ProductionsPage'
 import { ApiError } from '../../services/ApiTypes'
 import { getGenres } from '../../services/genres/Genres'
-import { getProductions, getProductionSeries } from '../../services/productions/Productions'
+import { getProductions } from '../../services/productions/Productions'
+import { getTags } from '../../services/tags/Tags'
 
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
@@ -15,7 +16,10 @@ import type { Tag } from '../../types/Tags'
 
 jest.mock('../../services/productions/Productions', () => ({
   getProductions: jest.fn(),
-  getProductionSeries: jest.fn(),
+}))
+
+jest.mock('../../services/tags/Tags', () => ({
+  getTags: jest.fn(),
 }))
 
 jest.mock('../../services/genres/Genres', () => ({
@@ -23,9 +27,7 @@ jest.mock('../../services/genres/Genres', () => ({
 }))
 
 const mockedGetProductions = getProductions as jest.MockedFunction<typeof getProductions>
-const mockedGetProductionSeries = getProductionSeries as jest.MockedFunction<
-  typeof getProductionSeries
->
+const mockedGetTags = getTags as jest.MockedFunction<typeof getTags>
 const mockedGetGenres = getGenres as jest.MockedFunction<typeof getGenres>
 
 const genreFixtures: Genre[] = [
@@ -52,10 +54,15 @@ const tagFixtures: Tag[] = [
     source: 'manual',
     type: 'series',
     is_enabled: true,
+    image: null,
     display_name: 'Premiere',
     display_short_description: null,
+    display_excerpt: null,
     display_url_title: null,
+    first_production_start: null,
+    last_production_end: null,
     name: { nl: 'Premiere' },
+    excerpt: null,
     short_description: {},
     url_title: {},
   },
@@ -65,10 +72,15 @@ const tagFixtures: Tag[] = [
     source: 'manual',
     type: 'series',
     is_enabled: true,
+    image: null,
     display_name: 'Festival',
     display_short_description: null,
+    display_excerpt: null,
     display_url_title: null,
+    first_production_start: null,
+    last_production_end: null,
     name: { nl: 'Festival' },
+    excerpt: null,
     short_description: {},
     url_title: {},
   },
@@ -144,16 +156,11 @@ describe('ProductionsPage', () => {
       previous: null,
       results: genreFixtures,
     })
-    mockedGetProductionSeries.mockResolvedValue({
+    mockedGetTags.mockResolvedValue({
       count: tagFixtures.length,
       next: null,
       previous: null,
-      results: tagFixtures.map((tag) => ({
-        tag,
-        firstProductionStart: null,
-        lastProductionEnd: null,
-        lastProductionImage: null,
-      })),
+      results: tagFixtures,
     })
   })
 
@@ -330,8 +337,8 @@ describe('ProductionsPage', () => {
 
     renderPage()
 
-    await screen.findByRole('button', { name: 'Ga naar pagina 2' })
-    fireEvent.click(screen.getByRole('button', { name: 'Ga naar pagina 2' }))
+    await screen.findByRole('button', { name: 'Ga naar volgende pagina' })
+    fireEvent.click(screen.getByRole('button', { name: 'Ga naar volgende pagina' }))
 
     await waitFor(() => {
       expect(mockedGetProductions).toHaveBeenLastCalledWith({
@@ -415,7 +422,7 @@ describe('ProductionsPage', () => {
     expect(await screen.findByRole('heading', { name: 'Productie 9' })).toBeInTheDocument()
   })
 
-  it('applies sidebar filters to the URL and forwards one attendance and one performer mode to the backend', async () => {
+  it('applies sidebar filters to the URL and forwards selected genre and tag ids to the backend', async () => {
     mockedGetProductions.mockResolvedValue({
       count: 1,
       next: null,
@@ -451,8 +458,8 @@ describe('ProductionsPage', () => {
           ordering: '-first_event_start',
           attendance_mode: 'offline',
           performer_type: 'solo',
-          genre: 5,
-          tag: 8,
+          genre: [5, 9],
+          tag: [8, 12],
           first_event_start_after: '2026-03-01T00:00:00.000Z',
           first_event_start_before: '2026-03-31T23:59:59.999Z',
         },
@@ -466,5 +473,5 @@ describe('ProductionsPage', () => {
     expect(screen.getByTestId('url-search')).toHaveTextContent('fa=2026-03-01')
     expect(screen.getByTestId('url-search')).toHaveTextContent('fb=2026-03-31')
     expect(screen.getByTestId('url-search')).not.toHaveTextContent('p=')
-  })
+  }, 10000)
 })

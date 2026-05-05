@@ -93,7 +93,7 @@ describe('ProductionDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl', {
         state: {
           floatingAlert: {
             open: true,
@@ -209,10 +209,15 @@ describe('ProductionDetailPage', () => {
           source: 'local',
           type: 'tag',
           is_enabled: true,
+          image: null,
           display_name: 'Tag1',
           display_short_description: null,
+          display_excerpt: null,
           display_url_title: null,
+          first_production_start: null,
+          last_production_end: null,
           name: null,
+          excerpt: null,
           short_description: null,
           url_title: null,
         },
@@ -270,7 +275,7 @@ describe('ProductionDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl', {
         state: {
           floatingAlert: {
             open: true,

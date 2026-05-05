@@ -23,6 +23,7 @@ import {
   type SearchViewMode,
 } from './types'
 import { tokens } from '../../theme/tokens'
+import { DarkMode } from '../../types/Theme'
 
 import type { ReactNode } from 'react'
 
@@ -74,9 +75,9 @@ const SearchControlsBar = ({
     ? sortTarget
     : (sortTargetOptions[0]?.value ?? 'name')
   const interactionColor =
-    theme.palette.mode === 'dark' ? tokens.colors.neutral.white : tokens.colors.neutral.black
+    theme.palette.mode === DarkMode ? tokens.colors.neutral.white : tokens.colors.neutral.black
   const interactionHoverBackground =
-    theme.palette.mode === 'dark' ? tokens.colors.overlay.white05 : tokens.colors.overlay.black05
+    theme.palette.mode === DarkMode ? tokens.colors.overlay.white05 : tokens.colors.overlay.black05
   const nextSortDirection: SearchSortDirection = sortDirection === 'asc' ? 'desc' : 'asc'
 
   return (

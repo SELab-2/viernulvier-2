@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 import ProductionListCard from '../../components/productions/ProductionListCard'
 import i18n from '../../i18n'
+import { toLocalizedPath } from '../../utils/localizedRoutes'
 
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
@@ -35,10 +36,15 @@ const minimalTag = (id: number, nlName: string, enName = nlName): Tag => ({
   source: 'db',
   type: 'series',
   is_enabled: true,
+  image: null,
   display_name: nlName,
   display_short_description: null,
+  display_excerpt: null,
   display_url_title: null,
+  first_production_start: null,
+  last_production_end: null,
   name: { nl: nlName, en: enName },
+  excerpt: null,
   short_description: null,
   url_title: null,
 })
@@ -67,12 +73,17 @@ const baseProduction = (overrides: Partial<Production> = {}): Production => ({
 const renderListCard = (props: {
   production: Production
   selectedGenreIds?: number[]
+  selectedTagIds?: number[]
   onGenreClick?: (id: number) => void
 }) => {
-  const { production, selectedGenreIds = [] } = props
+  const { production, selectedGenreIds = [], selectedTagIds = [] } = props
 
   const ui: ReactElement = (
-    <ProductionListCard production={production} selectedGenreIds={selectedGenreIds} />
+    <ProductionListCard
+      production={production}
+      selectedGenreIds={selectedGenreIds}
+      selectedTagIds={selectedTagIds}
+    />
   )
 
   return render(
@@ -124,8 +135,8 @@ describe('ProductionListCard', () => {
     expect(screen.getByRole('heading', { name: 'Voorstelling' })).toBeInTheDocument()
     expect(screen.getByText('Artiest')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Voorstelling/ })).toHaveAttribute(
-      'href',
-      '/productions/1',
+      'data-to',
+      toLocalizedPath('/productions/1', 'nl'),
     )
     expect(screen.getByRole('img', { name: 'Voorstelling' })).toHaveAttribute(
       'src',
@@ -276,6 +287,19 @@ describe('ProductionListCard', () => {
     expect(screen.getByText('Dans')).toBeInTheDocument()
   })
 
+  it('highlights selected series tags with the series color', () => {
+    const production = baseProduction({
+      tags: [minimalTag(11, 'Festivalreeks')],
+    })
+
+    renderListCard({ production, selectedTagIds: [11] })
+
+    expect(screen.getByRole('link', { name: 'Festivalreeks' })).toHaveStyle({
+      backgroundColor: '#1976d2',
+      borderColor: '#1976d2',
+    })
+  })
+
   it('does not render a genre row when there are no genres', () => {
     const production = baseProduction({ genres: [] })
     renderListCard({ production })
@@ -306,8 +330,8 @@ describe('ProductionListCard', () => {
     renderListCard({ production })
 
     expect(screen.getByRole('link', { name: /Voorstelling/ })).toHaveAttribute(
-      'href',
-      '/productions/42',
+      'data-to',
+      toLocalizedPath('/productions/42', 'nl'),
     )
   })
 
@@ -319,8 +343,8 @@ describe('ProductionListCard', () => {
     expect(screen.getByRole('heading', { name: 'Production' })).toBeInTheDocument()
     expect(screen.getByText('Artist')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Production/ })).toHaveAttribute(
-      'href',
-      '/productions/1',
+      'data-to',
+      toLocalizedPath('/productions/1', 'en'),
     )
     expect(screen.getByRole('img', { name: 'Production' })).toBeInTheDocument()
   })
@@ -434,6 +458,6 @@ describe('ProductionListCard', () => {
     expect(onGenreClick).not.toHaveBeenCalled()
 
     const cardLink = screen.getByRole('link', { name: /Voorstelling/ })
-    expect(cardLink).toHaveAttribute('href', '/productions/1')
+    expect(cardLink).toHaveAttribute('data-to', toLocalizedPath('/productions/1', 'nl'))
   })
 })

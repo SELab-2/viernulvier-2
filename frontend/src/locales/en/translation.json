@@ -192,13 +192,12 @@
     },
     "pagination": {
       "navigationLabel": "Production pagination",
-      "pageXofY": "Page {{page}} of {{totalPages}}",
       "firstPage": "Go to first page",
       "lastPage": "Go to last page",
       "nextPage": "Go to next page",
       "previousPage": "Go to previous page",
       "currentPage": "Current page, page {{page}}",
-      "goToPage": "Go to page {{page}}"
+      "ofPages": "of {{count}}"
     },
     "detail": {
       "related": "Related productions",
@@ -243,6 +242,15 @@
         "fallback": "Could not load blogs.",
         "notification": "Something went wrong while loading blogs."
       }
+    },
+    "pagination": {
+      "navigationLabel": "Blog pagination",
+      "firstPage": "Go to first page",
+      "lastPage": "Go to last page",
+      "nextPage": "Go to next page",
+      "previousPage": "Go to previous page",
+      "currentPage": "Current page, page {{page}}",
+      "ofPages": "of {{count}}"
     },
     "detail": {
       "noTitleAvailable": "No title available",
@@ -314,17 +322,37 @@
     },
     "pagination": {
       "navigationLabel": "Series pagination",
-      "pageXofY": "Page {{page}} of {{totalPages}}",
       "firstPage": "Go to first page",
       "lastPage": "Go to last page",
       "nextPage": "Go to next page",
       "previousPage": "Go to previous page",
       "currentPage": "Current page, page {{page}}",
-      "goToPage": "Go to page {{page}}"
+      "ofPages": "of {{count}}"
     }
   },
   "blog": {
     "couldNotLoad": "Could not load blog",
     "invalidId": "Invalid blog ID"
+  },
+  "media": {
+    "searchPlaceholder": "Search files by name, description or type...",
+    "fileType": {
+      "image": "Image",
+      "pdf": "PDF",
+      "file": "File"
+    },
+    "size": "Size",
+    "error": {
+      "retry": "Retry",
+      "fallback": "Could not load media files.",
+      "notification": "Something went wrong while loading media files."
+    },
+    "empty": {
+      "title": "No media files found.",
+      "description": "Adjust your search and try again."
+    },
+    "loading": "Loading media files",
+    "resultsRegionLabel": "Media files results",
+    "noDescription": "No description available."
   }
 }

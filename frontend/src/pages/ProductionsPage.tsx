@@ -13,7 +13,8 @@ import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlSta
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
 import { getGenres } from '../services/genres/Genres'
-import { getProductions, getProductionSeries } from '../services/productions/Productions'
+import { getProductions } from '../services/productions/Productions'
+import { getTags } from '../services/tags/Tags'
 
 import type { Genre } from '../types/Genres'
 import type { Production } from '../types/Productions'
@@ -21,7 +22,6 @@ import type { Tag } from '../types/Tags'
 
 // Page size for pagination.
 const PAGE_SIZE = 12
-const SERIES_TAG_FETCH_SIZE = 250
 
 // Function to determine the ordering parameter for the API based on the current sort target and direction.
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
@@ -38,19 +38,48 @@ const toIsoDateBoundary = (value: string, boundary: 'start' | 'end'): string | u
   return new Date(`${value}${suffix}`).toISOString()
 }
 
-const fetchSeriesTags = async (): Promise<Tag[]> => {
+const parseCommaSeparatedIds = (value: string): number[] | undefined => {
+  if (!value) {
+    return undefined
+  }
+
+  return value.split(',').map(Number)
+}
+
+const fetchGenres = async (): Promise<Genre[]> => {
+  const genres: Genre[] = []
+  let page = 1
+  let hasMore = true
+
+  while (hasMore) {
+    const response = await getGenres({
+      page,
+    })
+
+    genres.push(...response.results)
+    hasMore = response.next !== null
+    page += 1
+  }
+
+  return genres
+}
+
+const fetchTags = async (): Promise<Tag[]> => {
   const tagsById = new Map<number, Tag>()
   let page = 1
   let hasMore = true
 
   while (hasMore) {
-    const response = await getProductionSeries({
+    const response = await getTags({
       page,
-      pageSize: SERIES_TAG_FETCH_SIZE,
+      pageSize: 250,
+      filters: {
+        is_enabled: true,
+      },
     })
 
-    response.results.forEach((series) => {
-      tagsById.set(series.tag.id, series.tag)
+    response.results.forEach((tag) => {
+      tagsById.set(tag.id, tag)
     })
 
     hasMore = response.next !== null
@@ -130,8 +159,8 @@ const ProductionsPage = () => {
   )
   const selectedAttendanceMode = attendanceMode
   const selectedPerformerType = performerType
-  const selectedGenreId = selectedGenreIds[0]
-  const selectedTagId = selectedTagIds[0]
+  const selectedGenres = selectedGenreIds.join(',')
+  const selectedTags = selectedTagIds.join(',')
   const displayedSearchValue = isSearchDraftDirty ? searchDraft : searchValue
 
   useEffect(() => {
@@ -139,14 +168,14 @@ const ProductionsPage = () => {
 
     const fetchFilterMetadata = async () => {
       try {
-        const [genreResponse, seriesTags] = await Promise.all([getGenres(), fetchSeriesTags()])
+        const [genres, tags] = await Promise.all([fetchGenres(), fetchTags()])
 
         if (!isActive) {
           return
         }
 
-        setGenres(genreResponse.results)
-        setTags(seriesTags)
+        setGenres(genres)
+        setTags(tags)
       } catch {
         if (!isActive) {
           return
@@ -184,10 +213,8 @@ const ProductionsPage = () => {
             ordering,
             attendance_mode: selectedAttendanceMode,
             performer_type: selectedPerformerType,
-            // TODO: Forward all selected genre ids once the backend supports multi-value filtering.
-            genre: selectedGenreId,
-            // TODO: Forward all selected tag ids once the backend supports multi-value filtering.
-            tag: selectedTagId,
+            genre: parseCommaSeparatedIds(selectedGenres),
+            tag: parseCommaSeparatedIds(selectedTags),
             first_event_start_after: toIsoDateBoundary(firstEventStartAfter, 'start'),
             first_event_start_before: toIsoDateBoundary(firstEventStartBefore, 'end'),
           },
@@ -237,9 +264,9 @@ const ProductionsPage = () => {
     retryKey,
     searchValue,
     selectedAttendanceMode,
-    selectedGenreId,
+    selectedGenres,
     selectedPerformerType,
-    selectedTagId,
+    selectedTags,
   ])
 
   // Handler for retrying the data fetch when an error occurs, triggered by the retry button in the UI.
@@ -289,10 +316,18 @@ const ProductionsPage = () => {
       layout={viewMode}
       getKey={(production) => production.id}
       renderListItem={(production) => (
-        <ProductionListCard production={production} selectedGenreIds={selectedGenreIds} />
+        <ProductionListCard
+          production={production}
+          selectedGenreIds={selectedGenreIds}
+          selectedTagIds={selectedTagIds}
+        />
       )}
       renderGridItem={(production) => (
-        <ProductionGridCard production={production} selectedGenreIds={selectedGenreIds} />
+        <ProductionGridCard
+          production={production}
+          selectedGenreIds={selectedGenreIds}
+          selectedTagIds={selectedTagIds}
+        />
       )}
     />
   )

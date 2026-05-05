@@ -12,6 +12,7 @@ hard-coded fallback in this file. See ``infrastructure/.env.example``
 for the full list of required variables.
 """
 
+import mimetypes
 import os
 from pathlib import Path
 import textwrap
@@ -19,6 +20,15 @@ import textwrap
 from dotenv import load_dotenv
 
 from api.versioning import VERSIONING_SETTINGS
+
+# ---------------------------------------------------------------------------
+# MIME type overrides
+# ---------------------------------------------------------------------------
+# Python's mimetypes module does not include image/webp on all platforms
+# (notably absent on Windows and some Linux distros). Without this,
+# Django's file server falls back to application/octet-stream for .webp
+# files, causing browsers to download them instead of displaying inline.
+mimetypes.add_type("image/webp", ".webp")
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -342,4 +352,19 @@ LOGGING = {
             "propagate": False,
         },
     },
+}
+
+# ---------------------------------------------------------------------------
+# CACHING
+# ---------------------------------------------------------------------------
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "viernulvier",
+    }
 }

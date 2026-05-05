@@ -53,11 +53,11 @@ describe('SeriesDetailPage', () => {
 
   const renderPage = (id = '1') => {
     return render(
-      <MemoryRouter initialEntries={[`/series/${id}`]}>
+      <MemoryRouter initialEntries={[`/nl/reeksen/${id}`]}>
         <Routes>
-          <Route path="/series/:id" element={<SeriesDetailPage />} />
-          <Route path="/productions/:id" element={<div>PRODUCTION DETAIL</div>} />
-          <Route path="/404" element={<div>404 PAGE</div>} />
+          <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
+          <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
+          <Route path="/:lang/not-found" element={<div>404 PAGE</div>} />
         </Routes>
       </MemoryRouter>,
     )
@@ -76,6 +76,8 @@ describe('SeriesDetailPage', () => {
     mockedGetTag.mockResolvedValue({
       id: 1,
       name: { nl: 'VIDEODROOM' },
+      excerpt: { nl: 'Korte samenvatting' },
+      display_excerpt: 'Korte samenvatting',
       short_description: { nl: 'Beschrijving van de reeks' },
       type: 'festival',
     })
@@ -98,6 +100,7 @@ describe('SeriesDetailPage', () => {
     renderPage()
 
     expect(await screen.findByRole('heading', { name: 'VIDEODROOM' })).toBeInTheDocument()
+    expect(screen.getByText('Korte samenvatting')).toBeInTheDocument()
     expect(screen.getByText('Beschrijving van de reeks')).toBeInTheDocument()
     expect(screen.getByText('VIDEODROOM 2024')).toBeInTheDocument()
     expect(screen.getByText('Alle edities')).toBeInTheDocument()
@@ -107,6 +110,8 @@ describe('SeriesDetailPage', () => {
     mockedGetTag.mockResolvedValue({
       id: 1,
       name: { nl: 'VIDEODROOM' },
+      excerpt: { nl: 'Korte samenvatting' },
+      display_excerpt: 'Korte samenvatting',
       short_description: { nl: 'Beschrijving van de reeks' },
       type: 'festival',
     })
@@ -145,6 +150,8 @@ describe('SeriesDetailPage', () => {
     mockedGetTag.mockResolvedValue({
       id: 1,
       name: { nl: 'VIDEODROOM' },
+      excerpt: { nl: 'Korte samenvatting' },
+      display_excerpt: 'Korte samenvatting',
       short_description: { nl: 'Beschrijving' },
       type: 'festival',
     })
@@ -172,6 +179,8 @@ describe('SeriesDetailPage', () => {
     mockedGetTag.mockResolvedValue({
       id: 1,
       name: { nl: 'VIDEODROOM' },
+      excerpt: { nl: 'Korte samenvatting' },
+      display_excerpt: 'Korte samenvatting',
       short_description: { nl: 'Beschrijving van de reeks' },
       type: 'festival',
     })
@@ -203,6 +212,8 @@ describe('SeriesDetailPage', () => {
     mockedGetTag.mockResolvedValue({
       id: 1,
       name: { nl: 'VIDEODROOM' },
+      excerpt: { nl: 'Korte samenvatting' },
+      display_excerpt: 'Korte samenvatting',
       short_description: { nl: 'Beschrijving van de reeks' },
       type: 'festival',
     })

@@ -7,7 +7,7 @@
 import { Alert, Box, Container, Divider, Stack, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useParams } from 'react-router-dom'
+import { Navigate, useLocation, useParams } from 'react-router-dom'
 
 import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 import Breadcrumbs from '../components/production/Breadcrumbs'
@@ -16,6 +16,7 @@ import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
+import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 import { getTranslatedRecord } from '../utils/translations'
 
 import type { Production } from '../types/Productions'
@@ -44,7 +45,14 @@ type SeriesDetailContentProps = {
 }
 
 const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
+  const location = useLocation()
   const { t, i18n } = useTranslation()
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
@@ -105,36 +113,36 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return Array.from(groups.entries())
   }, [sortedProductions])
 
-  const stats = useMemo<SeriesStat[]>(() => {
-    const years = sortedProductions
-      .map(getProductionYear)
-      .filter((year) => /^\d{4}$/.test(year))
-      .map(Number)
+  const startYear = seriesTag?.first_production_start
+    ? new Date(seriesTag.first_production_start).getFullYear()
+    : null
+  const endYear = seriesTag?.last_production_end
+    ? new Date(seriesTag.last_production_end).getFullYear()
+    : null
 
-    const minYear = years.length ? Math.min(...years) : null
-    const maxYear = years.length ? Math.max(...years) : null
-
-    return [
-      { value: String(sortedProductions.length), label: t('series.stats.editions') },
-      {
-        value: minYear && maxYear ? `${minYear}–${maxYear}` : '—',
-        label: t('series.stats.period'),
-      },
-      { value: seriesTag?.type || '—', label: t('series.stats.type') },
-    ]
-  }, [seriesTag?.type, sortedProductions, t])
+  const stats: SeriesStat[] = [
+    { value: String(sortedProductions.length), label: t('series.stats.editions') },
+    {
+      value: startYear && endYear ? `${startYear}–${endYear}` : '—',
+      label: t('series.stats.period'),
+    },
+    { value: seriesTag?.type || '—', label: t('series.stats.type') },
+  ]
 
   if (isLoading) {
     return <SeriesDetailPageSkeleton />
   }
   if (error || !seriesTag) {
-    return <Navigate to="/404" replace />
+    return <Navigate to={notFoundPath} replace />
   }
 
   const lang = i18n.language.startsWith('en') ? 'en' : 'nl'
 
   const seriesName =
     getTranslatedRecord(seriesTag.name, lang, seriesTag.display_name) || t('series.untitled')
+
+  const seriesExcerpt =
+    getTranslatedRecord(seriesTag.excerpt, lang, seriesTag.display_excerpt) || ''
 
   const seriesDescription =
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
@@ -151,7 +159,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
           ]}
         />
 
-        <SeriesHeader name={seriesName} description={seriesDescription} />
+        <SeriesHeader name={seriesName} excerpt={seriesExcerpt} description={seriesDescription} />
         <SeriesStats stats={stats} />
         <Divider />
 
@@ -232,10 +240,18 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 }
 
 const SeriesDetailPage = () => {
+  const location = useLocation()
+  const { i18n } = useTranslation()
   const { id } = useParams<{ id: string }>()
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
 
   if (!id || Number.isNaN(Number(id))) {
-    return <Navigate to="/404" replace />
+    return <Navigate to={notFoundPath} replace />
   }
 
   return <SeriesDetailContent key={id} id={id} />

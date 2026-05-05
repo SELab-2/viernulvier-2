@@ -9,10 +9,15 @@ export interface Tag {
   source: string
   type: string
   is_enabled: boolean
+  image: string | null
   display_name: string | null
   display_short_description: string | null
+  display_excerpt: string | null
   display_url_title: string | null
+  first_production_start: string | null
+  last_production_end: string | null
   name: Record<string, string> | null
+  excerpt: Record<string, string> | null
   short_description: Record<string, string> | null
   url_title: Record<string, string> | null
 }

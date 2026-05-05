@@ -192,13 +192,12 @@
     },
     "pagination": {
       "navigationLabel": "Paginering van producties",
-      "pageXofY": "Pagina {{page}} van {{totalPages}}",
       "firstPage": "Ga naar eerste pagina",
       "lastPage": "Ga naar laatste pagina",
       "nextPage": "Ga naar volgende pagina",
       "previousPage": "Ga naar vorige pagina",
       "currentPage": "Huidige pagina, pagina {{page}}",
-      "goToPage": "Ga naar pagina {{page}}"
+      "ofPages": "van {{count}}"
     },
     "detail": {
       "related": "Gerelateerde producties",
@@ -243,6 +242,15 @@
         "fallback": "Kon blogs niet laden.",
         "notification": "Er ging iets mis bij het laden van blogs."
       }
+    },
+    "pagination": {
+      "navigationLabel": "Paginering van blogs",
+      "firstPage": "Ga naar eerste pagina",
+      "lastPage": "Ga naar laatste pagina",
+      "nextPage": "Ga naar volgende pagina",
+      "previousPage": "Ga naar vorige pagina",
+      "currentPage": "Huidige pagina, pagina {{page}}",
+      "ofPages": "van {{count}}"
     },
     "detail": {
       "noTitleAvailable": "Geen titel beschikbaar",
@@ -314,17 +322,37 @@
     },
     "pagination": {
       "navigationLabel": "Paginering van reeksen",
-      "pageXofY": "Pagina {{page}} van {{totalPages}}",
       "firstPage": "Ga naar eerste pagina",
       "lastPage": "Ga naar laatste pagina",
       "nextPage": "Ga naar volgende pagina",
       "previousPage": "Ga naar vorige pagina",
       "currentPage": "Huidige pagina, pagina {{page}}",
-      "goToPage": "Ga naar pagina {{page}}"
+      "ofPages": "van {{count}}"
     }
   },
   "blog": {
     "couldNotLoad": "Kon de blog niet laden",
     "invalidId": "Ongeldig blog ID"
+  },
+  "media": {
+    "searchPlaceholder": "Zoek bestanden op naam, beschrijving of type...",
+    "fileType": {
+      "image": "Afbeelding",
+      "pdf": "PDF",
+      "file": "Bestand"
+    },
+    "size": "Grootte",
+    "error": {
+      "retry": "Opnieuw proberen",
+      "fallback": "Kon mediabestanden niet laden.",
+      "notification": "Er ging iets mis bij het laden van de mediabestanden."
+    },
+    "empty": {
+      "title": "Geen mediabestanden gevonden.",
+      "description": "Geen mediabestanden die voldoen aan de huidige zoekopdracht."
+    },
+    "loading": "Mediabestanden laden",
+    "resultsRegionLabel": "Resultaten van mediabestanden",
+    "noDescription": "Geen beschrijving beschikbaar."
   }
 }

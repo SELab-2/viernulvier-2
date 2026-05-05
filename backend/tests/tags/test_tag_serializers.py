@@ -4,13 +4,15 @@ Tests for apps/tags/serializers.py
 Covers:
 - TagSerializer field presence and completeness
 - TagSerializer serialization (model -> dict)
-- Translated fields (name, short_description, url_title) returned as dicts
+- Translated fields (name, excerpt, short_description, url_title) returned as dicts
 - Translated fields return empty dict when no translations exist
 - Translated fields omit blank/falsy values
 - TagSerializer deserialization / validation (dict -> model)
 - Invalid data handling
 - Field types
 """
+
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 import pytest
@@ -42,7 +44,15 @@ class TestTagSerializerFields(TestCase):
             "source",
             "type",
             "is_enabled",
+            "image",
+            "display_name",
+            "display_short_description",
+            "display_excerpt",
+            "display_url_title",
+            "first_production_start",
+            "last_production_end",
             "name",
+            "excerpt",
             "short_description",
             "url_title",
         ):
@@ -56,10 +66,15 @@ class TestTagSerializerFields(TestCase):
             "source",
             "type",
             "is_enabled",
+            "image",
             "name",
             "display_name",
             "display_short_description",
+            "display_excerpt",
             "display_url_title",
+            "first_production_start",
+            "last_production_end",
+            "excerpt",
             "short_description",
             "url_title",
         }
@@ -171,6 +186,17 @@ class TestTagSerializerTranslatedFields(TestCase):
         data = TagSerializer(self.tag).data
         assert isinstance(data["short_description"], dict)
 
+    def test_excerpt_is_dict(self) -> None:
+        TagTranslationFactory.create(
+            tag=self.tag,
+            language=self.nl,
+            name="Genre",
+            excerpt="Een korte samenvatting",
+            url_title="genre",
+        )
+        data = TagSerializer(self.tag).data
+        assert isinstance(data["excerpt"], dict)
+
     def test_short_description_contains_correct_value(self) -> None:
         TagTranslationFactory.create(
             tag=self.tag,
@@ -181,6 +207,17 @@ class TestTagSerializerTranslatedFields(TestCase):
         )
         data = TagSerializer(self.tag).data
         assert data["short_description"]["nl"] == "Een muziekgenre"
+
+    def test_excerpt_contains_correct_value(self) -> None:
+        TagTranslationFactory.create(
+            tag=self.tag,
+            language=self.nl,
+            name="Genre",
+            excerpt="Een korte samenvatting",
+            url_title="genre",
+        )
+        data = TagSerializer(self.tag).data
+        assert data["excerpt"]["nl"] == "Een korte samenvatting"
 
     def test_url_title_is_dict(self) -> None:
         TagTranslationFactory.create(
@@ -210,6 +247,10 @@ class TestTagSerializerTranslatedFields(TestCase):
         data = TagSerializer(self.tag).data
         assert data["short_description"] == {}
 
+    def test_excerpt_is_empty_dict_when_no_translations(self) -> None:
+        data = TagSerializer(self.tag).data
+        assert data["excerpt"] == {}
+
     def test_url_title_is_empty_dict_when_no_translations(self) -> None:
         data = TagSerializer(self.tag).data
         assert data["url_title"] == {}
@@ -225,6 +266,18 @@ class TestTagSerializerTranslatedFields(TestCase):
         )
         data = TagSerializer(self.tag).data
         assert "nl" not in data["short_description"]
+
+    def test_blank_excerpt_is_excluded_from_dict(self) -> None:
+        """Translations with blank excerpt should not appear as a key."""
+        TagTranslationFactory.create(
+            tag=self.tag,
+            language=self.nl,
+            name="Genre",
+            excerpt="",
+            url_title="genre",
+        )
+        data = TagSerializer(self.tag).data
+        assert "nl" not in data["excerpt"]
 
     def test_multiple_translations_all_included(self) -> None:
         TagTranslationFactory.create(
@@ -364,3 +417,51 @@ class TestTagDisplayNameBaseLanguage:
 
         data = TagSerializer(tag, context=_display_ctx()).data
         assert data["display_name"] == "Thema"
+
+
+class TestTagSerializerGetImageFailures:
+    def test_returns_none_when_direct_image_url_resolution_fails(self) -> None:
+        class BrokenImage:
+            @property
+            def url(self):
+                raise RuntimeError("cannot build url")
+
+        class Obj:
+            image = BrokenImage()
+            fallback_crop_path = None
+
+        serializer = TagSerializer(context={})
+
+        assert serializer.get_image(Obj()) is None
+
+    def test_returns_none_when_fallback_storage_url_resolution_fails(self) -> None:
+        class Obj:
+            image = None
+            fallback_crop_path = "media_crops/fallback.jpg"
+
+        serializer = TagSerializer(context={})
+
+        with patch("apps.tags.serializers.default_storage.url", side_effect=RuntimeError("storage down")):
+            assert serializer.get_image(Obj()) is None
+
+    def test_returns_direct_image_url_without_request_context(self) -> None:
+        class ImageObj:
+            url = "/media/tag_images/tag.png"
+
+        class Obj:
+            image = ImageObj()
+            fallback_crop_path = None
+
+        serializer = TagSerializer(context={})
+
+        assert serializer.get_image(Obj()) == "/media/tag_images/tag.png"
+
+    def test_returns_fallback_storage_url_without_request_context(self) -> None:
+        class Obj:
+            image = None
+            fallback_crop_path = "media_crops/fallback.jpg"
+
+        serializer = TagSerializer(context={})
+
+        with patch("apps.tags.serializers.default_storage.url", return_value="/media/media_crops/fallback.jpg"):
+            assert serializer.get_image(Obj()) == "/media/media_crops/fallback.jpg"

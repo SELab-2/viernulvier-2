@@ -49,6 +49,20 @@ describe('buildListParams', () => {
     })
   })
 
+  it('serializes array filters as comma-separated params', () => {
+    expect(
+      buildListParams({
+        filters: {
+          genre: [5, 9],
+          tag: [8, 12],
+        },
+      }),
+    ).toEqual({
+      genre: '5,9',
+      tag: '8,12',
+    })
+  })
+
   it('does not mutate the original filters object', () => {
     const filters = {
       name: 'concert',

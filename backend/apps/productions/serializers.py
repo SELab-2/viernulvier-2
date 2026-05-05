@@ -23,7 +23,6 @@ from apps.core.serializers import TranslatableSerializerMixin
 from apps.genres.serializers import GenreSerializer
 from apps.media_library.models import MediaItem
 from apps.media_library.serializers import MediaGallerySerializer
-from apps.tags.models import Tag
 from apps.tags.serializers import TagSerializer
 
 from .models import Production, ProductionGenre, ProductionTag, UitDatabaseType
@@ -36,43 +35,6 @@ class ProductionLandingStatsSerializer(serializers.Serializer):
     series = serializers.IntegerField(min_value=0)
     years = serializers.IntegerField(min_value=0)
     blogs = serializers.IntegerField(min_value=0)
-
-
-class ProductionSeriesSerializer(serializers.ModelSerializer):
-    """Aggregated series summary grouped by production tag.
-
-    The serializer is used by the `/productions/series/` endpoint, where each
-    item represents one production tag bundle with derived start/end boundaries.
-    """
-
-    tag = TagSerializer(source="*", read_only=True)
-    first_production_start = serializers.DateTimeField(read_only=True, allow_null=True)
-    last_production_end = serializers.DateTimeField(read_only=True, allow_null=True)
-    last_production_image = serializers.SerializerMethodField(
-        help_text=(
-            "Absolute or relative URL of the first crop image of the most recent "
-            "production in this series. `null` when no image is available."
-        ),
-    )
-
-    class Meta:
-        model = Tag
-        fields = [
-            "tag",
-            "first_production_start",
-            "last_production_end",
-            "last_production_image",
-        ]
-        read_only_fields = fields
-
-    def get_last_production_image(self, obj: Tag) -> str | None:
-        """Resolve the image URL from the precomputed production-id lookup map."""
-        production_id = getattr(obj, "last_production_id", None)
-        if production_id is None:
-            return None
-
-        lookup = self.context.get("last_production_image_by_production_id", {})
-        return lookup.get(production_id)
 
 
 class UitDatabaseTypeSerializer(serializers.ModelSerializer):
@@ -214,9 +176,8 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
     description = serializers.SerializerMethodField(
         help_text=(
-            "Dictionary of all available translations for the long-form description "
-            '(e.g. {"en": "Full description", "fr": "Description complète"}). '
-            "Read-only - use the translation endpoints to manage translations."
+            "Production title in the project's base language (derived from settings.LANGUAGE_CODE). "
+            "Falls back to the first available translation when missing."
         ),
     )
 

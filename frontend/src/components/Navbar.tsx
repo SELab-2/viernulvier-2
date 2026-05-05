@@ -17,10 +17,17 @@ import {
 } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation, Link } from 'react-router-dom'
+import { useLocation, Link, useNavigate } from 'react-router-dom'
 
 import { createCommonStyles, createNavbarStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
+import { DarkMode, type ModeToggleProps } from '../types/Theme'
+import {
+  resolveCurrentLanguage,
+  stripLanguagePrefix,
+  toLocalizedPath,
+  type SupportedLanguage,
+} from '../utils/localizedRoutes'
 
 const NAV_LINKS = [
   { labelKey: 'nav.home', to: '/' },
@@ -30,38 +37,53 @@ const NAV_LINKS = [
   { labelKey: 'nav.media', to: '/media' },
 ] as const
 
-type SupportedLanguage = 'en' | 'nl'
-
-type NavbarProps = {
-  mode: 'light' | 'dark'
-  onToggleMode: () => void
-}
-
 // Sticky navbar with responsive desktop/mobile navigation.
-const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
+const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
   const navbarStyles = createNavbarStyles()
   const { t, i18n } = useTranslation()
   const location = useLocation()
+  const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const toolbarRef = useRef<HTMLDivElement | null>(null)
   // Route where the menu was opened; keeps mobile panel route-aware.
   const [menuOpenedAtPath, setMenuOpenedAtPath] = useState<string | null>(null)
   // Menu is open only on the route where it was triggered.
   const isEffectivelyOpen = mobileMenuOpen && menuOpenedAtPath === location.pathname
-  const currentLanguage: SupportedLanguage = i18n.language === 'en' ? 'en' : 'nl'
+  const currentLanguage: SupportedLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
   const nextLanguage: SupportedLanguage = currentLanguage === 'en' ? 'nl' : 'en'
-  const themeSwitchLabel = mode === 'dark' ? t('nav.switchToLightMode') : t('nav.switchToDarkMode')
+  const currentPathWithoutLanguage = stripLanguagePrefix(location.pathname)
+  const themeSwitchLabel =
+    mode === DarkMode ? t('nav.switchToLightMode') : t('nav.switchToDarkMode')
 
-  // Switch active UI language.
+  // Switch active UI language by swapping the URL language segment.
   const switchLanguage = (language: SupportedLanguage) => {
-    i18n.changeLanguage(language)
+    const targetPath = `${toLocalizedPath(location.pathname, language)}${location.search}${location.hash}`
+    navigate(targetPath)
   }
 
-  // Home route is exact; others use prefix match for nested pages.
-  const isActive = (to: string) =>
-    to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
+  // Home route is exact; archive also covers compatibility production URLs.
+  const isActive = (to: string) => {
+    if (to === '/') {
+      return currentPathWithoutLanguage === '/'
+    }
+
+    if (to === '/archive') {
+      return (
+        currentPathWithoutLanguage.startsWith('/archive') ||
+        currentPathWithoutLanguage.startsWith('/productions')
+      )
+    }
+
+    return currentPathWithoutLanguage.startsWith(to)
+  }
+
+  const localizedPath = (path: string) => toLocalizedPath(path, currentLanguage)
 
   // Close mobile menu and clear route marker.
   const closeMobileMenu = () => {
@@ -131,7 +153,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
             }}
           >
             {/* Brand: logo + "/ Archive" */}
-            <Box component={Link} to="/" sx={navbarStyles.brandLink}>
+            <Box component={Link} to={localizedPath('/')} sx={navbarStyles.brandLink}>
               <Box
                 component="img"
                 src="/vnv_logo.png"
@@ -156,7 +178,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                   <Button
                     color="inherit"
                     component={Link}
-                    to={to}
+                    to={localizedPath(to)}
                     aria-current={isActive(to) ? 'page' : undefined}
                     disableRipple
                     sx={[navbarStyles.navLink, ...(isActive(to) ? [navbarStyles.activeLink] : [])]}
@@ -195,7 +217,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                     backgroundColor: 'transparent',
                   }}
                 >
-                  {mode === 'dark' ? (
+                  {mode === DarkMode ? (
                     <DarkModeOutlinedIcon
                       sx={{
                         fontSize: { xs: '1.15rem', sm: '1.5rem' },
@@ -272,7 +294,7 @@ const Navbar = ({ mode, onToggleMode }: NavbarProps) => {
                       fullWidth
                       color="inherit"
                       component={Link}
-                      to={to}
+                      to={localizedPath(to)}
                       aria-current={isActive(to) ? 'page' : undefined}
                       onClick={closeMobileMenu}
                       disableRipple

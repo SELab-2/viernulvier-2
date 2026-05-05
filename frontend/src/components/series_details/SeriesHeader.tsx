@@ -8,15 +8,29 @@ import HtmlText from '../HtmlText'
 
 type Props = {
   name: string
+  excerpt?: string
   description: string
 }
 
-const SeriesHeader = ({ name, description }: Props) => {
+const SeriesHeader = ({ name, excerpt, description }: Props) => {
   return (
     <Stack spacing={2} sx={{ maxWidth: 760 }}>
       <Typography variant="h3" sx={{ fontWeight: 800, overflowWrap: 'break-word' }}>
         {name}
       </Typography>
+      {excerpt ? (
+        <HtmlText
+          html={excerpt}
+          variant="body1"
+          component="div"
+          sx={{
+            color: 'text.secondary',
+            overflowWrap: 'break-word',
+            fontSize: 'inherit',
+            fontStyle: 'italic',
+          }}
+        />
+      ) : null}
       <HtmlText
         html={description}
         variant="body1"

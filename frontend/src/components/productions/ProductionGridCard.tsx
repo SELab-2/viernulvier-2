@@ -1,11 +1,12 @@
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Box, Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { createCommonStyles } from '../../theme/styles'
 import { tokens } from '../../theme/tokens'
 import { getProductionDateLabel } from '../../utils/dateUtils'
+import { resolveCurrentLanguage, toLocalizedPath } from '../../utils/localizedRoutes'
 import { getTranslatedRecord } from '../../utils/translations'
 import GenreAndTagChip from '../chips/GenreAndTagChip'
 import ImageWithFallback from '../ImageWithFallback'
@@ -15,6 +16,7 @@ import type { Production } from '../../types/Productions'
 export interface ProductionGridCardProps {
   production: Production
   selectedGenreIds?: number[]
+  selectedTagIds?: number[]
 }
 
 /**
@@ -32,11 +34,23 @@ export interface ProductionGridCardProps {
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
  * @returns The grid card element.
  */
-const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCardProps) => {
+const ProductionGridCard = ({
+  production,
+  selectedGenreIds,
+  selectedTagIds,
+}: ProductionGridCardProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
   const { i18n } = useTranslation()
+  const location = useLocation()
+  const navigate = useNavigate()
   const { language } = i18n
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const detailPath = toLocalizedPath(`/productions/${production.id}`, currentLanguage)
 
   const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url
   const title = getTranslatedRecord(production.title, language, production.display_title)
@@ -50,13 +64,35 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
     production.last_event_end,
     language,
   )
-  const genres = production.genres.filter((genre) => genre.display_name)
-  const tags = production.tags.filter((tag) => tag.display_name || tag.name || tag.url_title)
+  const genres = production.genres
+    .filter((genre) => genre.display_name)
+    .sort((a, b) => {
+      const aSelected = selectedGenreIds?.includes(a.id) ? 1 : 0
+      const bSelected = selectedGenreIds?.includes(b.id) ? 1 : 0
+      return bSelected - aSelected
+    })
+  const tags = production.tags
+    .filter((tag) => tag.display_name || tag.name || tag.url_title)
+    .sort((a, b) => {
+      const aSelected = selectedTagIds?.includes(a.id) ? 1 : 0
+      const bSelected = selectedTagIds?.includes(b.id) ? 1 : 0
+      return bSelected - aSelected
+    })
 
   return (
     <Stack
-      component={RouterLink}
-      to={`/productions/${production.id}`}
+      role="link"
+      tabIndex={0}
+      data-to={detailPath}
+      onClick={() => {
+        navigate(detailPath)
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          navigate(detailPath)
+        }
+      }}
       sx={{
         ...commonStyles.cardBase,
         width: '100%',
@@ -64,6 +100,7 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
         height: '100%',
         borderRadius: tokens.card.borderRadius,
         overflow: 'hidden',
+        cursor: 'pointer',
       }}
     >
       <ImageWithFallback src={imageSrc} alt={title} sx={{ aspectRatio: 16 / 9 }} />
@@ -124,6 +161,7 @@ const ProductionGridCard = ({ production, selectedGenreIds }: ProductionGridCard
                   chipType="seriesTag"
                   context="static"
                   id={tag.id}
+                  selected={selectedTagIds?.includes(tag.id) || false}
                 />
               ))}
               {genres.map((genre) => (

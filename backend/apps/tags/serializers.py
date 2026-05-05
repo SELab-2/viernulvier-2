@@ -1,11 +1,12 @@
 """Serializers for the Tags app.
 
-Translated fields on ``TagSerializer`` (``name``,
+Translated fields on ``TagSerializer`` (``name``, ``excerpt``,
 ``short_description``, ``url_title``) return all available translations
 as language-code dictionaries
 (e.g. {"en": "Contemporary", "fr": "Contemporain"}).
 """
 
+from django.core.files.storage import default_storage
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
@@ -22,6 +23,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     language-code dictionaries:
 
     - ``name``
+    - ``excerpt``
     - ``short_description``
     - ``url_title``
 
@@ -48,6 +50,14 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
+    excerpt = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary of all available translations for the tag excerpt "
+            '(e.g. {"en": "A short summary", "fr": "Un court résumé"}). '
+            "Read-only - use the translation endpoints to manage translations."
+        ),
+    )
+
     url_title = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the URL-safe title "
@@ -70,10 +80,43 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
+    display_excerpt = serializers.SerializerMethodField(
+        help_text=(
+            "Excerpt in the project's base language (derived from settings.LANGUAGE_CODE). "
+            "Falls back to the first available translation when missing."
+        ),
+    )
+
+    first_production_start = serializers.DateTimeField(
+        read_only=True,
+        allow_null=True,
+        help_text=(
+            "Start time of the earliest production linked to this tag (UTC). "
+            "`null` when the tag is not linked to any productions."
+        ),
+    )
+
+    last_production_end = serializers.DateTimeField(
+        read_only=True,
+        allow_null=True,
+        help_text=(
+            "End time of the latest production linked to this tag (UTC). "
+            "`null` when the tag is not linked to any productions."
+        ),
+    )
+
     display_url_title = serializers.SerializerMethodField(
         help_text=(
             "URL-safe title in the project's base language (derived from settings.LANGUAGE_CODE). "
             "Falls back to the first available translation when missing."
+        ),
+    )
+
+    image = serializers.SerializerMethodField(
+        help_text=(
+            "URL of the uploaded image for this tag. "
+            "If not set, falls back to the image of the most recent production using this tag. "
+            "Read-only."
         ),
     )
 
@@ -85,10 +128,15 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "source",
             "type",
             "is_enabled",
+            "image",
             "display_name",
             "display_short_description",
+            "display_excerpt",
             "display_url_title",
+            "first_production_start",
+            "last_production_end",
             "name",
+            "excerpt",
             "short_description",
             "url_title",
         ]
@@ -98,8 +146,12 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "short_description",
             "display_name",
             "display_short_description",
+            "display_excerpt",
             "display_url_title",
+            "first_production_start",
+            "last_production_end",
             "url_title",
+            "image",
         ]
         extra_kwargs = {
             "url": {
@@ -128,6 +180,10 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "short_description")
 
+    def get_excerpt(self, obj: Tag) -> str:
+        """Return all available translations as a language-code dictionary."""
+        return self.get_translated_field(obj, "excerpt")
+
     def get_url_title(self, obj: Tag) -> str:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "url_title")
@@ -140,6 +196,42 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         """Return the base-language short description (with fallback)."""
         return self.get_base_translated_value(obj, field_name="short_description")
 
+    def get_display_excerpt(self, obj: Tag) -> str | None:
+        """Return the base-language excerpt (with fallback)."""
+        return self.get_base_translated_value(obj, field_name="excerpt")
+
     def get_display_url_title(self, obj: Tag) -> str | None:
         """Return the base-language URL title (with fallback)."""
         return self.get_base_translated_value(obj, field_name="url_title")
+
+    def get_image(self, obj: Tag) -> str | None:
+        """Return the absolute URL of the tag's uploaded image.
+
+        If the Tag has no `image`, fall back to the image of the most
+        recent Production that uses this Tag and has a media gallery with
+        at least one media item crop image.
+
+        The fallback value is expected to be pre-annotated in queryset
+        as `fallback_crop_path` by TagViewSet, which keeps list/detail
+        responses free from N+1 queries.
+        """
+        request = self.context.get("request") if hasattr(self, "context") else None
+
+        # Direct image on the tag
+        if obj.image:
+            try:
+                url = obj.image.url
+            except Exception:
+                return None
+            return request.build_absolute_uri(url) if request else url
+
+        fallback_crop_path = getattr(obj, "fallback_crop_path", None)
+        if not fallback_crop_path:
+            return None
+
+        try:
+            url = default_storage.url(fallback_crop_path)
+        except Exception:
+            return None
+
+        return request.build_absolute_uri(url) if request else url

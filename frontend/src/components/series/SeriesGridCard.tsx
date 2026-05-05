@@ -1,44 +1,50 @@
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 import { tokens } from '../../theme/tokens'
 import { formatDate } from '../../utils/dateUtils'
+import { resolveCurrentLanguage, toLocalizedPath } from '../../utils/localizedRoutes'
 import { getTranslatedRecord } from '../../utils/translations'
-import HtmlText from '../HtmlText'
 import ImageWithFallback from '../ImageWithFallback'
 
-import type { Series } from '../../types/Series'
+import type { Tag } from '../../types/Tags'
 
 export interface SeriesGridCardProps {
-  series: Series
+  tag: Tag
 }
 
-// Function to get the localized series name based on the current language.
-const getLocalizedSeriesName = (series: Series, language: string): string => {
+// TODO: use the function in utils for this once the PR implementing it has been merged
+const htmlToPlainText = (html: string): string => html.replace(/<[^>]*>/g, '').trim()
+
+// Function to get the localized tag name based on the current language.
+const getLocalizedTagName = (tag: Tag, language: string): string => {
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
-  return getTranslatedRecord(series.tag.name, normalizedLanguage, series.tag.display_name)
+  return getTranslatedRecord(tag.name, normalizedLanguage, tag.display_name)
 }
 
-// Function to get the localized series description based on the current language.
-const getLocalizedSeriesDescription = (series: Series, language: string): string => {
+// Function to get the localized tag excerpt based on the current language.
+const getLocalizedTagExcerpt = (tag: Tag, language: string): string => {
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
-  return getTranslatedRecord(
-    series.tag.short_description,
-    normalizedLanguage,
-    series.tag.display_short_description,
-  )
+  return getTranslatedRecord(tag.excerpt, normalizedLanguage, tag.display_excerpt)
 }
 
-const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
+const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
   const { i18n } = useTranslation()
+  const location = useLocation()
   const { language } = i18n
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const detailPath = toLocalizedPath(`/series/${tag.id}`, currentLanguage)
 
-  const title = getLocalizedSeriesName(series, language)
-  const description = getLocalizedSeriesDescription(series, language)
-  const startLabel = formatDate(series.firstProductionStart, language)
-  const endLabel = formatDate(series.lastProductionEnd, language)
+  const title = getLocalizedTagName(tag, language)
+  const excerpt = getLocalizedTagExcerpt(tag, language)
+  const startLabel = formatDate(tag.first_production_start, language)
+  const endLabel = formatDate(tag.last_production_end, language)
 
   // Keep the date label compact when both endpoints are available.
   const dateLabel =
@@ -52,7 +58,7 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
     // Render the series as a compact card-sized link.
     <Stack
       component={RouterLink}
-      to={`/series/${series.tag.id}`}
+      to={detailPath}
       sx={(theme) => ({
         width: '100%',
         maxWidth: tokens.card.gridCardWidthPx,
@@ -67,11 +73,7 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
         },
       })}
     >
-      <ImageWithFallback
-        src={series.lastProductionImage}
-        alt={title}
-        sx={{ aspectRatio: 16 / 9 }}
-      />
+      <ImageWithFallback src={tag.image} alt={title} sx={{ aspectRatio: 16 / 9 }} />
 
       <Stack sx={{ flex: 1, justifyContent: 'space-between', gap: 1, p: 3 }}>
         <Stack>
@@ -85,11 +87,10 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
             {title}
           </Typography>
 
-          {description ? (
-            <HtmlText
-              html={description}
-              variant="body2"
+          {excerpt ? (
+            <Typography
               component="div"
+              variant="body2"
               sx={{
                 fontSize: 'inherit',
                 color: 'text.secondary',
@@ -97,7 +98,9 @@ const SeriesGridCard = ({ series }: SeriesGridCardProps) => {
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
               }}
-            />
+            >
+              {htmlToPlainText(excerpt)}
+            </Typography>
           ) : null}
         </Stack>
 
