@@ -33,6 +33,7 @@ from apps.productions.models import (
     ProductionTranslation,
     UitDatabaseType,
 )
+from tests.factories.media_library import MediaItemFactory
 from tests.factories.production import (
     ProductionFactory,
     UitDatabaseTypeFactory,
@@ -298,6 +299,35 @@ class TestProductionAdminGetQueryset(TestCase):
     def test_queryset_has_select_related_for_uit_database_type(self) -> None:
         qs = self.model_admin.get_queryset(self._make_request())
         assert "uit_database_type" in qs.query.select_related
+
+
+class TestProductionAdminMediaItemsWidget(TestCase):
+    def setUp(self) -> None:
+        self.model_admin = admin.site._registry[Production]
+
+    def test_returns_dash_without_media_gallery(self) -> None:
+        production = ProductionFactory(media_gallery=None)
+
+        assert self.model_admin.media_items_admin(production) == "-"
+
+    def test_renders_add_button_for_empty_gallery(self) -> None:
+        production = ProductionFactory()
+
+        html = str(self.model_admin.media_items_admin(production))
+
+        assert "No images in gallery." in html
+        assert "Add image" in html
+        assert f"?gallery={production.media_gallery.id}" in html
+
+    def test_renders_item_links_and_add_button_for_non_empty_gallery(self) -> None:
+        production = ProductionFactory()
+        media_item = MediaItemFactory(gallery=production.media_gallery, original_filename="hero.jpg")
+
+        html = str(self.model_admin.media_items_admin(production))
+
+        assert "hero.jpg" in html
+        assert f"/admin/media_library/mediaitem/{media_item.id}/change/" in html
+        assert "Add image to gallery" in html
 
 
 # ---------------------------------------------------------------------------

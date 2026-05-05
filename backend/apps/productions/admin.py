@@ -17,6 +17,8 @@ from django import forms
 from django.contrib import admin
 from django.db.models import Max, QuerySet
 from django.http import HttpRequest
+from django.urls import reverse
+from django.utils.html import format_html, format_html_join
 
 from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
 from apps.genres.models import Genre
@@ -212,6 +214,8 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         ProductionTagInline,
     ]
 
+    readonly_fields = ("media_items_admin",)
+
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Optimise the queryset with select_related and prefetch_related."""
         return (
@@ -275,6 +279,40 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
             ProductionGenre.objects.bulk_create(to_create, ignore_conflicts=True)
 
         return f"Genre '{genre!s}' added to {len(to_create)} selected productions."
+
+    @admin.display(description="Media items")
+    def media_items_admin(self, obj: Production) -> str:
+        """Render a small admin widget linking to media items and add action.
+
+        Shows the list of media items attached to the production's gallery
+        (if any) with links to edit each item and a button to add a new
+        MediaItem prefilled with the gallery via GET params.
+        """
+        if not obj or not obj.media_gallery:
+            return "-"
+
+        gallery = obj.media_gallery
+        items = gallery.media_items.all()
+        if not items:
+            add_url = reverse("admin:media_library_mediaitem_add") + f"?gallery={gallery.id}"
+            return format_html(
+                '<div>No images in gallery.</div><div style="margin-top:0.5em"><a class="button" href="{}">Add image</a></div>',
+                add_url,
+            )
+
+        rows = format_html_join(
+            "\n",
+            '<div><a href="{}">{}</a></div>',
+            (
+                (reverse("admin:media_library_mediaitem_change", args=(i.id,)), i.original_filename or str(i.id))
+                for i in items
+            ),
+        )
+
+        add_url = reverse("admin:media_library_mediaitem_add") + f"?gallery={gallery.id}"
+        return format_html(
+            '{}<div style="margin-top:0.5em"><a class="button" href="{}">Add image to gallery</a></div>', rows, add_url
+        )
 
     @admin.action(description="Add tag to selected productions")
     def add_tag_to_selected_productions(self, request: HttpRequest, queryset: QuerySet) -> HttpRequest:

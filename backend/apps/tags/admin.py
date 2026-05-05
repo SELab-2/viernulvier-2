@@ -25,19 +25,20 @@ from .models import Tag, TagTranslation
 # ===========================================================================
 
 
-class TagTranslationInline(admin.TabularInline):
+class TagTranslationInline(admin.StackedInline):
     """
     Inline for editing localised tag fields directly inside the Tag change page.
 
-    Shows the language alongside the three translatable fields so editors
-    can manage all translations from a single form.
+    Shows the language alongside the translatable fields in a vertical layout
+    so editors can manage all translations from a single form with better readability.
     """
 
     model = TagTranslation
     extra = 1
     autocomplete_fields = ("language",)
-    fields = ("language", "name", "short_description", "url_title")
+    fields = ("language", "name", "excerpt", "short_description", "url_title")
     ordering = ("language__code",)
+    classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("language")

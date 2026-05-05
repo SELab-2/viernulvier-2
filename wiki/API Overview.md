@@ -199,28 +199,6 @@ This returns only productions that have both genres `2` and `9` and both tags `5
 
 ---
 
-## Series Aggregation Endpoint
-
-To support fast series overviews in the frontend, the productions API exposes an aggregated read endpoint:
-
-- `GET /api/v1/productions/series/`
-
-### What it returns
-
-Each row represents one production-tag bundle (a "series") and includes:
-
-- `tag`: full tag payload
-- `first_production_start`: earliest start date across productions in the bundle
-- `last_production_end`: latest end date across productions in the bundle
-- `last_production_image`: image URL of the most recent production in the bundle, when available
-
-### Supported query params
-
-- `search`: case-insensitive match on translated tag names
-- `page`, `page_size`: standard DRF pagination controls
-
-This endpoint avoids expensive per-tag fan-out requests from clients.
-
 ---
 
 ## Landing Stats Endpoint

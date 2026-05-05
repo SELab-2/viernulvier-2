@@ -14,6 +14,7 @@ import CollectionResultsSkeleton from '../components/skeletons/CollectionResults
 import { ApiError } from '../services/ApiTypes'
 import { getGenres } from '../services/genres/Genres'
 import { getProductions, getProductionSeries } from '../services/productions/Productions'
+import { getTags } from '../services/tags/Tags'
 
 import type { Genre } from '../types/Genres'
 import type { Production } from '../types/Productions'
@@ -72,34 +73,25 @@ const fetchGenres = async (): Promise<Genre[]> => {
 }
 
 const fetchTags = async (): Promise<Tag[]> => {
-  const firstPage = await getProductionSeries({
-    page: 1,
-    pageSize: FILTER_METADATA_PAGE_SIZE,
-  })
-
   const tagsById = new Map<number, Tag>()
-  firstPage.results.forEach((series) => {
-    tagsById.set(series.tag.id, series.tag)
-  })
+  let page = 1
+  let hasMore = true
 
-  const pageSize = Math.max(1, firstPage.results.length || FILTER_METADATA_PAGE_SIZE)
-  const totalPages = Math.max(1, Math.ceil(firstPage.count / pageSize))
-  if (totalPages > 1) {
-    const remainingPages = Array.from({ length: totalPages - 1 }, (_, index) => index + 2)
-    const remainingResponses = await Promise.all(
-      remainingPages.map((page) =>
-        getProductionSeries({
-          page,
-          pageSize: FILTER_METADATA_PAGE_SIZE,
-        }),
-      ),
-    )
-
-    remainingResponses.forEach((response) => {
-      response.results.forEach((series) => {
-        tagsById.set(series.tag.id, series.tag)
-      })
+  while (hasMore) {
+    const response = await getTags({
+      page,
+      pageSize: 250,
+      filters: {
+        is_enabled: true,
+      },
     })
+
+    response.results.forEach((tag) => {
+      tagsById.set(tag.id, tag)
+    })
+
+    hasMore = response.next !== null
+    page += 1
   }
 
   return Array.from(tagsById.values())

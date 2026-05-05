@@ -80,29 +80,28 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     void fetchSeries()
   }, [numericId])
 
-  /**
-   * Sort once, then derive the yearly grouping and stats in a single pass so the
-   * detail view avoids repeatedly traversing large production lists.
-   */
-  const { sortedProductions, productionsByYear, stats } = useMemo(() => {
-    const sorted = [...productions].sort((a, b) => {
-      if (a.first_event_start && b.first_event_start) {
-        return new Date(b.first_event_start).getTime() - new Date(a.first_event_start).getTime()
-      }
-      if (a.first_event_start) {
-        return -1
-      }
-      if (b.first_event_start) {
-        return 1
-      }
-      return b.id - a.id
-    })
+  /** Sorted most-recent first by start date; productions without a date fall to the end. */
+  const sortedProductions = useMemo(
+    () =>
+      [...productions].sort((a, b) => {
+        if (a.first_event_start && b.first_event_start) {
+          return new Date(b.first_event_start).getTime() - new Date(a.first_event_start).getTime()
+        }
+        if (a.first_event_start) {
+          return -1
+        }
+        if (b.first_event_start) {
+          return 1
+        }
+        return b.id - a.id
+      }),
+    [productions],
+  )
 
+  /** Productions grouped by year in display order, preserving sort within each group. */
+  const productionsByYear = useMemo(() => {
     const groups = new Map<string, Production[]>()
-    let minYear: number | null = null
-    let maxYear: number | null = null
-
-    for (const production of sorted) {
+    for (const production of sortedProductions) {
       const year = getProductionYear(production)
       const existing = groups.get(year)
       if (existing) {
@@ -110,27 +109,25 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
       } else {
         groups.set(year, [production])
       }
-
-      if (/^\d{4}$/.test(year)) {
-        const yearNumber = Number(year)
-        minYear = minYear === null ? yearNumber : Math.min(minYear, yearNumber)
-        maxYear = maxYear === null ? yearNumber : Math.max(maxYear, yearNumber)
-      }
     }
+    return Array.from(groups.entries())
+  }, [sortedProductions])
 
-    return {
-      sortedProductions: sorted,
-      productionsByYear: Array.from(groups.entries()),
-      stats: [
-        { value: String(sorted.length), label: t('series.stats.editions') },
-        {
-          value: minYear !== null && maxYear !== null ? `${minYear}–${maxYear}` : '—',
-          label: t('series.stats.period'),
-        },
-        { value: seriesTag?.type || '—', label: t('series.stats.type') },
-      ] satisfies SeriesStat[],
-    }
-  }, [productions, seriesTag?.type, t])
+  const startYear = seriesTag?.first_production_start
+    ? new Date(seriesTag.first_production_start).getFullYear()
+    : null
+  const endYear = seriesTag?.last_production_end
+    ? new Date(seriesTag.last_production_end).getFullYear()
+    : null
+
+  const stats: SeriesStat[] = [
+    { value: String(sortedProductions.length), label: t('series.stats.editions') },
+    {
+      value: startYear && endYear ? `${startYear}–${endYear}` : '—',
+      label: t('series.stats.period'),
+    },
+    { value: seriesTag?.type || '—', label: t('series.stats.type') },
+  ]
 
   if (isLoading) {
     return <SeriesDetailPageSkeleton />
@@ -143,6 +140,9 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
   const seriesName =
     getTranslatedRecord(seriesTag.name, lang, seriesTag.display_name) || t('series.untitled')
+
+  const seriesExcerpt =
+    getTranslatedRecord(seriesTag.excerpt, lang, seriesTag.display_excerpt) || ''
 
   const seriesDescription =
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
@@ -159,7 +159,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
           ]}
         />
 
-        <SeriesHeader name={seriesName} description={seriesDescription} />
+        <SeriesHeader name={seriesName} excerpt={seriesExcerpt} description={seriesDescription} />
         <SeriesStats stats={stats} />
         <Divider />
 

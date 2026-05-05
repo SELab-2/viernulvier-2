@@ -12,6 +12,7 @@ const SeriesDetailPageSkeleton = () => {
         {/* Header */}
         <Stack spacing={1} sx={{ maxWidth: 760 }}>
           <Skeleton variant="text" width="46%" height={68} />
+          <Skeleton variant="text" width="72%" height={26} />
           <Skeleton variant="text" width="90%" height={28} />
           <Skeleton variant="text" width="80%" height={28} />
         </Stack>

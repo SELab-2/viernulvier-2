@@ -4,7 +4,7 @@ Schema annotations are kept in schemas.py so this file stays focused
 on routing and queryset configuration only.
 
 Tags are classification labels used for filtering and categorising productions.
-They support localised fields (name, short_description, url_title).
+They support localised fields (name, excerpt, short_description, url_title).
 
 Translation Format
 ------------------
@@ -12,10 +12,11 @@ All translated fields are returned as dictionaries mapping language codes
 to their values (e.g., {"nl": "...", "en": "..."}).
 """
 
-from django.db.models import Prefetch
+from django.db.models import Max, Min, OuterRef, Prefetch, Subquery
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
+from apps.media_library.models import MediaItemCrop
 
 from .filters import TagFilter
 from .models import Tag, TagTranslation
@@ -43,6 +44,8 @@ class TagViewSet(ApiModelViewSet):
         Only active (enabled) tags.
     ``?name=contemporary``
         Substring match across all translated tag names.
+    ``?excerpt=contemporary arts``
+        Substring match across all translated tag excerpts.
     ``?external_id=abc``
         Exact match on the external identifier.
 
@@ -63,12 +66,30 @@ class TagViewSet(ApiModelViewSet):
     """
 
     serializer_class = TagSerializer
-    queryset = Tag.objects.prefetch_related(
-        Prefetch(
-            "translations",
-            queryset=TagTranslation.objects.select_related("language"),
+    queryset = (
+        Tag.objects.annotate(
+            first_production_start=Min("productions__events__starts_at"),
+            last_production_end=Max("productions__events__ends_at"),
+            fallback_crop_path=Subquery(
+                MediaItemCrop.objects.filter(
+                    media_item__gallery__productions__tags=OuterRef("pk"),
+                )
+                .order_by(
+                    "-media_item__gallery__productions__id",
+                    "media_item__position",
+                    "id",
+                )
+                .values("image")[:1]
+            ),
         )
-    ).order_by("id")
+        .prefetch_related(
+            Prefetch(
+                "translations",
+                queryset=TagTranslation.objects.select_related("language"),
+            )
+        )
+        .order_by("id")
+    )
 
     filterset_class = TagFilter
     ordering_fields = ["id", "type", "source", "is_enabled"]
