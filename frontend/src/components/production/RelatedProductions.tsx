@@ -88,7 +88,8 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
               sx={{ width: '100%' }}
             >
               {entry.productions.map((production) => {
-                // TODO:
+                // TODO: clean up comment if we decide to keep it like this.
+
                 // Related productions don't have all the values of a production
                 // It only contains the values required for the frontend to show the cards
                 // We could change the API to return complete productions to avoid this normalization
