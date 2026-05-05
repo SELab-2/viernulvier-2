@@ -13,7 +13,7 @@ import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlSta
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { ApiError } from '../services/ApiTypes'
 import { getGenres } from '../services/genres/Genres'
-import { getProductions, getProductionSeries } from '../services/productions/Productions'
+import { getProductions } from '../services/productions/Productions'
 import { getTags } from '../services/tags/Tags'
 
 import type { Genre } from '../types/Genres'
