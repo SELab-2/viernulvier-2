@@ -12,7 +12,13 @@ class RichTextAdminWidget(forms.Textarea):
     class Media:
         js = (
             "admin/js/rich_text_admin_widget_utils.js",
+            "admin/js/rich_text_admin_widget_utils_selection.js",
+            "admin/js/rich_text_admin_widget_utils_inline.js",
+            "admin/js/rich_text_admin_widget_utils_dom.js",
+            "admin/js/rich_text_admin_widget_utils_caret.js",
             "admin/js/rich_text_admin_widget_actions.js",
+            "admin/js/rich_text_admin_widget_actions_block.js",
+            "admin/js/rich_text_admin_widget_actions_list.js",
             "admin/js/rich_text_admin_widget_bootstrap.js",
         )
 

@@ -6,18 +6,15 @@
 
     var api = root.RichTextAdminWidget || (root.RichTextAdminWidget = {});
 
-    /*
-     * toggleInlineTag
+    /**
+     * Toggles an inline tag on the current selection.
      *
-     * If the whole selection is already wrapped in tagName → unwrap all
-     * matching elements that overlap the selection.
-     * Otherwise → wrap the selection.
+     * When the selection is fully inside the tag, the selection is unwrapped.
+     * Otherwise, the selection is wrapped in the tag.
      *
-     * This handles every case:
-     *   - Collapsed caret inside <b>  -> unwrap that single <b>
-     *   - Selection fully inside one <b>  -> unwrap that <b>
-     *   - Selection spanning multiple <b>foo</b> <b>bar</b>  -> unwrap both
-     *   - Selection not yet bold  -> wrap in new <b>
+     * @param {HTMLElement} editor Editor root element.
+     * @param {string} tagName Tag name to toggle.
+     * @param {Object} attributes Optional attributes for the wrapper.
      */
     api.toggleInlineTag = function toggleInlineTag(editor, tagName, attributes) {
         var isActive = api.isInlineTagActive(editor, tagName);
@@ -106,11 +103,10 @@
         api.wrapRangeWithElement(range, element);
     };
 
-    /*
-     * toggleLink
+    /**
+     * Wraps the current selection in a link.
      *
-     * Requires a non-collapsed selection. Shows a friendly alert when the user
-     * forgot to select text first. Never toggles / removes links.
+     * @param {HTMLElement} editor Editor root element.
      */
     api.toggleLink = function toggleLink(editor) {
         var range = api.getSelectionRange(editor);
@@ -126,94 +122,6 @@
         var element = document.createElement('A');
         element.setAttribute('href', href.trim());
         api.wrapRangeWithElement(range, element);
-    };
-
-    // Block formatting
-    api.formatCurrentBlock = function formatCurrentBlock(editor, tagName) {
-        var currentBlock = api.getCurrentBlockElement(editor);
-        var selection    = window.getSelection ? window.getSelection() : null;
-        var range, caretOffset, replacement;
-
-        if (!currentBlock) {
-            if (!selection || selection.rangeCount === 0) return;
-            range = selection.getRangeAt(0);
-            if (!editor.contains(range.commonAncestorContainer)) return;
-
-            currentBlock = document.createElement('p');
-            if (range.collapsed) {
-                currentBlock.innerHTML = '&nbsp;';
-                range.insertNode(currentBlock);
-            } else {
-                currentBlock.appendChild(range.extractContents());
-                range.insertNode(currentBlock);
-            }
-            api.setCaretInsideElement(currentBlock);
-        }
-
-        if (currentBlock.tagName === tagName) return;
-        if (currentBlock.tagName === 'LI') currentBlock = currentBlock.parentElement;
-
-        caretOffset = api.getCaretOffset(editor, currentBlock);
-        replacement = api.replaceElementTagName(currentBlock, tagName);
-
-        if (caretOffset !== null) {
-            api.setCaretAtOffset(replacement, caretOffset);
-        } else {
-            api.setCaretInsideElement(replacement);
-        }
-    };
-
-    // List Helpers
-    api.unwrapList = function unwrapList(listElement) {
-        var fragment = document.createDocumentFragment();
-        Array.prototype.slice.call(listElement.children).forEach(function (item) {
-            var p = document.createElement('p');
-            p.innerHTML = item.innerHTML || '<br>';
-            fragment.appendChild(p);
-        });
-        listElement.parentNode.replaceChild(fragment, listElement);
-    };
-
-    api.wrapCurrentBlockInList = function wrapCurrentBlockInList(blockElement, listTagName) {
-        var list = document.createElement(listTagName);
-        var li   = document.createElement('li');
-        li.innerHTML = blockElement.innerHTML || '<br>';
-        list.appendChild(li);
-        blockElement.parentNode.replaceChild(list, blockElement);
-        api.setCaretInsideElement(li);
-    };
-
-    api.toggleList = function toggleList(editor, listTagName) {
-        var currentList  = api.getCurrentListElement(editor);
-        var currentBlock = api.getCurrentBlockElement(editor);
-
-        if (currentList) {
-            if (currentList.tagName === listTagName) {
-                api.unwrapList(currentList);
-            } else {
-                api.replaceElementTagName(currentList, listTagName);
-            }
-            return;
-        }
-
-        if (!currentBlock) {
-            var sel = window.getSelection();
-            if (sel && sel.rangeCount > 0) {
-                var range    = sel.getRangeAt(0);
-                currentBlock = document.createElement('p');
-                if (range.collapsed) {
-                    currentBlock.innerHTML = '<br>';
-                    range.insertNode(currentBlock);
-                } else {
-                    currentBlock.appendChild(range.extractContents());
-                    range.insertNode(currentBlock);
-                }
-            }
-        }
-
-        if (currentBlock) {
-            api.wrapCurrentBlockInList(currentBlock, listTagName);
-        }
     };
 
 })(window);

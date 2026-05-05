@@ -9,7 +9,13 @@ class TestRichTextAdminWidget(TestCase):
     def test_media_contains_modular_js_files(self) -> None:
         js_files = RichTextAdminWidget.Media.js
         assert "admin/js/rich_text_admin_widget_utils.js" in js_files
+        assert "admin/js/rich_text_admin_widget_utils_selection.js" in js_files
+        assert "admin/js/rich_text_admin_widget_utils_inline.js" in js_files
+        assert "admin/js/rich_text_admin_widget_utils_dom.js" in js_files
+        assert "admin/js/rich_text_admin_widget_utils_caret.js" in js_files
         assert "admin/js/rich_text_admin_widget_actions.js" in js_files
+        assert "admin/js/rich_text_admin_widget_actions_block.js" in js_files
+        assert "admin/js/rich_text_admin_widget_actions_list.js" in js_files
         assert "admin/js/rich_text_admin_widget_bootstrap.js" in js_files
 
     def test_default_attrs_are_applied(self) -> None:

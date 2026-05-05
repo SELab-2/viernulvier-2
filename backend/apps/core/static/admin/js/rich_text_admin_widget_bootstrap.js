@@ -18,7 +18,15 @@
 
     var api = root.RichTextAdminWidget || {};
 
-    // Build a toolbar button with a command identifier.
+    /**
+     * Builds a toolbar button wired to a command handler.
+     *
+     * @param {string} label Button label.
+     * @param {string} title Tooltip text.
+     * @param {string} commandName Command identifier.
+     * @param {Function} onClick Click handler.
+     * @returns {HTMLButtonElement} Configured button element.
+     */
     function createToolbarButton(label, title, commandName, onClick) {
         var button = document.createElement('button');
 
@@ -37,18 +45,18 @@
         return button;
     }
 
-    // Update toolbar active states based on the current DOM selection.
+    /**
+     * Updates toolbar active states based on the current selection.
+     *
+     * @param {HTMLElement} toolbar Toolbar element.
+     * @param {HTMLElement} editor Editor root element.
+     */
     function updateToolbarState(toolbar, editor) {
         var activeBlock = api.getCurrentBlockElement(editor);
         var activeList = api.getCurrentListElement(editor);
         var isBoldActive = api.isInlineTagPresent(editor, 'B');
         var isItalicActive = api.isInlineTagPresent(editor, 'I');
         var isUnderlineActive = api.isInlineTagPresent(editor, 'U');
-
-        // FIX BUG 3: The link button is never shown as "active" - it is a
-        // one-shot insert action, not a toggle. We still compute isLinkActive
-        // for potential future use but do not apply it to the button state.
-        var isLinkActive = false; // always off
 
         // Toolbar state is derived from the DOM tree so it works without deprecated browser commands.
         toolbar.querySelectorAll('button[data-command]').forEach(function (button) {
@@ -62,7 +70,7 @@
             } else if (command === 'underline') {
                 isActive = isUnderlineActive;
             } else if (command === 'link') {
-                isActive = isLinkActive; // always false
+                isActive = false; // always off, this is not a toggle button
             } else if (command.indexOf('heading-') === 0) {
                 var headingTag = command.replace('heading-', '').toUpperCase();
                 isActive = !!activeBlock && activeBlock.tagName === headingTag;
@@ -77,7 +85,11 @@
         });
     }
 
-    // Initialize a single textarea into a rich-text editor instance.
+    /**
+     * Initializes a single textarea into a rich-text editor instance.
+     *
+     * @param {HTMLTextAreaElement} textarea Target textarea.
+     */
     function initTextarea(textarea) {
         var wrapper;
         var toolbar;
@@ -101,8 +113,11 @@
         editor.className = 'richtext-admin-editor';
         editor.contentEditable = 'true';
 
-        // One hidden textarea maps to one live editor surface.
-        // Execute a toolbar command and sync the textarea afterwards.
+        /**
+         * Executes a toolbar command and syncs the textarea afterward.
+         *
+         * @param {string} command Command identifier.
+         */
         function applyCommand(command) {
             if (command === 'bold') {
                 api.toggleInlineTag(editor, 'B');
@@ -256,14 +271,20 @@
         updateToolbarState(toolbar, editor);
     }
 
-    // Initialize all textareas inside the given scope.
+    /**
+     * Initializes all textareas within the given scope.
+     *
+     * @param {ParentNode} scope Root scope to scan.
+     */
     function initScope(scope) {
         var rootNode = scope || document;
 
         rootNode.querySelectorAll(api.SELECTOR).forEach(initTextarea);
     }
 
-    // Listen for dynamically added inline form rows.
+    /**
+     * Watches for dynamically inserted form rows and initializes editors.
+     */
     function observeDom() {
         if (!document.body || typeof MutationObserver === 'undefined') {
             return;
@@ -292,7 +313,9 @@
         observer.observe(document.body, { childList: true, subtree: true });
     }
 
-    // Boot once after DOM ready to hook existing and future inlines.
+    /**
+     * Boots the editor setup once the DOM is ready.
+     */
     function boot() {
         api.ensureStyles();
         initScope(document);

@@ -11,6 +11,9 @@
 
     // Styles
     // This is required to overwrite the styles forced by django cms
+    /**
+     * Injects the widget CSS once per page.
+     */
     api.ensureStyles = function () {
         if (document.getElementById(api.STYLE_ID)) return;
         var style = document.createElement('style');
@@ -39,15 +42,39 @@
     };
 
     // HTML helpers
+    /**
+     * Escapes HTML so it can be safely rendered as text.
+     *
+     * @param {string} v Raw input.
+     * @returns {string} Escaped text.
+     */
     api.escapeHtml = function (v) {
         return String(v || '')
             .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
             .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     };
 
+    /**
+     * Quick heuristic to check whether a string contains HTML tags.
+     *
+     * @param {string} v Candidate string.
+     * @returns {boolean} True when the string looks like HTML.
+     */
     api.looksLikeHtml        = function (v) { return /<\/?[a-z][\s\S]*>/i.test(v || ''); };
+    /**
+     * Detects escaped HTML sequences like &lt;tag&gt;.
+     *
+     * @param {string} v Candidate string.
+     * @returns {boolean} True when the string looks like escaped HTML.
+     */
     api.looksLikeEscapedHtml = function (v) { return /&lt;\/?[a-z][\s\S]*&gt;/i.test(v || ''); };
 
+    /**
+     * Decodes HTML entities into literal characters.
+     *
+     * @param {string} v HTML-encoded string.
+     * @returns {string} Decoded string.
+     */
     api.decodeHtmlEntities = function (v) {
         var d = document.createElement('textarea');
         d.innerHTML = v || '';
@@ -56,6 +83,12 @@
 
     var ALLOWED_TAGS = ['A','B','BR','EM','H1','H2','H3','H4','H5','H6','I','LI','OL','P','STRONG','U','UL','DIV'];
 
+    /**
+     * Normalizes inline tag aliases (e.g. B/STRONG, I/EM).
+     *
+     * @param {string} tagName Tag name to normalize.
+     * @returns {string[]} Tag aliases to treat as equivalent.
+     */
     api.getInlineTagAliases = function (tagName) {
         var tag = String(tagName || '').toUpperCase();
         if (tag === 'B' || tag === 'STRONG') return ['B', 'STRONG'];
@@ -64,6 +97,12 @@
         return [tag];
     };
 
+    /**
+     * Serializes an HTML node while keeping the allowed tag list.
+     *
+     * @param {Node} node Node to serialize.
+     * @returns {string} Sanitized HTML output.
+     */
     function serializeNode(node) {
         if (node.nodeType === Node.TEXT_NODE)    return api.escapeHtml(node.nodeValue);
         if (node.nodeType !== Node.ELEMENT_NODE) return '';
@@ -76,397 +115,18 @@
         return '<' + t + '>' + children + '</' + t + '>';
     }
 
+    /**
+     * Sanitizes HTML for displaying in the editor preview.
+     *
+     * @param {string} value Raw HTML string.
+     * @returns {string} Safe HTML string.
+     */
     api.buildPreviewHtml = function (value) {
         var decoded = api.decodeHtmlEntities(value || '');
         if (!decoded) return '';
         var c = document.createElement('div');
         c.innerHTML = decoded;
         return Array.prototype.map.call(c.childNodes, serializeNode).join('');
-    };
-
-    // Selection / range helpers
-    api.getSelectionRange = function (editor) {
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel || sel.rangeCount === 0) return null;
-        if (!editor.contains(sel.anchorNode) || !editor.contains(sel.focusNode)) return null;
-        return sel.getRangeAt(0);
-    };
-
-    api.findAncestor = function (node, matcher, stopNode) {
-        var cur = (node && node.nodeType === Node.TEXT_NODE) ? node.parentElement : node;
-        while (cur && cur !== stopNode) {
-            if (matcher(cur)) return cur;
-            cur = cur.parentElement;
-        }
-        return null;
-    };
-
-    api.isBlockTag = function (tagName) {
-        return /^H[1-6]$/.test(tagName) || tagName === 'P' || tagName === 'LI';
-    };
-
-    api.getCurrentBlockElement = function (editor) {
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel || sel.rangeCount === 0) return null;
-        return api.findAncestor(sel.anchorNode, function (el) {
-            return el.tagName && api.isBlockTag(el.tagName);
-        }, editor);
-    };
-
-    api.getCurrentListElement = function (editor) {
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel || sel.rangeCount === 0) return null;
-        return api.findAncestor(sel.anchorNode, function (el) {
-            return el.tagName === 'UL' || el.tagName === 'OL';
-        }, editor);
-    };
-
-    /*
-     * Collect every text node that overlaps `range`.
-     * Uses Range boundary comparison which is reliable cross-browser.
-     */
-    function getTextNodesInRange(range) {
-        var root = range.commonAncestorContainer;
-        if (root.nodeType === Node.TEXT_NODE) return [root];
-
-        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
-        var nodes  = [];
-        var node;
-        while ((node = walker.nextNode())) {
-            var nr = document.createRange();
-            nr.selectNodeContents(node);
-            // Overlap = range starts before node ends  AND  range ends after node starts
-            var startsBeforeNodeEnds = range.compareBoundaryPoints(Range.START_TO_END, nr) > 0;
-            var endsAfterNodeStarts  = range.compareBoundaryPoints(Range.END_TO_START, nr) < 0;
-            if (startsBeforeNodeEnds && endsAfterNodeStarts) nodes.push(node);
-        }
-        return nodes;
-    }
-
-    /*
-     * Collapsed caret: walk up from anchorNode, ignore empty wrappers.
-     * Real selection:  every text node inside the range must be a descendant
-     *                  of a `tagName` element. Zero text nodes -> ancestor walk.
-     */
-    api.isInlineTagActive = function (editor, tagName) {
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel || sel.rangeCount === 0) return false;
-
-        var range = sel.getRangeAt(0);
-        var tagNames = api.getInlineTagAliases(tagName);
-
-        /* collapsed caret */
-        if (range.collapsed) {
-            var anc = api.findAncestor(sel.anchorNode, function (el) {
-                return tagNames.indexOf(el.tagName) !== -1;
-            }, editor);
-            if (!anc) return false;
-            // Ignore empty wrappers left after backspacing
-            return anc.textContent.replace(/\u200B/g, '').trim() !== '';
-        }
-
-        /* real selection */
-        var textNodes = getTextNodesInRange(range);
-
-        if (textNodes.length === 0) {
-            // Fallback: check from anchorNode
-            return !!api.findAncestor(sel.anchorNode, function (el) {
-                return tagNames.indexOf(el.tagName) !== -1;
-            }, editor);
-        }
-
-        return textNodes.every(function (tn) {
-            return !!api.findAncestor(tn, function (el) {
-                return tagNames.indexOf(el.tagName) !== -1;
-            }, editor);
-        });
-    };
-
-    /*
-     * isInlineTagPresent - looser match for toolbar state.
-     * Returns true when any part of the selection is within the tag.
-     */
-    api.isInlineTagPresent = function (editor, tagName) {
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel || sel.rangeCount === 0) return false;
-
-        var range = sel.getRangeAt(0);
-        var tagNames = api.getInlineTagAliases(tagName);
-
-        if (range.collapsed) {
-            return !!api.findAncestor(sel.anchorNode, function (el) {
-                return tagNames.indexOf(el.tagName) !== -1;
-            }, editor);
-        }
-
-        var textNodes = getTextNodesInRange(range);
-        if (textNodes.length === 0) {
-            return !!api.findAncestor(sel.anchorNode, function (el) {
-                return tagNames.indexOf(el.tagName) !== -1;
-            }, editor);
-        }
-
-        return textNodes.some(function (tn) {
-            return !!api.findAncestor(tn, function (el) {
-                return tagNames.indexOf(el.tagName) !== -1;
-            }, editor);
-        });
-    };
-
-    /*
-     * getCurrentInlineElement - kept for callers in actions.js that need a
-     * DOM handle (e.g. for single-element unwrap).
-     * Returns the nearest tagName ancestor of anchorNode, but ONLY when the
-     * whole selection is already active according to isInlineTagActive.
-     */
-    api.getCurrentInlineElement = function (editor, tagName) {
-        if (!api.isInlineTagActive(editor, tagName)) return null;
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel || sel.rangeCount === 0) return null;
-        var tagNames = api.getInlineTagAliases(tagName);
-        return api.findAncestor(sel.anchorNode, function (el) {
-            return tagNames.indexOf(el.tagName) !== -1;
-        }, editor);
-    };
-
-    // Empty inline cleanup
-    api.removeEmptyInlineElements = function (editor) {
-        var tags = ['B','I','U','A','EM','STRONG'];
-        tags.forEach(function (tag) {
-            var els = Array.prototype.slice.call(editor.querySelectorAll(tag));
-            els.forEach(function (el) {
-                if (el.parentNode && el.textContent.replace(/\u200B/g, '').trim() === '') {
-                    api.unwrapElement(el);
-                }
-            });
-        });
-    };
-
-    // Caret helpers
-    api.setCaretInsideElement = function (element) {
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel) return;
-        var range = document.createRange();
-        if (element.lastChild && element.lastChild.nodeType === Node.TEXT_NODE) {
-            range.setStart(element.lastChild, element.lastChild.nodeValue.length);
-        } else {
-            range.selectNodeContents(element);
-            range.collapse(false);
-        }
-        sel.removeAllRanges();
-        sel.addRange(range);
-    };
-
-    api.selectNodeContents = function (node) {
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel) return;
-        var range = document.createRange();
-        range.selectNodeContents(node);
-        sel.removeAllRanges();
-        sel.addRange(range);
-    };
-
-    api.getCaretOffset = function (editor, element) {
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel || sel.rangeCount === 0 || !element) return null;
-        var range = sel.getRangeAt(0);
-        if (!element.contains(range.endContainer)) return null;
-        var probe = range.cloneRange();
-        probe.selectNodeContents(element);
-        probe.setEnd(range.endContainer, range.endOffset);
-        return probe.toString().length;
-    };
-
-    api.setCaretAtOffset = function (element, offset) {
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel || !element) return;
-        var range  = document.createRange();
-        var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
-        var node;
-        var remaining = offset;
-        while ((node = walker.nextNode())) {
-            if (remaining <= node.nodeValue.length) {
-                range.setStart(node, remaining);
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
-                return;
-            }
-            remaining -= node.nodeValue.length;
-        }
-        api.setCaretInsideElement(element);
-    };
-
-    api.splitInlineElementAtCaret = function (editor, element, range) {
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel || !range || !range.collapsed || !element) return false;
-        if (!element.contains(range.startContainer)) return false;
-
-        var elementRange = document.createRange();
-        elementRange.selectNodeContents(element);
-        var atStart = range.compareBoundaryPoints(Range.START_TO_START, elementRange) === 0;
-        var atEnd = range.compareBoundaryPoints(Range.END_TO_END, elementRange) === 0;
-
-        if (atStart) {
-            var startRange = document.createRange();
-            startRange.setStartBefore(element);
-            startRange.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(startRange);
-            return true;
-        }
-
-        if (atEnd) {
-            var endRange = document.createRange();
-            endRange.setStartAfter(element);
-            endRange.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(endRange);
-            return true;
-        }
-
-        var startContainer = range.startContainer;
-        var offset = range.startOffset;
-        var splitNode;
-
-        if (startContainer.nodeType === Node.TEXT_NODE) {
-            splitNode = startContainer.splitText(offset);
-        } else {
-            splitNode = document.createTextNode('');
-            startContainer.insertBefore(splitNode, startContainer.childNodes[offset] || null);
-        }
-
-        var firstMoved = splitNode;
-        var fragment = document.createDocumentFragment();
-        var node = splitNode;
-        while (node) {
-            var next = node.nextSibling;
-            fragment.appendChild(node);
-            node = next;
-        }
-
-        if (element.parentNode) {
-            element.parentNode.insertBefore(fragment, element.nextSibling);
-        }
-
-        if (element.textContent.replace(/\u200B/g, '').trim() === '') {
-            api.unwrapElement(element);
-        }
-
-        if (firstMoved) {
-            var caretRange = document.createRange();
-            caretRange.setStart(firstMoved, 0);
-            caretRange.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(caretRange);
-        }
-
-        return true;
-    };
-
-    api.splitInlineElementAtRangeBoundary = function (element, boundaryRange) {
-        if (!boundaryRange || !element) return false;
-        if (!element.contains(boundaryRange.startContainer)) return false;
-
-        var elementRange = document.createRange();
-        elementRange.selectNodeContents(element);
-        var atStart = boundaryRange.compareBoundaryPoints(Range.START_TO_START, elementRange) === 0;
-        var atEnd = boundaryRange.compareBoundaryPoints(Range.END_TO_END, elementRange) === 0;
-
-        if (atStart || atEnd) return false;
-
-        var startContainer = boundaryRange.startContainer;
-        var offset = boundaryRange.startOffset;
-        var splitNode;
-
-        if (startContainer.nodeType === Node.TEXT_NODE) {
-            splitNode = startContainer.splitText(offset);
-        } else {
-            splitNode = document.createTextNode('');
-            startContainer.insertBefore(splitNode, startContainer.childNodes[offset] || null);
-        }
-
-        var clone = element.cloneNode(false);
-        while (splitNode) {
-            var next = splitNode.nextSibling;
-            clone.appendChild(splitNode);
-            splitNode = next;
-        }
-
-        if (element.parentNode) {
-            element.parentNode.insertBefore(clone, element.nextSibling);
-        }
-
-        return true;
-    };
-
-    // DOM mutation helpers
-    api.replaceElementTagName = function (element, tagName) {
-        var replacement = document.createElement(tagName);
-        Array.prototype.forEach.call(element.attributes, function (attr) {
-            replacement.setAttribute(attr.name, attr.value);
-        });
-        replacement.innerHTML = element.innerHTML;
-        element.parentNode.replaceChild(replacement, element);
-        return replacement;
-    };
-
-    api.unwrapElement = function (element) {
-        var parent = element.parentNode;
-        if (!parent) return;
-        while (element.firstChild) parent.insertBefore(element.firstChild, element);
-        parent.removeChild(element);
-    };
-
-    api.wrapRangeWithElement = function (range, element) {
-        if (range.collapsed) {
-            element.appendChild(document.createTextNode('\u200B'));
-            range.insertNode(element);
-            api.setCaretInsideElement(element);
-        } else {
-            element.appendChild(range.extractContents());
-            range.insertNode(element);
-            api.selectNodeContents(element);
-        }
-        return element;
-    };
-
-    api.insertHtmlAtCursor = function (html) {
-        var sel = window.getSelection ? window.getSelection() : null;
-        if (!sel || sel.rangeCount === 0) return false;
-        var range = sel.getRangeAt(0);
-        range.deleteContents();
-        var container = document.createElement('div');
-        container.innerHTML = html;
-        var fragment = document.createDocumentFragment();
-        var lastNode = null;
-        var node;
-        while ((node = container.firstChild)) lastNode = fragment.appendChild(node);
-        range.insertNode(fragment);
-        if (lastNode) {
-            range = range.cloneRange();
-            range.setStartAfter(lastNode);
-            range.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-        return true;
-    };
-
-    api.syncToTextarea = function (editor, textarea) {
-        var html = editor.innerHTML;
-        if (
-            editor.childNodes.length === 1 &&
-            editor.firstChild.nodeType === 1 &&
-            editor.firstChild.tagName === 'DIV'
-        ) {
-            var frag = document.createElement('div');
-            Array.prototype.forEach.call(editor.firstChild.childNodes, function (n) {
-                frag.appendChild(n.cloneNode(true));
-            });
-            html = frag.innerHTML;
-        }
-        textarea.value = html;
     };
 
 })(window);
