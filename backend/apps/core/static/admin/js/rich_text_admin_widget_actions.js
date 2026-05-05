@@ -1,33 +1,104 @@
 /*
- * Rich Text Admin - Actions
- *
- * Formatting operations for the editor (bold/italic/underline, lists, block tags).
- * These functions manipulate DOM nodes directly and rely on utils for selection
- * and caret handling.
+ * Rich Text Admin - Actions (rewrite)
  */
 (function (root) {
     'use strict';
 
-    // Action layer: formatting commands that operate on the editor DOM.
-    // Formatting commands are grouped separately from bootstrap code so the control flow stays easier to scan.
     var api = root.RichTextAdminWidget || (root.RichTextAdminWidget = {});
 
-    // Toggle an inline tag or wrap the current selection in it.
+    /*
+     * toggleInlineTag
+     *
+     * If the whole selection is already wrapped in tagName → unwrap all
+     * matching elements that overlap the selection.
+     * Otherwise → wrap the selection.
+     *
+     * This handles every case:
+     *   • Collapsed caret inside <b>  → unwrap that single <b>
+     *   • Selection fully inside one <b>  → unwrap that <b>
+     *   • Selection spanning multiple <b>foo</b> <b>bar</b>  → unwrap both
+     *   • Selection not yet bold  → wrap in new <b>
+     */
     api.toggleInlineTag = function toggleInlineTag(editor, tagName, attributes) {
-        var currentElement = api.getCurrentInlineElement(editor, tagName);
-        var range = api.getSelectionRange(editor);
-        var element;
+        var isActive = api.isInlineTagActive(editor, tagName);
+        var range    = api.getSelectionRange(editor);
+        var tagNames = api.getInlineTagAliases(tagName);
 
-        if (currentElement) {
-            api.unwrapElement(currentElement);
+        if (isActive) {
+            /* ── Unwrap ─────────────────────────────────────────────────── */
+            if (!range) return;
+
+            if (range.collapsed) {
+                // Single element around caret
+                var el = api.getCurrentInlineElement(editor, tagName);
+                if (el) {
+                    if (api.splitInlineElementAtCaret(editor, el, range)) return;
+                    api.unwrapElement(el);
+                }
+                return;
+            }
+
+            var startMarker = document.createElement('span');
+            var endMarker = document.createElement('span');
+            startMarker.style.display = 'none';
+            endMarker.style.display = 'none';
+
+            var startInsert = range.cloneRange();
+            var endInsert = range.cloneRange();
+            startInsert.collapse(true);
+            endInsert.collapse(false);
+            endInsert.insertNode(endMarker);
+            startInsert.insertNode(startMarker);
+
+            var sameAncestor = api.findAncestor(startMarker, function (el) {
+                return tagNames.indexOf(el.tagName) !== -1 && el.contains(endMarker);
+            }, editor);
+
+            if (sameAncestor) {
+                var beforeRange = document.createRange();
+                beforeRange.selectNodeContents(sameAncestor);
+                beforeRange.setEndBefore(startMarker);
+                var beforeFrag = beforeRange.extractContents();
+
+                var afterRange = document.createRange();
+                afterRange.selectNodeContents(sameAncestor);
+                afterRange.setStartAfter(endMarker);
+                var afterFrag = afterRange.extractContents();
+
+                if (startMarker.parentNode) startMarker.parentNode.removeChild(startMarker);
+                if (endMarker.parentNode) endMarker.parentNode.removeChild(endMarker);
+
+                if (beforeFrag.childNodes.length) {
+                    var beforeEl = sameAncestor.cloneNode(false);
+                    beforeEl.appendChild(beforeFrag);
+                    sameAncestor.parentNode.insertBefore(beforeEl, sameAncestor);
+                }
+
+                if (afterFrag.childNodes.length) {
+                    var afterEl = sameAncestor.cloneNode(false);
+                    afterEl.appendChild(afterFrag);
+                    sameAncestor.parentNode.insertBefore(afterEl, sameAncestor.nextSibling);
+                }
+
+                api.unwrapElement(sameAncestor);
+                return;
+            }
+
+            var fragment = range.extractContents();
+            tagNames.forEach(function (tag) {
+                var nodes = Array.prototype.slice.call(fragment.querySelectorAll(tag));
+                nodes.forEach(function (el) {
+                    if (el.parentNode) api.unwrapElement(el);
+                });
+            });
+            range.insertNode(fragment);
             return;
         }
 
-        if (!range) {
-            return;
-        }
+        /* ── Wrap ───────────────────────────────────────────────────────── */
+        if (!range) return;
 
-        element = document.createElement(tagName);
+        var element = document.createElement(tagName);
         if (attributes) {
             Object.keys(attributes).forEach(function (key) {
                 element.setAttribute(key, attributes[key]);
@@ -37,56 +108,54 @@
         api.wrapRangeWithElement(range, element);
     };
 
-    // Create or update a link around the current selection.
+    /*
+     * toggleLink
+     *
+     * Requires a non-collapsed selection. Shows a friendly alert when the user
+     * forgot to select text first. Never toggles / removes links.
+     */
     api.toggleLink = function toggleLink(editor) {
-        var href = window.prompt('Enter URL');
+        var range = api.getSelectionRange(editor);
 
-        if (!href) {
+        if (!range || range.collapsed) {
+            window.alert('Selecteer eerst tekst om een link toe te voegen.');
             return;
         }
 
-        api.toggleInlineTag(editor, 'A', { href: href });
+        var href = window.prompt('Voer een URL in');
+        if (!href || !href.trim()) return;
+
+        var element = document.createElement('A');
+        element.setAttribute('href', href.trim());
+        api.wrapRangeWithElement(range, element);
     };
 
-    // Apply a block tag (H2/H3/H4 or P) to the current block element.
+    /* ------------------------------------------------------------------ */
+    /* Block formatting                                                     */
+    /* ------------------------------------------------------------------ */
     api.formatCurrentBlock = function formatCurrentBlock(editor, tagName) {
         var currentBlock = api.getCurrentBlockElement(editor);
-        var selection = window.getSelection ? window.getSelection() : null;
-        var range;
-        var caretOffset = null;
-        var replacement;
+        var selection    = window.getSelection ? window.getSelection() : null;
+        var range, caretOffset, replacement;
 
         if (!currentBlock) {
-            if (!selection || selection.rangeCount === 0) {
-                return;
-            }
-
+            if (!selection || selection.rangeCount === 0) return;
             range = selection.getRangeAt(0);
-            if (!editor.contains(range.commonAncestorContainer)) {
-                return;
-            }
+            if (!editor.contains(range.commonAncestorContainer)) return;
 
             currentBlock = document.createElement('p');
-
             if (range.collapsed) {
                 currentBlock.innerHTML = '&nbsp;';
                 range.insertNode(currentBlock);
             } else {
-                var content = range.extractContents();
-                currentBlock.appendChild(content);
+                currentBlock.appendChild(range.extractContents());
                 range.insertNode(currentBlock);
             }
-
             api.setCaretInsideElement(currentBlock);
         }
 
-        if (currentBlock.tagName === tagName) {
-            return;
-        }
-
-        if (currentBlock.tagName === 'LI') {
-            currentBlock = currentBlock.parentElement;
-        }
+        if (currentBlock.tagName === tagName) return;
+        if (currentBlock.tagName === 'LI') currentBlock = currentBlock.parentElement;
 
         caretOffset = api.getCaretOffset(editor, currentBlock);
         replacement = api.replaceElementTagName(currentBlock, tagName);
@@ -98,38 +167,32 @@
         }
     };
 
-    // Convert list items back into paragraphs.
+    /* ------------------------------------------------------------------ */
+    /* List helpers                                                         */
+    /* ------------------------------------------------------------------ */
     api.unwrapList = function unwrapList(listElement) {
         var fragment = document.createDocumentFragment();
-        var items = Array.prototype.slice.call(listElement.children);
-
-        items.forEach(function (item) {
-            var paragraph = document.createElement('p');
-
-            paragraph.innerHTML = item.innerHTML || '<br>';
-            fragment.appendChild(paragraph);
+        Array.prototype.slice.call(listElement.children).forEach(function (item) {
+            var p = document.createElement('p');
+            p.innerHTML = item.innerHTML || '<br>';
+            fragment.appendChild(p);
         });
-
         listElement.parentNode.replaceChild(fragment, listElement);
     };
 
-    // Replace the current block with a list wrapper.
     api.wrapCurrentBlockInList = function wrapCurrentBlockInList(blockElement, listTagName) {
         var list = document.createElement(listTagName);
-        var listItem = document.createElement('li');
-
-        listItem.innerHTML = blockElement.innerHTML || '<br>';
-        list.appendChild(listItem);
+        var li   = document.createElement('li');
+        li.innerHTML = blockElement.innerHTML || '<br>';
+        list.appendChild(li);
         blockElement.parentNode.replaceChild(list, blockElement);
-        api.setCaretInsideElement(listItem);
+        api.setCaretInsideElement(li);
     };
 
-    // Toggle list state for the current block.
     api.toggleList = function toggleList(editor, listTagName) {
-        var currentList = api.getCurrentListElement(editor);
+        var currentList  = api.getCurrentListElement(editor);
         var currentBlock = api.getCurrentBlockElement(editor);
 
-        // If we are already in a list: either unwrap or change type
         if (currentList) {
             if (currentList.tagName === listTagName) {
                 api.unwrapList(currentList);
@@ -139,13 +202,11 @@
             return;
         }
 
-        // If we don't have a block element at the cursor position, we need to create one to wrap in a list.
         if (!currentBlock) {
             var sel = window.getSelection();
-            if (sel.rangeCount > 0) {
-                var range = sel.getRangeAt(0);
+            if (sel && sel.rangeCount > 0) {
+                var range    = sel.getRangeAt(0);
                 currentBlock = document.createElement('p');
-                
                 if (range.collapsed) {
                     currentBlock.innerHTML = '<br>';
                     range.insertNode(currentBlock);
@@ -156,7 +217,6 @@
             }
         }
 
-        // If we have a block element at the cursor position, wrap it in a list.
         if (currentBlock) {
             api.wrapCurrentBlockInList(currentBlock, listTagName);
         }

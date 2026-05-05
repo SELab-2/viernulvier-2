@@ -37,14 +37,18 @@
         return button;
     }
 
-        // Update toolbar active states based on the current DOM selection.
+    // Update toolbar active states based on the current DOM selection.
     function updateToolbarState(toolbar, editor) {
         var activeBlock = api.getCurrentBlockElement(editor);
         var activeList = api.getCurrentListElement(editor);
-        var isBoldActive = !!api.getCurrentInlineElement(editor, 'B');
-        var isItalicActive = !!api.getCurrentInlineElement(editor, 'I');
-        var isUnderlineActive = !!api.getCurrentInlineElement(editor, 'U');
-        var isLinkActive = !!api.getCurrentInlineElement(editor, 'A');
+        var isBoldActive = api.isInlineTagPresent(editor, 'B');
+        var isItalicActive = api.isInlineTagPresent(editor, 'I');
+        var isUnderlineActive = api.isInlineTagPresent(editor, 'U');
+
+        // FIX BUG 3: The link button is never shown as "active" — it is a
+        // one-shot insert action, not a toggle. We still compute isLinkActive
+        // for potential future use but do not apply it to the button state.
+        var isLinkActive = false; // always off
 
         // Toolbar state is derived from the DOM tree so it works without deprecated browser commands.
         toolbar.querySelectorAll('button[data-command]').forEach(function (button) {
@@ -58,7 +62,7 @@
             } else if (command === 'underline') {
                 isActive = isUnderlineActive;
             } else if (command === 'link') {
-                isActive = isLinkActive;
+                isActive = isLinkActive; // always false
             } else if (command.indexOf('heading-') === 0) {
                 var headingTag = command.replace('heading-', '').toUpperCase();
                 isActive = !!activeBlock && activeBlock.tagName === headingTag;
@@ -161,7 +165,7 @@
         toolbar.appendChild(createToolbarButton('OL', 'Numbered list', 'numbered-list', function () {
             applyCommand('numbered-list');
         }));
-        toolbar.appendChild(createToolbarButton('Link', 'Insert link', 'link', function () {
+        toolbar.appendChild(createToolbarButton('Link', 'Voeg link in', 'link', function () {
             applyCommand('link');
         }));
 
@@ -205,7 +209,13 @@
         });
 
         // Keep textarea and toolbar state in sync on edits.
+        // FIX BUG 2: After each input event, sweep the editor for empty inline
+        // elements that the browser leaves behind when the user backspaces all
+        // content out of a formatted run. Without this cleanup, the caret ends
+        // up inside an empty <b></b> and the bold button lights up even though
+        // there is no visible bold text.
         editor.addEventListener('input', function () {
+            api.removeEmptyInlineElements(editor);
             api.syncToTextarea(editor, textarea);
             updateToolbarState(toolbar, editor);
         });
