@@ -101,7 +101,7 @@ class MediaFileAdmin(BaseAdmin):
     inlines = [MediaFileTranslationInline]
 
     class Media:
-        js = ("admin/js/mediafile_upload_fix.js",)
+        js = ("admin/js/media_file_upload.js",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Prefetch translations to avoid N+1 queries in admin screens."""
