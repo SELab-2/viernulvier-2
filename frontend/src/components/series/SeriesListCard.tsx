@@ -10,29 +10,25 @@ import { htmlToPlainText } from '../../utils/SanitizeHtml'
 import { getTranslatedRecord } from '../../utils/translations'
 import ImageWithFallback from '../ImageWithFallback'
 
-import type { Series } from '../../types/Series'
+import type { Tag } from '../../types/Tags'
 
 export interface SeriesListCardProps {
-  series: Series
+  tag: Tag
 }
 
-// Function to get the localized series name based on the current language.
-const getLocalizedSeriesName = (series: Series, language: string): string => {
+// Function to get the localized tag name based on the current language.
+const getLocalizedTagName = (tag: Tag, language: string): string => {
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
-  return getTranslatedRecord(series.tag.name, normalizedLanguage, series.tag.display_name)
+  return getTranslatedRecord(tag.name, normalizedLanguage, tag.display_name)
 }
 
-// Function to get the localized series description based on the current language.
-const getLocalizedSeriesDescription = (series: Series, language: string): string => {
+// Function to get the localized tag excerpt based on the current language.
+const getLocalizedTagExcerpt = (tag: Tag, language: string): string => {
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
-  return getTranslatedRecord(
-    series.tag.short_description,
-    normalizedLanguage,
-    series.tag.display_short_description,
-  )
+  return getTranslatedRecord(tag.excerpt, normalizedLanguage, tag.display_excerpt)
 }
 
-const SeriesListCard = ({ series }: SeriesListCardProps) => {
+const SeriesListCard = ({ tag }: SeriesListCardProps) => {
   const { i18n } = useTranslation()
   const location = useLocation()
   const { language } = i18n
@@ -41,12 +37,12 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
     i18n.language,
     i18n.resolvedLanguage,
   )
-  const detailPath = toLocalizedPath(`/series/${series.tag.id}`, currentLanguage)
+  const detailPath = toLocalizedPath(`/series/${tag.id}`, currentLanguage)
 
-  const title = getLocalizedSeriesName(series, language)
-  const description = htmlToPlainText(getLocalizedSeriesDescription(series, language))
-  const startLabel = formatDate(series.firstProductionStart, language)
-  const endLabel = formatDate(series.lastProductionEnd, language)
+  const title = getLocalizedTagName(tag, language)
+  const excerpt = getLocalizedTagExcerpt(tag, language)
+  const startLabel = formatDate(tag.first_production_start, language)
+  const endLabel = formatDate(tag.last_production_end, language)
 
   // Keep the date label compact when both endpoints are available.
   const dateLabel =
@@ -78,7 +74,7 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
       })}
     >
       <ImageWithFallback
-        src={series.lastProductionImage}
+        src={tag.image}
         alt={title}
         height="100%"
         sx={{ aspectRatio: 16 / 9, borderRadius: '4px' }}
@@ -105,10 +101,10 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
             {title}
           </Typography>
 
-          {description ? (
+          {excerpt ? (
             <Typography
-              variant="body2"
               component="div"
+              variant="body2"
               sx={{
                 fontSize: 'inherit',
                 color: 'text.secondary',
@@ -117,7 +113,7 @@ const SeriesListCard = ({ series }: SeriesListCardProps) => {
                 whiteSpace: 'nowrap',
               }}
             >
-              {description}
+              {htmlToPlainText(excerpt)}
             </Typography>
           ) : null}
         </Stack>

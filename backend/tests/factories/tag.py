@@ -36,6 +36,8 @@ class TagTranslationFactory(factory.django.DjangoModelFactory):
 
     name = LazyAttribute(lambda o: f"{faker.word().capitalize()} ({o.language.code})")
 
+    excerpt = LazyFunction(faker.sentence)
+
     short_description = LazyFunction(faker.sentence)
 
     url_title = LazyAttribute(lambda o: o.name.lower().replace(" ", "-"))

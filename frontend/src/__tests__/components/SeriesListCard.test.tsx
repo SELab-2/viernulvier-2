@@ -7,39 +7,36 @@ import SeriesListCard from '../../components/series/SeriesListCard'
 import i18n from '../../i18n'
 import { toLocalizedPath } from '../../utils/localizedRoutes'
 
-import type { Series } from '../../types/Series'
+import type { Tag } from '../../types/Tags'
 
-const renderCard = (series: Series) =>
+const renderCard = (tag: Tag) =>
   render(
     <MemoryRouter>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={createTheme()}>
-          <SeriesListCard series={series} />
+          <SeriesListCard tag={tag} />
         </ThemeProvider>
       </I18nextProvider>
     </MemoryRouter>,
   )
 
-const buildSeries = (): Series => ({
-  tag: {
-    id: 10,
-    url: '',
-    source: 'system',
-    type: 'series',
-    is_enabled: true,
-    display_name: 'Reeks Alpha',
-    display_short_description: '<p>Een reeks voor <em>testing</em></p>',
-    display_url_title: null,
-    name: { nl: 'Reeks Alpha', en: 'Series Alpha' },
-    short_description: {
-      nl: '<p>Een reeks voor <em>testing</em></p>',
-      en: 'A series for testing',
-    },
-    url_title: null,
-  },
-  firstProductionStart: '2026-01-01T19:00:00Z',
-  lastProductionEnd: '2026-01-31T20:00:00Z',
-  lastProductionImage: 'https://example.test/series.jpg',
+const buildTag = (): Tag => ({
+  id: 10,
+  url: '',
+  source: 'system',
+  type: 'series',
+  is_enabled: true,
+  image: 'https://example.test/series.jpg',
+  display_name: 'Reeks Alpha',
+  display_short_description: 'Een reeks voor testing',
+  display_excerpt: 'Een korte samenvatting',
+  display_url_title: null,
+  first_production_start: '2026-01-01T19:00:00Z',
+  last_production_end: '2026-01-31T20:00:00Z',
+  name: { nl: 'Reeks Alpha', en: 'Series Alpha' },
+  excerpt: { nl: 'Een korte samenvatting', en: 'A short summary' },
+  short_description: { nl: 'Een reeks voor testing', en: 'A series for testing' },
+  url_title: null,
 })
 
 describe('SeriesListCard', () => {
@@ -54,10 +51,10 @@ describe('SeriesListCard', () => {
   })
 
   it('renders the localized title, description, date range, image, and detail link', () => {
-    renderCard(buildSeries())
+    renderCard(buildTag())
 
     expect(screen.getByRole('heading', { name: 'Reeks Alpha' })).toBeInTheDocument()
-    expect(screen.getByText('Een reeks voor testing')).toBeInTheDocument()
+    expect(screen.getByText('Een korte samenvatting')).toBeInTheDocument()
     expect(screen.getByText('1 jan 2026 - 31 jan 2026')).toBeInTheDocument()
     expect(screen.getByRole('link')).toHaveAttribute('href', toLocalizedPath('/series/10', 'nl'))
     expect(screen.getByRole('img', { name: 'Reeks Alpha' })).toHaveAttribute(

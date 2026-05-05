@@ -114,24 +114,21 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return Array.from(groups.entries())
   }, [sortedProductions])
 
-  const stats = useMemo<SeriesStat[]>(() => {
-    const years = sortedProductions
-      .map(getProductionYear)
-      .filter((year) => /^\d{4}$/.test(year))
-      .map(Number)
+  const startYear = seriesTag?.first_production_start
+    ? new Date(seriesTag.first_production_start).getFullYear()
+    : null
+  const endYear = seriesTag?.last_production_end
+    ? new Date(seriesTag.last_production_end).getFullYear()
+    : null
 
-    const minYear = years.length ? Math.min(...years) : null
-    const maxYear = years.length ? Math.max(...years) : null
-
-    return [
-      { value: String(sortedProductions.length), label: t('series.stats.editions') },
-      {
-        value: minYear && maxYear ? `${minYear}–${maxYear}` : '—',
-        label: t('series.stats.period'),
-      },
-      { value: seriesTag?.type || '—', label: t('series.stats.type') },
-    ]
-  }, [seriesTag?.type, sortedProductions, t])
+  const stats: SeriesStat[] = [
+    { value: String(sortedProductions.length), label: t('series.stats.editions') },
+    {
+      value: startYear && endYear ? `${startYear}–${endYear}` : '—',
+      label: t('series.stats.period'),
+    },
+    { value: seriesTag?.type || '—', label: t('series.stats.type') },
+  ]
 
   if (isLoading) {
     return <SeriesDetailPageSkeleton />
@@ -144,6 +141,9 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
   const seriesName =
     getTranslatedRecord(seriesTag.name, lang, seriesTag.display_name) || t('series.untitled')
+
+  const seriesExcerpt =
+    getTranslatedRecord(seriesTag.excerpt, lang, seriesTag.display_excerpt) || ''
 
   const seriesDescription =
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
@@ -160,10 +160,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
           ]}
         />
 
-        <SeriesHeader
-          name={seriesName}
-          description={sanitizeHtml(seriesDescription, [sanitizeImagesStrictRule])}
-        />
+        <SeriesHeader name={seriesName} excerpt={seriesExcerpt} description={seriesDescription} />
         <SeriesStats stats={stats} />
         <Divider />
 

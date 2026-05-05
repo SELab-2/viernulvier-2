@@ -19,7 +19,6 @@ Covers:
 """
 
 from datetime import UTC, datetime
-from unittest.mock import patch
 
 from django.db.models import Min
 from django.test import TestCase, override_settings
@@ -32,7 +31,6 @@ from apps.productions.views import ProductionViewSet
 from tests.factories.blog import BlogFactory
 from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
-from tests.factories.media_library import MediaGalleryFactory, MediaItemCropFactory, MediaItemFactory
 from tests.factories.production import (
     ProductionFactory,
     ProductionTagFactory,
@@ -40,7 +38,7 @@ from tests.factories.production import (
     ProductionTranslationFactory,
     UitDatabaseTypeFactory,
 )
-from tests.factories.tag import TagFactory, TagTranslationFactory
+from tests.factories.tag import TagFactory
 from tests.helpers.api import internal_headers as int_headers
 from tests.helpers.api import public_headers as pub_headers
 from tests.helpers.api import wrong_headers
@@ -127,101 +125,6 @@ class TestProductionViewSetList(TestCase):
         Production.objects.all().delete()
         response = self.client.get("/api/v1/productions/", **pub_headers())
         assert response.data["results"] == []
-
-
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestProductionSeriesAction(TestCase):
-    def setUp(self) -> None:
-        self.client = APIClient()
-        self.nl = LanguageFactory.create(code="nl", name="Dutch")
-
-    def test_series_action_returns_grouped_series_rows(self) -> None:
-        series_tag = TagFactory.create(is_enabled=False)
-        TagTranslationFactory.create(tag=series_tag, language=self.nl, name="Reeks Alpha")
-
-        first_production = ProductionFactory.create()
-        latest_production = ProductionFactory.create()
-
-        ProductionTagFactory.create(production=first_production, tag=series_tag)
-        ProductionTagFactory.create(production=latest_production, tag=series_tag)
-
-        EventFactory.create(
-            production=first_production,
-            starts_at=datetime(2023, 1, 10, 19, 0, tzinfo=UTC),
-            ends_at=datetime(2023, 1, 10, 21, 0, tzinfo=UTC),
-        )
-        EventFactory.create(
-            production=latest_production,
-            starts_at=datetime(2024, 4, 20, 20, 0, tzinfo=UTC),
-            ends_at=datetime(2024, 4, 20, 22, 0, tzinfo=UTC),
-        )
-
-        response = self.client.get("/api/v1/productions/series/", **pub_headers())
-
-        assert response.status_code == 200
-        assert response.data["count"] == 1
-        row = response.data["results"][0]
-
-        assert row["tag"]["id"] == series_tag.id
-        assert row["first_production_start"].startswith("2023-01-10T19:00:00")
-        assert row["last_production_end"].startswith("2024-04-20T22:00:00")
-
-    def test_series_action_includes_last_production_image(self) -> None:
-        series_tag = TagFactory.create()
-        TagTranslationFactory.create(tag=series_tag, language=self.nl, name="Reeks Met Beeld")
-
-        gallery = MediaGalleryFactory.create()
-        production = ProductionFactory.create(media_gallery=gallery)
-        ProductionTagFactory.create(production=production, tag=series_tag)
-        EventFactory.create(
-            production=production,
-            starts_at=datetime(2025, 1, 1, 18, 0, tzinfo=UTC),
-            ends_at=datetime(2025, 1, 1, 20, 0, tzinfo=UTC),
-        )
-
-        media_item = MediaItemFactory.create(gallery=gallery)
-        MediaItemCropFactory.create(media_item=media_item)
-
-        response = self.client.get("/api/v1/productions/series/", **pub_headers())
-
-        assert response.status_code == 200
-        assert response.data["results"][0]["last_production_image"] is not None
-
-    def test_series_action_supports_name_search(self) -> None:
-        matching_tag = TagFactory.create()
-        other_tag = TagFactory.create()
-
-        TagTranslationFactory.create(tag=matching_tag, language=self.nl, name="Reeks Zoeken")
-        TagTranslationFactory.create(tag=other_tag, language=self.nl, name="Andere Bundel")
-
-        matching_production = ProductionFactory.create()
-        other_production = ProductionFactory.create()
-
-        ProductionTagFactory.create(production=matching_production, tag=matching_tag)
-        ProductionTagFactory.create(production=other_production, tag=other_tag)
-
-        EventFactory.create(production=matching_production)
-        EventFactory.create(production=other_production)
-
-        response = self.client.get("/api/v1/productions/series/?search=Zoeken", **pub_headers())
-
-        assert response.status_code == 200
-        assert response.data["count"] == 1
-        assert response.data["results"][0]["tag"]["id"] == matching_tag.id
-
-    def test_series_action_returns_non_paginated_list_when_pagination_is_disabled(self) -> None:
-        tag = TagFactory.create()
-        TagTranslationFactory.create(tag=tag, language=self.nl, name="Reeks Zonder Paginatie")
-        production = ProductionFactory.create()
-        ProductionTagFactory.create(production=production, tag=tag)
-        EventFactory.create(production=production)
-
-        with patch("apps.productions.views.ProductionViewSet.paginate_queryset", return_value=None):
-            response = self.client.get("/api/v1/productions/series/", **pub_headers())
-
-        assert response.status_code == 200
-        assert isinstance(response.data, list)
-        assert response.data[0]["tag"]["id"] == tag.id
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
@@ -1187,73 +1090,3 @@ class TestProductionOrderingEdgeCases(TestCase):
         )
 
         assert ids.index(self.prod_alpha.id) < ids.index(self.prod_zulu.id)
-
-
-# ---------------------------------------------------------------------------
-# Series endpoint tests
-# ---------------------------------------------------------------------------
-
-
-@override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
-class TestProductionViewSetSeries(TestCase):
-    def setUp(self) -> None:
-        self.client = APIClient()
-        self.nl = LanguageFactory.create(code="nl", name="Dutch")
-
-        self.matching_tag = TagFactory.create(type="theme")
-        TagTranslationFactory.create(tag=self.matching_tag, language=self.nl, name="Series Match")
-
-        self.other_tag = TagFactory.create(type="theme")
-        TagTranslationFactory.create(tag=self.other_tag, language=self.nl, name="Other bundle")
-
-        self.older_production = ProductionFactory.create()
-        self.latest_production = ProductionFactory.create(media_gallery=MediaGalleryFactory.create())
-        self.unrelated_production = ProductionFactory.create()
-
-        ProductionTagFactory.create(production=self.older_production, tag=self.matching_tag)
-        ProductionTagFactory.create(production=self.latest_production, tag=self.matching_tag)
-        ProductionTagFactory.create(production=self.unrelated_production, tag=self.other_tag)
-
-        EventFactory.create(
-            production=self.older_production,
-            starts_at=_dt(2025, 1, 1),
-            ends_at=_dt(2025, 1, 1, 20),
-        )
-        EventFactory.create(
-            production=self.latest_production,
-            starts_at=_dt(2025, 4, 1),
-            ends_at=_dt(2025, 4, 1, 21),
-        )
-        EventFactory.create(
-            production=self.unrelated_production,
-            starts_at=_dt(2025, 2, 1),
-            ends_at=_dt(2025, 2, 1, 20),
-        )
-
-        item = MediaItemFactory.create(gallery=self.latest_production.media_gallery, position=0)
-        MediaItemCropFactory.create(media_item=item, image="series/latest.jpg")
-
-    def test_series_endpoint_supports_search_and_resolves_last_production_image(self) -> None:
-        response = self.client.get(
-            "/api/v1/productions/series/",
-            {"search": "Series"},
-            **pub_headers(),
-        )
-
-        assert response.status_code == 200
-        assert "results" in response.data
-        assert len(response.data["results"]) == 1
-
-        row = response.data["results"][0]
-        assert row["tag"]["id"] == self.matching_tag.id
-        assert row["first_production_start"] is not None
-        assert row["last_production_end"] is not None
-        assert row["last_production_image"].endswith("/media/series/latest.jpg")
-
-    def test_series_endpoint_returns_plain_list_when_pagination_disabled(self) -> None:
-        with patch.object(ProductionViewSet, "pagination_class", None):
-            response = self.client.get("/api/v1/productions/series/", **pub_headers())
-
-        assert response.status_code == 200
-        assert isinstance(response.data, list)
-        assert len(response.data) == 2
