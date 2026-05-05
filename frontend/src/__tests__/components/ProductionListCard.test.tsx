@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
 
@@ -7,10 +7,10 @@ import ProductionListCard from '../../components/productions/ProductionListCard'
 import i18n from '../../i18n'
 import { toLocalizedPath } from '../../utils/localizedRoutes'
 
+import type { ReactElement } from 'react'
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
 import type { Tag } from '../../types/Tags'
-import type { ReactElement } from 'react'
 
 const accentTheme = createTheme({
   palette: {
@@ -142,6 +142,17 @@ describe('ProductionListCard', () => {
       'src',
       'https://cdn.example.com/a.jpg',
     )
+  })
+
+  it('supports keyboard activation for the full-card link', () => {
+    const production = baseProduction({ id: 8 })
+    renderListCard({ production })
+
+    const card = screen.getByRole('link', { name: /Voorstelling/ })
+    fireEvent.keyDown(card, { key: 'Enter' })
+    fireEvent.keyDown(card, { key: ' ' })
+
+    expect(card).toHaveAttribute('data-to', toLocalizedPath('/productions/8', 'nl'))
   })
 
   it('omits the artist line when there is no artist translation or display fallback', () => {
@@ -298,6 +309,71 @@ describe('ProductionListCard', () => {
       backgroundColor: '#1976d2',
       borderColor: '#1976d2',
     })
+  })
+
+  it('sorts selected series tags before unselected tags', () => {
+    const production = baseProduction({
+      tags: [minimalTag(10, 'Oud'), minimalTag(11, 'Geselecteerd')],
+    })
+
+    renderListCard({ production, selectedTagIds: [11] })
+
+    const tagLinks = screen.getAllByRole('link').map((link) => link.textContent)
+    expect(tagLinks).toEqual(expect.arrayContaining(['Geselecteerd', 'Oud']))
+    expect(tagLinks.indexOf('Geselecteerd')).toBeLessThan(tagLinks.indexOf('Oud'))
+  })
+
+  it('sorts selected genres before unselected genres', () => {
+    const production = baseProduction({
+      genres: [minimalGenre(1, 'Eerste'), minimalGenre(2, 'Tweede')],
+    })
+
+    renderListCard({ production, selectedGenreIds: [2] })
+
+    const selectedGenre = screen.getByText('Tweede')
+    const unselectedGenre = screen.getByText('Eerste')
+    expect(selectedGenre.compareDocumentPosition(unselectedGenre)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+  })
+
+  it('uses safe tag/genre fallbacks when optional translated fields are missing', () => {
+    const production = baseProduction({
+      tags: [
+        {
+          ...minimalTag(11, 'Display'),
+          display_name: null,
+          name: null,
+          url_title: { nl: 'url-naam' },
+        },
+        {
+          ...minimalTag(12, 'Display'),
+          display_name: null,
+          name: {},
+          url_title: null,
+          type: null as unknown as string,
+        },
+      ],
+      genres: [
+        { id: 9, type: 'primary', name: null, display_name: 'Genre fallback', vendor_id: null },
+      ],
+    })
+
+    renderListCard({ production })
+
+    expect(screen.getByText('url-naam')).toBeInTheDocument()
+    expect(screen.getByText('12')).toBeInTheDocument()
+    expect(screen.getByText('Genre fallback')).toBeInTheDocument()
+  })
+
+  it('ignores unrelated keyboard keys for card navigation', () => {
+    const production = baseProduction({ id: 9 })
+    renderListCard({ production })
+
+    const card = screen.getByRole('link', { name: /Voorstelling/ })
+    fireEvent.keyDown(card, { key: 'Escape' })
+
+    expect(card).toHaveAttribute('data-to', toLocalizedPath('/productions/9', 'nl'))
   })
 
   it('does not render a genre row when there are no genres', () => {
