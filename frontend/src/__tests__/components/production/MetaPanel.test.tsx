@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 import MetaPanel from '../../../components/production/MetaPanel'
 
+import type { ComponentProps } from 'react'
 import type { Production } from '../../../types/Productions'
 
 jest.mock('react-i18next', () => ({
@@ -15,10 +16,13 @@ jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }))
 
-const renderMetaPanel = (production: Production) =>
+const renderMetaPanel = (
+  production: Production,
+  props: Partial<ComponentProps<typeof MetaPanel>> = {},
+) =>
   render(
     <MemoryRouter>
-      <MetaPanel production={production} />
+      <MetaPanel production={production} {...props} />
     </MemoryRouter>,
   )
 
@@ -140,5 +144,112 @@ describe('MetaPanel component', () => {
     expect(screen.getByText('Titel')).toBeInTheDocument()
     expect(screen.getByText('Solo')).toBeInTheDocument()
     expect(screen.getByText('Online')).toBeInTheDocument()
+  })
+
+  it('formats multi-day dates and de-duplicates localized venue names', () => {
+    renderMetaPanel({
+      ...productionStub,
+      events: [
+        {
+          id: 1,
+          production: null as unknown as Production,
+          production_display: 'P1',
+          hall: {
+            id: 1,
+            space: null,
+            seat_selection: false,
+            open_seating: true,
+            name: { nl: 'Theaterzaal' },
+            display_name: 'Theaterzaal',
+            remark: null,
+          },
+          hall_display: 'Fallback hall',
+          starts_at: '2025-08-03T20:00:00Z',
+          ends_at: '2025-08-03T22:00:00Z',
+          prices: [],
+        },
+        {
+          id: 2,
+          production: null as unknown as Production,
+          production_display: 'P1',
+          hall: {
+            id: 1,
+            space: null,
+            seat_selection: false,
+            open_seating: true,
+            name: { nl: 'Theaterzaal' },
+            display_name: 'Theaterzaal',
+            remark: null,
+          },
+          hall_display: 'Fallback hall',
+          starts_at: '2025-08-01T20:00:00Z',
+          ends_at: '2025-08-01T22:00:00Z',
+          prices: [],
+        },
+        {
+          id: 3,
+          production: null as unknown as Production,
+          production_display: 'P1',
+          hall: null,
+          hall_display: 'Fallback hall',
+          starts_at: null,
+          ends_at: null,
+          prices: [],
+        },
+      ],
+    })
+
+    expect(screen.getByText(/1 aug 2025 - 3 aug 2025/)).toBeInTheDocument()
+    expect(screen.getByText('Theaterzaal, Fallback hall')).toBeInTheDocument()
+  })
+
+  it('uses localized fallbacks for genres and tags when display names are missing', () => {
+    renderMetaPanel({
+      ...productionStub,
+      tags: [
+        {
+          ...productionStub.tags[0],
+          id: 2,
+          display_name: null,
+          name: { nl: 'Naam-tag' },
+        },
+        {
+          ...productionStub.tags[0],
+          id: 3,
+          display_name: null,
+          name: null,
+          url_title: { nl: 'url-tag' },
+        },
+        {
+          ...productionStub.tags[0],
+          id: 4,
+          display_name: null,
+          name: null,
+          url_title: null,
+          type: 'type-tag',
+        },
+      ],
+      genres: [
+        {
+          id: 2,
+          type: 'genre',
+          name: { nl: 'Genre uit naam' },
+          display_name: null,
+          vendor_id: null,
+        },
+      ],
+    })
+
+    expect(screen.getAllByText('Genre uit naam')).toHaveLength(2)
+    expect(screen.getByText('Naam-tag')).toBeInTheDocument()
+    expect(screen.getByText('url-tag')).toBeInTheDocument()
+    expect(screen.getByText('type-tag')).toBeInTheDocument()
+  })
+
+  it('can hide the header while still rendering metadata rows', () => {
+    renderMetaPanel(productionStub, { showHeader: false, sx: [{ pt: 0 }] })
+
+    expect(screen.queryByRole('heading', { name: 'Titel' })).not.toBeInTheDocument()
+    expect(screen.getByText('Periode')).toBeInTheDocument()
   })
 })
