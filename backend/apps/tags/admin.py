@@ -15,6 +15,8 @@ language in a single query.
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpRequest
+from django.urls import reverse
+from django.utils.html import format_html, format_html_join
 
 from apps.core.admin import BaseAdmin
 
@@ -71,11 +73,23 @@ class TagAdmin(BaseAdmin):
         "type",
         "source",
         "is_enabled",
+        "media_gallery",
     )
 
     list_filter = (
         "is_enabled",
         "type",
+    )
+
+    fields = (
+        "id",
+        "external_id",
+        "url",
+        "source",
+        "is_enabled",
+        "type",
+        "media_gallery",
+        "media_items_admin",
     )
 
     search_fields = (
@@ -84,10 +98,63 @@ class TagAdmin(BaseAdmin):
         "translations__name",
     )
 
+    autocomplete_fields = ("media_gallery",)
+
+    readonly_fields = (
+        "id",
+        "media_items_admin",
+    )
+
     ordering = ("type", "id")
 
     inlines = [TagTranslationInline]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        """Prefetch translations to avoid N+1 queries on the detail page."""
-        return super().get_queryset(request).prefetch_related("translations")
+        """Prefetch translations and media gallery data to avoid N+1 queries."""
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("media_gallery")
+            .prefetch_related(
+                "translations",
+                "media_gallery__media_items",
+            )
+        )
+
+    @admin.display(description="Media items")
+    def media_items_admin(self, obj: Tag) -> str:
+        """Render linked media items and an add button for the tag gallery."""
+        if not obj or not obj.media_gallery:
+            return "-"
+
+        gallery = obj.media_gallery
+        items = gallery.media_items.all()
+
+        if not items:
+            add_url = reverse("admin:media_library_mediaitem_add") + f"?gallery={gallery.id}"
+            return format_html(
+                "<div>No images in gallery.</div>"
+                '<div style="margin-top:0.5em">'
+                '<a class="button" href="{}">Add image</a>'
+                "</div>",
+                add_url,
+            )
+
+        rows = format_html_join(
+            "\n",
+            '<div><a href="{}">{}</a></div>',
+            (
+                (
+                    reverse("admin:media_library_mediaitem_change", args=(item.id,)),
+                    item.original_filename or str(item.id),
+                )
+                for item in items
+            ),
+        )
+
+        add_url = reverse("admin:media_library_mediaitem_add") + f"?gallery={gallery.id}"
+        return format_html(
+            '{}<div style="margin-top:0.5em"><a class="button" href="{}">Add image to gallery</a></div>',
+            rows,
+            add_url,
+        )

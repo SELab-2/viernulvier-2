@@ -1,5 +1,4 @@
 from django.core.exceptions import ValidationError
-from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
 
 from apps.tags.models import TagTranslation
@@ -56,19 +55,6 @@ class TestTag:
         tag.delete()
 
         assert TagTranslation.objects.count() == 0
-
-    def test_clean_wraps_media_validation_errors_for_uploaded_image(self, monkeypatch) -> None:
-        def _raise_validation_error(*args, **kwargs):
-            raise ValueError("Invalid image file")
-
-        monkeypatch.setattr("apps.tags.models.validate_media_file", _raise_validation_error)
-        image = SimpleUploadedFile("tag.png", b"fake-image", content_type="image/png")
-        tag = TagFactory.build(image=image)
-
-        with pytest.raises(ValidationError) as exc:
-            tag.full_clean()
-
-        assert "image" in exc.value.message_dict
 
 
 # =====================================================

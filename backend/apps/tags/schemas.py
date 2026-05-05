@@ -21,14 +21,13 @@ from .serializers import TagSerializer
 
 _TAG_RESPONSE = OpenApiExample(
     "Tag - response",
-    summary="A tag with localised fields and optional image",
+    summary="A tag with localised fields",
     value={
         "id": 12,
         "url": "https://example.com/tags/hedendaags",
         "source": "uitdatabank",
         "type": "theme",
         "is_enabled": True,
-        "image": "/media/tag_images/hedendaags.jpg",
         "display_name": "Contemporary",
         "display_short_description": "Contemporary performing arts and theatre.",
         "display_excerpt": "Contemporary arts overview.",
@@ -45,14 +44,13 @@ _TAG_RESPONSE = OpenApiExample(
 
 _TAG_INTERNAL_RESPONSE = OpenApiExample(
     "Tag - internal (system) response",
-    summary="A tag created internally without an external source (image fallback example)",
+    summary="A tag created internally without an external source",
     value={
         "id": 5,
         "url": "",
         "source": "",
         "type": "audience",
         "is_enabled": True,
-        "image": "/media/productions/most-recent-image.jpg",
         "display_name": "Family friendly",
         "display_short_description": None,
         "display_excerpt": None,
@@ -95,7 +93,6 @@ _TAG_LIST = extend_schema(
     summary="List all tags",
     description=(
         "Returns a paginated list of all **Tag** objects ordered by `id`.\n\n"
-        "The `image` field contains the uploaded image for the tag, or if not set, the image of the most recent production using this tag (if available).\n\n"
         "Translated fields (`name`, `excerpt`, `short_description`, `url_title`) are "
         "returned as language-code dictionaries "
         '(e.g. {"en": "Contemporary", "fr": "Contemporain"}).'
@@ -108,7 +105,6 @@ _TAG_RETRIEVE = extend_schema(
     summary="Retrieve a tag",
     description=(
         "Returns the full representation of a single **Tag**.\n\n"
-        "The `image` field contains the uploaded image for the tag, or if not set, the image of the most recent production using this tag (if available).\n\n"
         "Translated fields are returned as language-code dictionaries "
         '(e.g. {"en": "Contemporary", "fr": "Contemporain"}).'
     ),

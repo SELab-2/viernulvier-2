@@ -86,8 +86,11 @@ class TagViewSet(ApiModelViewSet):
             Prefetch(
                 "translations",
                 queryset=TagTranslation.objects.select_related("language"),
-            )
+            ),
+            "media_gallery__media_items__translations__language",
+            "media_gallery__media_items__crops",
         )
+        .select_related("media_gallery")
         .order_by("id")
     )
 

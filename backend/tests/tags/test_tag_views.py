@@ -132,7 +132,7 @@ class TestTagViewSetList(TestCase):
             "source",
             "type",
             "is_enabled",
-            "image",
+            "media_gallery",
             "display_name",
             "display_short_description",
             "display_excerpt",

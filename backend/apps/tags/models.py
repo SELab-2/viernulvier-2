@@ -10,17 +10,11 @@ Tags are classification labels that can be attached to productions:
   and URL title for a specific language.
 """
 
-from django.core.exceptions import ValidationError
-from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 
-from apps.core.media_validation import (
-    ALLOWED_IMAGE_MIME_TYPES,
-    MAX_MEDIA_FILE_SIZE_BYTES,
-    validate_media_file,
-)
 from apps.core.models import BaseModel
 from apps.languages.models import Language
+from apps.media_library.models import MediaGallery
 
 
 class Tag(BaseModel):
@@ -65,27 +59,15 @@ class Tag(BaseModel):
         db_comment="Type/category of the tag.",
     )
 
-    image = models.ImageField(
-        upload_to="tag_images/",
+    media_gallery = models.ForeignKey(
+        MediaGallery,
         null=True,
         blank=True,
-        help_text="Upload an image for this tag.",
-        db_comment="Optional image for the tag.",
+        on_delete=models.SET_NULL,
+        related_name="tags",
+        help_text="Media gallery associated with this tag.",
+        db_comment="Media gallery associated with this tag.",
     )
-
-    def clean(self) -> None:
-        """Validate uploaded image files."""
-        super().clean()
-        uploaded_image = getattr(self.image, "_file", None)
-        if isinstance(uploaded_image, UploadedFile):
-            try:
-                validate_media_file(
-                    uploaded_image,
-                    allowed_mime_types=ALLOWED_IMAGE_MIME_TYPES,
-                    max_file_size=MAX_MEDIA_FILE_SIZE_BYTES,
-                )
-            except ValueError as exc:
-                raise ValidationError({"image": str(exc)}) from exc
 
     class Meta(BaseModel.Meta):
         db_table = "tag"

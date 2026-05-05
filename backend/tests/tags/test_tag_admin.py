@@ -19,6 +19,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
+from apps.media_library.models import MediaGallery, MediaItem
 from apps.tags.admin import TagAdmin, TagTranslationInline
 from apps.tags.models import Tag, TagTranslation
 from tests.factories.tag import TagFactory
@@ -141,3 +142,42 @@ class TestTagAdminFunctional(TestCase):
     def test_add_form_returns_200(self) -> None:
         url = reverse("admin:tags_tag_add")
         assert self.client.get(url).status_code == 200
+
+
+class TestTagAdminMediaItemsAdmin(TestCase):
+    def setUp(self) -> None:
+        self.admin = TagAdmin(Tag, admin.site)
+
+    def test_media_items_admin_without_gallery_returns_dash(self) -> None:
+        tag = TagFactory.create(media_gallery=None)
+
+        assert self.admin.media_items_admin(tag) == "-"
+
+    def test_media_items_admin_with_empty_gallery_shows_add_link(self) -> None:
+        gallery = MediaGallery.objects.create(name="Tag gallery")
+        tag = TagFactory.create(media_gallery=gallery)
+
+        html = str(self.admin.media_items_admin(tag))
+
+        assert "No images in gallery." in html
+        assert "Add image" in html
+        assert reverse("admin:media_library_mediaitem_add") in html
+        assert f"?gallery={gallery.id}" in html
+
+    def test_media_items_admin_with_items_shows_item_links_and_add_link(self) -> None:
+        gallery = MediaGallery.objects.create(name="Tag gallery")
+        item = MediaItem.objects.create(
+            gallery=gallery,
+            type=MediaItem.MediaItemType.IMAGE,
+            format="image/jpeg",
+            original_filename="poster.jpg",
+            position=0,
+        )
+        tag = TagFactory.create(media_gallery=gallery)
+
+        html = str(self.admin.media_items_admin(tag))
+
+        assert "poster.jpg" in html
+        assert reverse("admin:media_library_mediaitem_change", args=(item.id,)) in html
+        assert "Add image to gallery" in html
+        assert f"?gallery={gallery.id}" in html
