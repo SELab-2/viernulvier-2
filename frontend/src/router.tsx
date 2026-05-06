@@ -5,6 +5,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from '
 
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
+import { NotificationProvider } from './contexts/NotificationContext'
 import BlogDetailPage from './pages/BlogDetailPage'
 import BlogsPage from './pages/BlogsPage'
 import HomePage from './pages/HomePage'
@@ -201,15 +202,17 @@ const Router = ({ mode, onToggleMode }: ModeToggleProps) => {
 
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route
-          path="/:lang/*"
-          element={<LocalizedLayout mode={mode} onToggleMode={onToggleMode} />}
-        />
-        <Route path="/" element={<Navigate to={defaultRoot} replace />} />
-        <Route path="*" element={<LanguagePathRedirect />} />
-      </Routes>
+      <NotificationProvider>
+        <ScrollToTop />
+        <Routes>
+          <Route
+            path="/:lang/*"
+            element={<LocalizedLayout mode={mode} onToggleMode={onToggleMode} />}
+          />
+          <Route path="/" element={<Navigate to={defaultRoot} replace />} />
+          <Route path="*" element={<LanguagePathRedirect />} />
+        </Routes>
+      </NotificationProvider>
     </BrowserRouter>
   )
 }
