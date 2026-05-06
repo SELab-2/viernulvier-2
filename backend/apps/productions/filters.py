@@ -1,7 +1,9 @@
 """Filters for the Productions app."""
 
-import django_filters
+from datetime import datetime
+
 from django.db.models.functions import Now
+import django_filters
 
 from apps.core.filters import BaseModelFilter
 
@@ -42,10 +44,10 @@ class ProductionFilter(BaseModelFilter):
         Case-insensitive substring match across all translated artist names
         (e.g. ``?artist_name=toneelschuur``).
     ``first_event_start_after``
-        ISO 8601 datetime - returns productions with events starting on or 
+        ISO 8601 datetime - returns productions with events starting on or
         after this time (only considers events that have already ended).
     ``first_event_start_before``
-        ISO 8601 datetime - returns productions with events starting on or 
+        ISO 8601 datetime - returns productions with events starting on or
         before this time (only considers events that have already ended).
     """
 
@@ -91,33 +93,27 @@ class ProductionFilter(BaseModelFilter):
             return queryset.exclude(media_gallery__isnull=True)
         return queryset.filter(media_gallery__isnull=True)
 
-    def filter_first_event_start_after(self, queryset: Production, name: str, value) -> Production:
+    def filter_first_event_start_after(self, queryset: Production, _name: str, value: datetime | None) -> Production:
         """Filter productions with events starting on or after a given datetime.
-        
-        Only considers events that have already ended (ends_at <= Now()).
-        This ensures consistency with the queryset-level event filtering,
-        making date range filters work correctly when combined with other filters.
-        """
-        if value is None:
-            return queryset
-        return queryset.filter(
-            events__starts_at__gte=value,
-            events__ends_at__lte=Now()
-        ).distinct()
 
-    def filter_first_event_start_before(self, queryset: Production, name: str, value) -> Production:
-        """Filter productions with events starting on or before a given datetime.
-        
         Only considers events that have already ended (ends_at <= Now()).
         This ensures consistency with the queryset-level event filtering,
         making date range filters work correctly when combined with other filters.
         """
         if value is None:
             return queryset
-        return queryset.filter(
-            events__starts_at__lte=value,
-            events__ends_at__lte=Now()
-        ).distinct()
+        return queryset.filter(events__starts_at__gte=value, events__ends_at__lte=Now()).distinct()
+
+    def filter_first_event_start_before(self, queryset: Production, _name: str, value: datetime | None) -> Production:
+        """Filter productions with events starting on or before a given datetime.
+
+        Only considers events that have already ended (ends_at <= Now()).
+        This ensures consistency with the queryset-level event filtering,
+        making date range filters work correctly when combined with other filters.
+        """
+        if value is None:
+            return queryset
+        return queryset.filter(events__starts_at__lte=value, events__ends_at__lte=Now()).distinct()
 
     def _extract_multi_id_values(self, name: str, value: str | None) -> list[int]:
         """Return deduplicated IDs from repeated and comma-separated query values."""
