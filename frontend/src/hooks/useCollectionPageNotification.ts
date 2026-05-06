@@ -12,7 +12,7 @@
  *   }
  */
 
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useNotification } from '../contexts/notificationContextShared'
@@ -44,16 +44,16 @@ export const useCollectionPageNotification = (
     floatingErrorMessageRef.current = t(messageKey)
   }, [messageKey, t])
 
-  const showFloatingAlert = () => {
+  const showFloatingAlert = useCallback(() => {
     contextShowFloatingAlert({
       message: floatingErrorMessageRef.current,
       severity: ALERT_SEVERITIES.error,
     })
-  }
+  }, [contextShowFloatingAlert])
 
-  const clearFloatingAlert = () => {
+  const clearFloatingAlert = useCallback(() => {
     contextClearFloatingAlert()
-  }
+  }, [contextClearFloatingAlert])
 
   return {
     showFloatingAlert,
