@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
-import EntityView from '../components/entity/EntityView'
+import CollectionView from '../components/CollectionView'
 import FilterPanel from '../components/filter-panel/FilterPanel'
 import FloatingAlert from '../components/FloatingAlert'
 import ProductionGridCard from '../components/productions/ProductionGridCard'
@@ -311,7 +311,7 @@ const ProductionsPage = () => {
 
   // Main results content.
   const resultsContent = (
-    <EntityView
+    <CollectionView
       items={productions}
       layout={viewMode}
       getKey={(production) => production.id}

@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next'
 
 import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 import CollectionPageLayout from '../components/CollectionPageLayout'
+import CollectionView from '../components/CollectionView'
 import FloatingAlert from '../components/FloatingAlert'
-import MediaFileView from '../components/media-files/MediaFileView'
+import MediaFileGridCard from '../components/media-files/MediaFileGridCard'
+import MediaFileListCard from '../components/media-files/MediaFileListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import { ApiError } from '../services/ApiTypes'
 import { getMediaFiles } from '../services/media_files/MediaFiles'
@@ -157,7 +159,15 @@ const MediaFilesPage = () => {
     setSearchValue(nextQuery)
   }
 
-  const resultsContent = <MediaFileView mediaFiles={mediaFiles} layout={viewMode} />
+  const resultsContent = (
+    <CollectionView
+      items={mediaFiles}
+      layout={viewMode}
+      getKey={(mediaFile) => mediaFile.id}
+      renderListItem={(mediaFile) => <MediaFileListCard mediaFile={mediaFile} />}
+      renderGridItem={(mediaFile) => <MediaFileGridCard mediaFile={mediaFile} />}
+    />
+  )
 
   return (
     <>

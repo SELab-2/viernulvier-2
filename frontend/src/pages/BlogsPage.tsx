@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 
-import BlogView from '../components/BlogView'
+import BlogGridCard from '../components/BlogGridCard'
+import BlogListCard from '../components/BlogListCard'
+import CollectionView from '../components/CollectionView'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
@@ -188,7 +190,15 @@ const BlogsPage = () => {
         emptyTitle={t('blogs.home.empty.title')}
         emptyDescription={t('blogs.home.empty.description')}
         hasResults={blogs.length > 0}
-        resultsContent={<BlogView blogs={blogs} layout={viewMode} />}
+        resultsContent={
+          <CollectionView
+            items={blogs}
+            layout={viewMode}
+            getKey={(blog) => blog.id}
+            renderListItem={(blog) => <BlogListCard blog={blog} />}
+            renderGridItem={(blog) => <BlogGridCard blog={blog} />}
+          />
+        }
         page={page}
         pageSize={PAGE_SIZE}
         totalItems={totalCount}

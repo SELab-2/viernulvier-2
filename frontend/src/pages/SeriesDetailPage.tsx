@@ -11,7 +11,9 @@ import { Navigate, useLocation, useParams } from 'react-router-dom'
 
 import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 import Breadcrumbs from '../components/production/Breadcrumbs'
-import ProductionView from '../components/ProductionView'
+import CollectionView from '../components/CollectionView'
+import ProductionGridCard from '../components/productions/ProductionGridCard'
+import ProductionListCard from '../components/productions/ProductionListCard'
 import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
 import { getProductions } from '../services/productions/Productions'
@@ -227,7 +229,17 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                       pl: { xs: 3, md: 0 },
                     }}
                   >
-                    <ProductionView productions={yearProductions} layout="list" />
+                    <CollectionView
+                      items={yearProductions}
+                      layout="list"
+                      getKey={(production) => production.id}
+                      renderListItem={(production) => (
+                        <ProductionListCard production={production} />
+                      )}
+                      renderGridItem={(production) => (
+                        <ProductionGridCard production={production} />
+                      )}
+                    />
                   </Box>
                 </Stack>
               ))}

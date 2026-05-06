@@ -16,27 +16,25 @@ jest.mock('@mui/material', () => {
   }
 })
 
-jest.mock('../../../components/media-files/MediaFileGrid', () => ({
-  __esModule: true,
-  default: ({ mediaFiles }: { mediaFiles: Array<{ id: number }> }) => (
-    <div data-testid="grid-view">grid:{mediaFiles.length}</div>
-  ),
-}))
+import CollectionView from '../../../components/CollectionView'
 
-jest.mock('../../../components/media-files/MediaFileList', () => ({
-  __esModule: true,
-  default: ({ mediaFiles }: { mediaFiles: Array<{ id: number }> }) => (
-    <div data-testid="list-view">list:{mediaFiles.length}</div>
-  ),
-}))
-
-import MediaFileView from '../../../components/media-files/MediaFileView'
-
-describe('MediaFileView', () => {
+describe('CollectionView (media files)', () => {
   it('renders the requested list layout on desktop', () => {
     useMediaQueryMock.mockReturnValue(false)
 
-    render(<MediaFileView mediaFiles={[{ id: 1 } as never]} layout="list" />)
+    render(
+      <CollectionView
+        items={[{ id: 1 } as never]}
+        layout="list"
+        getKey={(item: { id: number }) => item.id}
+        renderListItem={(item: { id: number }) => (
+          <div data-testid="list-view">list:{item.id}</div>
+        )}
+        renderGridItem={(item: { id: number }) => (
+          <div data-testid="grid-view">grid:{item.id}</div>
+        )}
+      />,
+    )
 
     expect(screen.getByTestId('list-view')).toHaveTextContent('list:1')
   })
@@ -44,15 +42,38 @@ describe('MediaFileView', () => {
   it('renders the grid layout when explicitly requested on desktop', () => {
     useMediaQueryMock.mockReturnValue(false)
 
-    render(<MediaFileView mediaFiles={[{ id: 1 }, { id: 2 }] as never} layout="grid" />)
+    render(
+      <CollectionView
+        items={[{ id: 1 }, { id: 2 }] as never}
+        layout="grid"
+        getKey={(item: { id: number }) => item.id}
+        renderListItem={(item: { id: number }) => (
+          <div data-testid="list-view">list:{item.id}</div>
+        )}
+        renderGridItem={(item: { id: number }) => (
+          <div data-testid="grid-view">grid:{item.id}</div>
+        )}
+      />,
+    )
 
-    expect(screen.getByTestId('grid-view')).toHaveTextContent('grid:2')
+    expect(screen.getByTestId('grid-view')).toHaveTextContent('grid:1')
   })
 
   it('defaults to list layout on desktop when no layout is provided', () => {
     useMediaQueryMock.mockReturnValue(false)
 
-    render(<MediaFileView mediaFiles={[{ id: 1 } as never]} />)
+    render(
+      <CollectionView
+        items={[{ id: 1 } as never]}
+        getKey={(item: { id: number }) => item.id}
+        renderListItem={(item: { id: number }) => (
+          <div data-testid="list-view">list:{item.id}</div>
+        )}
+        renderGridItem={(item: { id: number }) => (
+          <div data-testid="grid-view">grid:{item.id}</div>
+        )}
+      />,
+    )
 
     expect(screen.getByTestId('list-view')).toHaveTextContent('list:1')
   })
@@ -60,7 +81,19 @@ describe('MediaFileView', () => {
   it('forces grid layout on small screens even when list is requested', () => {
     useMediaQueryMock.mockReturnValue(true)
 
-    render(<MediaFileView mediaFiles={[{ id: 1 } as never]} layout="list" />)
+    render(
+      <CollectionView
+        items={[{ id: 1 } as never]}
+        layout="list"
+        getKey={(item: { id: number }) => item.id}
+        renderListItem={(item: { id: number }) => (
+          <div data-testid="list-view">list:{item.id}</div>
+        )}
+        renderGridItem={(item: { id: number }) => (
+          <div data-testid="grid-view">grid:{item.id}</div>
+        )}
+      />,
+    )
 
     expect(screen.getByTestId('grid-view')).toBeInTheDocument()
     expect(screen.queryByTestId('list-view')).not.toBeInTheDocument()

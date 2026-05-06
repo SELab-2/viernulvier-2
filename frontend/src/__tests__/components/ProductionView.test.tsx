@@ -2,21 +2,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-import ProductionView from '../../components/ProductionView'
-
-import type { Production } from '../../types/Productions'
-
-// Mock child layout components so tests only cover ProductionView's routing logic,
-// not the rendering details of the cards themselves.
-jest.mock('../../components/ProductionGrid', () => ({
-  __esModule: true,
-  default: () => <div data-testid="production-grid" />,
-}))
-
-jest.mock('../../components/ProductionList', () => ({
-  __esModule: true,
-  default: () => <div data-testid="production-list" />,
-}))
+import CollectionView, { type CollectionViewProps } from '../../components/CollectionView'
 
 const accentTheme = createTheme({
   palette: {
@@ -25,38 +11,15 @@ const accentTheme = createTheme({
   },
 })
 
-const baseProduction = (overrides: Partial<Production> = {}): Production => ({
-  id: 1,
-  attendance_mode: 'offline',
-  performer_type: 'solo',
-  media_gallery: { id: 0, name: null, media_items: [] },
-  uit_database_type: null,
-  display_title: null,
-  display_artist_name: null,
-  first_event_start: null,
-  last_event_end: null,
-  title: { nl: 'Voorstelling', en: 'Production' },
-  artist_name: { nl: 'Artiest', en: 'Artist' },
-  tagline: {},
-  teaser: {},
-  description: {},
-  tags: [],
-  genres: [],
-  events: [],
-  ...overrides,
-})
-
-const renderView = (props: Parameters<typeof ProductionView>[0]) =>
+const renderView = (props: CollectionViewProps<number>) =>
   render(
     <MemoryRouter>
       <ThemeProvider theme={accentTheme}>
-        <ProductionView {...props} />
+        <CollectionView {...props} />
       </ThemeProvider>
     </MemoryRouter>,
   )
 
-// setupTests.ts mocks window.matchMedia with matches: false, so useMediaQuery returns
-// false by default (wide viewport). Override per-test to simulate a narrow viewport.
 const mockNarrowViewport = () => {
   window.matchMedia = jest.fn().mockImplementation((query: string) => ({
     matches: true,
@@ -87,54 +50,33 @@ afterEach(() => {
   mockWideViewport()
 })
 
-describe('ProductionView', () => {
-  describe('wide viewport', () => {
-    it('renders the list layout when layout="list"', () => {
-      renderView({ productions: [baseProduction()], layout: 'list' })
-
-      expect(screen.getByTestId('production-list')).toBeInTheDocument()
-      expect(screen.queryByTestId('production-grid')).not.toBeInTheDocument()
+describe('CollectionView', () => {
+  it('applies transformItems before rendering list items', () => {
+    renderView({
+      items: [1, 2, 3],
+      layout: 'list',
+      getKey: (item) => item,
+      renderListItem: (item) => <div data-testid="list-item">{item}</div>,
+      renderGridItem: (item) => <div data-testid="grid-item">{item}</div>,
+      transformItems: (items) => [...items].sort((a, b) => b - a),
     })
 
-    it('renders the grid layout when layout="grid"', () => {
-      renderView({ productions: [baseProduction()], layout: 'grid' })
-
-      expect(screen.getByTestId('production-grid')).toBeInTheDocument()
-      expect(screen.queryByTestId('production-list')).not.toBeInTheDocument()
-    })
-
-    it('defaults to the list layout when layout is omitted', () => {
-      renderView({ productions: [baseProduction()] })
-
-      expect(screen.getByTestId('production-list')).toBeInTheDocument()
-      expect(screen.queryByTestId('production-grid')).not.toBeInTheDocument()
-    })
+    const listItems = screen.getAllByTestId('list-item').map((node) => node.textContent)
+    expect(listItems).toEqual(['3', '2', '1'])
   })
 
-  describe('narrow viewport (below md breakpoint)', () => {
-    beforeEach(() => {
-      mockNarrowViewport()
+  it('forces the grid layout on narrow viewports', () => {
+    mockNarrowViewport()
+
+    renderView({
+      items: [1],
+      layout: 'list',
+      getKey: (item) => item,
+      renderListItem: (item) => <div data-testid="list-item">{item}</div>,
+      renderGridItem: (item) => <div data-testid="grid-item">{item}</div>,
     })
 
-    it('always renders the grid layout regardless of layout="list"', () => {
-      renderView({ productions: [baseProduction()], layout: 'list' })
-
-      expect(screen.getByTestId('production-grid')).toBeInTheDocument()
-      expect(screen.queryByTestId('production-list')).not.toBeInTheDocument()
-    })
-
-    it('renders the grid layout when layout="grid"', () => {
-      renderView({ productions: [baseProduction()], layout: 'grid' })
-
-      expect(screen.getByTestId('production-grid')).toBeInTheDocument()
-      expect(screen.queryByTestId('production-list')).not.toBeInTheDocument()
-    })
-
-    it('overrides the default list layout and renders the grid', () => {
-      renderView({ productions: [baseProduction()] })
-
-      expect(screen.getByTestId('production-grid')).toBeInTheDocument()
-      expect(screen.queryByTestId('production-list')).not.toBeInTheDocument()
-    })
+    expect(screen.getByTestId('grid-item')).toBeInTheDocument()
+    expect(screen.queryByTestId('list-item')).not.toBeInTheDocument()
   })
 })

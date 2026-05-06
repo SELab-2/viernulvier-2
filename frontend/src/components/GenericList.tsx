@@ -6,11 +6,12 @@ export interface GenericListProps<T> {
   items: T[]
   getKey: (item: T) => Key
   renderItem: (item: T) => ReactNode
+  spacing?: number
 }
 
-const GenericList = <T,>({ items, getKey, renderItem }: GenericListProps<T>) => {
+const GenericList = <T,>({ items, getKey, renderItem, spacing = 2 }: GenericListProps<T>) => {
   return (
-    <Stack spacing={2}>
+    <Stack spacing={spacing}>
       {items.map((item) => (
         <Box key={getKey(item)}>{renderItem(item)}</Box>
       ))}

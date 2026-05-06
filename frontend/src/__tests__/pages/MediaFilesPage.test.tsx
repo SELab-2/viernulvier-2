@@ -37,11 +37,11 @@ jest.mock('../../services/media_files/MediaFiles', () => ({
   getMediaFiles: (params: unknown) => getMediaFilesMock(params),
 }))
 
-jest.mock('../../components/media-files/MediaFileView', () => ({
+jest.mock('../../components/CollectionView', () => ({
   __esModule: true,
-  default: ({ mediaFiles, layout }: { mediaFiles: Array<{ id: number }>; layout: string }) => (
-    <div data-testid="media-file-view">
-      {layout}:{mediaFiles.map((file) => file.id).join(',')}
+  default: ({ items, layout }: { items: Array<{ id: number }>; layout: string }) => (
+    <div data-testid="collection-view">
+      {layout}:{items.map((item) => item.id).join(',')}
     </div>
   ),
 }))
@@ -141,7 +141,7 @@ describe('MediaFilesPage', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByTestId('media-file-view')).toHaveTextContent('list:11,22')
+      expect(screen.getByTestId('collection-view')).toHaveTextContent('list:11,22')
     })
 
     expect(screen.getByTestId('result-count')).toHaveTextContent('2')
@@ -258,7 +258,7 @@ describe('MediaFilesPage', () => {
     fireEvent.click(screen.getByText('retry'))
 
     await waitFor(() => expect(getMediaFilesMock).toHaveBeenCalledTimes(2))
-    expect(screen.getByTestId('media-file-view')).toHaveTextContent('list:1')
+    expect(screen.getByTestId('collection-view')).toHaveTextContent('list:1')
   })
 
   it('shows the fallback error and floating alert for a non-ApiError failure', async () => {

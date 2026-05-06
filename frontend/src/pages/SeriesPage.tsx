@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
-import EntityView from '../components/entity/EntityView'
+import CollectionView from '../components/CollectionView'
 import FloatingAlert from '../components/FloatingAlert'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import SeriesGridCard from '../components/series/SeriesGridCard'
@@ -220,7 +220,7 @@ const SeriesPage = () => {
 
   // Reuse the shared entity view to switch between list and grid cards.
   const resultsContent = (
-    <EntityView
+    <CollectionView
       items={pagedSeries}
       layout={viewMode}
       getKey={(tag) => tag.id}
