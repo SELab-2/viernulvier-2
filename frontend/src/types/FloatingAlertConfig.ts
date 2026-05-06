@@ -11,7 +11,7 @@ export type FloatingAlertProps = {
     vertical: 'top' | 'bottom'
     horizontal: 'left' | 'center' | 'right'
   }
-  stackOffsetPx?: number
+  disableFloatingWrapper?: boolean
 }
 
 export const ALERT_SEVERITIES = {
