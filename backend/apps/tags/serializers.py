@@ -6,10 +6,10 @@ as language-code dictionaries
 (e.g. {"en": "Contemporary", "fr": "Contemporain"}).
 """
 
+from django.core.files.storage import default_storage
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
-from apps.media_library.serializers import MediaGallerySerializer
 
 from .models import Tag
 
@@ -112,10 +112,12 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         ),
     )
 
-    media_gallery = MediaGallerySerializer(
-        read_only=True,
-        allow_null=True,
-        help_text="Nested media gallery linked to this tag.",
+    image = serializers.SerializerMethodField(
+        help_text=(
+            "URL of the uploaded image for this tag. "
+            "If not set, falls back to the image of the most recent production using this tag. "
+            "Read-only."
+        ),
     )
 
     class Meta:
@@ -126,6 +128,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "source",
             "type",
             "is_enabled",
+            "image",
             "display_name",
             "display_short_description",
             "display_excerpt",
@@ -136,7 +139,6 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "excerpt",
             "short_description",
             "url_title",
-            "media_gallery",
         ]
         read_only_fields = [
             "id",
@@ -149,7 +151,7 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
             "first_production_start",
             "last_production_end",
             "url_title",
-            "media_gallery",
+            "image",
         ]
         extra_kwargs = {
             "url": {
@@ -201,3 +203,35 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     def get_display_url_title(self, obj: Tag) -> str | None:
         """Return the base-language URL title (with fallback)."""
         return self.get_base_translated_value(obj, field_name="url_title")
+
+    def get_image(self, obj: Tag) -> str | None:
+        """Return the absolute URL of the tag's uploaded image.
+
+        If the Tag has no `image`, fall back to the image of the most
+        recent Production that uses this Tag and has a media gallery with
+        at least one media item crop image.
+
+        The fallback value is expected to be pre-annotated in queryset
+        as `fallback_crop_path` by TagViewSet, which keeps list/detail
+        responses free from N+1 queries.
+        """
+        request = self.context.get("request") if hasattr(self, "context") else None
+
+        # Direct image on the tag
+        if obj.image:
+            try:
+                url = obj.image.url
+            except Exception:
+                return None
+            return request.build_absolute_uri(url) if request else url
+
+        fallback_crop_path = getattr(obj, "fallback_crop_path", None)
+        if not fallback_crop_path:
+            return None
+
+        try:
+            url = default_storage.url(fallback_crop_path)
+        except Exception:
+            return None
+
+        return request.build_absolute_uri(url) if request else url
