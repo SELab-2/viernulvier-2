@@ -1,5 +1,5 @@
 import { useMediaQuery, useTheme } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 
@@ -11,10 +11,12 @@ import ProductionGridCard from '../components/productions/ProductionGridCard'
 import ProductionListCard from '../components/productions/ProductionListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
+import { useNotification } from '../contexts/notificationContextShared'
 import { ApiError } from '../services/ApiTypes'
 import { getGenres } from '../services/genres/Genres'
 import { getProductions } from '../services/productions/Productions'
 import { getTags } from '../services/tags/Tags'
+import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 
 import type { Genre } from '../types/Genres'
 import type { Production } from '../types/Productions'
@@ -97,10 +99,7 @@ const ProductionsPage = () => {
   // Type for optional navigation state used to show a one-time floating alert when arriving
   type NavState = { floatingAlert?: { open?: boolean; message?: string } }
   const nav = location as { state?: NavState }
-  const navFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
-  const navFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
-  const initialFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
-  const initialFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
+  const { showFloatingAlert, clearFloatingAlert, isFallback } = useNotification()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
@@ -138,10 +137,6 @@ const ProductionsPage = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(initialFloatingAlertOpen)
-  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(
-    initialFloatingAlertMessage,
-  )
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
   const [isSearchDraftDirty, setIsSearchDraftDirty] = useState(false)
@@ -151,6 +146,7 @@ const ProductionsPage = () => {
     ? t('productions.home.error.fallback')
     : errorMessage
   const floatingErrorMessage = t('productions.home.error.notification')
+  const floatingErrorMessageRef = useRef(floatingErrorMessage)
 
   // Memoized value for the API ordering parameter to avoid unnecessary recalculations on every render.
   const ordering = useMemo(
@@ -162,6 +158,10 @@ const ProductionsPage = () => {
   const selectedGenres = selectedGenreIds.join(',')
   const selectedTags = selectedTagIds.join(',')
   const displayedSearchValue = isSearchDraftDirty ? searchDraft : searchValue
+
+  useEffect(() => {
+    floatingErrorMessageRef.current = floatingErrorMessage
+  }, [floatingErrorMessage])
 
   useEffect(() => {
     let isActive = true
@@ -201,8 +201,7 @@ const ProductionsPage = () => {
       setIsLoading(true)
       setErrorMessage(null)
       setShowFallbackError(false)
-      setIsFloatingErrorOpen(false)
-      setFloatingAlertMessage(null)
+      clearFloatingAlert()
 
       try {
         const response = await getProductions({
@@ -240,8 +239,10 @@ const ProductionsPage = () => {
           setErrorMessage(null)
           setShowFallbackError(true)
         }
-        setIsFloatingErrorOpen(true)
-        setFloatingAlertMessage(null)
+        showFloatingAlert({
+          message: floatingErrorMessageRef.current,
+          severity: ALERT_SEVERITIES.error,
+        })
         setProductions([])
         setTotalCount(0)
       } finally {
@@ -257,6 +258,7 @@ const ProductionsPage = () => {
       isActive = false
     }
   }, [
+    clearFloatingAlert,
     firstEventStartAfter,
     firstEventStartBefore,
     ordering,
@@ -267,19 +269,13 @@ const ProductionsPage = () => {
     selectedGenres,
     selectedPerformerType,
     selectedTags,
+    showFloatingAlert,
   ])
 
   // Handler for retrying the data fetch when an error occurs, triggered by the retry button in the UI.
   const onRetry = () => {
-    setIsFloatingErrorOpen(false)
-    setFloatingAlertMessage(null)
+    clearFloatingAlert()
     setRetryKey((value) => value + 1)
-  }
-
-  // Handler for closing the floating error alert.
-  const onFloatingErrorClose = () => {
-    setIsFloatingErrorOpen(false)
-    setFloatingAlertMessage(null)
   }
 
   // Handler for submitting the search form, which updates the searchValue and triggers a new data fetch
@@ -394,12 +390,14 @@ const ProductionsPage = () => {
         onPageChange={setPage}
       />
 
-      <FloatingAlert
-        open={isFloatingErrorOpen || navFloatingAlertOpen}
-        onClose={onFloatingErrorClose}
-        severity="error"
-        message={navFloatingAlertMessage ?? floatingAlertMessage ?? floatingErrorMessage}
-      />
+      {isFallback && nav.state?.floatingAlert?.open ? (
+        <FloatingAlert
+          open
+          onClose={() => undefined}
+          message={nav.state.floatingAlert.message ?? ''}
+          severity={ALERT_SEVERITIES.error}
+        />
+      ) : null}
     </>
   )
 }

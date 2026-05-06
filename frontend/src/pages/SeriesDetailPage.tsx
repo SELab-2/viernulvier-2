@@ -52,7 +52,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     i18n.language,
     i18n.resolvedLanguage,
   )
-  const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
+  const seriesPath = toLocalizedPath('/series', currentLanguage)
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
@@ -133,7 +133,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return <SeriesDetailPageSkeleton />
   }
   if (error || !seriesTag) {
-    return <Navigate to={notFoundPath} replace />
+    return <Navigate to={seriesPath} replace />
   }
 
   const lang = i18n.language.startsWith('en') ? 'en' : 'nl'
@@ -248,10 +248,10 @@ const SeriesDetailPage = () => {
     i18n.language,
     i18n.resolvedLanguage,
   )
-  const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
+  const seriesPath = toLocalizedPath('/series', currentLanguage)
 
   if (!id || Number.isNaN(Number(id))) {
-    return <Navigate to={notFoundPath} replace />
+    return <Navigate to={seriesPath} replace />
   }
 
   return <SeriesDetailContent key={id} id={id} />

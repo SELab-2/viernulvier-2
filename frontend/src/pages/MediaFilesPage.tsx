@@ -7,8 +7,10 @@ import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
 import MediaFileView from '../components/media-files/MediaFileView'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
+import { useNotification } from '../contexts/notificationContextShared'
 import { ApiError } from '../services/ApiTypes'
 import { getMediaFiles } from '../services/media_files/MediaFiles'
+import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 
 import type { SearchSortDirection, SearchSortTarget } from '../components/searchbar/types'
 import type { MediaFile } from '../types/MediaFiles'
@@ -54,7 +56,7 @@ const MediaFilesPage = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
+  const { showFloatingAlert, clearFloatingAlert, isFallback } = useNotification()
   const [retryKey, setRetryKey] = useState(0)
   const [searchInputValue, setSearchInputValue] = useState(searchValue)
 
@@ -62,10 +64,14 @@ const MediaFilesPage = () => {
 
   const renderedErrorMessage = showFallbackError ? t('media.error.fallback') : errorMessage
   const floatingErrorMessage = t('media.error.notification')
+  const floatingErrorMessageRef = useRef(floatingErrorMessage)
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
     [sortTarget, sortDirection],
   )
+  useEffect(() => {
+    floatingErrorMessageRef.current = floatingErrorMessage
+  }, [floatingErrorMessage])
   useEffect(() => {
     const previousOrdering = previousOrderingRef.current
 
@@ -83,7 +89,7 @@ const MediaFilesPage = () => {
       setIsLoading(true)
       setErrorMessage(null)
       setShowFallbackError(false)
-      setIsFloatingErrorOpen(false)
+      clearFloatingAlert()
 
       try {
         const trimmedSearchValue = searchValue.trim()
@@ -116,7 +122,10 @@ const MediaFilesPage = () => {
           setShowFallbackError(true)
         }
 
-        setIsFloatingErrorOpen(true)
+        showFloatingAlert({
+          message: floatingErrorMessageRef.current,
+          severity: ALERT_SEVERITIES.error,
+        })
         setMediaFiles([])
         setTotalCount(0)
       } finally {
@@ -131,15 +140,11 @@ const MediaFilesPage = () => {
     return () => {
       isActive = false
     }
-  }, [ordering, page, retryKey, searchValue])
+  }, [clearFloatingAlert, ordering, page, retryKey, searchValue, showFloatingAlert])
 
   const onRetry = () => {
-    setIsFloatingErrorOpen(false)
+    clearFloatingAlert()
     setRetryKey((value) => value + 1)
-  }
-
-  const onFloatingErrorClose = () => {
-    setIsFloatingErrorOpen(false)
   }
 
   const onSearchSubmit = (value: string) => {
@@ -195,12 +200,14 @@ const MediaFilesPage = () => {
         paginationI18nKeyPrefix="media.pagination"
       />
 
-      <FloatingAlert
-        open={isFloatingErrorOpen}
-        onClose={onFloatingErrorClose}
-        severity="error"
-        message={floatingErrorMessage}
-      />
+      {isFallback ? (
+        <FloatingAlert
+          open={showFallbackError}
+          onClose={() => setShowFallbackError(false)}
+          message={floatingErrorMessage}
+          severity={ALERT_SEVERITIES.error}
+        />
+      ) : null}
     </>
   )
 }

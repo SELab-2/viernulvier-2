@@ -10,6 +10,7 @@ import Description from '../components/production/Description'
 import RelatedProductions from '../components/production/RelatedProductions'
 import { getBlog } from '../services/blogs/Blogs'
 import { tokens } from '../theme/tokens'
+import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 import { formatBlogPublishedDate } from '../utils/blogs'
 import { getLocalizedValue } from '../utils/localization'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
@@ -54,7 +55,9 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     if (Number.isNaN(parsed)) {
       const errMsg = t('blog.invalidId', 'Invalid blog ID')
       navigate(blogsPath, {
-        state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
+        state: {
+          floatingAlert: { open: true, message: errMsg, severity: ALERT_SEVERITIES.error },
+        },
       })
       return
     }
@@ -62,7 +65,9 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     const handleError = () => {
       const errMsg = t('blog.couldNotLoad', 'Could not load blog')
       navigate(blogsPath, {
-        state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
+        state: {
+          floatingAlert: { open: true, message: errMsg, severity: ALERT_SEVERITIES.error },
+        },
       })
     }
 

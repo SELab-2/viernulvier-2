@@ -15,6 +15,7 @@ import RelatedProductions from '../components/production/RelatedProductions'
 import { getBlogs } from '../services/blogs/Blogs'
 import { getProduction } from '../services/productions/Productions'
 import { tokens } from '../theme/tokens'
+import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 import { getLocalizedValue } from '../utils/localization'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 
@@ -84,7 +85,7 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     i18n.language,
     i18n.resolvedLanguage,
   )
-  const homePath = toLocalizedPath('/', currentLanguage)
+  const archivePath = toLocalizedPath('/archive', currentLanguage)
 
   const [prod, setProd] = useState<Production | null>(null)
   const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([])
@@ -95,8 +96,10 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
       const errMsg = t('productions.detail.error.invalidId', 'Invalid production ID')
-      navigate(homePath, {
-        state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
+      navigate(archivePath, {
+        state: {
+          floatingAlert: { open: true, message: errMsg, severity: ALERT_SEVERITIES.error },
+        },
       })
       return
     }
@@ -117,8 +120,14 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
         }
       } catch {
         const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
-        navigate(homePath, {
-          state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
+        navigate(archivePath, {
+          state: {
+            floatingAlert: {
+              open: true,
+              message: errMsg,
+              severity: ALERT_SEVERITIES.error,
+            },
+          },
         })
       } finally {
         setLoading(false)
@@ -126,7 +135,7 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     }
 
     fetchProduction()
-  }, [homePath, id, navigate, t])
+  }, [archivePath, id, navigate, t])
 
   // If the page is still loading, show a full-page skeleton.
   if (loading) {
