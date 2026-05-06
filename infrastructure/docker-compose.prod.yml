@@ -20,6 +20,20 @@ services:
     networks:
       - viernulvier
 
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - viernulvier
+
   backend:
     container_name: backend
     image: viernulvier/backend
@@ -44,6 +58,8 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       SECRET_KEY: ${SECRET_KEY}
       DOMAIN: ${DOMAIN}
@@ -51,6 +67,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_URL: redis://redis:6379/1
       VIERNULVIER_API_KEY: ${VIERNULVIER_API_KEY}
       PUBLIC_API_KEY: ${PUBLIC_API_KEY}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
@@ -130,6 +147,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
   static_files:
   media_files:
   frontend_build:
