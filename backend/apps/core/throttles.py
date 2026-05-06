@@ -1,5 +1,6 @@
 import hashlib
 
+from django.core.cache import caches
 from django.http import HttpRequest
 from rest_framework.throttling import SimpleRateThrottle
 
@@ -11,6 +12,8 @@ class PublicKeyThrottle(SimpleRateThrottle):
     X-Forwarded-For and REMOTE_ADDR automatically), combined with the
     User-Agent header to distinguish clients sharing the same IP.
     """
+
+    cache = caches["throttling"]
 
     def get_cache_key(self, request: HttpRequest, _view: any) -> str | None:
         """Generate a cache key based on the client's IP and User-Agent."""

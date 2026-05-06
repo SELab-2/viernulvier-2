@@ -5,6 +5,8 @@ Covers:
 - BaseAdmin class inheritance and configuration
 """
 
+from unittest.mock import MagicMock, patch
+
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.auth.models import User
@@ -91,3 +93,36 @@ class TestBaseAdmin(TestCase):
 
         assert queryset.model == User
         assert queryset.filter(username="u1").exists()
+
+    def test_save_model_clears_api_cache(self) -> None:
+        instance = BaseAdmin(User, admin.site)
+        request = self.factory.get("/admin/auth/user/")
+        obj = User(username="test-user")
+        form = MagicMock()
+
+        with patch("apps.core.admin.clear_api_cache") as clear_cache:
+            instance.save_model(request, obj, form, change=False)
+
+        clear_cache.assert_called_once()
+
+    def test_delete_model_clears_api_cache(self) -> None:
+        instance = BaseAdmin(User, admin.site)
+        request = self.factory.get("/admin/auth/user/")
+        obj = User.objects.create_user(username="delete-me", password="secret")
+
+        with patch("apps.core.admin.clear_api_cache") as clear_cache:
+            instance.delete_model(request, obj)
+
+        clear_cache.assert_called_once()
+
+    def test_delete_queryset_clears_api_cache(self) -> None:
+        instance = BaseAdmin(User, admin.site)
+        request = self.factory.get("/admin/auth/user/")
+        User.objects.create_user(username="delete-me-1", password="secret")
+        User.objects.create_user(username="delete-me-2", password="secret")
+        queryset = User.objects.filter(username__startswith="delete-me")
+
+        with patch("apps.core.admin.clear_api_cache") as clear_cache:
+            instance.delete_queryset(request, queryset)
+
+        clear_cache.assert_called_once()
