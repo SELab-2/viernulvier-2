@@ -56,8 +56,8 @@ describe('SeriesDetailPage', () => {
       <MemoryRouter initialEntries={[`/nl/reeksen/${id}`]}>
         <Routes>
           <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
+          <Route path="/:lang/reeksen" element={<div>SERIES PAGE</div>} />
           <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
-          <Route path="/:lang/not-found" element={<div>404 PAGE</div>} />
         </Routes>
       </MemoryRouter>,
     )
@@ -128,22 +128,22 @@ describe('SeriesDetailPage', () => {
     expect(screen.getByRole('button', { name: 'Reeksen' })).toBeInTheDocument()
   })
 
-  it('redirects to /404 when tag is not found', async () => {
+  it('redirects to the series tab when tag is not found', async () => {
     mockedGetTag.mockResolvedValue(null)
     mockedGetProductions.mockResolvedValue({ results: [] })
 
     renderPage()
 
-    expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
+    expect(await screen.findByText('SERIES PAGE')).toBeInTheDocument()
   })
 
-  it('redirects to /404 when API throws error', async () => {
+  it('redirects to the series tab when API throws error', async () => {
     mockedGetTag.mockRejectedValue(new Error('API error'))
     mockedGetProductions.mockResolvedValue({ results: [] })
 
     renderPage()
 
-    expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
+    expect(await screen.findByText('SERIES PAGE')).toBeInTheDocument()
   })
 
   it('shows empty state when no productions exist', async () => {
@@ -167,11 +167,11 @@ describe('SeriesDetailPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('redirects to /404 when id is invalid', async () => {
+  it('redirects to the series tab when id is invalid', async () => {
     renderPage('invalid')
 
     await waitFor(() => {
-      expect(screen.getByText('404 PAGE')).toBeInTheDocument()
+      expect(screen.getByText('SERIES PAGE')).toBeInTheDocument()
     })
   })
 

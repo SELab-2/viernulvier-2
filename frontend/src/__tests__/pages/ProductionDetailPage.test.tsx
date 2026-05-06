@@ -87,13 +87,13 @@ describe('ProductionDetailPage', () => {
     setMatchMediaMatches(false)
   })
 
-  it('shows invalid id error and navigates to home for non-numeric ID', async () => {
+  it('shows invalid id error and navigates to archive for non-numeric ID', async () => {
     mockUseParams.mockReturnValue({ id: 'abc' })
 
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/nl', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl/archief', {
         state: {
           floatingAlert: {
             open: true,
@@ -267,7 +267,7 @@ describe('ProductionDetailPage', () => {
     expect(mockNavigate).not.toHaveBeenCalled()
   })
 
-  it('shows load failed if getProduction throws and navigates to home', async () => {
+  it('shows load failed if getProduction throws and navigates to archive', async () => {
     mockUseParams.mockReturnValue({ id: '42' })
     mockedGetProduction.mockRejectedValue(new Error('network error'))
     mockedGetBlogs.mockResolvedValue({ count: 0, next: null, previous: null, results: [] })
@@ -275,7 +275,7 @@ describe('ProductionDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/nl', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl/archief', {
         state: {
           floatingAlert: {
             open: true,
