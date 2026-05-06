@@ -429,7 +429,9 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         # Lazy import, since importing at the top level would cause a circular import between the serializers.
         from apps.events.serializers import NestedEventSerializer  # noqa: PLC0415
 
-        events = obj.events.filter(ends_at__lte=Now())
+        events = getattr(obj, "prefetched_past_events", None)
+        if events is None:
+            events = obj.events.filter(ends_at__lte=Now())
         return NestedEventSerializer(events, many=True).data
 
     def to_representation(self, instance: Production) -> dict:

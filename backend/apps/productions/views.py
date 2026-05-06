@@ -264,6 +264,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                         ),
                     )
                     .select_related("hall__space__location"),
+                    to_attr="prefetched_past_events",
                 ),
             )
 
