@@ -62,7 +62,20 @@ class TagTranslationInline(admin.StackedInline):
 
 @admin.register(Tag)
 class TagAdmin(BaseAdmin):
-    """Admin configuration for the Tag model."""
+    """
+    Admin configuration for the Tag model.
+
+    The list view surfaces the type and status flag so editors can quickly
+    identify which tags are active and what category they belong to.
+
+    ``search_fields`` includes ``type`` and ``source`` to allow autocomplete
+    from :class:`~apps.productions.admin.ProductionTagInline`.
+
+    Queryset strategy
+    -----------------
+    ``prefetch_related("translations")`` prevents N+1 queries when the inline
+    renders all language translations on the detail page.
+    """
 
     form = TagAdminForm
 
