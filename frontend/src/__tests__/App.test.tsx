@@ -89,6 +89,7 @@ describe('App', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/nl/media')
     })
+    expect(await screen.findByText('Kon mediabestand niet laden')).toBeInTheDocument()
   })
 
   it('renders footer', () => {

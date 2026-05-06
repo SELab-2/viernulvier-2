@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import SeriesDetailPage from '../../pages/SeriesDetailPage'
 import { getProductions } from '../../services/productions/Productions'
@@ -42,6 +42,18 @@ jest.mock('react-i18next', () => ({
   }),
 }))
 
+const SeriesPageProbe = () => {
+  const location = useLocation()
+  const alert = (location.state as { floatingAlert?: { message?: string } } | null)?.floatingAlert
+
+  return (
+    <div>
+      <div>SERIES PAGE</div>
+      <div data-testid="floating-alert-message">{alert?.message ?? ''}</div>
+    </div>
+  )
+}
+
 describe('SeriesDetailPage', () => {
   const mockedGetTag = getTag as jest.Mock
   const mockedGetProductions = getProductions as jest.Mock
@@ -56,7 +68,7 @@ describe('SeriesDetailPage', () => {
       <MemoryRouter initialEntries={[`/nl/reeksen/${id}`]}>
         <Routes>
           <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
-          <Route path="/:lang/reeksen" element={<div>SERIES PAGE</div>} />
+          <Route path="/:lang/reeksen" element={<SeriesPageProbe />} />
           <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
         </Routes>
       </MemoryRouter>,
@@ -135,6 +147,9 @@ describe('SeriesDetailPage', () => {
     renderPage()
 
     expect(await screen.findByText('SERIES PAGE')).toBeInTheDocument()
+    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent(
+      'Kon de reeks niet ophalen.',
+    )
   })
 
   it('redirects to the series tab when API throws error', async () => {
@@ -144,6 +159,9 @@ describe('SeriesDetailPage', () => {
     renderPage()
 
     expect(await screen.findByText('SERIES PAGE')).toBeInTheDocument()
+    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent(
+      'Kon de reeks niet ophalen.',
+    )
   })
 
   it('shows empty state when no productions exist', async () => {
@@ -173,6 +191,7 @@ describe('SeriesDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('SERIES PAGE')).toBeInTheDocument()
     })
+    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent('Ongeldig reeks-ID.')
   })
 
   it('navigates to production detail when a production card is clicked', async () => {
