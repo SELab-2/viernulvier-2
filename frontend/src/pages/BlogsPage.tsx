@@ -1,15 +1,14 @@
 import { useMediaQuery, useTheme } from '@mui/material'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import BlogView from '../components/BlogView'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
-import { useNotification } from '../contexts/notificationContextShared'
+import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
 import { ApiError } from '../services/ApiTypes'
 import { getBlogs } from '../services/blogs/Blogs'
-import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 
 import type { Blog } from '../types/Blogs'
 
@@ -42,22 +41,18 @@ const BlogsPage = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const { showFloatingAlert, clearFloatingAlert } = useNotification()
+  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
+    'blogs.home.error.notification',
+  )
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
   const renderedErrorMessage = showFallbackError ? t('blogs.home.error.fallback') : errorMessage
-  const floatingErrorMessage = t('blogs.home.error.notification')
-  const floatingErrorMessageRef = useRef(floatingErrorMessage)
 
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
     [sortDirection, sortTarget],
   )
-
-  useEffect(() => {
-    floatingErrorMessageRef.current = floatingErrorMessage
-  }, [floatingErrorMessage])
 
   useEffect(() => {
     let isActive = true
@@ -99,10 +94,7 @@ const BlogsPage = () => {
           setErrorMessage(null)
           setShowFallbackError(true)
         }
-        showFloatingAlert({
-          message: floatingErrorMessageRef.current,
-          severity: ALERT_SEVERITIES.error,
-        })
+        showFloatingAlert()
         setBlogs([])
         setTotalCount(0)
       } finally {

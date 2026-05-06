@@ -1,5 +1,5 @@
 import { useMediaQuery, useTheme } from '@mui/material'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
@@ -9,12 +9,11 @@ import ProductionGridCard from '../components/productions/ProductionGridCard'
 import ProductionListCard from '../components/productions/ProductionListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
-import { useNotification } from '../contexts/notificationContextShared'
+import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
 import { ApiError } from '../services/ApiTypes'
 import { getGenres } from '../services/genres/Genres'
 import { getProductions } from '../services/productions/Productions'
 import { getTags } from '../services/tags/Tags'
-import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 
 import type { Genre } from '../types/Genres'
 import type { Production } from '../types/Productions'
@@ -93,7 +92,9 @@ const fetchTags = async (): Promise<Tag[]> => {
 const ProductionsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { showFloatingAlert, clearFloatingAlert } = useNotification()
+  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
+    'productions.home.error.notification',
+  )
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
@@ -139,8 +140,6 @@ const ProductionsPage = () => {
   const renderedErrorMessage = showFallbackError
     ? t('productions.home.error.fallback')
     : errorMessage
-  const floatingErrorMessage = t('productions.home.error.notification')
-  const floatingErrorMessageRef = useRef(floatingErrorMessage)
 
   // Memoized value for the API ordering parameter to avoid unnecessary recalculations on every render.
   const ordering = useMemo(
@@ -152,10 +151,6 @@ const ProductionsPage = () => {
   const selectedGenres = selectedGenreIds.join(',')
   const selectedTags = selectedTagIds.join(',')
   const displayedSearchValue = isSearchDraftDirty ? searchDraft : searchValue
-
-  useEffect(() => {
-    floatingErrorMessageRef.current = floatingErrorMessage
-  }, [floatingErrorMessage])
 
   useEffect(() => {
     let isActive = true
@@ -233,10 +228,7 @@ const ProductionsPage = () => {
           setErrorMessage(null)
           setShowFallbackError(true)
         }
-        showFloatingAlert({
-          message: floatingErrorMessageRef.current,
-          severity: ALERT_SEVERITIES.error,
-        })
+        showFloatingAlert()
         setProductions([])
         setTotalCount(0)
       } finally {

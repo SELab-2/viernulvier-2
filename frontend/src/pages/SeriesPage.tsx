@@ -1,5 +1,5 @@
 import { useMediaQuery, useTheme } from '@mui/material'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
@@ -8,10 +8,9 @@ import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlSta
 import SeriesGridCard from '../components/series/SeriesGridCard'
 import SeriesListCard from '../components/series/SeriesListCard'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
-import { useNotification } from '../contexts/notificationContextShared'
+import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
 import { ApiError } from '../services/ApiTypes'
 import { getTags } from '../services/tags/Tags'
-import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 import { getTranslatedRecord } from '../utils/translations'
 
 import type { SearchSortTarget, SearchSortDirection } from '../components/searchbar/types'
@@ -110,17 +109,13 @@ const SeriesPage = () => {
   const [seriesList, setSeriesList] = useState<Tag[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const { showFloatingAlert, clearFloatingAlert } = useNotification()
+  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
+    'series.home.error.notification',
+  )
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
   const renderedErrorMessage = showFallbackError ? t('series.home.error.fallback') : errorMessage
-  const floatingErrorMessage = t('series.home.error.notification')
-  const floatingErrorMessageRef = useRef(floatingErrorMessage)
-
-  useEffect(() => {
-    floatingErrorMessageRef.current = floatingErrorMessage
-  }, [floatingErrorMessage])
 
   // Force the page back to name sorting because the series page only supports that option.
   useEffect(() => {
@@ -162,10 +157,7 @@ const SeriesPage = () => {
           setShowFallbackError(true)
         }
 
-        showFloatingAlert({
-          message: floatingErrorMessageRef.current,
-          severity: ALERT_SEVERITIES.error,
-        })
+        showFloatingAlert()
         setSeriesList([])
       } finally {
         if (isActive) {

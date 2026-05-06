@@ -6,10 +6,9 @@ import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import MediaFileView from '../components/media-files/MediaFileView'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
-import { useNotification } from '../contexts/notificationContextShared'
+import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
 import { ApiError } from '../services/ApiTypes'
 import { getMediaFiles } from '../services/media_files/MediaFiles'
-import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 
 import type { SearchSortDirection, SearchSortTarget } from '../components/searchbar/types'
 import type { MediaFile } from '../types/MediaFiles'
@@ -55,22 +54,19 @@ const MediaFilesPage = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const { showFloatingAlert, clearFloatingAlert } = useNotification()
+  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
+    'media.error.notification',
+  )
   const [retryKey, setRetryKey] = useState(0)
   const [searchInputValue, setSearchInputValue] = useState(searchValue)
 
   const previousOrderingRef = useRef<string | null>(null)
 
   const renderedErrorMessage = showFallbackError ? t('media.error.fallback') : errorMessage
-  const floatingErrorMessage = t('media.error.notification')
-  const floatingErrorMessageRef = useRef(floatingErrorMessage)
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
     [sortTarget, sortDirection],
   )
-  useEffect(() => {
-    floatingErrorMessageRef.current = floatingErrorMessage
-  }, [floatingErrorMessage])
   useEffect(() => {
     const previousOrdering = previousOrderingRef.current
 
@@ -121,10 +117,7 @@ const MediaFilesPage = () => {
           setShowFallbackError(true)
         }
 
-        showFloatingAlert({
-          message: floatingErrorMessageRef.current,
-          severity: ALERT_SEVERITIES.error,
-        })
+        showFloatingAlert()
         setMediaFiles([])
         setTotalCount(0)
       } finally {
