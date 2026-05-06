@@ -16,7 +16,9 @@ import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
+import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
+import { createFloatingAlertState } from '../utils/navigation'
 import { getTranslatedRecord } from '../utils/translations'
 
 import type { Production } from '../types/Productions'
@@ -133,7 +135,16 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return <SeriesDetailPageSkeleton />
   }
   if (error || !seriesTag) {
-    return <Navigate to={seriesPath} replace />
+    return (
+      <Navigate
+        to={seriesPath}
+        replace
+        state={createFloatingAlertState({
+          message: t(error ?? 'series.fetchError'),
+          severity: ALERT_SEVERITIES.error,
+        })}
+      />
+    )
   }
 
   const lang = i18n.language.startsWith('en') ? 'en' : 'nl'
@@ -241,7 +252,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
 const SeriesDetailPage = () => {
   const location = useLocation()
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
@@ -251,7 +262,16 @@ const SeriesDetailPage = () => {
   const seriesPath = toLocalizedPath('/series', currentLanguage)
 
   if (!id || Number.isNaN(Number(id))) {
-    return <Navigate to={seriesPath} replace />
+    return (
+      <Navigate
+        to={seriesPath}
+        replace
+        state={createFloatingAlertState({
+          message: t('series.invalidId'),
+          severity: ALERT_SEVERITIES.error,
+        })}
+      />
+    )
   }
 
   return <SeriesDetailContent key={id} id={id} />

@@ -14,6 +14,7 @@ import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 import { formatBlogPublishedDate } from '../utils/blogs'
 import { getLocalizedValue } from '../utils/localization'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
+import { redirectWithFloatingAlert } from '../utils/navigation'
 
 import type { Blog } from '../types/Blogs'
 
@@ -54,20 +55,18 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
       const errMsg = t('blog.invalidId', 'Invalid blog ID')
-      navigate(blogsPath, {
-        state: {
-          floatingAlert: { open: true, message: errMsg, severity: ALERT_SEVERITIES.error },
-        },
+      redirectWithFloatingAlert(navigate, blogsPath, {
+        message: errMsg,
+        severity: ALERT_SEVERITIES.error,
       })
       return
     }
 
     const handleError = () => {
       const errMsg = t('blog.couldNotLoad', 'Could not load blog')
-      navigate(blogsPath, {
-        state: {
-          floatingAlert: { open: true, message: errMsg, severity: ALERT_SEVERITIES.error },
-        },
+      redirectWithFloatingAlert(navigate, blogsPath, {
+        message: errMsg,
+        severity: ALERT_SEVERITIES.error,
       })
     }
 

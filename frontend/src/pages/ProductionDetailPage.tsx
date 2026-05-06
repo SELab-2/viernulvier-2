@@ -18,6 +18,7 @@ import { tokens } from '../theme/tokens'
 import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 import { getLocalizedValue } from '../utils/localization'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
+import { redirectWithFloatingAlert } from '../utils/navigation'
 
 import type { Blog } from '../types/Blogs'
 import type { Production } from '../types/Productions'
@@ -96,10 +97,9 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
       const errMsg = t('productions.detail.error.invalidId', 'Invalid production ID')
-      navigate(archivePath, {
-        state: {
-          floatingAlert: { open: true, message: errMsg, severity: ALERT_SEVERITIES.error },
-        },
+      redirectWithFloatingAlert(navigate, archivePath, {
+        message: errMsg,
+        severity: ALERT_SEVERITIES.error,
       })
       return
     }
@@ -120,14 +120,9 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
         }
       } catch {
         const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
-        navigate(archivePath, {
-          state: {
-            floatingAlert: {
-              open: true,
-              message: errMsg,
-              severity: ALERT_SEVERITIES.error,
-            },
-          },
+        redirectWithFloatingAlert(navigate, archivePath, {
+          message: errMsg,
+          severity: ALERT_SEVERITIES.error,
         })
       } finally {
         setLoading(false)
