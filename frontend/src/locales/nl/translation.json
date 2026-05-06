@@ -335,6 +335,7 @@
     "invalidId": "Ongeldig blog ID"
   },
   "media": {
+    "couldNotLoad": "Kon mediabestand niet laden",
     "searchPlaceholder": "Zoek bestanden op naam, beschrijving of type...",
     "fileType": {
       "image": "Afbeelding",

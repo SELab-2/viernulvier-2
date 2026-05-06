@@ -335,6 +335,7 @@
     "invalidId": "Invalid blog ID"
   },
   "media": {
+    "couldNotLoad": "Could not load media file",
     "searchPlaceholder": "Search files by name, description or type...",
     "fileType": {
       "image": "Image",
