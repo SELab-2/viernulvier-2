@@ -1,25 +1,46 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const fileInput = document.querySelector('input[type="file"][name="file"]')
-  if (!fileInput) return
+  const fileInputs = document.querySelectorAll('input[type="file"]')
 
-  const ALLOWED_TYPES = [
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'application/pdf',
-  ]
+  if (!fileInputs.length) return
 
-  const isValidFile = (file) => ALLOWED_TYPES.includes(file.type)
-
-  const removeErrors = () => {
-    document.querySelectorAll('.errorlist').forEach(el => el.remove())
-    document.querySelectorAll('.errornote').forEach(el => el.remove())
-    document.querySelectorAll('.errors').forEach(el => el.classList.remove('errors'))
+  const MIME_TYPE_BY_EXTENSION = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.webp': 'image/webp',
+    '.pdf': 'application/pdf',
   }
 
-  const showError = (message) => {
-    // 🔴 1. field-level error
+  const getAllowedTypes = (fileInput) => {
+    const accept = fileInput.getAttribute('accept') || ''
+
+    return accept
+      .split(',')
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean)
+      .map((value) => MIME_TYPE_BY_EXTENSION[value] || value)
+  }
+
+  const getAllowedLabel = (allowedTypes) => {
+    const labels = []
+
+    if (allowedTypes.includes('image/jpeg')) labels.push('JPG')
+    if (allowedTypes.includes('image/png')) labels.push('PNG')
+    if (allowedTypes.includes('image/webp')) labels.push('WEBP')
+    if (allowedTypes.includes('application/pdf')) labels.push('PDF')
+
+    return labels.join(', ')
+  }
+
+  const removeErrors = () => {
+    document.querySelectorAll('.errorlist').forEach((el) => el.remove())
+    document.querySelectorAll('.errornote').forEach((el) => el.remove())
+    document.querySelectorAll('.errors').forEach((el) => el.classList.remove('errors'))
+  }
+
+  const showError = (fileInput, message) => {
     const formRow = fileInput.closest('.form-row')
+
     if (formRow) {
       formRow.classList.add('errors')
 
@@ -30,59 +51,64 @@ document.addEventListener('DOMContentLoaded', () => {
       li.textContent = message
 
       ul.appendChild(li)
-
       formRow.prepend(ul)
     }
 
-    // 🔴 2. global error banner
     const form = fileInput.closest('form')
     if (form && !form.querySelector('.errornote')) {
       const p = document.createElement('p')
       p.className = 'errornote'
       p.textContent = 'Please correct the error below.'
-
       form.prepend(p)
     }
   }
 
-  const validateFile = (file) => {
-    if (!isValidFile(file)) {
-      fileInput.value = ''
-      showError('Unsupported file type. Allowed: JPG, PNG, WEBP, PDF.')
-      return false
+  const isValidFile = (file, allowedTypes) => allowedTypes.includes(file.type)
+
+  const validateFile = (fileInput, file) => {
+    const allowedTypes = getAllowedTypes(fileInput)
+
+    if (!allowedTypes.length || isValidFile(file, allowedTypes)) {
+      return true
     }
-    return true
+
+    fileInput.value = ''
+
+    const allowedLabel = getAllowedLabel(allowedTypes)
+    showError(fileInput, `Unsupported file type. Allowed: ${allowedLabel}.`)
+
+    return false
   }
 
-  // =========================
-  // normale selectie
-  // =========================
-  fileInput.addEventListener('change', (e) => {
-    removeErrors()
-
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    validateFile(file)
-  })
-
-  // =========================
-  // drag & drop (global)
-  // =========================
-  document.addEventListener('drop', (e) => {
-    const file = e.dataTransfer?.files?.[0]
-    if (!file) return
-
-    if (!isValidFile(file)) {
-      e.preventDefault()
-      e.stopPropagation()
-
+  fileInputs.forEach((fileInput) => {
+    fileInput.addEventListener('change', (event) => {
       removeErrors()
-      showError('Unsupported file type. Allowed: JPG, PNG, WEBP, PDF.')
-    }
+
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      validateFile(fileInput, file)
+    })
+
+    fileInput.addEventListener('drop', (event) => {
+      const file = event.dataTransfer?.files?.[0]
+      if (!file) return
+
+      const allowedTypes = getAllowedTypes(fileInput)
+
+      if (allowedTypes.length && !isValidFile(file, allowedTypes)) {
+        event.preventDefault()
+        event.stopPropagation()
+
+        removeErrors()
+
+        const allowedLabel = getAllowedLabel(allowedTypes)
+        showError(fileInput, `Unsupported file type. Allowed: ${allowedLabel}.`)
+      }
+    })
   })
 
-  document.addEventListener('dragover', (e) => {
-    e.preventDefault()
+  document.addEventListener('dragover', (event) => {
+    event.preventDefault()
   })
 })
