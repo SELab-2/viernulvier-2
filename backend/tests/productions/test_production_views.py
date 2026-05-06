@@ -757,8 +757,28 @@ class TestProductionEventDateFieldsInResponse(TestCase):
 
     def test_list_fields_are_null_without_events(self) -> None:
         Production.objects.all().delete()
-        ProductionFactory.create()
-        assert self.client.get("/api/v1/productions/", **pub_headers()).data["results"] == []
+        production_without_events = ProductionFactory.create()
+
+        results = self.client.get("/api/v1/productions/", **pub_headers()).data["results"]
+        assert len(results) == 1
+        assert results[0]["id"] == production_without_events.id
+        assert results[0]["first_event_start"] is None
+        assert results[0]["last_event_end"] is None
+
+    def test_list_fields_are_null_when_only_future_events_exist(self) -> None:
+        Production.objects.all().delete()
+        future_only = ProductionFactory.create()
+        EventFactory.create(
+            production=future_only,
+            starts_at=_dt(2030, 1, 10),
+            ends_at=_dt(2030, 1, 10, 22),
+        )
+
+        results = self.client.get("/api/v1/productions/", **pub_headers()).data["results"]
+        assert len(results) == 1
+        assert results[0]["id"] == future_only.id
+        assert results[0]["first_event_start"] is None
+        assert results[0]["last_event_end"] is None
 
     def test_patch_with_first_event_start_is_ignored(self) -> None:
         self.client.patch(
@@ -1138,25 +1158,25 @@ class TestProductionOrderingEdgeCases(TestCase):
         ids = self._ids({"ordering": "first_event_start"}, **pub_headers())
 
         assert ids.index(self.prod_early.id) < ids.index(self.prod_late.id)
-        assert self.prod_without_events.id not in ids
+        assert ids[-1] == self.prod_without_events.id
 
     def test_first_event_start_places_missing_date_last_descending(self) -> None:
         ids = self._ids({"ordering": "-first_event_start"}, **pub_headers())
 
         assert ids.index(self.prod_late.id) < ids.index(self.prod_early.id)
-        assert self.prod_without_events.id not in ids
+        assert ids[-1] == self.prod_without_events.id
 
     def test_last_event_end_places_missing_date_last_ascending(self) -> None:
         ids = self._ids({"ordering": "last_event_end"}, **pub_headers())
 
         assert ids.index(self.prod_early.id) < ids.index(self.prod_late.id)
-        assert self.prod_without_events.id not in ids
+        assert ids[-1] == self.prod_without_events.id
 
     def test_last_event_end_places_missing_date_last_descending(self) -> None:
         ids = self._ids({"ordering": "-last_event_end"}, **pub_headers())
 
         assert ids.index(self.prod_late.id) < ids.index(self.prod_early.id)
-        assert self.prod_without_events.id not in ids
+        assert ids[-1] == self.prod_without_events.id
 
     def test_lang_query_param_overrides_accept_language_header_for_title_sort(self) -> None:
         ids = self._ids(

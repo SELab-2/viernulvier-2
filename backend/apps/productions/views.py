@@ -181,9 +181,6 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         language_code = self._get_request_language_code()
         queryset = super().get_queryset()
 
-        if getattr(self, "action", None) == "list":
-            queryset = queryset.filter(events__ends_at__lte=Now()).distinct()
-
         return queryset.annotate(
             title_sort=Lower(
                 Coalesce(
