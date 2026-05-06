@@ -14,7 +14,7 @@ containing all available translations (e.g., {"nl": "...", "en": "..."}).
 responses still include all translations in a single payload.
 """
 
-from django.db.models import Max, Min, Prefetch, Q, QuerySet
+from django.db.models import Exists, Max, Min, OuterRef, Prefetch, Q, QuerySet
 from django.db.models.functions import Coalesce, Lower, Now
 from django.http import HttpRequest
 from django.utils.decorators import method_decorator
@@ -140,8 +140,11 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                 ).order_by("position"),
             ),
         )
+        .filter(
+            Exists(Event.objects.filter(production=OuterRef("pk"), ends_at__lte=Now()))
+            | ~Exists(Event.objects.filter(production=OuterRef("pk")))
+        )
         .annotate(
-            # Computed once at the queryset level — not language-dependent.
             first_event_start=Min("events__starts_at", filter=Q(events__ends_at__lte=Now())),
             last_event_end=Max("events__ends_at", filter=Q(events__ends_at__lte=Now())),
         )

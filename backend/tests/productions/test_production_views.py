@@ -765,7 +765,7 @@ class TestProductionEventDateFieldsInResponse(TestCase):
         assert results[0]["first_event_start"] is None
         assert results[0]["last_event_end"] is None
 
-    def test_list_fields_are_null_when_only_future_events_exist(self) -> None:
+    def test_production_with_only_future_events_is_excluded(self) -> None:
         Production.objects.all().delete()
         future_only = ProductionFactory.create()
         EventFactory.create(
@@ -775,10 +775,7 @@ class TestProductionEventDateFieldsInResponse(TestCase):
         )
 
         results = self.client.get("/api/v1/productions/", **pub_headers()).data["results"]
-        assert len(results) == 1
-        assert results[0]["id"] == future_only.id
-        assert results[0]["first_event_start"] is None
-        assert results[0]["last_event_end"] is None
+        assert len(results) == 0
 
     def test_patch_with_first_event_start_is_ignored(self) -> None:
         self.client.patch(

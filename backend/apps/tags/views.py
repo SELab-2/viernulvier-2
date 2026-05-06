@@ -12,7 +12,8 @@ All translated fields are returned as dictionaries mapping language codes
 to their values (e.g., {"nl": "...", "en": "..."}).
 """
 
-from django.db.models import Max, Min, OuterRef, Prefetch, Subquery
+from django.db.models import Count, Max, Min, OuterRef, Prefetch, Q, Subquery
+from django.db.models.functions import Now
 from drf_spectacular.utils import extend_schema
 
 from apps.core.views import ApiModelViewSet
@@ -68,11 +69,23 @@ class TagViewSet(ApiModelViewSet):
     serializer_class = TagSerializer
     queryset = (
         Tag.objects.annotate(
-            first_production_start=Min("productions__events__starts_at"),
-            last_production_end=Max("productions__events__ends_at"),
+            first_production_start=Min(
+                "productions__events__starts_at",
+                filter=Q(productions__events__ends_at__lte=Now()),
+            ),
+            last_production_end=Max(
+                "productions__events__ends_at",
+                filter=Q(productions__events__ends_at__lte=Now()),
+            ),
+            past_event_count=Count(
+                "productions__events",
+                filter=Q(productions__events__ends_at__lte=Now()),
+                distinct=True,
+            ),
             fallback_crop_path=Subquery(
                 MediaItemCrop.objects.filter(
                     media_item__gallery__productions__tags=OuterRef("pk"),
+                    media_item__gallery__productions__events__ends_at__lte=Now(), # Only consider media from productions with past events
                 )
                 .order_by(
                     "-media_item__gallery__productions__id",
