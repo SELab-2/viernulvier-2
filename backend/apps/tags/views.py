@@ -85,7 +85,7 @@ class TagViewSet(ApiModelViewSet):
             fallback_crop_path=Subquery(
                 MediaItemCrop.objects.filter(
                     media_item__gallery__productions__tags=OuterRef("pk"),
-                    media_item__gallery__productions__events__ends_at__lte=Now(), # Only consider media from productions with past events
+                    media_item__gallery__productions__events__ends_at__lte=Now(),  # Only consider media from productions with past events
                 )
                 .order_by(
                     "-media_item__gallery__productions__id",
