@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 
 import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 import CollectionPageLayout from '../components/CollectionPageLayout'
-import FloatingAlert from '../components/FloatingAlert'
 import MediaFileView from '../components/media-files/MediaFileView'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import { useNotification } from '../contexts/notificationContextShared'
@@ -56,7 +55,7 @@ const MediaFilesPage = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const { showFloatingAlert, clearFloatingAlert, isFallback } = useNotification()
+  const { showFloatingAlert, clearFloatingAlert } = useNotification()
   const [retryKey, setRetryKey] = useState(0)
   const [searchInputValue, setSearchInputValue] = useState(searchValue)
 
@@ -165,50 +164,39 @@ const MediaFilesPage = () => {
   const resultsContent = <MediaFileView mediaFiles={mediaFiles} layout={viewMode} />
 
   return (
-    <>
-      <CollectionPageLayout
-        isMobile={isMobile}
-        searchPlaceholder={t('media.searchPlaceholder')}
-        searchValue={searchInputValue}
-        onSearchChange={setSearchInputValue}
-        onSearchSubmit={onSearchSubmit}
-        sortTarget={sortTarget}
-        onSortTargetChange={setSortTarget}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-        sortTargetOptions={MEDIA_SORT_TARGET_OPTIONS}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        resultCount={totalCount}
-        resultsRegionAriaLabel={t('media.resultsRegionLabel')}
-        isLoading={isLoading}
-        loadingLabel={t('media.loading')}
-        loadingContent={
-          <MediaFilesPageSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
-        }
-        errorMessage={renderedErrorMessage}
-        retryLabel={t('media.error.retry')}
-        onRetry={onRetry}
-        emptyTitle={t('media.empty.title')}
-        emptyDescription={t('media.empty.description')}
-        hasResults={mediaFiles.length > 0}
-        resultsContent={resultsContent}
-        page={page}
-        pageSize={PAGE_SIZE}
-        totalItems={totalCount}
-        onPageChange={setPage}
-        paginationI18nKeyPrefix="media.pagination"
-      />
-
-      {isFallback ? (
-        <FloatingAlert
-          open={showFallbackError}
-          onClose={() => setShowFallbackError(false)}
-          message={floatingErrorMessage}
-          severity={ALERT_SEVERITIES.error}
-        />
-      ) : null}
-    </>
+    <CollectionPageLayout
+      isMobile={isMobile}
+      searchPlaceholder={t('media.searchPlaceholder')}
+      searchValue={searchInputValue}
+      onSearchChange={setSearchInputValue}
+      onSearchSubmit={onSearchSubmit}
+      sortTarget={sortTarget}
+      onSortTargetChange={setSortTarget}
+      sortDirection={sortDirection}
+      onSortDirectionChange={setSortDirection}
+      sortTargetOptions={MEDIA_SORT_TARGET_OPTIONS}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      resultCount={totalCount}
+      resultsRegionAriaLabel={t('media.resultsRegionLabel')}
+      isLoading={isLoading}
+      loadingLabel={t('media.loading')}
+      loadingContent={
+        <MediaFilesPageSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+      }
+      errorMessage={renderedErrorMessage}
+      retryLabel={t('media.error.retry')}
+      onRetry={onRetry}
+      emptyTitle={t('media.empty.title')}
+      emptyDescription={t('media.empty.description')}
+      hasResults={mediaFiles.length > 0}
+      resultsContent={resultsContent}
+      page={page}
+      pageSize={PAGE_SIZE}
+      totalItems={totalCount}
+      onPageChange={setPage}
+      paginationI18nKeyPrefix="media.pagination"
+    />
   )
 }
 

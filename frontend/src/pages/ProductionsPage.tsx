@@ -1,12 +1,10 @@
 import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import EntityView from '../components/entity/EntityView'
 import FilterPanel from '../components/filter-panel/FilterPanel'
-import FloatingAlert from '../components/FloatingAlert'
 import ProductionGridCard from '../components/productions/ProductionGridCard'
 import ProductionListCard from '../components/productions/ProductionListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
@@ -95,11 +93,7 @@ const fetchTags = async (): Promise<Tag[]> => {
 const ProductionsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const location = useLocation()
-  // Type for optional navigation state used to show a one-time floating alert when arriving
-  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
-  const nav = location as { state?: NavState }
-  const { showFloatingAlert, clearFloatingAlert, isFallback } = useNotification()
+  const { showFloatingAlert, clearFloatingAlert } = useNotification()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
@@ -293,18 +287,6 @@ const ProductionsPage = () => {
     setIsSearchDraftDirty(false)
   }
 
-  // If a page navigated here with a floatingAlert in location.state, clear it once.
-  useEffect(() => {
-    const { state } = nav
-    if (state?.floatingAlert?.open) {
-      try {
-        window.history.replaceState({}, document.title)
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [nav])
-
   // Main results content.
   const resultsContent = (
     <EntityView
@@ -351,54 +333,43 @@ const ProductionsPage = () => {
   // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.
   // It also handles the different UI states such as loading, error, and empty results.
   return (
-    <>
-      <CollectionPageLayout
-        isMobile={isMobile}
-        searchPlaceholder={
-          isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
-        }
-        searchValue={displayedSearchValue}
-        onSearchChange={(value) => {
-          setSearchDraft(value)
-          setIsSearchDraftDirty(true)
-        }}
-        onSearchSubmit={onSearchSubmit}
-        sortTarget={sortTarget}
-        onSortTargetChange={setSortTarget}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        resultCount={totalCount}
-        sidebarContent={filterPanel}
-        resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
-        isLoading={isLoading}
-        loadingLabel={t('productions.home.loading')}
-        loadingContent={
-          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
-        }
-        errorMessage={renderedErrorMessage}
-        retryLabel={t('productions.home.error.retry')}
-        onRetry={onRetry}
-        emptyTitle={t('productions.home.empty.title')}
-        emptyDescription={t('productions.home.empty.description')}
-        hasResults={productions.length > 0}
-        resultsContent={resultsContent}
-        page={page}
-        pageSize={PAGE_SIZE}
-        totalItems={totalCount}
-        onPageChange={setPage}
-      />
-
-      {isFallback && nav.state?.floatingAlert?.open ? (
-        <FloatingAlert
-          open
-          onClose={() => undefined}
-          message={nav.state.floatingAlert.message ?? ''}
-          severity={ALERT_SEVERITIES.error}
-        />
-      ) : null}
-    </>
+    <CollectionPageLayout
+      isMobile={isMobile}
+      searchPlaceholder={
+        isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
+      }
+      searchValue={displayedSearchValue}
+      onSearchChange={(value) => {
+        setSearchDraft(value)
+        setIsSearchDraftDirty(true)
+      }}
+      onSearchSubmit={onSearchSubmit}
+      sortTarget={sortTarget}
+      onSortTargetChange={setSortTarget}
+      sortDirection={sortDirection}
+      onSortDirectionChange={setSortDirection}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      resultCount={totalCount}
+      sidebarContent={filterPanel}
+      resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
+      isLoading={isLoading}
+      loadingLabel={t('productions.home.loading')}
+      loadingContent={
+        <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+      }
+      errorMessage={renderedErrorMessage}
+      retryLabel={t('productions.home.error.retry')}
+      onRetry={onRetry}
+      emptyTitle={t('productions.home.empty.title')}
+      emptyDescription={t('productions.home.empty.description')}
+      hasResults={productions.length > 0}
+      resultsContent={resultsContent}
+      page={page}
+      pageSize={PAGE_SIZE}
+      totalItems={totalCount}
+      onPageChange={setPage}
+    />
   )
 }
 

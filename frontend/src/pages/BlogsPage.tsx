@@ -1,11 +1,9 @@
 import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
 
 import BlogView from '../components/BlogView'
 import CollectionPageLayout from '../components/CollectionPageLayout'
-import FloatingAlert from '../components/FloatingAlert'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { useNotification } from '../contexts/notificationContextShared'
@@ -25,9 +23,6 @@ const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'd
 const BlogsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const location = useLocation()
-  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
-  const nav = location as { state?: NavState }
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
   const {
     searchValue,
@@ -47,7 +42,7 @@ const BlogsPage = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const { showFloatingAlert, clearFloatingAlert, isFallback } = useNotification()
+  const { showFloatingAlert, clearFloatingAlert } = useNotification()
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
@@ -124,18 +119,6 @@ const BlogsPage = () => {
     }
   }, [clearFloatingAlert, ordering, page, retryKey, searchValue, showFloatingAlert])
 
-  // If a page navigated here with a floatingAlert in location.state, clear it once from history.
-  useEffect(() => {
-    const { state } = nav
-    if (state?.floatingAlert?.open) {
-      try {
-        window.history.replaceState({}, document.title)
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [nav])
-
   const onRetry = () => {
     clearFloatingAlert()
     setRetryKey((value) => value + 1)
@@ -153,52 +136,41 @@ const BlogsPage = () => {
   }
 
   return (
-    <>
-      <CollectionPageLayout
-        isMobile={isMobile}
-        showSidebar={false}
-        searchPlaceholder={
-          isMobile ? t('blogs.home.searchPlaceholderMobile') : t('blogs.home.searchPlaceholder')
-        }
-        searchValue={searchDraft}
-        onSearchChange={setSearchDraft}
-        onSearchSubmit={onSearchSubmit}
-        sortTarget={sortTarget}
-        onSortTargetChange={setSortTarget}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        resultCount={totalCount}
-        resultsRegionAriaLabel={t('blogs.home.resultsRegionLabel')}
-        isLoading={isLoading}
-        loadingLabel={t('blogs.home.loading')}
-        loadingContent={
-          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
-        }
-        errorMessage={renderedErrorMessage}
-        retryLabel={t('blogs.home.error.retry')}
-        onRetry={onRetry}
-        emptyTitle={t('blogs.home.empty.title')}
-        emptyDescription={t('blogs.home.empty.description')}
-        hasResults={blogs.length > 0}
-        resultsContent={<BlogView blogs={blogs} layout={viewMode} />}
-        page={page}
-        pageSize={PAGE_SIZE}
-        totalItems={totalCount}
-        onPageChange={setPage}
-        paginationI18nKeyPrefix="blogs.pagination"
-      />
-
-      {isFallback && nav.state?.floatingAlert?.open ? (
-        <FloatingAlert
-          open
-          onClose={() => undefined}
-          message={nav.state.floatingAlert.message ?? ''}
-          severity={ALERT_SEVERITIES.error}
-        />
-      ) : null}
-    </>
+    <CollectionPageLayout
+      isMobile={isMobile}
+      showSidebar={false}
+      searchPlaceholder={
+        isMobile ? t('blogs.home.searchPlaceholderMobile') : t('blogs.home.searchPlaceholder')
+      }
+      searchValue={searchDraft}
+      onSearchChange={setSearchDraft}
+      onSearchSubmit={onSearchSubmit}
+      sortTarget={sortTarget}
+      onSortTargetChange={setSortTarget}
+      sortDirection={sortDirection}
+      onSortDirectionChange={setSortDirection}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      resultCount={totalCount}
+      resultsRegionAriaLabel={t('blogs.home.resultsRegionLabel')}
+      isLoading={isLoading}
+      loadingLabel={t('blogs.home.loading')}
+      loadingContent={
+        <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+      }
+      errorMessage={renderedErrorMessage}
+      retryLabel={t('blogs.home.error.retry')}
+      onRetry={onRetry}
+      emptyTitle={t('blogs.home.empty.title')}
+      emptyDescription={t('blogs.home.empty.description')}
+      hasResults={blogs.length > 0}
+      resultsContent={<BlogView blogs={blogs} layout={viewMode} />}
+      page={page}
+      pageSize={PAGE_SIZE}
+      totalItems={totalCount}
+      onPageChange={setPage}
+      paginationI18nKeyPrefix="blogs.pagination"
+    />
   )
 }
 
