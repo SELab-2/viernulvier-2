@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 import { I18nextProvider } from 'react-i18next'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 
 import i18n from '../../i18n'
 import HomePage from '../../pages/HomePage'
@@ -15,12 +15,18 @@ jest.mock('../../services/productions/Productions', () => ({
 
 const mockedGetLandingStats = getLandingStats as jest.MockedFunction<typeof getLandingStats>
 
-const renderPage = () =>
+const LocationProbe = () => {
+  const location = useLocation()
+  return <div data-testid="location-probe">{`${location.pathname}${location.search}`}</div>
+}
+
+const renderPage = (initialPath = '/nl') =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialPath]}>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={createTheme()}>
           <HomePage />
+          <LocationProbe />
         </ThemeProvider>
       </I18nextProvider>
     </MemoryRouter>,
@@ -87,5 +93,42 @@ describe('HomePage', () => {
     expect(screen.getByText('81+')).toBeTruthy()
     expect(screen.getByText('36+')).toBeTruthy()
     expect(screen.getByText('121+')).toBeTruthy()
+  })
+
+  it('submits a trimmed query to the localized archive route', async () => {
+    renderPage()
+
+    expect(await screen.findByText('1.200+')).toBeTruthy()
+
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: '  opera voor morgen  ' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Zoeken' }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location-probe').textContent).toBe(
+        '/nl/archief?q=opera%20voor%20morgen',
+      )
+    })
+  })
+
+  it('navigates to the localized archive route when query is blank', async () => {
+    renderPage()
+
+    expect(await screen.findByText('1.200+')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Zoeken' }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location-probe').textContent).toBe('/nl/archief')
+    })
+  })
+
+  it('keeps fallback stats visible when stats endpoint fails', async () => {
+    mockedGetLandingStats.mockRejectedValueOnce(new Error('stats down'))
+
+    renderPage()
+
+    expect(await screen.findByText('8.500+')).toBeTruthy()
+    expect(screen.getByText('22+')).toBeTruthy()
   })
 })

@@ -356,4 +356,67 @@ describe('ProductionDetailPage', () => {
       expect(screen.getByText('Teaser NL')).toBeInTheDocument()
     })
   })
+
+  it('uses first available crop when preferred hero crops are missing', async () => {
+    mockUseParams.mockReturnValue({ id: '42' })
+
+    mockedGetProduction.mockResolvedValue({
+      id: 42,
+      title: { nl: 'Productie NL' },
+      display_title: null,
+      artist_name: {},
+      display_artist_name: null,
+      tagline: {},
+      description: {},
+      teaser: {},
+      media_gallery: {
+        id: 1,
+        name: 'Primary media',
+        media_items: [
+          {
+            id: 5,
+            gallery: 1,
+            type: 'foto',
+            format: 'jpg',
+            original_filename: 'image.jpg',
+            position: 0,
+            width: null,
+            height: null,
+            title: null,
+            display_title: null,
+            description: null,
+            credits: null,
+            link: null,
+            crops: [
+              { id: 11, name: 'custom_crop', image_url: 'https://cdn.test/fallback-crop.jpg' },
+            ],
+          },
+        ],
+      },
+      events: [],
+      genres: [],
+      tags: [],
+      uit_database_type: null,
+      performer_type: 'group',
+      attendance_mode: 'offline',
+      first_event_start: null,
+      last_event_end: null,
+    } as unknown as Production)
+    mockedGetBlogs.mockResolvedValue({ count: 0, next: null, previous: null, results: [] })
+
+    renderPage()
+
+    const heroImage = await screen.findByRole('img', { name: 'Productie NL' })
+    expect(heroImage).toHaveAttribute('src', 'https://cdn.test/fallback-crop.jpg')
+  })
+
+  it('returns null when route parameter id is missing', () => {
+    mockUseParams.mockReturnValue({})
+
+    const { container } = renderPage()
+
+    expect(container).toBeEmptyDOMElement()
+    expect(mockedGetProduction).not.toHaveBeenCalled()
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
 })

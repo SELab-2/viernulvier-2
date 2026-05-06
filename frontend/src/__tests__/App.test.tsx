@@ -121,6 +121,26 @@ describe('App', () => {
     })
   })
 
+  it('redirects localized productions listing aliases to archive routes', async () => {
+    window.history.pushState({}, '', '/nl/producties')
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/nl/archief')
+    })
+  })
+
+  it('redirects media detail aliases back to localized media list', async () => {
+    window.history.pushState({}, '', '/en/media/42')
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/en/media')
+    })
+  })
+
   it('redirects invalid language prefixes to a normalized localized path', async () => {
     window.history.pushState({}, '', '/xx/archive')
 

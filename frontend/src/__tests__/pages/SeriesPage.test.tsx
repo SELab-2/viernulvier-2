@@ -273,4 +273,70 @@ describe('SeriesPage', () => {
     const queryString = screen.getByTestId('url-search').textContent ?? ''
     expect(queryString).not.toMatch(/[?&]t=/)
   })
+
+  it('normalizes unsupported date sorting to name sorting for series', async () => {
+    mockedGetTags.mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildTag(10, 'Reeks Alpha')],
+    })
+
+    renderPage('/series?st=d&sd=a')
+
+    expect(await screen.findByRole('heading', { name: 'Reeks Alpha' })).toBeInTheDocument()
+
+    await waitFor(() => {
+      const queryString = screen.getByTestId('url-search').textContent ?? ''
+      expect(queryString).toContain('st=n')
+      expect(queryString).toContain('sd=a')
+    })
+  })
+
+  it('moves back to the last available page when URL page exceeds result pages', async () => {
+    mockedGetTags.mockResolvedValueOnce({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [buildTag(10, 'Reeks Alpha')],
+    })
+
+    renderPage('/series?p=3')
+
+    expect(await screen.findByRole('heading', { name: 'Reeks Alpha' })).toBeInTheDocument()
+
+    await waitFor(() => {
+      const queryString = screen.getByTestId('url-search').textContent ?? ''
+      expect(queryString).not.toContain('p=')
+    })
+  })
+
+  it('sorts by localized English names when language is en', async () => {
+    await i18n.changeLanguage('en')
+
+    mockedGetTags.mockResolvedValueOnce({
+      count: 2,
+      next: null,
+      previous: null,
+      results: [
+        {
+          ...buildTag(1, 'Fallback NL 1'),
+          name: { nl: 'Zeta', en: 'Alpha' },
+          display_name: 'Fallback NL 1',
+        },
+        {
+          ...buildTag(2, 'Fallback NL 2'),
+          name: { nl: 'Alpha', en: 'Zulu' },
+          display_name: 'Fallback NL 2',
+        },
+      ],
+    })
+
+    renderPage('/series?st=n&sd=a')
+
+    const alpha = await screen.findByRole('heading', { name: 'Alpha' })
+    const zulu = screen.getByRole('heading', { name: 'Zulu' })
+
+    expect(alpha.compareDocumentPosition(zulu)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
 })

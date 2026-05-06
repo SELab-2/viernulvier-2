@@ -241,6 +241,69 @@ describe('MediaFilesPage', () => {
     expect(setSearchValueMock).not.toHaveBeenCalled()
   })
 
+  it('maps name sorting to filename ordering in API calls', async () => {
+    searchBarStateMock.mockReturnValue({
+      searchValue: 'alpha',
+      sortTarget: 'name',
+      sortDirection: 'asc',
+      viewMode: 'list',
+      page: 1,
+      setSearchValue: setSearchValueMock,
+      setSortTarget: setSortTargetMock,
+      setSortDirection: setSortDirectionMock,
+      setViewMode: setViewModeMock,
+      setPage: setPageMock,
+    })
+
+    getMediaFilesMock.mockResolvedValueOnce({
+      results: [{ id: 7 }],
+      count: 1,
+    })
+
+    render(<MediaFilesPage />)
+
+    await waitFor(() => {
+      expect(getMediaFilesMock).toHaveBeenCalledWith({
+        page: 1,
+        pageSize: 12,
+        filters: {
+          search: 'alpha',
+          ordering: 'filename',
+        },
+      })
+    })
+  })
+
+  it('re-fetches same-query search without resetting pagination', async () => {
+    searchBarStateMock.mockReturnValue({
+      searchValue: 'report',
+      sortTarget: 'date',
+      sortDirection: 'desc',
+      viewMode: 'list',
+      page: 2,
+      setSearchValue: setSearchValueMock,
+      setSortTarget: setSortTargetMock,
+      setSortDirection: setSortDirectionMock,
+      setViewMode: setViewModeMock,
+      setPage: setPageMock,
+    })
+
+    getMediaFilesMock.mockResolvedValue({
+      results: [],
+      count: 0,
+    })
+
+    render(<MediaFilesPage />)
+
+    await waitFor(() => expect(getMediaFilesMock).toHaveBeenCalledTimes(1))
+
+    fireEvent.click(screen.getByText('submit-search'))
+
+    await waitFor(() => expect(getMediaFilesMock).toHaveBeenCalledTimes(2))
+    expect(setPageMock).not.toHaveBeenCalledWith(1)
+    expect(setSearchValueMock).not.toHaveBeenCalled()
+  })
+
   it('retries after an ApiError and shows fallback errors including the floating alert', async () => {
     getMediaFilesMock
       .mockRejectedValueOnce(new ApiError(500, 'Backend failure'))
