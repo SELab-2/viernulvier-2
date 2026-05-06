@@ -7,10 +7,10 @@ import ProductionGridCard from '../../components/productions/ProductionGridCard'
 import i18n from '../../i18n'
 import { toLocalizedPath } from '../../utils/localizedRoutes'
 
-import type { ReactElement } from 'react'
 import type { Genre } from '../../types/Genres'
 import type { Production } from '../../types/Productions'
 import type { Tag } from '../../types/Tags'
+import type { ReactElement } from 'react'
 
 const accentTheme = createTheme({
   palette: {

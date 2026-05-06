@@ -1,8 +1,9 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
-import type { ComponentProps } from 'react'
 
 import CollectionResultsSkeleton from '../../../components/skeletons/CollectionResultsSkeleton'
+
+import type { ComponentProps } from 'react'
 
 const renderSkeleton = (props?: Partial<ComponentProps<typeof CollectionResultsSkeleton>>) =>
   render(

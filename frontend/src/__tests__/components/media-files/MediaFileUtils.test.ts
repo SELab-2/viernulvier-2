@@ -7,8 +7,8 @@ import {
   getMediaFileTypeLabel,
 } from '../../../components/media-files/MediaFileUtils'
 
-import type { TFunction } from 'i18next'
 import type { MediaFile } from '../../../types/MediaFiles'
+import type { TFunction } from 'i18next'
 
 const baseMediaFile = (overrides: Partial<MediaFile> = {}): MediaFile => ({
   id: '1',

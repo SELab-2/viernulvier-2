@@ -3,8 +3,8 @@ import { MemoryRouter } from 'react-router-dom'
 
 import MetaPanel from '../../../components/production/MetaPanel'
 
-import type { ComponentProps } from 'react'
 import type { Production } from '../../../types/Productions'
+import type { ComponentProps } from 'react'
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),
