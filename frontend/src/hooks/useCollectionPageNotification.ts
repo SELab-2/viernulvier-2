@@ -1,0 +1,62 @@
+/**
+ * Shared notification hook for collection pages (blogs, productions, media, series).
+ * Manages floating alert state and display for data-fetching errors.
+ *
+ * Usage:
+ *   const { showFloatingAlert, clearFloatingAlert } =
+ *     useCollectionPageNotification('blogs.home.error.notification')
+ *
+ *   Then in fetch handler:
+ *   } catch (error) {
+ *     showFloatingAlert()
+ *   }
+ */
+
+import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+
+import { useNotification } from '../contexts/notificationContextShared'
+import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
+
+export type UseCollectionPageNotificationResult = {
+  showFloatingAlert: () => void
+  clearFloatingAlert: () => void
+}
+
+/**
+ * Composable hook for collection pages to manage floating alert notifications.
+ *
+ * @param messageKey - i18n key for the floating alert message
+ * @returns Object with showFloatingAlert and clearFloatingAlert callbacks
+ */
+export const useCollectionPageNotification = (
+  messageKey: string,
+): UseCollectionPageNotificationResult => {
+  const { t } = useTranslation()
+  const {
+    showFloatingAlert: contextShowFloatingAlert,
+    clearFloatingAlert: contextClearFloatingAlert,
+  } = useNotification()
+  const floatingErrorMessageRef = useRef(t(messageKey))
+
+  // Keep the translated message in sync when language changes
+  useEffect(() => {
+    floatingErrorMessageRef.current = t(messageKey)
+  }, [messageKey, t])
+
+  const showFloatingAlert = () => {
+    contextShowFloatingAlert({
+      message: floatingErrorMessageRef.current,
+      severity: ALERT_SEVERITIES.error,
+    })
+  }
+
+  const clearFloatingAlert = () => {
+    contextClearFloatingAlert()
+  }
+
+  return {
+    showFloatingAlert,
+    clearFloatingAlert,
+  }
+}
