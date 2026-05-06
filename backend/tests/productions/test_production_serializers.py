@@ -185,6 +185,9 @@ class TestProductionSerializerRelated(TestCase):
             def __init__(self, rows):
                 self.rows = rows
 
+            def filter(self, *_args, **_kwargs):
+                return self
+
             def exclude(self, **_kwargs):
                 return self
 

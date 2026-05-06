@@ -16,10 +16,12 @@ Nested relations
 - ``TagSerializer`` - nested many-to-many, carries its own translated fields.
 """
 
-from django.db.models import Prefetch
+from django.db.models import Exists, OuterRef, Prefetch
+from django.db.models.functions import Now
 from rest_framework import serializers
 
 from apps.core.serializers import TranslatableSerializerMixin
+from apps.events.models import Event
 from apps.genres.serializers import GenreSerializer
 from apps.media_library.models import MediaItem
 from apps.media_library.serializers import MediaGallerySerializer
@@ -378,6 +380,10 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         related_rows = (
             ProductionTag.objects.filter(tag_id__in=tag_ids)
             .exclude(production_id=obj.id)
+            .filter(
+                Exists(Event.objects.filter(production=OuterRef("production_id"), ends_at__lte=Now()))
+                | ~Exists(Event.objects.filter(production=OuterRef("production_id")))
+            )
             .select_related("production", "production__media_gallery")
             .prefetch_related(
                 "production__translations__language",
@@ -423,7 +429,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         # Lazy import, since importing at the top level would cause a circular import between the serializers.
         from apps.events.serializers import NestedEventSerializer  # noqa: PLC0415
 
-        events = obj.events.all()
+        events = obj.events.filter(ends_at__lte=Now())
         return NestedEventSerializer(events, many=True).data
 
     def to_representation(self, instance: Production) -> dict:
