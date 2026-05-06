@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import {
+  DEFAULT_FLOATING_ALERT_POSITION,
   NotificationContext,
   type FloatingAlertEntry,
   type FloatingAlertPayload,
+  groupAlertsByPosition,
 } from './notificationContextShared'
-import FloatingAlert from '../components/FloatingAlert'
+import FloatingAlertStack from '../components/FloatingAlertStack'
 import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 
 type NotificationProviderProps = {
@@ -18,7 +20,7 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
   const navigate = useNavigate()
   const [alerts, setAlerts] = useState<FloatingAlertEntry[]>([])
 
-  const showFloatingAlert = (payload: FloatingAlertPayload) => {
+  const showFloatingAlert = useCallback((payload: FloatingAlertPayload) => {
     setAlerts((currentAlerts) => [
       ...currentAlerts,
       {
@@ -27,11 +29,15 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
         id: currentAlerts.length > 0 ? Math.max(...currentAlerts.map((alert) => alert.id)) + 1 : 1,
       },
     ])
-  }
+  }, [])
 
-  const clearFloatingAlert = () => {
+  const clearFloatingAlert = useCallback(() => {
     setAlerts([])
-  }
+  }, [])
+
+  const closeFloatingAlert = useCallback((id: number) => {
+    setAlerts((currentAlerts) => currentAlerts.filter((currentAlert) => currentAlert.id !== id))
+  }, [])
 
   const consumedNavigationKeyRef = useRef<string | null>(null)
 
@@ -53,27 +59,28 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
         navigate(location.pathname, { replace: true, state: {} })
       })
     }
-  }, [location.key, location.state, location.pathname, navigate])
+  }, [location.key, location.state, location.pathname, navigate, showFloatingAlert])
 
-  const value = useMemo(() => ({ showFloatingAlert, clearFloatingAlert, isFallback: false }), [])
+  const value = useMemo(
+    () => ({ showFloatingAlert, clearFloatingAlert, isFallback: false }),
+    [clearFloatingAlert, showFloatingAlert],
+  )
+  const alertGroups = groupAlertsByPosition(alerts)
 
   return (
     <NotificationContext.Provider value={value}>
       {children}
-      {alerts.map((alert, index) => (
-        <FloatingAlert
-          key={alert.id}
-          open={alert.open !== false}
-          onClose={() => {
-            setAlerts((currentAlerts) =>
-              currentAlerts.filter((currentAlert) => currentAlert.id !== alert.id),
-            )
-          }}
-          message={alert.message ?? ''}
-          title={alert.title}
-          severity={alert.severity}
-          autoCloseDuration={alert.autoCloseDuration}
-          stackOffsetPx={index * 88}
+      {alertGroups.map(({ key, position, alerts: positionedAlerts }) => (
+        <FloatingAlertStack
+          key={key}
+          alerts={positionedAlerts.map((alert) => ({
+            ...alert,
+            open: alert.open !== false,
+            message: alert.message ?? '',
+            position: alert.position ?? DEFAULT_FLOATING_ALERT_POSITION,
+          }))}
+          onClose={closeFloatingAlert}
+          position={position}
         />
       ))}
     </NotificationContext.Provider>

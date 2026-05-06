@@ -1,14 +1,46 @@
 import { createContext, useContext } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 
-import FloatingAlert from '../components/FloatingAlert'
+import FloatingAlertStack from '../components/FloatingAlertStack'
 
 import type { FloatingAlertProps } from '../types/FloatingAlertConfig'
 
-export type FloatingAlertPayload = Partial<Omit<FloatingAlertProps, 'onClose' | 'position'>>
+export type FloatingAlertPosition = NonNullable<FloatingAlertProps['position']>
+
+export type FloatingAlertPayload = Partial<Omit<FloatingAlertProps, 'onClose'>>
 
 export type FloatingAlertEntry = FloatingAlertPayload & {
   id: number
+}
+
+export const DEFAULT_FLOATING_ALERT_POSITION: FloatingAlertPosition = {
+  vertical: 'top',
+  horizontal: 'right',
+}
+
+export const getFloatingAlertPositionKey = (position: FloatingAlertPosition): string =>
+  `${position.vertical}-${position.horizontal}`
+
+export const groupAlertsByPosition = (alerts: FloatingAlertEntry[]) => {
+  const groups = new Map<
+    string,
+    { key: string; position: FloatingAlertPosition; alerts: FloatingAlertEntry[] }
+  >()
+
+  alerts.forEach((alert) => {
+    const position = alert.position ?? DEFAULT_FLOATING_ALERT_POSITION
+    const key = getFloatingAlertPositionKey(position)
+    const group = groups.get(key)
+
+    if (group) {
+      group.alerts.push(alert)
+      return
+    }
+
+    groups.set(key, { key, position, alerts: [alert] })
+  })
+
+  return Array.from(groups.values())
 }
 
 export type NotificationContextValue = {
@@ -21,17 +53,23 @@ export const NotificationContext = createContext<NotificationContextValue | unde
 
 type FallbackState = {
   root: Root | null
+  container: HTMLElement | null
 }
 
 const fallbackState: FallbackState = {
   root: null,
+  container: null,
 }
 
 let fallbackAlertId = 0
 let fallbackAlerts: FloatingAlertEntry[] = []
 
 const ensureFallbackRoot = () => {
-  if (fallbackState.root) {
+  if (
+    fallbackState.root &&
+    fallbackState.container &&
+    document.body.contains(fallbackState.container)
+  ) {
     return fallbackState.root
   }
 
@@ -43,6 +81,7 @@ const ensureFallbackRoot = () => {
   }
 
   fallbackState.root = createRoot(container)
+  fallbackState.container = container
   return fallbackState.root
 }
 
@@ -51,19 +90,20 @@ const renderFallbackAlert = () => {
 
   const FallbackManager = ({ alerts }: { alerts: FloatingAlertEntry[] }) => (
     <>
-      {alerts.map((alert, index) => (
-        <FloatingAlert
-          key={alert.id}
-          open={alert.open !== false}
-          onClose={() => {
-            fallbackAlerts = fallbackAlerts.filter((currentAlert) => currentAlert.id !== alert.id)
+      {groupAlertsByPosition(alerts).map(({ key, position, alerts: positionedAlerts }) => (
+        <FloatingAlertStack
+          key={key}
+          alerts={positionedAlerts.map((alert) => ({
+            ...alert,
+            open: alert.open !== false,
+            message: alert.message ?? '',
+            position: alert.position ?? DEFAULT_FLOATING_ALERT_POSITION,
+          }))}
+          onClose={(id) => {
+            fallbackAlerts = fallbackAlerts.filter((currentAlert) => currentAlert.id !== id)
             renderFallbackAlert()
           }}
-          message={alert.message ?? ''}
-          title={alert.title}
-          severity={alert.severity ?? 'info'}
-          autoCloseDuration={alert.autoCloseDuration}
-          stackOffsetPx={index * 88}
+          position={position}
         />
       ))}
     </>
