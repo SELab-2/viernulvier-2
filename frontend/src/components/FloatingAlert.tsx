@@ -4,20 +4,7 @@ import { useTheme } from '@mui/material/styles'
 
 import { tokens } from '../theme/tokens'
 
-type FloatingAlertSeverity = 'error' | 'warning' | 'info' | 'success'
-
-type FloatingAlertProps = {
-  open: boolean
-  onClose: () => void
-  message: string
-  title?: string
-  severity?: FloatingAlertSeverity
-  autoCloseDuration?: number
-  position?: {
-    vertical: 'top' | 'bottom'
-    horizontal: 'left' | 'center' | 'right'
-  }
-}
+import type { FloatingAlertProps, FloatingAlertSeverity } from '../types/FloatingAlertConfig'
 
 /**
  * FloatingAlert combines Alert styling with Toast floating behavior.
@@ -31,6 +18,7 @@ const FloatingAlert = ({
   severity = 'info',
   autoCloseDuration = 4000,
   position = { vertical: 'top', horizontal: 'right' },
+  stackOffsetPx = 0,
 }: FloatingAlertProps) => {
   const theme = useTheme()
 
@@ -76,13 +64,13 @@ const FloatingAlert = ({
         position.vertical === 'top'
           ? {
               '&.MuiSnackbar-anchorOriginTopLeft': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+                top: `calc(var(--navbar-height, 64px) + 8px + ${stackOffsetPx}px + env(safe-area-inset-top, 0px))`,
               },
               '&.MuiSnackbar-anchorOriginTopCenter': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+                top: `calc(var(--navbar-height, 64px) + 8px + ${stackOffsetPx}px + env(safe-area-inset-top, 0px))`,
               },
               '&.MuiSnackbar-anchorOriginTopRight': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+                top: `calc(var(--navbar-height, 64px) + 8px + ${stackOffsetPx}px + env(safe-area-inset-top, 0px))`,
               },
             }
           : undefined
