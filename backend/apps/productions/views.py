@@ -214,7 +214,8 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
     @property
     def includes(self) -> set[str]:
         """Parse the 'include' query parameter into a set of related fields to include."""
-        return set(self.request.query_params.get("include", "").split(","))
+        raw_includes = self.request.query_params.get("include", "")
+        return {value.strip() for value in raw_includes.split(",") if value.strip()}
 
     def get_serializer(self, *args: tuple, **kwargs: dict) -> ProductionSerializer:
         """Pass the 'include' query parameter to the serializer context for dynamic field inclusion."""
@@ -259,6 +260,17 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                             queryset=LocationTranslation.objects.select_related("language"),
                         ),
                     ).select_related("hall__space__location"),
+                ),
+            )
+
+        if "blogs" in self.includes:
+            self.queryset = self.queryset.prefetch_related(
+                Prefetch(
+                    "blogs",
+                    queryset=Blog.objects.filter(published_at__isnull=False)
+                    .prefetch_related("translations__language")
+                    .order_by("-published_at", "-id"),
+                    to_attr="prefetched_related_blogs",
                 ),
             )
 

@@ -1,3 +1,4 @@
+import type { BlogCardData } from './Blogs'
 import type { Event } from './Events'
 import type { Genre } from './Genres'
 import type { MediaGallery } from './Media'
@@ -62,6 +63,7 @@ export interface Production {
   genres: Genre[]
   events?: Event[]
   related?: ProductionRelated[]
+  blogs?: BlogCardData[]
 }
 
 /**
