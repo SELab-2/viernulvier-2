@@ -32,10 +32,10 @@ export interface RelatedProduction {
   artist_name: Record<string, string> | null
   display_artist_name: string | null
   media_gallery: MediaGallery
-  first_event_start?: string | null
-  last_event_end?: string | null
-  tags?: Tag[]
-  genres?: Genre[]
+  first_event_start: string | null
+  last_event_end: string | null
+  tags: Tag[]
+  genres: Genre[]
   uit_database_type?: ProductionClassification | null
   performer_type?: PerformerType | ''
   attendance_mode?: AttendanceMode | ''

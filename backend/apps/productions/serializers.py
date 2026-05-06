@@ -360,7 +360,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
         return ProductionTagSerializer(production_tags, many=True).data
 
-    def _get_related_tags(self, obj: Production) -> list[Tag]:
+    def _get_related_tags(self, obj: Production) -> list[ProductionTag]:
         """Return tags for related grouping without extra queries when prefetched."""
         production_tags = getattr(obj, "prefetched_production_tags", None)
         if production_tags is not None:
@@ -441,7 +441,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
     def _group_related_productions(
         self,
-        tags: list[Tag],
+        tags: list[ProductionTag],
         related_rows: list[ProductionTag],
         related_productions_by_id: dict[int, Production],
     ) -> dict[int, list[Production]]:
@@ -460,7 +460,9 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
         return grouped_productions
 
-    def _serialize_related_groups(self, tags: list[Tag], grouped_productions: dict[int, list[Production]]) -> list[dict]:
+    def _serialize_related_groups(
+        self, tags: list[ProductionTag], grouped_productions: dict[int, list[Production]]
+    ) -> list[dict]:
         """Serialize grouped related productions."""
         return [
             {
