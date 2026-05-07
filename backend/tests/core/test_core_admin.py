@@ -139,7 +139,6 @@ class TestPersistentSelectionMixin(TestCase):
         request = self._get_post_request()
         response = self.admin.changelist_view(request)
 
-
         assert isinstance(response, TemplateResponse)
 
         assert "persistent_selected_ids" in response.context_data
