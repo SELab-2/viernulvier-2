@@ -199,6 +199,21 @@ This returns only productions that have both genres `2` and `9` and both tags `5
 
 ---
 
+## Production Detail Includes
+
+The production detail endpoint supports optional includes to embed related data in a single request:
+
+- `GET /api/v1/productions/:id/?include=events`
+- `GET /api/v1/productions/:id/?include=related`
+- `GET /api/v1/productions/:id/?include=blogs`
+- Includes can be combined: `?include=events,related,blogs`
+
+Behavior:
+
+- When an include is present, the corresponding field is embedded in the detail response.
+- When an include is absent, the field is omitted from the payload.
+- `include=blogs` returns only published blogs linked to the production.
+
 ---
 
 ## Landing Stats Endpoint

@@ -20,6 +20,7 @@ from django.db.models import Exists, OuterRef, Prefetch
 from django.db.models.functions import Now
 from rest_framework import serializers
 
+from apps.blogs.models import Blog
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.events.models import Event
 from apps.genres.serializers import GenreSerializer
@@ -102,6 +103,70 @@ class RelatedTagSerializer(TagSerializer):
     class Meta(TagSerializer.Meta):
         fields = ["id", "name", "display_name"]
         read_only_fields = fields
+
+
+class ProductionRelatedBlogSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
+    """Compact blog representation for `ProductionSerializer.blogs`."""
+
+    title = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary containing all available translations of the blog title, "
+            'e.g. {"en": "I Love Techno 2024", "nl": "I Love Techno 2024"}. '
+            "Read-only."
+        ),
+    )
+
+    excerpt = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary containing all available translations of the blog excerpt, "
+            'e.g. {"en": "Short summary...", "nl": "Korte samenvatting..."}. '
+            "Read-only."
+        ),
+    )
+
+    display_title = serializers.SerializerMethodField(
+        help_text=(
+            "Human-readable title in the project's base language. "
+            "Falls back to the first available translation when missing."
+        )
+    )
+
+    display_excerpt = serializers.SerializerMethodField(
+        help_text=(
+            "Human-readable excerpt in the project's base language. "
+            "Falls back to the first available translation when missing."
+        )
+    )
+
+    class Meta:
+        model = Blog
+        fields = [
+            "id",
+            "slug",
+            "published_at",
+            "cover_image",
+            "title",
+            "excerpt",
+            "display_title",
+            "display_excerpt",
+        ]
+        read_only_fields = fields
+
+    def get_title(self, obj: Blog) -> dict[str, str] | None:
+        """Return all available title translations as a language-code dictionary."""
+        return self.get_translated_field(obj, "title")
+
+    def get_excerpt(self, obj: Blog) -> dict[str, str] | None:
+        """Return all available excerpt translations as a language-code dictionary."""
+        return self.get_translated_field(obj, "excerpt")
+
+    def get_display_title(self, obj: Blog) -> str | None:
+        """Return the blog title in the project's base language."""
+        return self.get_base_translated_value(obj, "title")
+
+    def get_display_excerpt(self, obj: Blog) -> str | None:
+        """Return the blog excerpt in the project's base language."""
+        return self.get_base_translated_value(obj, "excerpt")
 
 
 class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
@@ -243,6 +308,14 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         read_only=True,
     )
 
+    blogs = serializers.SerializerMethodField(
+        help_text=(
+            "Published blogs linked to this production. Only present when `include=blogs` "
+            "is passed to the production detail endpoint."
+        ),
+        read_only=True,
+    )
+
     class Meta:
         model = Production
         fields = [
@@ -264,6 +337,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "genres",
             "events",
             "related",
+            "blogs",
         ]
         read_only_fields = [
             "id",
@@ -281,6 +355,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "genres",
             "events",
             "related",
+            "blogs",
         ]
         extra_kwargs = {
             "attendance_mode": {
@@ -434,6 +509,15 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             events = obj.events.filter(ends_at__lte=Now())
         return NestedEventSerializer(events, many=True).data
 
+    def get_blogs(self, obj: Production) -> list | None:
+        """Return published blogs linked to this production when requested."""
+        if "blogs" not in self.context.get("include", set()):
+            return None
+
+        blogs = getattr(obj, "prefetched_related_blogs", None)
+
+        return ProductionRelatedBlogSerializer(blogs, many=True, context=self.context).data
+
     def to_representation(self, instance: Production) -> dict:
         """Override to conditionally include the `events` field based on the serializer context.
 
@@ -444,6 +528,8 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             rep.pop("events", None)
         if "related" not in self.context.get("include", set()):
             rep.pop("related", None)
+        if "blogs" not in self.context.get("include", set()):
+            rep.pop("blogs", None)
         return rep
 
 

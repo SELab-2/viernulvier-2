@@ -5,10 +5,10 @@ import { tokens } from '../../theme/tokens'
 import BlogGridCard from '../BlogGridCard'
 import Carousel from '../carousel/Carousel'
 
-import type { Blog } from '../../types/Blogs'
+import type { BlogCardData } from '../../types/Blogs'
 
 interface RelatedBlogsProps {
-  blogs: Blog[]
+  blogs: BlogCardData[]
 }
 
 function RelatedBlogs({ blogs }: RelatedBlogsProps) {
