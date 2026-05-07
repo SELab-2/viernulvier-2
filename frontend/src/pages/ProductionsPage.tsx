@@ -228,7 +228,7 @@ const ProductionsPage = () => {
           setErrorMessage(null)
           setShowFallbackError(true)
         }
-        showFloatingAlert()
+        showFloatingAlert(error)
         setProductions([])
         setTotalCount(0)
       } finally {

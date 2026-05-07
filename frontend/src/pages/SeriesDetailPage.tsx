@@ -7,13 +7,14 @@
 import { Alert, Box, Container, Divider, Stack, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useLocation, useParams } from 'react-router-dom'
+import { Navigate, useLocation, useParams, useNavigate } from 'react-router-dom'
 
 import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 import Breadcrumbs from '../components/production/Breadcrumbs'
 import ProductionView from '../components/ProductionView'
 import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
+import { ApiError } from '../services/ApiTypes'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
 import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
@@ -55,12 +56,15 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     i18n.resolvedLanguage,
   )
   const seriesPath = toLocalizedPath('/series', currentLanguage)
+  const currentPath = location.pathname
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<SeriesErrorKey>(null)
   const numericId = Number(id)
+
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchSeries = async () => {
@@ -72,7 +76,18 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
         setSeriesTag(tag)
         setProductions(productionsResponse.results)
-      } catch {
+      } catch (error: unknown) {
+        if (error instanceof ApiError && error.status === 429) {
+          navigate(currentPath, {
+            replace: true,
+            state: createFloatingAlertState({
+              message: error.message,
+              severity: ALERT_SEVERITIES.warning,
+            }),
+          })
+          return
+        }
+
         setError('series.fetchError')
       } finally {
         setIsLoading(false)
@@ -80,7 +95,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     }
 
     void fetchSeries()
-  }, [numericId])
+  }, [currentPath, navigate, numericId, seriesPath])
 
   /** Sorted most-recent first by start date; productions without a date fall to the end. */
   const sortedProductions = useMemo(
@@ -137,7 +152,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   if (error || !seriesTag) {
     return (
       <Navigate
-        to={seriesPath}
+        to={toLocalizedPath('/404', currentLanguage)}
         replace
         state={createFloatingAlertState({
           message: t(error ?? 'series.fetchError'),

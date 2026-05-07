@@ -117,7 +117,7 @@ const MediaFilesPage = () => {
           setShowFallbackError(true)
         }
 
-        showFloatingAlert()
+        showFloatingAlert(error)
         setMediaFiles([])
         setTotalCount(0)
       } finally {

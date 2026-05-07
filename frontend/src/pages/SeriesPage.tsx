@@ -157,7 +157,7 @@ const SeriesPage = () => {
           setShowFallbackError(true)
         }
 
-        showFloatingAlert()
+        showFloatingAlert(error)
         setSeriesList([])
       } finally {
         if (isActive) {

@@ -94,7 +94,7 @@ const BlogsPage = () => {
           setErrorMessage(null)
           setShowFallbackError(true)
         }
-        showFloatingAlert()
+        showFloatingAlert(error)
         setBlogs([])
         setTotalCount(0)
       } finally {

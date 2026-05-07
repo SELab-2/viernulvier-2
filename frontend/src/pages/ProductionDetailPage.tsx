@@ -12,6 +12,7 @@ import MediaList from '../components/production/MediaList'
 import MetaPanel from '../components/production/MetaPanel'
 import RelatedBlogs from '../components/production/RelatedBlogs'
 import RelatedProductions from '../components/production/RelatedProductions'
+import { ApiError } from '../services/ApiTypes'
 import { getProduction } from '../services/productions/Productions'
 import { tokens } from '../theme/tokens'
 import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
@@ -85,6 +86,7 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     i18n.resolvedLanguage,
   )
   const archivePath = toLocalizedPath('/archive', currentLanguage)
+  const currentPath = location.pathname
 
   const [prod, setProd] = useState<Production | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
@@ -105,19 +107,27 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
       try {
         const data = await getProduction(parsed, ['events', 'related', 'blogs'])
         setProd(data)
-      } catch {
-        const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
-        redirectWithFloatingAlert(navigate, archivePath, {
-          message: errMsg,
-          severity: ALERT_SEVERITIES.error,
-        })
+      } catch (error: unknown) {
+        if (error instanceof ApiError && error.status === 429) {
+          const errMsg = error.message
+          redirectWithFloatingAlert(navigate, currentPath, {
+            message: errMsg,
+            severity: ALERT_SEVERITIES.warning,
+          })
+        } else {
+          const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
+          redirectWithFloatingAlert(navigate, toLocalizedPath('/404', currentLanguage), {
+            message: errMsg,
+            severity: ALERT_SEVERITIES.error,
+          })
+        }
       } finally {
         setLoading(false)
       }
     }
 
     fetchProduction()
-  }, [archivePath, id, navigate, t])
+  }, [archivePath, currentLanguage, currentPath, id, navigate, t])
 
   // If the page is still loading, show a full-page skeleton.
   if (loading) {
