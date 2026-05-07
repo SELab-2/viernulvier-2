@@ -12,13 +12,11 @@ import MediaList from '../components/production/MediaList'
 import MetaPanel from '../components/production/MetaPanel'
 import RelatedBlogs from '../components/production/RelatedBlogs'
 import RelatedProductions from '../components/production/RelatedProductions'
-import { getBlogs } from '../services/blogs/Blogs'
 import { getProduction } from '../services/productions/Productions'
 import { tokens } from '../theme/tokens'
 import { getLocalizedValue } from '../utils/localization'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 
-import type { Blog } from '../types/Blogs'
 import type { Production } from '../types/Productions'
 
 /**
@@ -87,7 +85,6 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
   const homePath = toLocalizedPath('/', currentLanguage)
 
   const [prod, setProd] = useState<Production | null>(null)
-  const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
   // useEffect to fetch the production given the id in the URL.
@@ -103,18 +100,8 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
 
     const fetchProduction = async () => {
       try {
-        const data = await getProduction(parsed, ['events', 'related'])
+        const data = await getProduction(parsed, ['events', 'related', 'blogs'])
         setProd(data)
-
-        try {
-          const blogData = await getBlogs({
-            filters: { production: data.id, published: true },
-          })
-          setRelatedBlogs(blogData.results)
-        } catch {
-          // Keep the detail page usable even if related blog loading fails.
-          setRelatedBlogs([])
-        }
       } catch {
         const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
         navigate(homePath, {
@@ -154,6 +141,7 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
   const heroImage = getProductionHeroImageUrl(production)
   const events = production.events ?? []
   const relatedProductions = production.related ?? []
+  const relatedBlogs = production.blogs ?? []
 
   return (
     <Box

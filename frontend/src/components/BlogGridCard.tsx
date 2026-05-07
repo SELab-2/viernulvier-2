@@ -11,10 +11,10 @@ import { formatBlogPublishedDate } from '../utils/blogs'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 import { getTranslatedRecord } from '../utils/translations'
 
-import type { Blog } from '../types/Blogs'
+import type { BlogCardData } from '../types/Blogs'
 
 export interface BlogGridCardProps {
-  blog: Blog
+  blog: BlogCardData
 }
 
 const BlogGridCard = ({ blog }: BlogGridCardProps) => {
