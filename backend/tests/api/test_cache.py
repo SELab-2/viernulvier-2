@@ -58,6 +58,7 @@ def test_cache_api_view_returns_callable_decorator():
     def view(request):
         return "ok"
 
+    assert view(None) == "ok"
     wrapped = cache_api_view(60)(view)
 
     assert callable(wrapped)

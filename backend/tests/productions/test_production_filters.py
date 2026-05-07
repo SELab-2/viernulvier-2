@@ -234,6 +234,30 @@ class TestProductionFilter:
 
         assert self._qs({}).count() == 4
 
+    def test_first_event_start_after_none_returns_unfiltered_queryset(self) -> None:
+        ProductionFactory.create_batch(3)
+        production_filter = ProductionFilter({}, queryset=Production.objects.all())
+
+        result = production_filter.filter_first_event_start_after(
+            Production.objects.all(),
+            "first_event_start_after",
+            None,
+        )
+
+        assert result.count() == 3
+
+    def test_first_event_start_before_none_returns_unfiltered_queryset(self) -> None:
+        ProductionFactory.create_batch(2)
+        production_filter = ProductionFilter({}, queryset=Production.objects.all())
+
+        result = production_filter.filter_first_event_start_before(
+            Production.objects.all(),
+            "first_event_start_before",
+            None,
+        )
+
+        assert result.count() == 2
+
 
 # =====================================================
 # ProductionViewSet

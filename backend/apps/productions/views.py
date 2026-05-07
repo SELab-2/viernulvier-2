@@ -14,8 +14,8 @@ containing all available translations (e.g., {"nl": "...", "en": "..."}).
 responses still include all translations in a single payload.
 """
 
-from django.db.models import Max, Min, Prefetch, Q, QuerySet
-from django.db.models.functions import Coalesce, Lower
+from django.db.models import Exists, Max, Min, OuterRef, Prefetch, Q, QuerySet
+from django.db.models.functions import Coalesce, Lower, Now
 from django.http import HttpRequest
 from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema
@@ -140,10 +140,13 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                 ).order_by("position"),
             ),
         )
+        .filter(
+            Exists(Event.objects.filter(production=OuterRef("pk"), ends_at__lte=Now()))
+            | ~Exists(Event.objects.filter(production=OuterRef("pk")))
+        )
         .annotate(
-            # Computed once at the queryset level — not language-dependent.
-            first_event_start=Min("events__starts_at"),
-            last_event_end=Max("events__ends_at"),
+            first_event_start=Min("events__starts_at", filter=Q(events__ends_at__lte=Now())),
+            last_event_end=Max("events__ends_at", filter=Q(events__ends_at__lte=Now())),
         )
     )
 
@@ -234,7 +237,8 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
             self.queryset = self.queryset.prefetch_related(
                 Prefetch(
                     "events",
-                    queryset=Event.objects.prefetch_related(
+                    queryset=Event.objects.filter(ends_at__lte=Now())
+                    .prefetch_related(
                         Prefetch(
                             "prices",
                             queryset=EventPrice.objects.select_related("price_rank", "price"),
@@ -259,7 +263,9 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                             "hall__space__location__translations",
                             queryset=LocationTranslation.objects.select_related("language"),
                         ),
-                    ).select_related("hall__space__location"),
+                    )
+                    .select_related("hall__space__location"),
+                    to_attr="prefetched_past_events",
                 ),
             )
 
