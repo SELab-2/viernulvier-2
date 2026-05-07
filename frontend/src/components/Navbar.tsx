@@ -151,7 +151,7 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
               minHeight: tokens.navbar.minHeight,
             }}
           >
-            {/* Brand: logo + "/ Archive" */}
+            {/* Brand: Archive logo */}
             <Box component={Link} to={localizedPath('/')} sx={navbarStyles.brandLink}>
               <Box
                 component="img"

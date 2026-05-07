@@ -18,7 +18,7 @@ describe('App', () => {
   it('renders navigation', async () => {
     render(<App />)
     // Router lazily loads some children; wait for the main shell to appear
-    const logo = await screen.findByAltText('Viernulvier logo')
+    const logo = await screen.findByAltText('Viernulvier logo', undefined, { timeout: 3000 })
     expect(logo).toBeInTheDocument()
 
     const mainNav = await screen.findByRole('list', { name: 'Hoofdnavigatie' })

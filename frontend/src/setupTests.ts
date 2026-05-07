@@ -9,6 +9,23 @@ global.TextDecoder = TextDecoder as typeof global.TextDecoder
 
 process.env.PUBLIC_API_KEY = process.env.PUBLIC_API_KEY ?? 'test-api-key'
 
+// Mock axios to prevent XMLHttpRequest errors in tests
+jest.mock('axios', () => ({
+  create: jest.fn(() => ({
+    get: jest.fn().mockResolvedValue({ data: {} }),
+    post: jest.fn().mockResolvedValue({ data: {} }),
+    put: jest.fn().mockResolvedValue({ data: {} }),
+    patch: jest.fn().mockResolvedValue({ data: {} }),
+    delete: jest.fn().mockResolvedValue({ data: {} }),
+    request: jest.fn().mockResolvedValue({ data: {} }),
+    interceptors: {
+      request: { use: jest.fn(), eject: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn() },
+    },
+  })),
+  isAxiosError: jest.fn(() => false),
+}))
+
 class IntersectionObserverMock implements IntersectionObserver {
   scrollMargin: string = ''
   readonly root: Element | Document | null = null
