@@ -57,6 +57,18 @@ class AddGenreToProductionsForm(forms.Form):
 # ===========================================================================
 
 
+class ProductionTranslationForm(forms.ModelForm):
+    """
+    Custom form to adjust the layout of fields in ProductionTranslationInline.
+    """
+    class Meta:
+        model = ProductionTranslation
+        fields = ["artist_name", "tagline"]
+        widgets = {
+            "artist_name": forms.TextInput(attrs={"rows": 1, "style": "width: 256px;"}),
+            "tagline": forms.TextInput(attrs={"rows": 1, "style": "width: 256px;"}),
+        }
+
 @enable_rich_text_for_fields(
     "teaser",
     "description",
@@ -72,6 +84,7 @@ class ProductionTranslationInline(admin.StackedInline):
     """
 
     model = ProductionTranslation
+    form = ProductionTranslationForm
     extra = 1
     autocomplete_fields = ("language",)
     classes = ("collapse",)
@@ -102,6 +115,7 @@ class ProductionGenreInline(admin.TabularInline):
     autocomplete_fields = ("genre",)
     fields = ("genre", "position")
     ordering = ("position",)
+    classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("genre")
@@ -117,6 +131,7 @@ class ProductionTagInline(admin.TabularInline):
     extra = 1
     autocomplete_fields = ("tag",)
     fields = ("tag",)
+    classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("tag")

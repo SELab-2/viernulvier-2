@@ -39,6 +39,7 @@ class BlogProductionInline(admin.TabularInline):
     extra = 1
     autocomplete_fields = ("production",)
     fields = ("production",)
+    classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("production")

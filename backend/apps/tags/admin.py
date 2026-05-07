@@ -29,9 +29,10 @@ from .models import Tag, TagTranslation
 
 @enable_rich_text_for_fields(
     "short_description",
+    "excerpt",
     widget_attrs={"data-richtext-headings": "h1,h2,h3,h4"},
 )
-class TagTranslationInline(admin.TabularInline):
+class TagTranslationInline(admin.StackedInline):
     """
     Inline for editing localised tag fields directly inside the Tag change page.
 
@@ -59,6 +60,7 @@ class TagProductionInline(admin.TabularInline):
     extra = 1
     autocomplete_fields = ("production",)
     fields = ("production",)
+    classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("production")
