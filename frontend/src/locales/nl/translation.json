@@ -123,6 +123,7 @@
       "400": "Ongeldige aanvraagparameters.",
       "401": "Niet geauthenticeerd. Log in om verder te gaan.",
       "403": "Je hebt geen toestemming om deze actie uit te voeren.",
+      "429": "Te veel verzoeken. Probeer het later opnieuw.",
       "404": "De gevraagde resource werd niet gevonden.",
       "500": "Er trad een interne serverfout op. Probeer later opnieuw.",
       "genericWithCode": "Aanvraag mislukt met status {{status}}."
