@@ -1,6 +1,6 @@
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useRef, useState, type KeyboardEvent } from 'react'
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 
 const DATE_PICKER_FORMAT = 'DD/MM/YYYY'
 
@@ -40,17 +40,25 @@ type FilterDatePickerProps = {
 }
 
 /**
- * A controlled date picker that buffers user input as a "draft" and only
- * calls `onChange` when the user confirms (blur, Enter, or calendar close).
- * Externally-driven `value` changes reset the draft automatically.
+ * A controlled date picker that buffers edits as a draft and commits when the user
+ * confirms (blur, Enter, or calendar close). Clearing via the field clear control or
+ * calendar commits immediately. External `value` changes reset the draft.
  */
 const FilterDatePicker = ({ label, value, onChange }: FilterDatePickerProps) => {
   const [field, setField] = useState<DateFieldState>(() => createFieldState(value))
   // Ref keeps the latest field state accessible from stale event-handler closures.
   const fieldRef = useRef(field)
 
-  // If the external value changed (e.g. cleared from outside), ignore local draft.
-  const effectiveField = field.sourceValue === value ? field : createFieldState(value)
+  const [prevExternalValue, setPrevExternalValue] = useState(value)
+  if (value !== prevExternalValue) {
+    setPrevExternalValue(value)
+    const next = createFieldState(value)
+    setField(next)
+  }
+
+  useLayoutEffect(() => {
+    fieldRef.current = field
+  }, [field])
 
   const applyDraft = () => {
     const latest =
@@ -63,7 +71,7 @@ const FilterDatePicker = ({ label, value, onChange }: FilterDatePickerProps) => 
   return (
     <DatePicker
       label={label}
-      value={effectiveField.draft}
+      value={field.draft}
       format={DATE_PICKER_FORMAT}
       disableFuture
       onChange={(newValue, context) => {
@@ -74,9 +82,13 @@ const FilterDatePicker = ({ label, value, onChange }: FilterDatePickerProps) => 
         }
         fieldRef.current = next
         setField(next)
+        if (newValue === null) {
+          onChange('')
+        }
       }}
       onClose={applyDraft}
       slotProps={{
+        field: { clearable: true },
         textField: {
           size: 'small',
           fullWidth: true,

@@ -35,6 +35,7 @@ Access matrix
 from collections.abc import Callable
 from typing import Any
 
+from django.utils.cache import patch_cache_control
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
@@ -43,6 +44,7 @@ from rest_framework.filters import SearchFilter
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
+from api.cache import clear_api_cache
 from apps.core.ordering import NullsLastOrderingFilter
 
 from .authentications import ApiKeyAuthentication
@@ -98,6 +100,35 @@ class ApiModelViewSet(ModelViewSet):
     permission_classes = [ApiKeyPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, NullsLastOrderingFilter]
 
+    def perform_create(self, serializer: any) -> any:
+        """Save a new instance and invalidate the API cache."""
+        instance = serializer.save()
+        clear_api_cache()
+        return instance
+
+    def perform_update(self, serializer: any) -> any:
+        """Save an updated instance and invalidate the API cache."""
+        instance = serializer.save()
+        clear_api_cache()
+        return instance
+
+    def perform_destroy(self, instance: any) -> None:
+        """Delete an instance and invalidate the API cache."""
+        instance.delete()
+        clear_api_cache()
+
+    def finalize_response(self, request: any, response: any, *args: any, **kwargs: any) -> any:
+        """Prevent browsers from reusing stale API responses."""
+        response = super().finalize_response(request, response, *args, **kwargs)
+        patch_cache_control(
+            response,
+            private=True,
+            max_age=0,
+            no_cache=True,
+            must_revalidate=True,
+        )
+        return response
+
 
 @method_decorator(cache_api_view(), name="list")
 @method_decorator(cache_api_view(), name="retrieve")
@@ -127,3 +158,15 @@ class ApiReadOnlyViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     authentication_classes = [ApiKeyAuthentication]
     permission_classes = [ApiKeyPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, NullsLastOrderingFilter]
+
+    def finalize_response(self, request: any, response: any, *args: any, **kwargs: any) -> any:
+        """Prevent browsers from reusing stale API responses."""
+        response = super().finalize_response(request, response, *args, **kwargs)
+        patch_cache_control(
+            response,
+            private=True,
+            max_age=0,
+            no_cache=True,
+            must_revalidate=True,
+        )
+        return response
