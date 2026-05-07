@@ -287,6 +287,21 @@ describe('MediaFilesPage', () => {
     expect(screen.getByTestId('result-count')).toHaveTextContent('0')
   })
 
+  it('shows a rate-limit warning for a 429 ApiError', async () => {
+    getMediaFilesMock.mockRejectedValueOnce(
+      new ApiError(429, 'Too many requests. Please try again later.'),
+    )
+
+    render(<MediaFilesPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Too many requests. Please try again later.')).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
+    expect(screen.getByTestId('result-count')).toHaveTextContent('0')
+  })
+
   it('closes the floating alert when requested', async () => {
     getMediaFilesMock.mockRejectedValueOnce(new Error('boom'))
 

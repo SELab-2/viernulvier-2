@@ -253,14 +253,14 @@ describe('ProductionDetailPage', () => {
     expect(mockNavigate).not.toHaveBeenCalled()
   })
 
-  it('shows load failed if getProduction throws and navigates to archive', async () => {
+  it('shows load failed if getProduction throws and navigates to localized 404', async () => {
     mockUseParams.mockReturnValue({ id: '42' })
     mockedGetProduction.mockRejectedValue(new Error('network error'))
 
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/nl/archief', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl/404', {
         state: {
           floatingAlert: {
             open: true,

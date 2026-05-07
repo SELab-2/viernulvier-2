@@ -69,6 +69,7 @@ describe('SeriesDetailPage', () => {
         <Routes>
           <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
           <Route path="/:lang/reeksen" element={<SeriesPageProbe />} />
+          <Route path="/:lang/404" element={<div>NOT FOUND</div>} />
           <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
         </Routes>
       </MemoryRouter>,
@@ -140,28 +141,22 @@ describe('SeriesDetailPage', () => {
     expect(screen.getByRole('button', { name: 'Reeksen' })).toBeInTheDocument()
   })
 
-  it('redirects to the series tab when tag is not found', async () => {
+  it('redirects to localized 404 when tag is not found', async () => {
     mockedGetTag.mockResolvedValue(null)
     mockedGetProductions.mockResolvedValue({ results: [] })
 
     renderPage()
 
-    expect(await screen.findByText('SERIES PAGE')).toBeInTheDocument()
-    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent(
-      'Kon de reeks niet ophalen.',
-    )
+    expect(await screen.findByText('NOT FOUND')).toBeInTheDocument()
   })
 
-  it('redirects to the series tab when API throws error', async () => {
+  it('redirects to localized 404 when API throws error', async () => {
     mockedGetTag.mockRejectedValue(new Error('API error'))
     mockedGetProductions.mockResolvedValue({ results: [] })
 
     renderPage()
 
-    expect(await screen.findByText('SERIES PAGE')).toBeInTheDocument()
-    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent(
-      'Kon de reeks niet ophalen.',
-    )
+    expect(await screen.findByText('NOT FOUND')).toBeInTheDocument()
   })
 
   it('shows empty state when no productions exist', async () => {
