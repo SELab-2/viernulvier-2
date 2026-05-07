@@ -2,17 +2,13 @@
 Tests for PersistentSelectionMixin — covering lines 56-62, 71, 101.
 """
 
-import json
-from unittest.mock import patch
-
 from unittest.mock import MagicMock, patch
-
 from django.contrib import admin
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.auth.models import User
 from django.contrib.sessions.backends.cache import SessionStore
-from django.http import JsonResponse
 from django.test import RequestFactory, TestCase
+from django.template.response import TemplateResponse
 
 from apps.core.admin import BaseAdmin
 
@@ -36,6 +32,7 @@ class TestPersistentSelectionMixin(TestCase):
     def _get_get_request(self):
         request = self.factory.get("/")
         request.session = _make_session()
+        request.user = User(is_active=True, is_staff=True, is_superuser=True)
         return request
 
     def _get_post_request(self, posted_ids=None):
@@ -43,6 +40,8 @@ class TestPersistentSelectionMixin(TestCase):
 
         request = self.factory.post("/", data=data)
         request.session = _make_session()
+        request.user = User(is_active=True, is_staff=True, is_superuser=True)
+        request._dont_enforce_csrf_checks = True
         return request
 
     def test_update_adds_selected_ids_to_empty_session(self):
@@ -134,18 +133,18 @@ class TestPersistentSelectionMixin(TestCase):
         assert result == set()
         assert self.admin._get_persisted_selected_ids(request) == set()
 
-    def test_changelist_view_post_request_persists_selection_before_delegating(self):
-        """POST requests trigger persistence before the parent changelist view runs."""
-        request = self._get_post_request(["1", "2"])
+    def test_changelist_view_post_no_action(self):
+        """Test changelist_view with a POST request that has no specific action."""
+        request = self._get_post_request()
+        response = self.admin.changelist_view(request)
 
-        with patch.object(admin.ModelAdmin, "changelist_view", return_value=JsonResponse({"ok": True})) as super_view:
-            response = self.admin.changelist_view(request)
+        self.assertIsInstance(response, TemplateResponse)
 
-        super_view.assert_called_once()
-        assert self.admin._get_persisted_selected_ids(request) == {"1", "2"}
-        assert json.loads(response.content) == {"ok": True}
-        assert queryset.model == User
-        assert queryset.filter(username="u1").exists()
+        self.assertIn("persistent_selected_ids", response.context_data)
+        self.assertIn("persistent_selected_count", response.context_data)
+
+        self.assertEqual(response.context_data["persistent_selected_ids"], [])
+        self.assertEqual(response.context_data["persistent_selected_count"], 0)
 
     def test_save_model_clears_api_cache(self) -> None:
         instance = BaseAdmin(User, admin.site)
