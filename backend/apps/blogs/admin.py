@@ -1,5 +1,6 @@
 """Admin configuration for the Blog app."""
 
+from django import forms
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpRequest
@@ -8,6 +9,26 @@ from django.utils.html import format_html
 from apps.core.admin import BaseAdmin
 
 from .models import Blog, BlogTranslation
+
+
+class BlogAdminForm(forms.ModelForm):
+    """Admin form that restricts blog cover uploads to supported image types."""
+
+    class Meta:
+        model = Blog
+        fields = [
+            "slug",
+            "published_at",
+            "cover_image",
+            "productions",
+        ]
+        widgets = {
+            "cover_image": forms.FileInput(
+                attrs={
+                    "accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp",
+                },
+            ),
+        }
 
 
 class BlogTranslationInline(admin.TabularInline):
@@ -27,6 +48,8 @@ class BlogTranslationInline(admin.TabularInline):
 class BlogAdmin(BaseAdmin):
     """Admin configuration for blog posts."""
 
+    form = BlogAdminForm
+
     list_display = (
         "id",
         "display_title",
@@ -35,14 +58,19 @@ class BlogAdmin(BaseAdmin):
         "published_at",
         "linked_productions_count",
     )
+
     list_filter = ("published_at",)
+
     search_fields = (
         "slug",
         "translations__title",
         "translations__body",
     )
+
     ordering = ("-published_at", "-id")
+
     autocomplete_fields = ("productions",)
+
     inlines = [BlogTranslationInline]
 
     fieldsets = (
@@ -56,10 +84,13 @@ class BlogAdmin(BaseAdmin):
             "Linked Productions",
             {
                 "fields": ("productions",),
-                "description": "Link this blog post to one or more productions to display them together on the frontend.",
+                "description": ("Link this blog post to one or more productions to display them together on the frontend."),
             },
         ),
     )
+
+    class Media:
+        js = ("admin/js/media_file_upload.js",)
 
     @admin.display(description="Title", ordering="translations__title")
     def display_title(self, obj: Blog) -> str:
@@ -75,10 +106,19 @@ class BlogAdmin(BaseAdmin):
     def linked_productions_count(self, obj: Blog) -> str:
         """Show the number of linked productions."""
         count = obj.productions.count()
+
         if count == 0:
             return format_html('<span style="color: #999;">{}</span>', "None")
+
         return str(count)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Blog]:
         """Prefetch translations and productions to avoid N+1 queries."""
-        return super().get_queryset(request).prefetch_related("translations__language", "productions")
+        return (
+            super()
+            .get_queryset(request)
+            .prefetch_related(
+                "translations__language",
+                "productions",
+            )
+        )
