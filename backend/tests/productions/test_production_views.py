@@ -28,7 +28,7 @@ from apps.core.views import ApiModelViewSet
 from apps.productions.models import Production
 from apps.productions.serializers import ProductionSerializer
 from apps.productions.views import ProductionViewSet
-from tests.factories.blog import BlogFactory
+from tests.factories.blog import BlogFactory, BlogTranslationFactory
 from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.production import (
@@ -551,6 +551,64 @@ class TestProductionViewSetResponseStructure(TestCase):
             "display_artist_name",
             "media_gallery",
         }
+
+    def test_retrieve_with_include_blogs_contains_blogs_field(self) -> None:
+        """blogs field is present in response when ?include=blogs is set."""
+        blog = BlogFactory(slug="related-blog", published_at=datetime.now(tz=UTC))
+        BlogTranslationFactory(blog=blog, language=self.nl, title="Gerelateerde blog", body="Body", excerpt="Excerpt")
+        blog.productions.add(self.production)
+
+        response = self.client.get(
+            f"/api/v1/productions/{self.production.id}/?include=blogs",
+            **pub_headers(),
+        )
+
+        assert response.status_code == 200
+        assert "blogs" in response.data
+        assert len(response.data["blogs"]) == 1
+        assert response.data["blogs"][0]["id"] == blog.id
+        assert set(response.data["blogs"][0].keys()) == {
+            "id",
+            "slug",
+            "published_at",
+            "cover_image",
+            "title",
+            "excerpt",
+            "display_title",
+            "display_excerpt",
+        }
+
+    def test_retrieve_without_include_excludes_blogs_field(self) -> None:
+        """blogs field is absent from response when ?include=blogs is not set."""
+        response = self.client.get(f"/api/v1/productions/{self.production.id}/", **pub_headers())
+        assert response.status_code == 200
+        assert "blogs" not in response.data
+
+    def test_retrieve_with_include_blogs_excludes_unpublished_blogs(self) -> None:
+        """Only published blogs are included when ?include=blogs is set."""
+        published_blog = BlogFactory(slug="published-blog", published_at=datetime.now(tz=UTC))
+        BlogTranslationFactory(
+            blog=published_blog,
+            language=self.nl,
+            title="Published blog",
+            body="Body",
+            excerpt="Excerpt",
+        )
+        published_blog.productions.add(self.production)
+
+        draft_blog = BlogFactory(slug="draft-blog", published_at=None)
+        BlogTranslationFactory(blog=draft_blog, language=self.nl, title="Draft blog", body="Body", excerpt="Excerpt")
+        draft_blog.productions.add(self.production)
+
+        response = self.client.get(
+            f"/api/v1/productions/{self.production.id}/?include=blogs",
+            **pub_headers(),
+        )
+
+        assert response.status_code == 200
+        blog_ids = [item["id"] for item in response.data["blogs"]]
+        assert published_blog.id in blog_ids
+        assert draft_blog.id not in blog_ids
 
 
 # ---------------------------------------------------------------------------

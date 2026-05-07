@@ -1,18 +1,24 @@
 import type { Production } from './Productions'
 
 /**
- * Blog object returned by the backend `/blogs/` endpoints.
+ * Minimal blog fields required for blog cards and related blog sections.
  */
-export interface Blog {
+export interface BlogCardData {
   id: number
   slug: string
   published_at: string | null
   cover_image: string | null
   title: Record<string, string>
-  body: Record<string, string>
   excerpt: Record<string, string>
   display_title: string
   display_excerpt: string
+}
+
+/**
+ * Blog object returned by the backend `/blogs/` endpoints.
+ */
+export interface Blog extends BlogCardData {
+  body: Record<string, string>
   productions: Production[]
 }
 

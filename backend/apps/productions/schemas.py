@@ -289,8 +289,9 @@ _PRODUCTION_RETRIEVE = extend_schema(
         "per language; the dictionary is empty when no descriptions have been added. "
         "`include=related` returns productions grouped by tag, where each related tag "
         "is compact and only exposes `id`, `name`, and `display_name`. "
-        "Use `?include=events` to include all related events in the response, or "
-        "`?include=related` to include related productions grouped by tag."
+        "Use `?include=events` to include all related events in the response, "
+        "`?include=related` to include related productions grouped by tag, and "
+        "`?include=blogs` to include linked published blogs."
     ),
     parameters=[
         OpenApiParameter(
@@ -298,11 +299,13 @@ _PRODUCTION_RETRIEVE = extend_schema(
             type=OpenApiTypes.STR,
             location=OpenApiParameter.QUERY,
             required=False,
-            description="Comma-separated list of relations to include. Accepted values: `events`, `related`.",
+            description="Comma-separated list of relations to include. Accepted values: `events`, `related`, `blogs`.",
             examples=[
                 OpenApiExample("No includes", value=""),
                 OpenApiExample("Include events", value="events"),
                 OpenApiExample("Include related", value="related"),
+                OpenApiExample("Include blogs", value="blogs"),
+                OpenApiExample("Include multiple", value="events,related,blogs"),
             ],
         )
     ],

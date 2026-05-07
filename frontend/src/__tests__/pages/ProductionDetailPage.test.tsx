@@ -3,7 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 import ProductionDetailPage from '../../pages/ProductionDetailPage'
-import { getBlogs } from '../../services/blogs/Blogs'
 import { getProduction } from '../../services/productions/Productions'
 
 import type { Event } from '../../types/Events'
@@ -31,10 +30,6 @@ jest.mock('../../services/productions/Productions', () => ({
   getProduction: jest.fn(),
 }))
 
-jest.mock('../../services/blogs/Blogs', () => ({
-  getBlogs: jest.fn(),
-}))
-
 jest.mock('../../components/production/RelatedProductions', () => ({
   __esModule: true,
   default: () => <div data-testid="related-productions-mock" />,
@@ -50,7 +45,6 @@ beforeEach(() => {
 })
 
 const mockedGetProduction = getProduction as jest.MockedFunction<typeof getProduction>
-const mockedGetBlogs = getBlogs as jest.MockedFunction<typeof getBlogs>
 
 const setMatchMediaMatches = (matches: boolean) => {
   Object.defineProperty(window, 'matchMedia', {
@@ -82,7 +76,6 @@ describe('ProductionDetailPage', () => {
   afterEach(() => {
     jest.clearAllMocks()
     mockedGetProduction.mockReset()
-    mockedGetBlogs.mockReset()
     languageState.current = 'nl'
     setMatchMediaMatches(false)
   })
@@ -227,28 +220,21 @@ describe('ProductionDetailPage', () => {
       attendance_mode: 'offline',
       first_event_start: null,
       last_event_end: null,
-    } as Production
-
-    mockedGetProduction.mockResolvedValue(productionData as Production)
-    mockedGetBlogs.mockResolvedValue({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [
+      blogs: [
         {
           id: 100,
           slug: 'blog',
           published_at: '2025-01-01T10:00:00Z',
           cover_image: null,
           title: { nl: 'Blog' },
-          body: { nl: 'Body' },
           excerpt: { nl: 'Excerpt' },
           display_title: 'Blog',
           display_excerpt: 'Excerpt',
-          productions: [],
         },
       ],
-    })
+    } as Production
+
+    mockedGetProduction.mockResolvedValue(productionData as Production)
 
     renderPage()
 
@@ -263,14 +249,13 @@ describe('ProductionDetailPage', () => {
       expect(screen.getByTestId('related-blogs-mock')).toBeInTheDocument()
     })
 
-    expect(mockedGetBlogs).toHaveBeenCalledWith({ filters: { production: 42, published: true } })
+    expect(mockedGetProduction).toHaveBeenCalledWith(42, ['events', 'related', 'blogs'])
     expect(mockNavigate).not.toHaveBeenCalled()
   })
 
   it('shows load failed if getProduction throws and navigates to home', async () => {
     mockUseParams.mockReturnValue({ id: '42' })
     mockedGetProduction.mockRejectedValue(new Error('network error'))
-    mockedGetBlogs.mockResolvedValue({ count: 0, next: null, previous: null, results: [] })
 
     renderPage()
 
@@ -287,7 +272,7 @@ describe('ProductionDetailPage', () => {
     })
   })
 
-  it('keeps rendering production details when related blog loading fails', async () => {
+  it('keeps rendering production details when no related blogs are returned', async () => {
     mockUseParams.mockReturnValue({ id: '42' })
 
     mockedGetProduction.mockResolvedValue({
@@ -308,8 +293,8 @@ describe('ProductionDetailPage', () => {
       attendance_mode: 'offline',
       first_event_start: null,
       last_event_end: null,
+      blogs: [],
     } as Production)
-    mockedGetBlogs.mockRejectedValue(new Error('blog error'))
 
     renderPage()
 
@@ -345,8 +330,8 @@ describe('ProductionDetailPage', () => {
       attendance_mode: 'offline',
       first_event_start: null,
       last_event_end: null,
+      blogs: [],
     } as Production)
-    mockedGetBlogs.mockResolvedValue({ count: 0, next: null, previous: null, results: [] })
 
     renderPage()
 
