@@ -124,6 +124,16 @@ describe('productions service', () => {
       expect(mockedGet).toHaveBeenCalledWith('/productions/42/', { params: { include: 'events' } })
       expect(result).toEqual(productionWithEvents)
     })
+
+    it('joins multiple include values in one query parameter', async () => {
+      mockedGet.mockResolvedValue({ data: mockProduction })
+
+      await getProduction(42, ['events', 'related', 'blogs'])
+
+      expect(mockedGet).toHaveBeenCalledWith('/productions/42/', {
+        params: { include: 'events,related,blogs' },
+      })
+    })
   })
 
   describe('getProductions', () => {
