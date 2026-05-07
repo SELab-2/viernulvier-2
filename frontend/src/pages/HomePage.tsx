@@ -255,7 +255,7 @@ const HomePage = () => {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [clearFloatingAlert, showFloatingAlert])
 
   const handleSearch = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
