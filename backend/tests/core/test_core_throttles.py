@@ -2,6 +2,7 @@ import hashlib
 from unittest.mock import MagicMock
 
 from django.conf import settings
+from django.core.cache import caches
 from django.test import TestCase, override_settings
 from rest_framework.test import APIRequestFactory
 
@@ -108,6 +109,10 @@ class TestSubclassScopes(TestCase):
         key = throttle.get_cache_key(make_request(), view)
         assert key is not None
         assert "public_hour" in key
+
+    def test_throttles_use_throttling_cache(self) -> None:
+        assert PublicKeyMinuteThrottle.cache is caches["throttling"]
+        assert PublicKeyHourThrottle.cache is caches["throttling"]
 
 
 class TestInternalKeyThrottle(TestCase):

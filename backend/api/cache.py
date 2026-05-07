@@ -24,7 +24,7 @@ CACHE_TTL_LONG = 60 * 60  # 1 hour
 
 API_CACHE_KEY_PREFIX = "api"
 API_CACHE_VARY_HEADERS = ("Accept-Language",)
-API_CACHE_DELETE_PATTERN = "api:*"
+API_CACHE_DELETE_PATTERN = "*api*"
 
 
 def cache_get_view(timeout: int = CACHE_TTL_SHORT) -> Callable[[type], type]:
@@ -55,8 +55,15 @@ def clear_api_cache() -> int | None:
     """
     delete_pattern = getattr(cache, "delete_pattern", None)
 
-    if callable(delete_pattern):
-        return delete_pattern(API_CACHE_DELETE_PATTERN)
+    try:
+        if callable(delete_pattern):
+            deleted = delete_pattern(API_CACHE_DELETE_PATTERN)
+            logger.info("Deleted %s API cache keys", deleted)
+            return deleted
 
-    cache.clear()
-    return None
+        cache.clear()
+        return None
+
+    except Exception:
+        logger.exception("API cache clear failed; continuing without cache invalidation")
+        return None

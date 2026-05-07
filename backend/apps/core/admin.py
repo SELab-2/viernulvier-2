@@ -11,8 +11,13 @@ from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.http import JsonResponse
 from django.http.response import HttpResponseRedirect
+from django.db.models import Model, QuerySet
+from django.forms import BaseModelForm
+from django.http import HttpRequest
 from django.template.response import TemplateResponse
 from django.urls import reverse
+
+from api.cache import clear_api_cache
 
 
 class PersistentSelectionMixin:
@@ -165,6 +170,27 @@ class BaseAdmin(PersistentSelectionMixin, admin.ModelAdmin):
         prevent N+1 queries on list and detail pages.
         """
         return super().get_queryset(request)
+
+    def save_model(
+        self,
+        request: HttpRequest,
+        obj: Model,
+        form: BaseModelForm,
+        change: bool,
+    ) -> None:
+        """Save a model instance and invalidate API cache."""
+        super().save_model(request, obj, form, change)
+        clear_api_cache()
+
+    def delete_model(self, request: HttpRequest, obj: Model) -> None:
+        """Delete a model instance and invalidate API cache."""
+        super().delete_model(request, obj)
+        clear_api_cache()
+
+    def delete_queryset(self, request: HttpRequest, queryset: QuerySet) -> None:
+        """Delete multiple model instances and invalidate API cache."""
+        super().delete_queryset(request, queryset)
+        clear_api_cache()
 
 
 class TwoStepBulkActionMixin:

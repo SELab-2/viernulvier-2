@@ -5,6 +5,8 @@ Tests for PersistentSelectionMixin — covering lines 56-62, 71, 101.
 import json
 from unittest.mock import patch
 
+from unittest.mock import MagicMock, patch
+
 from django.contrib import admin
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.auth.models import User
@@ -142,3 +144,38 @@ class TestPersistentSelectionMixin(TestCase):
         super_view.assert_called_once()
         assert self.admin._get_persisted_selected_ids(request) == {"1", "2"}
         assert json.loads(response.content) == {"ok": True}
+        assert queryset.model == User
+        assert queryset.filter(username="u1").exists()
+
+    def test_save_model_clears_api_cache(self) -> None:
+        instance = BaseAdmin(User, admin.site)
+        request = self.factory.get("/admin/auth/user/")
+        obj = User(username="test-user")
+        form = MagicMock()
+
+        with patch("apps.core.admin.clear_api_cache") as clear_cache:
+            instance.save_model(request, obj, form, change=False)
+
+        clear_cache.assert_called_once()
+
+    def test_delete_model_clears_api_cache(self) -> None:
+        instance = BaseAdmin(User, admin.site)
+        request = self.factory.get("/admin/auth/user/")
+        obj = User.objects.create_user(username="delete-me", password="secret")
+
+        with patch("apps.core.admin.clear_api_cache") as clear_cache:
+            instance.delete_model(request, obj)
+
+        clear_cache.assert_called_once()
+
+    def test_delete_queryset_clears_api_cache(self) -> None:
+        instance = BaseAdmin(User, admin.site)
+        request = self.factory.get("/admin/auth/user/")
+        User.objects.create_user(username="delete-me-1", password="secret")
+        User.objects.create_user(username="delete-me-2", password="secret")
+        queryset = User.objects.filter(username__startswith="delete-me")
+
+        with patch("apps.core.admin.clear_api_cache") as clear_cache:
+            instance.delete_queryset(request, queryset)
+
+        clear_cache.assert_called_once()
