@@ -61,6 +61,7 @@ class ProductionTranslationForm(forms.ModelForm):
     """
     Custom form to adjust the layout of fields in ProductionTranslationInline.
     """
+
     class Meta:
         model = ProductionTranslation
         fields = ["artist_name", "tagline"]
@@ -68,6 +69,7 @@ class ProductionTranslationForm(forms.ModelForm):
             "artist_name": forms.TextInput(attrs={"rows": 1, "style": "width: 256px;"}),
             "tagline": forms.TextInput(attrs={"rows": 1, "style": "width: 256px;"}),
         }
+
 
 @enable_rich_text_for_fields(
     "teaser",

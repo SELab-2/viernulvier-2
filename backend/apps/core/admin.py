@@ -9,11 +9,10 @@ or injecting request-scoped context) only need to be made in one place.
 
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
-from django.http import JsonResponse
-from django.http.response import HttpResponseRedirect
 from django.db.models import Model, QuerySet
 from django.forms import BaseModelForm
-from django.http import HttpRequest
+from django.http import HttpRequest, JsonResponse
+from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 

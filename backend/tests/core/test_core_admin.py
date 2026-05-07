@@ -3,12 +3,13 @@ Tests for PersistentSelectionMixin — covering lines 56-62, 71, 101.
 """
 
 from unittest.mock import MagicMock, patch
+
 from django.contrib import admin
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.auth.models import User
 from django.contrib.sessions.backends.cache import SessionStore
-from django.test import RequestFactory, TestCase
 from django.template.response import TemplateResponse
+from django.test import RequestFactory, TestCase
 
 from apps.core.admin import BaseAdmin
 
@@ -138,13 +139,14 @@ class TestPersistentSelectionMixin(TestCase):
         request = self._get_post_request()
         response = self.admin.changelist_view(request)
 
-        self.assertIsInstance(response, TemplateResponse)
 
-        self.assertIn("persistent_selected_ids", response.context_data)
-        self.assertIn("persistent_selected_count", response.context_data)
+        assert isinstance(response, TemplateResponse)
 
-        self.assertEqual(response.context_data["persistent_selected_ids"], [])
-        self.assertEqual(response.context_data["persistent_selected_count"], 0)
+        assert "persistent_selected_ids" in response.context_data
+        assert "persistent_selected_count" in response.context_data
+
+        assert response.context_data["persistent_selected_ids"] == []
+        assert response.context_data["persistent_selected_count"] == 0
 
     def test_save_model_clears_api_cache(self) -> None:
         instance = BaseAdmin(User, admin.site)
