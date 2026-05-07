@@ -16,10 +16,11 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useNotification } from '../contexts/notificationContextShared'
+import { ApiError } from '../services/ApiTypes'
 import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 
 export type UseCollectionPageNotificationResult = {
-  showFloatingAlert: () => void
+  showFloatingAlert: (error?: unknown) => void
   clearFloatingAlert: () => void
 }
 
@@ -44,12 +45,27 @@ export const useCollectionPageNotification = (
     floatingErrorMessageRef.current = t(messageKey)
   }, [messageKey, t])
 
-  const showFloatingAlert = useCallback(() => {
-    contextShowFloatingAlert({
-      message: floatingErrorMessageRef.current,
-      severity: ALERT_SEVERITIES.error,
-    })
-  }, [contextShowFloatingAlert])
+  const showFloatingAlert = useCallback(
+    (error?: unknown) => {
+      if (error instanceof ApiError) {
+        const { message: apiMessage, status } = error
+
+        if (status === 429) {
+          contextShowFloatingAlert({
+            message: apiMessage,
+            severity: ALERT_SEVERITIES.warning,
+          })
+          return
+        }
+      }
+
+      contextShowFloatingAlert({
+        message: floatingErrorMessageRef.current,
+        severity: ALERT_SEVERITIES.error,
+      })
+    },
+    [contextShowFloatingAlert],
+  )
 
   const clearFloatingAlert = useCallback(() => {
     contextClearFloatingAlert()
