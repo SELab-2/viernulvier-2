@@ -12,6 +12,7 @@ Queryset optimisation
 language in a single query.
 """
 
+from django import forms
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpRequest
@@ -22,9 +23,27 @@ from apps.productions.models import ProductionTag
 
 from .models import Tag, TagTranslation
 
-# ===========================================================================
-# Inline
-# ===========================================================================
+
+class TagAdminForm(forms.ModelForm):
+    """Admin form that restricts tag image uploads to supported image types."""
+
+    class Meta:
+        model = Tag
+        fields = [
+            "external_id",
+            "url",
+            "source",
+            "is_enabled",
+            "type",
+            "image",
+        ]
+        widgets = {
+            "image": forms.FileInput(
+                attrs={
+                    "accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp",
+                },
+            ),
+        }
 
 
 @enable_rich_text_for_fields(
@@ -35,9 +54,6 @@ from .models import Tag, TagTranslation
 class TagTranslationInline(admin.StackedInline):
     """
     Inline for editing localised tag fields directly inside the Tag change page.
-
-    Shows the language alongside the translatable fields in a vertical layout
-    so editors can manage all translations from a single form with better readability.
     """
 
     model = TagTranslation
@@ -66,11 +82,6 @@ class TagProductionInline(admin.TabularInline):
         return super().get_queryset(request).select_related("production")
 
 
-# ===========================================================================
-# Tag admin
-# ===========================================================================
-
-
 @admin.register(Tag)
 class TagAdmin(BaseAdmin):
     """
@@ -87,6 +98,8 @@ class TagAdmin(BaseAdmin):
     ``prefetch_related("translations")`` prevents N+1 queries when the inline
     renders all language translations on the detail page.
     """
+
+    form = TagAdminForm
 
     list_display = (
         "id",
@@ -115,6 +128,9 @@ class TagAdmin(BaseAdmin):
     def display_name(self, obj: Tag) -> str:
         """Return the display name shown in admin lists."""
         return str(obj)
+
+    class Media:
+        js = ("admin/js/media_file_upload.js",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Prefetch translations to avoid N+1 queries on the detail page."""

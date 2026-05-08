@@ -1,5 +1,6 @@
 """Admin configuration for the Media Files app."""
 
+from django import forms
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpRequest
@@ -8,6 +9,25 @@ from django.utils.html import format_html
 from apps.core.admin import BaseAdmin
 
 from .models import MediaFile, MediaFileTranslation
+
+
+class MediaFileAdminForm(forms.ModelForm):
+    """Admin form that restricts selectable upload file types."""
+
+    class Meta:
+        model = MediaFile
+        fields = [
+            "external_id",
+            "file",
+            "filename",
+        ]
+        widgets = {
+            "file": forms.FileInput(
+                attrs={
+                    "accept": ".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf",
+                },
+            ),
+        }
 
 
 class MediaFileTranslationInline(admin.TabularInline):
@@ -28,6 +48,8 @@ class MediaFileTranslationInline(admin.TabularInline):
 @admin.register(MediaFile)
 class MediaFileAdmin(BaseAdmin):
     """Admin configuration for the MediaFile model."""
+
+    form = MediaFileAdminForm
 
     list_display = (
         "id",
@@ -77,6 +99,9 @@ class MediaFileAdmin(BaseAdmin):
     )
 
     inlines = [MediaFileTranslationInline]
+
+    class Media:
+        js = ("admin/js/media_file_upload.js",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Prefetch translations to avoid N+1 queries in admin screens."""

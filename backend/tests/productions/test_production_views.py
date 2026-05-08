@@ -28,7 +28,7 @@ from apps.core.views import ApiModelViewSet
 from apps.productions.models import Production
 from apps.productions.serializers import ProductionSerializer
 from apps.productions.views import ProductionViewSet
-from tests.factories.blog import BlogFactory
+from tests.factories.blog import BlogFactory, BlogTranslationFactory
 from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.production import (
@@ -77,6 +77,16 @@ class TestProductionViewSetList(TestCase):
         Production.objects.all().delete()
         self.production_a = ProductionFactory.create(attendance_mode="offline")
         self.production_b = ProductionFactory.create(attendance_mode="online")
+        EventFactory.create(
+            production=self.production_a,
+            starts_at=datetime(2025, 1, 1, tzinfo=UTC),
+            ends_at=datetime(2025, 1, 1, 22, tzinfo=UTC),
+        )
+        EventFactory.create(
+            production=self.production_b,
+            starts_at=datetime(2025, 2, 1, tzinfo=UTC),
+            ends_at=datetime(2025, 2, 1, 22, tzinfo=UTC),
+        )
 
     def test_list_with_public_key_returns_200(self) -> None:
         response = self.client.get("/api/v1/productions/", **pub_headers())
@@ -417,8 +427,16 @@ class TestProductionViewSetResponseStructure(TestCase):
             uit_database_type=self.db_type,
             attendance_mode="offline",
         )
-        self.event1 = EventFactory.create(production=self.production)
-        self.event2 = EventFactory.create(production=self.production)
+        self.event1 = EventFactory.create(
+            production=self.production,
+            starts_at=_dt(2025, 2, 10),
+            ends_at=_dt(2025, 2, 10, 22),
+        )
+        self.event2 = EventFactory.create(
+            production=self.production,
+            starts_at=_dt(2025, 4, 10),
+            ends_at=_dt(2025, 4, 10, 22),
+        )
         ProductionTranslationFactory.create(
             production=self.production,
             language=self.nl,
@@ -552,6 +570,64 @@ class TestProductionViewSetResponseStructure(TestCase):
             "media_gallery",
         }
 
+    def test_retrieve_with_include_blogs_contains_blogs_field(self) -> None:
+        """blogs field is present in response when ?include=blogs is set."""
+        blog = BlogFactory(slug="related-blog", published_at=datetime.now(tz=UTC))
+        BlogTranslationFactory(blog=blog, language=self.nl, title="Gerelateerde blog", body="Body", excerpt="Excerpt")
+        blog.productions.add(self.production)
+
+        response = self.client.get(
+            f"/api/v1/productions/{self.production.id}/?include=blogs",
+            **pub_headers(),
+        )
+
+        assert response.status_code == 200
+        assert "blogs" in response.data
+        assert len(response.data["blogs"]) == 1
+        assert response.data["blogs"][0]["id"] == blog.id
+        assert set(response.data["blogs"][0].keys()) == {
+            "id",
+            "slug",
+            "published_at",
+            "cover_image",
+            "title",
+            "excerpt",
+            "display_title",
+            "display_excerpt",
+        }
+
+    def test_retrieve_without_include_excludes_blogs_field(self) -> None:
+        """blogs field is absent from response when ?include=blogs is not set."""
+        response = self.client.get(f"/api/v1/productions/{self.production.id}/", **pub_headers())
+        assert response.status_code == 200
+        assert "blogs" not in response.data
+
+    def test_retrieve_with_include_blogs_excludes_unpublished_blogs(self) -> None:
+        """Only published blogs are included when ?include=blogs is set."""
+        published_blog = BlogFactory(slug="published-blog", published_at=datetime.now(tz=UTC))
+        BlogTranslationFactory(
+            blog=published_blog,
+            language=self.nl,
+            title="Published blog",
+            body="Body",
+            excerpt="Excerpt",
+        )
+        published_blog.productions.add(self.production)
+
+        draft_blog = BlogFactory(slug="draft-blog", published_at=None)
+        BlogTranslationFactory(blog=draft_blog, language=self.nl, title="Draft blog", body="Body", excerpt="Excerpt")
+        draft_blog.productions.add(self.production)
+
+        response = self.client.get(
+            f"/api/v1/productions/{self.production.id}/?include=blogs",
+            **pub_headers(),
+        )
+
+        assert response.status_code == 200
+        blog_ids = [item["id"] for item in response.data["blogs"]]
+        assert published_blog.id in blog_ids
+        assert draft_blog.id not in blog_ids
+
 
 # ---------------------------------------------------------------------------
 # N+1 guard - prefetch translations
@@ -568,6 +644,9 @@ class TestProductionViewSetPrefetch(TestCase):
         self.en = LanguageFactory.create(code="en", name="English")
         for _ in range(5):
             p = ProductionFactory.create()
+            EventFactory.create(
+                production=p, starts_at=datetime(2025, 1, 1, tzinfo=UTC), ends_at=datetime(2025, 1, 1, 22, tzinfo=UTC)
+            )
             ProductionTranslationFactory.create(
                 production=p,
                 language=self.nl,
@@ -604,6 +683,11 @@ class TestProductionApiTagDescription(TestCase):
         self.client = APIClient()
         self.nl = LanguageFactory.create(code="nl")
         self.production = ProductionFactory.create()
+        EventFactory.create(
+            production=self.production,
+            starts_at=datetime(2025, 1, 1, tzinfo=UTC),
+            ends_at=datetime(2025, 1, 1, 22, tzinfo=UTC),
+        )
         self.tag = TagFactory.create(type="theme")
         self.production_tag = ProductionTagFactory.create(production=self.production, tag=self.tag)
         ProductionTagTranslationFactory.create(
@@ -649,6 +733,11 @@ class TestProductionViewSetTagTranslationPrefetch(TestCase):
 
         for _ in range(5):
             production = ProductionFactory.create()
+            EventFactory.create(
+                production=production,
+                starts_at=datetime(2025, 1, 1, tzinfo=UTC),
+                ends_at=datetime(2025, 1, 1, 22, tzinfo=UTC),
+            )
             for tag_type in ("theme", "mood"):
                 tag = TagFactory.create(type=tag_type)
                 pt = ProductionTagFactory.create(production=production, tag=tag)
@@ -681,7 +770,16 @@ class TestProductionEventDateFieldsInResponse(TestCase):
         self.client = APIClient()
         Production.objects.all().delete()
         self.production = ProductionFactory.create()
-        EventFactory.create(production=self.production, starts_at=_dt(2025, 9, 15), ends_at=_dt(2025, 9, 15, 22))
+        self.past_event = EventFactory.create(
+            production=self.production,
+            starts_at=_dt(2025, 9, 15),
+            ends_at=_dt(2025, 9, 15, 22),
+        )
+        self.future_event = EventFactory.create(
+            production=self.production,
+            starts_at=_dt(2030, 1, 10),
+            ends_at=_dt(2030, 1, 10, 22),
+        )
 
     def test_list_contains_first_event_start(self) -> None:
         response = self.client.get("/api/v1/productions/", **pub_headers())
@@ -699,6 +797,12 @@ class TestProductionEventDateFieldsInResponse(TestCase):
         response = self.client.get(f"/api/v1/productions/{self.production.pk}/", **pub_headers())
         assert "last_event_end" in response.data
 
+    def test_detail_with_include_events_omits_future_events(self) -> None:
+        response = self.client.get(f"/api/v1/productions/{self.production.pk}/?include=events", **pub_headers())
+        event_ids = [event["id"] for event in response.data["events"]]
+        assert self.past_event.id in event_ids
+        assert self.future_event.id not in event_ids
+
     def test_list_first_event_start_value_is_correct(self) -> None:
         item = self.client.get("/api/v1/productions/", **pub_headers()).data["results"][0]
         parsed = datetime.fromisoformat(item["first_event_start"])
@@ -711,10 +815,25 @@ class TestProductionEventDateFieldsInResponse(TestCase):
 
     def test_list_fields_are_null_without_events(self) -> None:
         Production.objects.all().delete()
-        ProductionFactory.create()
-        item = self.client.get("/api/v1/productions/", **pub_headers()).data["results"][0]
-        assert item["first_event_start"] is None
-        assert item["last_event_end"] is None
+        production_without_events = ProductionFactory.create()
+
+        results = self.client.get("/api/v1/productions/", **pub_headers()).data["results"]
+        assert len(results) == 1
+        assert results[0]["id"] == production_without_events.id
+        assert results[0]["first_event_start"] is None
+        assert results[0]["last_event_end"] is None
+
+    def test_production_with_only_future_events_is_excluded(self) -> None:
+        Production.objects.all().delete()
+        future_only = ProductionFactory.create()
+        EventFactory.create(
+            production=future_only,
+            starts_at=_dt(2030, 1, 10),
+            ends_at=_dt(2030, 1, 10, 22),
+        )
+
+        results = self.client.get("/api/v1/productions/", **pub_headers()).data["results"]
+        assert len(results) == 0
 
     def test_patch_with_first_event_start_is_ignored(self) -> None:
         self.client.patch(
@@ -829,6 +948,11 @@ class TestProductionLanguageAwareOrderingAndSearch(TestCase):
         self.en = LanguageFactory.create(code="en", name="English")
 
         self.prod_alpha_nl = ProductionFactory.create()
+        EventFactory.create(
+            production=self.prod_alpha_nl,
+            starts_at=datetime(2025, 1, 1, tzinfo=UTC),
+            ends_at=datetime(2025, 1, 1, 22, tzinfo=UTC),
+        )
         ProductionTranslationFactory.create(
             production=self.prod_alpha_nl,
             language=self.nl,
@@ -849,6 +973,11 @@ class TestProductionLanguageAwareOrderingAndSearch(TestCase):
         )
 
         self.prod_alpha_en = ProductionFactory.create()
+        EventFactory.create(
+            production=self.prod_alpha_en,
+            starts_at=datetime(2025, 1, 1, tzinfo=UTC),
+            ends_at=datetime(2025, 1, 1, 22, tzinfo=UTC),
+        )
         ProductionTranslationFactory.create(
             production=self.prod_alpha_en,
             language=self.nl,
@@ -889,6 +1018,9 @@ class TestProductionLanguageAwareOrderingAndSearch(TestCase):
 
     def test_ordering_by_title_sort_is_case_insensitive(self) -> None:
         prod_lower = ProductionFactory.create()
+        EventFactory.create(
+            production=prod_lower, starts_at=datetime(2025, 1, 1, tzinfo=UTC), ends_at=datetime(2025, 1, 1, 22, tzinfo=UTC)
+        )
         ProductionTranslationFactory.create(
             production=prod_lower,
             language=self.en,
@@ -900,6 +1032,9 @@ class TestProductionLanguageAwareOrderingAndSearch(TestCase):
         )
 
         prod_upper = ProductionFactory.create()
+        EventFactory.create(
+            production=prod_upper, starts_at=datetime(2025, 1, 2, tzinfo=UTC), ends_at=datetime(2025, 1, 2, 22, tzinfo=UTC)
+        )
         ProductionTranslationFactory.create(
             production=prod_upper,
             language=self.en,
@@ -948,6 +1083,11 @@ class TestProductionOrderingEdgeCases(TestCase):
         nl = LanguageFactory.create(code="nl", name="Dutch")
 
         self.prod_alpha = ProductionFactory.create()
+        EventFactory.create(
+            production=self.prod_alpha,
+            starts_at=_dt(2025, 1, 1),
+            ends_at=_dt(2025, 1, 1, 20),
+        )
         ProductionTranslationFactory.create(
             production=self.prod_alpha,
             language=en,
@@ -968,6 +1108,11 @@ class TestProductionOrderingEdgeCases(TestCase):
         )
 
         self.prod_zulu = ProductionFactory.create()
+        EventFactory.create(
+            production=self.prod_zulu,
+            starts_at=_dt(2025, 2, 1),
+            ends_at=_dt(2025, 2, 1, 20),
+        )
         ProductionTranslationFactory.create(
             production=self.prod_zulu,
             language=en,
@@ -988,8 +1133,18 @@ class TestProductionOrderingEdgeCases(TestCase):
         )
 
         self.prod_without_translation = ProductionFactory.create()
+        EventFactory.create(
+            production=self.prod_without_translation,
+            starts_at=_dt(2025, 3, 1),
+            ends_at=_dt(2025, 3, 1, 20),
+        )
 
         self.prod_blank_en = ProductionFactory.create()
+        EventFactory.create(
+            production=self.prod_blank_en,
+            starts_at=_dt(2025, 4, 1),
+            ends_at=_dt(2025, 4, 1, 20),
+        )
         ProductionTranslationFactory.create(
             production=self.prod_blank_en,
             language=en,
@@ -1058,29 +1213,25 @@ class TestProductionOrderingEdgeCases(TestCase):
         ids = self._ids({"ordering": "first_event_start"}, **pub_headers())
 
         assert ids.index(self.prod_early.id) < ids.index(self.prod_late.id)
-        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_early.id)
-        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_late.id)
+        assert ids[-1] == self.prod_without_events.id
 
     def test_first_event_start_places_missing_date_last_descending(self) -> None:
         ids = self._ids({"ordering": "-first_event_start"}, **pub_headers())
 
         assert ids.index(self.prod_late.id) < ids.index(self.prod_early.id)
-        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_early.id)
-        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_late.id)
+        assert ids[-1] == self.prod_without_events.id
 
     def test_last_event_end_places_missing_date_last_ascending(self) -> None:
         ids = self._ids({"ordering": "last_event_end"}, **pub_headers())
 
         assert ids.index(self.prod_early.id) < ids.index(self.prod_late.id)
-        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_early.id)
-        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_late.id)
+        assert ids[-1] == self.prod_without_events.id
 
     def test_last_event_end_places_missing_date_last_descending(self) -> None:
         ids = self._ids({"ordering": "-last_event_end"}, **pub_headers())
 
         assert ids.index(self.prod_late.id) < ids.index(self.prod_early.id)
-        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_early.id)
-        assert ids.index(self.prod_without_events.id) > ids.index(self.prod_late.id)
+        assert ids[-1] == self.prod_without_events.id
 
     def test_lang_query_param_overrides_accept_language_header_for_title_sort(self) -> None:
         ids = self._ids(
