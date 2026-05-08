@@ -6,6 +6,7 @@ import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { tokens } from '../../theme/tokens'
 import { formatDate } from '../../utils/dateUtils'
 import { resolveCurrentLanguage, toLocalizedPath } from '../../utils/localizedRoutes'
+import { htmlToPlainText } from '../../utils/SanitizeHtml'
 import { getTranslatedRecord } from '../../utils/translations'
 import ImageWithFallback from '../ImageWithFallback'
 
@@ -14,9 +15,6 @@ import type { Tag } from '../../types/Tags'
 export interface SeriesGridCardProps {
   tag: Tag
 }
-
-// TODO: use the function in utils for this once the PR implementing it has been merged
-const htmlToPlainText = (html: string): string => html.replace(/<[^>]*>/g, '').trim()
 
 // Function to get the localized tag name based on the current language.
 const getLocalizedTagName = (tag: Tag, language: string): string => {

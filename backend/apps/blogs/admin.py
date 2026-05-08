@@ -7,6 +7,7 @@ from django.http import HttpRequest
 from django.utils.html import format_html
 
 from apps.core.admin import BaseAdmin
+from apps.core.admin_widgets import enable_rich_text_for_fields
 
 from .models import Blog, BlogTranslation
 
@@ -31,17 +32,38 @@ class BlogAdminForm(forms.ModelForm):
         }
 
 
-class BlogTranslationInline(admin.TabularInline):
+@enable_rich_text_for_fields(
+    "excerpt",
+    "body",
+    widget_attrs={"data-richtext-headings": "h1,h2,h3,h4"},
+)
+class BlogTranslationInline(admin.StackedInline):
     """Inline admin for blog translations."""
 
     model = BlogTranslation
     extra = 1
+    classes = ("collapse",)
     fields = ("language", "title", "excerpt", "body")
     autocomplete_fields = ("language",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[BlogTranslation]:
         """Select related language to avoid N+1 queries."""
         return super().get_queryset(request).select_related("language")
+
+
+class BlogProductionInline(admin.TabularInline):
+    """Inline for attaching productions directly on a Blog change page."""
+
+    model = Blog.productions.through
+    verbose_name = "Production"
+    verbose_name_plural = "Linked Productions"
+    extra = 1
+    autocomplete_fields = ("production",)
+    fields = ("production",)
+    classes = ("collapse",)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).select_related("production")
 
 
 @admin.register(Blog)
@@ -69,22 +91,14 @@ class BlogAdmin(BaseAdmin):
 
     ordering = ("-published_at", "-id")
 
+    inlines = [BlogTranslationInline, BlogProductionInline]
     autocomplete_fields = ("productions",)
-
-    inlines = [BlogTranslationInline]
 
     fieldsets = (
         (
             "Basic Information",
             {
                 "fields": ("slug", "published_at", "cover_image"),
-            },
-        ),
-        (
-            "Linked Productions",
-            {
-                "fields": ("productions",),
-                "description": ("Link this blog post to one or more productions to display them together on the frontend."),
             },
         ),
     )

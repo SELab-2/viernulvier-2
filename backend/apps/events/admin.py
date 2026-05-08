@@ -26,6 +26,7 @@ class EventPriceInline(admin.TabularInline):
     fields = ("price_rank", "price", "amount", "available")
     ordering = ("price_rank__position",)
     show_change_link = False
+    classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[EventPrice]:
         return super().get_queryset(request).select_related("price_rank", "price")
