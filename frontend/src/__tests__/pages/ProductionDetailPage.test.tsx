@@ -387,7 +387,6 @@ describe('ProductionDetailPage', () => {
       first_event_start: null,
       last_event_end: null,
     } as unknown as Production)
-    mockedGetBlogs.mockResolvedValue({ count: 0, next: null, previous: null, results: [] })
 
     renderPage()
 
