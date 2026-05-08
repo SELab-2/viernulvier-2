@@ -1,0 +1,328 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}{% translate "Log in" %} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    :root {
+      --login-accent: #136f63;
+      --login-accent-hover: #0f5a50;
+      --login-card-bg: rgba(255, 255, 255, 0.94);
+      --login-border: rgba(16, 24, 40, 0.14);
+      --login-shadow: 0 18px 50px rgba(17, 24, 39, 0.18);
+      --login-text: #102a43;
+      --login-muted: #4f5d75;
+      --login-focus: rgba(19, 111, 99, 0.25);
+    }
+
+    body.login {
+        min-height: 100vh;
+        margin: 0;
+        overflow-x: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background:
+            radial-gradient(70% 55% at 5% 5%, rgba(19, 111, 99, 0.2) 0%, transparent 60%),
+            radial-gradient(65% 60% at 95% 95%, rgba(241, 135, 1, 0.2) 0%, transparent 62%),
+            linear-gradient(135deg, #f8fbff 0%, #edf6f4 100%);
+        color: var(--login-text);
+    }
+
+    #container {
+        width: 100%;
+        max-width: 820px;
+        padding: 18px;
+        box-sizing: border-box;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        
+        /* Overschrijf Django's default height zodat de flexbox in body kan centreren */
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 auto; 
+    }
+
+    #footer {
+      display: none;
+    }
+
+    #header {
+      display: none;
+    }
+
+    #content {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+    }
+
+    .login-layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 1.1fr) minmax(320px, 1fr);
+      background: var(--login-card-bg);
+      border: 1px solid var(--login-border);
+      border-radius: 18px;
+      box-shadow: var(--login-shadow);
+      overflow: hidden;
+      backdrop-filter: blur(3px);
+    }
+
+    .login-brand-panel {
+      padding: 40px 34px;
+      background:
+        linear-gradient(145deg, rgba(19, 111, 99, 0.95) 0%, rgba(16, 42, 67, 0.94) 100%);
+      color: #f8fbff;
+      display: grid;
+      align-content: center;
+      gap: 14px;
+    }
+
+    .login-brand-kicker {
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      font-weight: 700;
+      opacity: 0.82;
+    }
+
+    .login-brand-title {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 38px);
+      line-height: 1.05;
+      font-weight: 700;
+    }
+
+    .login-brand-description {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.5;
+      color: rgba(248, 251, 255, 0.88);
+      max-width: 28ch;
+    }
+
+    .login-form-panel {
+      padding: 34px;
+      display: grid;
+      align-content: center;
+      gap: 14px;
+    }
+
+    .login-form-title {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.1;
+      color: var(--login-text);
+    }
+
+    .login-form-subtitle {
+      margin: 0;
+      color: var(--login-muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    #content-main {
+      width: 100%;
+    }
+
+    .form-row {
+      margin-bottom: 12px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .form-row label {
+      width: auto;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--login-text);
+    }
+
+    .form-row input {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      padding: 11px 13px;
+      min-height: 44px;
+      font-size: 14px;
+      background: #fff;
+      color: var(--login-text);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-row input:focus {
+      border-color: var(--login-accent);
+      box-shadow: 0 0 0 3px var(--login-focus);
+      outline: none;
+    }
+
+    .errornote,
+    ul.errorlist {
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+
+    .submit-row {
+      margin: 10px 0 0;
+      padding: 0;
+      border: 0;
+      background: none;
+    }
+
+    .submit-row input {
+      width: 100%;
+      margin: 0;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      background: var(--login-accent);
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .submit-row input:hover,
+    .submit-row input:focus {
+      background: var(--login-accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .password-reset-link {
+      margin-top: 10px;
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .password-reset-link a {
+      color: var(--login-accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .password-reset-link a:hover,
+    .password-reset-link a:focus {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 920px) {
+      #container {
+        padding: 14px;
+      }
+
+      .login-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .login-brand-panel,
+      .login-form-panel {
+        padding: 28px;
+      }
+
+      .login-brand-description {
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 520px) {
+      #container {
+        padding: 8px;
+      }
+
+      .login-brand-panel,
+      .login-form-panel {
+        padding: 22px;
+      }
+
+      .login-form-title {
+        font-size: 23px;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+{% block usertools %}{% endblock %}
+{% block nav-global %}{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block content_title %}{% endblock %}
+
+{% block content %}
+  {% if form.errors and not form.non_field_errors %}
+    <p class="errornote">
+      {% blocktranslate count counter=form.errors.items|length %}
+        Please correct the error below.
+      {% plural %}
+        Please correct the errors below.
+      {% endblocktranslate %}
+    </p>
+  {% endif %}
+
+  {% if form.non_field_errors %}
+    {% for error in form.non_field_errors %}
+      <p class="errornote">
+        {{ error }}
+      </p>
+    {% endfor %}
+  {% endif %}
+
+  <div class="login-layout">
+    <section class="login-brand-panel" aria-hidden="true">
+      <p class="login-brand-kicker">{{ site_header|default:_('Django administration') }}</p>
+      <h1 class="login-brand-title">Viernulvier Archive</h1>
+      <p class="login-brand-description">
+        {% translate "Sign in to manage productions, events, media, and archive content." %}
+      </p>
+    </section>
+
+    <section class="login-form-panel">
+      <h2 class="login-form-title">{% translate "Welcome back" %}</h2>
+      <p class="login-form-subtitle">{% translate "Use your staff account to access the admin panel." %}</p>
+
+      <div id="content-main">
+        {% if user.is_authenticated %}
+          <p class="errornote">
+            {% blocktranslate trimmed %}
+              You are authenticated as {{ username }}, but are not authorized to access this page.
+              Would you like to login to a different account?
+            {% endblocktranslate %}
+          </p>
+        {% endif %}
+
+        <form action="{{ app_path }}" method="post" id="login-form" novalidate>
+          {% csrf_token %}
+          <div class="form-row">
+            {{ form.username.errors }}
+            {{ form.username.label_tag }}
+            {{ form.username }}
+          </div>
+          <div class="form-row">
+            {{ form.password.errors }}
+            {{ form.password.label_tag }}
+            {{ form.password }}
+            <input type="hidden" name="next" value="{{ next }}">
+          </div>
+
+          {% url 'admin_password_reset' as password_reset_url %}
+          {% if password_reset_url %}
+            <div class="password-reset-link">
+              <a href="{{ password_reset_url }}">{% translate 'Forgotten your password or username?' %}</a>
+            </div>
+          {% endif %}
+
+          <div class="submit-row">
+            <input type="submit" value="{% translate 'Log in' %}">
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+{% endblock %}

@@ -114,7 +114,7 @@ class BlogTranslation(BaseModel):
     body = models.TextField(
         null=False,
         blank=False,
-        help_text="Localized body content (supports HTML or Markdown).",
+        help_text="Localized body content (supports HTML).",
         db_comment="Translated body content.",
     )
 
