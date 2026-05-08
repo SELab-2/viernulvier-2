@@ -18,6 +18,8 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin
+from apps.core.admin_widgets import enable_rich_text_for_fields
+from apps.productions.models import ProductionTag
 
 from .models import Tag, TagTranslation
 
@@ -44,6 +46,11 @@ class TagAdminForm(forms.ModelForm):
         }
 
 
+@enable_rich_text_for_fields(
+    "short_description",
+    "excerpt",
+    widget_attrs={"data-richtext-headings": "h1,h2,h3,h4"},
+)
 class TagTranslationInline(admin.StackedInline):
     """
     Inline for editing localised tag fields directly inside the Tag change page.
@@ -58,6 +65,21 @@ class TagTranslationInline(admin.StackedInline):
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("language")
+
+
+class TagProductionInline(admin.TabularInline):
+    """Inline for attaching productions directly on a Tag change page."""
+
+    verbose_name = "Production"
+    verbose_name_plural = "Add Productions to this Tag"
+    model = ProductionTag
+    extra = 1
+    autocomplete_fields = ("production",)
+    fields = ("production",)
+    classes = ("collapse",)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).select_related("production")
 
 
 @admin.register(Tag)
@@ -81,6 +103,7 @@ class TagAdmin(BaseAdmin):
 
     list_display = (
         "id",
+        "display_name",
         "type",
         "source",
         "is_enabled",
@@ -99,7 +122,12 @@ class TagAdmin(BaseAdmin):
 
     ordering = ("type", "id")
 
-    inlines = [TagTranslationInline]
+    inlines = [TagTranslationInline, TagProductionInline]
+
+    @admin.display(description="Display name")
+    def display_name(self, obj: Tag) -> str:
+        """Return the display name shown in admin lists."""
+        return str(obj)
 
     class Media:
         js = ("admin/js/media_file_upload.js",)

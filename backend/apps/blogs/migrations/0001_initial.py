@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('external_id', models.CharField(blank=True, db_comment='External identifier from the viernulvier database.', help_text='Optional external identifier for integration with the viernulvier database.', null=True)),
                 ('title', models.CharField(db_comment='Translated title.', help_text='Localized title of the blog post.', max_length=255)),
-                ('body', models.TextField(db_comment='Translated body content.', help_text='Localized body content (supports HTML or Markdown).')),
+                ('body', models.TextField(db_comment='Translated body content.', help_text='Localized body content (supports HTML).')),
                 ('excerpt', models.TextField(blank=True, db_comment='Translated excerpt.', help_text='Optional short excerpt or summary of the post.', null=True)),
                 ('blog', models.ForeignKey(db_comment='FK to Blog.', help_text='Blog post this translation belongs to.', on_delete=django.db.models.deletion.CASCADE, related_name='translations', to='blogs.blog')),
                 ('language', models.ForeignKey(db_comment='FK to Language.', help_text='Language of this translation.', on_delete=django.db.models.deletion.CASCADE, related_name='blog_translations', to='languages.language')),

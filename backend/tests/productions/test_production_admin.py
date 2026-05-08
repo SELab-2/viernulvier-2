@@ -179,6 +179,9 @@ class TestProductionAdminConfiguration(TestCase):
     def test_three_inlines_registered(self) -> None:
         assert len(self.admin.inlines) == 3
 
+    def test_uses_custom_change_list_template(self) -> None:
+        assert self.admin.change_list_template == "admin/persistent_change_list.html"
+
 
 class TestProductionTagTranslationInlineClass(TestCase):
     def test_model_is_production_tag_translation(self) -> None:
@@ -244,7 +247,7 @@ class TestProductionTranslationInline(TestCase):
         assert "collapse" in ProductionTranslationInline.classes
 
     def test_is_tabular_inline(self) -> None:
-        assert issubclass(ProductionTranslationInline, admin.TabularInline)
+        assert issubclass(ProductionTranslationInline, admin.StackedInline)
 
 
 class TestProductionGenreInline(TestCase):

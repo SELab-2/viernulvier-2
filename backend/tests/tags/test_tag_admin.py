@@ -19,8 +19,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
-from apps.tags.admin import TagAdmin, TagTranslationInline
+from apps.productions.models import ProductionTag
+from apps.tags.admin import TagAdmin, TagProductionInline, TagTranslationInline
 from apps.tags.models import Tag, TagTranslation
+from tests.factories.language import LanguageFactory
 from tests.factories.tag import TagFactory
 
 # ---------------------------------------------------------------------------
@@ -66,6 +68,9 @@ class TestTagAdminConfiguration(TestCase):
     def test_list_display_contains_type(self) -> None:
         assert "type" in self.admin.list_display
 
+    def test_list_display_contains_display_name(self) -> None:
+        assert "display_name" in self.admin.list_display
+
     def test_list_display_contains_is_enabled(self) -> None:
         assert "is_enabled" in self.admin.list_display
 
@@ -99,6 +104,9 @@ class TestTagAdminConfiguration(TestCase):
     def test_inlines_contains_tag_translation_inline(self) -> None:
         assert TagTranslationInline in self.admin.inlines
 
+    def test_inlines_contains_tag_production_inline(self) -> None:
+        assert TagProductionInline in self.admin.inlines
+
 
 # ---------------------------------------------------------------------------
 # TagTranslationInline configuration
@@ -117,6 +125,20 @@ class TestTagTranslationInlineConfiguration(TestCase):
 
     def test_inline_autocomplete_fields_contains_language(self) -> None:
         assert "language" in self.inline.autocomplete_fields
+
+
+class TestTagProductionInlineConfiguration(TestCase):
+    def setUp(self) -> None:
+        self.inline = TagProductionInline(Tag, admin.site)
+
+    def test_inline_model_is_production_tag(self) -> None:
+        assert self.inline.model == ProductionTag
+
+    def test_inline_extra_is_one(self) -> None:
+        assert self.inline.extra == 1
+
+    def test_inline_autocomplete_fields_contains_production(self) -> None:
+        assert "production" in self.inline.autocomplete_fields
 
 
 # ---------------------------------------------------------------------------
@@ -141,3 +163,10 @@ class TestTagAdminFunctional(TestCase):
     def test_add_form_returns_200(self) -> None:
         url = reverse("admin:tags_tag_add")
         assert self.client.get(url).status_code == 200
+
+    def test_display_name_column_uses_tag_display_name(self) -> None:
+        lang = LanguageFactory(code="en", name="English")
+        tag = TagFactory.create(type="genre")
+        TagTranslation.objects.create(tag=tag, language=lang, name="Concert")
+
+        assert admin.site._registry[Tag].display_name(tag) == "Concert"
