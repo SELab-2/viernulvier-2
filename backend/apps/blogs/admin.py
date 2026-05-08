@@ -101,13 +101,6 @@ class BlogAdmin(BaseAdmin):
                 "fields": ("slug", "published_at", "cover_image"),
             },
         ),
-        (
-            "Linked Productions",
-            {
-                "fields": ("productions",),
-                "description": ("Link this blog post to one or more productions to display them together on the frontend."),
-            },
-        ),
     )
 
     class Media:
