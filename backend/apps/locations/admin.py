@@ -21,6 +21,7 @@ class LocationTranslationInline(admin.TabularInline):
     extra = 1
     fields = ("language", "name")
     autocomplete_fields = ("language",)
+    classes = ("collapse",)
 
 
 @admin.register(Location)
@@ -48,6 +49,7 @@ class SpaceTranslationInline(admin.TabularInline):
     extra = 1
     fields = ("language", "name")
     autocomplete_fields = ("language",)
+    classes = ("collapse",)
 
 
 @admin.register(Space)
@@ -71,6 +73,7 @@ class HallTranslationInline(admin.TabularInline):
     extra = 1
     fields = ("language", "name", "remark")
     autocomplete_fields = ("language",)
+    classes = ("collapse",)
 
 
 @admin.register(Hall)

@@ -47,6 +47,7 @@ class MediaItemCropInline(admin.TabularInline):
     model = MediaItemCrop
     extra = 1
     fields = ("name", "image", "get_url")
+    classes = ("collapse",)
     readonly_fields = ("get_url",)
 
     @admin.display(description="URL")

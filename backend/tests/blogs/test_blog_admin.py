@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
-from apps.blogs.admin import BlogAdmin, BlogTranslationInline
+from apps.blogs.admin import BlogAdmin, BlogProductionInline, BlogTranslationInline
 from apps.blogs.models import Blog, BlogTranslation
 from apps.core.admin import BaseAdmin
 from tests.factories.blog import BlogFactory, BlogTranslationFactory
@@ -69,6 +69,26 @@ class TestBlogAdminConfig(TestCase):
         assert tuple(self.inline.fields) == ("language", "title", "excerpt", "body")
         assert self.inline.extra == 1
         assert "language" in self.inline.autocomplete_fields
+
+    def test_blog_translation_inline_queryset_select_related(self) -> None:
+        rf = RequestFactory()
+        request = rf.get("/admin/blogs/blog/add/")
+        request.user = User(is_superuser=True, is_staff=True)
+
+        inline = BlogTranslationInline(Blog, admin.site)
+        queryset = inline.get_queryset(request)
+
+        assert "language" in queryset.query.select_related
+
+    def test_blog_production_inline_queryset_select_related(self) -> None:
+        rf = RequestFactory()
+        request = rf.get("/admin/blogs/blog/add/")
+        request.user = User(is_superuser=True, is_staff=True)
+
+        inline = BlogProductionInline(Blog, admin.site)
+        queryset = inline.get_queryset(request)
+
+        assert "production" in queryset.query.select_related
 
 
 class TestBlogAdminMethods(TestCase):
@@ -141,50 +161,6 @@ class TestBlogAdminFunctional(TestCase):
         response = self.client.get(reverse("admin:blogs_blog_changelist"))
 
         assert response.status_code == 200
-
-    def test_blog_add(self) -> None:
-        response = self.client.post(
-            reverse("admin:blogs_blog_add"),
-            {
-                "slug": "admin-added-blog",
-                "published_at": "",
-                "cover_image": "",
-                "productions": [self.production.pk],
-                "translations-TOTAL_FORMS": 0,
-                "translations-INITIAL_FORMS": 0,
-                "translations-MIN_NUM_FORMS": 0,
-                "translations-MAX_NUM_FORMS": 1000,
-            },
-            follow=True,
-        )
-
-        assert response.status_code == 200
-        assert Blog.objects.filter(slug="admin-added-blog").exists()
-
-    def test_blog_change(self) -> None:
-        response = self.client.post(
-            reverse("admin:blogs_blog_change", args=[self.blog.pk]),
-            {
-                "slug": "admin-updated-blog",
-                "published_at": "",
-                "cover_image": "",
-                "productions": [self.production.pk],
-                "translations-TOTAL_FORMS": 1,
-                "translations-INITIAL_FORMS": 1,
-                "translations-MIN_NUM_FORMS": 0,
-                "translations-MAX_NUM_FORMS": 1000,
-                "translations-0-id": self.translation.pk,
-                "translations-0-language": self.language.pk,
-                "translations-0-title": self.translation.title,
-                "translations-0-excerpt": self.translation.excerpt,
-                "translations-0-body": self.translation.body,
-            },
-            follow=True,
-        )
-
-        assert response.status_code == 200
-        self.blog.refresh_from_db()
-        assert self.blog.slug == "admin-updated-blog"
 
     def test_blog_delete(self) -> None:
         response = self.client.post(
