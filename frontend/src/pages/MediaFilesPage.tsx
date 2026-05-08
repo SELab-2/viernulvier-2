@@ -1,5 +1,5 @@
 import { useMediaQuery, useTheme } from '@mui/material'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
@@ -9,6 +9,8 @@ import FloatingAlert from '../components/FloatingAlert'
 import MediaFileGridCard from '../components/media-files/MediaFileGridCard'
 import MediaFileListCard from '../components/media-files/MediaFileListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
+import useCollectionQuery from '../hooks/useCollectionQuery'
+import useSearchDraft from '../hooks/useSearchDraft'
 import { ApiError } from '../services/ApiTypes'
 import { getMediaFiles } from '../services/media_files/MediaFiles'
 
@@ -33,6 +35,11 @@ const getOrderingValue = (
   return sortDirection === 'desc' ? '-created_at' : 'created_at'
 }
 
+/**
+ * Media files list page that uses shared collection hooks.
+ *
+ * This page keeps the search input trimmed on change to match previous UX.
+ */
 const MediaFilesPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
@@ -51,23 +58,51 @@ const MediaFilesPage = () => {
     setPage,
   } = useSearchBarUrlState({ isMobile })
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
-  const [totalCount, setTotalCount] = useState(0)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
-  const [retryKey, setRetryKey] = useState(0)
-  const [searchInputValue, setSearchInputValue] = useState(searchValue)
-
   const previousOrderingRef = useRef<string | null>(null)
 
-  const renderedErrorMessage = showFallbackError ? t('media.error.fallback') : errorMessage
-  const floatingErrorMessage = t('media.error.notification')
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
     [sortTarget, sortDirection],
   )
+
+  const {
+    isLoading,
+    items: mediaFiles,
+    count: totalCount,
+    error,
+    floatingAlert,
+    retry,
+  } = useCollectionQuery<MediaFile, { results: MediaFile[]; count: number }>({
+    deps: [ordering, page, searchValue],
+    fetcher: () =>
+      getMediaFiles({
+        page,
+        pageSize: PAGE_SIZE,
+        filters: {
+          search: searchValue.trim() || undefined,
+          ordering,
+        },
+      }),
+    select: (response) => ({ items: response.results, count: response.count }),
+    mapError: (error: unknown) => ({
+      message: error instanceof ApiError ? error.message : null,
+      showFallback: true,
+    }),
+  })
+
+  const searchDraft = useSearchDraft({
+    value: searchValue,
+    onCommit: (nextValue) => {
+      if (page !== 1) {
+        setPage(1)
+      }
+      setSearchValue(nextValue)
+    },
+    onSameQuery: () => retry(),
+  })
+
+  const renderedErrorMessage = error.showFallback ? t('media.error.fallback') : error.message
+  const floatingErrorMessage = t('media.error.notification')
   useEffect(() => {
     const previousOrdering = previousOrderingRef.current
 
@@ -78,85 +113,8 @@ const MediaFilesPage = () => {
     previousOrderingRef.current = ordering
   }, [ordering, page, setPage])
 
-  useEffect(() => {
-    let isActive = true
-
-    const fetchMediaFiles = async () => {
-      setIsLoading(true)
-      setErrorMessage(null)
-      setShowFallbackError(false)
-      setIsFloatingErrorOpen(false)
-
-      try {
-        const trimmedSearchValue = searchValue.trim()
-
-        const response = await getMediaFiles({
-          page,
-          pageSize: PAGE_SIZE,
-          filters: {
-            search: trimmedSearchValue || undefined,
-            ordering,
-          },
-        })
-
-        if (!isActive) {
-          return
-        }
-
-        setMediaFiles(response.results)
-        setTotalCount(response.count)
-      } catch (error: unknown) {
-        if (!isActive) {
-          return
-        }
-
-        if (error instanceof ApiError) {
-          setErrorMessage(error.message)
-          setShowFallbackError(true)
-        } else {
-          setErrorMessage(null)
-          setShowFallbackError(true)
-        }
-
-        setIsFloatingErrorOpen(true)
-        setMediaFiles([])
-        setTotalCount(0)
-      } finally {
-        if (isActive) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void fetchMediaFiles()
-
-    return () => {
-      isActive = false
-    }
-  }, [ordering, page, retryKey, searchValue])
-
-  const onRetry = () => {
-    setIsFloatingErrorOpen(false)
-    setRetryKey((value) => value + 1)
-  }
-
-  const onFloatingErrorClose = () => {
-    setIsFloatingErrorOpen(false)
-  }
-
   const onSearchSubmit = (value: string) => {
-    const nextQuery = value.trim()
-
-    if (nextQuery === searchValue.trim()) {
-      setRetryKey((current) => current + 1)
-      return
-    }
-
-    if (page !== 1) {
-      setPage(1)
-    }
-
-    setSearchValue(nextQuery)
+    searchDraft.submit(value)
   }
 
   const resultsContent = (
@@ -174,8 +132,8 @@ const MediaFilesPage = () => {
       <CollectionPageLayout
         isMobile={isMobile}
         searchPlaceholder={t('media.searchPlaceholder')}
-        searchValue={searchInputValue}
-        onSearchChange={setSearchInputValue}
+        searchValue={searchDraft.displayedValue}
+        onSearchChange={(value) => searchDraft.setDraft(value.trim())}
         onSearchSubmit={onSearchSubmit}
         sortTarget={sortTarget}
         onSortTargetChange={setSortTarget}
@@ -193,7 +151,7 @@ const MediaFilesPage = () => {
         }
         errorMessage={renderedErrorMessage}
         retryLabel={t('media.error.retry')}
-        onRetry={onRetry}
+        onRetry={retry}
         emptyTitle={t('media.empty.title')}
         emptyDescription={t('media.empty.description')}
         hasResults={mediaFiles.length > 0}
@@ -206,8 +164,8 @@ const MediaFilesPage = () => {
       />
 
       <FloatingAlert
-        open={isFloatingErrorOpen}
-        onClose={onFloatingErrorClose}
+        open={floatingAlert.isOpen}
+        onClose={floatingAlert.close}
         severity="error"
         message={floatingErrorMessage}
       />

@@ -1,7 +1,6 @@
 import { useMediaQuery, useTheme } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
 
 import BlogGridCard from '../components/BlogGridCard'
 import BlogListCard from '../components/BlogListCard'
@@ -10,7 +9,9 @@ import CollectionPageLayout from '../components/CollectionPageLayout'
 import FloatingAlert from '../components/FloatingAlert'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
-import { ApiError } from '../services/ApiTypes'
+import useCollectionQuery from '../hooks/useCollectionQuery'
+import useFloatingAlertOnce from '../hooks/useFloatingAlertOnce'
+import useSearchDraft from '../hooks/useSearchDraft'
 import { getBlogs } from '../services/blogs/Blogs'
 
 import type { Blog } from '../types/Blogs'
@@ -22,16 +23,17 @@ const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'd
   return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 
+/**
+ * Blog list page with shared collection lifecycle hooks.
+ *
+ * - {@link useCollectionQuery} handles loading/error/retry state.
+ * - {@link useSearchDraft} keeps input value decoupled from URL state.
+ * - {@link useFloatingAlertOnce} shows navigation alerts one time.
+ */
 const BlogsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const location = useLocation()
-  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
-  const nav = location as { state?: NavState }
-  const navFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
-  const navFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
-  const initialFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
-  const initialFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
+  const navFloatingAlert = useFloatingAlertOnce()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
   const {
     searchValue,
@@ -46,118 +48,45 @@ const BlogsPage = () => {
     setPage,
   } = useSearchBarUrlState({ isMobile })
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [blogs, setBlogs] = useState<Blog[]>([])
-  const [totalCount, setTotalCount] = useState(0)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(initialFloatingAlertOpen)
-  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(
-    initialFloatingAlertMessage,
-  )
-  const [retryKey, setRetryKey] = useState(0)
-  const [searchDraft, setSearchDraft] = useState(searchValue)
-
-  const renderedErrorMessage = showFallbackError ? t('blogs.home.error.fallback') : errorMessage
-  const floatingErrorMessage = t('blogs.home.error.notification')
-
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
     [sortDirection, sortTarget],
   )
 
-  useEffect(() => {
-    let isActive = true
+  const {
+    isLoading,
+    items: blogs,
+    count: totalCount,
+    error,
+    floatingAlert,
+    retry,
+  } = useCollectionQuery<Blog, { results: Blog[]; count: number }>({
+    deps: [ordering, page, searchValue],
+    fetcher: () =>
+      getBlogs({
+        page,
+        pageSize: PAGE_SIZE,
+        filters: {
+          published: true,
+          search: searchValue.trim() || undefined,
+          ordering,
+        },
+      }),
+    select: (response) => ({ items: response.results, count: response.count }),
+    mapError: () => ({ message: null, showFallback: true }),
+  })
 
-    const fetchBlogs = async () => {
-      setIsLoading(true)
-      setErrorMessage(null)
-      setShowFallbackError(false)
-      setIsFloatingErrorOpen(false)
-      setFloatingAlertMessage(null)
+  const searchDraft = useSearchDraft({
+    value: searchValue,
+    onCommit: setSearchValue,
+    onSameQuery: () => retry(),
+  })
 
-      try {
-        const response = await getBlogs({
-          page,
-          pageSize: PAGE_SIZE,
-          filters: {
-            published: true,
-            search: searchValue.trim() || undefined,
-            ordering,
-          },
-        })
-
-        if (!isActive) {
-          return
-        }
-
-        setBlogs(response.results)
-        setTotalCount(response.count)
-      } catch (error: unknown) {
-        if (!isActive) {
-          return
-        }
-
-        if (error instanceof ApiError) {
-          // Backend error payloads are not guaranteed to be localized,
-          // so we always show the translated fallback copy in the UI.
-          setErrorMessage(null)
-          setShowFallbackError(true)
-        } else {
-          setErrorMessage(null)
-          setShowFallbackError(true)
-        }
-        setIsFloatingErrorOpen(true)
-        setFloatingAlertMessage(null)
-        setBlogs([])
-        setTotalCount(0)
-      } finally {
-        if (isActive) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void fetchBlogs()
-
-    return () => {
-      isActive = false
-    }
-  }, [ordering, page, retryKey, searchValue])
-
-  // If a page navigated here with a floatingAlert in location.state, show it once.
-  useEffect(() => {
-    const { state } = nav
-    if (state?.floatingAlert?.open) {
-      // Clear the history state so the alert won't reappear on back/refresh
-      try {
-        window.history.replaceState({}, document.title)
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [nav])
-
-  const onRetry = () => {
-    setIsFloatingErrorOpen(false)
-    setFloatingAlertMessage(null)
-    setRetryKey((value) => value + 1)
-  }
-
-  const onFloatingErrorClose = () => {
-    setIsFloatingErrorOpen(false)
-    setFloatingAlertMessage(null)
-  }
+  const renderedErrorMessage = error.showFallback ? t('blogs.home.error.fallback') : error.message
+  const floatingErrorMessage = t('blogs.home.error.notification')
 
   const onSearchSubmit = (value: string) => {
-    const nextQuery = value.trim()
-    if (nextQuery === searchValue.trim()) {
-      setRetryKey((current) => current + 1)
-      return
-    }
-
-    setSearchValue(nextQuery)
-    setSearchDraft(nextQuery)
+    searchDraft.submit(value)
   }
 
   return (
@@ -168,8 +97,8 @@ const BlogsPage = () => {
         searchPlaceholder={
           isMobile ? t('blogs.home.searchPlaceholderMobile') : t('blogs.home.searchPlaceholder')
         }
-        searchValue={searchDraft}
-        onSearchChange={setSearchDraft}
+        searchValue={searchDraft.displayedValue}
+        onSearchChange={searchDraft.setDraft}
         onSearchSubmit={onSearchSubmit}
         sortTarget={sortTarget}
         onSortTargetChange={setSortTarget}
@@ -186,7 +115,7 @@ const BlogsPage = () => {
         }
         errorMessage={renderedErrorMessage}
         retryLabel={t('blogs.home.error.retry')}
-        onRetry={onRetry}
+        onRetry={retry}
         emptyTitle={t('blogs.home.empty.title')}
         emptyDescription={t('blogs.home.empty.description')}
         hasResults={blogs.length > 0}
@@ -207,10 +136,13 @@ const BlogsPage = () => {
       />
 
       <FloatingAlert
-        open={isFloatingErrorOpen || navFloatingAlertOpen}
-        onClose={onFloatingErrorClose}
+        open={floatingAlert.isOpen || navFloatingAlert.isOpen}
+        onClose={() => {
+          floatingAlert.close()
+          navFloatingAlert.close()
+        }}
         severity="error"
-        message={navFloatingAlertMessage ?? floatingAlertMessage ?? floatingErrorMessage}
+        message={navFloatingAlert.message ?? floatingAlert.message ?? floatingErrorMessage}
       />
     </>
   )

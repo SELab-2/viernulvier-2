@@ -1,5 +1,5 @@
 import { useMediaQuery, useTheme } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
@@ -9,6 +9,8 @@ import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlSta
 import SeriesGridCard from '../components/series/SeriesGridCard'
 import SeriesListCard from '../components/series/SeriesListCard'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
+import useCollectionQuery from '../hooks/useCollectionQuery'
+import useSearchDraft from '../hooks/useSearchDraft'
 import { ApiError } from '../services/ApiTypes'
 import { getTags } from '../services/tags/Tags'
 import { getTranslatedRecord } from '../utils/translations'
@@ -87,6 +89,12 @@ const fetchTagList = async ({ search }: { search?: string }): Promise<Tag[]> => 
   return tagList
 }
 
+/**
+ * Series list page with shared collection lifecycle hooks.
+ *
+ * The page derives series ordering in memory while the fetch hook
+ * remains responsible for the request lifecycle.
+ */
 const SeriesPage = () => {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
@@ -105,15 +113,31 @@ const SeriesPage = () => {
     setPage,
   } = useSearchBarUrlState({ isMobile })
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [seriesList, setSeriesList] = useState<Tag[]>([])
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
-  const [retryKey, setRetryKey] = useState(0)
-  const [searchDraft, setSearchDraft] = useState(searchValue)
+  const {
+    isLoading,
+    items: seriesList,
+    error,
+    floatingAlert,
+    retry,
+  } = useCollectionQuery<Tag, Tag[]>({
+    deps: [searchValue],
+    fetcher: () =>
+      fetchTagList({
+        search: searchValue.trim() || undefined,
+      }),
+    select: (items) => ({ items, count: items.length }),
+    mapError: (error: unknown) => ({
+      message: error instanceof ApiError ? error.message : null,
+      showFallback: !(error instanceof ApiError),
+    }),
+  })
 
-  const renderedErrorMessage = showFallbackError ? t('series.home.error.fallback') : errorMessage
+  const searchDraft = useSearchDraft({
+    value: searchValue,
+    onCommit: setSearchValue,
+  })
+
+  const renderedErrorMessage = error.showFallback ? t('series.home.error.fallback') : error.message
   const floatingErrorMessage = t('series.home.error.notification')
 
   // Force the page back to name sorting because the series page only supports that option.
@@ -124,54 +148,6 @@ const SeriesPage = () => {
   }, [setSortTarget, sortTarget])
 
   // Fetch and cache the derived series list whenever the active query changes.
-  useEffect(() => {
-    let isActive = true
-
-    const fetchPageData = async () => {
-      setIsLoading(true)
-      setErrorMessage(null)
-      setShowFallbackError(false)
-      setIsFloatingErrorOpen(false)
-
-      try {
-        const response = await fetchTagList({
-          search: searchValue.trim() || undefined,
-        })
-
-        if (!isActive) {
-          return
-        }
-
-        setSeriesList(response)
-      } catch (error: unknown) {
-        if (!isActive) {
-          return
-        }
-
-        if (error instanceof ApiError) {
-          setErrorMessage(error.message)
-          setShowFallbackError(false)
-        } else {
-          setErrorMessage(null)
-          setShowFallbackError(true)
-        }
-
-        setIsFloatingErrorOpen(true)
-        setSeriesList([])
-      } finally {
-        if (isActive) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void fetchPageData()
-
-    return () => {
-      isActive = false
-    }
-  }, [retryKey, searchValue])
-
   // Sort the derived series list in memory so the UI stays responsive.
   const sortedSeries = useMemo(
     () =>
@@ -201,21 +177,9 @@ const SeriesPage = () => {
   }, [page, sortedSeries])
 
   // Retry the last failed fetch by invalidating the request key.
-  const onRetry = () => {
-    setIsFloatingErrorOpen(false)
-    setRetryKey((value) => value + 1)
-  }
-
-  // Close the floating error alert without changing page state.
-  const onFloatingErrorClose = () => {
-    setIsFloatingErrorOpen(false)
-  }
-
   // Normalize the search input before pushing it into the URL state.
   const onSearchSubmit = (value: string) => {
-    const nextValue = value.trim()
-    setSearchValue(nextValue)
-    setSearchDraft(nextValue)
+    searchDraft.submit(value)
   }
 
   // Reuse the shared entity view to switch between list and grid cards.
@@ -237,8 +201,8 @@ const SeriesPage = () => {
         searchPlaceholder={
           isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
         }
-        searchValue={searchDraft}
-        onSearchChange={setSearchDraft}
+        searchValue={searchDraft.displayedValue}
+        onSearchChange={searchDraft.setDraft}
         onSearchSubmit={onSearchSubmit}
         sortTarget={sortTarget}
         onSortTargetChange={setSortTarget}
@@ -256,7 +220,7 @@ const SeriesPage = () => {
         }
         errorMessage={renderedErrorMessage}
         retryLabel={t('series.home.error.retry')}
-        onRetry={onRetry}
+        onRetry={retry}
         emptyTitle={t('series.home.empty.title')}
         emptyDescription={t('series.home.empty.description')}
         hasResults={pagedSeries.length > 0}
@@ -269,8 +233,8 @@ const SeriesPage = () => {
       />
 
       <FloatingAlert
-        open={isFloatingErrorOpen}
-        onClose={onFloatingErrorClose}
+        open={floatingAlert.isOpen}
+        onClose={floatingAlert.close}
         severity="error"
         message={floatingErrorMessage}
       />

@@ -1,7 +1,6 @@
 import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import CollectionView from '../components/CollectionView'
@@ -11,7 +10,9 @@ import ProductionGridCard from '../components/productions/ProductionGridCard'
 import ProductionListCard from '../components/productions/ProductionListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
-import { ApiError } from '../services/ApiTypes'
+import useCollectionQuery from '../hooks/useCollectionQuery'
+import useFloatingAlertOnce from '../hooks/useFloatingAlertOnce'
+import useSearchDraft from '../hooks/useSearchDraft'
 import { getGenres } from '../services/genres/Genres'
 import { getProductions } from '../services/productions/Productions'
 import { getTags } from '../services/tags/Tags'
@@ -89,18 +90,18 @@ const fetchTags = async (): Promise<Tag[]> => {
   return Array.from(tagsById.values())
 }
 
-// Productions page component that displays a list of productions with search, sorting, and pagination functionality.
+
+/**
+ * Productions list page with shared collection lifecycle hooks.
+ *
+ * - {@link useCollectionQuery} handles loading/error/retry state.
+ * - {@link useSearchDraft} keeps input value decoupled from URL state.
+ * - {@link useFloatingAlertOnce} shows navigation alerts one time.
+ */
 const ProductionsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const location = useLocation()
-  // Type for optional navigation state used to show a one-time floating alert when arriving
-  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
-  const nav = location as { state?: NavState }
-  const navFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
-  const navFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
-  const initialFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
-  const initialFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
+  const navFloatingAlert = useFloatingAlertOnce()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
@@ -130,27 +131,8 @@ const ProductionsPage = () => {
     clearFilters,
   } = useSearchBarUrlState({ isMobile })
 
-  // Local state for managing the productions data, loading state, error messages, and a retry key to trigger refetching
-  const [isLoading, setIsLoading] = useState(true)
-  const [productions, setProductions] = useState<Production[]>([])
   const [genres, setGenres] = useState<Genre[]>([])
   const [tags, setTags] = useState<Tag[]>([])
-  const [totalCount, setTotalCount] = useState(0)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(initialFloatingAlertOpen)
-  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(
-    initialFloatingAlertMessage,
-  )
-  const [retryKey, setRetryKey] = useState(0)
-  const [searchDraft, setSearchDraft] = useState(searchValue)
-  const [isSearchDraftDirty, setIsSearchDraftDirty] = useState(false)
-
-  // Error message to display in the UI, preferring the translated fallback message
-  const renderedErrorMessage = showFallbackError
-    ? t('productions.home.error.fallback')
-    : errorMessage
-  const floatingErrorMessage = t('productions.home.error.notification')
 
   // Memoized value for the API ordering parameter to avoid unnecessary recalculations on every render.
   const ordering = useMemo(
@@ -161,7 +143,57 @@ const ProductionsPage = () => {
   const selectedPerformerType = performerType
   const selectedGenres = selectedGenreIds.join(',')
   const selectedTags = selectedTagIds.join(',')
-  const displayedSearchValue = isSearchDraftDirty ? searchDraft : searchValue
+
+  const {
+    isLoading,
+    items: productions,
+    count: totalCount,
+    error,
+    floatingAlert,
+    retry,
+  } = useCollectionQuery<Production, { results: Production[]; count: number }>({
+    deps: [
+      firstEventStartAfter,
+      firstEventStartBefore,
+      ordering,
+      page,
+      searchValue,
+      selectedAttendanceMode,
+      selectedGenres,
+      selectedPerformerType,
+      selectedTags,
+    ],
+    fetcher: () =>
+      getProductions({
+        page,
+        pageSize: PAGE_SIZE,
+        filters: {
+          search: searchValue.trim() || undefined,
+          ordering,
+          attendance_mode: selectedAttendanceMode,
+          performer_type: selectedPerformerType,
+          genre: parseCommaSeparatedIds(selectedGenres),
+          tag: parseCommaSeparatedIds(selectedTags),
+          first_event_start_after: toIsoDateBoundary(firstEventStartAfter, 'start'),
+          first_event_start_before: toIsoDateBoundary(firstEventStartBefore, 'end'),
+        },
+      }),
+    select: (response) => ({ items: response.results, count: response.count }),
+    mapError: () => ({ message: null, showFallback: true }),
+  })
+
+  const searchDraft = useSearchDraft({
+    value: searchValue,
+    trackDirty: true,
+    onCommit: setSearchValue,
+    onSameQuery: () => retry(),
+  })
+
+  // Error message to display in the UI, preferring the translated fallback message
+  const renderedErrorMessage = error.showFallback
+    ? t('productions.home.error.fallback')
+    : error.message
+  const floatingErrorMessage = t('productions.home.error.notification')
 
   useEffect(() => {
     let isActive = true
@@ -194,120 +226,9 @@ const ProductionsPage = () => {
   }, [])
 
   // Effect to fetch the productions data from the API whenever the ordering, page, retryKey, or searchValue changes
-  useEffect(() => {
-    let isActive = true
-
-    const fetchPageData = async () => {
-      setIsLoading(true)
-      setErrorMessage(null)
-      setShowFallbackError(false)
-      setIsFloatingErrorOpen(false)
-      setFloatingAlertMessage(null)
-
-      try {
-        const response = await getProductions({
-          page,
-          pageSize: PAGE_SIZE,
-          filters: {
-            search: searchValue.trim() || undefined,
-            ordering,
-            attendance_mode: selectedAttendanceMode,
-            performer_type: selectedPerformerType,
-            genre: parseCommaSeparatedIds(selectedGenres),
-            tag: parseCommaSeparatedIds(selectedTags),
-            first_event_start_after: toIsoDateBoundary(firstEventStartAfter, 'start'),
-            first_event_start_before: toIsoDateBoundary(firstEventStartBefore, 'end'),
-          },
-        })
-
-        if (!isActive) {
-          return
-        }
-
-        setProductions(response.results)
-        setTotalCount(response.count)
-      } catch (error: unknown) {
-        if (!isActive) {
-          return
-        }
-
-        if (error instanceof ApiError) {
-          // Backend error payloads are not guaranteed to be localized,
-          // so we always show the translated fallback copy in the UI.
-          setErrorMessage(null)
-          setShowFallbackError(true)
-        } else {
-          setErrorMessage(null)
-          setShowFallbackError(true)
-        }
-        setIsFloatingErrorOpen(true)
-        setFloatingAlertMessage(null)
-        setProductions([])
-        setTotalCount(0)
-      } finally {
-        if (isActive) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void fetchPageData()
-
-    return () => {
-      isActive = false
-    }
-  }, [
-    firstEventStartAfter,
-    firstEventStartBefore,
-    ordering,
-    page,
-    retryKey,
-    searchValue,
-    selectedAttendanceMode,
-    selectedGenres,
-    selectedPerformerType,
-    selectedTags,
-  ])
-
-  // Handler for retrying the data fetch when an error occurs, triggered by the retry button in the UI.
-  const onRetry = () => {
-    setIsFloatingErrorOpen(false)
-    setFloatingAlertMessage(null)
-    setRetryKey((value) => value + 1)
-  }
-
-  // Handler for closing the floating error alert.
-  const onFloatingErrorClose = () => {
-    setIsFloatingErrorOpen(false)
-    setFloatingAlertMessage(null)
-  }
-
-  // Handler for submitting the search form, which updates the searchValue and triggers a new data fetch
   const onSearchSubmit = (value: string) => {
-    const nextQuery = value.trim()
-    if (nextQuery === searchValue.trim()) {
-      setSearchDraft(nextQuery)
-      setIsSearchDraftDirty(false)
-      setRetryKey((current) => current + 1)
-      return
-    }
-
-    setSearchValue(nextQuery)
-    setSearchDraft(nextQuery)
-    setIsSearchDraftDirty(false)
+    searchDraft.submit(value)
   }
-
-  // If a page navigated here with a floatingAlert in location.state, clear it once.
-  useEffect(() => {
-    const { state } = nav
-    if (state?.floatingAlert?.open) {
-      try {
-        window.history.replaceState({}, document.title)
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [nav])
 
   // Main results content.
   const resultsContent = (
@@ -361,11 +282,8 @@ const ProductionsPage = () => {
         searchPlaceholder={
           isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
         }
-        searchValue={displayedSearchValue}
-        onSearchChange={(value) => {
-          setSearchDraft(value)
-          setIsSearchDraftDirty(true)
-        }}
+        searchValue={searchDraft.displayedValue}
+        onSearchChange={searchDraft.setDraft}
         onSearchSubmit={onSearchSubmit}
         sortTarget={sortTarget}
         onSortTargetChange={setSortTarget}
@@ -383,7 +301,7 @@ const ProductionsPage = () => {
         }
         errorMessage={renderedErrorMessage}
         retryLabel={t('productions.home.error.retry')}
-        onRetry={onRetry}
+        onRetry={retry}
         emptyTitle={t('productions.home.empty.title')}
         emptyDescription={t('productions.home.empty.description')}
         hasResults={productions.length > 0}
@@ -395,10 +313,13 @@ const ProductionsPage = () => {
       />
 
       <FloatingAlert
-        open={isFloatingErrorOpen || navFloatingAlertOpen}
-        onClose={onFloatingErrorClose}
+        open={floatingAlert.isOpen || navFloatingAlert.isOpen}
+        onClose={() => {
+          floatingAlert.close()
+          navFloatingAlert.close()
+        }}
         severity="error"
-        message={navFloatingAlertMessage ?? floatingAlertMessage ?? floatingErrorMessage}
+        message={navFloatingAlert.message ?? floatingAlert.message ?? floatingErrorMessage}
       />
     </>
   )
