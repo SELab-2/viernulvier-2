@@ -49,26 +49,20 @@ export interface ProductionRelated {
 
 /**
  * Production object returned by the backend `/productions/` endpoints.
+ * Inherits from `RelatedProduction` and adds some fields for detail view.
+ * Note: some fields like `artist_name` are duplicated here because they are 
+ *       not guaranteed to be present in the `related` entries.
  */
-export interface Production {
-  id: number
-  attendance_mode: AttendanceMode | ''
-  performer_type: PerformerType | ''
-  first_event_start: string | null
-  last_event_end: string | null
-  media_gallery: MediaGallery
-  uit_database_type: ProductionClassification | null
-  display_title: string | null
-  display_artist_name: string | null
-  title: Record<string, string>
-  artist_name: Record<string, string>
+export interface Production extends RelatedProduction {
   tagline: Record<string, string>
   teaser: Record<string, string>
   description: Record<string, string>
-  tags: Tag[]
-  genres: Genre[]
   events?: Event[]
   related?: ProductionRelated[]
+  artist_name: Record<string, string>
+  attendance_mode: AttendanceMode | ''
+  performer_type: PerformerType | ''
+  uit_database_type: ProductionClassification | null
 }
 
 /**
