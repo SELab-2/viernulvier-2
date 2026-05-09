@@ -50,7 +50,7 @@ export interface ProductionRelated {
 /**
  * Production object returned by the backend `/productions/` endpoints.
  * Inherits from `RelatedProduction` and adds some fields for detail view.
- * Note: some fields like `artist_name` are duplicated here because they are 
+ * Note: some fields like `artist_name` are duplicated here because they are
  *       not guaranteed to be present in the `related` entries.
  */
 export interface Production extends RelatedProduction {
