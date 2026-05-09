@@ -652,17 +652,19 @@ class TestProductionApiTagDescription(TestCase):
 
     def test_tag_entry_in_detail_has_description_key(self) -> None:
         data = self._detail().data
-        assert "description" in data["tags"][0]
+        assert "description" not in data["tags"][0]
 
     def test_tag_description_nl_is_correct_in_detail(self) -> None:
         data = self._detail().data
-        assert data["tags"][0]["description"]["nl"] == "Context voor dit thema."
+        # production-scoped description is no longer included on tag payloads
+        # and this setup does not create tag-level translations.
+        assert data["tags"][0]["name"] == {}
 
     def test_tag_description_in_list_response(self) -> None:
         response = self.client.get("/api/v1/productions/", **pub_headers())
         tags = response.data["results"][0]["tags"]
-        assert "description" in tags[0]
-        assert tags[0]["description"]["nl"] == "Context voor dit thema."
+        assert "description" not in tags[0]
+        assert tags[0]["name"] == {}
 
     def test_tag_without_translation_has_empty_description_dict(self) -> None:
         other_production = ProductionFactory.create()
@@ -670,7 +672,7 @@ class TestProductionApiTagDescription(TestCase):
         ProductionTagFactory.create(production=other_production, tag=other_tag)
 
         response = self.client.get(f"/api/v1/productions/{other_production.pk}/", **pub_headers())
-        assert response.data["tags"][0]["description"] == {}
+        assert "description" not in response.data["tags"][0]
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
@@ -694,16 +696,15 @@ class TestProductionViewSetTagTranslationPrefetch(TestCase):
         # Baseline from the existing N+1 test is 7 queries for 5 productions
         # with translation prefetch. Adding tag translation prefetch must not
         # grow this number linearly with the number of tags or productions.
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(7):
             response = self.client.get("/api/v1/productions/", **pub_headers())
         assert response.status_code == 200
         results = response.data["results"]
         assert len(results) == 5
-        # Spot-check that description data is present and correct
+        # Spot-check that through-table description is not exposed anymore
         for item in results:
             for tag in item["tags"]:
-                assert "nl" in tag["description"]
-                assert "en" in tag["description"]
+                assert "description" not in tag
 
 
 def _dt(year, month, day, hour=0):

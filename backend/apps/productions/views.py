@@ -33,7 +33,7 @@ from apps.pricing.models import PriceRankTranslation, PriceTranslation
 from apps.tags.models import Tag
 
 from .filters import ProductionFilter
-from .models import Production, ProductionGenre, ProductionTag
+from .models import Production, ProductionGenre
 from .schemas import production_schema
 from .serializers import (
     ProductionLandingStatsSerializer,
@@ -123,14 +123,9 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                 to_attr="prefetched_production_genres",
             ),
             Prefetch(
-                "productiontag_set",
-                queryset=ProductionTag.objects.select_related("tag")
-                .prefetch_related(
-                    "translations__language",
-                    "tag__translations__language",
-                )
-                .order_by("tag__type", "id"),
-                to_attr="prefetched_production_tags",
+                "tags",
+                queryset=Tag.objects.prefetch_related("translations__language").order_by("type", "id"),
+                to_attr="prefetched_tags",
             ),
             Prefetch(
                 "media_gallery__media_items",
