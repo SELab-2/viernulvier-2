@@ -7,8 +7,8 @@ import SearchControlsBar, {
 } from '../../components/searchbar/SearchControlsBar'
 import i18n from '../../i18n'
 
-const renderSearchBar = (props: SearchControlsBarProps) => {
-  const theme = createTheme()
+const renderSearchBar = (props: SearchControlsBarProps, mode: 'light' | 'dark' = 'light') => {
+  const theme = createTheme({ palette: { mode } })
   return render(
     <I18nextProvider i18n={i18n}>
       <ThemeProvider theme={theme}>
@@ -50,6 +50,22 @@ describe('SearchControlsBar', () => {
     expect(screen.getByText('12 resultaten gevonden')).toBeInTheDocument()
   })
 
+  it('renders with default optional controls and no result count', () => {
+    renderSearchBar({
+      searchValue: '',
+      onSearchChange: mockOnSearchChange,
+    })
+
+    expect(screen.getByRole('combobox', { name: 'Sorteer op' })).toBeInTheDocument()
+    expect(screen.queryByText(/resultaat gevonden/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByLabelText('Schakel naar oplopend'))
+    fireEvent.click(screen.getByLabelText('Raster'))
+
+    expect(mockOnSortDirectionChange).not.toHaveBeenCalled()
+    expect(mockOnViewModeChange).not.toHaveBeenCalled()
+  })
+
   it('uses singular copy when there is exactly one result', () => {
     renderSearchBar({ ...props, resultCount: 1 })
 
@@ -81,6 +97,14 @@ describe('SearchControlsBar', () => {
     expect(mockOnSortDirectionChange).toHaveBeenCalledWith('asc')
   })
 
+  it('toggles descending when the current sort direction is ascending', () => {
+    renderSearchBar({ ...props, sortDirection: 'asc' })
+
+    fireEvent.click(screen.getByLabelText('Schakel naar aflopend'))
+
+    expect(mockOnSortDirectionChange).toHaveBeenCalledWith('desc')
+  })
+
   it('changes view mode when the list toggle is selected', () => {
     renderSearchBar(props)
     fireEvent.click(screen.getByLabelText('Lijst'))
@@ -91,6 +115,30 @@ describe('SearchControlsBar', () => {
     renderSearchBar({ ...props, showViewModeToggle: false })
     expect(screen.queryByLabelText('Lijst')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Raster')).not.toBeInTheDocument()
+  })
+
+  it('falls back to the first allowed sort target when the current value is invalid', () => {
+    renderSearchBar({
+      ...props,
+      sortTarget: 'date',
+      sortTargetOptions: [{ value: 'name', labelKey: 'searchbar.sort.name' }],
+    })
+
+    expect(screen.getByRole('combobox', { name: 'Sorteer op' })).toHaveTextContent('Naam')
+  })
+
+  it('renders extra controls and keeps dark mode interactions usable', () => {
+    renderSearchBar(
+      {
+        ...props,
+        extraControls: <button type="button">Extra filter</button>,
+      },
+      'dark',
+    )
+
+    expect(screen.getByRole('button', { name: 'Extra filter' })).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Lijst'))
+    expect(mockOnViewModeChange).toHaveBeenCalledWith('list')
   })
 
   it('submits the current query when the search icon is clicked', () => {

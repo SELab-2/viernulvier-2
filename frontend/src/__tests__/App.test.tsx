@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom'
-import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import App from '../App'
 import i18n from '../i18n'
@@ -99,5 +99,55 @@ describe('App', () => {
 
     // If ThemeProvider is working, styled components should render
     expect(screen.getByAltText('Viernulvier logo')).toBeInTheDocument()
+  })
+
+  it('redirects nl compatibility slugs to localized archive routes', async () => {
+    window.history.pushState({}, '', '/nl/archive')
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/nl/archief')
+    })
+  })
+
+  it('redirects en compatibility slugs to localized archive routes', async () => {
+    window.history.pushState({}, '', '/en/archief')
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/en/archive')
+    })
+  })
+
+  it('redirects localized productions listing aliases to archive routes', async () => {
+    window.history.pushState({}, '', '/nl/producties')
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/nl/archief')
+    })
+  })
+
+  it('redirects media detail aliases back to localized media list', async () => {
+    window.history.pushState({}, '', '/en/media/42')
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/en/media')
+    })
+  })
+
+  it('redirects invalid language prefixes to a normalized localized path', async () => {
+    window.history.pushState({}, '', '/xx/archive')
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(window.location.pathname).toMatch(/^\/(nl|en)\//)
+    })
   })
 })

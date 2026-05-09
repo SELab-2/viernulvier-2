@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 import MediaList from '../../../components/production/MediaList'
 
@@ -194,5 +194,25 @@ describe('MediaList component', () => {
       </ThemeProvider>,
     )
     expect(screen.getByAltText('Media item')).toBeInTheDocument()
+  })
+
+  it('opens and closes the image preview from click and keyboard actions', () => {
+    const theme = createTheme({ palette: { mode: 'dark' } })
+    mockMatchMedia('desktop')
+
+    render(
+      <ThemeProvider theme={theme}>
+        <MediaList mediaItems={[baseMediaItem({ display_title: 'Preview image' })]} />
+      </ThemeProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Preview image' }))
+    expect(screen.getAllByAltText('Preview image')).toHaveLength(2)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close preview' }))
+    expect(screen.getAllByAltText('Preview image')).toHaveLength(1)
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Preview image' }), { key: 'Enter' })
+    expect(screen.getAllByAltText('Preview image')).toHaveLength(2)
   })
 })
