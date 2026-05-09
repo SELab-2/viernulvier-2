@@ -10,12 +10,32 @@ import type { Production } from '../../types/Productions'
 // not the rendering details of the cards themselves.
 jest.mock('../../components/ProductionGrid', () => ({
   __esModule: true,
-  default: () => <div data-testid="production-grid" />,
+  default: ({
+    productions,
+    selectedGenreIds,
+  }: {
+    productions: Array<{ id: number }>
+    selectedGenreIds?: number[]
+  }) => (
+    <div data-selected-genres={selectedGenreIds?.join(',') ?? ''} data-testid="production-grid">
+      {productions.map((production) => production.id).join(',')}
+    </div>
+  ),
 }))
 
 jest.mock('../../components/ProductionList', () => ({
   __esModule: true,
-  default: () => <div data-testid="production-list" />,
+  default: ({
+    productions,
+    selectedGenreIds,
+  }: {
+    productions: Array<{ id: number }>
+    selectedGenreIds?: number[]
+  }) => (
+    <div data-selected-genres={selectedGenreIds?.join(',') ?? ''} data-testid="production-list">
+      {productions.map((production) => production.id).join(',')}
+    </div>
+  ),
 }))
 
 const accentTheme = createTheme({
@@ -108,6 +128,36 @@ describe('ProductionView', () => {
 
       expect(screen.getByTestId('production-list')).toBeInTheDocument()
       expect(screen.queryByTestId('production-grid')).not.toBeInTheDocument()
+    })
+
+    it('sorts productions with selected genres to the front and passes selection through', () => {
+      renderView({
+        productions: [
+          baseProduction({
+            id: 1,
+            genres: [
+              { id: 1, type: 'theme', name: { nl: 'Dans' }, display_name: 'Dans', vendor_id: null },
+            ],
+          }),
+          baseProduction({
+            id: 2,
+            genres: [
+              {
+                id: 2,
+                type: 'theme',
+                name: { nl: 'Theater' },
+                display_name: 'Theater',
+                vendor_id: null,
+              },
+            ],
+          }),
+          baseProduction({ id: 3, genres: [] }),
+        ],
+        selectedGenreIds: [2],
+      })
+
+      expect(screen.getByTestId('production-list')).toHaveTextContent('2,1,3')
+      expect(screen.getByTestId('production-list')).toHaveAttribute('data-selected-genres', '2')
     })
   })
 

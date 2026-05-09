@@ -267,4 +267,100 @@ describe('SeriesDetailPage', () => {
     expect(await screen.findByText('Audiovisueel')).toBeInTheDocument()
     expect(screen.getByText('Performance')).toBeInTheDocument()
   })
+
+  it('sorts productions by event date and groups undated productions last', async () => {
+    mockedGetTag.mockResolvedValue({
+      id: 1,
+      name: null,
+      display_name: 'Fallback reeks',
+      excerpt: null,
+      display_excerpt: null,
+      short_description: null,
+      display_short_description: null,
+      first_production_start: null,
+      last_production_end: null,
+      type: null,
+    })
+
+    mockedGetProductions.mockResolvedValue({
+      results: [
+        {
+          id: 1,
+          display_title: 'Zonder datum laag',
+          title: { nl: 'Zonder datum laag' },
+          teaser: {},
+          description: {},
+          artist_name: {},
+          first_event_start: null,
+          last_event_end: null,
+          genres: [],
+          tags: [],
+        },
+        {
+          id: 2,
+          display_title: 'Editie 2024',
+          title: { nl: 'Editie 2024' },
+          teaser: {},
+          description: {},
+          artist_name: {},
+          first_event_start: '2024-06-01T20:00:00Z',
+          last_event_end: null,
+          genres: [],
+          tags: [],
+        },
+        {
+          id: 3,
+          display_title: 'Editie 2025',
+          title: { nl: 'Editie 2025' },
+          teaser: {},
+          description: {},
+          artist_name: {},
+          first_event_start: '2025-06-01T20:00:00Z',
+          last_event_end: null,
+          genres: [],
+          tags: [],
+        },
+        {
+          id: 4,
+          display_title: 'Alleen einddatum',
+          title: { nl: 'Alleen einddatum' },
+          teaser: {},
+          description: {},
+          artist_name: {},
+          first_event_start: null,
+          last_event_end: '2023-06-01T20:00:00Z',
+          genres: [],
+          tags: [],
+        },
+        {
+          id: 5,
+          display_title: 'Zonder datum hoog',
+          title: { nl: 'Zonder datum hoog' },
+          teaser: {},
+          description: {},
+          artist_name: {},
+          first_event_start: null,
+          last_event_end: null,
+          genres: [],
+          tags: [],
+        },
+      ],
+    })
+
+    renderPage()
+
+    expect(await screen.findByRole('heading', { name: 'Fallback reeks' })).toBeInTheDocument()
+    expect(screen.getByText('Geen beschrijving beschikbaar.')).toBeInTheDocument()
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2)
+
+    const edition2025 = screen.getByRole('heading', { name: 'Editie 2025' })
+    const edition2024 = screen.getByRole('heading', { name: 'Editie 2024' })
+    const undatedHigh = screen.getByRole('heading', { name: 'Zonder datum hoog' })
+    const undatedLow = screen.getByRole('heading', { name: 'Zonder datum laag' })
+
+    expect(screen.getByText('2023')).toBeInTheDocument()
+    expect(edition2025.compareDocumentPosition(edition2024)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(edition2024.compareDocumentPosition(undatedHigh)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(undatedHigh.compareDocumentPosition(undatedLow)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
 })
