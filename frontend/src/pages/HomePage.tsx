@@ -220,8 +220,9 @@ const HomePage = () => {
     i18n.resolvedLanguage,
   )
   const localizedPath = (path: string) => toLocalizedPath(path, currentLanguage)
-  const { showFloatingAlert, clearFloatingAlert } =
-    useCollectionPageNotification('home.error.notification')
+  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
+    'archive.home.error.notification',
+  )
 
   useEffect(() => {
     let isActive = true
