@@ -90,7 +90,7 @@ describe('ProductionDetailPage', () => {
         state: {
           floatingAlert: {
             open: true,
-            message: 'Invalid production ID',
+            message: 'Invalid production ID.',
             severity: 'error',
           },
         },
@@ -264,7 +264,7 @@ describe('ProductionDetailPage', () => {
         state: {
           floatingAlert: {
             open: true,
-            message: 'Could not load production',
+            message: 'Could not load production.',
             severity: 'error',
           },
         },

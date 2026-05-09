@@ -103,7 +103,7 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
   const mediaSlug = getLocalizedSegment('media', normalizedLanguage)
   const productionsSlug = getLocalizedSegment('productions', normalizedLanguage)
   const mediaDetailAlertState = createFloatingAlertState({
-    message: t('media.couldNotLoad', 'Could not load media file'),
+    message: t('media.couldNotLoad', 'Could not load media file.'),
     severity: ALERT_SEVERITIES.error,
   })
 

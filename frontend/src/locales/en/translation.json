@@ -219,8 +219,8 @@
       "unknownProduction": "Unknown production",
       "noDescription": "No description available.",
       "error": {
-        "invalidId": "Invalid production ID",
-        "loadFailed": "Could not load production"
+        "invalidId": "Invalid production ID.",
+        "loadFailed": "Could not load production."
       },
       "events": "Events"
     }
@@ -332,11 +332,11 @@
     }
   },
   "blog": {
-    "couldNotLoad": "Could not load blog",
-    "invalidId": "Invalid blog ID"
+    "couldNotLoad": "Could not load blog.",
+    "invalidId": "Invalid blog ID."
   },
   "media": {
-    "couldNotLoad": "Could not load media file",
+    "couldNotLoad": "Could not load media file.",
     "searchPlaceholder": "Search files by name, description or type...",
     "fileType": {
       "image": "Image",
