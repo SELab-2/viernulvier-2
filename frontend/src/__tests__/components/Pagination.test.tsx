@@ -69,6 +69,25 @@ describe('Pagination', () => {
     expect(onPageChange).toHaveBeenCalledWith(2)
   })
 
+  it('emits boundary page changes from first, previous and last buttons', () => {
+    const onPageChange = jest.fn()
+
+    renderPagination({
+      page: 3,
+      pageSize: 10,
+      totalItems: 50,
+      onPageChange,
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ga naar eerste pagina' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ga naar vorige pagina' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ga naar laatste pagina' }))
+
+    expect(onPageChange).toHaveBeenNthCalledWith(1, 1)
+    expect(onPageChange).toHaveBeenNthCalledWith(2, 2)
+    expect(onPageChange).toHaveBeenNthCalledWith(3, 5)
+  })
+
   it('commits a changed valid page on Enter and closes the field after blur', () => {
     const onPageChange = jest.fn()
 
@@ -119,6 +138,24 @@ describe('Pagination', () => {
     expect(onPageChange).toHaveBeenCalledWith(5)
     expect(input).toHaveDisplayValue('')
     expect(input).toHaveAttribute('placeholder', '3')
+  })
+
+  it('ignores empty input when committing the page field', () => {
+    const onPageChange = jest.fn()
+
+    renderPagination({
+      page: 3,
+      pageSize: 10,
+      totalItems: 50,
+      onPageChange,
+    })
+
+    const input = screen.getByRole('textbox', { name: 'Huidige pagina, pagina 3' })
+    fireEvent.focus(input)
+    fireEvent.blur(input)
+
+    expect(onPageChange).not.toHaveBeenCalled()
+    expect(input).toHaveDisplayValue('')
   })
 
   it('closes the field on Enter when the current page is entered again after blur', () => {
