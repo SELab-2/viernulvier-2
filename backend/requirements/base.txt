@@ -10,3 +10,5 @@ bleach==6.3.0
 tqdm==4.67.3
 Pillow==12.2.0
 django-redis==5.4.0
+django-import-export==4.4.1
+

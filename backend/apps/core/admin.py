@@ -15,6 +15,7 @@ from django.http import HttpRequest, JsonResponse
 from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
+from import_export.admin import ExportMixin
 
 from api.cache import clear_api_cache
 
@@ -136,7 +137,7 @@ class PersistentSelectionMixin:
         return response
 
 
-class BaseAdmin(PersistentSelectionMixin, admin.ModelAdmin):
+class BaseAdmin(PersistentSelectionMixin, ExportMixin, admin.ModelAdmin):
     """
     Project-wide base class for all ``ModelAdmin`` registrations.
 
@@ -144,6 +145,8 @@ class BaseAdmin(PersistentSelectionMixin, admin.ModelAdmin):
     of ``admin.ModelAdmin`` directly. This ensures any future cross-cutting
     concerns (auditing, permission overrides, queryset scoping, etc.) can
     be introduced here without touching individual app admins.
+
+    ExportMixin is included here to make the "export" action available globally.
 
     Current behaviour
     -----------------

@@ -1,264 +1,264 @@
 {% extends "admin/change_list.html" %}
 
 {% block result_list %}
-  {{ block.super }}
+{{ block.super }}
 
-  <style>
-    /* Hide Django's default per-page counter so users see only the persistent summary. */
-    #changelist-form .actions .action-counter {
-      display: none;
+<style>
+  /* Hide Django's default per-page counter so users see only the persistent summary. */
+  #changelist-form .actions .action-counter {
+    display: none;
+  }
+
+  /* Inline summary next to the action controls (Go button area). */
+  #changelist-form .actions .persistent-selection-inline {
+    margin-left: 10px;
+    color: #417690;
+    font-weight: 600;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  /* Inline reset control for the persisted selection state. */
+  #changelist-form .actions .persistent-selection-clear {
+    margin-left: 8px;
+    background: none;
+    border: 0;
+    color: #b94a48;
+    cursor: pointer;
+    text-decoration: underline;
+    font: inherit;
+    padding: 0;
+    vertical-align: middle;
+  }
+</style>
+
+{% if persistent_selected_ids %}
+{{ persistent_selected_ids|json_script:"persistent-selected-ids" }}
+{% else %}
+<script id="persistent-selected-ids" type="application/json">[]</script>
+{% endif %}
+
+<script>
+  (function () {
+    'use strict';
+
+    // ---------------------------------------------------------------------
+    // Persistent Selection UI + Sync
+    // ---------------------------------------------------------------------
+    // This script is intentionally inline in the shared admin changelist
+    // template so every BaseAdmin changelist gets the same behavior.
+    //
+    // Responsibilities:
+    // 1. Restore checkbox state from persisted IDs stored in the session.
+    // 2. Show a clear summary near action controls:
+    //    - selected on current page
+    //    - selected across all pages/searches
+    // 3. Keep server-side session state synced while the user checks/unchecks.
+    // 4. Offer a "Deselect all" button that clears both UI and session state.
+    //
+    // Server contract (PersistentSelectionMixin):
+    // - POST persist_selection=1 + visible_ids + selected_ids
+    // - POST clear_persistent_selection=1
+    // - JSON response { ok: true, count: <total persisted> }
+    // ---------------------------------------------------------------------
+
+    var changelistForm = document.getElementById('changelist-form');
+    if (!changelistForm) {
+      // Safety guard for templates that do not render a changelist form.
+      return;
     }
 
-    /* Inline summary next to the action controls (Go button area). */
-    #changelist-form .actions .persistent-selection-inline {
-      margin-left: 10px;
-      color: #417690;
-      font-weight: 600;
-      vertical-align: middle;
-      white-space: nowrap;
-    }
-
-    /* Inline reset control for the persisted selection state. */
-    #changelist-form .actions .persistent-selection-clear {
-      margin-left: 8px;
-      background: none;
-      border: 0;
-      color: #b94a48;
-      cursor: pointer;
-      text-decoration: underline;
-      font: inherit;
-      padding: 0;
-      vertical-align: middle;
-    }
-  </style>
-
-  {% if persistent_selected_ids %}
-    {{ persistent_selected_ids|json_script:"persistent-selected-ids" }}
-  {% else %}
-    <script id="persistent-selected-ids" type="application/json">[]</script>
-  {% endif %}
-
-  <script>
-    (function () {
-      'use strict';
-
-      // ---------------------------------------------------------------------
-      // Persistent Selection UI + Sync
-      // ---------------------------------------------------------------------
-      // This script is intentionally inline in the shared admin changelist
-      // template so every BaseAdmin changelist gets the same behavior.
-      //
-      // Responsibilities:
-      // 1. Restore checkbox state from persisted IDs stored in the session.
-      // 2. Show a clear summary near action controls:
-      //    - selected on current page
-      //    - selected across all pages/searches
-      // 3. Keep server-side session state synced while the user checks/unchecks.
-      // 4. Offer a "Deselect all" button that clears both UI and session state.
-      //
-      // Server contract (PersistentSelectionMixin):
-      // - POST persist_selection=1 + visible_ids + selected_ids
-      // - POST clear_persistent_selection=1
-      // - JSON response { ok: true, count: <total persisted> }
-      // ---------------------------------------------------------------------
-
-      var changelistForm = document.getElementById('changelist-form');
-      if (!changelistForm) {
-        // Safety guard for templates that do not render a changelist form.
-        return;
+    // Parsed from server-rendered context; represents persisted IDs in session.
+    var persistedScript = document.getElementById('persistent-selected-ids');
+    var persistedIds = new Set();
+    if (persistedScript && persistedScript.textContent) {
+      try {
+        JSON.parse(persistedScript.textContent).forEach(function (id) {
+          persistedIds.add(String(id));
+        });
+      } catch (error) {
+        // Keep default empty set when JSON parsing fails.
       }
+    }
 
-      // Parsed from server-rendered context; represents persisted IDs in session.
-      var persistedScript = document.getElementById('persistent-selected-ids');
-      var persistedIds = new Set();
-      if (persistedScript && persistedScript.textContent) {
-        try {
-          JSON.parse(persistedScript.textContent).forEach(function (id) {
-            persistedIds.add(String(id));
-          });
-        } catch (error) {
-          // Keep default empty set when JSON parsing fails.
+    function getActionCheckboxes() {
+      // Django admin row selection checkboxes.
+      return Array.from(changelistForm.querySelectorAll('input.action-select'));
+    }
+
+    function ensureInlineSummary() {
+      // There can be an actions block at top and bottom.
+      // Inject summary + clear button into each one exactly once.
+      document.querySelectorAll('#changelist-form .actions').forEach(function (actionsEl) {
+        if (!actionsEl.querySelector('.persistent-selection-inline')) {
+          var summaryEl = document.createElement('span');
+          summaryEl.className = 'persistent-selection-inline';
+          summaryEl.textContent = 'Selected: 0 on this page, 0 total across pages';
+          actionsEl.appendChild(summaryEl);
         }
-      }
 
-      function getActionCheckboxes() {
-        // Django admin row selection checkboxes.
-        return Array.from(changelistForm.querySelectorAll('input.action-select'));
-      }
+        if (!actionsEl.querySelector('.persistent-selection-clear')) {
+          var clearButton = document.createElement('button');
+          clearButton.type = 'button';
+          clearButton.className = 'persistent-selection-clear';
+          clearButton.textContent = 'Deselect all';
+          clearButton.addEventListener('click', clearAllSelections);
+          actionsEl.appendChild(clearButton);
+        }
+      });
+    }
 
-      function ensureInlineSummary() {
-        // There can be an actions block at top and bottom.
-        // Inject summary + clear button into each one exactly once.
-        document.querySelectorAll('#changelist-form .actions').forEach(function (actionsEl) {
-          if (!actionsEl.querySelector('.persistent-selection-inline')) {
-            var summaryEl = document.createElement('span');
-            summaryEl.className = 'persistent-selection-inline';
-            summaryEl.textContent = 'Selected: 0 on this page, 0 total across pages';
-            actionsEl.appendChild(summaryEl);
+    function updateSelectionSummary() {
+      // Current-page count derives from currently checked checkboxes.
+      var selectedOnPage = getActionCheckboxes().filter(function (checkbox) {
+        return checkbox.checked;
+      }).length;
+
+      // Total count derives from our persisted set.
+      document.querySelectorAll('#changelist-form .actions .persistent-selection-inline').forEach(function (el) {
+        el.textContent =
+          'Selected: ' + selectedOnPage + ' on this page, ' + persistedIds.size + ' total across pages';
+      });
+    }
+
+    function setCheckedByPersistedIds() {
+      // Ensure visible rows reflect persisted session state when page loads.
+      getActionCheckboxes().forEach(function (checkbox) {
+        if (persistedIds.has(String(checkbox.value))) {
+          checkbox.checked = true;
+          var row = checkbox.closest('tr');
+          if (row) {
+            row.classList.add('selected');
           }
+        }
+      });
+    }
 
-          if (!actionsEl.querySelector('.persistent-selection-clear')) {
-            var clearButton = document.createElement('button');
-            clearButton.type = 'button';
-            clearButton.className = 'persistent-selection-clear';
-            clearButton.textContent = 'Deselect all';
-            clearButton.addEventListener('click', clearAllSelections);
-            actionsEl.appendChild(clearButton);
-          }
-        });
-      }
+    function getCsrfToken() {
+      var csrfInput = changelistForm.querySelector('input[name="csrfmiddlewaretoken"]');
+      return csrfInput ? csrfInput.value : '';
+    }
 
-      function updateSelectionSummary() {
-        // Current-page count derives from currently checked checkboxes.
-        var selectedOnPage = getActionCheckboxes().filter(function (checkbox) {
+    function syncPersistedSelection(options) {
+      // Push current snapshot to server so selection survives pagination/search.
+      var opts = options || {};
+      var visibleIds = getActionCheckboxes().map(function (checkbox) {
+        return String(checkbox.value);
+      });
+
+      var selectedIds = getActionCheckboxes()
+        .filter(function (checkbox) {
           return checkbox.checked;
-        }).length;
-
-        // Total count derives from our persisted set.
-        document.querySelectorAll('#changelist-form .actions .persistent-selection-inline').forEach(function (el) {
-          el.textContent =
-            'Selected: ' + selectedOnPage + ' on this page, ' + persistedIds.size + ' total across pages';
-        });
-      }
-
-      function setCheckedByPersistedIds() {
-        // Ensure visible rows reflect persisted session state when page loads.
-        getActionCheckboxes().forEach(function (checkbox) {
-          if (persistedIds.has(String(checkbox.value))) {
-            checkbox.checked = true;
-            var row = checkbox.closest('tr');
-            if (row) {
-              row.classList.add('selected');
-            }
-          }
-        });
-      }
-
-      function getCsrfToken() {
-        var csrfInput = changelistForm.querySelector('input[name="csrfmiddlewaretoken"]');
-        return csrfInput ? csrfInput.value : '';
-      }
-
-      function syncPersistedSelection(options) {
-        // Push current snapshot to server so selection survives pagination/search.
-        var opts = options || {};
-        var visibleIds = getActionCheckboxes().map(function (checkbox) {
+        })
+        .map(function (checkbox) {
           return String(checkbox.value);
         });
 
-        var selectedIds = getActionCheckboxes()
-          .filter(function (checkbox) {
-            return checkbox.checked;
-          })
-          .map(function (checkbox) {
-            return String(checkbox.value);
-          });
-
-        var payload = new URLSearchParams();
-        if (opts.clearAll) {
-          payload.append('clear_persistent_selection', '1');
-        } else {
-          payload.append('persist_selection', '1');
-          visibleIds.forEach(function (id) {
-            payload.append('visible_ids', id);
-          });
-          selectedIds.forEach(function (id) {
-            payload.append('selected_ids', id);
-          });
-        }
-
-        return fetch(window.location.href, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-            'X-CSRFToken': getCsrfToken(),
-          },
-          body: payload.toString(),
-          credentials: 'same-origin',
-        })
-          .then(function (response) {
-            return response.json();
-          })
-          .then(function (data) {
-            // Keep client state synced to server as source of truth.
-            if (data && typeof data.count === 'number') {
-              if (opts.clearAll) {
-                persistedIds.clear();
-              }
-              updateSelectionSummary();
-            }
-          })
-          .catch(function () {
-            // Non-blocking failure: UI still stays functional.
-          });
-      }
-
-      function clearAllSelections() {
-        // Clear visible state immediately for responsive UX.
-        persistedIds.clear();
-        getActionCheckboxes().forEach(function (checkbox) {
-          checkbox.checked = false;
-          var row = checkbox.closest('tr');
-          if (row) {
-            row.classList.remove('selected');
-          }
+      var payload = new URLSearchParams();
+      if (opts.clearAll) {
+        payload.append('clear_persistent_selection', '1');
+      } else {
+        payload.append('persist_selection', '1');
+        visibleIds.forEach(function (id) {
+          payload.append('visible_ids', id);
         });
-
-        var allToggle = document.getElementById('action-toggle');
-        if (allToggle) {
-          allToggle.checked = false;
-        }
-
-        updateSelectionSummary();
-        syncPersistedSelection({ clearAll: true });
+        selectedIds.forEach(function (id) {
+          payload.append('selected_ids', id);
+        });
       }
 
-      // Initial render pass.
-      ensureInlineSummary();
-      setCheckedByPersistedIds();
-      updateSelectionSummary();
+      return fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          'X-CSRFToken': getCsrfToken(),
+        },
+        body: payload.toString(),
+        credentials: 'same-origin',
+      })
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (data) {
+          // Keep client state synced to server as source of truth.
+          if (data && typeof data.count === 'number') {
+            if (opts.clearAll) {
+              persistedIds.clear();
+            }
+            updateSelectionSummary();
+          }
+        })
+        .catch(function () {
+          // Non-blocking failure: UI still stays functional.
+        });
+    }
 
-      // Single-row checkbox interactions.
-      changelistForm.addEventListener('change', function (event) {
-        var target = event.target;
-        if (!target || !target.classList.contains('action-select')) {
-          return;
+    function clearAllSelections() {
+      // Clear visible state immediately for responsive UX.
+      persistedIds.clear();
+      getActionCheckboxes().forEach(function (checkbox) {
+        checkbox.checked = false;
+        var row = checkbox.closest('tr');
+        if (row) {
+          row.classList.remove('selected');
         }
-
-        if (target.checked) {
-          persistedIds.add(String(target.value));
-        } else {
-          persistedIds.delete(String(target.value));
-        }
-        updateSelectionSummary();
-        syncPersistedSelection();
       });
 
-      // "Select all on page" checkbox interactions.
       var allToggle = document.getElementById('action-toggle');
       if (allToggle) {
-        allToggle.addEventListener('click', function () {
-          // Django updates row checkboxes after click; sync on next tick.
-          window.setTimeout(function () {
-            getActionCheckboxes().forEach(function (checkbox) {
-              if (checkbox.checked) {
-                persistedIds.add(String(checkbox.value));
-              } else {
-                persistedIds.delete(String(checkbox.value));
-              }
-            });
-            updateSelectionSummary();
-            syncPersistedSelection();
-          }, 0);
-        });
+        allToggle.checked = false;
       }
 
-      // Mirror Django's built-in clear link with our persisted clear behavior.
-      document.querySelectorAll('div.actions span.clear a').forEach(function (clearLink) {
-        clearLink.addEventListener('click', function () {
-          clearAllSelections();
-        });
+      updateSelectionSummary();
+      syncPersistedSelection({ clearAll: true });
+    }
+
+    // Initial render pass.
+    ensureInlineSummary();
+    setCheckedByPersistedIds();
+    updateSelectionSummary();
+
+    // Single-row checkbox interactions.
+    changelistForm.addEventListener('change', function (event) {
+      var target = event.target;
+      if (!target || !target.classList.contains('action-select')) {
+        return;
+      }
+
+      if (target.checked) {
+        persistedIds.add(String(target.value));
+      } else {
+        persistedIds.delete(String(target.value));
+      }
+      updateSelectionSummary();
+      syncPersistedSelection();
+    });
+
+    // "Select all on page" checkbox interactions.
+    var allToggle = document.getElementById('action-toggle');
+    if (allToggle) {
+      allToggle.addEventListener('click', function () {
+        // Django updates row checkboxes after click; sync on next tick.
+        window.setTimeout(function () {
+          getActionCheckboxes().forEach(function (checkbox) {
+            if (checkbox.checked) {
+              persistedIds.add(String(checkbox.value));
+            } else {
+              persistedIds.delete(String(checkbox.value));
+            }
+          });
+          updateSelectionSummary();
+          syncPersistedSelection();
+        }, 0);
       });
-    })();
-  </script>
+    }
+
+    // Mirror Django's built-in clear link with our persisted clear behavior.
+    document.querySelectorAll('div.actions span.clear a').forEach(function (clearLink) {
+      clearLink.addEventListener('click', function () {
+        clearAllSelections();
+      });
+    });
+  })();
+</script>
 {% endblock %}
