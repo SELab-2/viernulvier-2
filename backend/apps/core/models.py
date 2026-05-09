@@ -77,6 +77,9 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+        permissions = [
+            ("can_export", "Can export data via admin"),
+        ]
 
     def save(self, *args: tuple, **kwargs: dict) -> None:
         """Run full model validation before persisting to the database.
