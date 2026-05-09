@@ -90,6 +90,11 @@ const fetchTags = async (): Promise<Tag[]> => {
   return Array.from(tagsById.values())
 }
 
+/**
+ * Returns true if the production has at least one genre matching the selected genre IDs.
+ */
+const hasSelectedGenre = (production: Production, selectedGenreIds: number[]): boolean =>
+  production.genres.some((genre) => selectedGenreIds.includes(genre.id))
 
 /**
  * Productions list page with shared collection lifecycle hooks.
@@ -225,10 +230,26 @@ const ProductionsPage = () => {
     }
   }, [])
 
-  // Effect to fetch the productions data from the API whenever the ordering, page, retryKey, or searchValue changes
   const onSearchSubmit = (value: string) => {
     searchDraft.submit(value)
   }
+
+  /**
+   * Sorts productions with a selected genre to the front of the list,
+   * preserving the relative order within each group.
+   */
+  const sortProductionsBySelectedGenres = useMemo(
+    () =>
+      selectedGenreIds.length === 0
+        ? undefined
+        : (items: Production[]) =>
+            [...items].sort((a, b) => {
+              const aMatch = hasSelectedGenre(a, selectedGenreIds) ? 0 : 1
+              const bMatch = hasSelectedGenre(b, selectedGenreIds) ? 0 : 1
+              return aMatch - bMatch
+            }),
+    [selectedGenreIds],
+  )
 
   // Main results content.
   const resultsContent = (
@@ -250,6 +271,7 @@ const ProductionsPage = () => {
           selectedTagIds={selectedTagIds}
         />
       )}
+      transformItems={sortProductionsBySelectedGenres}
     />
   )
 
@@ -273,8 +295,6 @@ const ProductionsPage = () => {
     />
   )
 
-  // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.
-  // It also handles the different UI states such as loading, error, and empty results.
   return (
     <>
       <CollectionPageLayout
