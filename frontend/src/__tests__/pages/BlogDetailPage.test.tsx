@@ -62,7 +62,7 @@ describe('BlogDetailPage', () => {
         state: {
           floatingAlert: {
             open: true,
-            message: 'Invalid blog ID.',
+            message: 'Invalid blog ID',
             severity: 'error',
           },
         },
@@ -127,7 +127,7 @@ describe('BlogDetailPage', () => {
         state: {
           floatingAlert: {
             open: true,
-            message: 'Could not load blog.',
+            message: 'Could not load blog',
             severity: 'error',
           },
         },
@@ -146,7 +146,7 @@ describe('BlogDetailPage', () => {
         state: {
           floatingAlert: {
             open: true,
-            message: 'Could not load blog.',
+            message: 'Could not load blog',
             severity: 'error',
           },
         },
