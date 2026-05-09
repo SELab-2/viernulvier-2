@@ -47,19 +47,37 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     }
 
     const state = location.state as { floatingAlert?: FloatingAlertPayload } | null | undefined
-    if (state?.floatingAlert?.message) {
+    const floatingAlert = state?.floatingAlert
+
+    if (floatingAlert?.message) {
       consumedNavigationKeyRef.current = location.key
+
       Promise.resolve().then(() => {
         showFloatingAlert({
-          message: state.floatingAlert!.message ?? '',
-          severity: state.floatingAlert!.severity ?? ALERT_SEVERITIES.error,
-          title: state.floatingAlert!.title,
-          autoCloseDuration: state.floatingAlert!.autoCloseDuration,
+          ...floatingAlert,
+          message: floatingAlert.message,
+          severity: floatingAlert.severity ?? ALERT_SEVERITIES.error,
         })
-        navigate(location.pathname, { replace: true, state: {} })
+
+        navigate(
+          {
+            pathname: location.pathname,
+            search: location.search,
+            hash: location.hash,
+          },
+          { replace: true, state: null },
+        )
       })
     }
-  }, [location.key, location.state, location.pathname, navigate, showFloatingAlert])
+  }, [
+    location.key,
+    location.state,
+    location.pathname,
+    location.search,
+    location.hash,
+    navigate,
+    showFloatingAlert,
+  ])
 
   const value = useMemo(
     () => ({ showFloatingAlert, clearFloatingAlert, isFallback: false }),
