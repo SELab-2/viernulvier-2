@@ -11,7 +11,7 @@ process.env.PUBLIC_API_KEY = process.env.PUBLIC_API_KEY ?? 'test-api-key'
 
 // Mock axios to prevent XMLHttpRequest errors in tests
 jest.mock('axios', () => {
-  const handlers: { request: any[]; response: any[] } = { request: [], response: [] }
+  const handlers = { request: [], response: [] }
 
   class AxiosHeaders {
     private headers: { [key: string]: string } = {}
@@ -60,7 +60,7 @@ jest.mock('axios', () => {
     })),
     AxiosHeaders,
     isAxiosError: jest.fn((value: unknown) => {
-      return typeof value === 'object' && value !== null && (value as any).isAxiosError === true
+      return typeof value === 'object' && value !== null && value.isAxiosError === true
     }),
   }
 })
