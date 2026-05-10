@@ -140,19 +140,32 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     }
   }
 
-  /** Sorted most-recent first by start date; productions without a date fall to the end. */
+  const getProductionSortTimestamp = (production: Production): number | null => {
+    const date = production.first_event_start || production.last_event_end
+
+    if (!date) {
+      return null
+    }
+
+    return new Date(date).getTime()
+  }
+
+  /** Sorted most-recent first by event date; productions without any date fall to the end. */
   const sortedProductions = useMemo(
     () =>
       [...productions].sort((a, b) => {
-        if (a.first_event_start && b.first_event_start) {
-          return new Date(b.first_event_start).getTime() - new Date(a.first_event_start).getTime()
+        const aTimestamp = getProductionSortTimestamp(a)
+        const bTimestamp = getProductionSortTimestamp(b)
+
+        if (aTimestamp !== null && bTimestamp !== null) {
+          return bTimestamp - aTimestamp
         }
 
-        if (a.first_event_start) {
+        if (aTimestamp !== null) {
           return -1
         }
 
-        if (b.first_event_start) {
+        if (bTimestamp !== null) {
           return 1
         }
 
