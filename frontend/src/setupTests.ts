@@ -10,8 +10,16 @@ global.TextDecoder = TextDecoder as typeof global.TextDecoder
 process.env.PUBLIC_API_KEY = process.env.PUBLIC_API_KEY ?? 'test-api-key'
 
 // Mock axios to prevent XMLHttpRequest errors in tests
+type InterceptorEntry = {
+  fulfilled?: (value: unknown) => unknown
+  rejected?: (error: unknown) => unknown
+}
+
 jest.mock('axios', () => {
-  const handlers = { request: [], response: [] }
+  const handlers: { request: InterceptorEntry[]; response: InterceptorEntry[] } = {
+    request: [],
+    response: [],
+  }
 
   class AxiosHeaders {
     private headers: { [key: string]: string } = {}
@@ -43,16 +51,18 @@ jest.mock('axios', () => {
       request: jest.fn().mockResolvedValue({ data: {} }),
       interceptors: {
         request: {
-          use: jest.fn((fulfilled) => {
+          use: jest.fn((fulfilled: (value: unknown) => unknown) => {
             handlers.request.push({ fulfilled })
           }),
           handlers: handlers.request,
           eject: jest.fn(),
         },
         response: {
-          use: jest.fn((fulfilled, rejected) => {
-            handlers.response.push({ fulfilled, rejected })
-          }),
+          use: jest.fn(
+            (fulfilled: (value: unknown) => unknown, rejected?: (error: unknown) => unknown) => {
+              handlers.response.push({ fulfilled, rejected })
+            },
+          ),
           handlers: handlers.response,
           eject: jest.fn(),
         },
@@ -60,7 +70,11 @@ jest.mock('axios', () => {
     })),
     AxiosHeaders,
     isAxiosError: jest.fn((value: unknown) => {
-      return typeof value === 'object' && value !== null && value.isAxiosError === true
+      if (typeof value === 'object' && value !== null) {
+        const v = value as Record<string, unknown>
+        return v.isAxiosError === true
+      }
+      return false
     }),
   }
 })
