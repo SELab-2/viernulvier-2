@@ -241,6 +241,22 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         ),
     )
 
+    video_1 = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary of all available translations for the primary video URL "
+            '(e.g. {"en": "https://...", "nl": "https://..."}). '
+            "Read-only."
+        ),
+    )
+
+    video_2 = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary of all available translations for the secondary video URL "
+            '(e.g. {"en": "https://...", "nl": "https://..."}). '
+            "Read-only."
+        ),
+    )
+
     description = serializers.SerializerMethodField(
         help_text=(
             "Production title in the project's base language (derived from settings.LANGUAGE_CODE). "
@@ -333,6 +349,8 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "tagline",
             "teaser",
             "description",
+            "video_1",
+            "video_2",
             "tags",
             "genres",
             "events",
@@ -351,6 +369,8 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "tagline",
             "teaser",
             "description",
+            "video_1",
+            "video_2",
             "tags",
             "genres",
             "events",
@@ -409,6 +429,16 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     def get_description(self, obj: Production) -> str:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")
+
+
+    def get_video_1(self, obj: Production) -> dict[str, str] | None:
+        """Return all available translations for `video_1` as a language-code dict."""
+        return self.get_translated_field(obj, "video_1")
+
+
+    def get_video_2(self, obj: Production) -> dict[str, str] | None:
+        """Return all available translations for `video_2` as a language-code dict."""
+        return self.get_translated_field(obj, "video_2")
 
     def get_display_title(self, obj: Production) -> str | None:
         """Return the base-language title (with fallback)."""

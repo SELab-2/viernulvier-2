@@ -142,6 +142,9 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
   const events = production.events ?? []
   const relatedProductions = production.related ?? []
   const relatedBlogs = production.blogs ?? []
+  const video1 = getLocalizedValue(production.video_1, lang) || null
+  const video2 = getLocalizedValue(production.video_2, lang) || null
+  const videoUrls = [video1, video2].filter(Boolean) as string[]
 
   return (
     <Box
@@ -236,9 +239,12 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
         </Box>
       </Box>
 
-      {production.media_gallery?.media_items?.length > 0 && (
-        <Box sx={{ px: 2, pb: 4 }}>
-          <MediaList mediaItems={production.media_gallery.media_items} />
+      {(videoUrls.length > 0 || (production.media_gallery?.media_items?.length ?? 0) > 0) && (
+        <Box sx={{ pb: 4 }}>
+          <MediaList
+            mediaItems={production.media_gallery?.media_items ?? []}
+            videoUrls={videoUrls}
+          />
         </Box>
       )}
 
