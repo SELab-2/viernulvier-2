@@ -302,7 +302,10 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
     def landing_stats(self, _request: Request) -> Response:
         """Return pre-aggregated counters used by the frontend homepage."""
         payload = {
-            "productions": Production.objects.count(),
+            "productions": Production.objects.filter(
+                Exists(Event.objects.filter(production=OuterRef("pk"), ends_at__lte=Now()))
+                | ~Exists(Event.objects.filter(production=OuterRef("pk")))
+            ).count(),
             "series": Tag.objects.filter(productions__isnull=False).distinct().count(),
             "years": self._get_documented_years_count(),
             "blogs": Blog.objects.filter(published_at__isnull=False).count(),
