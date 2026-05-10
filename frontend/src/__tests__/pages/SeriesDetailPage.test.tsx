@@ -109,7 +109,9 @@ describe('SeriesDetailPage', () => {
     mockedGetTag.mockResolvedValue(baseTag())
     mockedGetProductions.mockResolvedValue({
       count: 1,
-      results: [makeProduction(1, { display_title: 'VIDEODROOM 2024', title: { nl: 'VIDEODROOM 2024' } })],
+      results: [
+        makeProduction(1, { display_title: 'VIDEODROOM 2024', title: { nl: 'VIDEODROOM 2024' } }),
+      ],
     })
 
     renderPage()
@@ -213,7 +215,9 @@ describe('SeriesDetailPage', () => {
     mockedGetTag.mockResolvedValue(baseTag())
     mockedGetProductions.mockResolvedValue({
       count: 1,
-      results: [makeProduction(42, { display_title: 'VIDEODROOM 2024', title: { nl: 'VIDEODROOM 2024' } })],
+      results: [
+        makeProduction(42, { display_title: 'VIDEODROOM 2024', title: { nl: 'VIDEODROOM 2024' } }),
+      ],
     })
 
     renderPage()
@@ -228,7 +232,12 @@ describe('SeriesDetailPage', () => {
     mockedGetTag.mockResolvedValue(baseTag())
     mockedGetProductions.mockResolvedValue({
       count: 1,
-      results: [makeProduction(43, { display_title: 'Keyboard productie', title: { nl: 'Keyboard productie' } })],
+      results: [
+        makeProduction(43, {
+          display_title: 'Keyboard productie',
+          title: { nl: 'Keyboard productie' },
+        }),
+      ],
     })
 
     renderPage()
@@ -370,7 +379,9 @@ describe('SeriesDetailPage', () => {
       })
       .mockResolvedValueOnce({
         count: 13,
-        results: [makeProduction(13, { display_title: 'Productie 13', title: { nl: 'Productie 13' } })],
+        results: [
+          makeProduction(13, { display_title: 'Productie 13', title: { nl: 'Productie 13' } }),
+        ],
       })
 
     renderPage()

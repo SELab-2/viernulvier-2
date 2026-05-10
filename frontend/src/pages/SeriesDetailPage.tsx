@@ -322,9 +322,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
               {hasMoreProductions && (
                 <Box sx={{ pl: { xs: 3, md: 12 } }}>
                   <Button variant="outlined" onClick={loadMoreProductions} disabled={isLoadingMore}>
-                    {isLoadingMore
-                      ? t('common.loading', 'Loading…')
-                      : t('series.showMore')}
+                    {isLoadingMore ? t('common.loading', 'Loading…') : t('series.showMore')}
                   </Button>
                 </Box>
               )}
