@@ -430,11 +430,9 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "description")
 
-
     def get_video_1(self, obj: Production) -> dict[str, str] | None:
         """Return all available translations for `video_1` as a language-code dict."""
         return self.get_translated_field(obj, "video_1")
-
 
     def get_video_2(self, obj: Production) -> dict[str, str] | None:
         """Return all available translations for `video_2` as a language-code dict."""

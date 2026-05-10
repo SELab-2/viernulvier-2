@@ -97,6 +97,8 @@ class ProductionTranslationInline(admin.StackedInline):
         "tagline",
         "teaser",
         "description",
+        "video_1",
+        "video_2",
     )
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:

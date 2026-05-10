@@ -37,57 +37,140 @@ function getBestImageUrl(item: MediaItem): string | null {
   return fallback?.image_url ?? null
 }
 
+/**
+ * Returns a thumbnail URL for supported video providers.
+ * Currently supports:
+ * - YouTube
+ * - YouTube Shorts
+ * - Vimeo (thumbnail not publicly available without API)
+ * - SoundCloud (no direct thumbnail support)
+ *
+ * Returns null when no thumbnail can be generated.
+ */
 function getVideoThumbnail(raw: string): string | null {
   try {
     const url = new URL(raw)
     const host = url.hostname.toLowerCase()
-    if (host.includes('youtube.com')) {
-      const vid = url.searchParams.get('v')
-      if (vid) {
-        return `https://img.youtube.com/vi/${vid}/maxresdefault.jpg`
+
+    // YouTube
+    if (host.includes('youtube.com') || host === 'youtu.be') {
+      let videoId: string | null = null
+
+      // Standard YouTube URL (https://www.youtube.com/watch?v=abc123)
+      if (host.includes('youtube.com')) {
+        videoId = url.searchParams.get('v')
+
+        // YouTube Shorts (https://youtube.com/shorts/abc123)
+        if (!videoId && url.pathname.startsWith('/shorts/')) {
+          videoId = url.pathname.split('/')[2] || null
+        }
+
+        // YouTube Embed (https://youtube.com/embed/abc123)
+        if (!videoId && url.pathname.startsWith('/embed/')) {
+          videoId = url.pathname.split('/')[2] || null
+        }
+      }
+
+      // Short URL (https://youtu.be/abc123)
+      if (host === 'youtu.be') {
+        videoId = url.pathname.replace('/', '')
+      }
+
+      if (videoId) {
+        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
       }
     }
-    if (host === 'youtu.be') {
-      const vid = url.pathname.replace('/', '')
-      if (vid) {
-        return `https://img.youtube.com/vi/${vid}/maxresdefault.jpg`
-      }
+
+    // Vimeo thumbnails require API/oEmbed support
+    if (host.includes('vimeo.com')) {
+      return null
+    }
+
+    // SoundCloud has no simple public thumbnail endpoint
+    if (host.includes('soundcloud.com')) {
+      return null
     }
   } catch {
-    /* ignore */
+    // Ignore invalid URLs
   }
+
   return null
 }
 
+/**
+ * Converts supported video URLs into embeddable player URLs.
+ *
+ * Supports:
+ * - YouTube
+ * - YouTube Shorts
+ * - Vimeo
+ * - SoundCloud
+ * - Loom
+ *
+ * Returns the original URL if it cannot be converted.
+ */
 function toEmbedUrl(raw: string): string {
   try {
     const url = new URL(raw)
     const host = url.hostname.toLowerCase()
-    if (host.includes('youtube.com')) {
-      const vid = url.searchParams.get('v')
-      if (vid) {
-        return `https://www.youtube.com/embed/${vid}?autoplay=1&rel=0`
+
+    // YouTube
+    if (host.includes('youtube.com') || host === 'youtu.be') {
+      let videoId: string | null = null
+
+      // Standard watch URL
+      if (host.includes('youtube.com')) {
+        videoId = url.searchParams.get('v')
+
+        // Shorts
+        if (!videoId && url.pathname.startsWith('/shorts/')) {
+          videoId = url.pathname.split('/')[2] || null
+        }
+
+        // Existing embed URL
+        if (!videoId && url.pathname.startsWith('/embed/')) {
+          videoId = url.pathname.split('/')[2] || null
+        }
+      }
+
+      // Shortened URL
+      if (host === 'youtu.be') {
+        videoId = url.pathname.replace('/', '')
+      }
+
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`
       }
     }
-    if (host === 'youtu.be') {
-      const vid = url.pathname.replace('/', '')
-      if (vid) {
-        return `https://www.youtube.com/embed/${vid}?autoplay=1&rel=0`
-      }
-    }
+
+    // Vimeo
     if (host.includes('vimeo.com')) {
       const parts = url.pathname.split('/').filter(Boolean)
-      const vid = parts.length ? parts[parts.length - 1] : ''
-      if (vid) {
-        return `https://player.vimeo.com/video/${vid}?autoplay=1`
+      const videoId = parts[parts.length - 1]
+
+      if (videoId) {
+        return `https://player.vimeo.com/video/${videoId}?autoplay=1`
       }
     }
+
+    // SoundCloud
     if (host.includes('soundcloud.com')) {
-      return `https://w.soundcloud.com/player/?url=${encodeURIComponent(raw)}&auto_play=true&color=%23ff5500`
+      return `https://w.soundcloud.com/player/?url=${encodeURIComponent(raw)}&auto_play=true`
+    }
+
+    // Loom
+    if (host.includes('loom.com')) {
+      const parts = url.pathname.split('/').filter(Boolean)
+      const videoId = parts[parts.length - 1]
+
+      if (videoId) {
+        return `https://www.loom.com/embed/${videoId}`
+      }
     }
   } catch {
-    /* ignore */
+    // Ignore invalid URLs
   }
+
   return raw
 }
 
