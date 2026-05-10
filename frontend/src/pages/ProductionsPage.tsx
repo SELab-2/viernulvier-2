@@ -1,16 +1,15 @@
 import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import EntityView from '../components/entity/EntityView'
 import FilterPanel from '../components/filter-panel/FilterPanel'
-import FloatingAlert from '../components/FloatingAlert'
 import ProductionGridCard from '../components/productions/ProductionGridCard'
 import ProductionListCard from '../components/productions/ProductionListCard'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
+import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
 import { ApiError } from '../services/ApiTypes'
 import { getGenres } from '../services/genres/Genres'
 import { getProductions } from '../services/productions/Productions'
@@ -101,14 +100,9 @@ const fetchTags = async (): Promise<Tag[]> => {
 const ProductionsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const location = useLocation()
-  // Type for optional navigation state used to show a one-time floating alert when arriving
-  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
-  const nav = location as { state?: NavState }
-  const navFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
-  const navFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
-  const initialFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
-  const initialFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
+  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
+    'productions.home.error.notification',
+  )
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
@@ -146,10 +140,6 @@ const ProductionsPage = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(initialFloatingAlertOpen)
-  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(
-    initialFloatingAlertMessage,
-  )
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
   const [isSearchDraftDirty, setIsSearchDraftDirty] = useState(false)
@@ -158,7 +148,6 @@ const ProductionsPage = () => {
   const renderedErrorMessage = showFallbackError
     ? t('productions.home.error.fallback')
     : errorMessage
-  const floatingErrorMessage = t('productions.home.error.notification')
 
   // Memoized value for the API ordering parameter to avoid unnecessary recalculations on every render.
   const ordering = useMemo(
@@ -209,8 +198,7 @@ const ProductionsPage = () => {
       setIsLoading(true)
       setErrorMessage(null)
       setShowFallbackError(false)
-      setIsFloatingErrorOpen(false)
-      setFloatingAlertMessage(null)
+      clearFloatingAlert()
 
       try {
         const response = await getProductions({
@@ -248,8 +236,7 @@ const ProductionsPage = () => {
           setErrorMessage(null)
           setShowFallbackError(true)
         }
-        setIsFloatingErrorOpen(true)
-        setFloatingAlertMessage(null)
+        showFloatingAlert(error)
         setProductions([])
         setTotalCount(0)
       } finally {
@@ -265,6 +252,7 @@ const ProductionsPage = () => {
       isActive = false
     }
   }, [
+    clearFloatingAlert,
     firstEventStartAfter,
     firstEventStartBefore,
     ordering,
@@ -275,19 +263,13 @@ const ProductionsPage = () => {
     selectedGenres,
     selectedPerformerType,
     selectedTags,
+    showFloatingAlert,
   ])
 
   // Handler for retrying the data fetch when an error occurs, triggered by the retry button in the UI.
   const onRetry = () => {
-    setIsFloatingErrorOpen(false)
-    setFloatingAlertMessage(null)
+    clearFloatingAlert()
     setRetryKey((value) => value + 1)
-  }
-
-  // Handler for closing the floating error alert.
-  const onFloatingErrorClose = () => {
-    setIsFloatingErrorOpen(false)
-    setFloatingAlertMessage(null)
   }
 
   // Handler for submitting the search form, which updates the searchValue and triggers a new data fetch
@@ -304,18 +286,6 @@ const ProductionsPage = () => {
     setSearchDraft(nextQuery)
     setIsSearchDraftDirty(false)
   }
-
-  // If a page navigated here with a floatingAlert in location.state, clear it once.
-  useEffect(() => {
-    const { state } = nav
-    if (state?.floatingAlert?.open) {
-      try {
-        window.history.replaceState({}, document.title)
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [nav])
 
   // Main results content.
   const resultsContent = (
@@ -363,52 +333,43 @@ const ProductionsPage = () => {
   // The component renders the CollectionPageLayout with all the necessary props for displaying the productions list, search controls, sorting options, and pagination.
   // It also handles the different UI states such as loading, error, and empty results.
   return (
-    <>
-      <CollectionPageLayout
-        isMobile={isMobile}
-        searchPlaceholder={
-          isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
-        }
-        searchValue={displayedSearchValue}
-        onSearchChange={(value) => {
-          setSearchDraft(value)
-          setIsSearchDraftDirty(true)
-        }}
-        onSearchSubmit={onSearchSubmit}
-        sortTarget={sortTarget}
-        onSortTargetChange={setSortTarget}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        resultCount={totalCount}
-        sidebarContent={filterPanel}
-        resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
-        isLoading={isLoading}
-        loadingLabel={t('productions.home.loading')}
-        loadingContent={
-          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
-        }
-        errorMessage={renderedErrorMessage}
-        retryLabel={t('productions.home.error.retry')}
-        onRetry={onRetry}
-        emptyTitle={t('productions.home.empty.title')}
-        emptyDescription={t('productions.home.empty.description')}
-        hasResults={productions.length > 0}
-        resultsContent={resultsContent}
-        page={page}
-        pageSize={PAGE_SIZE}
-        totalItems={totalCount}
-        onPageChange={setPage}
-      />
-
-      <FloatingAlert
-        open={isFloatingErrorOpen || navFloatingAlertOpen}
-        onClose={onFloatingErrorClose}
-        severity="error"
-        message={navFloatingAlertMessage ?? floatingAlertMessage ?? floatingErrorMessage}
-      />
-    </>
+    <CollectionPageLayout
+      isMobile={isMobile}
+      searchPlaceholder={
+        isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
+      }
+      searchValue={displayedSearchValue}
+      onSearchChange={(value) => {
+        setSearchDraft(value)
+        setIsSearchDraftDirty(true)
+      }}
+      onSearchSubmit={onSearchSubmit}
+      sortTarget={sortTarget}
+      onSortTargetChange={setSortTarget}
+      sortDirection={sortDirection}
+      onSortDirectionChange={setSortDirection}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      resultCount={totalCount}
+      sidebarContent={filterPanel}
+      resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
+      isLoading={isLoading}
+      loadingLabel={t('productions.home.loading')}
+      loadingContent={
+        <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+      }
+      errorMessage={renderedErrorMessage}
+      retryLabel={t('productions.home.error.retry')}
+      onRetry={onRetry}
+      emptyTitle={t('productions.home.empty.title')}
+      emptyDescription={t('productions.home.empty.description')}
+      hasResults={productions.length > 0}
+      resultsContent={resultsContent}
+      page={page}
+      pageSize={PAGE_SIZE}
+      totalItems={totalCount}
+      onPageChange={setPage}
+    />
   )
 }
 

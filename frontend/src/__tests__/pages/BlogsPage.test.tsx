@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 
+import { NotificationProvider } from '../../contexts/NotificationContext'
 import i18n from '../../i18n'
 import BlogsPage from '../../pages/BlogsPage'
 import { ApiError } from '../../services/ApiTypes'
@@ -46,8 +47,10 @@ const renderPage = (
     <MemoryRouter initialEntries={[initialEntry]}>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={createTheme()}>
-          <BlogsPage />
-          <LocationProbe />
+          <NotificationProvider>
+            <BlogsPage />
+            <LocationProbe />
+          </NotificationProvider>
         </ThemeProvider>
       </I18nextProvider>
     </MemoryRouter>,

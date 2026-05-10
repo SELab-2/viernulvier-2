@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-undef */
 import '@testing-library/jest-dom/jest-globals'
 import '@testing-library/jest-dom'
@@ -118,3 +119,17 @@ Object.defineProperty(window, 'scrollTo', {
   configurable: true,
   value: jest.fn(),
 })
+
+// Suppress jsdom XHR AggregateError noise in test output (these are harmless
+// network errors triggered by environment helpers; they clutter CI logs).
+const originalConsoleError = console.error
+console.error = (...args: unknown[]) => {
+  const first = args[0]
+  if (first && typeof first === 'object' && 'type' in (first as any)) {
+    const maybe = first as any
+    if (maybe.type === 'XMLHttpRequest') {
+      return
+    }
+  }
+  originalConsoleError(...(args as [any, ...any[]]))
+}

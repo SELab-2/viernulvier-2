@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import SeriesDetailPage from '../../pages/SeriesDetailPage'
 import { getProductions } from '../../services/productions/Productions'
@@ -42,6 +42,18 @@ jest.mock('react-i18next', () => ({
   }),
 }))
 
+const SeriesPageProbe = () => {
+  const location = useLocation()
+  const alert = (location.state as { floatingAlert?: { message?: string } } | null)?.floatingAlert
+
+  return (
+    <div>
+      <div>SERIES PAGE</div>
+      <div data-testid="floating-alert-message">{alert?.message ?? ''}</div>
+    </div>
+  )
+}
+
 describe('SeriesDetailPage', () => {
   const mockedGetTag = getTag as jest.Mock
   const mockedGetProductions = getProductions as jest.Mock
@@ -56,8 +68,9 @@ describe('SeriesDetailPage', () => {
       <MemoryRouter initialEntries={[`/nl/reeksen/${id}`]}>
         <Routes>
           <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
+          <Route path="/:lang/reeksen" element={<SeriesPageProbe />} />
+          <Route path="/:lang/404" element={<div>NOT FOUND</div>} />
           <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
-          <Route path="/:lang/not-found" element={<div>404 PAGE</div>} />
         </Routes>
       </MemoryRouter>,
     )
@@ -128,22 +141,22 @@ describe('SeriesDetailPage', () => {
     expect(screen.getByRole('button', { name: 'Reeksen' })).toBeInTheDocument()
   })
 
-  it('redirects to /404 when tag is not found', async () => {
+  it('redirects to localized 404 when tag is not found', async () => {
     mockedGetTag.mockResolvedValue(null)
     mockedGetProductions.mockResolvedValue({ results: [] })
 
     renderPage()
 
-    expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
+    expect(await screen.findByText('NOT FOUND')).toBeInTheDocument()
   })
 
-  it('redirects to /404 when API throws error', async () => {
+  it('redirects to localized 404 when API throws error', async () => {
     mockedGetTag.mockRejectedValue(new Error('API error'))
     mockedGetProductions.mockResolvedValue({ results: [] })
 
     renderPage()
 
-    expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
+    expect(await screen.findByText('NOT FOUND')).toBeInTheDocument()
   })
 
   it('shows empty state when no productions exist', async () => {
@@ -167,12 +180,13 @@ describe('SeriesDetailPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('redirects to /404 when id is invalid', async () => {
+  it('redirects to the series tab when id is invalid', async () => {
     renderPage('invalid')
 
     await waitFor(() => {
-      expect(screen.getByText('404 PAGE')).toBeInTheDocument()
+      expect(screen.getByText('SERIES PAGE')).toBeInTheDocument()
     })
+    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent('Ongeldig reeks-ID.')
   })
 
   it('navigates to production detail when a production card is clicked', async () => {
