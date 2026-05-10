@@ -257,6 +257,7 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
             >
               <Box
                 role="button"
+                aria-label={`Video ${idx + 1}`}
                 tabIndex={0}
                 onClick={() => setActiveVideoUrl(url)}
                 onKeyDown={(e) => {
