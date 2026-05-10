@@ -8,11 +8,14 @@ import ImageWithFallback from '../components/ImageWithFallback'
 import Breadcrumbs from '../components/production/Breadcrumbs'
 import Description from '../components/production/Description'
 import RelatedProductions from '../components/production/RelatedProductions'
+import { ApiError } from '../services/ApiTypes'
 import { getBlog } from '../services/blogs/Blogs'
 import { tokens } from '../theme/tokens'
+import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 import { formatBlogPublishedDate } from '../utils/blogs'
 import { getLocalizedValue } from '../utils/localization'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
+import { redirectWithFloatingAlert } from '../utils/navigation'
 
 import type { Blog } from '../types/Blogs'
 
@@ -40,6 +43,7 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     i18n.resolvedLanguage,
   )
   const blogsPath = toLocalizedPath('/blogs', currentLanguage)
+  const currentPath = location.pathname
 
   const [blog, setBlog] = useState<Blog | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
@@ -53,16 +57,28 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
       const errMsg = t('blog.invalidId', 'Invalid blog ID')
-      navigate(blogsPath, {
-        state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
+      redirectWithFloatingAlert(navigate, blogsPath, {
+        message: errMsg,
+        severity: ALERT_SEVERITIES.error,
       })
       return
     }
 
-    const handleError = () => {
+    const handleError = (error?: unknown) => {
+      // If the failure is a rate-limit, show a warning and return to the listing.
+      if (error instanceof ApiError && error.status === 429) {
+        redirectWithFloatingAlert(navigate, currentPath, {
+          message: error.message,
+          severity: ALERT_SEVERITIES.warning,
+        })
+        return
+      }
+
+      // For other failures, redirect to the site-wide localized 404 page.
       const errMsg = t('blog.couldNotLoad', 'Could not load blog')
-      navigate(blogsPath, {
-        state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
+      redirectWithFloatingAlert(navigate, toLocalizedPath('/404', currentLanguage), {
+        message: errMsg,
+        severity: ALERT_SEVERITIES.error,
       })
     }
 
@@ -77,15 +93,15 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
           return
         }
         setBlog(data)
-      } catch {
-        handleError()
+      } catch (error: unknown) {
+        handleError(error)
       } finally {
         setLoading(false)
       }
     }
 
     fetchBlog()
-  }, [blogsPath, id, navigate, t])
+  }, [blogsPath, currentLanguage, id, navigate, t, currentPath])
 
   if (loading) {
     return <BlogDetailPageSkeleton />

@@ -81,6 +81,17 @@ describe('App', () => {
     })
   })
 
+  it('redirects media detail routes to the media tab', async () => {
+    window.history.pushState({}, '', '/nl/media/123')
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/nl/media')
+    })
+    expect(await screen.findByText(/Kon mediabestand niet laden\.?/)).toBeInTheDocument()
+  })
+
   it('renders footer', () => {
     render(<App />)
 
