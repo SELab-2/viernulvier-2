@@ -4,7 +4,7 @@
  * of associated productions grouped by year.
  */
 
-import { Alert, Box, Container, Divider, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useParams } from 'react-router-dom'
@@ -22,6 +22,8 @@ import { getTranslatedRecord } from '../utils/translations'
 import type { Production } from '../types/Productions'
 import type { Tag } from '../types/Tags'
 
+const PAGE_SIZE = 12
+
 type SeriesStat = {
   value: string
   label: string
@@ -34,9 +36,11 @@ function getProductionYear(production: Production): string {
   if (production.first_event_start) {
     return new Date(production.first_event_start).getFullYear().toString()
   }
+
   if (production.last_event_end) {
     return new Date(production.last_event_end).getFullYear().toString()
   }
+
   return '—'
 }
 
@@ -56,29 +60,85 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
+  const [totalProductions, setTotalProductions] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [error, setError] = useState<SeriesErrorKey>(null)
+
   const numericId = Number(id)
 
   useEffect(() => {
+    let isActive = true
+
     const fetchSeries = async () => {
+      setIsLoading(true)
+      setError(null)
+      setProductions([])
+      setTotalProductions(0)
+      setCurrentPage(1)
+
       try {
         const [tag, productionsResponse] = await Promise.all([
           getTag(numericId),
-          getProductions({ pageSize: 100, filters: { tag: numericId } }),
+          getProductions({
+            page: 1,
+            pageSize: PAGE_SIZE,
+            filters: { tag: numericId },
+          }),
         ])
+
+        if (!isActive) {
+          return
+        }
 
         setSeriesTag(tag)
         setProductions(productionsResponse.results)
+        setTotalProductions(productionsResponse.count)
       } catch {
-        setError('series.fetchError')
+        if (isActive) {
+          setError('series.fetchError')
+        }
       } finally {
-        setIsLoading(false)
+        if (isActive) {
+          setIsLoading(false)
+        }
       }
     }
 
     void fetchSeries()
+
+    return () => {
+      isActive = false
+    }
   }, [numericId])
+
+  const loadMoreProductions = async () => {
+    if (isLoadingMore || productions.length >= totalProductions) {
+      return
+    }
+
+    setIsLoadingMore(true)
+
+    try {
+      const nextPage = currentPage + 1
+
+      const productionsResponse = await getProductions({
+        page: nextPage,
+        pageSize: PAGE_SIZE,
+        filters: { tag: numericId },
+      })
+
+      setProductions((currentProductions) => [
+        ...currentProductions,
+        ...productionsResponse.results,
+      ])
+      setTotalProductions(productionsResponse.count)
+      setCurrentPage(nextPage)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
 
   /** Sorted most-recent first by start date; productions without a date fall to the end. */
   const sortedProductions = useMemo(
@@ -87,12 +147,15 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
         if (a.first_event_start && b.first_event_start) {
           return new Date(b.first_event_start).getTime() - new Date(a.first_event_start).getTime()
         }
+
         if (a.first_event_start) {
           return -1
         }
+
         if (b.first_event_start) {
           return 1
         }
+
         return b.id - a.id
       }),
     [productions],
@@ -101,27 +164,31 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   /** Productions grouped by year in display order, preserving sort within each group. */
   const productionsByYear = useMemo(() => {
     const groups = new Map<string, Production[]>()
+
     for (const production of sortedProductions) {
       const year = getProductionYear(production)
       const existing = groups.get(year)
+
       if (existing) {
         existing.push(production)
       } else {
         groups.set(year, [production])
       }
     }
+
     return Array.from(groups.entries())
   }, [sortedProductions])
 
   const startYear = seriesTag?.first_production_start
     ? new Date(seriesTag.first_production_start).getFullYear()
     : null
+
   const endYear = seriesTag?.last_production_end
     ? new Date(seriesTag.last_production_end).getFullYear()
     : null
 
   const stats: SeriesStat[] = [
-    { value: String(sortedProductions.length), label: t('series.stats.editions') },
+    { value: String(totalProductions), label: t('series.stats.editions') },
     {
       value: startYear && endYear ? `${startYear}–${endYear}` : '—',
       label: t('series.stats.period'),
@@ -132,6 +199,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   if (isLoading) {
     return <SeriesDetailPageSkeleton />
   }
+
   if (error || !seriesTag) {
     return <Navigate to={notFoundPath} replace />
   }
@@ -147,6 +215,8 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const seriesDescription =
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
     t('series.noDescription')
+
+  const hasMoreProductions = productions.length < totalProductions
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
@@ -201,7 +271,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                   <Stack
                     direction="row"
                     spacing={1}
-                    sx={{ alignItems: 'center', flexShrink: 0, width: { md: 80 } }}
+                    sx={{
+                      alignItems: 'center',
+                      flexShrink: 0,
+                      width: { md: 80 },
+                    }}
                   >
                     <Box
                       sx={{
@@ -231,6 +305,16 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                   </Box>
                 </Stack>
               ))}
+
+              {hasMoreProductions && (
+                <Box sx={{ pl: { xs: 3, md: 12 } }}>
+                  <Button variant="outlined" onClick={loadMoreProductions} disabled={isLoadingMore}>
+                    {isLoadingMore
+                      ? t('common.loading', 'Loading…')
+                      : t('series.showMore')}
+                  </Button>
+                </Box>
+              )}
             </Stack>
           </Box>
         )}
