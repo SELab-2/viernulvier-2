@@ -3,16 +3,58 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 
 import App from '../App'
 import i18n from '../i18n'
+import { getGenres } from '../services/genres/Genres'
+import { getProductions } from '../services/productions/Productions'
+import { getTags } from '../services/tags/Tags'
+
+jest.mock('../services/productions/Productions', () => ({
+  getProductions: jest.fn(),
+}))
+
+jest.mock('../services/tags/Tags', () => ({
+  getTags: jest.fn(),
+}))
+
+jest.mock('../services/genres/Genres', () => ({
+  getGenres: jest.fn(),
+}))
+
+const mockedGetProductions = getProductions as jest.MockedFunction<typeof getProductions>
+const mockedGetTags = getTags as jest.MockedFunction<typeof getTags>
+const mockedGetGenres = getGenres as jest.MockedFunction<typeof getGenres>
 
 describe('App', () => {
   beforeEach(async () => {
     window.history.pushState({}, '', '/')
     localStorage.clear()
     await i18n.changeLanguage('nl')
+
+    // Mock the service functions to return empty results
+    mockedGetProductions.mockResolvedValue({
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+    })
+
+    mockedGetGenres.mockResolvedValue({
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+    })
+
+    mockedGetTags.mockResolvedValue({
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+    })
   })
 
   afterEach(() => {
     localStorage.clear()
+    jest.clearAllMocks()
   })
 
   it('renders navigation', async () => {
