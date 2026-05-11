@@ -102,7 +102,7 @@ describe('BlogDetailPage', () => {
     })
   })
 
-  it('handles unpublished blog by navigating to blogs with error', async () => {
+  it('handles unpublished blog by navigating to localized 404', async () => {
     mockUseParams.mockReturnValue({ id: '13' })
 
     const blogData = {
@@ -123,7 +123,7 @@ describe('BlogDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/nl/blogs', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl/404', {
         state: {
           floatingAlert: {
             open: true,
@@ -135,14 +135,14 @@ describe('BlogDetailPage', () => {
     })
   })
 
-  it('handles fetch error by navigating to blogs with error', async () => {
+  it('handles fetch error by navigating to localized 404', async () => {
     mockUseParams.mockReturnValue({ id: '12' })
     mockedGetBlog.mockRejectedValue(new Error('network error'))
 
     renderPage()
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/nl/blogs', {
+      expect(mockNavigate).toHaveBeenCalledWith('/nl/404', {
         state: {
           floatingAlert: {
             open: true,
