@@ -4,8 +4,16 @@
  * of associated productions grouped by year.
  */
 
-import { Alert, Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Divider,
+  Stack,
+  Typography,
+} from '@mui/material'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 
@@ -18,7 +26,10 @@ import { ApiError } from '../services/ApiTypes'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
 import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
-import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
+import {
+  resolveCurrentLanguage,
+  toLocalizedPath,
+} from '../utils/localizedRoutes'
 import { createFloatingAlertState } from '../utils/navigation'
 import { getTranslatedRecord } from '../utils/translations'
 
@@ -45,12 +56,6 @@ function getProductionYear(production: Production): string {
   return '—'
 }
 
-/** Returns the timestamp used for chronological sorting. */
-function getProductionSortTimestamp(production: Production): number | null {
-  const date = production.first_event_start ?? production.last_event_end
-  return date ? new Date(date).getTime() : null
-}
-
 type SeriesDetailContentProps = {
   id: string
 }
@@ -65,6 +70,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     i18n.resolvedLanguage,
   )
   const seriesPath = toLocalizedPath('/series', currentLanguage)
+  const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
   const currentPath = location.pathname
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
@@ -76,7 +82,22 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const [error, setError] = useState<SeriesErrorKey>(null)
   const numericId = Number(id)
 
-  const navigate = useNavigate()
+  const showRateLimitAlert = useCallback(
+    (rateLimitError: ApiError, fallbackPath = seriesPath) => {
+      const alertMessage =
+        Number(rateLimitError.message) === 429
+          ? String(rateLimitError.status)
+          : rateLimitError.message
+      navigate(fallbackPath, {
+        replace: true,
+        state: createFloatingAlertState({
+          message: alertMessage,
+          severity: ALERT_SEVERITIES.warning,
+        }),
+      })
+    },
+    [navigate, seriesPath],
+  )
 
   useEffect(() => {
     let isActive = true
@@ -91,7 +112,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
       try {
         const [tag, productionsResponse] = await Promise.all([
           getTag(numericId),
-          getProductions({ page: 1, pageSize: PAGE_SIZE, filters: { tag: numericId } }),
+          getProductions({
+            page: 1,
+            pageSize: PAGE_SIZE,
+            filters: { tag: numericId },
+          }),
         ])
 
         if (!isActive) {
@@ -100,15 +125,20 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
         setSeriesTag(tag)
         setProductions(productionsResponse.results)
+        setTotalProductions(
+          productionsResponse.count ?? productionsResponse.results.length,
+        )
       } catch (error: unknown) {
-        if (error instanceof ApiError && error.status === 429) {
-          navigate(currentPath, {
-            replace: true,
-            state: createFloatingAlertState({
-              message: error.message,
-              severity: ALERT_SEVERITIES.warning,
-            }),
-          })
+        if (!isActive) {
+          return
+        }
+
+        if (
+          error instanceof ApiError &&
+          (error.status === 429 || Number(error.message) === 429)
+        ) {
+          isActive = false
+          showRateLimitAlert(error)
           return
         }
 
@@ -121,12 +151,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     }
 
     void fetchSeries()
-  }, [currentPath, navigate, numericId, seriesPath])
 
     return () => {
       isActive = false
     }
-  }, [navigate, numericId, seriesPath])
+  }, [numericId, showRateLimitAlert])
 
   const loadMoreProductions = async () => {
     if (isLoadingMore || productions.length >= totalProductions) {
@@ -148,30 +177,34 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
         ...productionsResponse.results,
       ])
       setTotalProductions(
-        productionsResponse.count ?? productions.length + productionsResponse.results.length,
+        productionsResponse.count ??
+          productions.length + productionsResponse.results.length,
       )
       setCurrentPage(nextPage)
+    } catch (error: unknown) {
+      if (
+        error instanceof ApiError &&
+        (error.status === 429 || Number(error.message) === 429)
+      ) {
+        showRateLimitAlert(error, currentPath)
+      }
     } finally {
       setIsLoadingMore(false)
     }
   }
 
-  /** Sorted most-recent first by start/end date; productions without a date fall to the end. */
+  /** Sorted most-recent first by start date; productions without a date fall to the end. */
   const sortedProductions = useMemo(
     () =>
       [...productions].sort((a, b) => {
-        const aTimestamp = getProductionSortTimestamp(a)
-        const bTimestamp = getProductionSortTimestamp(b)
+        const aDate = a.first_event_start ?? a.last_event_end
+        const bDate = b.first_event_start ?? b.last_event_end
 
-        if (aTimestamp !== null && bTimestamp !== null) {
-          return bTimestamp - aTimestamp
+        if (aDate && bDate) {
+          return new Date(bDate).getTime() - new Date(aDate).getTime()
         }
-        if (aTimestamp !== null) {
-          return -1
-        }
-        if (bTimestamp !== null) {
-          return 1
-        }
+        if (aDate) return -1
+        if (bDate) return 1
         return b.id - a.id
       }),
     [productions],
@@ -214,7 +247,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   if (error || !seriesTag) {
     return (
       <Navigate
-        to={toLocalizedPath('/404', currentLanguage)}
+        to={notFoundPath}
         replace
         state={createFloatingAlertState({
           message: t(error ?? 'series.fetchError'),
@@ -227,14 +260,19 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const lang = i18n.language.startsWith('en') ? 'en' : 'nl'
 
   const seriesName =
-    getTranslatedRecord(seriesTag.name, lang, seriesTag.display_name) || t('series.untitled')
+    getTranslatedRecord(seriesTag.name, lang, seriesTag.display_name) ||
+    t('series.untitled')
 
   const seriesExcerpt =
-    getTranslatedRecord(seriesTag.excerpt, lang, seriesTag.display_excerpt) || ''
+    getTranslatedRecord(seriesTag.excerpt, lang, seriesTag.display_excerpt) ||
+    ''
 
   const seriesDescription =
-    getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
-    t('series.noDescription')
+    getTranslatedRecord(
+      seriesTag.short_description,
+      lang,
+      seriesTag.display_short_description,
+    ) || t('series.noDescription')
   const hasMoreProductions = productions.length < totalProductions
 
   return (
@@ -248,7 +286,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
           ]}
         />
 
-        <SeriesHeader name={seriesName} excerpt={seriesExcerpt} description={seriesDescription} />
+        <SeriesHeader
+          name={seriesName}
+          excerpt={seriesExcerpt}
+          description={seriesDescription}
+        />
         <SeriesStats stats={stats} />
         <Divider />
 
@@ -290,7 +332,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                   <Stack
                     direction="row"
                     spacing={1}
-                    sx={{ alignItems: 'center', flexShrink: 0, width: { md: 80 } }}
+                    sx={{
+                      alignItems: 'center',
+                      flexShrink: 0,
+                      width: { md: 80 },
+                    }}
                   >
                     <Box
                       sx={{
@@ -316,14 +362,21 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                       pl: { xs: 3, md: 0 },
                     }}
                   >
-                    <ProductionView productions={yearProductions} layout="list" />
+                    <ProductionView
+                      productions={yearProductions}
+                      layout="list"
+                    />
                   </Box>
                 </Stack>
               ))}
 
               {hasMoreProductions && (
                 <Box sx={{ pl: { xs: 3, md: 12 } }}>
-                  <Button variant="outlined" onClick={loadMoreProductions} disabled={isLoadingMore}>
+                  <Button
+                    variant="outlined"
+                    onClick={loadMoreProductions}
+                    disabled={isLoadingMore}
+                  >
                     {isLoadingMore
                       ? t('common.loading', 'Loading…')
                       : t('series.showMore', 'Show More')}
