@@ -1,7 +1,7 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
 
-import GenericGrid from '../../components/GenericGrid'
+import GenericGrid from '../../shared/components/GenericGrid'
 
 import type { ReactNode } from 'react'
 

@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
 
-import ProductionGridCard from '../../components/productions/ProductionGridCard'
+import ProductionGridCard from '../../features/productions/components/cards/ProductionGridCard'
 import i18n from '../../i18n'
 import { toLocalizedPath } from '../../utils/localizedRoutes'
 

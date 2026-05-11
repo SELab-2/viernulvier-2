@@ -1,7 +1,7 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
 
-import CollectionResultsSkeleton from '../../../components/skeletons/CollectionResultsSkeleton'
+import CollectionResultsSkeleton from '../../../shared/components/skeletons/CollectionResultsSkeleton'
 
 import type { ComponentProps } from 'react'
 

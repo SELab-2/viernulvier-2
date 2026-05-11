@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 
-import FloatingAlert from '../components/FloatingAlert'
+import FloatingAlert from '../shared/components/FloatingAlert'
 
 describe('FloatingAlert', () => {
   it('renders floating alert when open is true', () => {

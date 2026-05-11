@@ -2,7 +2,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 
-import SearchBar from '../../components/searchbar/SearchBar'
+import SearchBar from '../../shared/components/search/SearchBar'
 import i18n from '../../i18n'
 
 import type { ComponentProps } from 'react'

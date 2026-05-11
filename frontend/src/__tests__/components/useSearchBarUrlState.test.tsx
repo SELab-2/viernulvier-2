@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
-import { useSearchBarUrlState } from '../../components/searchbar/useSearchBarUrlState'
+import { useSearchBarUrlState } from '../../shared/hooks/useSearchBarUrlState'
 
 type HarnessProps = {
   isMobile?: boolean

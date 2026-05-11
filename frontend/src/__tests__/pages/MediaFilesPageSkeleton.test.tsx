@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react'
 
-import MediaFilesPageSkeleton from '../../pages/MediaFilesPageSkeleton'
+import MediaFilesPageSkeleton from '../../features/media-files/pages/MediaFilesPageSkeleton'
 
 const skeletonCount = (container: HTMLElement) =>
   container.querySelectorAll('.MuiSkeleton-root').length

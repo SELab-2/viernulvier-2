@@ -1,16 +1,16 @@
 import { render, screen } from '@testing-library/react'
 
-import BlogGrid from '../../components/BlogGrid'
+import BlogGrid from '../../features/blogs/components/BlogGrid'
 
 import type { Blog } from '../../types/Blogs'
 import type { ReactNode } from 'react'
 
-jest.mock('../../components/BlogGridCard', () => ({
+jest.mock('../../features/blogs/components/BlogGridCard', () => ({
   __esModule: true,
   default: ({ blog }: { blog: Blog }) => <div data-testid="blog-grid-card">{blog.id}</div>,
 }))
 
-jest.mock('../../components/GenericGrid', () => ({
+jest.mock('../../shared/components/GenericGrid', () => ({
   __esModule: true,
   default: ({ items, renderItem }: { items: Blog[]; renderItem: (item: Blog) => ReactNode }) => (
     <div data-testid="generic-grid">

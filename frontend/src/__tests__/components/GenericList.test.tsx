@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 
-import GenericList from '../../components/GenericList'
+import GenericList from '../../shared/components/GenericList'
 
 type Item = {
   id: number

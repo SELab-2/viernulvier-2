@@ -2,7 +2,7 @@ import { ThemeProvider, createTheme } from '@mui/material'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-import ProductionDetailPage from '../../pages/ProductionDetailPage'
+import ProductionDetailPage from '../../features/productions/pages/ProductionDetailPage'
 import { getProduction } from '../../services/productions/Productions'
 
 import type { Event } from '../../types/Events'
@@ -30,12 +30,12 @@ jest.mock('../../services/productions/Productions', () => ({
   getProduction: jest.fn(),
 }))
 
-jest.mock('../../components/production/RelatedProductions', () => ({
+jest.mock('../../features/productions/components/detail/RelatedProductions', () => ({
   __esModule: true,
   default: () => <div data-testid="related-productions-mock" />,
 }))
 
-jest.mock('../../components/production/RelatedBlogs', () => ({
+jest.mock('../../features/productions/components/detail/RelatedBlogs', () => ({
   __esModule: true,
   default: () => <div data-testid="related-blogs-mock" />,
 }))

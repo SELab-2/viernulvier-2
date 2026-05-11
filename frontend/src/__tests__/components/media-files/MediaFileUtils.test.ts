@@ -5,7 +5,7 @@ import {
   formatMediaFileSize,
   getMediaFileDescription,
   getMediaFileTypeLabel,
-} from '../../../components/media-files/MediaFileUtils'
+} from '../../../features/media-files/components/MediaFileUtils'
 
 import type { MediaFile } from '../../../types/MediaFiles'
 import type { TFunction } from 'i18next'

@@ -2,7 +2,7 @@ import '@testing-library/jest-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
-import SeriesDetailPage from '../../pages/SeriesDetailPage'
+import SeriesDetailPage from '../../features/series/pages/SeriesDetailPage'
 import { getProductions } from '../../services/productions/Productions'
 import { getTag } from '../../services/tags/Tags'
 

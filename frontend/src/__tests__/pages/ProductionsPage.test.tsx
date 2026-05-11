@@ -4,7 +4,7 @@ import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 
 import i18n from '../../i18n'
-import ProductionsPage from '../../pages/ProductionsPage'
+import ProductionsPage from '../../features/productions/pages/ProductionsPage'
 import { ApiError } from '../../services/ApiTypes'
 import { getGenres } from '../../services/genres/Genres'
 import { getProductions } from '../../services/productions/Productions'

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 
 import '@testing-library/jest-dom'
-import SeriesStats from '../../../components/series_details/SeriesStats'
+import SeriesStats from '../../../features/series/components/SeriesStats'
 
 describe('SeriesStats', () => {
   const stats = [

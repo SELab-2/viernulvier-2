@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 
-import HtmlText from '../../components/HtmlText'
+import HtmlText from '../../shared/components/HtmlText'
 
 describe('HtmlText', () => {
   it('renders sanitized html content', () => {

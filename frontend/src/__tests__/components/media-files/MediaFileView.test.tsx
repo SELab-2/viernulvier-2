@@ -11,12 +11,18 @@ jest.mock('@mui/material', () => {
       breakpoints: {
         down: jest.fn(() => 'mocked-breakpoint'),
       },
+      palette: {
+        divider: '#e0e0e0',
+        background: {
+          paper: '#ffffff',
+        },
+      },
     }),
     useMediaQuery: () => useMediaQueryMock(),
   }
 })
 
-import CollectionView from '../../../components/CollectionView'
+import CollectionView from '../../../shared/components/CollectionView'
 
 describe('CollectionView (media files)', () => {
   it('renders the requested list layout on desktop', () => {
@@ -27,12 +33,8 @@ describe('CollectionView (media files)', () => {
         items={[{ id: 1 } as never]}
         layout="list"
         getKey={(item: { id: number }) => item.id}
-        renderListItem={(item: { id: number }) => (
-          <div data-testid="list-view">list:{item.id}</div>
-        )}
-        renderGridItem={(item: { id: number }) => (
-          <div data-testid="grid-view">grid:{item.id}</div>
-        )}
+        renderListItem={(item: { id: number }) => <div data-testid="list-view">list:{item.id}</div>}
+        renderGridItem={(item: { id: number }) => <div data-testid="grid-view">grid:{item.id}</div>}
       />,
     )
 
@@ -47,16 +49,13 @@ describe('CollectionView (media files)', () => {
         items={[{ id: 1 }, { id: 2 }] as never}
         layout="grid"
         getKey={(item: { id: number }) => item.id}
-        renderListItem={(item: { id: number }) => (
-          <div data-testid="list-view">list:{item.id}</div>
-        )}
-        renderGridItem={(item: { id: number }) => (
-          <div data-testid="grid-view">grid:{item.id}</div>
-        )}
+        renderListItem={(item: { id: number }) => <div data-testid="list-view">list:{item.id}</div>}
+        renderGridItem={(item: { id: number }) => <div data-testid="grid-view">grid:{item.id}</div>}
       />,
     )
 
-    expect(screen.getByTestId('grid-view')).toHaveTextContent('grid:1')
+    expect(screen.getAllByTestId('grid-view')).toHaveLength(2)
+    expect(screen.getAllByTestId('grid-view')[0]).toHaveTextContent('grid:1')
   })
 
   it('defaults to list layout on desktop when no layout is provided', () => {
@@ -66,12 +65,8 @@ describe('CollectionView (media files)', () => {
       <CollectionView
         items={[{ id: 1 } as never]}
         getKey={(item: { id: number }) => item.id}
-        renderListItem={(item: { id: number }) => (
-          <div data-testid="list-view">list:{item.id}</div>
-        )}
-        renderGridItem={(item: { id: number }) => (
-          <div data-testid="grid-view">grid:{item.id}</div>
-        )}
+        renderListItem={(item: { id: number }) => <div data-testid="list-view">list:{item.id}</div>}
+        renderGridItem={(item: { id: number }) => <div data-testid="grid-view">grid:{item.id}</div>}
       />,
     )
 
@@ -86,12 +81,8 @@ describe('CollectionView (media files)', () => {
         items={[{ id: 1 } as never]}
         layout="list"
         getKey={(item: { id: number }) => item.id}
-        renderListItem={(item: { id: number }) => (
-          <div data-testid="list-view">list:{item.id}</div>
-        )}
-        renderGridItem={(item: { id: number }) => (
-          <div data-testid="grid-view">grid:{item.id}</div>
-        )}
+        renderListItem={(item: { id: number }) => <div data-testid="list-view">list:{item.id}</div>}
+        renderGridItem={(item: { id: number }) => <div data-testid="grid-view">grid:{item.id}</div>}
       />,
     )
 

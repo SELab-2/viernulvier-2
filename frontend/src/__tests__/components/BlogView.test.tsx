@@ -15,21 +15,21 @@ jest.mock('@mui/material', () => {
   }
 })
 
-jest.mock('../../components/BlogGrid', () => ({
+jest.mock('../../features/blogs/components/BlogGrid', () => ({
   __esModule: true,
   default: ({ blogs }: { blogs: Array<{ id: number }> }) => (
     <div data-testid="blog-grid">grid:{blogs.length}</div>
   ),
 }))
 
-jest.mock('../../components/BlogList', () => ({
+jest.mock('../../features/blogs/components/BlogList', () => ({
   __esModule: true,
   default: ({ blogs }: { blogs: Array<{ id: number }> }) => (
     <div data-testid="blog-list">list:{blogs.length}</div>
   ),
 }))
 
-import BlogView from '../../components/BlogView'
+import BlogView from '../../shared/components/BlogView'
 
 describe('BlogView', () => {
   it('renders list on wide viewports when layout=list', () => {

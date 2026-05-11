@@ -4,7 +4,7 @@ import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 
 import i18n from '../../i18n'
-import SeriesPage from '../../pages/SeriesPage'
+import SeriesPage from '../../features/series/pages/SeriesPage'
 import { ApiError } from '../../services/ApiTypes'
 import { getTags } from '../../services/tags/Tags'
 

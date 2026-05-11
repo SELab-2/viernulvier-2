@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 
-import Description from '../../../components/production/Description'
+import Description from '../../../features/productions/components/detail/Description'
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),

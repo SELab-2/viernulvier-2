@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 
-import EventList from '../../../components/production/EventList'
+import EventList from '../../../features/productions/components/detail/EventList'
 
 import type { Event } from '../../../types/Events'
 import type { Production } from '../../../types/Productions'

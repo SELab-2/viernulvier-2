@@ -2,7 +2,7 @@ import { ThemeProvider, createTheme } from '@mui/material'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-import BlogDetailPage from '../../pages/BlogDetailPage'
+import BlogDetailPage from '../../features/blogs/pages/BlogDetailPage'
 import { getBlog } from '../../services/blogs/Blogs'
 
 import type { Blog } from '../../types/Blogs'
@@ -29,7 +29,7 @@ jest.mock('../../services/blogs/Blogs', () => ({
   getBlog: jest.fn(),
 }))
 
-jest.mock('../../components/production/RelatedProductions', () => ({
+jest.mock('../../features/productions/components/detail/RelatedProductions', () => ({
   __esModule: true,
   default: () => <div data-testid="related-productions-mock" />,
 }))

@@ -26,21 +26,21 @@ jest.mock('../../../theme/tokens', () => ({
   },
 }))
 
-jest.mock('../../../components/media-files/MediaFilePreview', () => ({
+jest.mock('../../../features/media-files/components/MediaFilePreview', () => ({
   __esModule: true,
   default: ({ previewLabel }: { previewLabel: string }) => (
     <div data-testid="media-preview">preview:{previewLabel}</div>
   ),
 }))
 
-jest.mock('../../../components/media-files/MediaFileUtils', () => ({
+jest.mock('../../../features/media-files/components/MediaFileUtils', () => ({
   formatMediaFileDate: (...args: unknown[]) => formatMediaFileDateMock(...args),
   formatMediaFileSize: (...args: unknown[]) => formatMediaFileSizeMock(...args),
   getMediaFileDescription: (...args: unknown[]) => getMediaFileDescriptionMock(...args),
   getMediaFileTypeLabel: (...args: unknown[]) => getMediaFileTypeLabelMock(...args),
 }))
 
-import MediaFileGridCard from '../../../components/media-files/MediaFileGridCard'
+import MediaFileGridCard from '../../../features/media-files/components/MediaFileGridCard'
 
 describe('MediaFileGridCard', () => {
   beforeEach(() => {

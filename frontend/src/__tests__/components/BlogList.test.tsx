@@ -1,16 +1,16 @@
 import { render, screen } from '@testing-library/react'
 
-import BlogList from '../../components/BlogList'
+import BlogList from '../../features/blogs/components/BlogList'
 
 import type { Blog } from '../../types/Blogs'
 import type { ReactNode } from 'react'
 
-jest.mock('../../components/BlogListCard', () => ({
+jest.mock('../../features/blogs/components/BlogListCard', () => ({
   __esModule: true,
   default: ({ blog }: { blog: Blog }) => <div data-testid="blog-list-card">{blog.id}</div>,
 }))
 
-jest.mock('../../components/GenericList', () => ({
+jest.mock('../../shared/components/GenericList', () => ({
   __esModule: true,
   default: ({ items, renderItem }: { items: Blog[]; renderItem: (item: Blog) => ReactNode }) => (
     <div data-testid="generic-list">

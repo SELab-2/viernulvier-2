@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 import { MemoryRouter } from 'react-router-dom'
 
-import RelatedProductions from '../../../components/production/RelatedProductions'
+import RelatedProductions from '../../../features/productions/components/detail/RelatedProductions'
 
 import type { ProductionRelated, RelatedProduction } from '../../../types/Productions'
 

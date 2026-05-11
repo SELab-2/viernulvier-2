@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react'
 
-import RelatedBlogs from '../../../components/production/RelatedBlogs'
+import RelatedBlogs from '../../../features/productions/components/detail/RelatedBlogs'
 
 import type { Blog } from '../../../types/Blogs'
 import type { ReactNode } from 'react'
 
-jest.mock('../../../components/BlogGridCard', () => ({
+jest.mock('../../../features/blogs/components/BlogGridCard', () => ({
   __esModule: true,
   default: ({ blog }: { blog: Blog }) => (
     <article data-testid="blog-card">{blog.display_title}</article>

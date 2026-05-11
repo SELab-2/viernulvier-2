@@ -17,37 +17,37 @@ jest.mock('../pages/HomePage', () => ({
   default: () => <div data-testid="home-page-mock" />,
 }))
 
-jest.mock('../pages/ProductionsPage', () => ({
+jest.mock('../features/productions/pages/ProductionsPage', () => ({
   __esModule: true,
   default: () => <div data-testid="productions-page-mock" />,
 }))
 
-jest.mock('../pages/ProductionDetailPage', () => ({
+jest.mock('../features/productions/pages/ProductionDetailPage', () => ({
   __esModule: true,
   default: () => <div data-testid="production-detail-page-mock" />,
 }))
 
-jest.mock('../pages/SeriesPage', () => ({
+jest.mock('../features/series/pages/SeriesPage', () => ({
   __esModule: true,
   default: () => <div data-testid="series-page-mock" />,
 }))
 
-jest.mock('../pages/SeriesDetailPage', () => ({
+jest.mock('../features/series/pages/SeriesDetailPage', () => ({
   __esModule: true,
   default: () => <div data-testid="series-detail-page-mock" />,
 }))
 
-jest.mock('../pages/BlogsPage', () => ({
+jest.mock('../features/blogs/pages/BlogsPage', () => ({
   __esModule: true,
   default: () => <div data-testid="blogs-page-mock" />,
 }))
 
-jest.mock('../pages/BlogDetailPage', () => ({
+jest.mock('../features/blogs/pages/BlogDetailPage', () => ({
   __esModule: true,
   default: () => <div data-testid="blog-detail-page-mock" />,
 }))
 
-jest.mock('../pages/MediaFilesPage', () => ({
+jest.mock('../features/media-files/pages/MediaFilesPage', () => ({
   __esModule: true,
   default: () => <div data-testid="media-files-page-mock" />,
 }))

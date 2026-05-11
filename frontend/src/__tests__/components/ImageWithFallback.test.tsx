@@ -1,7 +1,7 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import ImageWithFallback from '../../components/ImageWithFallback'
+import ImageWithFallback from '../../shared/components/ImageWithFallback'
 
 import type { ReactElement } from 'react'
 

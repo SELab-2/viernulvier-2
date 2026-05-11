@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-import MetaPanel from '../../../components/production/MetaPanel'
+import MetaPanel from '../../../features/productions/components/detail/MetaPanel'
 
 import type { Production } from '../../../types/Productions'
 import type { ComponentProps } from 'react'

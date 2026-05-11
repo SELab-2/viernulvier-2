@@ -4,7 +4,7 @@ import { I18nextProvider } from 'react-i18next'
 
 import SearchControlsBar, {
   type SearchControlsBarProps,
-} from '../../components/searchbar/SearchControlsBar'
+} from '../../shared/components/search/SearchControlsBar'
 import i18n from '../../i18n'
 
 const renderSearchBar = (props: SearchControlsBarProps, mode: 'light' | 'dark' = 'light') => {

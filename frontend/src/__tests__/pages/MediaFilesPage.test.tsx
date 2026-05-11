@@ -29,7 +29,7 @@ jest.mock('react-i18next', () => ({
   }),
 }))
 
-jest.mock('../../components/searchbar/useSearchBarUrlState', () => ({
+jest.mock('../../shared/hooks/useSearchBarUrlState', () => ({
   useSearchBarUrlState: () => searchBarStateMock(),
 }))
 
@@ -37,7 +37,7 @@ jest.mock('../../services/media_files/MediaFiles', () => ({
   getMediaFiles: (params: unknown) => getMediaFilesMock(params),
 }))
 
-jest.mock('../../components/CollectionView', () => ({
+jest.mock('../../shared/components/CollectionView', () => ({
   __esModule: true,
   default: ({ items, layout }: { items: Array<{ id: number }>; layout: string }) => (
     <div data-testid="collection-view">
@@ -46,7 +46,7 @@ jest.mock('../../components/CollectionView', () => ({
   ),
 }))
 
-jest.mock('../../pages/MediaFilesPageSkeleton', () => ({
+jest.mock('../../features/media-files/pages/MediaFilesPageSkeleton', () => ({
   __esModule: true,
   default: ({ layout, isMobile, cards }: { layout: string; isMobile: boolean; cards: number }) => (
     <div data-testid="results-skeleton">
@@ -55,7 +55,7 @@ jest.mock('../../pages/MediaFilesPageSkeleton', () => ({
   ),
 }))
 
-jest.mock('../../components/FloatingAlert', () => ({
+jest.mock('../../shared/components/FloatingAlert', () => ({
   __esModule: true,
   default: ({ open, message, onClose }: { open: boolean; message: string; onClose: () => void }) =>
     open ? (
@@ -66,7 +66,7 @@ jest.mock('../../components/FloatingAlert', () => ({
     ) : null,
 }))
 
-jest.mock('../../components/CollectionPageLayout', () => ({
+jest.mock('../../shared/layouts/CollectionPageLayout', () => ({
   __esModule: true,
   default: (props: any) => (
     <div>
@@ -97,7 +97,7 @@ jest.mock('../../components/CollectionPageLayout', () => ({
   ),
 }))
 
-import MediaFilesPage from '../../pages/MediaFilesPage'
+import MediaFilesPage from '../../features/media-files/pages/MediaFilesPage'
 import { ApiError } from '../../services/ApiTypes'
 
 describe('MediaFilesPage', () => {

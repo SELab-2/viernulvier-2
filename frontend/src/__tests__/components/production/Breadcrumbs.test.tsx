@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-import Breadcrumbs from '../../../components/production/Breadcrumbs'
+import Breadcrumbs from '../../../features/productions/components/detail/Breadcrumbs'
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),

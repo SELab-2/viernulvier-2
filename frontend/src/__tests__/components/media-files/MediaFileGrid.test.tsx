@@ -2,7 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 
-jest.mock('../../../components/GenericGrid', () => ({
+jest.mock('../../../shared/components/GenericGrid', () => ({
   __esModule: true,
   default: ({
     items,
@@ -23,14 +23,14 @@ jest.mock('../../../components/GenericGrid', () => ({
   ),
 }))
 
-jest.mock('../../../components/media-files/MediaFileGridCard', () => ({
+jest.mock('../../../features/media-files/components/MediaFileGridCard', () => ({
   __esModule: true,
   default: ({ mediaFile }: { mediaFile: { filename: string } }) => (
     <div data-testid="grid-card">{mediaFile.filename}</div>
   ),
 }))
 
-import MediaFileGrid from '../../../components/media-files/MediaFileGrid'
+import MediaFileGrid from '../../../features/media-files/components/MediaFileGrid'
 
 describe('MediaFileGrid', () => {
   it('renders all media files through GenericGrid and MediaFileGridCard', () => {

@@ -2,7 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 
-jest.mock('../../../components/GenericList', () => ({
+jest.mock('../../../shared/components/GenericList', () => ({
   __esModule: true,
   default: ({
     items,
@@ -23,14 +23,14 @@ jest.mock('../../../components/GenericList', () => ({
   ),
 }))
 
-jest.mock('../../../components/media-files/MediaFileListCard', () => ({
+jest.mock('../../../features/media-files/components/MediaFileListCard', () => ({
   __esModule: true,
   default: ({ mediaFile }: { mediaFile: { filename: string } }) => (
     <div data-testid="list-card">{mediaFile.filename}</div>
   ),
 }))
 
-import MediaFileList from '../../../components/media-files/MediaFileList'
+import MediaFileList from '../../../features/media-files/components/MediaFileList'
 
 describe('MediaFileList', () => {
   it('renders all media files through GenericList and MediaFileListCard', () => {

@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
 
-import SeriesGridCard from '../../components/series/SeriesGridCard'
+import SeriesGridCard from '../../features/series/components/SeriesGridCard'
 import i18n from '../../i18n'
 import { toLocalizedPath } from '../../utils/localizedRoutes'
 

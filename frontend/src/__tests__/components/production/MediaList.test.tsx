@@ -1,7 +1,7 @@
 import { ThemeProvider, createTheme } from '@mui/material'
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import MediaList from '../../../components/production/MediaList'
+import MediaList from '../../../features/productions/components/detail/MediaList'
 
 import type { MediaItem, MediaItemCrop } from '../../../types/Media'
 

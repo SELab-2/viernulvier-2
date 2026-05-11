@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 
-import MediaFilePreview from '../../../components/media-files/MediaFilePreview'
+import MediaFilePreview from '../../../features/media-files/components/MediaFilePreview'
 
 import type { ReactNode } from 'react'
 

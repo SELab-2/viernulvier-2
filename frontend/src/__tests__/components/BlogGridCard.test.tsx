@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
 
-import BlogGridCard from '../../components/BlogGridCard'
+import BlogGridCard from '../../features/blogs/components/BlogGridCard'
 import i18n from '../../i18n'
 import { toLocalizedPath } from '../../utils/localizedRoutes'
 

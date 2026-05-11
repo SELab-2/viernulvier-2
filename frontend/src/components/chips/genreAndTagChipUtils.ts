@@ -1,4 +1,4 @@
-import { PARAM_GENRES, PARAM_TAGS } from '../searchbar/useSearchBarUrlState'
+import { PARAM_GENRES, PARAM_TAGS } from '../../shared/hooks/useSearchBarUrlState'
 
 import type { GenreAndTagChipType } from '../../types/GenreAndTagChip'
 

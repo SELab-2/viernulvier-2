@@ -5,15 +5,15 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from '
 
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
-import BlogDetailPage from './pages/BlogDetailPage'
-import BlogsPage from './pages/BlogsPage'
+import BlogDetailPage from './features/blogs/pages/BlogDetailPage'
+import BlogsPage from './features/blogs/pages/BlogsPage'
+import MediaFilesPage from './features/media-files/pages/MediaFilesPage'
+import ProductionDetailPage from './features/productions/pages/ProductionDetailPage'
+import ProductionsPage from './features/productions/pages/ProductionsPage'
+import SeriesDetailPage from './features/series/pages/SeriesDetailPage'
+import SeriesPage from './features/series/pages/SeriesPage'
 import HomePage from './pages/HomePage'
-import MediaFilesPage from './pages/MediaFilesPage'
 import NotFoundPage from './pages/NotFoundPage'
-import ProductionDetailPage from './pages/ProductionDetailPage'
-import ProductionsPage from './pages/ProductionsPage'
-import SeriesDetailPage from './pages/SeriesDetailPage'
-import SeriesPage from './pages/SeriesPage'
 import {
   DEFAULT_LANGUAGE,
   getLocalizedSegment,

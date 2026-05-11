@@ -1,12 +1,14 @@
+import { afterEach, describe, expect, it, jest } from '@jest/globals'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import CollectionView, { type CollectionViewProps } from '../../components/CollectionView'
+
+import CollectionView, { type CollectionViewProps } from '../../shared/components/CollectionView'
 
 const accentTheme = createTheme({
   palette: {
     mode: 'light',
-    accent: { main: '#8224E3', contrastText: '#ffffff' },
+    primary: { main: '#8224E3', contrastText: '#ffffff' },
   },
 })
 
@@ -20,29 +22,31 @@ const renderView = (props: CollectionViewProps<number>) =>
   )
 
 const mockNarrowViewport = () => {
-  window.matchMedia = jest.fn().mockImplementation((query: string) => ({
-    matches: true,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  }))
+  window.matchMedia = ((query: string) =>
+    ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }) as MediaQueryList) as typeof window.matchMedia
 }
 
 const mockWideViewport = () => {
-  window.matchMedia = jest.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  }))
+  window.matchMedia = ((query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }) as MediaQueryList) as typeof window.matchMedia
 }
 
 afterEach(() => {
@@ -73,8 +77,8 @@ describe('CollectionView', () => {
       renderGridItem: (item) => <div data-testid="grid-item">{item}</div>,
     })
 
-    expect(screen.getByTestId('grid-item')).toBeInTheDocument()
-    expect(screen.queryByTestId('list-item')).not.toBeInTheDocument()
+    expect(screen.getByTestId('grid-item')).not.toBeNull()
+    expect(screen.queryByTestId('list-item')).toBeNull()
   })
 
   it('defaults to the list layout when layout is omitted', () => {
@@ -85,8 +89,8 @@ describe('CollectionView', () => {
       renderGridItem: (item) => <div data-testid="grid-item">{item}</div>,
     })
 
-    expect(screen.getByTestId('list-item')).toBeInTheDocument()
-    expect(screen.queryByTestId('grid-item')).not.toBeInTheDocument()
+    expect(screen.getByTestId('list-item')).not.toBeNull()
+    expect(screen.queryByTestId('grid-item')).toBeNull()
   })
 
   it('sorts items with a matching id to the front via transformItems', () => {
@@ -124,7 +128,7 @@ describe('CollectionView', () => {
       renderGridItem: (item) => <div data-testid="grid-item">{item}</div>,
     })
 
-    expect(screen.getByTestId('grid-item')).toBeInTheDocument()
-    expect(screen.queryByTestId('list-item')).not.toBeInTheDocument()
+    expect(screen.getByTestId('grid-item')).not.toBeNull()
+    expect(screen.queryByTestId('list-item')).toBeNull()
   })
 })

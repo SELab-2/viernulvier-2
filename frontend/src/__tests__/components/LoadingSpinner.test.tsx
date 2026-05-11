@@ -1,7 +1,7 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { render, screen } from '@testing-library/react'
 
-import LoadingSpinner from '../../components/LoadingSpinner'
+import LoadingSpinner from '../../shared/components/LoadingSpinner'
 
 import type { ReactNode } from 'react'
 

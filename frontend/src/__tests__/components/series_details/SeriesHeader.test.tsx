@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 
 import '@testing-library/jest-dom'
-import SeriesHeader from '../../../components/series_details/SeriesHeader'
+import SeriesHeader from '../../../features/series/components/SeriesHeader'
 
 describe('SeriesHeader', () => {
   const defaultProps = {
