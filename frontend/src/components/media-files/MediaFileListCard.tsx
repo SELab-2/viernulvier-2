@@ -11,6 +11,7 @@ import {
 } from './MediaFileUtils'
 import { createCommonStyles } from '../../theme/styles'
 import { tokens } from '../../theme/tokens'
+import { getPublicMediaFileUrl } from '../../utils/mediaFileUrls'
 
 import type { MediaFile } from '../../types/MediaFiles'
 
@@ -28,13 +29,12 @@ const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
   const fileSize = formatMediaFileSize(mediaFile.size_bytes)
   const description = getMediaFileDescription(mediaFile, i18n.language, t)
   const fileTypeLabel = getMediaFileTypeLabel(mediaFile, t)
+  const fileUrl = getPublicMediaFileUrl(mediaFile.file)
 
   return (
     <Stack
       component="a"
-      href={mediaFile.file}
-      target="_blank"
-      rel="noopener noreferrer"
+      href={fileUrl}
       direction={{ xs: 'column', sm: 'row' }}
       sx={{
         ...commonStyles.cardBase,

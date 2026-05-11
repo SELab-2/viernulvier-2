@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 const useMediaQueryMock = jest.fn<(query?: unknown) => boolean>()
@@ -57,6 +57,12 @@ jest.mock('../../pages/MediaFilesPageSkeleton', () => ({
 
 jest.mock('../../components/FloatingAlert', () => ({
   __esModule: true,
+  ALERT_SEVERITIES: {
+    error: 'error',
+    warning: 'warning',
+    info: 'info',
+    success: 'success',
+  },
   default: ({ open, message, onClose }: { open: boolean; message: string; onClose: () => void }) =>
     open ? (
       <div>
@@ -117,6 +123,13 @@ describe('MediaFilesPage', () => {
       setViewMode: setViewModeMock,
       setPage: setPageMock,
     })
+  })
+
+  afterEach(() => {
+    const fallbackRoot = document.getElementById('notification-fallback-root')
+    if (fallbackRoot) {
+      fallbackRoot.remove()
+    }
   })
 
   it('fetches media files with trimmed search and ordering, then renders the results', async () => {
@@ -241,6 +254,69 @@ describe('MediaFilesPage', () => {
     expect(setSearchValueMock).not.toHaveBeenCalled()
   })
 
+  it('maps name sorting to filename ordering in API calls', async () => {
+    searchBarStateMock.mockReturnValue({
+      searchValue: 'alpha',
+      sortTarget: 'name',
+      sortDirection: 'asc',
+      viewMode: 'list',
+      page: 1,
+      setSearchValue: setSearchValueMock,
+      setSortTarget: setSortTargetMock,
+      setSortDirection: setSortDirectionMock,
+      setViewMode: setViewModeMock,
+      setPage: setPageMock,
+    })
+
+    getMediaFilesMock.mockResolvedValueOnce({
+      results: [{ id: 7 }],
+      count: 1,
+    })
+
+    render(<MediaFilesPage />)
+
+    await waitFor(() => {
+      expect(getMediaFilesMock).toHaveBeenCalledWith({
+        page: 1,
+        pageSize: 12,
+        filters: {
+          search: 'alpha',
+          ordering: 'filename',
+        },
+      })
+    })
+  })
+
+  it('re-fetches same-query search without resetting pagination', async () => {
+    searchBarStateMock.mockReturnValue({
+      searchValue: 'report',
+      sortTarget: 'date',
+      sortDirection: 'desc',
+      viewMode: 'list',
+      page: 2,
+      setSearchValue: setSearchValueMock,
+      setSortTarget: setSortTargetMock,
+      setSortDirection: setSortDirectionMock,
+      setViewMode: setViewModeMock,
+      setPage: setPageMock,
+    })
+
+    getMediaFilesMock.mockResolvedValue({
+      results: [],
+      count: 0,
+    })
+
+    render(<MediaFilesPage />)
+
+    await waitFor(() => expect(getMediaFilesMock).toHaveBeenCalledTimes(1))
+
+    fireEvent.click(screen.getByText('submit-search'))
+
+    await waitFor(() => expect(getMediaFilesMock).toHaveBeenCalledTimes(2))
+    expect(setPageMock).not.toHaveBeenCalledWith(1)
+    expect(setSearchValueMock).not.toHaveBeenCalled()
+  })
+
   it('retries after an ApiError and shows fallback errors including the floating alert', async () => {
     getMediaFilesMock
       .mockRejectedValueOnce(new ApiError(500, 'Backend failure'))
@@ -274,6 +350,21 @@ describe('MediaFilesPage', () => {
     expect(screen.getByTestId('result-count')).toHaveTextContent('0')
   })
 
+  it('shows a rate-limit warning for a 429 ApiError', async () => {
+    getMediaFilesMock.mockRejectedValueOnce(
+      new ApiError(429, 'Too many requests. Please try again later.'),
+    )
+
+    render(<MediaFilesPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Too many requests. Please try again later.')).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
+    expect(screen.getByTestId('result-count')).toHaveTextContent('0')
+  })
+
   it('closes the floating alert when requested', async () => {
     getMediaFilesMock.mockRejectedValueOnce(new Error('boom'))
 
@@ -283,7 +374,8 @@ describe('MediaFilesPage', () => {
       expect(screen.getByText('media.error.notification')).toBeInTheDocument()
     })
 
-    fireEvent.click(screen.getByText('close-floating-alert'))
+    const closeButton = screen.getAllByText('close-floating-alert')[0]
+    fireEvent.click(closeButton)
 
     expect(screen.queryByText('media.error.notification')).not.toBeInTheDocument()
   })

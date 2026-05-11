@@ -12,13 +12,14 @@ import MediaList from '../components/production/MediaList'
 import MetaPanel from '../components/production/MetaPanel'
 import RelatedBlogs from '../components/production/RelatedBlogs'
 import RelatedProductions from '../components/production/RelatedProductions'
-import { getBlogs } from '../services/blogs/Blogs'
+import { ApiError } from '../services/ApiTypes'
 import { getProduction } from '../services/productions/Productions'
 import { tokens } from '../theme/tokens'
+import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 import { getLocalizedValue } from '../utils/localization'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
+import { redirectWithFloatingAlert } from '../utils/navigation'
 
-import type { Blog } from '../types/Blogs'
 import type { Production } from '../types/Productions'
 
 /**
@@ -84,10 +85,10 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     i18n.language,
     i18n.resolvedLanguage,
   )
-  const homePath = toLocalizedPath('/', currentLanguage)
+  const archivePath = toLocalizedPath('/archive', currentLanguage)
+  const currentPath = location.pathname
 
   const [prod, setProd] = useState<Production | null>(null)
-  const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
   // useEffect to fetch the production given the id in the URL.
@@ -95,38 +96,38 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
       const errMsg = t('productions.detail.error.invalidId', 'Invalid production ID')
-      navigate(homePath, {
-        state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
+      redirectWithFloatingAlert(navigate, archivePath, {
+        message: errMsg,
+        severity: ALERT_SEVERITIES.error,
       })
       return
     }
 
     const fetchProduction = async () => {
       try {
-        const data = await getProduction(parsed, ['events', 'related'])
+        const data = await getProduction(parsed, ['events', 'related', 'blogs'])
         setProd(data)
-
-        try {
-          const blogData = await getBlogs({
-            filters: { production: data.id, published: true },
+      } catch (error: unknown) {
+        if (error instanceof ApiError && error.status === 429) {
+          const errMsg = error.message
+          redirectWithFloatingAlert(navigate, currentPath, {
+            message: errMsg,
+            severity: ALERT_SEVERITIES.warning,
           })
-          setRelatedBlogs(blogData.results)
-        } catch {
-          // Keep the detail page usable even if related blog loading fails.
-          setRelatedBlogs([])
+        } else {
+          const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
+          redirectWithFloatingAlert(navigate, toLocalizedPath('/404', currentLanguage), {
+            message: errMsg,
+            severity: ALERT_SEVERITIES.error,
+          })
         }
-      } catch {
-        const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
-        navigate(homePath, {
-          state: { floatingAlert: { open: true, message: errMsg, severity: 'error' } },
-        })
       } finally {
         setLoading(false)
       }
     }
 
     fetchProduction()
-  }, [homePath, id, navigate, t])
+  }, [archivePath, currentLanguage, currentPath, id, navigate, t])
 
   // If the page is still loading, show a full-page skeleton.
   if (loading) {
@@ -154,6 +155,10 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
   const heroImage = getProductionHeroImageUrl(production)
   const events = production.events ?? []
   const relatedProductions = production.related ?? []
+  const relatedBlogs = production.blogs ?? []
+  const video1 = getLocalizedValue(production.video_1, lang) || null
+  const video2 = getLocalizedValue(production.video_2, lang) || null
+  const videoUrls = [video1, video2].filter(Boolean) as string[]
 
   return (
     <Box
@@ -248,9 +253,12 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
         </Box>
       </Box>
 
-      {production.media_gallery?.media_items?.length > 0 && (
-        <Box sx={{ px: 2, pb: 4 }}>
-          <MediaList mediaItems={production.media_gallery.media_items} />
+      {(videoUrls.length > 0 || (production.media_gallery?.media_items?.length ?? 0) > 0) && (
+        <Box sx={{ pb: 4 }}>
+          <MediaList
+            mediaItems={production.media_gallery?.media_items ?? []}
+            videoUrls={videoUrls}
+          />
         </Box>
       )}
 

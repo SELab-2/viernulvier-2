@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import SeriesDetailPage from '../../pages/SeriesDetailPage'
 import { getProductions } from '../../services/productions/Productions'
@@ -42,6 +42,18 @@ jest.mock('react-i18next', () => ({
   }),
 }))
 
+const SeriesPageProbe = () => {
+  const location = useLocation()
+  const alert = (location.state as { floatingAlert?: { message?: string } } | null)?.floatingAlert
+
+  return (
+    <div>
+      <div>SERIES PAGE</div>
+      <div data-testid="floating-alert-message">{alert?.message ?? ''}</div>
+    </div>
+  )
+}
+
 describe('SeriesDetailPage', () => {
   const mockedGetTag = getTag as jest.Mock
   const mockedGetProductions = getProductions as jest.Mock
@@ -56,8 +68,9 @@ describe('SeriesDetailPage', () => {
       <MemoryRouter initialEntries={[`/nl/reeksen/${id}`]}>
         <Routes>
           <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
+          <Route path="/:lang/reeksen" element={<SeriesPageProbe />} />
+          <Route path="/:lang/404" element={<div>NOT FOUND</div>} />
           <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
-          <Route path="/:lang/not-found" element={<div>404 PAGE</div>} />
         </Routes>
       </MemoryRouter>,
     )
@@ -128,22 +141,22 @@ describe('SeriesDetailPage', () => {
     expect(screen.getByRole('button', { name: 'Reeksen' })).toBeInTheDocument()
   })
 
-  it('redirects to /404 when tag is not found', async () => {
+  it('redirects to localized 404 when tag is not found', async () => {
     mockedGetTag.mockResolvedValue(null)
     mockedGetProductions.mockResolvedValue({ results: [] })
 
     renderPage()
 
-    expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
+    expect(await screen.findByText('NOT FOUND')).toBeInTheDocument()
   })
 
-  it('redirects to /404 when API throws error', async () => {
+  it('redirects to localized 404 when API throws error', async () => {
     mockedGetTag.mockRejectedValue(new Error('API error'))
     mockedGetProductions.mockResolvedValue({ results: [] })
 
     renderPage()
 
-    expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
+    expect(await screen.findByText('NOT FOUND')).toBeInTheDocument()
   })
 
   it('shows empty state when no productions exist', async () => {
@@ -167,12 +180,13 @@ describe('SeriesDetailPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('redirects to /404 when id is invalid', async () => {
+  it('redirects to the series tab when id is invalid', async () => {
     renderPage('invalid')
 
     await waitFor(() => {
-      expect(screen.getByText('404 PAGE')).toBeInTheDocument()
+      expect(screen.getByText('SERIES PAGE')).toBeInTheDocument()
     })
+    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent('Ongeldig reeks-ID.')
   })
 
   it('navigates to production detail when a production card is clicked', async () => {
@@ -252,5 +266,101 @@ describe('SeriesDetailPage', () => {
 
     expect(await screen.findByText('Audiovisueel')).toBeInTheDocument()
     expect(screen.getByText('Performance')).toBeInTheDocument()
+  })
+
+  it('sorts productions by event date and groups undated productions last', async () => {
+    mockedGetTag.mockResolvedValue({
+      id: 1,
+      name: null,
+      display_name: 'Fallback reeks',
+      excerpt: null,
+      display_excerpt: null,
+      short_description: null,
+      display_short_description: null,
+      first_production_start: null,
+      last_production_end: null,
+      type: null,
+    })
+
+    mockedGetProductions.mockResolvedValue({
+      results: [
+        {
+          id: 1,
+          display_title: 'Zonder datum laag',
+          title: { nl: 'Zonder datum laag' },
+          teaser: {},
+          description: {},
+          artist_name: {},
+          first_event_start: null,
+          last_event_end: null,
+          genres: [],
+          tags: [],
+        },
+        {
+          id: 2,
+          display_title: 'Editie 2024',
+          title: { nl: 'Editie 2024' },
+          teaser: {},
+          description: {},
+          artist_name: {},
+          first_event_start: '2024-06-01T20:00:00Z',
+          last_event_end: null,
+          genres: [],
+          tags: [],
+        },
+        {
+          id: 3,
+          display_title: 'Editie 2025',
+          title: { nl: 'Editie 2025' },
+          teaser: {},
+          description: {},
+          artist_name: {},
+          first_event_start: '2025-06-01T20:00:00Z',
+          last_event_end: null,
+          genres: [],
+          tags: [],
+        },
+        {
+          id: 4,
+          display_title: 'Alleen einddatum',
+          title: { nl: 'Alleen einddatum' },
+          teaser: {},
+          description: {},
+          artist_name: {},
+          first_event_start: null,
+          last_event_end: '2023-06-01T20:00:00Z',
+          genres: [],
+          tags: [],
+        },
+        {
+          id: 5,
+          display_title: 'Zonder datum hoog',
+          title: { nl: 'Zonder datum hoog' },
+          teaser: {},
+          description: {},
+          artist_name: {},
+          first_event_start: null,
+          last_event_end: null,
+          genres: [],
+          tags: [],
+        },
+      ],
+    })
+
+    renderPage()
+
+    expect(await screen.findByRole('heading', { name: 'Fallback reeks' })).toBeInTheDocument()
+    expect(screen.getByText('Geen beschrijving beschikbaar.')).toBeInTheDocument()
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2)
+
+    const edition2025 = screen.getByRole('heading', { name: 'Editie 2025' })
+    const edition2024 = screen.getByRole('heading', { name: 'Editie 2024' })
+    const undatedHigh = screen.getByRole('heading', { name: 'Zonder datum hoog' })
+    const undatedLow = screen.getByRole('heading', { name: 'Zonder datum laag' })
+
+    expect(screen.getByText('2023')).toBeInTheDocument()
+    expect(edition2025.compareDocumentPosition(edition2024)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(edition2024.compareDocumentPosition(undatedHigh)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(undatedHigh.compareDocumentPosition(undatedLow)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 })

@@ -1,3 +1,4 @@
+import type { BlogCardData } from './Blogs'
 import type { Event } from './Events'
 import type { Genre } from './Genres'
 import type { MediaGallery } from './Media'
@@ -29,16 +30,11 @@ export interface RelatedProduction {
   id: number
   title: Record<string, string>
   display_title: string | null
-  artist_name: Record<string, string> | null
-  display_artist_name: string | null
   media_gallery: MediaGallery
   first_event_start: string | null
   last_event_end: string | null
   tags: Tag[]
   genres: Genre[]
-  uit_database_type?: ProductionClassification | null
-  performer_type?: PerformerType | ''
-  attendance_mode?: AttendanceMode | ''
 }
 
 /** Shape of a single related entry (grouped by tag). */
@@ -57,12 +53,17 @@ export interface Production extends RelatedProduction {
   tagline: Record<string, string>
   teaser: Record<string, string>
   description: Record<string, string>
+  uit_database_type?: ProductionClassification | null
+  performer_type?: PerformerType | ''
+  attendance_mode?: AttendanceMode | ''
   events?: Event[]
   related?: ProductionRelated[]
-  artist_name: Record<string, string>
-  attendance_mode: AttendanceMode | ''
-  performer_type: PerformerType | ''
-  uit_database_type: ProductionClassification | null
+  video_1?: Record<string, string>
+  video_2?: Record<string, string>
+  genres: Genre[]
+  blogs?: BlogCardData[]
+  artist_name: Record<string, string> | null
+  display_artist_name: string | null
 }
 
 /**

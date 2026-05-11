@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 import MediaList from '../../../components/production/MediaList'
 
@@ -194,5 +194,292 @@ describe('MediaList component', () => {
       </ThemeProvider>,
     )
     expect(screen.getByAltText('Media item')).toBeInTheDocument()
+  })
+
+  it('opens and closes the image preview from click and keyboard actions', () => {
+    const theme = createTheme({ palette: { mode: 'dark' } })
+    mockMatchMedia('desktop')
+
+    render(
+      <ThemeProvider theme={theme}>
+        <MediaList mediaItems={[baseMediaItem({ display_title: 'Preview image' })]} />
+      </ThemeProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Preview image' }))
+    expect(screen.getAllByAltText('Preview image')).toHaveLength(2)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close preview' }))
+    expect(screen.getAllByAltText('Preview image')).toHaveLength(1)
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Preview image' }), { key: 'Enter' })
+    expect(screen.getAllByAltText('Preview image')).toHaveLength(2)
+  })
+})
+
+describe('MediaList - videoUrls prop', () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it('renders null when both mediaItems and videoUrls are empty', () => {
+    mockMatchMedia('desktop')
+
+    const { container } = render(<MediaList mediaItems={[]} videoUrls={[]} />)
+
+    expect(container.firstChild).toBeNull()
+  })
+
+  it('renders when only videoUrls are provided', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://www.youtube.com/watch?v=abc123']} />)
+
+    expect(screen.getByText('Media')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /video 1/i })).toBeInTheDocument()
+  })
+
+  it('renders YouTube thumbnail from watch URL', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://www.youtube.com/watch?v=abc123']} />)
+
+    const thumbnail = screen.getByAltText('Video 1') as HTMLImageElement
+
+    expect(thumbnail).toBeInTheDocument()
+    expect(thumbnail.src).toContain('/vi/abc123/hqdefault.jpg')
+  })
+
+  it('renders YouTube thumbnail from short URL', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://youtu.be/xyz789']} />)
+
+    const thumbnail = screen.getByAltText('Video 1') as HTMLImageElement
+
+    expect(thumbnail.src).toContain('/vi/xyz789/hqdefault.jpg')
+  })
+
+  it('renders YouTube thumbnail from shorts URL', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://www.youtube.com/shorts/short99']} />)
+
+    const thumbnail = screen.getByAltText('Video 1') as HTMLImageElement
+
+    expect(thumbnail.src).toContain('/vi/short99/hqdefault.jpg')
+  })
+
+  it('renders YouTube thumbnail from embed URL', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://www.youtube.com/embed/embed55']} />)
+
+    const thumbnail = screen.getByAltText('Video 1') as HTMLImageElement
+
+    expect(thumbnail.src).toContain('/vi/embed55/hqdefault.jpg')
+  })
+
+  it('renders no thumbnail for Vimeo videos', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://vimeo.com/123456789']} />)
+
+    expect(screen.queryByAltText('Video 1')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /video 1/i })).toBeInTheDocument()
+  })
+
+  it('renders no thumbnail for SoundCloud videos', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://soundcloud.com/artist/track']} />)
+
+    expect(screen.queryByAltText('Video 1')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /video 1/i })).toBeInTheDocument()
+  })
+
+  it('opens YouTube embed URL in modal', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://www.youtube.com/watch?v=abc123']} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /video 1/i }))
+
+    const iframe = screen.getByTitle('Video player') as HTMLIFrameElement
+
+    expect(iframe).toBeInTheDocument()
+    expect(iframe.src).toContain('youtube.com/embed/abc123')
+    expect(iframe.src).toContain('autoplay=1')
+  })
+
+  it('opens YouTube shorts embed URL in modal', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://youtube.com/shorts/short99']} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /video 1/i }))
+
+    const iframe = screen.getByTitle('Video player') as HTMLIFrameElement
+
+    expect(iframe.src).toContain('youtube.com/embed/short99')
+  })
+
+  it('opens Vimeo embed URL in modal', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://vimeo.com/123456789']} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /video 1/i }))
+
+    const iframe = screen.getByTitle('Video player') as HTMLIFrameElement
+
+    expect(iframe.src).toContain('player.vimeo.com/video/123456789')
+    expect(iframe.src).toContain('autoplay=1')
+  })
+
+  it('opens SoundCloud embed URL in modal', () => {
+    mockMatchMedia('desktop')
+
+    const soundcloudUrl = 'https://soundcloud.com/artist/track'
+
+    render(<MediaList mediaItems={[]} videoUrls={[soundcloudUrl]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /video 1/i }))
+
+    const iframe = screen.getByTitle('Video player') as HTMLIFrameElement
+
+    expect(iframe.src).toContain('w.soundcloud.com/player')
+    expect(iframe.src).toContain(encodeURIComponent(soundcloudUrl))
+  })
+
+  it('opens Loom embed URL in modal', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://www.loom.com/share/loom123']} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /video 1/i }))
+
+    const iframe = screen.getByTitle('Video player') as HTMLIFrameElement
+
+    expect(iframe.src).toContain('loom.com/embed/loom123')
+  })
+
+  it('closes the video modal', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://www.youtube.com/watch?v=abc123']} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /video 1/i }))
+
+    expect(screen.getByTitle('Video player')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /close preview/i }))
+
+    expect(screen.queryByTitle('Video player')).not.toBeInTheDocument()
+  })
+
+  it('opens video modal with Enter key', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://www.youtube.com/watch?v=abc123']} />)
+
+    fireEvent.keyDown(screen.getByRole('button', { name: /video 1/i }), {
+      key: 'Enter',
+    })
+
+    expect(screen.getByTitle('Video player')).toBeInTheDocument()
+  })
+
+  it('opens video modal with Space key', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://www.youtube.com/watch?v=abc123']} />)
+
+    fireEvent.keyDown(screen.getByRole('button', { name: /video 1/i }), {
+      key: ' ',
+    })
+
+    expect(screen.getByTitle('Video player')).toBeInTheDocument()
+  })
+
+  it('does not open modal for unsupported keys', () => {
+    mockMatchMedia('desktop')
+
+    render(<MediaList mediaItems={[]} videoUrls={['https://www.youtube.com/watch?v=abc123']} />)
+
+    fireEvent.keyDown(screen.getByRole('button', { name: /video 1/i }), {
+      key: 'Tab',
+    })
+
+    expect(screen.queryByTitle('Video player')).not.toBeInTheDocument()
+  })
+
+  it('renders multiple videos and opens the correct one', () => {
+    mockMatchMedia('desktop')
+
+    render(
+      <MediaList
+        mediaItems={[]}
+        videoUrls={[
+          'https://www.youtube.com/watch?v=first1',
+          'https://www.youtube.com/watch?v=second2',
+        ]}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: /video 1/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /video 2/i })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /video 2/i }))
+
+    const iframe = screen.getByTitle('Video player') as HTMLIFrameElement
+
+    expect(iframe.src).toContain('second2')
+  })
+
+  it('renders photos and videos together', () => {
+    mockMatchMedia('desktop')
+
+    render(
+      <MediaList
+        mediaItems={[baseMediaItem({ display_title: 'My photo' })]}
+        videoUrls={['https://www.youtube.com/watch?v=abc123']}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: /video 1/i })).toBeInTheDocument()
+    expect(screen.getByAltText('My photo')).toBeInTheDocument()
+  })
+
+  it('opens image preview when clicking photo item', () => {
+    mockMatchMedia('desktop')
+
+    render(
+      <MediaList
+        mediaItems={[baseMediaItem({ display_title: 'My photo' })]}
+        videoUrls={['https://www.youtube.com/watch?v=abc123']}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'My photo' }))
+
+    expect(screen.queryByTitle('Video player')).not.toBeInTheDocument()
+    expect(screen.getAllByAltText('My photo')).toHaveLength(2)
+  })
+
+  it('renders correctly in dark mode', () => {
+    mockMatchMedia('desktop')
+
+    const theme = createTheme({
+      palette: {
+        mode: 'dark',
+      },
+    })
+
+    render(
+      <ThemeProvider theme={theme}>
+        <MediaList mediaItems={[]} videoUrls={['https://vimeo.com/123456789']} />
+      </ThemeProvider>,
+    )
+
+    expect(screen.getByRole('button', { name: /video 1/i })).toBeInTheDocument()
   })
 })

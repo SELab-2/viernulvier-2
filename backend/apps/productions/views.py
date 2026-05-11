@@ -14,8 +14,8 @@ containing all available translations (e.g., {"nl": "...", "en": "..."}).
 responses still include all translations in a single payload.
 """
 
-from django.db.models import Max, Min, Prefetch, Q, QuerySet
-from django.db.models.functions import Coalesce, Lower
+from django.db.models import Exists, Max, Min, OuterRef, Prefetch, Q, QuerySet
+from django.db.models.functions import Coalesce, Lower, Now
 from django.http import HttpRequest
 from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema
@@ -135,10 +135,13 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                 ).order_by("position"),
             ),
         )
+        .filter(
+            Exists(Event.objects.filter(production=OuterRef("pk"), ends_at__lte=Now()))
+            | ~Exists(Event.objects.filter(production=OuterRef("pk")))
+        )
         .annotate(
-            # Computed once at the queryset level — not language-dependent.
-            first_event_start=Min("events__starts_at"),
-            last_event_end=Max("events__ends_at"),
+            first_event_start=Min("events__starts_at", filter=Q(events__ends_at__lte=Now())),
+            last_event_end=Max("events__ends_at", filter=Q(events__ends_at__lte=Now())),
         )
     )
 
@@ -209,7 +212,8 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
     @property
     def includes(self) -> set[str]:
         """Parse the 'include' query parameter into a set of related fields to include."""
-        return set(self.request.query_params.get("include", "").split(","))
+        raw_includes = self.request.query_params.get("include", "")
+        return {value.strip() for value in raw_includes.split(",") if value.strip()}
 
     def get_serializer(self, *args: tuple, **kwargs: dict) -> ProductionSerializer:
         """Pass the 'include' query parameter to the serializer context for dynamic field inclusion."""
@@ -228,7 +232,8 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
             self.queryset = self.queryset.prefetch_related(
                 Prefetch(
                     "events",
-                    queryset=Event.objects.prefetch_related(
+                    queryset=Event.objects.filter(ends_at__lte=Now())
+                    .prefetch_related(
                         Prefetch(
                             "prices",
                             queryset=EventPrice.objects.select_related("price_rank", "price"),
@@ -253,7 +258,20 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                             "hall__space__location__translations",
                             queryset=LocationTranslation.objects.select_related("language"),
                         ),
-                    ).select_related("hall__space__location"),
+                    )
+                    .select_related("hall__space__location"),
+                    to_attr="prefetched_past_events",
+                ),
+            )
+
+        if "blogs" in self.includes:
+            self.queryset = self.queryset.prefetch_related(
+                Prefetch(
+                    "blogs",
+                    queryset=Blog.objects.filter(published_at__isnull=False)
+                    .prefetch_related("translations__language")
+                    .order_by("-published_at", "-id"),
+                    to_attr="prefetched_related_blogs",
                 ),
             )
 
@@ -279,7 +297,10 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
     def landing_stats(self, _request: Request) -> Response:
         """Return pre-aggregated counters used by the frontend homepage."""
         payload = {
-            "productions": Production.objects.count(),
+            "productions": Production.objects.filter(
+                Exists(Event.objects.filter(production=OuterRef("pk"), ends_at__lte=Now()))
+                | ~Exists(Event.objects.filter(production=OuterRef("pk")))
+            ).count(),
             "series": Tag.objects.filter(productions__isnull=False).distinct().count(),
             "years": self._get_documented_years_count(),
             "blogs": Blog.objects.filter(published_at__isnull=False).count(),

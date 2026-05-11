@@ -12,25 +12,48 @@ Queryset optimisation
 language in a single query.
 """
 
+from django import forms
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin
+from apps.core.admin_widgets import enable_rich_text_for_fields
+from apps.productions.models import ProductionTag
 
 from .models import Tag, TagTranslation
 
-# ===========================================================================
-# Inline
-# ===========================================================================
+
+class TagAdminForm(forms.ModelForm):
+    """Admin form that restricts tag image uploads to supported image types."""
+
+    class Meta:
+        model = Tag
+        fields = [
+            "external_id",
+            "url",
+            "source",
+            "is_enabled",
+            "type",
+            "image",
+        ]
+        widgets = {
+            "image": forms.FileInput(
+                attrs={
+                    "accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp",
+                },
+            ),
+        }
 
 
+@enable_rich_text_for_fields(
+    "short_description",
+    "excerpt",
+    widget_attrs={"data-richtext-headings": "h1,h2,h3,h4"},
+)
 class TagTranslationInline(admin.StackedInline):
     """
     Inline for editing localised tag fields directly inside the Tag change page.
-
-    Shows the language alongside the translatable fields in a vertical layout
-    so editors can manage all translations from a single form with better readability.
     """
 
     model = TagTranslation
@@ -44,9 +67,19 @@ class TagTranslationInline(admin.StackedInline):
         return super().get_queryset(request).select_related("language")
 
 
-# ===========================================================================
-# Tag admin
-# ===========================================================================
+class TagProductionInline(admin.TabularInline):
+    """Inline for attaching productions directly on a Tag change page."""
+
+    verbose_name = "Production"
+    verbose_name_plural = "Add Productions to this Tag"
+    model = ProductionTag
+    extra = 1
+    autocomplete_fields = ("production",)
+    fields = ("production",)
+    classes = ("collapse",)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).select_related("production")
 
 
 @admin.register(Tag)
@@ -66,8 +99,11 @@ class TagAdmin(BaseAdmin):
     renders all language translations on the detail page.
     """
 
+    form = TagAdminForm
+
     list_display = (
         "id",
+        "display_name",
         "type",
         "source",
         "is_enabled",
@@ -86,7 +122,15 @@ class TagAdmin(BaseAdmin):
 
     ordering = ("type", "id")
 
-    inlines = [TagTranslationInline]
+    inlines = [TagTranslationInline, TagProductionInline]
+
+    @admin.display(description="Display name")
+    def display_name(self, obj: Tag) -> str:
+        """Return the display name shown in admin lists."""
+        return str(obj)
+
+    class Media:
+        js = ("admin/js/media_file_upload.js",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Prefetch translations to avoid N+1 queries on the detail page."""

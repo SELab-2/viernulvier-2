@@ -118,6 +118,8 @@ class TestProductionSerializerFields(TestCase):
             "genres",
             "display_title",
             "display_artist_name",
+            "video_1",
+            "video_2",
         }
         assert set(data.keys()) == expected
 
@@ -141,13 +143,11 @@ class TestRelatedProductionSerializerFields(TestCase):
             "id",
             "title",
             "display_title",
-            "artist_name",
-            "display_artist_name",
             "media_gallery",
             "first_event_start",
             "last_event_end",
             "tags",
-            "genres",
+            "genres"
         }
 
     def test_display_title_uses_base_language_fallback(self) -> None:
@@ -194,6 +194,9 @@ class TestProductionSerializerRelated(TestCase):
         class FakeQueryset:
             def __init__(self, rows):
                 self.rows = rows
+
+            def filter(self, *_args, **_kwargs):
+                return self
 
             def exclude(self, **_kwargs):
                 return self
@@ -666,3 +669,127 @@ class TestProductionSerializerIncludeEventsAndRelated(TestCase):
         data = ProductionSerializer(self.production, context={"include": {"related"}}).data
         assert "related" in data
         assert isinstance(data["related"], list)
+# ---------------------------------------------------------------------------
+# ProductionSerializer - get_events method
+# ---------------------------------------------------------------------------
+
+
+class TestProductionSerializerGetEventsNotIncluded(TestCase):
+    """Test that events field is excluded when not in the include set."""
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        EventFactory.create(production=self.production, starts_at=_dt(2025, 9, 1), ends_at=_dt(2025, 9, 1, 22))
+
+    def test_events_field_excluded_without_include(self) -> None:
+        """events field is not present when 'events' is not in the include set."""
+        serializer = ProductionSerializer(self.production, context={"include": set()})
+        assert "events" not in serializer.data
+
+    def test_events_returns_none_when_not_included(self) -> None:
+        """get_events returns None when 'events' is not in the include set."""
+        serializer = ProductionSerializer(self.production, context={"include": set()})
+        # The to_representation method should remove the events field entirely
+        assert "events" not in serializer.data
+
+
+class TestProductionSerializerGetEventsFallbackPath(TestCase):
+    """Test get_events method fallback path (non-prefetched queryset).
+
+    This tests the case where prefetched_past_events is not set, forcing
+    the serializer to query obj.events.filter(ends_at__lte=Now()).
+    """
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        # Create past and future events
+        self.past_event = EventFactory.create(
+            production=self.production,
+            starts_at=_dt(2025, 9, 1),
+            ends_at=_dt(2025, 9, 1, 22),
+        )
+        self.future_event = EventFactory.create(
+            production=self.production,
+            starts_at=_dt(2026, 9, 1),
+            ends_at=_dt(2026, 9, 1, 22),
+        )
+
+    def test_fallback_path_returns_list(self) -> None:
+        """get_events returns a list when using fallback (non-prefetched) path."""
+        serializer = ProductionSerializer(self.production, context={"include": {"events"}})
+        assert isinstance(serializer.data["events"], list)
+
+    def test_fallback_path_filters_future_events(self) -> None:
+        """get_events filters out future events in fallback path."""
+        serializer = ProductionSerializer(self.production, context={"include": {"events"}})
+        event_ids = [e["id"] for e in serializer.data["events"]]
+        assert self.past_event.id in event_ids
+        assert self.future_event.id not in event_ids
+
+    def test_fallback_path_includes_past_events(self) -> None:
+        """get_events includes past events in fallback path."""
+        serializer = ProductionSerializer(self.production, context={"include": {"events"}})
+        event_ids = [e["id"] for e in serializer.data["events"]]
+        assert len(event_ids) == 1
+        assert self.past_event.id in event_ids
+
+    def test_fallback_path_empty_when_no_past_events(self) -> None:
+        """get_events returns empty list when no past events exist."""
+        production = ProductionFactory.create()
+        EventFactory.create(
+            production=production,
+            starts_at=_dt(2026, 9, 1),
+            ends_at=_dt(2026, 9, 1, 22),
+        )
+        serializer = ProductionSerializer(production, context={"include": {"events"}})
+        assert serializer.data["events"] == []
+
+
+class TestProductionSerializerGetEventsPrefetchedPath(TestCase):
+    """Test get_events method when prefetched_past_events is pre-set.
+
+    This tests the optimized path where the viewset has already prefetched
+    the past events into obj.prefetched_past_events.
+    """
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        self.past_event = EventFactory.create(
+            production=self.production,
+            starts_at=_dt(2025, 9, 1),
+            ends_at=_dt(2025, 9, 1, 22),
+        )
+        self.future_event = EventFactory.create(
+            production=self.production,
+            starts_at=_dt(2026, 9, 1),
+            ends_at=_dt(2026, 9, 1, 22),
+        )
+
+    def test_prefetched_path_uses_prefetched_events(self) -> None:
+        """get_events uses prefetched_past_events when available."""
+        # Manually set prefetched_past_events to test the prefetch path
+        self.production.prefetched_past_events = [self.past_event]
+
+        serializer = ProductionSerializer(self.production, context={"include": {"events"}})
+        event_ids = [e["id"] for e in serializer.data["events"]]
+        assert len(event_ids) == 1
+        assert self.past_event.id in event_ids
+
+    def test_prefetched_path_returns_empty_when_no_prefetched(self) -> None:
+        """get_events returns empty list when prefetched_past_events is empty."""
+        self.production.prefetched_past_events = []
+
+        serializer = ProductionSerializer(self.production, context={"include": {"events"}})
+        assert serializer.data["events"] == []
+
+    def test_prefetched_path_respects_only_prefetched_data(self) -> None:
+        """get_events returns only prefetched data, not queried data."""
+        # Set prefetched to only past event, even though future exists
+        self.production.prefetched_past_events = [self.past_event]
+
+        serializer = ProductionSerializer(self.production, context={"include": {"events"}})
+        event_ids = [e["id"] for e in serializer.data["events"]]
+        # Should only contain the one prefetched event
+        assert len(event_ids) == 1
+        assert self.past_event.id in event_ids
+        assert self.future_event.id not in event_ids

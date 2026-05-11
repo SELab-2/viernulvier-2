@@ -17,6 +17,7 @@ import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 
+import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
 import { getLandingStats, type LandingStatsResponse } from '../services/productions/Productions'
 import { createHomePageStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'
@@ -219,11 +220,17 @@ const HomePage = () => {
     i18n.resolvedLanguage,
   )
   const localizedPath = (path: string) => toLocalizedPath(path, currentLanguage)
+  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
+    'archive.home.error.notification',
+  )
 
   useEffect(() => {
     let isActive = true
 
     const fetchStats = async () => {
+      // Clear any existing floating alerts for predictable UX
+      clearFloatingAlert()
+
       try {
         const response = await getLandingStats()
         if (!isActive) {
@@ -231,10 +238,13 @@ const HomePage = () => {
         }
 
         setArchiveStats(response)
-      } catch {
+      } catch (error: unknown) {
         if (!isActive) {
           return
         }
+
+        // Show a floating alert for API failures (rate-limits will be shown as warnings)
+        showFloatingAlert(error)
 
         // Keep predictable values when the stats endpoint is temporarily unavailable.
         setArchiveStats(FALLBACK_ARCHIVE_STATS)
@@ -246,7 +256,7 @@ const HomePage = () => {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [clearFloatingAlert, showFloatingAlert])
 
   const handleSearch = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
