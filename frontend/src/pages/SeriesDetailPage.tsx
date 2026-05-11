@@ -4,15 +4,7 @@
  * of associated productions grouped by year.
  */
 
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  Divider,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -26,10 +18,7 @@ import { ApiError } from '../services/ApiTypes'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
 import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
-import {
-  resolveCurrentLanguage,
-  toLocalizedPath,
-} from '../utils/localizedRoutes'
+import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 import { createFloatingAlertState } from '../utils/navigation'
 import { getTranslatedRecord } from '../utils/translations'
 
@@ -125,18 +114,13 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
         setSeriesTag(tag)
         setProductions(productionsResponse.results)
-        setTotalProductions(
-          productionsResponse.count ?? productionsResponse.results.length,
-        )
+        setTotalProductions(productionsResponse.count ?? productionsResponse.results.length)
       } catch (error: unknown) {
         if (!isActive) {
           return
         }
 
-        if (
-          error instanceof ApiError &&
-          (error.status === 429 || Number(error.message) === 429)
-        ) {
+        if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {
           isActive = false
           showRateLimitAlert(error)
           return
@@ -177,15 +161,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
         ...productionsResponse.results,
       ])
       setTotalProductions(
-        productionsResponse.count ??
-          productions.length + productionsResponse.results.length,
+        productionsResponse.count ?? productions.length + productionsResponse.results.length,
       )
       setCurrentPage(nextPage)
     } catch (error: unknown) {
-      if (
-        error instanceof ApiError &&
-        (error.status === 429 || Number(error.message) === 429)
-      ) {
+      if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {
         showRateLimitAlert(error, currentPath)
       }
     } finally {
@@ -260,19 +240,14 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const lang = i18n.language.startsWith('en') ? 'en' : 'nl'
 
   const seriesName =
-    getTranslatedRecord(seriesTag.name, lang, seriesTag.display_name) ||
-    t('series.untitled')
+    getTranslatedRecord(seriesTag.name, lang, seriesTag.display_name) || t('series.untitled')
 
   const seriesExcerpt =
-    getTranslatedRecord(seriesTag.excerpt, lang, seriesTag.display_excerpt) ||
-    ''
+    getTranslatedRecord(seriesTag.excerpt, lang, seriesTag.display_excerpt) || ''
 
   const seriesDescription =
-    getTranslatedRecord(
-      seriesTag.short_description,
-      lang,
-      seriesTag.display_short_description,
-    ) || t('series.noDescription')
+    getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
+    t('series.noDescription')
   const hasMoreProductions = productions.length < totalProductions
 
   return (
@@ -286,11 +261,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
           ]}
         />
 
-        <SeriesHeader
-          name={seriesName}
-          excerpt={seriesExcerpt}
-          description={seriesDescription}
-        />
+        <SeriesHeader name={seriesName} excerpt={seriesExcerpt} description={seriesDescription} />
         <SeriesStats stats={stats} />
         <Divider />
 
@@ -362,21 +333,14 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                       pl: { xs: 3, md: 0 },
                     }}
                   >
-                    <ProductionView
-                      productions={yearProductions}
-                      layout="list"
-                    />
+                    <ProductionView productions={yearProductions} layout="list" />
                   </Box>
                 </Stack>
               ))}
 
               {hasMoreProductions && (
                 <Box sx={{ pl: { xs: 3, md: 12 } }}>
-                  <Button
-                    variant="outlined"
-                    onClick={loadMoreProductions}
-                    disabled={isLoadingMore}
-                  >
+                  <Button variant="outlined" onClick={loadMoreProductions} disabled={isLoadingMore}>
                     {isLoadingMore
                       ? t('common.loading', 'Loading…')
                       : t('series.showMore', 'Show More')}

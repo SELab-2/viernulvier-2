@@ -26,13 +26,7 @@ jest.mock('../../types/FloatingAlertConfig', () => ({
 }))
 
 jest.mock('../../utils/navigation', () => ({
-  createFloatingAlertState: ({
-    message,
-    severity,
-  }: {
-    message: string
-    severity: string
-  }) => ({
+  createFloatingAlertState: ({ message, severity }: { message: string; severity: string }) => ({
     floatingAlert: { message, severity },
   }),
 }))
@@ -56,8 +50,7 @@ jest.mock('react-i18next', () => ({
         'series.allEditionsSubtitle':
           'Chronologisch overzicht van de producties binnen deze reeks.',
         'series.showMore': 'Toon meer',
-        'series.noProductions':
-          'Er zijn geen producties gekoppeld aan deze reeks.',
+        'series.noProductions': 'Er zijn geen producties gekoppeld aan deze reeks.',
         'series.invalidId': 'Ongeldig reeks-ID.',
         'series.fetchError': 'Kon de reeks niet ophalen.',
         'series.noDescription': 'Geen beschrijving beschikbaar.',
@@ -91,10 +84,7 @@ const baseTag = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 })
 
-const makeProduction = (
-  id: number,
-  overrides: MockProductionOverrides = {},
-) => ({
+const makeProduction = (id: number, overrides: MockProductionOverrides = {}) => ({
   id,
   display_title: `Productie ${id}`,
   title: { nl: `Productie ${id}` },
@@ -112,9 +102,7 @@ const makeProduction = (
 
 const SeriesPageMock = () => {
   const location = useLocation()
-  const alert = (
-    location.state as { floatingAlert?: { message?: string } } | null
-  )?.floatingAlert
+  const alert = (location.state as { floatingAlert?: { message?: string } } | null)?.floatingAlert
 
   return (
     <div>
@@ -139,10 +127,7 @@ describe('SeriesDetailPage', () => {
         <Routes>
           <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
           <Route path="/:lang/reeksen" element={<SeriesPageMock />} />
-          <Route
-            path="/:lang/producties/:id"
-            element={<div>PRODUCTION DETAIL</div>}
-          />
+          <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
           <Route path="/:lang/not-found" element={<div>404 PAGE</div>} />
         </Routes>
       </MemoryRouter>,
@@ -172,9 +157,7 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
-    expect(
-      await screen.findByRole('heading', { name: 'VIDEODROOM' }),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'VIDEODROOM' })).toBeInTheDocument()
     expect(screen.getByText('Korte samenvatting')).toBeInTheDocument()
     expect(screen.getByText('Beschrijving van de reeks')).toBeInTheDocument()
     expect(screen.getByText('VIDEODROOM 2024')).toBeInTheDocument()
@@ -226,9 +209,7 @@ describe('SeriesDetailPage', () => {
     renderPage()
 
     expect(await screen.findByText('SERIES PAGE')).toBeInTheDocument()
-    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent(
-      'Te veel aanvragen.',
-    )
+    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent('Te veel aanvragen.')
   })
 
   it('does not update the page when the initial request resolves after unmount', async () => {
@@ -256,27 +237,19 @@ describe('SeriesDetailPage', () => {
       resolveProductions!({ count: 1, results: [makeProduction(1)] })
     })
 
-    expect(
-      screen.queryByRole('heading', { name: 'VIDEODROOM' }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'VIDEODROOM' })).not.toBeInTheDocument()
   })
 
   it('shows empty state when no productions exist', async () => {
-    mockedGetTag.mockResolvedValue(
-      baseTag({ short_description: { nl: 'Beschrijving' } }),
-    )
+    mockedGetTag.mockResolvedValue(baseTag({ short_description: { nl: 'Beschrijving' } }))
     mockedGetProductions.mockResolvedValue({ count: 0, results: [] })
 
     renderPage()
 
     expect(
-      await screen.findByText(
-        'Er zijn geen producties gekoppeld aan deze reeks.',
-      ),
+      await screen.findByText('Er zijn geen producties gekoppeld aan deze reeks.'),
     ).toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Toon meer' }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Toon meer' })).not.toBeInTheDocument()
   })
 
   it('redirects to the series tab when id is invalid', async () => {
@@ -288,9 +261,7 @@ describe('SeriesDetailPage', () => {
 
     expect(mockedGetTag).not.toHaveBeenCalled()
     expect(mockedGetProductions).not.toHaveBeenCalled()
-    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent(
-      'Ongeldig reeks-ID.',
-    )
+    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent('Ongeldig reeks-ID.')
   })
 
   it('navigates to production detail when a production card is clicked', async () => {
@@ -429,12 +400,8 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
-    expect(
-      await screen.findByRole('heading', { name: 'Fallback reeks' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText('Geen beschrijving beschikbaar.'),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Fallback reeks' })).toBeInTheDocument()
+    expect(screen.getByText('Geen beschrijving beschikbaar.')).toBeInTheDocument()
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2)
 
     const edition2025 = screen.getByRole('heading', { name: 'Editie 2025' })
@@ -450,18 +417,10 @@ describe('SeriesDetailPage', () => {
     })
 
     expect(screen.getByText('2023')).toBeInTheDocument()
-    expect(edition2025.compareDocumentPosition(edition2024)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    )
-    expect(edition2024.compareDocumentPosition(onlyEndDate)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    )
-    expect(onlyEndDate.compareDocumentPosition(undatedHigh)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    )
-    expect(undatedHigh.compareDocumentPosition(undatedLow)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    )
+    expect(edition2025.compareDocumentPosition(edition2024)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(edition2024.compareDocumentPosition(onlyEndDate)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(onlyEndDate.compareDocumentPosition(undatedHigh)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(undatedHigh.compareDocumentPosition(undatedLow)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
   it('does not render Show More when the loaded amount matches the total amount', async () => {
@@ -473,12 +432,8 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
-    expect(
-      await screen.findByRole('heading', { name: 'Productie 1' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Toon meer' }),
-    ).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Productie 1' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Toon meer' })).not.toBeInTheDocument()
   })
 
   it('loads the next page when Show More is clicked and hides the button on the last page', async () => {
@@ -486,9 +441,7 @@ describe('SeriesDetailPage', () => {
     mockedGetProductions
       .mockResolvedValueOnce({
         count: 13,
-        results: Array.from({ length: 12 }, (_, index) =>
-          makeProduction(index + 1),
-        ),
+        results: Array.from({ length: 12 }, (_, index) => makeProduction(index + 1)),
       })
       .mockResolvedValueOnce({
         count: 13,
@@ -505,23 +458,17 @@ describe('SeriesDetailPage', () => {
     const showMoreButton = await screen.findByRole('button', {
       name: 'Toon meer',
     })
-    expect(
-      screen.queryByRole('heading', { name: 'Productie 13' }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Productie 13' })).not.toBeInTheDocument()
 
     fireEvent.click(showMoreButton)
 
-    expect(
-      await screen.findByRole('heading', { name: 'Productie 13' }),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Productie 13' })).toBeInTheDocument()
     expect(mockedGetProductions).toHaveBeenLastCalledWith({
       page: 2,
       pageSize: 12,
       filters: { tag: 1 },
     })
-    expect(
-      screen.queryByRole('button', { name: 'Toon meer' }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Toon meer' })).not.toBeInTheDocument()
   })
 
   it('disables Show More and shows a loading label while the next page is loading', async () => {
@@ -531,9 +478,7 @@ describe('SeriesDetailPage', () => {
     mockedGetProductions
       .mockResolvedValueOnce({
         count: 13,
-        results: Array.from({ length: 12 }, (_, index) =>
-          makeProduction(index + 1),
-        ),
+        results: Array.from({ length: 12 }, (_, index) => makeProduction(index + 1)),
       })
       .mockImplementationOnce(
         () =>
@@ -558,8 +503,6 @@ describe('SeriesDetailPage', () => {
       resolveNextPage!({ count: 13, results: [makeProduction(13)] })
     })
 
-    expect(
-      await screen.findByRole('heading', { name: 'Productie 13' }),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Productie 13' })).toBeInTheDocument()
   })
 })
