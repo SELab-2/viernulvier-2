@@ -1,10 +1,31 @@
 import '@testing-library/jest-dom'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import SeriesDetailPage from '../../pages/SeriesDetailPage'
+import { ApiError } from '../../services/ApiTypes'
 import { getProductions } from '../../services/productions/Productions'
 import { getTag } from '../../services/tags/Tags'
+
+jest.mock('../../services/ApiTypes', () => ({
+  ApiError: class ApiError extends Error {
+    status: number
+
+    constructor(status: number, message: string) {
+      super(message)
+      this.status = status
+    }
+  },
+}))
+
+jest.mock('../../utils/floatingAlertState', () => ({
+  ALERT_SEVERITIES: {
+    warning: 'warning',
+  },
+  createFloatingAlertState: ({ message, severity }: { message: string; severity: string }) => ({
+    floatingAlert: { message, severity },
+  }),
+}))
 
 jest.mock('../../services/tags/Tags', () => ({
   getTag: jest.fn(),
@@ -75,6 +96,18 @@ const makeProduction = (id: number, overrides: MockProductionOverrides = {}) => 
   ...overrides,
 })
 
+const SeriesPageMock = () => {
+  const location = useLocation()
+  const alert = (location.state as { floatingAlert?: { message?: string } } | null)?.floatingAlert
+
+  return (
+    <div>
+      <div>SERIES PAGE</div>
+      <div data-testid="floating-alert-message">{alert?.message ?? ''}</div>
+    </div>
+  )
+}
+
 describe('SeriesDetailPage', () => {
   const mockedGetTag = getTag as jest.Mock
   const mockedGetProductions = getProductions as jest.Mock
@@ -89,6 +122,7 @@ describe('SeriesDetailPage', () => {
       <MemoryRouter initialEntries={[`/nl/reeksen/${id}`]}>
         <Routes>
           <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
+          <Route path="/:lang/reeksen" element={<SeriesPageMock />} />
           <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
           <Route path="/:lang/not-found" element={<div>404 PAGE</div>} />
         </Routes>
@@ -110,7 +144,10 @@ describe('SeriesDetailPage', () => {
     mockedGetProductions.mockResolvedValue({
       count: 1,
       results: [
-        makeProduction(1, { display_title: 'VIDEODROOM 2024', title: { nl: 'VIDEODROOM 2024' } }),
+        makeProduction(1, {
+          display_title: 'VIDEODROOM 2024',
+          title: { nl: 'VIDEODROOM 2024' },
+        }),
       ],
     })
 
@@ -152,13 +189,23 @@ describe('SeriesDetailPage', () => {
     expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
   })
 
-  it('redirects to /404 when API throws error', async () => {
+  it('redirects to /404 when API throws a non-rate-limit error', async () => {
     mockedGetTag.mockRejectedValue(new Error('API error'))
     mockedGetProductions.mockResolvedValue({ count: 0, results: [] })
 
     renderPage()
 
     expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
+  })
+
+  it('redirects to the series page with a floating alert when the API returns a rate-limit error', async () => {
+    mockedGetTag.mockRejectedValue(new ApiError(429, 'Te veel aanvragen.'))
+    mockedGetProductions.mockResolvedValue({ count: 0, results: [] })
+
+    renderPage()
+
+    expect(await screen.findByText('SERIES PAGE')).toBeInTheDocument()
+    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent('Te veel aanvragen.')
   })
 
   it('does not update the page when the initial request resolves after unmount', async () => {
@@ -201,14 +248,16 @@ describe('SeriesDetailPage', () => {
     expect(screen.queryByRole('button', { name: 'Toon meer' })).not.toBeInTheDocument()
   })
 
-  it('redirects to /404 when id is invalid', async () => {
+  it('redirects to the series tab when id is invalid', async () => {
     renderPage('invalid')
 
     await waitFor(() => {
-      expect(screen.getByText('404 PAGE')).toBeInTheDocument()
+      expect(screen.getByText('SERIES PAGE')).toBeInTheDocument()
     })
+
     expect(mockedGetTag).not.toHaveBeenCalled()
     expect(mockedGetProductions).not.toHaveBeenCalled()
+    expect(screen.getByTestId('floating-alert-message')).toHaveTextContent('Ongeldig reeks-ID.')
   })
 
   it('navigates to production detail when a production card is clicked', async () => {
@@ -216,7 +265,10 @@ describe('SeriesDetailPage', () => {
     mockedGetProductions.mockResolvedValue({
       count: 1,
       results: [
-        makeProduction(42, { display_title: 'VIDEODROOM 2024', title: { nl: 'VIDEODROOM 2024' } }),
+        makeProduction(42, {
+          display_title: 'VIDEODROOM 2024',
+          title: { nl: 'VIDEODROOM 2024' },
+        }),
       ],
     })
 

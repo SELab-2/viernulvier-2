@@ -36,11 +36,9 @@ function getProductionYear(production: Production): string {
   if (production.first_event_start) {
     return new Date(production.first_event_start).getFullYear().toString()
   }
-
   if (production.last_event_end) {
     return new Date(production.last_event_end).getFullYear().toString()
   }
-
   return '—'
 }
 
@@ -65,7 +63,6 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [error, setError] = useState<SeriesErrorKey>(null)
-
   const numericId = Number(id)
 
   useEffect(() => {
@@ -81,11 +78,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
       try {
         const [tag, productionsResponse] = await Promise.all([
           getTag(numericId),
-          getProductions({
-            page: 1,
-            pageSize: PAGE_SIZE,
-            filters: { tag: numericId },
-          }),
+          getProductions({ page: 1, pageSize: PAGE_SIZE, filters: { tag: numericId } }),
         ])
 
         if (!isActive) {
@@ -122,7 +115,6 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
     try {
       const nextPage = currentPage + 1
-
       const productionsResponse = await getProductions({
         page: nextPage,
         pageSize: PAGE_SIZE,
@@ -140,35 +132,19 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     }
   }
 
-  const getProductionSortTimestamp = (production: Production): number | null => {
-    const date = production.first_event_start || production.last_event_end
-
-    if (!date) {
-      return null
-    }
-
-    return new Date(date).getTime()
-  }
-
-  /** Sorted most-recent first by event date; productions without any date fall to the end. */
+  /** Sorted most-recent first by start date; productions without a date fall to the end. */
   const sortedProductions = useMemo(
     () =>
       [...productions].sort((a, b) => {
-        const aTimestamp = getProductionSortTimestamp(a)
-        const bTimestamp = getProductionSortTimestamp(b)
-
-        if (aTimestamp !== null && bTimestamp !== null) {
-          return bTimestamp - aTimestamp
+        if (a.first_event_start && b.first_event_start) {
+          return new Date(b.first_event_start).getTime() - new Date(a.first_event_start).getTime()
         }
-
-        if (aTimestamp !== null) {
+        if (a.first_event_start) {
           return -1
         }
-
-        if (bTimestamp !== null) {
+        if (b.first_event_start) {
           return 1
         }
-
         return b.id - a.id
       }),
     [productions],
@@ -177,25 +153,21 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   /** Productions grouped by year in display order, preserving sort within each group. */
   const productionsByYear = useMemo(() => {
     const groups = new Map<string, Production[]>()
-
     for (const production of sortedProductions) {
       const year = getProductionYear(production)
       const existing = groups.get(year)
-
       if (existing) {
         existing.push(production)
       } else {
         groups.set(year, [production])
       }
     }
-
     return Array.from(groups.entries())
   }, [sortedProductions])
 
   const startYear = seriesTag?.first_production_start
     ? new Date(seriesTag.first_production_start).getFullYear()
     : null
-
   const endYear = seriesTag?.last_production_end
     ? new Date(seriesTag.last_production_end).getFullYear()
     : null
@@ -212,7 +184,6 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   if (isLoading) {
     return <SeriesDetailPageSkeleton />
   }
-
   if (error || !seriesTag) {
     return <Navigate to={notFoundPath} replace />
   }
@@ -228,8 +199,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const seriesDescription =
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
     t('series.noDescription')
-
-  const hasMoreProductions = productions.length < totalProductions
+  const hasMoreProductions = sortedProductions.length < totalProductions
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
@@ -284,11 +254,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                   <Stack
                     direction="row"
                     spacing={1}
-                    sx={{
-                      alignItems: 'center',
-                      flexShrink: 0,
-                      width: { md: 80 },
-                    }}
+                    sx={{ alignItems: 'center', flexShrink: 0, width: { md: 80 } }}
                   >
                     <Box
                       sx={{
