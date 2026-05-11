@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - env:
           ONLY: ${{ inputs.only }}
