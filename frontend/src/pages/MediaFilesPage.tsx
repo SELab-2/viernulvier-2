@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next'
 
 import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 import CollectionPageLayout from '../components/CollectionPageLayout'
-import FloatingAlert from '../components/FloatingAlert'
 import MediaFileView from '../components/media-files/MediaFileView'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
+import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
 import { ApiError } from '../services/ApiTypes'
 import { getMediaFiles } from '../services/media_files/MediaFiles'
 
@@ -54,14 +54,15 @@ const MediaFilesPage = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
+  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
+    'media.error.notification',
+  )
   const [retryKey, setRetryKey] = useState(0)
   const [searchInputValue, setSearchInputValue] = useState(searchValue)
 
   const previousOrderingRef = useRef<string | null>(null)
 
   const renderedErrorMessage = showFallbackError ? t('media.error.fallback') : errorMessage
-  const floatingErrorMessage = t('media.error.notification')
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
     [sortTarget, sortDirection],
@@ -83,7 +84,7 @@ const MediaFilesPage = () => {
       setIsLoading(true)
       setErrorMessage(null)
       setShowFallbackError(false)
-      setIsFloatingErrorOpen(false)
+      clearFloatingAlert()
 
       try {
         const trimmedSearchValue = searchValue.trim()
@@ -116,7 +117,7 @@ const MediaFilesPage = () => {
           setShowFallbackError(true)
         }
 
-        setIsFloatingErrorOpen(true)
+        showFloatingAlert(error)
         setMediaFiles([])
         setTotalCount(0)
       } finally {
@@ -131,15 +132,11 @@ const MediaFilesPage = () => {
     return () => {
       isActive = false
     }
-  }, [ordering, page, retryKey, searchValue])
+  }, [clearFloatingAlert, ordering, page, retryKey, searchValue, showFloatingAlert])
 
   const onRetry = () => {
-    setIsFloatingErrorOpen(false)
+    clearFloatingAlert()
     setRetryKey((value) => value + 1)
-  }
-
-  const onFloatingErrorClose = () => {
-    setIsFloatingErrorOpen(false)
   }
 
   const onSearchSubmit = (value: string) => {
@@ -160,48 +157,39 @@ const MediaFilesPage = () => {
   const resultsContent = <MediaFileView mediaFiles={mediaFiles} layout={viewMode} />
 
   return (
-    <>
-      <CollectionPageLayout
-        isMobile={isMobile}
-        searchPlaceholder={t('media.searchPlaceholder')}
-        searchValue={searchInputValue}
-        onSearchChange={setSearchInputValue}
-        onSearchSubmit={onSearchSubmit}
-        sortTarget={sortTarget}
-        onSortTargetChange={setSortTarget}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-        sortTargetOptions={MEDIA_SORT_TARGET_OPTIONS}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        resultCount={totalCount}
-        resultsRegionAriaLabel={t('media.resultsRegionLabel')}
-        isLoading={isLoading}
-        loadingLabel={t('media.loading')}
-        loadingContent={
-          <MediaFilesPageSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
-        }
-        errorMessage={renderedErrorMessage}
-        retryLabel={t('media.error.retry')}
-        onRetry={onRetry}
-        emptyTitle={t('media.empty.title')}
-        emptyDescription={t('media.empty.description')}
-        hasResults={mediaFiles.length > 0}
-        resultsContent={resultsContent}
-        page={page}
-        pageSize={PAGE_SIZE}
-        totalItems={totalCount}
-        onPageChange={setPage}
-        paginationI18nKeyPrefix="media.pagination"
-      />
-
-      <FloatingAlert
-        open={isFloatingErrorOpen}
-        onClose={onFloatingErrorClose}
-        severity="error"
-        message={floatingErrorMessage}
-      />
-    </>
+    <CollectionPageLayout
+      isMobile={isMobile}
+      searchPlaceholder={t('media.searchPlaceholder')}
+      searchValue={searchInputValue}
+      onSearchChange={setSearchInputValue}
+      onSearchSubmit={onSearchSubmit}
+      sortTarget={sortTarget}
+      onSortTargetChange={setSortTarget}
+      sortDirection={sortDirection}
+      onSortDirectionChange={setSortDirection}
+      sortTargetOptions={MEDIA_SORT_TARGET_OPTIONS}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      resultCount={totalCount}
+      resultsRegionAriaLabel={t('media.resultsRegionLabel')}
+      isLoading={isLoading}
+      loadingLabel={t('media.loading')}
+      loadingContent={
+        <MediaFilesPageSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+      }
+      errorMessage={renderedErrorMessage}
+      retryLabel={t('media.error.retry')}
+      onRetry={onRetry}
+      emptyTitle={t('media.empty.title')}
+      emptyDescription={t('media.empty.description')}
+      hasResults={mediaFiles.length > 0}
+      resultsContent={resultsContent}
+      page={page}
+      pageSize={PAGE_SIZE}
+      totalItems={totalCount}
+      onPageChange={setPage}
+      paginationI18nKeyPrefix="media.pagination"
+    />
   )
 }
 

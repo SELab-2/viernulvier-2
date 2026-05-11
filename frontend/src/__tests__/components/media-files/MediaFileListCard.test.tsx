@@ -1,4 +1,4 @@
-import { describe, expect, it, jest, beforeEach } from '@jest/globals'
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 
 const formatMediaFileDateMock = jest.fn()
@@ -42,6 +42,14 @@ jest.mock('../../../components/media-files/MediaFileUtils', () => ({
 
 import MediaFileListCard from '../../../components/media-files/MediaFileListCard'
 
+const baseMediaFile = {
+  filename: 'photo.jpg',
+  file: 'https://example.com/photo.jpg',
+  created_at: '2026-04-23T10:00:00Z',
+  size_bytes: 1572864,
+  file_type: 'image',
+}
+
 describe('MediaFileListCard', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -51,20 +59,8 @@ describe('MediaFileListCard', () => {
     getMediaFileTypeLabelMock.mockReturnValue('Afbeelding')
   })
 
-  it('renders filename, description, preview and metadata', () => {
-    render(
-      <MediaFileListCard
-        mediaFile={
-          {
-            filename: 'photo.jpg',
-            file: 'https://example.com/photo.jpg',
-            created_at: '2026-04-23T10:00:00Z',
-            size_bytes: 1572864,
-            file_type: 'image',
-          } as never
-        }
-      />,
-    )
+  it('renders filename, description, preview and direct same-tab file link', () => {
+    render(<MediaFileListCard mediaFile={baseMediaFile as never} />)
 
     expect(screen.getByRole('heading', { name: 'photo.jpg' })).toBeInTheDocument()
     expect(screen.getByText('Lange beschrijving')).toBeInTheDocument()
@@ -73,27 +69,15 @@ describe('MediaFileListCard', () => {
     expect(screen.getByTestId('media-preview')).toHaveTextContent('preview:Afbeelding')
 
     const link = screen.getByRole('link')
-    expect(link).toHaveAttribute('href', 'https://example.com/photo.jpg')
-    expect(link).toHaveAttribute('target', '_blank')
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(link).toHaveAttribute('href', `${window.location.origin}/photo.jpg`)
+    expect(link).not.toHaveAttribute('target')
+    expect(link).not.toHaveAttribute('rel')
   })
 
   it('falls back to the file type label when no description is available', () => {
     getMediaFileDescriptionMock.mockReturnValueOnce('')
 
-    render(
-      <MediaFileListCard
-        mediaFile={
-          {
-            filename: 'photo.jpg',
-            file: 'https://example.com/photo.jpg',
-            created_at: '2026-04-23T10:00:00Z',
-            size_bytes: 1572864,
-            file_type: 'image',
-          } as never
-        }
-      />,
-    )
+    render(<MediaFileListCard mediaFile={baseMediaFile as never} />)
 
     expect(screen.getByText('Afbeelding')).toBeInTheDocument()
   })
@@ -105,11 +89,8 @@ describe('MediaFileListCard', () => {
       <MediaFileListCard
         mediaFile={
           {
-            filename: 'photo.jpg',
-            file: 'https://example.com/photo.jpg',
-            created_at: '2026-04-23T10:00:00Z',
+            ...baseMediaFile,
             size_bytes: null,
-            file_type: 'image',
           } as never
         }
       />,

@@ -7,7 +7,11 @@
 import { Alert, Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+<<<<<<< 478-fe-addition-of-show-more-to-seriesdetailpages
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
+=======
+import { Navigate, useLocation, useParams, useNavigate } from 'react-router-dom'
+>>>>>>> dev
 
 import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 import Breadcrumbs from '../components/production/Breadcrumbs'
@@ -65,7 +69,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     i18n.resolvedLanguage,
   )
   const seriesPath = toLocalizedPath('/series', currentLanguage)
+<<<<<<< 478-fe-addition-of-show-more-to-seriesdetailpages
   const notFoundPath = toLocalizedPath('/404', currentLanguage)
+=======
+  const currentPath = location.pathname
+>>>>>>> dev
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
@@ -75,6 +83,8 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [error, setError] = useState<SeriesErrorKey>(null)
   const numericId = Number(id)
+
+  const navigate = useNavigate()
 
   useEffect(() => {
     let isActive = true
@@ -98,6 +108,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
         setSeriesTag(tag)
         setProductions(productionsResponse.results)
+<<<<<<< 478-fe-addition-of-show-more-to-seriesdetailpages
         setTotalProductions(productionsResponse.count ?? productionsResponse.results.length)
       } catch (error: unknown) {
         if (!isActive) {
@@ -106,6 +117,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
         if (error instanceof ApiError && error.status === 429) {
           navigate(seriesPath, {
+=======
+      } catch (error: unknown) {
+        if (error instanceof ApiError && error.status === 429) {
+          navigate(currentPath, {
+>>>>>>> dev
             replace: true,
             state: createFloatingAlertState({
               message: error.message,
@@ -124,6 +140,10 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     }
 
     void fetchSeries()
+<<<<<<< 478-fe-addition-of-show-more-to-seriesdetailpages
+=======
+  }, [currentPath, navigate, numericId, seriesPath])
+>>>>>>> dev
 
     return () => {
       isActive = false
@@ -216,7 +236,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   if (error || !seriesTag) {
     return (
       <Navigate
+<<<<<<< 478-fe-addition-of-show-more-to-seriesdetailpages
         to={notFoundPath}
+=======
+        to={toLocalizedPath('/404', currentLanguage)}
+>>>>>>> dev
         replace
         state={createFloatingAlertState({
           message: t(error ?? 'series.fetchError'),

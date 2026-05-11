@@ -1,5 +1,9 @@
 import '@testing-library/jest-dom'
+<<<<<<< 478-fe-addition-of-show-more-to-seriesdetailpages
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+=======
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+>>>>>>> dev
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import SeriesDetailPage from '../../pages/SeriesDetailPage'
@@ -69,6 +73,7 @@ jest.mock('react-i18next', () => ({
   }),
 }))
 
+<<<<<<< 478-fe-addition-of-show-more-to-seriesdetailpages
 type MockProductionOverrides = Record<string, unknown>
 
 const baseTag = (overrides: Record<string, unknown> = {}) => ({
@@ -101,6 +106,9 @@ const makeProduction = (id: number, overrides: MockProductionOverrides = {}) => 
 })
 
 const SeriesPageMock = () => {
+=======
+const SeriesPageProbe = () => {
+>>>>>>> dev
   const location = useLocation()
   const alert = (location.state as { floatingAlert?: { message?: string } } | null)?.floatingAlert
 
@@ -126,9 +134,15 @@ describe('SeriesDetailPage', () => {
       <MemoryRouter initialEntries={[`/nl/reeksen/${id}`]}>
         <Routes>
           <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
+<<<<<<< 478-fe-addition-of-show-more-to-seriesdetailpages
           <Route path="/:lang/reeksen" element={<SeriesPageMock />} />
           <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
           <Route path="/:lang/404" element={<div>404 PAGE</div>} />
+=======
+          <Route path="/:lang/reeksen" element={<SeriesPageProbe />} />
+          <Route path="/:lang/404" element={<div>NOT FOUND</div>} />
+          <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
+>>>>>>> dev
         </Routes>
       </MemoryRouter>,
     )
@@ -184,22 +198,26 @@ describe('SeriesDetailPage', () => {
     expect(screen.getByRole('button', { name: 'Reeksen' })).toBeInTheDocument()
   })
 
-  it('redirects to /404 when tag is not found', async () => {
+  it('redirects to localized 404 when tag is not found', async () => {
     mockedGetTag.mockResolvedValue(null)
     mockedGetProductions.mockResolvedValue({ count: 0, results: [] })
 
     renderPage()
 
-    expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
+    expect(await screen.findByText('NOT FOUND')).toBeInTheDocument()
   })
 
+<<<<<<< 478-fe-addition-of-show-more-to-seriesdetailpages
   it('redirects to /404 when API throws a non-rate-limit error', async () => {
+=======
+  it('redirects to localized 404 when API throws error', async () => {
+>>>>>>> dev
     mockedGetTag.mockRejectedValue(new Error('API error'))
     mockedGetProductions.mockResolvedValue({ count: 0, results: [] })
 
     renderPage()
 
-    expect(await screen.findByText('404 PAGE')).toBeInTheDocument()
+    expect(await screen.findByText('NOT FOUND')).toBeInTheDocument()
   })
 
   it('redirects to the series page with a floating alert when the API returns a rate-limit error', async () => {
@@ -258,9 +276,12 @@ describe('SeriesDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('SERIES PAGE')).toBeInTheDocument()
     })
+<<<<<<< 478-fe-addition-of-show-more-to-seriesdetailpages
 
     expect(mockedGetTag).not.toHaveBeenCalled()
     expect(mockedGetProductions).not.toHaveBeenCalled()
+=======
+>>>>>>> dev
     expect(screen.getByTestId('floating-alert-message')).toHaveTextContent('Ongeldig reeks-ID.')
   })
 

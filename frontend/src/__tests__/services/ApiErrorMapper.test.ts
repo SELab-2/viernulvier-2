@@ -15,6 +15,7 @@ describe('normalizeApiError', () => {
     [400, 'Invalid request parameters.'],
     [401, 'Not authenticated. Please log in.'],
     [403, 'You do not have permission to perform this action.'],
+    [429, 'Too many requests. Please try again later.'],
     [404, 'The requested resource was not found.'],
     [500, 'An internal server error occurred. Please try again later.'],
   ])('maps HTTP %i to ApiError with message', (status, expectedMessage) => {

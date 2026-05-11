@@ -1,13 +1,12 @@
 import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
 
 import BlogView from '../components/BlogView'
 import CollectionPageLayout from '../components/CollectionPageLayout'
-import FloatingAlert from '../components/FloatingAlert'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
+import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
 import { ApiError } from '../services/ApiTypes'
 import { getBlogs } from '../services/blogs/Blogs'
 
@@ -23,13 +22,6 @@ const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'd
 const BlogsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const location = useLocation()
-  type NavState = { floatingAlert?: { open?: boolean; message?: string } }
-  const nav = location as { state?: NavState }
-  const navFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
-  const navFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
-  const initialFloatingAlertOpen = Boolean(nav.state?.floatingAlert?.open)
-  const initialFloatingAlertMessage = nav.state?.floatingAlert?.message ?? null
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
   const {
     searchValue,
@@ -49,15 +41,13 @@ const BlogsPage = () => {
   const [totalCount, setTotalCount] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(initialFloatingAlertOpen)
-  const [floatingAlertMessage, setFloatingAlertMessage] = useState<string | null>(
-    initialFloatingAlertMessage,
+  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
+    'blogs.home.error.notification',
   )
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
   const renderedErrorMessage = showFallbackError ? t('blogs.home.error.fallback') : errorMessage
-  const floatingErrorMessage = t('blogs.home.error.notification')
 
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
@@ -71,8 +61,7 @@ const BlogsPage = () => {
       setIsLoading(true)
       setErrorMessage(null)
       setShowFallbackError(false)
-      setIsFloatingErrorOpen(false)
-      setFloatingAlertMessage(null)
+      clearFloatingAlert()
 
       try {
         const response = await getBlogs({
@@ -105,8 +94,7 @@ const BlogsPage = () => {
           setErrorMessage(null)
           setShowFallbackError(true)
         }
-        setIsFloatingErrorOpen(true)
-        setFloatingAlertMessage(null)
+        showFloatingAlert(error)
         setBlogs([])
         setTotalCount(0)
       } finally {
@@ -121,30 +109,11 @@ const BlogsPage = () => {
     return () => {
       isActive = false
     }
-  }, [ordering, page, retryKey, searchValue])
-
-  // If a page navigated here with a floatingAlert in location.state, show it once.
-  useEffect(() => {
-    const { state } = nav
-    if (state?.floatingAlert?.open) {
-      // Clear the history state so the alert won't reappear on back/refresh
-      try {
-        window.history.replaceState({}, document.title)
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [nav])
+  }, [clearFloatingAlert, ordering, page, retryKey, searchValue, showFloatingAlert])
 
   const onRetry = () => {
-    setIsFloatingErrorOpen(false)
-    setFloatingAlertMessage(null)
+    clearFloatingAlert()
     setRetryKey((value) => value + 1)
-  }
-
-  const onFloatingErrorClose = () => {
-    setIsFloatingErrorOpen(false)
-    setFloatingAlertMessage(null)
   }
 
   const onSearchSubmit = (value: string) => {
@@ -159,50 +128,41 @@ const BlogsPage = () => {
   }
 
   return (
-    <>
-      <CollectionPageLayout
-        isMobile={isMobile}
-        showSidebar={false}
-        searchPlaceholder={
-          isMobile ? t('blogs.home.searchPlaceholderMobile') : t('blogs.home.searchPlaceholder')
-        }
-        searchValue={searchDraft}
-        onSearchChange={setSearchDraft}
-        onSearchSubmit={onSearchSubmit}
-        sortTarget={sortTarget}
-        onSortTargetChange={setSortTarget}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        resultCount={totalCount}
-        resultsRegionAriaLabel={t('blogs.home.resultsRegionLabel')}
-        isLoading={isLoading}
-        loadingLabel={t('blogs.home.loading')}
-        loadingContent={
-          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
-        }
-        errorMessage={renderedErrorMessage}
-        retryLabel={t('blogs.home.error.retry')}
-        onRetry={onRetry}
-        emptyTitle={t('blogs.home.empty.title')}
-        emptyDescription={t('blogs.home.empty.description')}
-        hasResults={blogs.length > 0}
-        resultsContent={<BlogView blogs={blogs} layout={viewMode} />}
-        page={page}
-        pageSize={PAGE_SIZE}
-        totalItems={totalCount}
-        onPageChange={setPage}
-        paginationI18nKeyPrefix="blogs.pagination"
-      />
-
-      <FloatingAlert
-        open={isFloatingErrorOpen || navFloatingAlertOpen}
-        onClose={onFloatingErrorClose}
-        severity="error"
-        message={navFloatingAlertMessage ?? floatingAlertMessage ?? floatingErrorMessage}
-      />
-    </>
+    <CollectionPageLayout
+      isMobile={isMobile}
+      showSidebar={false}
+      searchPlaceholder={
+        isMobile ? t('blogs.home.searchPlaceholderMobile') : t('blogs.home.searchPlaceholder')
+      }
+      searchValue={searchDraft}
+      onSearchChange={setSearchDraft}
+      onSearchSubmit={onSearchSubmit}
+      sortTarget={sortTarget}
+      onSortTargetChange={setSortTarget}
+      sortDirection={sortDirection}
+      onSortDirectionChange={setSortDirection}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      resultCount={totalCount}
+      resultsRegionAriaLabel={t('blogs.home.resultsRegionLabel')}
+      isLoading={isLoading}
+      loadingLabel={t('blogs.home.loading')}
+      loadingContent={
+        <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+      }
+      errorMessage={renderedErrorMessage}
+      retryLabel={t('blogs.home.error.retry')}
+      onRetry={onRetry}
+      emptyTitle={t('blogs.home.empty.title')}
+      emptyDescription={t('blogs.home.empty.description')}
+      hasResults={blogs.length > 0}
+      resultsContent={<BlogView blogs={blogs} layout={viewMode} />}
+      page={page}
+      pageSize={PAGE_SIZE}
+      totalItems={totalCount}
+      onPageChange={setPage}
+      paginationI18nKeyPrefix="blogs.pagination"
+    />
   )
 }
 
