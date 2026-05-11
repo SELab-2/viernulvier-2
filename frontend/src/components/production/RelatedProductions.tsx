@@ -118,12 +118,9 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                     <ProductionGridCard
                       production={{
                         ...production,
-                        attendance_mode: production.attendance_mode ?? '',
-                        performer_type: production.performer_type ?? '',
                         first_event_start: production.first_event_start ?? null,
                         last_event_end: production.last_event_end ?? null,
-                        uit_database_type: production.uit_database_type ?? null,
-                        artist_name: production.artist_name ?? {},
+                        artist_name: {},
                         title: production.title ?? {},
                         tagline: {},
                         teaser: {},
@@ -131,7 +128,7 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                         tags: production.tags ?? [],
                         genres: production.genres ?? [],
                         display_title: production.display_title ?? null,
-                        display_artist_name: production.display_artist_name ?? null,
+                        display_artist_name: null,
                       }}
                     />
                   </Box>
