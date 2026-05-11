@@ -123,6 +123,7 @@
       "400": "Ongeldige aanvraagparameters.",
       "401": "Niet geauthenticeerd. Log in om verder te gaan.",
       "403": "Je hebt geen toestemming om deze actie uit te voeren.",
+      "429": "Te veel verzoeken. Probeer het later opnieuw.",
       "404": "De gevraagde resource werd niet gevonden.",
       "500": "Er trad een interne serverfout op. Probeer later opnieuw.",
       "genericWithCode": "Aanvraag mislukt met status {{status}}."
@@ -218,8 +219,8 @@
       "unknownProduction": "Onbekende productie",
       "noDescription": "Geen beschrijving beschikbaar.",
       "error": {
-        "invalidId": "Ongeldige productie-id",
-        "loadFailed": "Kon productie niet laden"
+        "invalidId": "Ongeldige productie-id.",
+        "loadFailed": "Kon productie niet laden."
       },
       "events": "Evenementen"
     }
@@ -291,7 +292,7 @@
     "noDescription": "Geen beschrijving beschikbaar.",
     "noProductions": "Er zijn geen producties gekoppeld aan deze reeks.",
     "loading": "Reeks laden",
-    "invalidId": "Ongeldig reeks-ID.",
+    "invalidId": "Ongeldige reeks-ID.",
     "fetchError": "Kon de reeks niet ophalen.",
     "untitled": "Naamloze reeks",
     "untitledProduction": "Naamloze productie",
@@ -331,10 +332,11 @@
     }
   },
   "blog": {
-    "couldNotLoad": "Kon de blog niet laden",
-    "invalidId": "Ongeldig blog ID"
+    "couldNotLoad": "Kon de blog niet laden.",
+    "invalidId": "Ongeldige blog-ID."
   },
   "media": {
+    "couldNotLoad": "Kon mediabestand niet laden.",
     "searchPlaceholder": "Zoek bestanden op naam, beschrijving of type...",
     "fileType": {
       "image": "Afbeelding",

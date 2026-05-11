@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next'
 
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import EntityView from '../components/entity/EntityView'
-import FloatingAlert from '../components/FloatingAlert'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
 import SeriesGridCard from '../components/series/SeriesGridCard'
 import SeriesListCard from '../components/series/SeriesListCard'
 import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
+import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
 import { ApiError } from '../services/ApiTypes'
 import { getTags } from '../services/tags/Tags'
 import { getTranslatedRecord } from '../utils/translations'
@@ -109,12 +109,13 @@ const SeriesPage = () => {
   const [seriesList, setSeriesList] = useState<Tag[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFallbackError, setShowFallbackError] = useState(false)
-  const [isFloatingErrorOpen, setIsFloatingErrorOpen] = useState(false)
+  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
+    'series.home.error.notification',
+  )
   const [retryKey, setRetryKey] = useState(0)
   const [searchDraft, setSearchDraft] = useState(searchValue)
 
   const renderedErrorMessage = showFallbackError ? t('series.home.error.fallback') : errorMessage
-  const floatingErrorMessage = t('series.home.error.notification')
 
   // Force the page back to name sorting because the series page only supports that option.
   useEffect(() => {
@@ -131,7 +132,7 @@ const SeriesPage = () => {
       setIsLoading(true)
       setErrorMessage(null)
       setShowFallbackError(false)
-      setIsFloatingErrorOpen(false)
+      clearFloatingAlert()
 
       try {
         const response = await fetchTagList({
@@ -156,7 +157,7 @@ const SeriesPage = () => {
           setShowFallbackError(true)
         }
 
-        setIsFloatingErrorOpen(true)
+        showFloatingAlert(error)
         setSeriesList([])
       } finally {
         if (isActive) {
@@ -170,7 +171,7 @@ const SeriesPage = () => {
     return () => {
       isActive = false
     }
-  }, [retryKey, searchValue])
+  }, [clearFloatingAlert, retryKey, searchValue, showFloatingAlert])
 
   // Sort the derived series list in memory so the UI stays responsive.
   const sortedSeries = useMemo(
@@ -202,13 +203,8 @@ const SeriesPage = () => {
 
   // Retry the last failed fetch by invalidating the request key.
   const onRetry = () => {
-    setIsFloatingErrorOpen(false)
+    clearFloatingAlert()
     setRetryKey((value) => value + 1)
-  }
-
-  // Close the floating error alert without changing page state.
-  const onFloatingErrorClose = () => {
-    setIsFloatingErrorOpen(false)
   }
 
   // Normalize the search input before pushing it into the URL state.
@@ -231,50 +227,41 @@ const SeriesPage = () => {
 
   // TODO: Fetch series list from API and display them here
   return (
-    <>
-      <CollectionPageLayout
-        isMobile={isMobile}
-        searchPlaceholder={
-          isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
-        }
-        searchValue={searchDraft}
-        onSearchChange={setSearchDraft}
-        onSearchSubmit={onSearchSubmit}
-        sortTarget={sortTarget}
-        onSortTargetChange={setSortTarget}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-        sortTargetOptions={SERIES_SORT_TARGET_OPTIONS}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        resultCount={sortedSeries.length}
-        resultsRegionAriaLabel={t('series.home.resultsRegionLabel')}
-        isLoading={isLoading}
-        loadingLabel={t('series.home.loading')}
-        loadingContent={
-          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
-        }
-        errorMessage={renderedErrorMessage}
-        retryLabel={t('series.home.error.retry')}
-        onRetry={onRetry}
-        emptyTitle={t('series.home.empty.title')}
-        emptyDescription={t('series.home.empty.description')}
-        hasResults={pagedSeries.length > 0}
-        resultsContent={resultsContent}
-        page={page}
-        pageSize={PAGE_SIZE}
-        totalItems={sortedSeries.length}
-        onPageChange={setPage}
-        paginationI18nKeyPrefix="series.pagination"
-      />
-
-      <FloatingAlert
-        open={isFloatingErrorOpen}
-        onClose={onFloatingErrorClose}
-        severity="error"
-        message={floatingErrorMessage}
-      />
-    </>
+    <CollectionPageLayout
+      isMobile={isMobile}
+      searchPlaceholder={
+        isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
+      }
+      searchValue={searchDraft}
+      onSearchChange={setSearchDraft}
+      onSearchSubmit={onSearchSubmit}
+      sortTarget={sortTarget}
+      onSortTargetChange={setSortTarget}
+      sortDirection={sortDirection}
+      onSortDirectionChange={setSortDirection}
+      sortTargetOptions={SERIES_SORT_TARGET_OPTIONS}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      resultCount={sortedSeries.length}
+      resultsRegionAriaLabel={t('series.home.resultsRegionLabel')}
+      isLoading={isLoading}
+      loadingLabel={t('series.home.loading')}
+      loadingContent={
+        <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+      }
+      errorMessage={renderedErrorMessage}
+      retryLabel={t('series.home.error.retry')}
+      onRetry={onRetry}
+      emptyTitle={t('series.home.empty.title')}
+      emptyDescription={t('series.home.empty.description')}
+      hasResults={pagedSeries.length > 0}
+      resultsContent={resultsContent}
+      page={page}
+      pageSize={PAGE_SIZE}
+      totalItems={sortedSeries.length}
+      onPageChange={setPage}
+      paginationI18nKeyPrefix="series.pagination"
+    />
   )
 }
 

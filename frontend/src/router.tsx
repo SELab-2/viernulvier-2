@@ -5,6 +5,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from '
 
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
+import { NotificationProvider } from './contexts/NotificationContext'
 import BlogDetailPage from './pages/BlogDetailPage'
 import BlogsPage from './pages/BlogsPage'
 import HomePage from './pages/HomePage'
@@ -14,6 +15,7 @@ import ProductionDetailPage from './pages/ProductionDetailPage'
 import ProductionsPage from './pages/ProductionsPage'
 import SeriesDetailPage from './pages/SeriesDetailPage'
 import SeriesPage from './pages/SeriesPage'
+import { ALERT_SEVERITIES } from './types/FloatingAlertConfig'
 import {
   DEFAULT_LANGUAGE,
   getLocalizedSegment,
@@ -22,6 +24,7 @@ import {
   resolveCurrentLanguage,
   toLocalizedPath,
 } from './utils/localizedRoutes'
+import { createFloatingAlertState } from './utils/navigation'
 
 import type { ModeToggleProps } from './types/Theme'
 
@@ -69,7 +72,7 @@ const AliasDetailRedirect = ({ language, targetBasePath }: AliasDetailRedirectPr
 
 const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
   const { lang } = useParams<{ lang: string }>()
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const location = useLocation()
   const normalizedLanguage = normalizeLanguage(lang)
 
@@ -99,6 +102,10 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
   const blogsSlug = getLocalizedSegment('blogs', normalizedLanguage)
   const mediaSlug = getLocalizedSegment('media', normalizedLanguage)
   const productionsSlug = getLocalizedSegment('productions', normalizedLanguage)
+  const mediaDetailAlertState = createFloatingAlertState({
+    message: t('media.couldNotLoad', 'Could not load media file.'),
+    severity: ALERT_SEVERITIES.error,
+  })
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -119,7 +126,9 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
           <Route path={mediaSlug} element={<MediaFilesPage />} />
           <Route
             path={`${mediaSlug}/:id`}
-            element={<Navigate to={localizedPath('/media')} replace />}
+            element={
+              <Navigate to={localizedPath('/media')} replace state={mediaDetailAlertState} />
+            }
           />
           {/* Compatibility aliases from untranslated slug paths. */}
           {archiveSlug !== 'archive' && (
@@ -186,7 +195,12 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
             <Route path="media" element={<Navigate to={localizedPath('/media')} replace />} />
           )}
           {mediaSlug !== 'media' && (
-            <Route path="media/:id" element={<Navigate to={localizedPath('/media')} replace />} />
+            <Route
+              path="media/:id"
+              element={
+                <Navigate to={localizedPath('/media')} replace state={mediaDetailAlertState} />
+              }
+            />
           )}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
@@ -201,15 +215,17 @@ const Router = ({ mode, onToggleMode }: ModeToggleProps) => {
 
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route
-          path="/:lang/*"
-          element={<LocalizedLayout mode={mode} onToggleMode={onToggleMode} />}
-        />
-        <Route path="/" element={<Navigate to={defaultRoot} replace />} />
-        <Route path="*" element={<LanguagePathRedirect />} />
-      </Routes>
+      <NotificationProvider>
+        <ScrollToTop />
+        <Routes>
+          <Route
+            path="/:lang/*"
+            element={<LocalizedLayout mode={mode} onToggleMode={onToggleMode} />}
+          />
+          <Route path="/" element={<Navigate to={defaultRoot} replace />} />
+          <Route path="*" element={<LanguagePathRedirect />} />
+        </Routes>
+      </NotificationProvider>
     </BrowserRouter>
   )
 }
