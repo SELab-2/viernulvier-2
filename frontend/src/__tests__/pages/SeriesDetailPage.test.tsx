@@ -11,17 +11,21 @@ jest.mock('../../services/ApiTypes', () => ({
   ApiError: class ApiError extends Error {
     status: number
 
-    constructor(status: number, message: string) {
+    constructor(message: string, status: number) {
       super(message)
       this.status = status
     }
   },
 }))
 
-jest.mock('../../utils/floatingAlertState', () => ({
+jest.mock('../../types/FloatingAlertConfig', () => ({
   ALERT_SEVERITIES: {
+    error: 'error',
     warning: 'warning',
   },
+}))
+
+jest.mock('../../utils/navigation', () => ({
   createFloatingAlertState: ({ message, severity }: { message: string; severity: string }) => ({
     floatingAlert: { message, severity },
   }),
@@ -124,7 +128,7 @@ describe('SeriesDetailPage', () => {
           <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
           <Route path="/:lang/reeksen" element={<SeriesPageMock />} />
           <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
-          <Route path="/:lang/not-found" element={<div>404 PAGE</div>} />
+          <Route path="/:lang/404" element={<div>404 PAGE</div>} />
         </Routes>
       </MemoryRouter>,
     )
@@ -199,7 +203,7 @@ describe('SeriesDetailPage', () => {
   })
 
   it('redirects to the series page with a floating alert when the API returns a rate-limit error', async () => {
-    mockedGetTag.mockRejectedValue(new ApiError(429, 'Te veel aanvragen.'))
+    mockedGetTag.mockRejectedValue(new ApiError('Te veel aanvragen.', 429))
     mockedGetProductions.mockResolvedValue({ count: 0, results: [] })
 
     renderPage()

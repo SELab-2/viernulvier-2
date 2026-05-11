@@ -7,16 +7,19 @@
 import { Alert, Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useLocation, useParams } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 import Breadcrumbs from '../components/production/Breadcrumbs'
 import ProductionView from '../components/ProductionView'
 import SeriesHeader from '../components/series_details/SeriesHeader'
 import SeriesStats from '../components/series_details/SeriesStats'
+import { ApiError } from '../services/ApiTypes'
 import { getProductions } from '../services/productions/Productions'
 import { getTag } from '../services/tags/Tags'
+import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
+import { createFloatingAlertState } from '../utils/navigation'
 import { getTranslatedRecord } from '../utils/translations'
 
 import type { Production } from '../types/Productions'
@@ -42,19 +45,27 @@ function getProductionYear(production: Production): string {
   return '—'
 }
 
+/** Returns the timestamp used for chronological sorting. */
+function getProductionSortTimestamp(production: Production): number | null {
+  const date = production.first_event_start ?? production.last_event_end
+  return date ? new Date(date).getTime() : null
+}
+
 type SeriesDetailContentProps = {
   id: string
 }
 
 const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const location = useLocation()
+  const navigate = useNavigate()
   const { t, i18n } = useTranslation()
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
     i18n.language,
     i18n.resolvedLanguage,
   )
-  const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
+  const seriesPath = toLocalizedPath('/series', currentLanguage)
+  const notFoundPath = toLocalizedPath('/404', currentLanguage)
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
@@ -87,11 +98,24 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
         setSeriesTag(tag)
         setProductions(productionsResponse.results)
-        setTotalProductions(productionsResponse.count)
-      } catch {
-        if (isActive) {
-          setError('series.fetchError')
+        setTotalProductions(productionsResponse.count ?? productionsResponse.results.length)
+      } catch (error: unknown) {
+        if (!isActive) {
+          return
         }
+
+        if (error instanceof ApiError && error.status === 429) {
+          navigate(seriesPath, {
+            replace: true,
+            state: createFloatingAlertState({
+              message: error.message,
+              severity: ALERT_SEVERITIES.warning,
+            }),
+          })
+          return
+        }
+
+        setError('series.fetchError')
       } finally {
         if (isActive) {
           setIsLoading(false)
@@ -104,7 +128,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return () => {
       isActive = false
     }
-  }, [numericId])
+  }, [navigate, numericId, seriesPath])
 
   const loadMoreProductions = async () => {
     if (isLoadingMore || productions.length >= totalProductions) {
@@ -125,24 +149,29 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
         ...currentProductions,
         ...productionsResponse.results,
       ])
-      setTotalProductions(productionsResponse.count)
+      setTotalProductions(
+        productionsResponse.count ?? productions.length + productionsResponse.results.length,
+      )
       setCurrentPage(nextPage)
     } finally {
       setIsLoadingMore(false)
     }
   }
 
-  /** Sorted most-recent first by start date; productions without a date fall to the end. */
+  /** Sorted most-recent first by start/end date; productions without a date fall to the end. */
   const sortedProductions = useMemo(
     () =>
       [...productions].sort((a, b) => {
-        if (a.first_event_start && b.first_event_start) {
-          return new Date(b.first_event_start).getTime() - new Date(a.first_event_start).getTime()
+        const aTimestamp = getProductionSortTimestamp(a)
+        const bTimestamp = getProductionSortTimestamp(b)
+
+        if (aTimestamp !== null && bTimestamp !== null) {
+          return bTimestamp - aTimestamp
         }
-        if (a.first_event_start) {
+        if (aTimestamp !== null) {
           return -1
         }
-        if (b.first_event_start) {
+        if (bTimestamp !== null) {
           return 1
         }
         return b.id - a.id
@@ -185,7 +214,16 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return <SeriesDetailPageSkeleton />
   }
   if (error || !seriesTag) {
-    return <Navigate to={notFoundPath} replace />
+    return (
+      <Navigate
+        to={notFoundPath}
+        replace
+        state={createFloatingAlertState({
+          message: t(error ?? 'series.fetchError'),
+          severity: ALERT_SEVERITIES.error,
+        })}
+      />
+    )
   }
 
   const lang = i18n.language.startsWith('en') ? 'en' : 'nl'
@@ -199,7 +237,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const seriesDescription =
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
     t('series.noDescription')
-  const hasMoreProductions = sortedProductions.length < totalProductions
+  const hasMoreProductions = productions.length < totalProductions
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
@@ -288,7 +326,9 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
               {hasMoreProductions && (
                 <Box sx={{ pl: { xs: 3, md: 12 } }}>
                   <Button variant="outlined" onClick={loadMoreProductions} disabled={isLoadingMore}>
-                    {isLoadingMore ? t('common.loading', 'Loading…') : t('series.showMore')}
+                    {isLoadingMore
+                      ? t('common.loading', 'Loading…')
+                      : t('series.showMore', 'Show More')}
                   </Button>
                 </Box>
               )}
@@ -302,17 +342,26 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
 const SeriesDetailPage = () => {
   const location = useLocation()
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
     i18n.language,
     i18n.resolvedLanguage,
   )
-  const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
+  const seriesPath = toLocalizedPath('/series', currentLanguage)
 
   if (!id || Number.isNaN(Number(id))) {
-    return <Navigate to={notFoundPath} replace />
+    return (
+      <Navigate
+        to={seriesPath}
+        replace
+        state={createFloatingAlertState({
+          message: t('series.invalidId'),
+          severity: ALERT_SEVERITIES.error,
+        })}
+      />
+    )
   }
 
   return <SeriesDetailContent key={id} id={id} />
