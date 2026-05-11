@@ -59,6 +59,8 @@ export interface Production {
   tagline: Record<string, string>
   teaser: Record<string, string>
   description: Record<string, string>
+  video_1?: Record<string, string>
+  video_2?: Record<string, string>
   tags: Tag[]
   genres: Genre[]
   events?: Event[]

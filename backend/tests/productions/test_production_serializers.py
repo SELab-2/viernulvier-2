@@ -119,6 +119,8 @@ class TestProductionSerializerFields(TestCase):
             "genres",
             "display_title",
             "display_artist_name",
+            "video_1",
+            "video_2",
         }
         assert set(data.keys()) == expected
 
