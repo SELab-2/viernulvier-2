@@ -1,4 +1,4 @@
-import { Button, Divider, Paper, Stack, Typography } from '@mui/material'
+import { Button, Divider, Paper, Stack, Typography, Box } from '@mui/material'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import 'dayjs/locale/nl'
@@ -32,6 +32,7 @@ export interface FilterPanelProps {
   onTagSelectionChange: (ids: number[]) => void
   onClearFilters: () => void
   headerActions?: ReactNode
+  onMobileApply?: () => void
 }
 
 const toggleIdInArray = (values: number[], id: number): number[] =>
@@ -90,6 +91,7 @@ const FilterPanel = ({
   onTagSelectionChange,
   onClearFilters,
   headerActions,
+  onMobileApply,
 }: FilterPanelProps) => {
   const { i18n, t } = useTranslation()
   const adapterLocale = i18n.language.startsWith('nl') ? 'nl' : 'en'
@@ -228,6 +230,19 @@ const FilterPanel = ({
           </Stack>
         </FilterSection>
       </Paper>
+      {onMobileApply ? (
+        <Box sx={{ p: tokens.spacing.numericMd, display: { xs: 'block', md: 'none' } }}>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={onMobileApply}
+            aria-label={t('searchbar.search')}
+            sx={{ fontSize: tokens.typography.sizes.sm, py: tokens.spacing.numericSm }}
+          >
+            {t('searchbar.search')}
+          </Button>
+        </Box>
+      ) : null}
     </LocalizationProvider>
   )
 }
