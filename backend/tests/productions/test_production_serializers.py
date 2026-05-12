@@ -149,7 +149,7 @@ class TestRelatedProductionSerializerFields(TestCase):
             "first_event_start",
             "last_event_end",
             "tags",
-            "genres"
+            "genres",
         }
 
     def test_display_title_uses_base_language_fallback(self) -> None:
@@ -671,6 +671,8 @@ class TestProductionSerializerIncludeEventsAndRelated(TestCase):
         data = ProductionSerializer(self.production, context={"include": {"related"}}).data
         assert "related" in data
         assert isinstance(data["related"], list)
+
+
 # ---------------------------------------------------------------------------
 # ProductionSerializer - get_events method
 # ---------------------------------------------------------------------------
