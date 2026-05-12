@@ -9,14 +9,11 @@ export type ImageWithFallbackProps = Omit<BoxProps<'img'>, 'component' | 'src' |
 }
 
 /**
- * Image with a remote `src`, or a centered branded logo on a neutral background when the URL is
- * missing or the request fails.
- *
- * @param props {@link ImageWithFallbackProps}: optional `src` (falsy shows fallback), required
- *   `alt`, optional `sx`, `onError`, and remaining Box-as-`img` props for the loaded image only.
- * @returns The image or fallback subtree.
+ * Renders a remote image when available, otherwise shows a branded fallback.
+ * @param props Image source, alt text, style overrides, and remaining image props.
  */
-const ImageWithFallback = ({ src, alt, sx, onError, ...props }: ImageWithFallbackProps) => {
+const ImageWithFallback = (props: ImageWithFallbackProps) => {
+  const { src, alt, sx, onError, ...imgProps } = props
   const [hasError, setHasError] = useState(false)
   const showImage = Boolean(src) && !hasError
 
@@ -26,6 +23,7 @@ const ImageWithFallback = ({ src, alt, sx, onError, ...props }: ImageWithFallbac
         component="img"
         src={src!}
         alt={alt}
+        loading={imgProps.loading ?? 'lazy'}
         onError={(event) => {
           setHasError(true)
           onError?.(event)
@@ -36,7 +34,7 @@ const ImageWithFallback = ({ src, alt, sx, onError, ...props }: ImageWithFallbac
           backgroundColor: 'action.hover',
           ...sx,
         }}
-        {...props}
+        {...imgProps}
       />
     )
   }

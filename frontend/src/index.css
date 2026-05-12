@@ -17,6 +17,7 @@
   src: url('/fonts/ABCMonumentGrotesk-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -24,8 +25,9 @@
   src: url('/fonts/ABCMonumentGrotesk-Heavy.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
-
+Grotesk
 /* ============================================================================
    ROOT & THEME VARIABLES (Light Mode, MUI-compatible)
    ============================================================================ */
