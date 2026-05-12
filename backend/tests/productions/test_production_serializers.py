@@ -143,6 +143,8 @@ class TestRelatedProductionSerializerFields(TestCase):
             "id",
             "title",
             "display_title",
+            "artist_name",
+            "display_artist_name",
             "media_gallery",
             "first_event_start",
             "last_event_end",

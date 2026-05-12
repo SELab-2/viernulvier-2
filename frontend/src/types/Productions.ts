@@ -35,6 +35,8 @@ export interface RelatedProduction {
   last_event_end: string | null
   tags: Tag[]
   genres: Genre[]
+  artist_name: Record<string, string> | null
+  display_artist_name: string | null
 }
 
 /** Shape of a single related entry (grouped by tag). */
@@ -46,7 +48,7 @@ export interface ProductionRelated {
 /**
  * Production object returned by the backend `/productions/` endpoints.
  * Inherits from `RelatedProduction` and adds some fields for detail view.
- * Note: some fields like `artist_name` are duplicated here because they are
+ * Note: some fields are duplicated here because they are
  *       not guaranteed to be present in the `related` entries.
  */
 export interface Production extends RelatedProduction {
@@ -62,8 +64,6 @@ export interface Production extends RelatedProduction {
   video_2?: Record<string, string>
   genres: Genre[]
   blogs?: BlogCardData[]
-  artist_name: Record<string, string> | null
-  display_artist_name: string | null
 }
 
 /**

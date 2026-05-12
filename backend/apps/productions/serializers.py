@@ -16,13 +16,12 @@ Nested relations
 - ``TagSerializer`` - nested many-to-many.
 """
 
-from django.db.models import Exists, OuterRef, Prefetch, Max, Min, QuerySet
+from django.db.models import Max, Min, Prefetch, QuerySet
 from django.db.models.functions import Now
 from rest_framework import serializers
 
 from apps.blogs.models import Blog
 from apps.core.serializers import TranslatableSerializerMixin
-from apps.events.models import Event
 from apps.genres.serializers import GenreSerializer
 from apps.media_library.models import MediaItem
 from apps.media_library.serializers import MediaGallerySerializer
@@ -477,6 +476,8 @@ class RelatedProductionSerializer(ProductionSerializer):
             "id",
             "title",
             "display_title",
+            "artist_name",
+            "display_artist_name",
             "media_gallery",
             "first_event_start",
             "last_event_end",

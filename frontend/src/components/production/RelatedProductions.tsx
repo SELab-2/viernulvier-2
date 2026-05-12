@@ -120,7 +120,7 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                         ...production,
                         first_event_start: production.first_event_start ?? null,
                         last_event_end: production.last_event_end ?? null,
-                        artist_name: {},
+                        artist_name: production.artist_name ?? null,
                         title: production.title ?? {},
                         tagline: {},
                         teaser: {},
@@ -128,7 +128,7 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                         tags: production.tags ?? [],
                         genres: production.genres ?? [],
                         display_title: production.display_title ?? null,
-                        display_artist_name: null,
+                        display_artist_name: production.display_artist_name ?? null,
                       }}
                     />
                   </Box>
