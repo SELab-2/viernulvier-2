@@ -303,20 +303,20 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                   spacing={2}
                   sx={{ alignItems: { md: 'flex-start' } }}
                 >
-                  {/* Year marker — dot sits on top of the timeline line */}
+                  {/* Year marker — dot on timeline + bold year label */}
                   <Stack
                     direction="row"
-                    spacing={1}
+                    spacing={1.5}
                     sx={{
                       alignItems: 'center',
                       flexShrink: 0,
-                      width: { md: 80 },
+                      width: { md: 88 },
                     }}
                   >
                     <Box
                       sx={{
-                        width: 10,
-                        height: 10,
+                        width: 12,
+                        height: 12,
                         borderRadius: '50%',
                         bgcolor: 'text.primary',
                         flexShrink: 0,
@@ -324,7 +324,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                         zIndex: 1,
                       }}
                     />
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant="h6"
+                      component="span"
+                      sx={{ fontWeight: 800, lineHeight: 1 }}
+                    >
                       {year}
                     </Typography>
                   </Stack>
