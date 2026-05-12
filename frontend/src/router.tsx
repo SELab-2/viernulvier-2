@@ -118,7 +118,7 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
         <Navbar mode={mode} onToggleMode={onToggleMode} />
       </Suspense>
       <Box component="main" sx={{ flexGrow: 1 }}>
-        <Suspense fallback={<LoadingSpinner fullScreen={true} />}>
+        <Suspense fallback={<LoadingSpinner fullScreen />}>
           <Routes>
             <Route index element={<HomePage />} />
             <Route path={archiveSlug} element={<ProductionsPage />} />
