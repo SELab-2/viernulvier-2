@@ -102,8 +102,8 @@ const MediaFilesPage = () => {
           return
         }
 
-        setMediaFiles(response.results)
-        setTotalCount(response.count)
+        setMediaFiles(response.results ?? [])
+        setTotalCount(response.count ?? 0)
       } catch (error: unknown) {
         if (!isActive) {
           return
