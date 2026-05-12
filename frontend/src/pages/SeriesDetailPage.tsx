@@ -4,10 +4,10 @@
  * of associated productions grouped by year.
  */
 
-import { Alert, Box, Container, Divider, Stack, Typography } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { Alert, Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useLocation, useParams, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import SeriesDetailPageSkeleton from './SeriesDetailPageSkeleton'
 import Breadcrumbs from '../components/production/Breadcrumbs'
@@ -24,6 +24,8 @@ import { getTranslatedRecord } from '../utils/translations'
 
 import type { Production } from '../types/Productions'
 import type { Tag } from '../types/Tags'
+
+const PAGE_SIZE = 12
 
 type SeriesStat = {
   value: string
@@ -49,6 +51,7 @@ type SeriesDetailContentProps = {
 
 const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const location = useLocation()
+  const navigate = useNavigate()
   const { t, i18n } = useTranslation()
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
@@ -56,58 +59,134 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     i18n.resolvedLanguage,
   )
   const seriesPath = toLocalizedPath('/series', currentLanguage)
+  const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
   const currentPath = location.pathname
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [productions, setProductions] = useState<Production[]>([])
+  const [totalProductions, setTotalProductions] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [error, setError] = useState<SeriesErrorKey>(null)
   const numericId = Number(id)
 
-  const navigate = useNavigate()
+  const showRateLimitAlert = useCallback(
+    (rateLimitError: ApiError, fallbackPath = seriesPath) => {
+      const alertMessage =
+        Number(rateLimitError.message) === 429
+          ? String(rateLimitError.status)
+          : rateLimitError.message
+      navigate(fallbackPath, {
+        replace: true,
+        state: createFloatingAlertState({
+          message: alertMessage,
+          severity: ALERT_SEVERITIES.warning,
+        }),
+      })
+    },
+    [navigate, seriesPath],
+  )
 
   useEffect(() => {
+    let isActive = true
+
     const fetchSeries = async () => {
+      setIsLoading(true)
+      setError(null)
+      setProductions([])
+      setTotalProductions(0)
+      setCurrentPage(1)
+
       try {
         const [tag, productionsResponse] = await Promise.all([
           getTag(numericId),
-          getProductions({ pageSize: 100, filters: { tag: numericId } }),
+          getProductions({
+            page: 1,
+            pageSize: PAGE_SIZE,
+            filters: { tag: numericId },
+          }),
         ])
+
+        if (!isActive) {
+          return
+        }
 
         setSeriesTag(tag)
         setProductions(productionsResponse.results)
+        setTotalProductions(productionsResponse.count ?? productionsResponse.results.length)
       } catch (error: unknown) {
-        if (error instanceof ApiError && error.status === 429) {
-          navigate(currentPath, {
-            replace: true,
-            state: createFloatingAlertState({
-              message: error.message,
-              severity: ALERT_SEVERITIES.warning,
-            }),
-          })
+        if (!isActive) {
+          return
+        }
+
+        if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {
+          isActive = false
+          showRateLimitAlert(error)
           return
         }
 
         setError('series.fetchError')
       } finally {
-        setIsLoading(false)
+        if (isActive) {
+          setIsLoading(false)
+        }
       }
     }
 
     void fetchSeries()
-  }, [currentPath, navigate, numericId, seriesPath])
+
+    return () => {
+      isActive = false
+    }
+  }, [numericId, showRateLimitAlert])
+
+  const loadMoreProductions = async () => {
+    if (isLoadingMore || productions.length >= totalProductions) {
+      return
+    }
+
+    setIsLoadingMore(true)
+
+    try {
+      const nextPage = currentPage + 1
+      const productionsResponse = await getProductions({
+        page: nextPage,
+        pageSize: PAGE_SIZE,
+        filters: { tag: numericId },
+      })
+
+      setProductions((currentProductions) => [
+        ...currentProductions,
+        ...productionsResponse.results,
+      ])
+      setTotalProductions(
+        productionsResponse.count ?? productions.length + productionsResponse.results.length,
+      )
+      setCurrentPage(nextPage)
+    } catch (error: unknown) {
+      if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {
+        showRateLimitAlert(error, currentPath)
+      }
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
 
   /** Sorted most-recent first by start date; productions without a date fall to the end. */
   const sortedProductions = useMemo(
     () =>
       [...productions].sort((a, b) => {
-        if (a.first_event_start && b.first_event_start) {
-          return new Date(b.first_event_start).getTime() - new Date(a.first_event_start).getTime()
+        const aDate = a.first_event_start ?? a.last_event_end
+        const bDate = b.first_event_start ?? b.last_event_end
+
+        if (aDate && bDate) {
+          return new Date(bDate).getTime() - new Date(aDate).getTime()
         }
-        if (a.first_event_start) {
+        if (aDate) {
           return -1
         }
-        if (b.first_event_start) {
+        if (bDate) {
           return 1
         }
         return b.id - a.id
@@ -138,7 +217,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     : null
 
   const stats: SeriesStat[] = [
-    { value: String(sortedProductions.length), label: t('series.stats.editions') },
+    { value: String(totalProductions), label: t('series.stats.editions') },
     {
       value: startYear && endYear ? `${startYear}–${endYear}` : '—',
       label: t('series.stats.period'),
@@ -152,7 +231,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   if (error || !seriesTag) {
     return (
       <Navigate
-        to={toLocalizedPath('/404', currentLanguage)}
+        to={notFoundPath}
         replace
         state={createFloatingAlertState({
           message: t(error ?? 'series.fetchError'),
@@ -173,6 +252,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const seriesDescription =
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
     t('series.noDescription')
+  const hasMoreProductions = productions.length < totalProductions
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
@@ -223,16 +303,20 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                   spacing={2}
                   sx={{ alignItems: { md: 'flex-start' } }}
                 >
-                  {/* Year marker — dot sits on top of the timeline line */}
+                  {/* Year marker — dot on timeline + bold year label */}
                   <Stack
                     direction="row"
-                    spacing={1}
-                    sx={{ alignItems: 'center', flexShrink: 0, width: { md: 80 } }}
+                    spacing={1.5}
+                    sx={{
+                      alignItems: 'center',
+                      flexShrink: 0,
+                      width: { md: 88 },
+                    }}
                   >
                     <Box
                       sx={{
-                        width: 10,
-                        height: 10,
+                        width: 12,
+                        height: 12,
                         borderRadius: '50%',
                         bgcolor: 'text.primary',
                         flexShrink: 0,
@@ -240,7 +324,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                         zIndex: 1,
                       }}
                     />
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant="h6"
+                      component="span"
+                      sx={{ fontWeight: 800, lineHeight: 1 }}
+                    >
                       {year}
                     </Typography>
                   </Stack>
@@ -257,6 +345,16 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                   </Box>
                 </Stack>
               ))}
+
+              {hasMoreProductions && (
+                <Box sx={{ pl: { xs: 3, md: 12 } }}>
+                  <Button variant="outlined" onClick={loadMoreProductions} disabled={isLoadingMore}>
+                    {isLoadingMore
+                      ? t('common.loading', 'Loading…')
+                      : t('series.showMore', 'Show More')}
+                  </Button>
+                </Box>
+              )}
             </Stack>
           </Box>
         )}
