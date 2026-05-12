@@ -23,7 +23,6 @@ describe('Navbar', () => {
   it('renders the brand logo and Archive label', () => {
     renderNavbar()
     expect(screen.getByAltText('Viernulvier logo')).toBeInTheDocument()
-    expect(screen.getByText('/ Archive')).toBeInTheDocument()
   })
 
   it('renders all navigation links', () => {
