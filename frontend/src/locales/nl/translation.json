@@ -204,9 +204,11 @@
       "related": "Gerelateerde producties",
       "relatedBlogs": "Gerelateerde blogs",
       "meta": {
+        "artist": "Artiest",
         "period": "Periode",
         "venues": "Locaties",
-        "genre": "Genre",
+        "genres": "Genres",
+        "series": "Reeksen",
         "type": "Type",
         "performerType": "Uitvoering",
         "group": "Groep",

@@ -241,7 +241,7 @@ describe('ProductionDetailPage', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Productie NL')).toHaveLength(2)
       expect(screen.getByRole('heading', { name: 'Productie NL' })).toBeInTheDocument()
-      expect(screen.queryByText('Tagline NL')).not.toBeInTheDocument()
+      expect(screen.getByText('Kunstenaar NL')).toBeInTheDocument()
       expect(screen.getByText('Teaser NL')).toBeInTheDocument()
       expect(screen.getByText('Omschrijving NL')).toBeInTheDocument()
       expect(screen.getByText('Events')).toBeInTheDocument()
@@ -299,8 +299,8 @@ describe('ProductionDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(screen.queryByText('Tagline NL')).not.toBeInTheDocument()
       expect(screen.getByRole('heading', { name: 'Productie NL' })).toBeInTheDocument()
+      expect(screen.queryByText('Tagline NL')).not.toBeInTheDocument()
       expect(screen.getByText('Events')).toBeInTheDocument()
     })
 

@@ -204,9 +204,11 @@
       "related": "Related productions",
       "relatedBlogs": "Related blogs",
       "meta": {
+        "artist": "Artist",
         "period": "Period",
         "venues": "Venues",
-        "genre": "Genre",
+        "genres": "Genres",
+        "series": "Series",
         "type": "Type",
         "performerType": "Performer type",
         "group": "Group",
