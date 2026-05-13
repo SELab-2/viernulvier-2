@@ -52,15 +52,13 @@ function getDateRange(events: Production['events'] | null | undefined, lang: str
  * This avoids repeated venue descriptions by using a set.
  * Note: event.hall_display is expected to be a fallback provided by the API.
  */
-function getUniqueVenues(events: Production['events'] | null | undefined, lang: string): string {
+function getUniqueVenues(events: Production['events'] | null | undefined, lang: string): string[] {
   const list = events || []
-  const venues = [
+  return [
     ...new Set(
       list.map((event) => getHallDisplayName(event, lang) || event.hall_display).filter(Boolean),
     ),
   ] as string[]
-
-  return venues.join(', ')
 }
 
 interface ResolvedTag {
@@ -222,6 +220,7 @@ export default function MetaPanel({
 
   const resolvedDateRange = getDateRange(production.events, language)
   const resolvedVenues = getUniqueVenues(production.events, language)
+  const resolvedVenueList = resolvedVenues.join(', ')
   const genreTags = formatGenreTags(production, language)
   const seriesTags = formatSeriesTags(production, language)
 
@@ -285,8 +284,14 @@ export default function MetaPanel({
             value={resolvedDateRange}
           />
         )}
-        {resolvedVenues && (
-          <MetaRow label={t('productions.detail.meta.venues', 'Locaties')} value={resolvedVenues} />
+        {resolvedVenueList && (
+          <MetaRow
+            label={t('productions.detail.meta.venues', {
+              count: resolvedVenues.length,
+              defaultValue: 'Locaties',
+            })}
+            value={resolvedVenueList}
+          />
         )}
         {capitalizedResolvedTypeName && (
           <MetaRow
@@ -316,13 +321,19 @@ export default function MetaPanel({
         />
         {genreTags.length > 0 && (
           <MetaRow
-            label={t('productions.detail.meta.genres', 'Genres')}
+            label={t('productions.detail.meta.genres', {
+              count: genreTags.length,
+              defaultValue: 'Genres',
+            })}
             value={renderTagList(genreTags)}
           />
         )}
         {seriesTags.length > 0 && (
           <MetaRow
-            label={t('productions.detail.meta.series', 'Reeksen')}
+            label={t('productions.detail.meta.series', {
+              count: seriesTags.length,
+              defaultValue: 'Reeksen',
+            })}
             value={renderTagList(seriesTags)}
           />
         )}
