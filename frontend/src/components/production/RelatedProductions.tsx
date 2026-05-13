@@ -88,25 +88,15 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
               sx={{ width: '100%' }}
             >
               {entry.productions.map((production) => {
-                const normalizedTitle = getTranslatedRecord(
-                  production.title,
-                  language,
-                  production.display_title,
-                )
+                // TODO: clean up comment if we decide to keep it like this.
 
-                const normalizedArtist =
-                  getTranslatedRecord(
-                    production.artist_name,
-                    language,
-                    production.display_artist_name,
-                  ) || ''
-
-                // TODO:
                 // Related productions don't have all the values of a production
                 // It only contains the values required for the frontend to show the cards
                 // We could change the API to return complete productions to avoid this normalization
                 // Or we could make the ProductionGridCard work with the related production types
                 // For now just use normalization, but maybe this should be looked at again?
+
+                // Currently we just get the needed values for the card and pass them, nulling the rest.
                 return (
                   <Box
                     key={production.id}
@@ -128,19 +118,17 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                     <ProductionGridCard
                       production={{
                         ...production,
-                        attendance_mode: '',
-                        performer_type: '',
-                        first_event_start: null,
-                        last_event_end: null,
-                        uit_database_type: null,
-                        artist_name: production.artist_name ?? {},
+                        first_event_start: production.first_event_start ?? null,
+                        last_event_end: production.last_event_end ?? null,
+                        artist_name: production.artist_name ?? null,
+                        title: production.title ?? {},
                         tagline: {},
                         teaser: {},
                         description: {},
-                        tags: [],
-                        genres: [],
-                        display_title: normalizedTitle,
-                        display_artist_name: normalizedArtist,
+                        tags: production.tags ?? [],
+                        genres: production.genres ?? [],
+                        display_title: production.display_title ?? null,
+                        display_artist_name: production.display_artist_name ?? null,
                       }}
                     />
                   </Box>
