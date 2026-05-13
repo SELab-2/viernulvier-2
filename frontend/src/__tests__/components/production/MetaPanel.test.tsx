@@ -242,7 +242,7 @@ describe('MetaPanel component', () => {
       ],
     })
 
-    expect(screen.getAllByText('Genre uit naam')).toHaveLength(2)
+    expect(screen.getAllByText('Genre uit naam')).toHaveLength(1)
     expect(screen.getByText('Naam-tag')).toBeInTheDocument()
     expect(screen.getByText('url-tag')).toBeInTheDocument()
     expect(screen.getByText('type-tag')).toBeInTheDocument()
