@@ -2,59 +2,64 @@ import { render, screen, waitFor } from '@testing-library/react'
 
 import Router from '../router'
 
+// Create mock page components
+const createMockPage = (testid: string) => () => <div data-testid={testid} />
+
+// Mock the navbar and footer (not lazy loaded in the actual app, but mocked in tests)
 jest.mock('../shared/Navbar', () => ({
   __esModule: true,
-  default: () => <div data-testid="navbar-mock" />,
+  default: createMockPage('navbar-mock'),
 }))
 
 jest.mock('../shared/Footer', () => ({
   __esModule: true,
-  default: () => <div data-testid="footer-mock" />,
+  default: createMockPage('footer-mock'),
 }))
 
+// Mock the lazily-loaded pages - these need to resolve properly for React.lazy()
 jest.mock('../pages/HomePage', () => ({
   __esModule: true,
-  default: () => <div data-testid="home-page-mock" />,
+  default: createMockPage('home-page-mock'),
 }))
 
 jest.mock('../features/productions/pages/ProductionsPage', () => ({
   __esModule: true,
-  default: () => <div data-testid="productions-page-mock" />,
+  default: createMockPage('productions-page-mock'),
 }))
 
 jest.mock('../features/productions/pages/ProductionDetailPage', () => ({
   __esModule: true,
-  default: () => <div data-testid="production-detail-page-mock" />,
+  default: createMockPage('production-detail-page-mock'),
 }))
 
 jest.mock('../features/series/pages/SeriesPage', () => ({
   __esModule: true,
-  default: () => <div data-testid="series-page-mock" />,
+  default: createMockPage('series-page-mock'),
 }))
 
 jest.mock('../features/series/pages/SeriesDetailPage', () => ({
   __esModule: true,
-  default: () => <div data-testid="series-detail-page-mock" />,
+  default: createMockPage('series-detail-page-mock'),
 }))
 
 jest.mock('../features/blogs/pages/BlogsPage', () => ({
   __esModule: true,
-  default: () => <div data-testid="blogs-page-mock" />,
+  default: createMockPage('blogs-page-mock'),
 }))
 
 jest.mock('../features/blogs/pages/BlogDetailPage', () => ({
   __esModule: true,
-  default: () => <div data-testid="blog-detail-page-mock" />,
+  default: createMockPage('blog-detail-page-mock'),
 }))
 
 jest.mock('../features/media-files/pages/MediaFilesPage', () => ({
   __esModule: true,
-  default: () => <div data-testid="media-files-page-mock" />,
+  default: createMockPage('media-files-page-mock'),
 }))
 
 jest.mock('../pages/NotFoundPage', () => ({
   __esModule: true,
-  default: () => <div data-testid="not-found-page-mock" />,
+  default: createMockPage('not-found-page-mock'),
 }))
 
 describe('Router', () => {
@@ -70,7 +75,7 @@ describe('Router', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/nl')
     })
-    expect(screen.getByTestId('home-page-mock')).toBeInTheDocument()
+    expect(await screen.findByTestId('home-page-mock')).toBeInTheDocument()
   })
 
   it('redirects invalid language prefixes to inferred localized paths', async () => {
@@ -81,7 +86,7 @@ describe('Router', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/en/archive')
     })
-    expect(screen.getByTestId('productions-page-mock')).toBeInTheDocument()
+    expect(await screen.findByTestId('productions-page-mock')).toBeInTheDocument()
   })
 
   it('localizes unprefixed paths through the global language redirect', async () => {
@@ -92,7 +97,7 @@ describe('Router', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/en/archive')
     })
-    expect(screen.getByTestId('productions-page-mock')).toBeInTheDocument()
+    expect(await screen.findByTestId('productions-page-mock')).toBeInTheDocument()
   })
 
   it('redirects production detail compatibility alias to localized productions detail route', async () => {
@@ -103,7 +108,7 @@ describe('Router', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/nl/producties/42')
     })
-    expect(screen.getByTestId('production-detail-page-mock')).toBeInTheDocument()
+    expect(await screen.findByTestId('production-detail-page-mock')).toBeInTheDocument()
   })
 
   it('redirects Dutch series aliases to English series detail route', async () => {
@@ -114,7 +119,7 @@ describe('Router', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/en/series/5')
     })
-    expect(screen.getByTestId('series-detail-page-mock')).toBeInTheDocument()
+    expect(await screen.findByTestId('series-detail-page-mock')).toBeInTheDocument()
   })
 
   it('normalizes invalid language-only roots and falls through to not-found', async () => {
@@ -125,6 +130,6 @@ describe('Router', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/en/xx')
     })
-    expect(screen.getByTestId('not-found-page-mock')).toBeInTheDocument()
+    expect(await screen.findByTestId('not-found-page-mock')).toBeInTheDocument()
   })
 })

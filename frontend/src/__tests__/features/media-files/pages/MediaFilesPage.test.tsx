@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 const useMediaQueryMock = jest.fn<(query?: unknown) => boolean>()
@@ -57,6 +57,12 @@ jest.mock('../../../../features/media-files/pages/MediaFilesPageSkeleton', () =>
 
 jest.mock('../../../../shared/components/FloatingAlert', () => ({
   __esModule: true,
+  ALERT_SEVERITIES: {
+    error: 'error',
+    warning: 'warning',
+    info: 'info',
+    success: 'success',
+  },
   default: ({ open, message, onClose }: { open: boolean; message: string; onClose: () => void }) =>
     open ? (
       <div>
@@ -117,6 +123,13 @@ describe('MediaFilesPage', () => {
       setViewMode: setViewModeMock,
       setPage: setPageMock,
     })
+  })
+
+  afterEach(() => {
+    const fallbackRoot = document.getElementById('notification-fallback-root')
+    if (fallbackRoot) {
+      fallbackRoot.remove()
+    }
   })
 
   it('fetches media files with trimmed search and ordering, then renders the results', async () => {
@@ -337,6 +350,21 @@ describe('MediaFilesPage', () => {
     expect(screen.getByTestId('result-count')).toHaveTextContent('0')
   })
 
+  it('shows a rate-limit warning for a 429 ApiError', async () => {
+    getMediaFilesMock.mockRejectedValueOnce(
+      new ApiError(429, 'Too many requests. Please try again later.'),
+    )
+
+    render(<MediaFilesPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Too many requests. Please try again later.')).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
+    expect(screen.getByTestId('result-count')).toHaveTextContent('0')
+  })
+
   it('closes the floating alert when requested', async () => {
     getMediaFilesMock.mockRejectedValueOnce(new Error('boom'))
 
@@ -346,7 +374,8 @@ describe('MediaFilesPage', () => {
       expect(screen.getByText('media.error.notification')).toBeInTheDocument()
     })
 
-    fireEvent.click(screen.getByText('close-floating-alert'))
+    const closeButton = screen.getAllByText('close-floating-alert')[0]
+    fireEvent.click(closeButton)
 
     expect(screen.queryByText('media.error.notification')).not.toBeInTheDocument()
   })

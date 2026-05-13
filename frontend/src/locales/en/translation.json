@@ -123,6 +123,7 @@
       "400": "Invalid request parameters.",
       "401": "Not authenticated. Please log in.",
       "403": "You do not have permission to perform this action.",
+      "429": "Too many requests. Please try again later.",
       "404": "The requested resource was not found.",
       "500": "An internal server error occurred. Please try again later.",
       "genericWithCode": "Request failed with status {{status}}."
@@ -218,8 +219,8 @@
       "unknownProduction": "Unknown production",
       "noDescription": "No description available.",
       "error": {
-        "invalidId": "Invalid production ID",
-        "loadFailed": "Could not load production"
+        "invalidId": "Invalid production ID.",
+        "loadFailed": "Could not load production."
       },
       "events": "Events"
     }
@@ -288,6 +289,7 @@
     "listPlaceholder": "List of series will be displayed here.",
     "allEditions": "All editions",
     "allEditionsSubtitle": "Chronological overview of the productions within this series.",
+    "showMore": "Show more",
     "noDescription": "No description available.",
     "noProductions": "There are no productions linked to this series.",
     "loading": "Loading series",
@@ -331,10 +333,11 @@
     }
   },
   "blog": {
-    "couldNotLoad": "Could not load blog",
-    "invalidId": "Invalid blog ID"
+    "couldNotLoad": "Could not load blog.",
+    "invalidId": "Invalid blog ID."
   },
   "media": {
+    "couldNotLoad": "Could not load media file.",
     "searchPlaceholder": "Search files by name, description or type...",
     "fileType": {
       "image": "Image",

@@ -13,22 +13,22 @@ Nested relations
 - ``UitDatabaseTypeSerializer`` - simple read-only nested representation of
     the classification FK target.
 - ``GenreSerializer`` - nested per production, ordered by ``position``.
-- ``TagSerializer`` - nested many-to-many, carries its own translated fields.
+- ``TagSerializer`` - nested many-to-many.
 """
 
-from django.db.models import Exists, OuterRef, Prefetch
+from django.db.models import Max, Min, Prefetch, QuerySet
 from django.db.models.functions import Now
 from rest_framework import serializers
 
 from apps.blogs.models import Blog
 from apps.core.serializers import TranslatableSerializerMixin
-from apps.events.models import Event
 from apps.genres.serializers import GenreSerializer
 from apps.media_library.models import MediaItem
 from apps.media_library.serializers import MediaGallerySerializer
+from apps.tags.models import Tag
 from apps.tags.serializers import TagSerializer
 
-from .models import Production, ProductionTag, UitDatabaseType
+from .models import Production, ProductionGenre, UitDatabaseType
 
 
 class ProductionLandingStatsSerializer(serializers.Serializer):
@@ -49,52 +49,6 @@ class UitDatabaseTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = UitDatabaseType
         fields = ["id", "name"]
-
-
-class ProductionTagSerializer(serializers.ModelSerializer):
-    """Serializes a ProductionTag through-table record.
-
-    Exposes all ``Tag`` fields (delegated to ``TagSerializer``) plus a
-    ``description`` dictionary carrying all available translations of the
-    per-production-tag description.
-
-    The ``description`` field returns translations as a language-code dict
-    (e.g. ``{"nl": "...", "en": "..."}``) consistent with the pattern used
-    by ``TranslatableSerializerMixin`` on other models.
-
-    Queryset strategy
-    -----------------
-    Expects ``obj.translations`` to be pre-fetched with ``select_related("language")``
-    to avoid N+1 queries. When the viewset uses ``to_attr="prefetched_production_tags"``
-    the inline ``get_queryset`` should include
-    ``.prefetch_related("translations__language")``.
-    """
-
-    description = serializers.SerializerMethodField(
-        help_text=(
-            "Dictionary of all available translations for the tag description "
-            'within this production (e.g. {"nl": "...", "en": "..."}). '
-            "Empty dict when no descriptions have been added."
-        ),
-    )
-
-    class Meta:
-        model = ProductionTag
-        fields = ["description"]
-
-    def to_representation(self, instance: ProductionTag) -> dict:
-        """Merge the full Tag representation with this through-table's own fields.
-
-        Tag fields always come first so the shape is backward-compatible with
-        the previous ``TagSerializer``-only output.
-        """
-        tag_data = TagSerializer(instance.tag).data
-        own_data = super().to_representation(instance)
-        return {**tag_data, **own_data}
-
-    def get_description(self, obj: ProductionTag) -> dict:
-        """Return all available translations as a language-code dictionary."""
-        return {translation.language.code: translation.description for translation in obj.translations.all()}
 
 
 class RelatedTagSerializer(TagSerializer):
@@ -193,10 +147,6 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
     - ``genres`` - ordered by ``position`` via ``ProductionGenre.position``.
     """
 
-    # ---------------------------------------------------------------------------
-    # Translatable fields
-    # ---------------------------------------------------------------------------
-
     title = serializers.SerializerMethodField(
         help_text=(
             "Dictionary of all available translations for the production title "
@@ -241,11 +191,24 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         ),
     )
 
-    description = serializers.SerializerMethodField(
+    video_1 = serializers.SerializerMethodField(
         help_text=(
-            "Production title in the project's base language (derived from settings.LANGUAGE_CODE). "
-            "Falls back to the first available translation when missing."
+            "Dictionary of all available translations for the primary video URL "
+            '(e.g. {"en": "https://...", "nl": "https://..."}). '
+            "Read-only."
         ),
+    )
+
+    video_2 = serializers.SerializerMethodField(
+        help_text=(
+            "Dictionary of all available translations for the secondary video URL "
+            '(e.g. {"en": "https://...", "nl": "https://..."}). '
+            "Read-only."
+        ),
+    )
+
+    description = serializers.SerializerMethodField(
+        help_text="Production description in all available translations.",
     )
 
     display_title = serializers.SerializerMethodField(
@@ -262,21 +225,12 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         ),
     )
 
-    # ---------------------------------------------------------------------------
-    # Nested relations (read-only)
-    # ---------------------------------------------------------------------------
-
     uit_database_type = UitDatabaseTypeSerializer(
         read_only=True,
         help_text="Nested UIT Database Type classification. `null` when not assigned.",
     )
 
-    tags = serializers.SerializerMethodField(
-        help_text=(
-            "Tags attached to this production, each with localised fields and "
-            "an optional per-production ``description`` dictionary."
-        )
-    )
+    tags = serializers.SerializerMethodField(help_text="Tags attached to this production, each with localised fields.")
 
     genres = serializers.SerializerMethodField(
         help_text=(
@@ -287,9 +241,8 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
     events = serializers.SerializerMethodField(
         help_text=(
-            "List of events that are performances of this production."
-            "This is only shown if the request is to a specific production, "
-            "and the `events` field is included in the request."
+            "List of events that are performances of this production. "
+            "Only shown if `events` is passed to the `include` query parameter."
         ),
         read_only=True,
     )
@@ -333,6 +286,8 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "tagline",
             "teaser",
             "description",
+            "video_1",
+            "video_2",
             "tags",
             "genres",
             "events",
@@ -351,6 +306,8 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
             "tagline",
             "teaser",
             "description",
+            "video_1",
+            "video_2",
             "tags",
             "genres",
             "events",
@@ -359,149 +316,130 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         ]
         extra_kwargs = {
             "attendance_mode": {
-                "help_text": ("How the audience attends the production. Accepted values: `offline`, `online`."),
+                "help_text": "How the audience attends the production. Accepted values: `offline`, `online`.",
             },
             "performer_type": {
-                "help_text": ("Whether the performance is by a group or a solo artist. Accepted values: `group`, `solo`."),
+                "help_text": "Whether the performance is by a group or a solo artist. Accepted values: `group`, `solo`.",
             },
             "media_gallery": {
                 "help_text": "PK of the associated MediaGallery. `null` when no gallery is assigned.",
             },
         }
 
-    # ---------------------------------------------------------------------------
-    # SerializerMethodField implementations
-    # ---------------------------------------------------------------------------
-
     def get_genres(self, obj: Production) -> list:
-        """Return serialised genres in correct position order.
-
-        Reads from ``obj.prefetched_production_genres`` when the viewset has
-        used an explicit ``Prefetch`` with ``to_attr``; falls back to a live
-        queryset call to avoid silently returning an empty list.
-        """
+        """Return serialised genres in correct position order."""
         production_genres = getattr(obj, "prefetched_production_genres", None)
 
         if production_genres is not None:
             genres = [pg.genre for pg in production_genres]
         else:
-            # Fallback - will trigger an additional query per production.
             genres = obj.genres.all().order_by("productiongenre__position")
 
         return GenreSerializer(genres, many=True).data
 
-    def get_title(self, obj: Production) -> str:
-        """Return all available translations as a language-code dictionary."""
+    def get_title(self, obj: Production) -> dict:
+        """Return all available translations for the title as a language-code dictionary."""
         return self.get_translated_field(obj, "title")
 
-    def get_artist_name(self, obj: Production) -> str:
-        """Return all available translations as a language-code dictionary."""
+    def get_artist_name(self, obj: Production) -> dict:
+        """Return all available translations for the artist name as a language-code dictionary."""
         return self.get_translated_field(obj, "artist_name")
 
-    def get_tagline(self, obj: Production) -> str:
-        """Return all available translations as a language-code dictionary."""
+    def get_tagline(self, obj: Production) -> dict:
+        """Return all available translations for the tagline as a language-code dictionary."""
         return self.get_translated_field(obj, "tagline")
 
-    def get_teaser(self, obj: Production) -> str:
-        """Return all available translations as a language-code dictionary."""
+    def get_teaser(self, obj: Production) -> dict:
+        """Return all available translations for the teaser as a language-code dictionary."""
         return self.get_translated_field(obj, "teaser")
 
-    def get_description(self, obj: Production) -> str:
-        """Return all available translations as a language-code dictionary."""
+    def get_description(self, obj: Production) -> dict:
+        """Return all available translations for the description as a language-code dictionary."""
         return self.get_translated_field(obj, "description")
 
+    def get_video_1(self, obj: Production) -> dict[str, str] | None:
+        """Return all available translations for `video_1` as a language-code dict."""
+        return self.get_translated_field(obj, "video_1")
+
+    def get_video_2(self, obj: Production) -> dict[str, str] | None:
+        """Return all available translations for `video_2` as a language-code dict."""
+        return self.get_translated_field(obj, "video_2")
+
     def get_display_title(self, obj: Production) -> str | None:
-        """Return the base-language title (with fallback)."""
+        """Return the title in the project's base language, falling back to the first available translation."""
         return self.get_base_translated_value(obj, field_name="title")
 
     def get_display_artist_name(self, obj: Production) -> str | None:
-        """Return the base-language artist/company name (with fallback)."""
+        """Return the artist name in the project's base language, falling back to the first available translation."""
         return self.get_base_translated_value(obj, field_name="artist_name")
 
     def get_tags(self, obj: Production) -> list:
-        """Return serialised production-tag records in type/id order.
+        """Return serialised tags, from prefetch or fallback query."""
+        tags = getattr(obj, "prefetched_tags", None)
 
-        Reads from ``obj.prefetched_production_tags`` when the viewset has
-        used an explicit ``Prefetch`` with ``to_attr``; falls back to a live
-        queryset call to avoid silently returning an empty list.
-        """
-        production_tags = getattr(obj, "prefetched_production_tags", None)
+        if tags is None:
+            tags = obj.tags.prefetch_related("translations__language").order_by("type", "id")
 
-        if production_tags is None:
-            # Fallback — will trigger additional queries per production.
-            production_tags = (
-                obj.productiontag_set.select_related("tag")
-                .prefetch_related("translations__language", "tag__translations__language")
-                .order_by("tag__type", "id")
+        return TagSerializer(tags, many=True).data
+
+    def _get_related_productions_qs(self, tag: Tag, exclude_id: int) -> QuerySet[Production]:
+        """Return a queryset of productions sharing the given tag, excluding the current production."""
+        return (
+            Production.objects.filter(tags=tag)
+            .exclude(id=exclude_id)
+            .select_related("uit_database_type", "media_gallery")
+            .prefetch_related(
+                "translations__language",
+                Prefetch(
+                    "productiongenre_set",
+                    queryset=ProductionGenre.objects.select_related("genre").order_by("position"),
+                    to_attr="prefetched_production_genres",
+                ),
+                Prefetch(
+                    "tags",
+                    queryset=Tag.objects.prefetch_related("translations__language").order_by("type", "id"),
+                    to_attr="prefetched_tags",
+                ),
+                Prefetch(
+                    "media_gallery__media_items",
+                    queryset=MediaItem.objects.prefetch_related("translations__language", "crops").order_by("position"),
+                ),
             )
-
-        return ProductionTagSerializer(production_tags, many=True).data
+            .annotate(
+                first_event_start=Min("events__starts_at"),
+                last_event_end=Max("events__ends_at"),
+            )
+        )
 
     def get_related(self, obj: Production) -> list | None:
         """Return related productions grouped by the tags on this production."""
         if "related" not in self.context.get("include", set()):
             return None
 
-        production_tags = getattr(obj, "prefetched_production_tags", None)
-        if production_tags is not None:
-            tags = [production_tag.tag for production_tag in production_tags]
-        else:
-            tags = list(obj.tags.all())
+        tags = getattr(obj, "prefetched_tags", None) or list(
+            obj.tags.prefetch_related("translations__language").order_by("type", "id")
+        )
 
         if not tags:
             return []
 
-        tag_ids = [tag.id for tag in tags]
-        related_rows = (
-            ProductionTag.objects.filter(tag_id__in=tag_ids)
-            .exclude(production_id=obj.id)
-            .filter(
-                Exists(Event.objects.filter(production=OuterRef("production_id"), ends_at__lte=Now()))
-                | ~Exists(Event.objects.filter(production=OuterRef("production_id")))
-            )
-            .select_related("production", "production__media_gallery")
-            .prefetch_related(
-                "production__translations__language",
-                Prefetch(
-                    "production__media_gallery__media_items",
-                    queryset=MediaItem.objects.prefetch_related("translations__language", "crops").order_by("position"),
-                ),
-            )
-            .order_by("tag__type", "id")
-        )
+        return [
+            {
+                "tag": RelatedTagSerializer(tag, context=self.context).data,
+                "productions": RelatedProductionSerializer(
+                    self._get_related_productions_qs(tag, obj.id),
+                    many=True,
+                    context=self.context,
+                ).data,
+            }
+            for tag in tags
+        ]
 
-        grouped_productions: dict[int, list[Production]] = {tag.id: [] for tag in tags}
-        seen_production_ids: dict[int, set[int]] = {tag.id: set() for tag in tags}
-
-        for row in related_rows:
-            production = row.production
-            if production.id in seen_production_ids[row.tag_id]:
-                continue
-            grouped_productions[row.tag_id].append(production)
-            seen_production_ids[row.tag_id].add(production.id)
-
-        result = []
-
-        for tag in tags:
-            result.append(
-                {
-                    "tag": RelatedTagSerializer(tag, context=self.context).data,
-                    "productions": RelatedProductionSerializer(
-                        grouped_productions.get(tag.id, []),
-                        many=True,
-                        context=self.context,
-                    ).data,
-                },
-            )
-
-        return result
-
-    def get_events(self, obj: Production) -> list:
-        """Return a list of events for this production, if included in the serializer context."""
+    def get_events(self, obj: Production) -> list | None:
+        """Return events for this production if included in the serializer context."""
         if "events" not in self.context.get("include", set()):
             return None
 
-        # Lazy import, since importing at the top level would cause a circular import between the serializers.
         from apps.events.serializers import NestedEventSerializer  # noqa: PLC0415
 
         events = getattr(obj, "prefetched_past_events", None)
@@ -519,10 +457,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         return ProductionRelatedBlogSerializer(blogs, many=True, context=self.context).data
 
     def to_representation(self, instance: Production) -> dict:
-        """Override to conditionally include the `events` field based on the serializer context.
-
-        If the events are not included, the events field is removed from the output instead of being returned as `null`.
-        """
+        """Conditionally strip ``events`` and ``related`` when not requested."""
         rep = super().to_representation(instance)
         if "events" not in self.context.get("include", set()):
             rep.pop("events", None)
@@ -534,13 +469,19 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
 
 
 class RelatedProductionSerializer(ProductionSerializer):
-    """Compact representation used inside `ProductionSerializer.related`.
-
-    This reuses the same translation and media-gallery wiring as the main
-    production serializer, but only exposes the fields needed for related
-    cards.
-    """
+    """Compact representation used inside ``ProductionSerializer.related``."""
 
     class Meta(ProductionSerializer.Meta):
-        fields = ["id", "title", "display_title", "artist_name", "display_artist_name", "media_gallery"]
+        fields = [
+            "id",
+            "title",
+            "display_title",
+            "artist_name",
+            "display_artist_name",
+            "media_gallery",
+            "first_event_start",
+            "last_event_end",
+            "tags",
+            "genres",
+        ]
         read_only_fields = fields

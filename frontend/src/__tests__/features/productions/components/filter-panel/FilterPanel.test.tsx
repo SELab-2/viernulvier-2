@@ -458,4 +458,16 @@ describe('FilterPanel', () => {
 
     expect(props.onFirstEventStartAfterChange).toHaveBeenCalledWith('2026-07-15')
   })
+
+  it('renders a mobile apply button when `onMobileApply` is provided and calls it', () => {
+    const onMobileApply = jest.fn()
+    renderPanel({ onMobileApply })
+
+    // Button should be present (label comes from searchbar.search)
+    const applyButton = screen.getByRole('button', { name: i18n.t('searchbar.search') })
+    expect(applyButton).toBeInTheDocument()
+
+    fireEvent.click(applyButton)
+    expect(onMobileApply).toHaveBeenCalledTimes(1)
+  })
 })

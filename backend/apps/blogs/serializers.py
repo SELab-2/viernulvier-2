@@ -12,7 +12,7 @@ from apps.core.media_validation import (
 from apps.core.serializers import TranslatableSerializerMixin
 from apps.languages.models import Language
 from apps.productions.models import Production
-from apps.productions.serializers import ProductionSerializer
+from apps.productions.serializers import RelatedProductionSerializer
 
 from .models import Blog, BlogTranslation
 
@@ -86,7 +86,9 @@ class BlogSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
         help_text="List of production IDs to link to this blog post (write-only).",
     )
 
-    productions = ProductionSerializer(many=True, read_only=True, help_text="List of linked production objects (read-only).")
+    productions = RelatedProductionSerializer(
+        many=True, read_only=True, help_text="List of linked production objects (read-only)."
+    )
 
     translations_data = BlogTranslationInlineSerializer(
         many=True,

@@ -1,19 +1,10 @@
 import { Box } from '@mui/material'
-import { useLayoutEffect } from 'react'
+import { lazy, Suspense, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
-
-import Footer from './shared/Footer'
-import Navbar from './shared/Navbar'
-import BlogDetailPage from './features/blogs/pages/BlogDetailPage'
-import BlogsPage from './features/blogs/pages/BlogsPage'
-import MediaFilesPage from './features/media-files/pages/MediaFilesPage'
-import ProductionDetailPage from './features/productions/pages/ProductionDetailPage'
-import ProductionsPage from './features/productions/pages/ProductionsPage'
-import SeriesDetailPage from './features/series/pages/SeriesDetailPage'
-import SeriesPage from './features/series/pages/SeriesPage'
-import HomePage from './pages/HomePage'
-import NotFoundPage from './pages/NotFoundPage'
+import LoadingSpinner from './shared/components/LoadingSpinner'
+import { NotificationProvider } from './contexts/NotificationContext'
+import { ALERT_SEVERITIES } from './types/FloatingAlertConfig'
 import {
   DEFAULT_LANGUAGE,
   getLocalizedSegment,
@@ -22,8 +13,24 @@ import {
   resolveCurrentLanguage,
   toLocalizedPath,
 } from './utils/localizedRoutes'
+import { createFloatingAlertState } from './utils/navigation'
 
 import type { ModeToggleProps } from './types/Theme'
+
+// Lazy-load UI chrome (navbar/footer) and the home page to reduce initial bundle size.
+const Navbar = lazy(() => import('./shared/Navbar'))
+const Footer = lazy(() => import('./shared/Footer'))
+const HomePage = lazy(() => import('./pages/HomePage'))
+
+// Lazy-load route pages to reduce initial bundle size
+const BlogDetailPage = lazy(() => import('./features/blogs/pages/BlogDetailPage'))
+const BlogsPage = lazy(() => import('./features/blogs/pages/BlogsPage'))
+const MediaFilesPage = lazy(() => import('./features/media-files/pages/MediaFilesPage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
+const ProductionDetailPage = lazy(() => import('./features/productions/pages/ProductionDetailPage'))
+const ProductionsPage = lazy(() => import('./features/productions/pages/ProductionsPage'))
+const SeriesDetailPage = lazy(() => import('./features/series/pages/SeriesDetailPage'))
+const SeriesPage = lazy(() => import('./features/series/pages/SeriesPage'))
 
 const ScrollToTop = () => {
   const location = useLocation()
@@ -69,7 +76,7 @@ const AliasDetailRedirect = ({ language, targetBasePath }: AliasDetailRedirectPr
 
 const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
   const { lang } = useParams<{ lang: string }>()
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const location = useLocation()
   const normalizedLanguage = normalizeLanguage(lang)
 
@@ -99,99 +106,122 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
   const blogsSlug = getLocalizedSegment('blogs', normalizedLanguage)
   const mediaSlug = getLocalizedSegment('media', normalizedLanguage)
   const productionsSlug = getLocalizedSegment('productions', normalizedLanguage)
+  const mediaDetailAlertState = createFloatingAlertState({
+    message: t('media.couldNotLoad', 'Could not load media file.'),
+    severity: ALERT_SEVERITIES.error,
+  })
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar mode={mode} onToggleMode={onToggleMode} />
+      <Suspense fallback={null}>
+        <Navbar mode={mode} onToggleMode={onToggleMode} />
+      </Suspense>
       <Box component="main" sx={{ flexGrow: 1 }}>
-        <Routes>
-          <Route index element={<HomePage />} />
-          <Route path={archiveSlug} element={<ProductionsPage />} />
-          <Route
-            path={productionsSlug}
-            element={<Navigate to={localizedPath('/archive')} replace />}
-          />
-          <Route path={`${productionsSlug}/:id`} element={<ProductionDetailPage />} />
-          <Route path={seriesSlug} element={<SeriesPage />} />
-          <Route path={`${seriesSlug}/:id`} element={<SeriesDetailPage />} />
-          <Route path={blogsSlug} element={<BlogsPage />} />
-          <Route path={`${blogsSlug}/:id`} element={<BlogDetailPage />} />
-          <Route path={mediaSlug} element={<MediaFilesPage />} />
-          <Route
-            path={`${mediaSlug}/:id`}
-            element={<Navigate to={localizedPath('/media')} replace />}
-          />
-          {/* Compatibility aliases from untranslated slug paths. */}
-          {archiveSlug !== 'archive' && (
-            <Route path="archive" element={<Navigate to={localizedPath('/archive')} replace />} />
-          )}
-          {archiveSlug !== 'archief' && (
-            <Route path="archief" element={<Navigate to={localizedPath('/archive')} replace />} />
-          )}
-          {productionsSlug !== 'productions' && (
+        <Suspense fallback={<LoadingSpinner fullScreen />}>
+          <Routes>
+            <Route index element={<HomePage />} />
+            <Route path={archiveSlug} element={<ProductionsPage />} />
             <Route
-              path="productions"
+              path={productionsSlug}
               element={<Navigate to={localizedPath('/archive')} replace />}
             />
-          )}
-          {productionsSlug !== 'producties' && (
+            <Route path={`${productionsSlug}/:id`} element={<ProductionDetailPage />} />
+            <Route path={seriesSlug} element={<SeriesPage />} />
+            <Route path={`${seriesSlug}/:id`} element={<SeriesDetailPage />} />
+            <Route path={blogsSlug} element={<BlogsPage />} />
+            <Route path={`${blogsSlug}/:id`} element={<BlogDetailPage />} />
+            <Route path={mediaSlug} element={<MediaFilesPage />} />
             <Route
-              path="producties"
-              element={<Navigate to={localizedPath('/archive')} replace />}
-            />
-          )}
-          {productionsSlug !== 'productions' && (
-            <Route
-              path="productions/:id"
+              path={`${mediaSlug}/:id`}
               element={
-                <AliasDetailRedirect language={normalizedLanguage} targetBasePath="/productions" />
+                <Navigate to={localizedPath('/media')} replace state={mediaDetailAlertState} />
               }
             />
-          )}
-          {productionsSlug !== 'producties' && (
-            <Route
-              path="producties/:id"
-              element={
-                <AliasDetailRedirect language={normalizedLanguage} targetBasePath="/productions" />
-              }
-            />
-          )}
-          {seriesSlug !== 'series' && (
-            <Route path="series" element={<Navigate to={localizedPath('/series')} replace />} />
-          )}
-          {seriesSlug !== 'reeksen' && (
-            <Route path="reeksen" element={<Navigate to={localizedPath('/series')} replace />} />
-          )}
-          {seriesSlug !== 'series' && (
-            <Route
-              path="series/:id"
-              element={
-                <AliasDetailRedirect language={normalizedLanguage} targetBasePath="/series" />
-              }
-            />
-          )}
-          {seriesSlug !== 'reeksen' && (
-            <Route
-              path="reeksen/:id"
-              element={
-                <AliasDetailRedirect language={normalizedLanguage} targetBasePath="/series" />
-              }
-            />
-          )}
-          {blogsSlug !== 'blogs' && (
-            <Route path="blogs" element={<Navigate to={localizedPath('/blogs')} replace />} />
-          )}
-          {blogsSlug !== 'blogs' && <Route path="blogs/:id" element={<BlogDetailPage />} />}
-          {mediaSlug !== 'media' && (
-            <Route path="media" element={<Navigate to={localizedPath('/media')} replace />} />
-          )}
-          {mediaSlug !== 'media' && (
-            <Route path="media/:id" element={<Navigate to={localizedPath('/media')} replace />} />
-          )}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+            {/* Compatibility aliases from untranslated slug paths. */}
+            {archiveSlug !== 'archive' && (
+              <Route path="archive" element={<Navigate to={localizedPath('/archive')} replace />} />
+            )}
+            {archiveSlug !== 'archief' && (
+              <Route path="archief" element={<Navigate to={localizedPath('/archive')} replace />} />
+            )}
+            {productionsSlug !== 'productions' && (
+              <Route
+                path="productions"
+                element={<Navigate to={localizedPath('/archive')} replace />}
+              />
+            )}
+            {productionsSlug !== 'producties' && (
+              <Route
+                path="producties"
+                element={<Navigate to={localizedPath('/archive')} replace />}
+              />
+            )}
+            {productionsSlug !== 'productions' && (
+              <Route
+                path="productions/:id"
+                element={
+                  <AliasDetailRedirect
+                    language={normalizedLanguage}
+                    targetBasePath="/productions"
+                  />
+                }
+              />
+            )}
+            {productionsSlug !== 'producties' && (
+              <Route
+                path="producties/:id"
+                element={
+                  <AliasDetailRedirect
+                    language={normalizedLanguage}
+                    targetBasePath="/productions"
+                  />
+                }
+              />
+            )}
+            {seriesSlug !== 'series' && (
+              <Route path="series" element={<Navigate to={localizedPath('/series')} replace />} />
+            )}
+            {seriesSlug !== 'reeksen' && (
+              <Route path="reeksen" element={<Navigate to={localizedPath('/series')} replace />} />
+            )}
+            {seriesSlug !== 'series' && (
+              <Route
+                path="series/:id"
+                element={
+                  <AliasDetailRedirect language={normalizedLanguage} targetBasePath="/series" />
+                }
+              />
+            )}
+            {seriesSlug !== 'reeksen' && (
+              <Route
+                path="reeksen/:id"
+                element={
+                  <AliasDetailRedirect language={normalizedLanguage} targetBasePath="/series" />
+                }
+              />
+            )}
+            {blogsSlug !== 'blogs' && (
+              <Route path="blogs" element={<Navigate to={localizedPath('/blogs')} replace />} />
+            )}
+            {blogsSlug !== 'blogs' && <Route path="blogs/:id" element={<BlogDetailPage />} />}
+            {mediaSlug !== 'media' && (
+              <Route path="media" element={<Navigate to={localizedPath('/media')} replace />} />
+            )}
+            {mediaSlug !== 'media' && (
+              <Route
+                path="media/:id"
+                element={
+                  <Navigate to={localizedPath('/media')} replace state={mediaDetailAlertState} />
+                }
+              />
+            )}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
       </Box>
-      <Footer />
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
     </Box>
   )
 }
@@ -201,15 +231,17 @@ const Router = ({ mode, onToggleMode }: ModeToggleProps) => {
 
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route
-          path="/:lang/*"
-          element={<LocalizedLayout mode={mode} onToggleMode={onToggleMode} />}
-        />
-        <Route path="/" element={<Navigate to={defaultRoot} replace />} />
-        <Route path="*" element={<LanguagePathRedirect />} />
-      </Routes>
+      <NotificationProvider>
+        <ScrollToTop />
+        <Routes>
+          <Route
+            path="/:lang/*"
+            element={<LocalizedLayout mode={mode} onToggleMode={onToggleMode} />}
+          />
+          <Route path="/" element={<Navigate to={defaultRoot} replace />} />
+          <Route path="*" element={<LanguagePathRedirect />} />
+        </Routes>
+      </NotificationProvider>
     </BrowserRouter>
   )
 }

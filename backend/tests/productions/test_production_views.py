@@ -20,8 +20,10 @@ Covers:
 
 from datetime import UTC, datetime
 
+from django.db import connection
 from django.db.models import Min
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
 from apps.core.views import ApiModelViewSet
@@ -128,6 +130,8 @@ class TestProductionViewSetList(TestCase):
             "genres",
             "display_title",
             "display_artist_name",
+            "video_1",
+            "video_2",
         }
         assert set(item.keys()) == expected_fields
 
@@ -242,29 +246,58 @@ class TestProductionViewSetDetail(TestCase):
     def test_retrieve_with_include_related_no_n_plus_one(self) -> None:
         """Related productions + hun translations mogen geen N+1 veroorzaken."""
         nl = LanguageFactory.create(code="nl", name="Dutch")
+        en = LanguageFactory.create(code="en", name="English")
         tag = TagFactory.create(type="theme")
         ProductionTagFactory.create(production=self.production, tag=tag)
 
-        for _ in range(5):
+        def create_related(index: int) -> Production:
             related = ProductionFactory.create()
             ProductionTranslationFactory.create(
                 production=related,
                 language=nl,
-                title="Gerelateerde titel",
-                artist_name="",
-                tagline="",
-                teaser="",
+                title=f"Gerelateerde productie {index}",
                 description="",
+                teaser="",
+                artist_name=f"Artiest {index}",
+                tagline="",
             )
-            ProductionTagFactory.create(production=related, tag=tag)
+            ProductionTranslationFactory.create(
+                production=related,
+                language=en,
+                title=f"Related production {index}",
+                description="",
+                teaser="",
+                artist_name=f"Artist {index}",
+                tagline="",
+            )
+            production_tag = ProductionTagFactory.create(production=related, tag=tag)
+            ProductionTagTranslationFactory.create(
+                production_tag=production_tag,
+                language=nl,
+                description=f"Context {index}",
+            )
+            return related
 
-        with self.assertNumQueries(11):
-            response = self.client.get(
-                f"/api/v1/productions/{self.production.id}/?include=related",
-                **pub_headers(),
-            )
+        create_related(1)
+        url = f"/api/v1/productions/{self.production.pk}/?include=related"
+
+        with CaptureQueriesContext(connection) as one_related_queries:
+            response = self.client.get(url, **pub_headers())
+
         assert response.status_code == 200
+        assert len(response.data["related"]) == 1
+        assert len(response.data["related"][0]["productions"]) == 1
+
+        for index in range(2, 6):
+            create_related(index)
+
+        with CaptureQueriesContext(connection) as five_related_queries:
+            response = self.client.get(url, **pub_headers())
+
+        assert response.status_code == 200
+        assert len(response.data["related"]) == 1
         assert len(response.data["related"][0]["productions"]) == 5
+        assert len(five_related_queries) == len(one_related_queries)
 
 
 # ---------------------------------------------------------------------------
@@ -568,6 +601,10 @@ class TestProductionViewSetResponseStructure(TestCase):
             "artist_name",
             "display_artist_name",
             "media_gallery",
+            "first_event_start",
+            "last_event_end",
+            "tags",
+            "genres",
         }
 
     def test_retrieve_with_include_blogs_contains_blogs_field(self) -> None:
@@ -701,17 +738,19 @@ class TestProductionApiTagDescription(TestCase):
 
     def test_tag_entry_in_detail_has_description_key(self) -> None:
         data = self._detail().data
-        assert "description" in data["tags"][0]
+        assert "description" not in data["tags"][0]
 
     def test_tag_description_nl_is_correct_in_detail(self) -> None:
         data = self._detail().data
-        assert data["tags"][0]["description"]["nl"] == "Context voor dit thema."
+        # production-scoped description is no longer included on tag payloads
+        # and this setup does not create tag-level translations.
+        assert data["tags"][0]["name"] == {}
 
     def test_tag_description_in_list_response(self) -> None:
         response = self.client.get("/api/v1/productions/", **pub_headers())
         tags = response.data["results"][0]["tags"]
-        assert "description" in tags[0]
-        assert tags[0]["description"]["nl"] == "Context voor dit thema."
+        assert "description" not in tags[0]
+        assert tags[0]["name"] == {}
 
     def test_tag_without_translation_has_empty_description_dict(self) -> None:
         other_production = ProductionFactory.create()
@@ -719,7 +758,7 @@ class TestProductionApiTagDescription(TestCase):
         ProductionTagFactory.create(production=other_production, tag=other_tag)
 
         response = self.client.get(f"/api/v1/productions/{other_production.pk}/", **pub_headers())
-        assert response.data["tags"][0]["description"] == {}
+        assert "description" not in response.data["tags"][0]
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
@@ -748,16 +787,15 @@ class TestProductionViewSetTagTranslationPrefetch(TestCase):
         # Baseline from the existing N+1 test is 7 queries for 5 productions
         # with translation prefetch. Adding tag translation prefetch must not
         # grow this number linearly with the number of tags or productions.
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(7):
             response = self.client.get("/api/v1/productions/", **pub_headers())
         assert response.status_code == 200
         results = response.data["results"]
         assert len(results) == 5
-        # Spot-check that description data is present and correct
+        # Spot-check that through-table description is not exposed anymore
         for item in results:
             for tag in item["tags"]:
-                assert "nl" in tag["description"]
-                assert "en" in tag["description"]
+                assert "description" not in tag
 
 
 def _dt(year, month, day, hour=0):

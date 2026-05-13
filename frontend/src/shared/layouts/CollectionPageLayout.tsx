@@ -223,9 +223,11 @@ const CollectionPageLayout = ({
       </IconButton>
     ) : null
   const mobileSidebarContent =
-    isMobile && isValidElement<{ headerActions?: ReactNode }>(sidebarContent)
+    isMobile &&
+    isValidElement<{ headerActions?: ReactNode; onMobileApply?: () => void }>(sidebarContent)
       ? cloneElement(sidebarContent, {
           headerActions: mobileSidebarHeaderAction,
+          onMobileApply: () => setIsMobileSidebarOpen(false),
         })
       : sidebarContent
 

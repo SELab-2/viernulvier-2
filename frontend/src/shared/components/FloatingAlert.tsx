@@ -1,23 +1,11 @@
 import CloseIcon from '@mui/icons-material/Close'
 import { Snackbar, Box, IconButton } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { useEffect } from 'react'
 
 import { tokens } from '../../theme/tokens'
 
-type FloatingAlertSeverity = 'error' | 'warning' | 'info' | 'success'
-
-type FloatingAlertProps = {
-  open: boolean
-  onClose: () => void
-  message: string
-  title?: string
-  severity?: FloatingAlertSeverity
-  autoCloseDuration?: number
-  position?: {
-    vertical: 'top' | 'bottom'
-    horizontal: 'left' | 'center' | 'right'
-  }
-}
+import type { FloatingAlertProps, FloatingAlertSeverity } from '../types/FloatingAlertConfig'
 
 /**
  * FloatingAlert combines Alert styling with Toast floating behavior.
@@ -31,6 +19,7 @@ const FloatingAlert = ({
   severity = 'info',
   autoCloseDuration = 4000,
   position = { vertical: 'top', horizontal: 'right' },
+  disableFloatingWrapper = false,
 }: FloatingAlertProps) => {
   const theme = useTheme()
 
@@ -66,29 +55,17 @@ const FloatingAlert = ({
 
   const config = severityConfig[severity]
 
-  return (
-    <Snackbar
-      open={open}
-      autoHideDuration={autoCloseDuration}
-      onClose={onClose}
-      anchorOrigin={position}
-      sx={
-        position.vertical === 'top'
-          ? {
-              '&.MuiSnackbar-anchorOriginTopLeft': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-              '&.MuiSnackbar-anchorOriginTopCenter': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-              '&.MuiSnackbar-anchorOriginTopRight': {
-                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
-              },
-            }
-          : undefined
-      }
-      data-testid="floating-alert"
-    >
+  useEffect(() => {
+    if (!disableFloatingWrapper || !open || autoCloseDuration === null) {
+      return undefined
+    }
+
+    const timeout = window.setTimeout(onClose, autoCloseDuration)
+    return () => window.clearTimeout(timeout)
+  }, [autoCloseDuration, disableFloatingWrapper, onClose, open])
+
+  const content = (
+    <Box data-testid="floating-alert">
       <Box
         role="alert"
         aria-live="assertive"
@@ -147,6 +124,36 @@ const FloatingAlert = ({
           <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
+    </Box>
+  )
+
+  if (disableFloatingWrapper) {
+    return open ? content : null
+  }
+
+  return (
+    <Snackbar
+      open={open}
+      autoHideDuration={autoCloseDuration}
+      onClose={onClose}
+      anchorOrigin={position}
+      sx={
+        position.vertical === 'top'
+          ? {
+              '&.MuiSnackbar-anchorOriginTopLeft': {
+                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+              },
+              '&.MuiSnackbar-anchorOriginTopCenter': {
+                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+              },
+              '&.MuiSnackbar-anchorOriginTopRight': {
+                top: 'calc(var(--navbar-height, 64px) + 8px + env(safe-area-inset-top, 0px))',
+              },
+            }
+          : undefined
+      }
+    >
+      {content}
     </Snackbar>
   )
 }

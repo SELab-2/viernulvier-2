@@ -1,4 +1,4 @@
-import { describe, expect, it, jest, beforeEach } from '@jest/globals'
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 
 const formatMediaFileDateMock = jest.fn()
@@ -42,6 +42,14 @@ jest.mock('../../../../features/media-files/components/MediaFileUtils', () => ({
 
 import MediaFileGridCard from '../../../../features/media-files/components/MediaFileGridCard'
 
+const baseMediaFile = {
+  filename: 'brochure.pdf',
+  file: 'https://example.com/brochure.pdf',
+  created_at: '2026-04-23T10:00:00Z',
+  size_bytes: 2 * 1024 * 1024,
+  file_type: 'pdf',
+}
+
 describe('MediaFileGridCard', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -51,20 +59,8 @@ describe('MediaFileGridCard', () => {
     getMediaFileTypeLabelMock.mockReturnValue('PDF')
   })
 
-  it('renders the main metadata, preview and file link', () => {
-    render(
-      <MediaFileGridCard
-        mediaFile={
-          {
-            filename: 'brochure.pdf',
-            file: 'https://example.com/brochure.pdf',
-            created_at: '2026-04-23T10:00:00Z',
-            size_bytes: 2 * 1024 * 1024,
-            file_type: 'pdf',
-          } as never
-        }
-      />,
-    )
+  it('renders the main metadata, preview and direct same-tab file link', () => {
+    render(<MediaFileGridCard mediaFile={baseMediaFile as never} />)
 
     expect(screen.getByRole('heading', { name: 'brochure.pdf' })).toBeInTheDocument()
     expect(screen.getByText('Korte beschrijving')).toBeInTheDocument()
@@ -73,27 +69,15 @@ describe('MediaFileGridCard', () => {
     expect(screen.getByTestId('media-preview')).toHaveTextContent('preview:PDF')
 
     const link = screen.getByRole('link')
-    expect(link).toHaveAttribute('href', 'https://example.com/brochure.pdf')
-    expect(link).toHaveAttribute('target', '_blank')
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(link).toHaveAttribute('href', `${window.location.origin}/brochure.pdf`)
+    expect(link).not.toHaveAttribute('target')
+    expect(link).not.toHaveAttribute('rel')
   })
 
   it('falls back to the file type label when the description is empty', () => {
     getMediaFileDescriptionMock.mockReturnValueOnce('')
 
-    render(
-      <MediaFileGridCard
-        mediaFile={
-          {
-            filename: 'brochure.pdf',
-            file: 'https://example.com/brochure.pdf',
-            created_at: '2026-04-23T10:00:00Z',
-            size_bytes: 2 * 1024 * 1024,
-            file_type: 'pdf',
-          } as never
-        }
-      />,
-    )
+    render(<MediaFileGridCard mediaFile={baseMediaFile as never} />)
 
     expect(screen.getByText('PDF')).toBeInTheDocument()
   })
@@ -105,11 +89,8 @@ describe('MediaFileGridCard', () => {
       <MediaFileGridCard
         mediaFile={
           {
-            filename: 'brochure.pdf',
-            file: 'https://example.com/brochure.pdf',
-            created_at: '2026-04-23T10:00:00Z',
+            ...baseMediaFile,
             size_bytes: null,
-            file_type: 'pdf',
           } as never
         }
       />,

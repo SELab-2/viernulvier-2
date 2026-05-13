@@ -8,7 +8,6 @@ import {
   Button,
   Stack,
   Box,
-  Typography,
   IconButton,
   Container,
   Collapse,
@@ -152,17 +151,14 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
               minHeight: tokens.navbar.minHeight,
             }}
           >
-            {/* Brand: logo + "/ Archive" */}
+            {/* Brand: Archive logo */}
             <Box component={Link} to={localizedPath('/')} sx={navbarStyles.brandLink}>
               <Box
                 component="img"
-                src="/vnv_logo.png"
+                src="/vnv_archive_logo.png"
                 alt="Viernulvier logo"
                 sx={navbarStyles.brandLogo}
               />
-              <Typography variant="subtitle1" sx={navbarStyles.brandArchiveText}>
-                / Archive
-              </Typography>
             </Box>
 
             {/* Main page links only stay inline on large screens; below lg they move to the dropdown. */}

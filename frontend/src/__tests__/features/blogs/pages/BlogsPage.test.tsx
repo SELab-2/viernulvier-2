@@ -46,8 +46,10 @@ const renderPage = (
     <MemoryRouter initialEntries={[initialEntry]}>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={createTheme()}>
-          <BlogsPage />
-          <LocationProbe />
+          <NotificationProvider>
+            <BlogsPage />
+            <LocationProbe />
+          </NotificationProvider>
         </ThemeProvider>
       </I18nextProvider>
     </MemoryRouter>,

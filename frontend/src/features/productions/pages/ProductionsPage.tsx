@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import CollectionView from '../../../shared/components/CollectionView'
-import FloatingAlert from '../../../shared/components/FloatingAlert'
 import CollectionResultsSkeleton from '../../../shared/components/skeletons/CollectionResultsSkeleton'
 import { useSearchBarUrlState } from '../../../shared/hooks/useSearchBarUrlState'
 import useCollectionQuery from '../../../shared/hooks/useCollectionQuery'
@@ -13,9 +12,13 @@ import CollectionPageLayout from '../../../shared/layouts/CollectionPageLayout'
 import ProductionGridCard from '../components/cards/ProductionGridCard'
 import ProductionListCard from '../components/cards/ProductionListCard'
 import FilterPanel from '../components/filter-panel/FilterPanel'
+
 import { getGenres } from '../../../services/genres/Genres'
 import { getProductions } from '../../../services/productions/Productions'
 import { getTags } from '../../../services/tags/Tags'
+import { useCollectionPageNotification } from '../../../hooks/useCollectionPageNotification'
+import { ApiError } from '../../../services/ApiTypes'
+
 
 import type { Genre } from '../../../types/Genres'
 import type { Production } from '../../../types/Productions'
@@ -23,6 +26,7 @@ import type { Tag } from '../../../types/Tags'
 
 // Page size for pagination.
 const PAGE_SIZE = 12
+const FILTER_METADATA_PAGE_SIZE = 250
 
 // Function to determine the ordering parameter for the API based on the current sort target and direction.
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
@@ -48,21 +52,28 @@ const parseCommaSeparatedIds = (value: string): number[] | undefined => {
 }
 
 const fetchGenres = async (): Promise<Genre[]> => {
-  const genres: Genre[] = []
-  let page = 1
-  let hasMore = true
+  const firstPage = await getGenres({
+    page: 1,
+    pageSize: FILTER_METADATA_PAGE_SIZE,
+  })
 
-  while (hasMore) {
-    const response = await getGenres({
-      page,
-    })
-
-    genres.push(...response.results)
-    hasMore = response.next !== null
-    page += 1
+  const pageSize = Math.max(1, firstPage.results.length || FILTER_METADATA_PAGE_SIZE)
+  const totalPages = Math.max(1, Math.ceil(firstPage.count / pageSize))
+  if (totalPages === 1) {
+    return firstPage.results
   }
 
-  return genres
+  const remainingPages = Array.from({ length: totalPages - 1 }, (_, index) => index + 2)
+  const remainingResponses = await Promise.all(
+    remainingPages.map((page) =>
+      getGenres({
+        page,
+        pageSize: FILTER_METADATA_PAGE_SIZE,
+      }),
+    ),
+  )
+
+  return [...firstPage.results, ...remainingResponses.flatMap((response) => response.results)]
 }
 
 const fetchTags = async (): Promise<Tag[]> => {
@@ -106,7 +117,9 @@ const hasSelectedGenre = (production: Production, selectedGenreIds: number[]): b
 const ProductionsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const navFloatingAlert = useFloatingAlertOnce()
+  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
+    'productions.home.error.notification',
+  )
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
@@ -136,8 +149,21 @@ const ProductionsPage = () => {
     clearFilters,
   } = useSearchBarUrlState({ isMobile })
 
+  const [isLoading, setIsLoading] = useState(true)
+  const [productions, setProductions] = useState<Production[]>([])
   const [genres, setGenres] = useState<Genre[]>([])
   const [tags, setTags] = useState<Tag[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [showFallbackError, setShowFallbackError] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
+  const [searchDraft, setSearchDraft] = useState(searchValue)
+  const [isSearchDraftDirty, setIsSearchDraftDirty] = useState(false)
+
+  // Error message to display in the UI, preferring the translated fallback message
+  const renderedErrorMessage = showFallbackError
+    ? t('productions.home.error.fallback')
+    : errorMessage
 
   // Memoized value for the API ordering parameter to avoid unnecessary recalculations on every render.
   const ordering = useMemo(
@@ -148,57 +174,7 @@ const ProductionsPage = () => {
   const selectedPerformerType = performerType
   const selectedGenres = selectedGenreIds.join(',')
   const selectedTags = selectedTagIds.join(',')
-
-  const {
-    isLoading,
-    items: productions,
-    count: totalCount,
-    error,
-    floatingAlert,
-    retry,
-  } = useCollectionQuery<Production, { results: Production[]; count: number }>({
-    deps: [
-      firstEventStartAfter,
-      firstEventStartBefore,
-      ordering,
-      page,
-      searchValue,
-      selectedAttendanceMode,
-      selectedGenres,
-      selectedPerformerType,
-      selectedTags,
-    ],
-    fetcher: () =>
-      getProductions({
-        page,
-        pageSize: PAGE_SIZE,
-        filters: {
-          search: searchValue.trim() || undefined,
-          ordering,
-          attendance_mode: selectedAttendanceMode,
-          performer_type: selectedPerformerType,
-          genre: parseCommaSeparatedIds(selectedGenres),
-          tag: parseCommaSeparatedIds(selectedTags),
-          first_event_start_after: toIsoDateBoundary(firstEventStartAfter, 'start'),
-          first_event_start_before: toIsoDateBoundary(firstEventStartBefore, 'end'),
-        },
-      }),
-    select: (response) => ({ items: response.results, count: response.count }),
-    mapError: () => ({ message: null, showFallback: true }),
-  })
-
-  const searchDraft = useSearchDraft({
-    value: searchValue,
-    trackDirty: true,
-    onCommit: setSearchValue,
-    onSameQuery: () => retry(),
-  })
-
-  // Error message to display in the UI, preferring the translated fallback message
-  const renderedErrorMessage = error.showFallback
-    ? t('productions.home.error.fallback')
-    : error.message
-  const floatingErrorMessage = t('productions.home.error.notification')
+  const displayedSearchValue = isSearchDraftDirty ? searchDraft : searchValue
 
   useEffect(() => {
     let isActive = true
@@ -230,8 +206,101 @@ const ProductionsPage = () => {
     }
   }, [])
 
+  // Effect to fetch the productions data from the API whenever the ordering, page, retryKey, or searchValue changes
+  useEffect(() => {
+    let isActive = true
+
+    const fetchPageData = async () => {
+      setIsLoading(true)
+      setErrorMessage(null)
+      setShowFallbackError(false)
+      clearFloatingAlert()
+
+      try {
+        const response = await getProductions({
+          page,
+          pageSize: PAGE_SIZE,
+          filters: {
+            search: searchValue.trim() || undefined,
+            ordering,
+            attendance_mode: selectedAttendanceMode,
+            performer_type: selectedPerformerType,
+            genre: parseCommaSeparatedIds(selectedGenres),
+            tag: parseCommaSeparatedIds(selectedTags),
+            first_event_start_after: toIsoDateBoundary(firstEventStartAfter, 'start'),
+            first_event_start_before: toIsoDateBoundary(firstEventStartBefore, 'end'),
+          },
+        })
+
+        if (!isActive) {
+          return
+        }
+
+        setProductions(response.results)
+        setTotalCount(response.count)
+      } catch (error: unknown) {
+        if (!isActive) {
+          return
+        }
+
+        if (error instanceof ApiError) {
+          // Backend error payloads are not guaranteed to be localized,
+          // so we always show the translated fallback copy in the UI.
+          setErrorMessage(null)
+          setShowFallbackError(true)
+        } else {
+          setErrorMessage(null)
+          setShowFallbackError(true)
+        }
+        showFloatingAlert(error)
+        setProductions([])
+        setTotalCount(0)
+      } finally {
+        if (isActive) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void fetchPageData()
+
+    return () => {
+      isActive = false
+    }
+  }, [
+    clearFloatingAlert,
+    firstEventStartAfter,
+    firstEventStartBefore,
+    ordering,
+    page,
+    retryKey,
+    searchValue,
+    selectedAttendanceMode,
+    selectedGenres,
+    selectedPerformerType,
+    selectedTags,
+    showFloatingAlert,
+  ])
+
+  // Handler for retrying the data fetch when an error occurs, triggered by the retry button in the UI.
+  const onRetry = () => {
+    clearFloatingAlert()
+    setRetryKey((value) => value + 1)
+  }
+
+  // Handler for submitting the search form, which updates the searchValue and triggers a new data fetch
   const onSearchSubmit = (value: string) => {
-    searchDraft.submit(value)
+    const nextQuery = value.trim()
+    if (nextQuery === searchValue.trim()) {
+      setSearchDraft(nextQuery)
+      setIsSearchDraftDirty(false)
+      setRetryKey((current) => current + 1)
+      return
+    }
+
+    setSearchValue(nextQuery)
+    setSearchDraft(nextQuery)
+    setIsSearchDraftDirty(false)
   }
 
   /**
@@ -302,8 +371,11 @@ const ProductionsPage = () => {
         searchPlaceholder={
           isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
         }
-        searchValue={searchDraft.displayedValue}
-        onSearchChange={searchDraft.setDraft}
+        searchValue={displayedSearchValue}
+        onSearchChange={(value) => {
+          setSearchDraft(value)
+          setIsSearchDraftDirty(true)
+        }}
         onSearchSubmit={onSearchSubmit}
         sortTarget={sortTarget}
         onSortTargetChange={setSortTarget}
@@ -321,7 +393,7 @@ const ProductionsPage = () => {
         }
         errorMessage={renderedErrorMessage}
         retryLabel={t('productions.home.error.retry')}
-        onRetry={retry}
+        onRetry={onRetry}
         emptyTitle={t('productions.home.empty.title')}
         emptyDescription={t('productions.home.empty.description')}
         hasResults={productions.length > 0}
@@ -330,16 +402,6 @@ const ProductionsPage = () => {
         pageSize={PAGE_SIZE}
         totalItems={totalCount}
         onPageChange={setPage}
-      />
-
-      <FloatingAlert
-        open={floatingAlert.isOpen || navFloatingAlert.isOpen}
-        onClose={() => {
-          floatingAlert.close()
-          navFloatingAlert.close()
-        }}
-        severity="error"
-        message={navFloatingAlert.message ?? floatingAlert.message ?? floatingErrorMessage}
       />
     </>
   )
