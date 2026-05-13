@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 
-import FloatingAlertStack from '../components/FloatingAlertStack'
+import FloatingAlertStack from '../../../shared/components/FloatingAlertStack'
 
 const alerts = [
   { id: 1, open: true, message: 'First alert', severity: 'info' as const },

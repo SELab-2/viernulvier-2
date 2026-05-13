@@ -2,8 +2,8 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
-import { NotificationProvider } from '../contexts/NotificationContext'
-import { useNotification } from '../contexts/notificationContextShared'
+import { NotificationProvider } from '../../contexts/NotificationContext'
+import { useNotification } from '../../contexts/notificationContextShared'
 
 const NotificationHarness = () => {
   const { showFloatingAlert } = useNotification()

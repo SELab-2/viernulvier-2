@@ -17,7 +17,7 @@ import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 
-import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
+import { useCollectionPageNotification } from '../shared/hooks/useCollectionPageNotification'
 import { getLandingStats, type LandingStatsResponse } from '../services/productions/Productions'
 import { createHomePageStyles } from '../theme/styles'
 import { tokens } from '../theme/tokens'

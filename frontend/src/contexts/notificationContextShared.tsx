@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 
-import FloatingAlertStack from '../components/FloatingAlertStack'
+import FloatingAlertStack from '../shared/components/FloatingAlertStack'
 
 import type { FloatingAlertProps } from '../types/FloatingAlertConfig'
 

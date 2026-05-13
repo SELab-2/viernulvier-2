@@ -8,7 +8,7 @@ import {
   type FloatingAlertPayload,
   groupAlertsByPosition,
 } from './notificationContextShared'
-import FloatingAlertStack from '../components/FloatingAlertStack'
+import FloatingAlertStack from '../shared/components/FloatingAlertStack'
 import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
 
 type NotificationProviderProps = {

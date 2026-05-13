@@ -1,9 +1,12 @@
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals'
+import '@testing-library/jest-dom'
 import { createTheme, ThemeProvider } from '@mui/material/styles'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 
 import i18n from '../../../../i18n'
+import { NotificationProvider } from '../../../../contexts/NotificationContext'
 import ProductionsPage from '../../../../features/productions/pages/ProductionsPage'
 import { ApiError } from '../../../../services/ApiTypes'
 import { getGenres } from '../../../../services/genres/Genres'
@@ -131,9 +134,9 @@ const renderPage = (
 const setMatchMediaMatches = (matches: boolean) => {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
-    value: jest.fn().mockImplementation((query: string) => ({
+    value: jest.fn().mockImplementation((query: unknown) => ({
       matches,
-      media: query,
+      media: String(query),
       onchange: null,
       addListener: jest.fn(),
       removeListener: jest.fn(),

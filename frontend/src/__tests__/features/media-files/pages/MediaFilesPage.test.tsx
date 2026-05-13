@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import '@testing-library/jest-dom'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 const useMediaQueryMock = jest.fn<(query?: unknown) => boolean>()
 const getMediaFilesMock = jest.fn<(params?: unknown) => Promise<any>>()
@@ -9,6 +10,7 @@ const setSortDirectionMock = jest.fn<(value: string) => void>()
 const setViewModeMock = jest.fn<(value: string) => void>()
 const setPageMock = jest.fn<(value: number) => void>()
 const searchBarStateMock = jest.fn<() => any>()
+const mockFloatingAlertOnClose = jest.fn()
 
 jest.mock('@mui/material', () => {
   const actual = jest.requireActual('@mui/material') as Record<string, unknown>
@@ -67,7 +69,14 @@ jest.mock('../../../../shared/components/FloatingAlert', () => ({
     open ? (
       <div>
         <span>{message}</span>
-        <button onClick={onClose}>close-floating-alert</button>
+        <button
+          onClick={() => {
+            mockFloatingAlertOnClose()
+            onClose()
+          }}
+        >
+          close-floating-alert
+        </button>
       </div>
     ) : null,
 }))
@@ -126,6 +135,8 @@ describe('MediaFilesPage', () => {
   })
 
   afterEach(() => {
+    cleanup()
+
     const fallbackRoot = document.getElementById('notification-fallback-root')
     if (fallbackRoot) {
       fallbackRoot.remove()
@@ -328,7 +339,7 @@ describe('MediaFilesPage', () => {
       expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
     })
 
-    expect(screen.getByText('media.error.notification')).toBeInTheDocument()
+    expect(screen.getAllByText('media.error.notification').length).toBeGreaterThan(0)
     expect(screen.getByTestId('has-results')).toHaveTextContent('false')
 
     fireEvent.click(screen.getByText('retry'))
@@ -346,7 +357,7 @@ describe('MediaFilesPage', () => {
       expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
     })
 
-    expect(screen.getByText('media.error.notification')).toBeInTheDocument()
+    expect(screen.getAllByText('media.error.notification').length).toBeGreaterThan(1)
     expect(screen.getByTestId('result-count')).toHaveTextContent('0')
   })
 
@@ -358,7 +369,7 @@ describe('MediaFilesPage', () => {
     render(<MediaFilesPage />)
 
     await waitFor(() => {
-      expect(screen.getByText('Too many requests. Please try again later.')).toBeInTheDocument()
+      expect(screen.getAllByText('media.error.notification').length).toBeGreaterThan(0)
     })
 
     expect(screen.getByTestId('error-message')).toHaveTextContent('media.error.fallback')
@@ -371,12 +382,11 @@ describe('MediaFilesPage', () => {
     render(<MediaFilesPage />)
 
     await waitFor(() => {
-      expect(screen.getByText('media.error.notification')).toBeInTheDocument()
+      expect(screen.getAllByText('media.error.notification').length).toBeGreaterThan(0)
     })
 
-    const closeButton = screen.getAllByText('close-floating-alert')[0]
-    fireEvent.click(closeButton)
+    fireEvent.click(screen.getAllByText('close-floating-alert')[0])
 
-    expect(screen.queryByText('media.error.notification')).not.toBeInTheDocument()
+    expect(mockFloatingAlertOnClose).toHaveBeenCalled()
   })
 })

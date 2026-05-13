@@ -14,9 +14,9 @@ import type { Blog } from '../../../types/Blogs'
 import { formatBlogPublishedDate } from '../../../utils/dateUtils'
 import { getLocalizedValue } from '../../../utils/localization'
 import { resolveCurrentLanguage, toLocalizedPath } from '../../../utils/localizedRoutes'
-import { ApiError } from '../../../../services/ApiTypes'
-import { ALERT_SEVERITIES } from '../../../../types/FloatingAlertConfig'
-import { redirectWithFloatingAlert } from '../../../../utils/navigation'
+import { ApiError } from '../../../services/ApiTypes'
+import { ALERT_SEVERITIES } from '../../../types/FloatingAlertConfig'
+import { redirectWithFloatingAlert } from '../../../utils/navigation'
 
 /**
  * Blog detail page

@@ -1,5 +1,5 @@
 import { useMediaQuery, useTheme } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import SeriesGridCard from '../components/SeriesGridCard'
@@ -8,15 +8,13 @@ import CollectionView from '../../../shared/components/CollectionView'
 import CollectionResultsSkeleton from '../../../shared/components/skeletons/CollectionResultsSkeleton'
 import { type SearchSortDirection, type SearchSortTarget } from '../../../shared/components/search/types'
 import { useSearchBarUrlState } from '../../../shared/hooks/useSearchBarUrlState'
+import useCollectionQuery from '../../../shared/hooks/useCollectionQuery'
+import useSearchDraft from '../../../shared/hooks/useSearchDraft'
 import CollectionPageLayout from '../../../shared/layouts/CollectionPageLayout'
-import { ApiError } from '../../../services/ApiTypes'
+import { useNotification } from '../../../contexts/notificationContextShared'
 import { getTags } from '../../../services/tags/Tags'
 import type { Tag } from '../../../types/Tags'
 import { getTranslatedRecord } from '../../../utils/translations'
-
-import { useCollectionPageNotification } from '../../../hooks/useCollectionPageNotification'
-
-
 
 // Page size for pagination.
 const PAGE_SIZE = 12
@@ -98,6 +96,7 @@ const fetchTagList = async ({ search }: { search?: string }): Promise<Tag[]> => 
 const SeriesPage = () => {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
+  const { showFloatingAlert } = useNotification()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
 
   const {
@@ -113,18 +112,6 @@ const SeriesPage = () => {
     setPage,
   } = useSearchBarUrlState({ isMobile })
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [seriesList, setSeriesList] = useState<Tag[]>([])
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [showFallbackError, setShowFallbackError] = useState(false)
-  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
-    'series.home.error.notification',
-  )
-  const [retryKey, setRetryKey] = useState(0)
-  const [searchDraft, setSearchDraft] = useState(searchValue)
-
-  const renderedErrorMessage = showFallbackError ? t('series.home.error.fallback') : errorMessage
-
   // Force the page back to name sorting because the series page only supports that option.
   useEffect(() => {
     if (sortTarget === 'date') {
@@ -132,54 +119,40 @@ const SeriesPage = () => {
     }
   }, [setSortTarget, sortTarget])
 
-  // Fetch and cache the derived series list whenever the active query changes.
-  useEffect(() => {
-    let isActive = true
-
-    const fetchPageData = async () => {
-      setIsLoading(true)
-      setErrorMessage(null)
-      setShowFallbackError(false)
-      clearFloatingAlert()
-
-      try {
-        const response = await fetchTagList({
-          search: searchValue.trim() || undefined,
-        })
-
-        if (!isActive) {
-          return
-        }
-
-        setSeriesList(response)
-      } catch (error: unknown) {
-        if (!isActive) {
-          return
-        }
-
-        if (error instanceof ApiError) {
-          setErrorMessage(error.message)
-          setShowFallbackError(false)
-        } else {
-          setErrorMessage(null)
-          setShowFallbackError(true)
-        }
-
-        showFloatingAlert(error)
-        setSeriesList([])
-      } finally {
-        if (isActive) {
-          setIsLoading(false)
-        }
+  const {
+    isLoading,
+    items: seriesList,
+    error,
+    retry,
+  } = useCollectionQuery<Tag, Tag[]>({
+    deps: [searchValue],
+    fetcher: () =>
+      fetchTagList({
+        search: searchValue.trim() || undefined,
+      }),
+    select: (response) => ({ items: response, count: response.length }),
+    mapError: (error) => {
+      showFloatingAlert({
+        message: t('series.home.error.notification'),
+        severity: 'error',
+      })
+      // Backend error payloads are not guaranteed to be localized,
+      // so we always show the translated fallback copy in the UI.
+      return {
+        message: error instanceof Error ? error.message : null,
+        showFallback: !(error instanceof Error),
       }
-    }
+    },
+  })
 
-    void fetchPageData()
+  const searchDraft = useSearchDraft({
+    value: searchValue,
+    trackDirty: false,
+    onCommit: setSearchValue,
+    onSameQuery: () => retry(),
+  })
 
-    return () => {
-      isActive = false
-    }
-  }, [clearFloatingAlert, retryKey, searchValue, showFloatingAlert])
+  const renderedErrorMessage = error.showFallback ? t('series.home.error.fallback') : error.message
 
   // Sort the derived series list in memory so the UI stays responsive.
   const sortedSeries = useMemo(
@@ -209,17 +182,9 @@ const SeriesPage = () => {
     return sortedSeries.slice(start, start + PAGE_SIZE)
   }, [page, sortedSeries])
 
-  // Retry the last failed fetch by invalidating the request key.
-  const onRetry = () => {
-    clearFloatingAlert()
-    setRetryKey((value) => value + 1)
-  }
-
   // Normalize the search input before pushing it into the URL state.
   const onSearchSubmit = (value: string) => {
-    const nextValue = value.trim()
-    setSearchValue(nextValue)
-    setSearchDraft(nextValue)
+    searchDraft.submit(value)
   }
 
   // Reuse the shared entity view to switch between list and grid cards.
@@ -240,8 +205,8 @@ const SeriesPage = () => {
       searchPlaceholder={
         isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
       }
-      searchValue={searchDraft}
-      onSearchChange={setSearchDraft}
+      searchValue={searchDraft.displayedValue}
+      onSearchChange={searchDraft.setDraft}
       onSearchSubmit={onSearchSubmit}
       sortTarget={sortTarget}
       onSortTargetChange={setSortTarget}
@@ -259,7 +224,7 @@ const SeriesPage = () => {
       }
       errorMessage={renderedErrorMessage}
       retryLabel={t('series.home.error.retry')}
-      onRetry={onRetry}
+      onRetry={retry}
       emptyTitle={t('series.home.empty.title')}
       emptyDescription={t('series.home.empty.description')}
       hasResults={pagedSeries.length > 0}

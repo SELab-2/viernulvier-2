@@ -15,9 +15,9 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useNotification } from '../contexts/notificationContextShared'
-import { ApiError } from '../services/ApiTypes'
-import { ALERT_SEVERITIES } from '../types/FloatingAlertConfig'
+import { useNotification } from '../../contexts/notificationContextShared'
+import { ApiError } from '../../services/ApiTypes'
+import { ALERT_SEVERITIES } from '../../types/FloatingAlertConfig'
 
 export type UseCollectionPageNotificationResult = {
   showFloatingAlert: (error?: unknown) => void

@@ -6,19 +6,15 @@ import CollectionView from '../../../shared/components/CollectionView'
 import CollectionResultsSkeleton from '../../../shared/components/skeletons/CollectionResultsSkeleton'
 import { useSearchBarUrlState } from '../../../shared/hooks/useSearchBarUrlState'
 import useCollectionQuery from '../../../shared/hooks/useCollectionQuery'
-import useFloatingAlertOnce from '../../../shared/hooks/useFloatingAlertOnce'
 import useSearchDraft from '../../../shared/hooks/useSearchDraft'
 import CollectionPageLayout from '../../../shared/layouts/CollectionPageLayout'
 import ProductionGridCard from '../components/cards/ProductionGridCard'
 import ProductionListCard from '../components/cards/ProductionListCard'
 import FilterPanel from '../components/filter-panel/FilterPanel'
-
+import { useNotification } from '../../../contexts/notificationContextShared'
 import { getGenres } from '../../../services/genres/Genres'
 import { getProductions } from '../../../services/productions/Productions'
 import { getTags } from '../../../services/tags/Tags'
-import { useCollectionPageNotification } from '../../../hooks/useCollectionPageNotification'
-import { ApiError } from '../../../services/ApiTypes'
-
 
 import type { Genre } from '../../../types/Genres'
 import type { Production } from '../../../types/Productions'
@@ -112,14 +108,12 @@ const hasSelectedGenre = (production: Production, selectedGenreIds: number[]): b
  *
  * - {@link useCollectionQuery} handles loading/error/retry state.
  * - {@link useSearchDraft} keeps input value decoupled from URL state.
- * - {@link useFloatingAlertOnce} shows navigation alerts one time.
+ * - Floating alerts worden centraal afgehandeld via {@link NotificationProvider}.
  */
 const ProductionsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { showFloatingAlert, clearFloatingAlert } = useCollectionPageNotification(
-    'productions.home.error.notification',
-  )
+  const { showFloatingAlert } = useNotification()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
@@ -149,46 +143,31 @@ const ProductionsPage = () => {
     clearFilters,
   } = useSearchBarUrlState({ isMobile })
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [productions, setProductions] = useState<Production[]>([])
   const [genres, setGenres] = useState<Genre[]>([])
   const [tags, setTags] = useState<Tag[]>([])
-  const [totalCount, setTotalCount] = useState(0)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [showFallbackError, setShowFallbackError] = useState(false)
-  const [retryKey, setRetryKey] = useState(0)
-  const [searchDraft, setSearchDraft] = useState(searchValue)
-  const [isSearchDraftDirty, setIsSearchDraftDirty] = useState(false)
-
-  // Error message to display in the UI, preferring the translated fallback message
-  const renderedErrorMessage = showFallbackError
-    ? t('productions.home.error.fallback')
-    : errorMessage
 
   // Memoized value for the API ordering parameter to avoid unnecessary recalculations on every render.
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
     [sortDirection, sortTarget],
   )
-  const selectedAttendanceMode = attendanceMode
-  const selectedPerformerType = performerType
+
   const selectedGenres = selectedGenreIds.join(',')
   const selectedTags = selectedTagIds.join(',')
-  const displayedSearchValue = isSearchDraftDirty ? searchDraft : searchValue
 
   useEffect(() => {
     let isActive = true
 
     const fetchFilterMetadata = async () => {
       try {
-        const [genres, tags] = await Promise.all([fetchGenres(), fetchTags()])
+        const [fetchedGenres, fetchedTags] = await Promise.all([fetchGenres(), fetchTags()])
 
         if (!isActive) {
           return
         }
 
-        setGenres(genres)
-        setTags(tags)
+        setGenres(fetchedGenres)
+        setTags(fetchedTags)
       } catch {
         if (!isActive) {
           return
@@ -206,101 +185,56 @@ const ProductionsPage = () => {
     }
   }, [])
 
-  // Effect to fetch the productions data from the API whenever the ordering, page, retryKey, or searchValue changes
-  useEffect(() => {
-    let isActive = true
+  const {
+    isLoading,
+    items: productions,
+    count: totalCount,
+    error,
+    retry,
+  } = useCollectionQuery<Production, { results: Production[]; count: number }>({
+    deps: [ordering, page, searchValue, attendanceMode, performerType, selectedGenres, selectedTags, firstEventStartAfter, firstEventStartBefore],
+    fetcher: () =>
+      getProductions({
+        page,
+        pageSize: PAGE_SIZE,
+        filters: {
+          search: searchValue.trim() || undefined,
+          ordering,
+          attendance_mode: attendanceMode,
+          performer_type: performerType,
+          genre: parseCommaSeparatedIds(selectedGenres),
+          tag: parseCommaSeparatedIds(selectedTags),
+          first_event_start_after: toIsoDateBoundary(firstEventStartAfter, 'start'),
+          first_event_start_before: toIsoDateBoundary(firstEventStartBefore, 'end'),
+        },
+      }),
+    select: (response) => ({ items: response.results, count: response.count }),
+    mapError: () => {
+      showFloatingAlert({
+        message: t('productions.home.error.notification'),
+        severity: 'error',
+      })
+      // Backend error payloads are not guaranteed to be localized,
+      // so we always show the translated fallback copy in the UI.
+      return { message: null, showFallback: true }
+    },
+  })
 
-    const fetchPageData = async () => {
-      setIsLoading(true)
-      setErrorMessage(null)
-      setShowFallbackError(false)
-      clearFloatingAlert()
+  const searchDraft = useSearchDraft({
+    value: searchValue,
+    trackDirty: true,
+    onCommit: setSearchValue,
+    onSameQuery: () => retry(),
+  })
 
-      try {
-        const response = await getProductions({
-          page,
-          pageSize: PAGE_SIZE,
-          filters: {
-            search: searchValue.trim() || undefined,
-            ordering,
-            attendance_mode: selectedAttendanceMode,
-            performer_type: selectedPerformerType,
-            genre: parseCommaSeparatedIds(selectedGenres),
-            tag: parseCommaSeparatedIds(selectedTags),
-            first_event_start_after: toIsoDateBoundary(firstEventStartAfter, 'start'),
-            first_event_start_before: toIsoDateBoundary(firstEventStartBefore, 'end'),
-          },
-        })
-
-        if (!isActive) {
-          return
-        }
-
-        setProductions(response.results)
-        setTotalCount(response.count)
-      } catch (error: unknown) {
-        if (!isActive) {
-          return
-        }
-
-        if (error instanceof ApiError) {
-          // Backend error payloads are not guaranteed to be localized,
-          // so we always show the translated fallback copy in the UI.
-          setErrorMessage(null)
-          setShowFallbackError(true)
-        } else {
-          setErrorMessage(null)
-          setShowFallbackError(true)
-        }
-        showFloatingAlert(error)
-        setProductions([])
-        setTotalCount(0)
-      } finally {
-        if (isActive) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void fetchPageData()
-
-    return () => {
-      isActive = false
-    }
-  }, [
-    clearFloatingAlert,
-    firstEventStartAfter,
-    firstEventStartBefore,
-    ordering,
-    page,
-    retryKey,
-    searchValue,
-    selectedAttendanceMode,
-    selectedGenres,
-    selectedPerformerType,
-    selectedTags,
-    showFloatingAlert,
-  ])
-
-  // Handler for retrying the data fetch when an error occurs, triggered by the retry button in the UI.
-  const onRetry = () => {
-    clearFloatingAlert()
-    setRetryKey((value) => value + 1)
-  }
+  // Error message to display in the UI, preferring the translated fallback message
+  const renderedErrorMessage = error.showFallback
+    ? t('productions.home.error.fallback')
+    : error.message
 
   // Handler for submitting the search form, which updates the searchValue and triggers a new data fetch
   const onSearchSubmit = (value: string) => {
-    const nextQuery = value.trim()
-    if (nextQuery === searchValue.trim()) {
-      setSearchDraft(nextQuery)
-      setIsSearchDraftDirty(false)
-      setRetryKey((current) => current + 1)
-      return
-    }
-
-    setSearchValue(nextQuery)
-    setSearchDraft(nextQuery)
-    setIsSearchDraftDirty(false)
+    searchDraft.submit(value)
   }
 
   /**
@@ -365,45 +299,40 @@ const ProductionsPage = () => {
   )
 
   return (
-    <>
-      <CollectionPageLayout
-        isMobile={isMobile}
-        searchPlaceholder={
-          isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
-        }
-        searchValue={displayedSearchValue}
-        onSearchChange={(value) => {
-          setSearchDraft(value)
-          setIsSearchDraftDirty(true)
-        }}
-        onSearchSubmit={onSearchSubmit}
-        sortTarget={sortTarget}
-        onSortTargetChange={setSortTarget}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        resultCount={totalCount}
-        sidebarContent={filterPanel}
-        resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
-        isLoading={isLoading}
-        loadingLabel={t('productions.home.loading')}
-        loadingContent={
-          <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
-        }
-        errorMessage={renderedErrorMessage}
-        retryLabel={t('productions.home.error.retry')}
-        onRetry={onRetry}
-        emptyTitle={t('productions.home.empty.title')}
-        emptyDescription={t('productions.home.empty.description')}
-        hasResults={productions.length > 0}
-        resultsContent={resultsContent}
-        page={page}
-        pageSize={PAGE_SIZE}
-        totalItems={totalCount}
-        onPageChange={setPage}
-      />
-    </>
+    <CollectionPageLayout
+      isMobile={isMobile}
+      searchPlaceholder={
+        isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
+      }
+      searchValue={searchDraft.displayedValue}
+      onSearchChange={searchDraft.setDraft}
+      onSearchSubmit={onSearchSubmit}
+      sortTarget={sortTarget}
+      onSortTargetChange={setSortTarget}
+      sortDirection={sortDirection}
+      onSortDirectionChange={setSortDirection}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      resultCount={totalCount}
+      sidebarContent={filterPanel}
+      resultsRegionAriaLabel={t('productions.home.resultsRegionLabel')}
+      isLoading={isLoading}
+      loadingLabel={t('productions.home.loading')}
+      loadingContent={
+        <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+      }
+      errorMessage={renderedErrorMessage}
+      retryLabel={t('productions.home.error.retry')}
+      onRetry={retry}
+      emptyTitle={t('productions.home.empty.title')}
+      emptyDescription={t('productions.home.empty.description')}
+      hasResults={productions.length > 0}
+      resultsContent={resultsContent}
+      page={page}
+      pageSize={PAGE_SIZE}
+      totalItems={totalCount}
+      onPageChange={setPage}
+    />
   )
 }
 

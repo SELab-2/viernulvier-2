@@ -5,7 +5,7 @@ import { useEffect } from 'react'
 
 import { tokens } from '../../theme/tokens'
 
-import type { FloatingAlertProps, FloatingAlertSeverity } from '../types/FloatingAlertConfig'
+import type { FloatingAlertProps, FloatingAlertSeverity } from '../../types/FloatingAlertConfig'
 
 /**
  * FloatingAlert combines Alert styling with Toast floating behavior.

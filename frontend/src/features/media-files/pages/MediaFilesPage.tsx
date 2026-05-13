@@ -6,12 +6,12 @@ import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 import MediaFileGridCard from '../components/MediaFileGridCard'
 import MediaFileListCard from '../components/MediaFileListCard'
 import CollectionView from '../../../shared/components/CollectionView'
-import FloatingAlert from '../../../shared/components/FloatingAlert'
 import { type SearchSortDirection, type SearchSortTarget } from '../../../shared/components/search/types'
 import { useSearchBarUrlState } from '../../../shared/hooks/useSearchBarUrlState'
 import useCollectionQuery from '../../../shared/hooks/useCollectionQuery'
 import useSearchDraft from '../../../shared/hooks/useSearchDraft'
 import CollectionPageLayout from '../../../shared/layouts/CollectionPageLayout'
+import { useNotification } from '../../../contexts/notificationContextShared'
 import { ApiError } from '../../../services/ApiTypes'
 import { getMediaFiles } from '../../../services/media_files/MediaFiles'
 
@@ -44,6 +44,7 @@ const MediaFilesPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const { showFloatingAlert } = useNotification()
 
   const {
     searchValue,
@@ -70,7 +71,6 @@ const MediaFilesPage = () => {
     items: mediaFiles,
     count: totalCount,
     error,
-    floatingAlert,
     retry,
   } = useCollectionQuery<MediaFile, { results: MediaFile[]; count: number }>({
     deps: [ordering, page, searchValue],
@@ -84,10 +84,16 @@ const MediaFilesPage = () => {
         },
       }),
     select: (response) => ({ items: response.results, count: response.count }),
-    mapError: (error: unknown) => ({
-      message: error instanceof ApiError ? error.message : null,
-      showFallback: true,
-    }),
+    mapError: (error: unknown) => {
+      showFloatingAlert({
+        message: t('media.error.notification'),
+        severity: 'error',
+      })
+      return {
+        message: error instanceof ApiError ? error.message : null,
+        showFallback: true,
+      }
+    },
   })
 
   const searchDraft = useSearchDraft({
@@ -103,7 +109,7 @@ const MediaFilesPage = () => {
   })
 
   const renderedErrorMessage = error.showFallback ? t('media.error.fallback') : error.message
-  const floatingErrorMessage = t('media.error.notification')
+
   useEffect(() => {
     const previousOrdering = previousOrderingRef.current
 
@@ -129,48 +135,39 @@ const MediaFilesPage = () => {
   )
 
   return (
-    <>
-      <CollectionPageLayout
-        isMobile={isMobile}
-        searchPlaceholder={t('media.searchPlaceholder')}
-        searchValue={searchDraft.displayedValue}
-        onSearchChange={(value) => searchDraft.setDraft(value.trim())}
-        onSearchSubmit={onSearchSubmit}
-        sortTarget={sortTarget}
-        onSortTargetChange={setSortTarget}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-        sortTargetOptions={MEDIA_SORT_TARGET_OPTIONS}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        resultCount={totalCount}
-        resultsRegionAriaLabel={t('media.resultsRegionLabel')}
-        isLoading={isLoading}
-        loadingLabel={t('media.loading')}
-        loadingContent={
-          <MediaFilesPageSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
-        }
-        errorMessage={renderedErrorMessage}
-        retryLabel={t('media.error.retry')}
-        onRetry={retry}
-        emptyTitle={t('media.empty.title')}
-        emptyDescription={t('media.empty.description')}
-        hasResults={mediaFiles.length > 0}
-        resultsContent={resultsContent}
-        page={page}
-        pageSize={PAGE_SIZE}
-        totalItems={totalCount}
-        onPageChange={setPage}
-        paginationI18nKeyPrefix="media.pagination"
-      />
-
-      <FloatingAlert
-        open={floatingAlert.isOpen}
-        onClose={floatingAlert.close}
-        severity="error"
-        message={floatingErrorMessage}
-      />
-    </>
+    <CollectionPageLayout
+      isMobile={isMobile}
+      searchPlaceholder={t('media.searchPlaceholder')}
+      searchValue={searchDraft.displayedValue}
+      onSearchChange={(value) => searchDraft.setDraft(value.trim())}
+      onSearchSubmit={onSearchSubmit}
+      sortTarget={sortTarget}
+      onSortTargetChange={setSortTarget}
+      sortDirection={sortDirection}
+      onSortDirectionChange={setSortDirection}
+      sortTargetOptions={MEDIA_SORT_TARGET_OPTIONS}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      resultCount={totalCount}
+      resultsRegionAriaLabel={t('media.resultsRegionLabel')}
+      isLoading={isLoading}
+      loadingLabel={t('media.loading')}
+      loadingContent={
+        <MediaFilesPageSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+      }
+      errorMessage={renderedErrorMessage}
+      retryLabel={t('media.error.retry')}
+      onRetry={retry}
+      emptyTitle={t('media.empty.title')}
+      emptyDescription={t('media.empty.description')}
+      hasResults={mediaFiles.length > 0}
+      resultsContent={resultsContent}
+      page={page}
+      pageSize={PAGE_SIZE}
+      totalItems={totalCount}
+      onPageChange={setPage}
+      paginationI18nKeyPrefix="media.pagination"
+    />
   )
 }
 
