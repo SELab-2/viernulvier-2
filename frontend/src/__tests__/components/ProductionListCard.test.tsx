@@ -135,24 +135,13 @@ describe('ProductionListCard', () => {
     expect(screen.getByRole('heading', { name: 'Voorstelling' })).toBeInTheDocument()
     expect(screen.getByText('Artiest')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Voorstelling/ })).toHaveAttribute(
-      'data-to',
+      'href',
       toLocalizedPath('/productions/1', 'nl'),
     )
     expect(screen.getByRole('img', { name: 'Voorstelling' })).toHaveAttribute(
       'src',
       'https://cdn.example.com/a.jpg',
     )
-  })
-
-  it('supports keyboard activation for the full-card link', () => {
-    const production = baseProduction({ id: 8 })
-    renderListCard({ production })
-
-    const card = screen.getByRole('link', { name: /Voorstelling/ })
-    fireEvent.keyDown(card, { key: 'Enter' })
-    fireEvent.keyDown(card, { key: ' ' })
-
-    expect(card).toHaveAttribute('data-to', toLocalizedPath('/productions/8', 'nl'))
   })
 
   it('omits the artist line when there is no artist translation or display fallback', () => {
@@ -373,7 +362,7 @@ describe('ProductionListCard', () => {
     const card = screen.getByRole('link', { name: /Voorstelling/ })
     fireEvent.keyDown(card, { key: 'Escape' })
 
-    expect(card).toHaveAttribute('data-to', toLocalizedPath('/productions/9', 'nl'))
+    expect(card).toHaveAttribute('href', toLocalizedPath('/productions/9', 'nl'))
   })
 
   it('does not render a genre row when there are no genres', () => {
@@ -406,7 +395,7 @@ describe('ProductionListCard', () => {
     renderListCard({ production })
 
     expect(screen.getByRole('link', { name: /Voorstelling/ })).toHaveAttribute(
-      'data-to',
+      'href',
       toLocalizedPath('/productions/42', 'nl'),
     )
   })
@@ -419,7 +408,7 @@ describe('ProductionListCard', () => {
     expect(screen.getByRole('heading', { name: 'Production' })).toBeInTheDocument()
     expect(screen.getByText('Artist')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Production/ })).toHaveAttribute(
-      'data-to',
+      'href',
       toLocalizedPath('/productions/1', 'en'),
     )
     expect(screen.getByRole('img', { name: 'Production' })).toBeInTheDocument()
@@ -534,6 +523,6 @@ describe('ProductionListCard', () => {
     expect(onGenreClick).not.toHaveBeenCalled()
 
     const cardLink = screen.getByRole('link', { name: /Voorstelling/ })
-    expect(cardLink).toHaveAttribute('data-to', toLocalizedPath('/productions/1', 'nl'))
+    expect(cardLink).toHaveAttribute('href', toLocalizedPath('/productions/1', 'nl'))
   })
 })

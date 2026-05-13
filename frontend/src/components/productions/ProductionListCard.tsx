@@ -2,7 +2,7 @@ import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 import { tokens } from '../../theme/tokens'
 import { getProductionDateLabel } from '../../utils/dateUtils'
@@ -41,7 +41,6 @@ const ProductionListCard = ({
 }: ProductionListCardProps) => {
   const { i18n } = useTranslation()
   const location = useLocation()
-  const navigate = useNavigate()
   const { language } = i18n
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
@@ -79,19 +78,9 @@ const ProductionListCard = ({
 
   return (
     <Stack
+      component={RouterLink}
+      to={detailPath}
       direction="row"
-      role="link"
-      tabIndex={0}
-      data-to={detailPath}
-      onClick={() => {
-        navigate(detailPath)
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          navigate(detailPath)
-        }
-      }}
       sx={(theme) => ({
         gap: 3,
         height: 170,

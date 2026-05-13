@@ -1,7 +1,7 @@
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Box, Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Link as RouterLink } from 'react-router-dom'
 
 import { createCommonStyles } from '../../theme/styles'
 import { tokens } from '../../theme/tokens'
@@ -43,7 +43,7 @@ const ProductionGridCard = ({
   const commonStyles = createCommonStyles(theme)
   const { i18n } = useTranslation()
   const location = useLocation()
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
   const { language } = i18n
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
@@ -81,18 +81,20 @@ const ProductionGridCard = ({
 
   return (
     <Stack
-      role="link"
-      tabIndex={0}
-      data-to={detailPath}
-      onClick={() => {
-        navigate(detailPath)
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          navigate(detailPath)
-        }
-      }}
+      component={RouterLink}
+      to={detailPath}
+      // role="link"
+      // tabIndex={0}
+      // data-to={detailPath}
+      // onClick={() => {
+      //   navigate(detailPath)
+      // }}
+      // onKeyDown={(event) => {
+      //   if (event.key === 'Enter' || event.key === ' ') {
+      //     event.preventDefault()
+      //     navigate(detailPath)
+      //   }
+      // }}
       sx={{
         ...commonStyles.cardBase,
         width: '100%',

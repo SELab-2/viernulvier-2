@@ -286,7 +286,7 @@ describe('SeriesDetailPage', () => {
     expect(await screen.findByText('PRODUCTION DETAIL')).toBeInTheDocument()
   })
 
-  it('navigates to production detail with keyboard activation', async () => {
+  it('links production cards to the production detail route', async () => {
     mockedGetTag.mockResolvedValue(baseTag())
     mockedGetProductions.mockResolvedValue({
       count: 1,
@@ -303,9 +303,7 @@ describe('SeriesDetailPage', () => {
     const productionCard = await screen.findByRole('link', {
       name: /keyboard productie/i,
     })
-    fireEvent.keyDown(productionCard, { key: 'Enter' })
-
-    expect(await screen.findByText('PRODUCTION DETAIL')).toBeInTheDocument()
+    expect(productionCard).toHaveAttribute('href', '/nl/producties/43')
   })
 
   it('renders production genre chips on the production card when genres have display names', async () => {

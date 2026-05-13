@@ -145,20 +145,9 @@ describe('ProductionGridCard', () => {
     renderGridCard({ production })
 
     expect(screen.getByRole('link', { name: /Voorstelling/ })).toHaveAttribute(
-      'data-to',
+      'href',
       toLocalizedPath('/productions/7', 'nl'),
     )
-  })
-
-  it('supports keyboard activation for the card link', () => {
-    const production = baseProduction({ id: 8 })
-    renderGridCard({ production })
-
-    const card = screen.getByRole('link', { name: /Voorstelling/ })
-    fireEvent.keyDown(card, { key: 'Enter' })
-    fireEvent.keyDown(card, { key: ' ' })
-
-    expect(card).toHaveAttribute('data-to', toLocalizedPath('/productions/8', 'nl'))
   })
 
   it('the content area links to the production detail route', () => {
@@ -167,7 +156,7 @@ describe('ProductionGridCard', () => {
 
     const links = screen.getAllByRole('link')
     expect(
-      links.some((l) => l.getAttribute('data-to') === toLocalizedPath('/productions/42', 'nl')),
+      links.some((l) => l.getAttribute('href') === toLocalizedPath('/productions/42', 'nl')),
     ).toBe(true)
   })
 
@@ -427,7 +416,7 @@ describe('ProductionGridCard', () => {
     const card = screen.getByRole('link', { name: /Voorstelling/ })
     fireEvent.keyDown(card, { key: 'Escape' })
 
-    expect(card).toHaveAttribute('data-to', toLocalizedPath('/productions/9', 'nl'))
+    expect(card).toHaveAttribute('href', toLocalizedPath('/productions/9', 'nl'))
   })
 
   it('does not render a genre row when there are no genres', () => {
@@ -480,7 +469,7 @@ describe('ProductionGridCard', () => {
 
     const links = screen.getAllByRole('link')
     expect(
-      links.some((l) => l.getAttribute('data-to') === toLocalizedPath('/productions/1', 'nl')),
+      links.some((l) => l.getAttribute('href') === toLocalizedPath('/productions/1', 'nl')),
     ).toBe(true)
   })
 
