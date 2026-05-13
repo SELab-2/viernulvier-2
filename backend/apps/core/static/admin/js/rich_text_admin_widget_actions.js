@@ -34,6 +34,9 @@
                 return;
             }
 
+            // Mark the exact selection boundaries before extracting or moving nodes.
+            // Range operations mutate the DOM, so invisible markers let us find the
+            // selected segment again after inserts/extracts have changed the tree.
             var startMarker = document.createElement('span');
             var endMarker = document.createElement('span');
             startMarker.style.display = 'none';
@@ -43,9 +46,15 @@
             var endInsert = range.cloneRange();
             startInsert.collapse(true);
             endInsert.collapse(false);
+
+            // Insert the end marker first so inserting the start marker cannot shift
+            // the range end position in browsers that update live ranges during DOM edits.
             endInsert.insertNode(endMarker);
             startInsert.insertNode(startMarker);
 
+            // If both markers ended up inside the same active inline element, split
+            // that element into "before selection", "selected content", and "after selection".
+            // Only the selected middle part is unwrapped; formatting outside the selection stays intact.
             var sameAncestor = api.findAncestor(startMarker, function (el) {
                 return tagNames.indexOf(el.tagName) !== -1 && el.contains(endMarker);
             }, editor);
@@ -80,6 +89,8 @@
                 return;
             }
 
+            // Fallback for selections spanning multiple inline elements: remove the
+            // requested formatting from any matching descendants inside the selection.
             var fragment = range.extractContents();
             tagNames.forEach(function (tag) {
                 var nodes = Array.prototype.slice.call(fragment.querySelectorAll(tag));

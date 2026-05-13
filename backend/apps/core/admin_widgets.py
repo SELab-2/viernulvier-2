@@ -49,6 +49,8 @@ def enable_rich_text_for_fields(
     configured_widget_attrs = dict(widget_attrs or {})
 
     def decorator(admin_class: type) -> type:
+        # Preserve any existing admin implementation so the decorator can layer
+        # rich-text behaviour on top without discarding custom formfield logic.
         original_formfield_for_dbfield = admin_class.__dict__.get("formfield_for_dbfield")
 
         def formfield_for_dbfield(self: Any, db_field: Any, request: Any, **kwargs: Any) -> Any:

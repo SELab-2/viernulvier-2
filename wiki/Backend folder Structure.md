@@ -31,17 +31,26 @@ viernulvier_archive/
 │   │
 │   ├── core/                        # Shared base classes & utilities
 │   │   ├── __init__.py
-│   │   ├── admin.py                 # Base admin mixins
-│   │   ├── admin_widgets.py         # Shared admin widgets and rich text editor decorator
-│   │   ├── authentications.py       # Authentication validation
-│   │   ├── permissions.py           # Internal/public Api-Key validation
-│   │   ├── serializers.py           # TranslatableSerializerMixin
-│   │   ├── openapi.py               # Reusable responses
-│   │   ├── views.py                 # ApiModelViewSet and ApiReadOnlyViewSet
-│   │   ├── models.py                # BaseModel base
-│   │   ├── media_validation.py       # Shared media MIME/signature/size validation helpers
-│   │   ├── spectacular_extensions.py # Defines OpenAPI schema extension for API-key authentication
-│   │   └── throttles.py             # Implements DRF rate-limiting classes for public and internal API keys
+│   │   ├── admin.py                     # BaseAdmin, persistent selections, two-step actions
+│   │   ├── admin_filters.py             # Searchable multi-select admin filters
+│   │   ├── admin_widgets.py             # Rich-text admin widget and decorator
+│   │   ├── authentications.py           # API-key authentication
+│   │   ├── exceptions.py                # RFC 7807 exception handler
+│   │   ├── filters.py                   # BaseModelFilter
+│   │   ├── media_validation.py          # MIME/signature/size validation helpers
+│   │   ├── mixins.py                    # Shared ViewSet mixins
+│   │   ├── models.py                    # BaseModel
+│   │   ├── openapi.py                   # Reusable OpenAPI error responses
+│   │   ├── ordering.py                  # Nulls-last ordering filter
+│   │   ├── permissions.py               # API-key permission matrix
+│   │   ├── serializers.py               # TranslatableSerializerMixin
+│   │   ├── spectacular_extensions.py    # OpenAPI API-key auth extension
+│   │   ├── throttles.py                 # API-key throttling classes
+│   │   ├── views.py                     # Base API ViewSets
+│   │   ├── templatetags/
+│   │   │   └── admin_dashboard.py       # Custom admin dashboard cards
+│   │   └── static/admin/js/
+│   │       └── rich_text_admin_widget_*.js
 │   │
 │   ├── languages/                   # LANGUAGE table
 │   │   ├── __init__.py
@@ -305,11 +314,11 @@ python manage.py test
 
 ### `api/urls.py`
 
-**Purpose**: Central API router
+**Purpose**: Top-level API routing
 
-- Registers app viewsets
-- Defines API prefixes (e.g. `/api/`)
-- Keeps routing consistent across apps
+- Exposes API version prefixes, such as `/api/v1/`
+- Exposes OpenAPI schema and documentation endpoints
+- Delegates version-specific viewset registration to files such as `api/v1/urls.py`
 
 ---
 
@@ -470,6 +479,6 @@ tests/
 | `config/settings/` | Settings per environment | `dev.py`, `test.py` |
 | `apps/` | Domain apps | `apps/events/` |
 | `apps/core/` | Shared utilities | `permissions.py` |
-| `api/` | Central API routing | `api/urls.py` |
+| `api/` | API routing, versioning, docs, caching, and pagination | `api/urls.py`, `api/v1/urls.py` |
 | `tests/` | Pytest tests | `tests/pricing/test_views.py` |
 | `requirements/` | Dependency sets | `development.txt` |

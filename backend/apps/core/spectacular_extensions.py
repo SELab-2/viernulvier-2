@@ -1,3 +1,5 @@
+"""drf-spectacular extensions for documenting core authentication schemes."""
+
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
 
