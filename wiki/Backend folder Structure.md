@@ -136,10 +136,13 @@ viernulvier_archive/
 │           ├── viernulvier_sync.py            # Core sync loop & upsert logic
 │           └── viernulvier_media.py           # Media gallery & crop sync
 │
-├── api/                             # OpenAPI / DRF router
-│   ├── __init__.py
-│   ├── urls.py                      # Central API router
-│   └── pagination.py                # Custom pagination
+├── api/    # OpenAPI / DRF router
+│   ├── urls.py          # Top-level API routing: versions + schema/docs endpoints
+│   ├── versioning.py    # DRF URL path versioning config
+│   ├── cache.py         # Shared API caching decorators and cache invalidation helpers
+│   ├── pagination.py    # Shared pagination presets
+│   └── v1/
+|       └── urls.py      # v1 router with all current viewset registrations
 │
 ├── tests/                           # Pytest test suite
 │   ├── core/
@@ -357,13 +360,13 @@ apps/<domain>/
 
 ### `api/`
 
-**Purpose**: Central DRF/OpenAPI routing and shared API configuration
+**Purpose**: Central API configuration for routing, versioning, docs, caching, and pagination.
 
-**Guidelines**:
-
-- Keep app-specific routes/viewsets inside apps
-- Use `api/urls.py` only to aggregate and version/prefix endpoints
-- Put cross-cutting API concerns here (pagination, versioning)
+- `api/urls.py` exposes version prefixes and documentation endpoints.
+- `api/v1/urls.py` registers the current v1 viewsets.
+- `api/versioning.py` defines supported API versions.
+- `api/cache.py` contains reusable API cache helpers.
+- `api/pagination.py` defines shared pagination presets.
 
 ---
 
