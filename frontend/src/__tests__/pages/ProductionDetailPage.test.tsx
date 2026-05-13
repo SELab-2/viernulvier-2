@@ -13,7 +13,17 @@ const languageState = { current: 'nl' }
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: languageState.current },
-    t: (_key: string, defaultValue: string) => defaultValue,
+    // Support both signature variants used in code/tests:
+    // t(key, defaultValueString) and t(key, { count, defaultValue })
+    t: (_key: string, options: any) => {
+      if (typeof options === 'string') {
+        return options
+      }
+      if (options && typeof options === 'object' && 'defaultValue' in options) {
+        return options.defaultValue
+      }
+      return _key
+    },
   }),
 }))
 
