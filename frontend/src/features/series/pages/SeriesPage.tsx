@@ -12,6 +12,7 @@ import useCollectionQuery from '../../../shared/hooks/useCollectionQuery'
 import useSearchDraft from '../../../shared/hooks/useSearchDraft'
 import CollectionPageLayout from '../../../shared/layouts/CollectionPageLayout'
 import { useNotification } from '../../../contexts/notificationContextShared'
+import { ApiError } from '../../../services/ApiTypes'
 import { getTags } from '../../../services/tags/Tags'
 import type { Tag } from '../../../types/Tags'
 import { getTranslatedRecord } from '../../../utils/translations'
@@ -125,6 +126,8 @@ const SeriesPage = () => {
     error,
     retry,
   } = useCollectionQuery<Tag, Tag[]>({
+    // sortTarget is intentionally excluded from deps — sorting is done in-memory,
+    // so only a new search query should trigger a new fetch.
     deps: [searchValue],
     fetcher: () =>
       fetchTagList({
@@ -132,22 +135,32 @@ const SeriesPage = () => {
       }),
     select: (response) => ({ items: response, count: response.length }),
     mapError: (error) => {
+      // Backend error payloads are not guaranteed to be localized,
+      // so we always show the translated fallback copy in the UI.
+      if (error instanceof ApiError) {
+        return { message: error.message, showFallback: false }
+      }
+      return { message: null, showFallback: true }
+    },
+  })
+
+  // Show the floating alert once whenever a new error comes in.
+  // Done via useEffect so the alert fires exactly once per fetch failure,
+  // not on every re-render.
+  const hasError = error.message !== null || error.showFallback
+  useEffect(() => {
+    if (hasError) {
       showFloatingAlert({
         message: t('series.home.error.notification'),
         severity: 'error',
       })
-      // Backend error payloads are not guaranteed to be localized,
-      // so we always show the translated fallback copy in the UI.
-      return {
-        message: error instanceof Error ? error.message : null,
-        showFallback: !(error instanceof Error),
-      }
-    },
-  })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasError])
 
   const searchDraft = useSearchDraft({
     value: searchValue,
-    trackDirty: false,
+    trackDirty: true,
     onCommit: setSearchValue,
     onSameQuery: () => retry(),
   })
