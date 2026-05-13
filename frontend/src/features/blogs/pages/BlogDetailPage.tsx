@@ -4,19 +4,20 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useParams, useNavigate } from 'react-router-dom'
 
 import BlogDetailPageSkeleton from './BlogDetailPageSkeleton'
-import ImageWithFallback from '../../../shared/components/ImageWithFallback'
-import Breadcrumbs from '../../productions/components/detail/Breadcrumbs'
-import Description from '../../productions/components/detail/Description'
-import RelatedProductions from '../../productions/components/detail/RelatedProductions'
+import { ApiError } from '../../../services/ApiTypes'
 import { getBlog } from '../../../services/blogs/Blogs'
+import ImageWithFallback from '../../../shared/components/ImageWithFallback'
 import { tokens } from '../../../theme/tokens'
-import type { Blog } from '../../../types/Blogs'
+import { ALERT_SEVERITIES } from '../../../types/FloatingAlertConfig'
 import { formatBlogPublishedDate } from '../../../utils/dateUtils'
 import { getLocalizedValue } from '../../../utils/localization'
 import { resolveCurrentLanguage, toLocalizedPath } from '../../../utils/localizedRoutes'
-import { ApiError } from '../../../services/ApiTypes'
-import { ALERT_SEVERITIES } from '../../../types/FloatingAlertConfig'
 import { redirectWithFloatingAlert } from '../../../utils/navigation'
+import Breadcrumbs from '../../productions/components/detail/Breadcrumbs'
+import Description from '../../productions/components/detail/Description'
+import RelatedProductions from '../../productions/components/detail/RelatedProductions'
+
+import type { Blog } from '../../../types/Blogs'
 
 /**
  * Blog detail page

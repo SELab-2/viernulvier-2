@@ -1,8 +1,9 @@
 import '@testing-library/jest-dom'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
-import { ApiError } from '../../../../services/ApiTypes'
+
 import SeriesDetailPage from '../../../../features/series/pages/SeriesDetailPage'
+import { ApiError } from '../../../../services/ApiTypes'
 import { getProductions } from '../../../../services/productions/Productions'
 import { getTag } from '../../../../services/tags/Tags'
 

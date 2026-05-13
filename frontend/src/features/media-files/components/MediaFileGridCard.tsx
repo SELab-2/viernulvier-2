@@ -9,7 +9,6 @@ import {
   getMediaFileDescription,
   getMediaFileTypeLabel,
 } from './MediaFileUtils'
-
 import { createCommonStyles } from '../../../theme/styles'
 import { tokens } from '../../../theme/tokens'
 import { getPublicMediaFileUrl } from '../../../utils/mediaFileUrls'

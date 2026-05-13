@@ -2,8 +2,9 @@ import { Box } from '@mui/material'
 import { lazy, Suspense, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
-import LoadingSpinner from './shared/components/LoadingSpinner'
+
 import { NotificationProvider } from './contexts/NotificationContext'
+import LoadingSpinner from './shared/components/LoadingSpinner'
 import { ALERT_SEVERITIES } from './types/FloatingAlertConfig'
 import {
   DEFAULT_LANGUAGE,

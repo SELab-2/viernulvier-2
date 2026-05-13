@@ -12,6 +12,7 @@ import {
 import { createCommonStyles } from '../../../theme/styles'
 import { tokens } from '../../../theme/tokens'
 import { getPublicMediaFileUrl } from '../../../utils/mediaFileUrls'
+
 import type { MediaFile } from '../../../types/MediaFiles'
 
 export interface MediaFileListCardProps {

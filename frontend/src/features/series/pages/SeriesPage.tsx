@@ -2,20 +2,21 @@ import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import SeriesGridCard from '../components/SeriesGridCard'
-import SeriesListCard from '../components/SeriesListCard'
-import CollectionView from '../../../shared/components/CollectionView'
-import CollectionResultsSkeleton from '../../../shared/components/skeletons/CollectionResultsSkeleton'
-import { type SearchSortDirection, type SearchSortTarget } from '../../../shared/components/search/types'
-import { useSearchBarUrlState } from '../../../shared/hooks/useSearchBarUrlState'
-import useCollectionQuery from '../../../shared/hooks/useCollectionQuery'
-import useSearchDraft from '../../../shared/hooks/useSearchDraft'
-import CollectionPageLayout from '../../../shared/layouts/CollectionPageLayout'
 import { useNotification } from '../../../contexts/notificationContextShared'
 import { ApiError } from '../../../services/ApiTypes'
 import { getTags } from '../../../services/tags/Tags'
-import type { Tag } from '../../../types/Tags'
+import CollectionView from '../../../shared/components/CollectionView'
+import CollectionResultsSkeleton from '../../../shared/components/skeletons/CollectionResultsSkeleton'
+import useCollectionQuery from '../../../shared/hooks/useCollectionQuery'
+import { useSearchBarUrlState } from '../../../shared/hooks/useSearchBarUrlState'
+import useSearchDraft from '../../../shared/hooks/useSearchDraft'
+import CollectionPageLayout from '../../../shared/layouts/CollectionPageLayout'
 import { getTranslatedRecord } from '../../../utils/translations'
+import SeriesGridCard from '../components/SeriesGridCard'
+import SeriesListCard from '../components/SeriesListCard'
+
+import type { SearchSortDirection, SearchSortTarget } from '../../../shared/components/search/types'
+import type { Tag } from '../../../types/Tags'
 
 // Page size for pagination.
 const PAGE_SIZE = 12
@@ -155,7 +156,7 @@ const SeriesPage = () => {
         severity: 'error',
       })
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasError])
 
   const searchDraft = useSearchDraft({

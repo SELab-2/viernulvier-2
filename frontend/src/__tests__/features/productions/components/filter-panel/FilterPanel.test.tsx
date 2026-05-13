@@ -6,7 +6,9 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import React, { type ReactNode } from 'react'
 import { I18nextProvider } from 'react-i18next'
 
-import FilterPanel, { type FilterPanelProps } from '../../../../../features/productions/components/filter-panel/FilterPanel'
+import FilterPanel, {
+  type FilterPanelProps,
+} from '../../../../../features/productions/components/filter-panel/FilterPanel'
 import i18n from '../../../../../i18n'
 
 import type { Genre } from '../../../../../types/Genres'

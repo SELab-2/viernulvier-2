@@ -3,8 +3,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 
-import i18n from '../../../../i18n'
 import SeriesPage from '../../../../features/series/pages/SeriesPage'
+import i18n from '../../../../i18n'
 import { ApiError } from '../../../../services/ApiTypes'
 import { getTags } from '../../../../services/tags/Tags'
 

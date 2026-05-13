@@ -2,19 +2,19 @@ import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useNotification } from '../../../contexts/notificationContextShared'
+import { getGenres } from '../../../services/genres/Genres'
+import { getProductions } from '../../../services/productions/Productions'
+import { getTags } from '../../../services/tags/Tags'
 import CollectionView from '../../../shared/components/CollectionView'
 import CollectionResultsSkeleton from '../../../shared/components/skeletons/CollectionResultsSkeleton'
-import { useSearchBarUrlState } from '../../../shared/hooks/useSearchBarUrlState'
 import useCollectionQuery from '../../../shared/hooks/useCollectionQuery'
+import { useSearchBarUrlState } from '../../../shared/hooks/useSearchBarUrlState'
 import useSearchDraft from '../../../shared/hooks/useSearchDraft'
 import CollectionPageLayout from '../../../shared/layouts/CollectionPageLayout'
 import ProductionGridCard from '../components/cards/ProductionGridCard'
 import ProductionListCard from '../components/cards/ProductionListCard'
 import FilterPanel from '../components/filter-panel/FilterPanel'
-import { useNotification } from '../../../contexts/notificationContextShared'
-import { getGenres } from '../../../services/genres/Genres'
-import { getProductions } from '../../../services/productions/Productions'
-import { getTags } from '../../../services/tags/Tags'
 
 import type { Genre } from '../../../types/Genres'
 import type { Production } from '../../../types/Productions'
@@ -192,7 +192,17 @@ const ProductionsPage = () => {
     error,
     retry,
   } = useCollectionQuery<Production, { results: Production[]; count: number }>({
-    deps: [ordering, page, searchValue, attendanceMode, performerType, selectedGenres, selectedTags, firstEventStartAfter, firstEventStartBefore],
+    deps: [
+      ordering,
+      page,
+      searchValue,
+      attendanceMode,
+      performerType,
+      selectedGenres,
+      selectedTags,
+      firstEventStartAfter,
+      firstEventStartBefore,
+    ],
     fetcher: () =>
       getProductions({
         page,

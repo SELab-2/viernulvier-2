@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-import Navbar from '../../shared/Navbar'
 import i18n from '../../i18n'
+import Navbar from '../../shared/Navbar'
 
 const renderNavbar = (
   initialPath = '/',

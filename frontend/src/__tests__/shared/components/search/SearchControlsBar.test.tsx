@@ -2,10 +2,10 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 
+import i18n from '../../../../i18n'
 import SearchControlsBar, {
   type SearchControlsBarProps,
 } from '../../../../shared/components/search/SearchControlsBar'
-import i18n from '../../../../i18n'
 
 const renderSearchBar = (props: SearchControlsBarProps, mode: 'light' | 'dark' = 'light') => {
   const theme = createTheme({ palette: { mode } })

@@ -1,7 +1,8 @@
 import { Box, Typography, type TypographyProps } from '@mui/material'
-import type { ReactNode } from 'react'
 
 import { sanitizeHtml } from '../../utils/SanitizeHtml'
+
+import type { ReactNode } from 'react'
 
 export interface HtmlTextProps {
   html: string

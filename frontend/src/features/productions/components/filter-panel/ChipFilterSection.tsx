@@ -4,8 +4,8 @@ import { Box, Button, Stack, Typography } from '@mui/material'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { tokens } from '../../../../theme/tokens'
 import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
+import { tokens } from '../../../../theme/tokens'
 
 const DEFAULT_VISIBLE_COUNT = 5
 

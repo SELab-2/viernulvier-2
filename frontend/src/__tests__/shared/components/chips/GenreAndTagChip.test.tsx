@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter } from 'react-router-dom'
 
-import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
 import i18n from '../../../../i18n'
+import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
 import { toLocalizedPath } from '../../../../utils/localizedRoutes'
 import { getTranslatedRecord } from '../../../../utils/translations'
 
