@@ -115,7 +115,18 @@ const FilterPanel = ({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={adapterLocale}>
-      <Paper variant="outlined" sx={{ borderRadius: tokens.borderRadius.lg, overflow: 'hidden' }}>
+      <Paper
+        variant="outlined"
+        sx={(theme) => ({
+          borderRadius: tokens.borderRadius.lg,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          height: { xs: '100dvh', md: 'auto' },
+          maxHeight: { xs: '100dvh', md: 'none' },
+          backgroundColor: theme.palette.background.paper,
+        })}
+      >
         <Stack
           direction="row"
           spacing={1}
@@ -159,90 +170,106 @@ const FilterPanel = ({
           </Stack>
         </Stack>
 
-        <FilterSection title={t('productions.home.filters.date')}>
-          <Stack spacing={tokens.spacing.numericMd}>
-            <FilterDatePicker
-              label={t('productions.home.filters.startAfter')}
-              value={firstEventStartAfter}
-              onChange={onFirstEventStartAfterChange}
+        <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+          <FilterSection title={t('productions.home.filters.date')}>
+            <Stack spacing={tokens.spacing.numericMd}>
+              <FilterDatePicker
+                label={t('productions.home.filters.startAfter')}
+                value={firstEventStartAfter}
+                onChange={onFirstEventStartAfterChange}
+              />
+              <FilterDatePicker
+                label={t('productions.home.filters.startBefore')}
+                value={firstEventStartBefore}
+                onChange={onFirstEventStartBeforeChange}
+              />
+            </Stack>
+          </FilterSection>
+
+          <Divider />
+
+          <FilterSection title={t('productions.home.filters.genres')}>
+            <ChipFilterSection
+              options={genreOptions}
+              selectedIds={selectedGenreIds}
+              emptyLabel={t('productions.home.filters.noGenres')}
+              onToggle={(id) => onGenreSelectionChange(toggleIdInArray(selectedGenreIds, id))}
             />
-            <FilterDatePicker
-              label={t('productions.home.filters.startBefore')}
-              value={firstEventStartBefore}
-              onChange={onFirstEventStartBeforeChange}
+          </FilterSection>
+
+          <Divider />
+
+          <FilterSection title={t('productions.home.filters.tags')}>
+            <ChipFilterSection
+              options={tagOptions}
+              selectedIds={selectedTagIds}
+              emptyLabel={t('productions.home.filters.noTags')}
+              onToggle={(id) => onTagSelectionChange(toggleIdInArray(selectedTagIds, id))}
             />
-          </Stack>
-        </FilterSection>
+          </FilterSection>
 
-        <Divider />
+          <Divider />
 
-        <FilterSection title={t('productions.home.filters.genres')}>
-          <ChipFilterSection
-            options={genreOptions}
-            selectedIds={selectedGenreIds}
-            emptyLabel={t('productions.home.filters.noGenres')}
-            onToggle={(id) => onGenreSelectionChange(toggleIdInArray(selectedGenreIds, id))}
-          />
-        </FilterSection>
-
-        <Divider />
-
-        <FilterSection title={t('productions.home.filters.tags')}>
-          <ChipFilterSection
-            options={tagOptions}
-            selectedIds={selectedTagIds}
-            emptyLabel={t('productions.home.filters.noTags')}
-            onToggle={(id) => onTagSelectionChange(toggleIdInArray(selectedTagIds, id))}
-          />
-        </FilterSection>
-
-        <Divider />
-
-        <FilterSection title={t('productions.home.filters.performerType')} defaultExpanded={false}>
-          <Stack>
-            <FilterCheckbox
-              label={t('productions.detail.meta.solo')}
-              checked={performerType === 'solo'}
-              onChange={() => onPerformerTypeToggle('solo')}
-            />
-            <FilterCheckbox
-              label={t('productions.detail.meta.group')}
-              checked={performerType === 'group'}
-              onChange={() => onPerformerTypeToggle('group')}
-            />
-          </Stack>
-        </FilterSection>
-
-        <Divider />
-
-        <FilterSection title={t('productions.home.filters.attendanceMode')} defaultExpanded={false}>
-          <Stack>
-            <FilterCheckbox
-              label={t('productions.detail.meta.offline')}
-              checked={attendanceMode === 'offline'}
-              onChange={() => onAttendanceModeToggle('offline')}
-            />
-            <FilterCheckbox
-              label={t('productions.detail.meta.online')}
-              checked={attendanceMode === 'online'}
-              onChange={() => onAttendanceModeToggle('online')}
-            />
-          </Stack>
-        </FilterSection>
-      </Paper>
-      {onMobileApply ? (
-        <Box sx={{ p: tokens.spacing.numericMd, display: { xs: 'block', md: 'none' } }}>
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={onMobileApply}
-            aria-label={t('searchbar.search')}
-            sx={{ fontSize: tokens.typography.sizes.sm, py: tokens.spacing.numericSm }}
+          <FilterSection
+            title={t('productions.home.filters.performerType')}
+            defaultExpanded={false}
           >
-            {t('searchbar.search')}
-          </Button>
+            <Stack>
+              <FilterCheckbox
+                label={t('productions.detail.meta.solo')}
+                checked={performerType === 'solo'}
+                onChange={() => onPerformerTypeToggle('solo')}
+              />
+              <FilterCheckbox
+                label={t('productions.detail.meta.group')}
+                checked={performerType === 'group'}
+                onChange={() => onPerformerTypeToggle('group')}
+              />
+            </Stack>
+          </FilterSection>
+
+          <Divider />
+
+          <FilterSection
+            title={t('productions.home.filters.attendanceMode')}
+            defaultExpanded={false}
+          >
+            <Stack>
+              <FilterCheckbox
+                label={t('productions.detail.meta.offline')}
+                checked={attendanceMode === 'offline'}
+                onChange={() => onAttendanceModeToggle('offline')}
+              />
+              <FilterCheckbox
+                label={t('productions.detail.meta.online')}
+                checked={attendanceMode === 'online'}
+                onChange={() => onAttendanceModeToggle('online')}
+              />
+            </Stack>
+          </FilterSection>
         </Box>
-      ) : null}
+        {onMobileApply ? (
+          <Box
+            sx={(theme) => ({
+              p: tokens.spacing.numericMd,
+              display: { xs: 'block', md: 'none' },
+              borderTop: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
+              pb: 'max(env(safe-area-inset-bottom), 16px)',
+            })}
+          >
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={onMobileApply}
+              aria-label={t('searchbar.search')}
+              sx={{ fontSize: tokens.typography.sizes.sm, py: tokens.spacing.numericSm }}
+            >
+              {t('searchbar.search')}
+            </Button>
+          </Box>
+        ) : null}
+      </Paper>
     </LocalizationProvider>
   )
 }
