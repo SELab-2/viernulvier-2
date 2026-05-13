@@ -25,7 +25,6 @@ from apps.core.serializers import TranslatableSerializerMixin
 from apps.productions.models import Production
 from apps.productions.serializers import (
     ProductionSerializer,
-    ProductionTagSerializer,
     RelatedProductionSerializer,
     RelatedTagSerializer,
     UitDatabaseTypeSerializer,
@@ -140,7 +139,18 @@ class TestRelatedProductionSerializerFields(TestCase):
 
     def test_expected_fields_are_present(self) -> None:
         data = RelatedProductionSerializer(self.production).data
-        assert set(data.keys()) == {"id", "title", "display_title", "artist_name", "display_artist_name", "media_gallery"}
+        assert set(data.keys()) == {
+            "id",
+            "title",
+            "display_title",
+            "artist_name",
+            "display_artist_name",
+            "media_gallery",
+            "first_event_start",
+            "last_event_end",
+            "tags",
+            "genres",
+        }
 
     def test_display_title_uses_base_language_fallback(self) -> None:
         data = RelatedProductionSerializer(self.production).data
@@ -187,30 +197,12 @@ class TestProductionSerializerRelated(TestCase):
             def __init__(self, rows):
                 self.rows = rows
 
-            def filter(self, *_args, **_kwargs):
-                return self
-
-            def exclude(self, **_kwargs):
-                return self
-
-            def select_related(self, *_args, **_kwargs):
-                return self
-
-            def prefetch_related(self, *_args, **_kwargs):
-                return self
-
-            def order_by(self, *_args, **_kwargs):
-                return self
-
-            def __iter__(self):
-                return iter(self.rows)
-
         duplicate_rows = [
             SimpleNamespace(production=self.related_production, tag_id=self.tag.id),
             SimpleNamespace(production=self.related_production, tag_id=self.tag.id),
         ]
 
-        with patch("apps.productions.serializers.ProductionTag.objects.filter", return_value=FakeQueryset(duplicate_rows)):
+        with patch("apps.productions.models.ProductionTag.objects.filter", return_value=FakeQueryset(duplicate_rows)):
             data = ProductionSerializer(self.production, context={"include": {"related"}}).data
 
         assert "related" in data
@@ -235,12 +227,22 @@ class TestProductionSerializerRelated(TestCase):
     def test_related_returns_empty_list_when_production_has_no_tags(self) -> None:
         untagged_production = ProductionFactory.create()
 
-        with patch("apps.productions.serializers.ProductionTag.objects.filter") as filter_mock:
+        with patch("apps.productions.models.ProductionTag.objects.filter") as filter_mock:
             data = ProductionSerializer(untagged_production, context={"include": {"related"}}).data
 
         assert "related" in data
         assert data["related"] == []
         filter_mock.assert_not_called()
+
+    def test_related_includes_event_timestamps_for_related_productions(self) -> None:
+        EventFactory.create(production=self.related_production, starts_at=_dt(2025, 9, 20), ends_at=_dt(2025, 9, 20, 22))
+        EventFactory.create(production=self.related_production, starts_at=_dt(2025, 9, 15), ends_at=_dt(2025, 9, 15, 21))
+
+        data = ProductionSerializer(self.production, context={"include": {"related"}}).data
+
+        related_items = data["related"][0]["productions"]
+        assert related_items[0]["first_event_start"] == "2025-09-15T00:00:00.000000Z"
+        assert related_items[0]["last_event_end"] == "2025-09-20T22:00:00.000000Z"
 
 
 # ---------------------------------------------------------------------------
@@ -489,105 +491,24 @@ class TestProductionSerializerInheritance(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# ProductionTagSerializer - description field (empty state)
+# ProductionSerializer - production-tag through-table behaviour
 # ---------------------------------------------------------------------------
 
 
-class TestProductionTagSerializerDescriptionEmpty(TestCase):
-    """description is an empty dict when no translations exist."""
-
-    def setUp(self) -> None:
-        self.production_tag = ProductionTagFactory.create()
-
-    def test_description_is_empty_dict_without_translations(self) -> None:
-        data = ProductionTagSerializer(self.production_tag).data
-        assert data["description"] == {}
-
-    def test_description_key_is_always_present(self) -> None:
-        data = ProductionTagSerializer(self.production_tag).data
-        assert "description" in data
-
-
-class TestProductionTagSerializerDescriptionPopulated(TestCase):
-    """description returns a language-code dict when translations exist."""
-
-    def setUp(self) -> None:
-        self.production_tag = ProductionTagFactory.create()
-        self.nl = LanguageFactory.create(code="nl")
-        self.en = LanguageFactory.create(code="en")
-        ProductionTagTranslationFactory.create(
-            production_tag=self.production_tag,
-            language=self.nl,
-            description="Nederlandse context.",
-        )
-        ProductionTagTranslationFactory.create(
-            production_tag=self.production_tag,
-            language=self.en,
-            description="English context.",
-        )
-
-    def test_description_contains_nl_key(self) -> None:
-        data = ProductionTagSerializer(self.production_tag).data
-        assert "nl" in data["description"]
-
-    def test_description_contains_en_key(self) -> None:
-        data = ProductionTagSerializer(self.production_tag).data
-        assert "en" in data["description"]
-
-    def test_description_nl_value_is_correct(self) -> None:
-        data = ProductionTagSerializer(self.production_tag).data
-        assert data["description"]["nl"] == "Nederlandse context."
-
-    def test_description_en_value_is_correct(self) -> None:
-        data = ProductionTagSerializer(self.production_tag).data
-        assert data["description"]["en"] == "English context."
-
-    def test_description_has_exactly_two_entries(self) -> None:
-        data = ProductionTagSerializer(self.production_tag).data
-        assert len(data["description"]) == 2
-
-
-class TestProductionTagSerializerToRepresentation(TestCase):
-    """to_representation merges Tag fields first, then through-table fields."""
-
-    def setUp(self) -> None:
-        self.tag = TagFactory.create(type="theme")
-        self.production_tag = ProductionTagFactory.create(tag=self.tag)
-
-    def test_output_contains_tag_id(self) -> None:
-        data = ProductionTagSerializer(self.production_tag).data
-        assert data["id"] == self.tag.id
-
-    def test_output_contains_tag_type(self) -> None:
-        data = ProductionTagSerializer(self.production_tag).data
-        assert data["type"] == "theme"
-
-    def test_output_contains_description_from_through_table(self) -> None:
-        data = ProductionTagSerializer(self.production_tag).data
-        assert "description" in data
-
-    def test_tag_fields_come_before_description_in_key_order(self) -> None:
-        """description must not shadow a tag field with the same name."""
-        data = ProductionTagSerializer(self.production_tag).data
-        keys = list(data.keys())
-        # id (from Tag) must appear before description (from through-table)
-        assert keys.index("id") < keys.index("description")
-
-
 class TestProductionSerializerTagsDescriptionEmpty(TestCase):
-    def test_tag_entry_has_description_key(self) -> None:
+    def test_tag_entry_has_no_description_key(self) -> None:
         production = ProductionFactory.create()
         tag = TagFactory.create()
         production.tags.add(tag)
         data = ProductionSerializer(production).data
-        assert "description" in data["tags"][0]
+        assert "description" not in data["tags"][0]
 
-    def test_tag_entry_description_is_empty_dict_when_no_translations(self) -> None:
+    def test_tag_entry_has_no_description_when_no_translations(self) -> None:
         production = ProductionFactory.create()
         tag = TagFactory.create()
         production.tags.add(tag)
         data = ProductionSerializer(production).data
-        assert data["tags"][0]["description"] == {}
+        assert "description" not in data["tags"][0]
 
 
 class TestProductionSerializerTagsDescriptionPopulated(TestCase):
@@ -611,24 +532,18 @@ class TestProductionSerializerTagsDescriptionPopulated(TestCase):
     def _tag_data(self):
         return ProductionSerializer(self.production).data["tags"][0]
 
-    def test_description_nl_is_correct(self) -> None:
-        assert self._tag_data()["description"]["nl"] == "Thema in NL context."
-
-    def test_description_en_is_correct(self) -> None:
-        assert self._tag_data()["description"]["en"] == "Theme in EN context."
-
-    def test_description_has_two_entries(self) -> None:
-        assert len(self._tag_data()["description"]) == 2
+    def test_description_is_not_in_tag_output(self) -> None:
+        assert "description" not in self._tag_data()
 
     def test_tag_id_is_still_present(self) -> None:
         assert self._tag_data()["id"] == self.tag.id
 
     def test_description_is_production_scoped(self) -> None:
-        """A second production with the same tag gets its own (empty) description."""
+        """A second production with the same tag has no description in tag output."""
         other_production = ProductionFactory.create()
         ProductionTagFactory.create(production=other_production, tag=self.tag)
         data = ProductionSerializer(other_production).data
-        assert data["tags"][0]["description"] == {}
+        assert "description" not in data["tags"][0]
 
 
 class TestProductionSerializerTagsMultipleTags(TestCase):
@@ -643,8 +558,8 @@ class TestProductionSerializerTagsMultipleTags(TestCase):
 
         tags_data = {t["id"]: t for t in ProductionSerializer(production).data["tags"]}
 
-        assert tags_data[tag_a.id]["description"]["nl"] == "Beschrijving A."
-        assert tags_data[tag_b.id]["description"] == {}
+        assert "description" not in tags_data[tag_a.id]
+        assert "description" not in tags_data[tag_b.id]
 
 
 # ---------------------------------------------------------------------------
@@ -711,6 +626,33 @@ class TestProductionSerializerEventDateFieldsPopulated(TestCase):
             assert isinstance(value, str)
             parsed = datetime.fromisoformat(value)
             assert parsed.tzinfo is not None
+
+
+class TestProductionSerializerIncludeEventsAndRelated(TestCase):
+    """Ensure `events` and `related` are present when requested via context."""
+
+    def setUp(self) -> None:
+        self.production = ProductionFactory.create()
+        self.nl = LanguageFactory.create(code="nl")
+        # event for events include
+        EventFactory.create(production=self.production, starts_at=_dt(2025, 9, 15), ends_at=_dt(2025, 9, 15, 22))
+
+    def test_events_key_present_when_included(self) -> None:
+        data = ProductionSerializer(self.production, context={"include": {"events"}}).data
+        assert "events" in data
+        assert isinstance(data["events"], list)
+
+    def test_related_key_present_when_included(self) -> None:
+        # create a tag and a related production so `related` has content
+        tag = TagFactory.create(type="theme")
+        self.production.tags.add(tag)
+        related = ProductionFactory.create()
+        ProductionTranslationFactory.create(production=related, language=self.nl, title="Rel")
+        related.tags.add(tag)
+
+        data = ProductionSerializer(self.production, context={"include": {"related"}}).data
+        assert "related" in data
+        assert isinstance(data["related"], list)
 
 
 # ---------------------------------------------------------------------------
