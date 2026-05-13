@@ -87,6 +87,7 @@ viernulvier_archive/
 │   ├── events/                      # EVENT + EVENT_PRICE tables
 │   │   ├── __init__.py
 │   │   ├── admin.py
+│   │   ├── filters.py
 │   │   ├── models.py
 │   │   ├── schemas.py
 │   │   ├── serializers.py
