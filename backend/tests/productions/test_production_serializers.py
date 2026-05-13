@@ -197,24 +197,6 @@ class TestProductionSerializerRelated(TestCase):
             def __init__(self, rows):
                 self.rows = rows
 
-            def filter(self, *_args, **_kwargs):
-                return self
-
-            def exclude(self, **_kwargs):
-                return self
-
-            def select_related(self, *_args, **_kwargs):
-                return self
-
-            def prefetch_related(self, *_args, **_kwargs):
-                return self
-
-            def order_by(self, *_args, **_kwargs):
-                return self
-
-            def __iter__(self):
-                return iter(self.rows)
-
         duplicate_rows = [
             SimpleNamespace(production=self.related_production, tag_id=self.tag.id),
             SimpleNamespace(production=self.related_production, tag_id=self.tag.id),
