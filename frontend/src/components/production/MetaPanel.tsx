@@ -129,7 +129,6 @@ function renderTagList(tags: ResolvedTag[]) {
       }}
     >
       {tags.map((tag, index) => (
-        /* TODO: fix this to use the tag correctly instead of just the name */
         <GenreAndTagChip
           key={`${tag.tagName}-${index}`}
           name={tag.tagName}
