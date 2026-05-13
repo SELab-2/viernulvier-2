@@ -32,6 +32,7 @@ class BlogAdminForm(forms.ModelForm):
         }
 
 
+# Enable the shared rich-text editor for translated blog content fields.
 @enable_rich_text_for_fields(
     "excerpt",
     "body",
@@ -63,6 +64,7 @@ class BlogProductionInline(admin.TabularInline):
     classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related productions to avoid N+1 queries."""
         return super().get_queryset(request).select_related("production")
 
 

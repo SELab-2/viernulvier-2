@@ -14,11 +14,21 @@ viernulvier_archive/
 │   │   ├── dev.py                   # Dev-specific
 │   |   ├── test.py                  # SQLite db for tests
 │   │   └── prod.py                  # For production
+│   │
 │   ├── urls.py                      # Root URL config
 │   ├── wsgi.py
 │   └── asgi.py
 │
 ├── apps/
+│   ├── blogs/                       # BLOG + BLOG_TRANSLATION tables
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── filters.py
+│   │   ├── models.py
+│   │   ├── schemas.py
+│   │   ├── serializers.py
+│   │   └── views.py
+│   │
 │   ├── core/                        # Shared base classes & utilities
 │   │   ├── __init__.py
 │   │   ├── admin.py                 # Base admin mixins
