@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next'
 
 import { tokens } from '../../theme/tokens'
 import { DarkMode } from '../../types/Theme'
-import Carousel from '../carousel/Carousel'
 import { getTranslatedRecord } from '../../utils/translations'
+import Carousel from '../carousel/Carousel'
 
 import type { MediaItem } from '../../types/Media'
 
@@ -194,11 +194,13 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
    * or stray leading 'c' characters to avoid duplicated symbols like "© © Foo".
    */
   function normalizeCredits(raw: string): string {
-    if (!raw) return ''
+    if (!raw) {
+      return ''
+    }
     let s = raw.trim()
 
     // Remove any leading ©, (c), c., c) or lone c/C followed by optional punctuation/space
-    s = s.replace(/^(?:\u00A9|\(c\)|c[.)]?|C[.)]?)[\s\u00A0\.:,-]*/i, '')
+    s = s.replace(/^(?:\u00A9|\(c\)|c[.)]?|C[.)]?)[\s\u00A0.:,-]*/i, '')
 
     return s
   }

@@ -1,6 +1,5 @@
 import { Box, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import type { ReactNode } from 'react'
 
 import { tokens } from '../../theme/tokens'
 import { formatDate } from '../../utils/dateUtils'
@@ -16,6 +15,7 @@ import type {
 } from '../../types/GenreAndTagChip'
 import type { Production } from '../../types/Productions'
 import type { SxProps, Theme } from '@mui/material/styles'
+import type { ReactNode } from 'react'
 
 /**
  * Format an event list into a human-readable date range for production metadata.
