@@ -3,7 +3,7 @@ import { Box, Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import GenreAndTagChip from '../../../../components/chips/GenreAndTagChip'
+import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
 import ImageWithFallback from '../../../../shared/components/ImageWithFallback'
 import { createCommonStyles } from '../../../../theme/styles'
 import { tokens } from '../../../../theme/tokens'

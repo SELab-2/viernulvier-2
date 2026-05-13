@@ -11,7 +11,7 @@ import RelatedProductions from '../../productions/components/detail/RelatedProdu
 import { getBlog } from '../../../services/blogs/Blogs'
 import { tokens } from '../../../theme/tokens'
 import type { Blog } from '../../../types/Blogs'
-import { formatBlogPublishedDate } from '../../../utils/blogs'
+import { formatBlogPublishedDate } from '../../../utils/dateUtils'
 import { getLocalizedValue } from '../../../utils/localization'
 import { resolveCurrentLanguage, toLocalizedPath } from '../../../utils/localizedRoutes'
 

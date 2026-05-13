@@ -2,12 +2,12 @@ import { render, screen, waitFor } from '@testing-library/react'
 
 import Router from '../router'
 
-jest.mock('../components/Navbar', () => ({
+jest.mock('../shared/Navbar', () => ({
   __esModule: true,
   default: () => <div data-testid="navbar-mock" />,
 }))
 
-jest.mock('../components/Footer', () => ({
+jest.mock('../shared/Footer', () => ({
   __esModule: true,
   default: () => <div data-testid="footer-mock" />,
 }))

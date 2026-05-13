@@ -2,7 +2,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import { Box, IconButton, Modal, Typography } from '@mui/material'
 import { useState, type KeyboardEvent } from 'react'
 
-import Carousel from '../../../../components/carousel/Carousel'
+import Carousel from '../../../../shared/components/Carousel'
 import { tokens } from '../../../../theme/tokens'
 import { DarkMode } from '../../../../types/Theme'
 

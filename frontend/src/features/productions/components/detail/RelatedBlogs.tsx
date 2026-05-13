@@ -1,7 +1,7 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
-import Carousel from '../../../../components/carousel/Carousel'
+import Carousel from '../../../../shared/components/Carousel'
 import { tokens } from '../../../../theme/tokens'
 import BlogGridCard from '../../../blogs/components/BlogGridCard'
 

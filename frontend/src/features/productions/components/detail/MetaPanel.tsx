@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
-import GenreAndTagChip from '../../../../components/chips/GenreAndTagChip'
+import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
 import { tokens } from '../../../../theme/tokens'
 import { formatDate } from '../../../../utils/dateUtils'
 import { getHallDisplayName } from '../../../../utils/hall'

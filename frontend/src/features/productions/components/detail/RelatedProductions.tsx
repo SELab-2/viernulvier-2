@@ -1,8 +1,8 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
-import Carousel from '../../../../components/carousel/Carousel'
-import GenreAndTagChip from '../../../../components/chips/GenreAndTagChip'
+import Carousel from '../../../../shared/components/Carousel'
+import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
 import { tokens } from '../../../../theme/tokens'
 import { getTranslatedRecord } from '../../../../utils/translations'
 import ProductionGridCard from '../cards/ProductionGridCard'
