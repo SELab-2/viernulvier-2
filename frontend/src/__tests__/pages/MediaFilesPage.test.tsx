@@ -37,20 +37,20 @@ jest.mock('../../services/media_files/MediaFiles', () => ({
   getMediaFiles: (params: unknown) => getMediaFilesMock(params),
 }))
 
+jest.mock('../../components/skeletons/CollectionResultsSkeleton', () => ({
+  __esModule: true,
+  default: ({ layout, isMobile, cards }: { layout: string; isMobile: boolean; cards: number }) => (
+    <div data-testid="collection-results-skeleton">
+      {layout}:{String(isMobile)}:{cards}
+    </div>
+  ),
+}))
+
 jest.mock('../../components/media-files/MediaFileView', () => ({
   __esModule: true,
   default: ({ mediaFiles, layout }: { mediaFiles: Array<{ id: number }>; layout: string }) => (
     <div data-testid="media-file-view">
       {layout}:{mediaFiles.map((file) => file.id).join(',')}
-    </div>
-  ),
-}))
-
-jest.mock('../../pages/MediaFilesPageSkeleton', () => ({
-  __esModule: true,
-  default: ({ layout, isMobile, cards }: { layout: string; isMobile: boolean; cards: number }) => (
-    <div data-testid="results-skeleton">
-      {layout}:{String(isMobile)}:{cards}
     </div>
   ),
 }))
@@ -140,7 +140,7 @@ describe('MediaFilesPage', () => {
 
     render(<MediaFilesPage />)
 
-    expect(screen.getByTestId('loading-content')).toHaveTextContent('list:false:12')
+    expect(screen.getByTestId('collection-results-skeleton')).toHaveTextContent('list:false:12')
 
     await waitFor(() => {
       expect(getMediaFilesMock).toHaveBeenCalledWith({
@@ -160,6 +160,20 @@ describe('MediaFilesPage', () => {
     expect(screen.getByTestId('result-count')).toHaveTextContent('2')
     expect(screen.getByTestId('has-results')).toHaveTextContent('true')
     expect(screen.getByTestId('total-items')).toHaveTextContent('2')
+  })
+
+  it('passes the mobile state to the collection results skeleton', async () => {
+    useMediaQueryMock.mockReturnValue(true)
+    getMediaFilesMock.mockResolvedValueOnce({
+      results: [],
+      count: 0,
+    })
+
+    render(<MediaFilesPage />)
+
+    expect(screen.getByTestId('collection-results-skeleton')).toHaveTextContent('list:true:12')
+
+    await waitFor(() => expect(getMediaFilesMock).toHaveBeenCalledTimes(1))
   })
 
   it('passes through local search input, submitted search, sort, view and pagination callbacks', async () => {
