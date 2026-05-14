@@ -15,7 +15,7 @@ from apps.core.serializers import TranslatableSerializerMixin
 from .models import Hall, Location, Space
 
 
-class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
+class LocationSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """Represents a Location.
 
     The `name` field contains all available translations as a dictionary,
@@ -76,7 +76,7 @@ class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixi
         return self.get_base_translated_value(obj, "name")
 
 
-class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
+class HallSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """Represents a Hall.
 
     Both `name` and `remark` contain all available translations
@@ -126,7 +126,7 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             "display_name",
             "remark",
         ]
-        read_only_fields = ["id", "name", "display_remark", "remark", "space"]
+        read_only_fields = ["id", "name", "display_name", "remark", "space"]
         extra_kwargs = {
             "space": {},
             "seat_selection": {
@@ -151,6 +151,8 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
 
     def get_space(self, obj: Hall) -> dict | None:
         """Return a nested representation of the parent Space."""
+        if obj.space is None:
+            return None
         return SpaceNestedSerializer(obj.space, context=self.context).data
 
 
@@ -162,7 +164,7 @@ class HallNestedSerializer(HallSerializer):
         read_only_fields = [f for f in HallSerializer.Meta.read_only_fields if f != "space"]
 
 
-class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
+class SpaceSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     """Represents a Space.
 
     The `name` field contains all available translations as a dictionary,

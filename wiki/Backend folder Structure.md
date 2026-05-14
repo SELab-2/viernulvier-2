@@ -98,6 +98,7 @@ viernulvier_archive/
 │   ├── locations/                   # LOCATION + SPACE + HALL tables (+ translations)
 │   │   ├── __init__.py
 │   │   ├── admin.py
+│   │   ├── filters.py
 │   │   ├── models.py
 │   │   ├── schemas.py
 │   │   ├── serializers.py
