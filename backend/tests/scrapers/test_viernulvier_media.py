@@ -17,7 +17,7 @@ class _DummyImg:
     def close(self):
         return None
 
-    def save(self, buf_out, **kwargs):
+    def save(self, buf_out, **_kwargs):
         # write configured webp bytes
         buf_out.write(self._webp)
 
@@ -29,7 +29,7 @@ class _DummyImageModule:
         self._is_animated = is_animated
         self._n_frames = n_frames
 
-    def open(self, buf):
+    def open(self, _buf):
         # ignore buffer contents; return a _DummyImg configured to write _webp
         return _DummyImg(mode=self._img_mode, is_animated=self._is_animated, n_frames=self._n_frames, webp_bytes=self._webp)
 
@@ -119,4 +119,3 @@ def test_maybe_convert_to_webp_handles_unexpected_exceptions(monkeypatch):
     res, converted = vmedia._maybe_convert_to_webp(src, "http://example/img.jpg")
     assert res == src
     assert converted is False
- 

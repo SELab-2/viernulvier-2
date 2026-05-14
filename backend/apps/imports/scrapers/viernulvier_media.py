@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import contextlib
 from io import BytesIO
-
 import logging
 import os
 import re
@@ -12,10 +11,10 @@ import time
 from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urljoin
 
-from PIL import Image, UnidentifiedImageError
 from django.core.exceptions import FieldDoesNotExist
 from django.core.files.base import ContentFile
 from django.db import transaction
+from PIL import Image, UnidentifiedImageError
 import requests
 
 from apps.import_log.models import ImportLog
@@ -447,9 +446,9 @@ def _upsert_missing_media_item(
     logger.info("Upserted missing MediaItem dependency for crops: %s (pk=%s)", external_id, obj.pk)
     return obj.pk
 
+
 def _maybe_convert_to_webp(image_bytes: bytes, image_url: str) -> tuple[bytes, bool]:
-    """
-    Attempt to convert image bytes to WebP.
+    """Attempt to convert image bytes to WebP.
 
     Returns (result_bytes, was_converted).
     Falls back silently to the original bytes when:
@@ -494,7 +493,9 @@ def _maybe_convert_to_webp(image_bytes: bytes, image_url: str) -> tuple[bytes, b
         if len(webp_bytes) >= len(image_bytes):
             logger.debug(
                 "WebP larger than source (%d >= %d) - keeping original: %s",
-                len(webp_bytes), len(image_bytes), image_url,
+                len(webp_bytes),
+                len(image_bytes),
+                image_url,
             )
             return image_bytes, False
 
@@ -532,15 +533,15 @@ def _save_single_crop(
     if dry_run:
         logger.info(
             "[DRY RUN] Would save crop '%s' for MediaItem pk=%d from %s",
-            crop_name, item_pk, image_url,
+            crop_name,
+            item_pk,
+            image_url,
         )
         return 1, 0
 
     image_bytes = download_image_fn(session, image_url)
     if image_bytes is None:
-        append_limited_error(
-            error_messages, f"Download failed for crop '{crop_name}' on {external_id}"
-        )
+        append_limited_error(error_messages, f"Download failed for crop '{crop_name}' on {external_id}")
         return 0, 1
 
     # Convert to WebP when possible; fall back silently to original bytes.
@@ -557,8 +558,7 @@ def _save_single_crop(
 
         # Fetch old path before overwriting so we can clean it up afterwards.
         existing_image_path: str | None = (
-            media_models.MediaItemCrop.objects
-            .filter(media_item_id=item_pk, name=crop_name)
+            media_models.MediaItemCrop.objects.filter(media_item_id=item_pk, name=crop_name)
             .values_list("image", flat=True)
             .first()
         )
@@ -586,15 +586,15 @@ def _save_single_crop(
         logger.debug(
             "%s crop '%s' for MediaItem pk=%d -> %s",
             "Created" if created else "Updated",
-            crop_name, item_pk, saved_path,
+            crop_name,
+            item_pk,
+            saved_path,
         )
         return 1, 0
 
     except Exception as exc:
         logger.exception("Error saving crop '%s' for MediaItem pk=%d", crop_name, item_pk)
-        append_limited_error(
-            error_messages, f"Save failed for crop '{crop_name}' on {external_id}: {exc}"
-        )
+        append_limited_error(error_messages, f"Save failed for crop '{crop_name}' on {external_id}: {exc}")
         return 0, 1
 
 
