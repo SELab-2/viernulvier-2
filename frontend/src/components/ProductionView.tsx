@@ -19,14 +19,12 @@ export interface ProductionViewProps {
  * Renders either a {@link ProductionGrid} or a {@link ProductionList} based on
  * the requested {@link LayoutMode}.
  *
- * On viewports narrower than the `md` breakpoint the list card's fixed horizontal
- * layout is too cramped, so the component always falls back to grid regardless of
- * the `layout` prop. Layout toggle controls should live in the parent and pass the
- * chosen mode down via `layout`.
+ * On viewports narrower than the `md` breakpoint, the component always falls back
+ * to grid regardless of the requested `layout` because the list layout does not
+ * fit comfortably on small screens.
  *
  * When `selectedGenreIds` is provided, productions whose genres include at least
- * one selected id are sorted to the front of the list. Genre chips on cards are
- * rendered as non-interactive whenever `selectedGenreIds` is defined.
+ * one selected id are sorted to the front of the list.
  *
  * @param props.productions List of productions to display.
  * @param props.selectedGenreIds Genre ids currently active in the parent filter state.

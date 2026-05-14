@@ -1,7 +1,11 @@
 /**
  * Displays detailed information about a specific series (tag),
- * including its metadata, statistics and a chronological list
- * of associated productions grouped by year.
+ * including metadata, statistics, and a year-grouped timeline of
+ * associated productions.
+ *
+ * The page resolves the series tag and the first page of productions in
+ * parallel, keeps loading and rate-limit states local, and loads additional
+ * productions on demand while preserving the date-descending order.
  */
 
 import { Alert, Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
@@ -318,7 +322,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                   spacing={2}
                   sx={{ alignItems: { md: 'flex-start' } }}
                 >
-                  {/* Year marker — dot on timeline + bold year label */}
+                  {/* Year marker for the timeline grouping. */}
                   <Stack
                     direction="row"
                     spacing={1.5}

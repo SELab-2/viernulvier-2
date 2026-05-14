@@ -27,8 +27,9 @@ export interface ProductionListCardProps {
  * first crop of the first gallery image when present; otherwise {@link ImageWithFallback} shows the
  * branded placeholder.
  *
- * Genre chips use `context="static"` (non-interactive) whenever `selectedGenreIds` is defined,
- * so that genre filtering is controlled exclusively by the parent rather than navigating away.
+ * Chips inside the card are rendered with `disableLink` so they stay interactive without
+ * creating nested anchors inside the outer card link. Genre chips fall back to static labels
+ * when `selectedGenreIds` is provided, otherwise they keep archive-link behavior.
  *
  * @param props.production Full API payload (title, artist, media gallery, genres, events, etc.).
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).

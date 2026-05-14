@@ -38,18 +38,19 @@ const readMultiParamValues = (searchParams: URLSearchParams, paramName: string):
  *
  * Context behavior:
  * - `search`: toggles the selected value via `onToggle`
- * - `description`: routes to homepage with the chip value in URL query
+ * - `description`: routes to the archive with the chip value in URL query
  * - `series`: routes to the series detail page `/series/:id`
  * - `static`: visual-only non-clickable chip
  *
- * Chip label resolution priorit
+ * When `disableLink` is set, the chip renders as a `div` and navigates programmatically,
+ * which keeps it interactive without creating nested anchors inside card links.
+ *
+ * Chip label resolution priority:
  * 1. The translated value from `labels` based on the active locale
  * 2. The raw `name` as a fallback
  *
- * The selected state and click behavior are only relevant in the 'search' context,
- * where chips act as filters.
- * In 'description' and 'series' contexts, chips function as navigation links.
- * The 'static' context renders a non-interactive chip for display purposes.
+ * Search chips act as filters. Description and series chips act as navigation targets.
+ * Static chips are rendered for display only.
  */
 const GenreAndTagChip = ({
   name,
@@ -108,7 +109,7 @@ const GenreAndTagChip = ({
       ? t('genreChip.filterByGenre', { genre: label })
       : undefined)
 
-  /** Handles click behavior for search context */
+  /** Handles filter toggles in search context. */
   const handleSearchClick = (event: MouseEvent) => {
     event.preventDefault()
     event.stopPropagation()
