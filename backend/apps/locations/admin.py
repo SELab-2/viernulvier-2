@@ -18,6 +18,7 @@ from .models import (
 
 class LocationTranslationInline(admin.TabularInline):
     """Inline admin for managing translated location names."""
+
     model = LocationTranslation
     extra = 1
     fields = ("language", "name")
@@ -47,6 +48,7 @@ class LocationAdmin(BaseAdmin):
 
 class SpaceTranslationInline(admin.TabularInline):
     """Inline admin for managing translated space names."""
+
     model = SpaceTranslation
     extra = 1
     fields = ("language", "name")
@@ -72,6 +74,7 @@ class SpaceAdmin(BaseAdmin):
 
 class HallTranslationInline(admin.TabularInline):
     """Inline admin for managing translated hall names and remarks."""
+
     model = HallTranslation
     extra = 1
     fields = ("language", "name", "remark")
