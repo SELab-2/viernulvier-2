@@ -32,14 +32,23 @@ interface EventsListProps {
 /**
  * Renders the list of events for a production detail page.
  *
- * Each event row shows date, time, and venue. When the event has prices,
- * a chevron button expands an inline price table below that row.
+ * Design intent:
+ * - Each event is displayed as a compact row with date, time, and venue
+ * - Optional pricing information is hidden behind an expandable section
+ * - Keeps the default UI minimal while still exposing detailed ticket info on demand
+ *
+ * Important behavior:
+ * - Expand/collapse state is tracked per-event via a Set of event IDs
+ * - Multiple events can be expanded at the same time
  */
 export default function EventsList({ events }: EventsListProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
+
+  // Tracks which event rows have their price table expanded
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
 
+  // Empty-state handling: if no events exist, render a fallback message instead of table layout
   if (!events.length) {
     return (
       <Typography variant="body2" sx={(theme) => ({ color: theme.palette.text.primary })}>
@@ -48,6 +57,10 @@ export default function EventsList({ events }: EventsListProps) {
     )
   }
 
+  /**
+   * Toggles the expanded state for a given event.
+   * Uses Set to avoid duplicates and allow efficient add/remove operations.
+   */
   const toggle = (id: number) =>
     setExpandedIds((prev) => {
       const next = new Set(prev)
@@ -67,7 +80,7 @@ export default function EventsList({ events }: EventsListProps) {
 
         return (
           <Box key={event.id}>
-            {/* -- Event row -- */}
+            {/* Event row container: holds date/time/venue + optional expand button */}
             <Stack
               direction="row"
               sx={(theme) => ({
@@ -77,8 +90,9 @@ export default function EventsList({ events }: EventsListProps) {
               })}
             >
               <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-                {/* Date + time */}
+                {/* Date + time block */}
                 <Stack direction="row" spacing={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Event start date */}
                   <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                     <CalendarTodayOutlinedIcon sx={{ fontSize: '0.95rem' }} />
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -86,6 +100,7 @@ export default function EventsList({ events }: EventsListProps) {
                     </Typography>
                   </Stack>
 
+                  {/* Event time range (only shown if start exists) */}
                   {event.starts_at && (
                     <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                       <ScheduleOutlinedIcon sx={{ fontSize: '0.95rem' }} />
@@ -97,7 +112,7 @@ export default function EventsList({ events }: EventsListProps) {
                   )}
                 </Stack>
 
-                {/* Venue */}
+                {/* Venue / hall display (only shown when available) */}
                 {(() => {
                   const hallName = getHallDisplayName(event, lang)
                   return (
@@ -111,12 +126,13 @@ export default function EventsList({ events }: EventsListProps) {
                 })()}
               </Stack>
 
-              {/* Expand prices toggle */}
+              {/* Right-side action area (expand prices if available) */}
               <Stack
                 direction="row"
                 spacing={1}
                 sx={{ alignItems: 'center', flexShrink: 0, ml: 2 }}
               >
+                {/* Only render toggle if price data exists */}
                 {hasPrices && (
                   <IconButton
                     size="small"
@@ -132,6 +148,7 @@ export default function EventsList({ events }: EventsListProps) {
                       borderRadius: tokens.borderRadius.sm,
                     })}
                   >
+                    {/* Icon rotates to indicate expanded/collapsed state */}
                     <ExpandMoreIcon
                       fontSize="small"
                       sx={{
@@ -144,7 +161,7 @@ export default function EventsList({ events }: EventsListProps) {
               </Stack>
             </Stack>
 
-            {/* -- Prices panel -- */}
+            {/* Collapsible price table section */}
             {hasPrices && (
               <Collapse in={expanded} unmountOnExit>
                 <Box
@@ -156,6 +173,7 @@ export default function EventsList({ events }: EventsListProps) {
                   })}
                 >
                   <Table size="small">
+                    {/* Table header describing price structure */}
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: tokens.typography.weights.bold }}>
@@ -175,13 +193,20 @@ export default function EventsList({ events }: EventsListProps) {
                         </TableCell>
                       </TableRow>
                     </TableHead>
+
+                    {/* Price rows per ticket type */}
                     <TableBody>
                       {event.prices.map((p) => (
                         <TableRow key={p.id} hover>
+                          {/* Price category / description */}
                           <TableCell>{p.price?.description?.[lang] || p.price_display}</TableCell>
+
+                          {/* Price value formatted as EUR */}
                           <TableCell align="right">
                             <Typography variant="body2">€{Number(p.amount).toFixed(2)}</Typography>
                           </TableCell>
+
+                          {/* Availability indicator (can be null) */}
                           <TableCell align="right">
                             <Typography
                               variant="body2"

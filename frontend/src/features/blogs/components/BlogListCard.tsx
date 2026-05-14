@@ -13,6 +13,17 @@ import { getTranslatedRecord } from '../../../utils/translations'
 
 import type { Blog } from '../../../types/Blogs'
 
+/**
+ * BlogListCard
+ *
+ * Compact horizontal blog card used in list view.
+ *
+ * Features:
+ * - localized routing per language
+ * - translated title/excerpt support
+ * - safe HTML stripping for excerpts
+ * - fallback handling for missing content
+ */
 export interface BlogListCardProps {
   blog: Blog
 }
@@ -21,17 +32,37 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
   const { i18n, t } = useTranslation()
   const location = useLocation()
   const { language } = i18n
+
+  /**
+   * Resolve current UI language based on URL + i18n state.
+   * Ensures correct localized routing for blog detail page.
+   */
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
     i18n.language,
     i18n.resolvedLanguage,
   )
+
+  /**
+   * Localized link to blog detail page.
+   */
   const detailPath = toLocalizedPath(`/blogs/${blog.id}`, currentLanguage)
 
+  /**
+   * Blog title with fallback handling.
+   */
   const title =
     getTranslatedRecord(blog.title, language, blog.display_title) ||
     t('blogs.detail.noTitleAvailable', 'No title available')
+
+  /**
+   * Clean excerpt by stripping HTML and resolving translations.
+   */
   const excerpt = htmlToPlainText(getTranslatedRecord(blog.excerpt, language, blog.display_excerpt))
+
+  /**
+   * Formatted publication date (localized).
+   */
   const publishedDate = formatBlogPublishedDate(blog.published_at, language)
 
   return (
@@ -56,6 +87,7 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
         },
       })}
     >
+      {/* Blog cover image */}
       <ImageWithFallback
         src={blog.cover_image ?? undefined}
         alt={title || t('blogs.home.coverAltFallback')}
@@ -63,6 +95,7 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
         sx={{ aspectRatio: 16 / 9, borderRadius: tokens.borderRadius.sm }}
       />
 
+      {/* Main content column */}
       <Stack
         sx={{
           flex: 1,
@@ -73,6 +106,7 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
           overflow: 'hidden',
         }}
       >
+        {/* Title + excerpt */}
         <Stack spacing={1}>
           <Typography
             component="h2"
@@ -100,6 +134,7 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
           </Typography>
         </Stack>
 
+        {/* Footer: published date or fallback state */}
         {publishedDate ? (
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'text.secondary' }}>
             <DateRangeOutlinedIcon fontSize="inherit" />
@@ -114,6 +149,7 @@ const BlogListCard = ({ blog }: BlogListCardProps) => {
         )}
       </Stack>
 
+      {/* Arrow indicator */}
       <Box sx={{ alignSelf: 'center', pr: 2 }}>
         <ArrowForwardOutlinedIcon color="action" />
       </Box>

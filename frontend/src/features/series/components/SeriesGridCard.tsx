@@ -1,3 +1,7 @@
+/*
+ * Displays a compact grid card for a series.
+ */
+
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
@@ -16,13 +20,19 @@ export interface SeriesGridCardProps {
   tag: Tag
 }
 
-// Function to get the localized tag name based on the current language.
+/**
+ * Returns the localized name for a tag based on current UI language.
+ * Falls back to default display values if translation is missing.
+ */
 const getLocalizedTagName = (tag: Tag, language: string): string => {
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
   return getTranslatedRecord(tag.name, normalizedLanguage, tag.display_name)
 }
 
-// Function to get the localized tag excerpt based on the current language.
+/**
+ * Returns the localized excerpt for a tag based on current UI language.
+ * Used for short preview text in card layouts.
+ */
 const getLocalizedTagExcerpt = (tag: Tag, language: string): string => {
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
   return getTranslatedRecord(tag.excerpt, normalizedLanguage, tag.display_excerpt)
@@ -32,6 +42,8 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
   const { i18n } = useTranslation()
   const location = useLocation()
   const { language } = i18n
+
+  // Resolve locale-aware routing path for the current series detail page
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
     i18n.language,
@@ -39,12 +51,20 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
   )
   const detailPath = toLocalizedPath(`/series/${tag.id}`, currentLanguage)
 
+  // Localized content fields
   const title = getLocalizedTagName(tag, language)
   const excerpt = getLocalizedTagExcerpt(tag, language)
+
+  // Date formatting for display range
   const startLabel = formatDate(tag.first_production_start, language)
   const endLabel = formatDate(tag.last_production_end, language)
 
-  // Keep the date label compact when both endpoints are available.
+  /**
+   * Build a compact date label:
+   * - single date if equal
+   * - range if both exist
+   * - fallback to whichever is available
+   */
   const dateLabel =
     startLabel && endLabel
       ? startLabel === endLabel
@@ -53,7 +73,7 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
       : startLabel || endLabel
 
   return (
-    // Render the series as a compact card-sized link.
+    // Entire card acts as a navigation link to the series detail page
     <Stack
       component={RouterLink}
       to={detailPath}
@@ -71,10 +91,13 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
         },
       })}
     >
+      {/* Series image preview */}
       <ImageWithFallback src={tag.image} alt={title} sx={{ aspectRatio: 16 / 9 }} />
 
+      {/* Card content section */}
       <Stack sx={{ flex: 1, justifyContent: 'space-between', gap: 1, p: 3 }}>
         <Stack>
+          {/* Title */}
           <Typography
             component="h2"
             variant="h6"
@@ -85,6 +108,7 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
             {title}
           </Typography>
 
+          {/* Excerpt (sanitized to plain text) */}
           {excerpt ? (
             <Typography
               component="div"
@@ -102,6 +126,7 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
           ) : null}
         </Stack>
 
+        {/* Date range indicator */}
         {dateLabel ? (
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'text.secondary' }}>
             <DateRangeOutlinedIcon fontSize="inherit" />

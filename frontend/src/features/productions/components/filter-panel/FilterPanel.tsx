@@ -15,6 +15,21 @@ import type { Genre } from '../../../../types/Genres'
 import type { AttendanceMode, PerformerType } from '../../../../types/Productions'
 import type { Tag } from '../../../../types/Tags'
 
+/**
+ * FilterPanel
+ *
+ * Central filtering UI for the productions page.
+ *
+ * Responsibilities:
+ * - Date filtering (start/end range)
+ * - Genre selection (multi-select chips)
+ * - Tag selection (multi-select chips)
+ * - Performer type filtering (solo/group)
+ * - Attendance mode filtering (online/offline)
+ * - Clearing all active filters
+ *
+ */
+
 export interface FilterPanelProps {
   attendanceMode?: AttendanceMode
   performerType?: PerformerType
@@ -35,12 +50,19 @@ export interface FilterPanelProps {
   onMobileApply?: () => void
 }
 
+/**
+ * Toggles a numeric ID inside an array immutably.
+ * Used for genre/tag selection logic.
+ */
 const toggleIdInArray = (values: number[], id: number): number[] =>
   values.includes(id) ? values.filter((v) => v !== id) : [...values, id]
 
 /**
- * Resolves a display name from an API entry that has either a pre-computed
- * `display_name` or a multilingual `name` record.
+ * Resolves a human-readable display name for a filter entry.
+ *
+ * Supports:
+ * - Precomputed `display_name`
+ * - Multilingual `name` fallback object
  */
 const getLocalizedName = (
   entry: Pick<Genre, 'display_name' | 'name'> | Pick<Tag, 'display_name' | 'name'>,
@@ -49,14 +71,19 @@ const getLocalizedName = (
   if (entry.display_name) {
     return entry.display_name
   }
+
   if (!entry.name) {
     return ''
   }
+
   return (
     entry.name[language] ?? entry.name[language.split('-')[0]] ?? Object.values(entry.name)[0] ?? ''
   )
 }
 
+/**
+ * Converts API genre/tag entries into chip-compatible UI options.
+ */
 const toChipOptions = (
   entries: Array<Genre | Tag>,
   chipType: ChipOption['chipType'],
@@ -65,6 +92,7 @@ const toChipOptions = (
   entries
     .map((entry) => {
       const name = getLocalizedName(entry, language)
+
       return {
         id: entry.id,
         name,
@@ -94,17 +122,25 @@ const FilterPanel = ({
   onMobileApply,
 }: FilterPanelProps) => {
   const { i18n, t } = useTranslation()
+
+  // Determine correct locale for date picker
   const adapterLocale = i18n.language.startsWith('nl') ? 'nl' : 'en'
 
+  // Memoized filter options to avoid recalculations on re-render
   const genreOptions = useMemo(
     () => toChipOptions(genres, 'genre', i18n.language),
     [genres, i18n.language],
   )
+
   const tagOptions = useMemo(
     () => toChipOptions(tags, 'seriesTag', i18n.language),
     [tags, i18n.language],
   )
 
+  /**
+   * Determines whether any filter is currently active.
+   * Used to enable/disable the "clear filters" button.
+   */
   const hasActiveFilters =
     attendanceMode !== undefined ||
     performerType !== undefined ||
@@ -115,6 +151,7 @@ const FilterPanel = ({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={adapterLocale}>
+      {/* Main filter panel container */}
       <Paper
         variant="outlined"
         sx={(theme) => ({
@@ -127,6 +164,7 @@ const FilterPanel = ({
           backgroundColor: theme.palette.background.paper,
         })}
       >
+        {/* Header section */}
         <Stack
           direction="row"
           spacing={1}
@@ -150,6 +188,8 @@ const FilterPanel = ({
           >
             {t('productions.home.filterPanelTitle')}
           </Typography>
+
+          {/* Header actions (e.g. additional buttons) */}
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexShrink: 0 }}>
             <Button
               size="small"
@@ -170,7 +210,9 @@ const FilterPanel = ({
           </Stack>
         </Stack>
 
+        {/* Scrollable filter body */}
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+          {/* Date filters */}
           <FilterSection title={t('productions.home.filters.date')}>
             <Stack spacing={tokens.spacing.numericMd}>
               <FilterDatePicker
@@ -188,6 +230,7 @@ const FilterPanel = ({
 
           <Divider />
 
+          {/* Genre filters */}
           <FilterSection title={t('productions.home.filters.genres')}>
             <ChipFilterSection
               options={genreOptions}
@@ -199,6 +242,7 @@ const FilterPanel = ({
 
           <Divider />
 
+          {/* Tag filters */}
           <FilterSection title={t('productions.home.filters.tags')}>
             <ChipFilterSection
               options={tagOptions}
@@ -210,6 +254,7 @@ const FilterPanel = ({
 
           <Divider />
 
+          {/* Performer type filters */}
           <FilterSection
             title={t('productions.home.filters.performerType')}
             defaultExpanded={false}
@@ -230,6 +275,7 @@ const FilterPanel = ({
 
           <Divider />
 
+          {/* Attendance mode filters */}
           <FilterSection
             title={t('productions.home.filters.attendanceMode')}
             defaultExpanded={false}
@@ -248,6 +294,8 @@ const FilterPanel = ({
             </Stack>
           </FilterSection>
         </Box>
+
+        {/* Mobile apply button */}
         {onMobileApply ? (
           <Box
             sx={(theme) => ({

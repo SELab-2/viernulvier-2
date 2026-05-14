@@ -1,3 +1,10 @@
+/*
+ * ProductionsPage
+ *
+ * Displays a searchable, filterable, and sortable list of productions.
+ * Big Floppa: this page orchestrates data fetching, URL-synced state, filters, and layout only.
+ */
+
 import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -20,16 +27,20 @@ import type { Genre } from '../../../types/Genres'
 import type { Production } from '../../../types/Productions'
 import type { Tag } from '../../../types/Tags'
 
-// Page size for pagination.
 const PAGE_SIZE = 12
 const FILTER_METADATA_PAGE_SIZE = 250
 
-// Function to determine the ordering parameter for the API based on the current sort target and direction.
+/**
+ * Builds ordering string for API based on UI sort state.
+ */
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
   const targetField = sortTarget === 'name' ? 'title_sort' : 'first_event_start'
   return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 
+/**
+ * Converts YYYY-MM-DD into ISO boundary timestamps.
+ */
 const toIsoDateBoundary = (value: string, boundary: 'start' | 'end'): string | undefined => {
   if (!value) {
     return undefined
@@ -39,14 +50,19 @@ const toIsoDateBoundary = (value: string, boundary: 'start' | 'end'): string | u
   return new Date(`${value}${suffix}`).toISOString()
 }
 
+/**
+ * Parses comma-separated ID strings into numeric arrays.
+ */
 const parseCommaSeparatedIds = (value: string): number[] | undefined => {
   if (!value) {
     return undefined
   }
-
   return value.split(',').map(Number)
 }
 
+/**
+ * Fetches all genres across paginated API responses.
+ */
 const fetchGenres = async (): Promise<Genre[]> => {
   const firstPage = await getGenres({
     page: 1,
@@ -55,11 +71,13 @@ const fetchGenres = async (): Promise<Genre[]> => {
 
   const pageSize = Math.max(1, firstPage.results.length || FILTER_METADATA_PAGE_SIZE)
   const totalPages = Math.max(1, Math.ceil(firstPage.count / pageSize))
+
   if (totalPages === 1) {
     return firstPage.results
   }
 
-  const remainingPages = Array.from({ length: totalPages - 1 }, (_, index) => index + 2)
+  const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2)
+
   const remainingResponses = await Promise.all(
     remainingPages.map((page) =>
       getGenres({
@@ -69,9 +87,12 @@ const fetchGenres = async (): Promise<Genre[]> => {
     ),
   )
 
-  return [...firstPage.results, ...remainingResponses.flatMap((response) => response.results)]
+  return [...firstPage.results, ...remainingResponses.flatMap((r) => r.results)]
 }
 
+/**
+ * Fetches all enabled tags across paginated API responses.
+ */
 const fetchTags = async (): Promise<Tag[]> => {
   const tagsById = new Map<number, Tag>()
   let page = 1
@@ -81,14 +102,10 @@ const fetchTags = async (): Promise<Tag[]> => {
     const response = await getTags({
       page,
       pageSize: 250,
-      filters: {
-        is_enabled: true,
-      },
+      filters: { is_enabled: true },
     })
 
-    response.results.forEach((tag) => {
-      tagsById.set(tag.id, tag)
-    })
+    response.results.forEach((tag) => tagsById.set(tag.id, tag))
 
     hasMore = response.next !== null
     page += 1
@@ -98,25 +115,17 @@ const fetchTags = async (): Promise<Tag[]> => {
 }
 
 /**
- * Returns true if the production has at least one genre matching the selected genre IDs.
+ * Returns true if production has at least one selected genre.
  */
 const hasSelectedGenre = (production: Production, selectedGenreIds: number[]): boolean =>
   production.genres.some((genre) => selectedGenreIds.includes(genre.id))
 
-/**
- * Productions list page with shared collection lifecycle hooks.
- *
- * - {@link useCollectionQuery} handles loading/error/retry state.
- * - {@link useSearchDraft} keeps input value decoupled from URL state.
- * - Floating alerts worden centraal afgehandeld via {@link NotificationProvider}.
- */
 const ProductionsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
   const { showFloatingAlert } = useNotification()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
-  // The useSearchBarUrlState hook is used to synchronize the search bar state with the URL query parameters
   const {
     searchValue,
     sortTarget,
@@ -146,15 +155,17 @@ const ProductionsPage = () => {
   const [genres, setGenres] = useState<Genre[]>([])
   const [tags, setTags] = useState<Tag[]>([])
 
-  // Memoized value for the API ordering parameter to avoid unnecessary recalculations on every render.
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
-    [sortDirection, sortTarget],
+    [sortTarget, sortDirection],
   )
 
   const selectedGenres = selectedGenreIds.join(',')
   const selectedTags = selectedTagIds.join(',')
 
+  /**
+   * Load filter metadata (genres + tags).
+   */
   useEffect(() => {
     let isActive = true
 
@@ -172,7 +183,6 @@ const ProductionsPage = () => {
         if (!isActive) {
           return
         }
-
         setGenres([])
         setTags([])
       }
@@ -224,8 +234,7 @@ const ProductionsPage = () => {
         message: t('productions.home.error.notification'),
         severity: 'error',
       })
-      // Backend error payloads are not guaranteed to be localized,
-      // so we always show the translated fallback copy in the UI.
+
       return { message: null, showFallback: true }
     },
   })
@@ -237,20 +246,14 @@ const ProductionsPage = () => {
     onSameQuery: () => retry(),
   })
 
-  // Error message to display in the UI, preferring the translated fallback message
   const renderedErrorMessage = error.showFallback
     ? t('productions.home.error.fallback')
     : error.message
 
-  // Handler for submitting the search form, which updates the searchValue and triggers a new data fetch
   const onSearchSubmit = (value: string) => {
     searchDraft.submit(value)
   }
 
-  /**
-   * Sorts productions with a selected genre to the front of the list,
-   * preserving the relative order within each group.
-   */
   const sortProductionsBySelectedGenres = useMemo(
     () =>
       selectedGenreIds.length === 0
@@ -264,22 +267,21 @@ const ProductionsPage = () => {
     [selectedGenreIds],
   )
 
-  // Main results content.
   const resultsContent = (
     <CollectionView
       items={productions}
       layout={viewMode}
-      getKey={(production) => production.id}
-      renderListItem={(production) => (
+      getKey={(p) => p.id}
+      renderListItem={(p) => (
         <ProductionListCard
-          production={production}
+          production={p}
           selectedGenreIds={selectedGenreIds}
           selectedTagIds={selectedTagIds}
         />
       )}
-      renderGridItem={(production) => (
+      renderGridItem={(p) => (
         <ProductionGridCard
-          production={production}
+          production={p}
           selectedGenreIds={selectedGenreIds}
           selectedTagIds={selectedTagIds}
         />

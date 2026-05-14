@@ -52,7 +52,7 @@ const SEGMENT_ALIASES: Record<string, CanonicalRouteSegment> = {
  * This function:
  * - Trims whitespace
  * - Converts to lowercase
- * - Extracts base language (e.g. "en-US" → "en")
+ * - Extracts base language (e.g. "en-US" -> "en")
  * - Validates against SUPPORTED_LANGUAGES
  *
  * @param language Raw language string (e.g. from headers, router, or i18n)
@@ -109,8 +109,8 @@ export const resolveCurrentLanguage = (
  * Converts a canonical route segment into its localized version.
  *
  * Example:
- * - "archive" → "archief" (nl)
- * - "archive" → "archive" (en)
+ * - "archive" -> "archief" (nl)
+ * - "archive" -> "archive" (en)
  *
  * @param canonicalSegment Internal canonical route segment
  * @param language Target language
@@ -156,8 +156,8 @@ export const inferLanguageFromPathname = (pathname: string): SupportedLanguage |
  * Converts a localized or alias segment back into its canonical form.
  *
  * Example:
- * - "archief" → "archive"
- * - "producties" → "productions"
+ * - "archief" -> "archive"
+ * - "producties" -> "productions"
  *
  * @param segment URL segment (localized or alias)
  * @returns Canonical segment or `null` if unknown

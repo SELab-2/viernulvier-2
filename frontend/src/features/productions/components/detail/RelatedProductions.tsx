@@ -88,15 +88,8 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
               sx={{ width: '100%' }}
             >
               {entry.productions.map((production) => {
-                // TODO: clean up comment if we decide to keep it like this.
-
                 // Related productions don't have all the values of a production
-                // It only contains the values required for the frontend to show the cards
-                // We could change the API to return complete productions to avoid this normalization
-                // Or we could make the ProductionGridCard work with the related production types
-                // For now just use normalization, but maybe this should be looked at again?
-
-                // Currently we just get the needed values for the card and pass them, nulling the rest.
+                // so we need to normalize the data to contain all the required props.
                 return (
                   <Box
                     key={production.id}

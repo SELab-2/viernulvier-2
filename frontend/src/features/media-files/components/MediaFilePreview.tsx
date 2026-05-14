@@ -6,15 +6,37 @@ import { Document, Page, pdfjs } from 'react-pdf'
 
 import type { MediaFile } from '../../../types/MediaFiles'
 
+/**
+ * Configures the PDF.js worker so that react-pdf can render PDFs correctly.
+ * Uses a CDN-based worker matching the installed pdfjs version.
+ */
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
+/**
+ * Props for MediaFilePreview component.
+ */
 export interface MediaFilePreviewProps {
   mediaFile: MediaFile
   previewLabel: string
 }
 
+/**
+ * Renders a preview for different media file types (image, PDF, or fallback icon).
+ *
+ * - Images are rendered directly via <img>
+ * - PDFs are lazily rendered using IntersectionObserver + react-pdf
+ * - Other file types show a generic icon + label
+ */
 const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) => {
   const previewRef = useRef<HTMLDivElement | null>(null)
+
+  /**
+   * Controls whether the PDF renderer should be mounted.
+   * Initially disabled and only enabled when:
+   * - component is in viewport (lazy load), OR
+   * - SSR/test environments, OR
+   * - IntersectionObserver is unavailable
+   */
   const [shouldRenderPdf, setShouldRenderPdf] = useState(
     () =>
       process.env.NODE_ENV === 'test' ||
@@ -22,6 +44,10 @@ const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) =>
       !('IntersectionObserver' in window),
   )
 
+  /**
+   * Sets up an IntersectionObserver to lazily load PDF rendering
+   * when the preview container comes into view.
+   */
   useEffect(() => {
     if (mediaFile.file_type !== 'pdf' || shouldRenderPdf) {
       return
@@ -49,6 +75,10 @@ const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) =>
     }
   }, [mediaFile.file_type, shouldRenderPdf])
 
+  /**
+   * IMAGE PREVIEW
+   * Direct rendering for image-type media files.
+   */
   if (mediaFile.file_type === 'image') {
     return (
       <Box
@@ -66,6 +96,10 @@ const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) =>
     )
   }
 
+  /**
+   * PDF PREVIEW
+   * Uses react-pdf with lazy loading and fallback label while loading/error.
+   */
   if (mediaFile.file_type === 'pdf') {
     return (
       <Box
@@ -107,6 +141,10 @@ const MediaFilePreview = ({ mediaFile, previewLabel }: MediaFilePreviewProps) =>
     )
   }
 
+  /**
+   * FALLBACK PREVIEW
+   * Used for unsupported or generic file types.
+   */
   return (
     <Stack
       spacing={1}

@@ -8,8 +8,14 @@ import { tokens } from '../../theme/tokens'
 import type { FloatingAlertProps, FloatingAlertSeverity } from '../../types/FloatingAlertConfig'
 
 /**
- * FloatingAlert combines Alert styling with Toast floating behavior.
- * Displays severity-themed notifications that auto-dismiss.
+ * FloatingAlert
+ *
+ * A reusable notification component that supports:
+ * - Severity-based styling (error, warning, info, success)
+ * - Auto-dismiss behavior
+ * - Optional standalone rendering (without MUI Snackbar wrapper)
+ * - Accessible alert semantics
+ *
  */
 const FloatingAlert = ({
   open,
@@ -23,6 +29,10 @@ const FloatingAlert = ({
 }: FloatingAlertProps) => {
   const theme = useTheme()
 
+  /**
+   * Visual configuration per severity level.
+   * Controls background, border, and text colors.
+   */
   const severityConfig: Record<
     FloatingAlertSeverity,
     { bgColor: string; textColor: string; borderColor: string; titleColor: string }
@@ -55,6 +65,14 @@ const FloatingAlert = ({
 
   const config = severityConfig[severity]
 
+  /**
+   * Handles auto-close behavior when using inline (non-Snackbar) mode.
+   *
+   * NOTE:
+   * - Only active when disableFloatingWrapper = true
+   * - Respects autoCloseDuration (if not null)
+   * - Cleans up timeout on unmount or dependency change
+   */
   useEffect(() => {
     if (!disableFloatingWrapper || !open || autoCloseDuration === null) {
       return undefined
@@ -64,6 +82,10 @@ const FloatingAlert = ({
     return () => window.clearTimeout(timeout)
   }, [autoCloseDuration, disableFloatingWrapper, onClose, open])
 
+  /**
+   * Core alert UI content.
+   * Shared between Snackbar and stack rendering modes.
+   */
   const content = (
     <Box data-testid="floating-alert">
       <Box
@@ -98,6 +120,7 @@ const FloatingAlert = ({
               {title}
             </Box>
           )}
+
           <Box
             sx={{
               fontSize: '0.875rem',
@@ -108,6 +131,7 @@ const FloatingAlert = ({
             {message}
           </Box>
         </Box>
+
         <IconButton
           size="small"
           onClick={onClose}
@@ -127,10 +151,17 @@ const FloatingAlert = ({
     </Box>
   )
 
+  /**
+   * Inline mode (used inside FloatingAlertStack)
+   * No Snackbar wrapper is used here.
+   */
   if (disableFloatingWrapper) {
     return open ? content : null
   }
 
+  /**
+   * Default mode: MUI Snackbar wrapper handles positioning + animation.
+   */
   return (
     <Snackbar
       open={open}

@@ -14,12 +14,22 @@ interface RelatedBlogsProps {
 function RelatedBlogs({ blogs }: RelatedBlogsProps) {
   const { t } = useTranslation()
 
+  // Early return: no related content to render
   if (blogs.length === 0) {
     return null
   }
 
   return (
-    <Stack spacing={3} sx={{ p: 2, width: '100%', maxWidth: 1250, mx: 'auto' }}>
+    <Stack
+      spacing={3}
+      sx={{
+        p: 2,
+        width: '100%',
+        maxWidth: 1250,
+        mx: 'auto',
+      }}
+    >
+      {/* Section title */}
       <Typography
         variant="h5"
         sx={(theme) => ({
@@ -31,6 +41,8 @@ function RelatedBlogs({ blogs }: RelatedBlogsProps) {
       >
         {t('productions.detail.relatedBlogs', 'Related blogs')}
       </Typography>
+
+      {/* Horizontal carousel of blog cards */}
       <Carousel
         ariaLabel={t('productions.detail.relatedBlogs', 'Related blogs')}
         maxWidth="100%"
@@ -45,11 +57,15 @@ function RelatedBlogs({ blogs }: RelatedBlogsProps) {
             sx={{
               display: 'flex',
               alignItems: 'stretch',
+
+              // Ensure internal anchor/card fills full height for consistent layout
               '& > a': {
                 display: 'flex',
                 flexDirection: 'column',
                 height: '100%',
               },
+
+              // Normalize nested Stack height behavior inside card
               '& > a > .MuiStack-root': {
                 height: '100%',
               },

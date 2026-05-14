@@ -2,6 +2,14 @@
  * Displays detailed information about a specific series (tag),
  * including its metadata, statistics and a chronological list
  * of associated productions grouped by year.
+ *
+ * This page handles:
+ * - Fetching series metadata (Tag)
+ * - Fetching paginated productions for the series
+ * - Grouping productions by year
+ * - Infinite "Load more" pagination
+ * - Rate-limit handling (429 redirects with floating alert state)
+ * - Localized routing and translations
  */
 
 import { Alert, Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
@@ -30,13 +38,22 @@ import type { Tag } from '../../../types/Tags'
 const PAGE_SIZE = 12
 const SERIES_PRODUCTIONS_ORDERING = '-first_event_start'
 
+/**
+ * UI representation of a single stat block in the series header.
+ */
 type SeriesStat = {
   value: string
   label: string
 }
 
+/**
+ * Error keys used for translation-based error handling.
+ */
 type SeriesErrorKey = 'series.invalidId' | 'series.fetchError' | null
 
+/**
+ * Groups productions by year for timeline-style rendering.
+ */
 type ProductionYearGroup = {
   year: number
   productions: Production[]
@@ -46,11 +63,19 @@ type SeriesDetailContentProps = {
   id: string
 }
 
+/**
+ * Extracts a sortable timestamp from a production.
+ * Prefers first_event_start, falls back to last_event_end.
+ */
 const getProductionDateTimestamp = (production: Production): number => {
   const date = production.first_event_start ?? production.last_event_end
   return date ? new Date(date).getTime() : Number.NEGATIVE_INFINITY
 }
 
+/**
+ * Sort productions by date descending (newest first),
+ * then by ID as a stable fallback.
+ */
 const sortProductionsByDateDesc = (productions: Production[]): Production[] =>
   [...productions].sort((a, b) => {
     const dateDifference = getProductionDateTimestamp(b) - getProductionDateTimestamp(a)
@@ -62,6 +87,10 @@ const sortProductionsByDateDesc = (productions: Production[]): Production[] =>
     return b.id - a.id
   })
 
+/**
+ * Extract year from production date fields.
+ * Returns null if no valid date exists.
+ */
 const getProductionYear = (production: Production): number | null => {
   const date = production.first_event_start ?? production.last_event_end
 
@@ -73,6 +102,9 @@ const getProductionYear = (production: Production): number | null => {
   return Number.isNaN(year) ? null : year
 }
 
+/**
+ * Groups productions by year and sorts them in reverse chronological order.
+ */
 const groupProductionsByYear = (productions: Production[]): ProductionYearGroup[] => {
   const groupedProductions = new Map<number, Production[]>()
 
@@ -91,6 +123,10 @@ const groupProductionsByYear = (productions: Production[]): ProductionYearGroup[
     .map(([year, yearProductions]) => ({ year, productions: yearProductions }))
 }
 
+/**
+ * Main content component for a series detail page.
+ * Handles data fetching, pagination, grouping, and rendering.
+ */
 const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const location = useLocation()
   const navigate = useNavigate()
@@ -113,12 +149,16 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const [error, setError] = useState<SeriesErrorKey>(null)
   const numericId = Number(id)
 
+  /**
+   * Handles rate-limit (429) errors by redirecting and attaching a floating alert.
+   */
   const showRateLimitAlert = useCallback(
     (rateLimitError: ApiError, fallbackPath = seriesPath) => {
       const alertMessage =
         Number(rateLimitError.message) === 429
           ? String(rateLimitError.status)
           : rateLimitError.message
+
       navigate(fallbackPath, {
         replace: true,
         state: createFloatingAlertState({
@@ -130,6 +170,9 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     [navigate, seriesPath],
   )
 
+  /**
+   * Initial fetch: loads tag + first page of productions.
+   */
   useEffect(() => {
     let isActive = true
 
@@ -187,6 +230,9 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     }
   }, [numericId, showRateLimitAlert])
 
+  /**
+   * Loads the next page of productions.
+   */
   const loadMoreProductions = async () => {
     if (isLoadingMore || seriesProductions.length >= totalProductions) {
       return
@@ -219,6 +265,9 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     }
   }
 
+  /**
+   * Memoized grouping of productions by year.
+   */
   const productionsByYear = useMemo(
     () => groupProductionsByYear(seriesProductions),
     [seriesProductions],
@@ -231,6 +280,9 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     ? new Date(seriesTag.last_production_end).getFullYear()
     : null
 
+  /**
+   * Stats displayed in header section.
+   */
   const stats: SeriesStat[] = [
     { value: String(totalProductions), label: t('series.stats.editions') },
     {
@@ -243,6 +295,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   if (isLoading) {
     return <SeriesDetailPageSkeleton />
   }
+
   if (error || !seriesTag) {
     return (
       <Navigate
@@ -393,6 +446,9 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   )
 }
 
+/**
+ * Route wrapper that validates the URL param and handles invalid IDs.
+ */
 const SeriesDetailPage = () => {
   const location = useLocation()
   const { i18n, t } = useTranslation()

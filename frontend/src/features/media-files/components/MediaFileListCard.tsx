@@ -15,16 +15,31 @@ import { getPublicMediaFileUrl } from '../../../utils/mediaFileUrls'
 
 import type { MediaFile } from '../../../types/MediaFiles'
 
+/**
+ * Props for MediaFileListCard component.
+ */
 export interface MediaFileListCardProps {
   mediaFile: MediaFile
 }
 
+/**
+ * Renders a media file in list layout (row-based card).
+ *
+ * Layout:
+ * - Left: preview (image/pdf/icon)
+ * - Right: metadata (filename, description, date, size)
+ *
+ * Clicking the card opens the public file URL.
+ */
 const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
   const { t, i18n } = useTranslation()
   const { language } = i18n
 
+  /**
+   * Derived metadata for display.
+   */
   const uploadedAt = formatMediaFileDate(mediaFile.created_at, language)
   const fileSize = formatMediaFileSize(mediaFile.size_bytes)
   const description = getMediaFileDescription(mediaFile, i18n.language, t)
@@ -49,9 +64,10 @@ const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
         },
       }}
     >
+      {/* LEFT: preview container */}
       <Stack
         sx={{
-          p: tokens.spacing.numericMd, // 🔥 ruimte rond preview (zoals blogs)
+          p: tokens.spacing.numericMd,
           flexShrink: 0,
         }}
       >
@@ -68,6 +84,7 @@ const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
         </Stack>
       </Stack>
 
+      {/* RIGHT: metadata content */}
       <Stack
         sx={{
           flex: 1,
@@ -77,6 +94,7 @@ const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
           minWidth: 0,
         }}
       >
+        {/* Filename + description */}
         <Stack spacing={1}>
           <Typography
             component="h2"
@@ -106,6 +124,7 @@ const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
           </Typography>
         </Stack>
 
+        {/* Footer metadata row */}
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={1}
@@ -116,6 +135,7 @@ const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
             minWidth: 0,
           }}
         >
+          {/* upload date */}
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
             <DateRangeOutlinedIcon fontSize="inherit" />
             <Typography variant="body2" noWrap>
@@ -123,6 +143,7 @@ const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
             </Typography>
           </Stack>
 
+          {/* file size (optional) */}
           {fileSize ? (
             <Typography variant="body2" noWrap>
               {t('media.size')}: {fileSize}

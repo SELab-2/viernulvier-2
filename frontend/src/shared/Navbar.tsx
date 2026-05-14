@@ -1,3 +1,16 @@
+/**
+ * Responsive navigation bar component.
+ *
+ * This component renders the main application navbar, including:
+ * - Primary navigation links (desktop + mobile)
+ * - Language switching based on localized routes
+ * - Theme mode toggle (light/dark)
+ * - Responsive mobile menu with collapse behavior
+ *
+ * It also synchronizes route-based language detection and ensures that
+ * navigation paths are always correctly localized.
+ */
+
 import CloseIcon from '@mui/icons-material/Close'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
@@ -46,27 +59,37 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const toolbarRef = useRef<HTMLDivElement | null>(null)
+
   // Route where the menu was opened; keeps mobile panel route-aware.
   const [menuOpenedAtPath, setMenuOpenedAtPath] = useState<string | null>(null)
-  // Menu is open only on the route where it was triggered.
+
+  // Menu is only considered open for the route where it was triggered.
   const isEffectivelyOpen = mobileMenuOpen && menuOpenedAtPath === location.pathname
+
   const currentLanguage: SupportedLanguage = resolveCurrentLanguage(
     location.pathname,
     i18n.language,
     i18n.resolvedLanguage,
   )
+
   const nextLanguage: SupportedLanguage = currentLanguage === 'en' ? 'nl' : 'en'
+
   const currentPathWithoutLanguage = stripLanguagePrefix(location.pathname)
+
   const themeSwitchLabel =
     mode === DarkMode ? t('nav.switchToLightMode') : t('nav.switchToDarkMode')
 
-  // Switch active UI language by swapping the URL language segment.
+  /**
+   * Switches the active UI language by updating the localized URL.
+   */
   const switchLanguage = (language: SupportedLanguage) => {
     const targetPath = `${toLocalizedPath(location.pathname, language)}${location.search}${location.hash}`
     navigate(targetPath)
   }
 
-  // Home route is exact; archive also covers compatibility production URLs.
+  /**
+   * Determines whether a navigation item is active.
+   */
   const isActive = (to: string) => {
     if (to === '/') {
       return currentPathWithoutLanguage === '/'
@@ -84,13 +107,17 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
 
   const localizedPath = (path: string) => toLocalizedPath(path, currentLanguage)
 
-  // Close mobile menu and clear route marker.
+  /**
+   * Closes the mobile navigation menu and resets route tracking.
+   */
   const closeMobileMenu = () => {
     setMobileMenuOpen(false)
     setMenuOpenedAtPath(null)
   }
 
-  // Toggle menu and store current path when opening.
+  /**
+   * Toggles mobile menu open/close state.
+   */
   const toggleMobileMenu = () => {
     if (isEffectivelyOpen) {
       setMobileMenuOpen(false)
@@ -103,6 +130,10 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
 
   const baseListSx = { listStyle: 'none', m: 0, p: 0 }
 
+  /**
+   * Keeps CSS variable `--navbar-height` in sync with actual rendered height.
+   * Used for layout calculations elsewhere in the app.
+   */
   useEffect(() => {
     const toolbar = toolbarRef.current
     if (!toolbar) {
@@ -112,7 +143,6 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
     const updateNavbarHeightVar = () => {
       const measuredHeight = Math.ceil(toolbar.getBoundingClientRect().height)
 
-      // Avoid writing unusable values (e.g., 0 in jsdom/hidden states) so CSS fallback remains valid.
       if (measuredHeight <= 0) {
         return
       }
@@ -122,6 +152,7 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
     }
 
     updateNavbarHeightVar()
+
     const supportsResizeObserver = typeof ResizeObserver !== 'undefined'
     const resizeObserver = supportsResizeObserver ? new ResizeObserver(updateNavbarHeightVar) : null
 
@@ -144,14 +175,8 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
     <AppBar position="sticky" component="nav" sx={commonStyles.navbar}>
       <ClickAwayListener onClickAway={closeMobileMenu}>
         <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3, md: 20 } }}>
-          <Toolbar
-            ref={toolbarRef}
-            disableGutters
-            sx={{
-              minHeight: tokens.navbar.minHeight,
-            }}
-          >
-            {/* Brand: Archive logo */}
+          <Toolbar ref={toolbarRef} disableGutters sx={{ minHeight: tokens.navbar.minHeight }}>
+            {/* Brand */}
             <Box component={Link} to={localizedPath('/')} sx={navbarStyles.brandLink}>
               <Box
                 component="img"
@@ -161,7 +186,7 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
               />
             </Box>
 
-            {/* Main page links only stay inline on large screens; below lg they move to the dropdown. */}
+            {/* Desktop navigation */}
             <Stack
               direction="row"
               spacing={1}
@@ -185,14 +210,13 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
               ))}
             </Stack>
 
-            {/* Theme/language controls remain visible longer and only move into menu on xs. */}
+            {/* Theme + language controls */}
             <Stack
               direction="row"
               spacing={0}
               component="ul"
               sx={{ ...baseListSx, display: 'flex', alignItems: 'center' }}
             >
-              {/* Theme toggle */}
               <Box
                 component="li"
                 sx={{
@@ -208,38 +232,21 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
                   aria-label={themeSwitchLabel}
                   disableRipple
                   onClick={onToggleMode}
-                  sx={{
-                    p: { xs: '2px 4px', sm: '4px 6px' },
-                    backgroundColor: 'transparent',
-                  }}
+                  sx={{ p: { xs: '2px 4px', sm: '4px 6px' } }}
                 >
                   {mode === DarkMode ? (
-                    <DarkModeOutlinedIcon
-                      sx={{
-                        fontSize: { xs: '1.15rem', sm: '1.5rem' },
-                        color: theme.palette.primary.light,
-                        transition: tokens.transitions.fast,
-                      }}
-                    />
+                    <DarkModeOutlinedIcon sx={{ fontSize: { xs: '1.15rem', sm: '1.5rem' } }} />
                   ) : (
-                    <LightModeOutlinedIcon
-                      sx={{
-                        fontSize: { xs: '1.15rem', sm: '1.5rem' },
-                        color: theme.palette.primary.contrastText,
-                        transition: tokens.transitions.fast,
-                      }}
-                    />
+                    <LightModeOutlinedIcon sx={{ fontSize: { xs: '1.15rem', sm: '1.5rem' } }} />
                   )}
                 </IconButton>
               </Box>
 
-              {/* Language switcher */}
               <Box component="li" sx={{ pl: { xs: 1, sm: 2 }, ml: { xs: 0.5, sm: 1 } }}>
                 <Button
                   size="small"
                   data-testid="language-toggle-inline"
                   color="inherit"
-                  // Single toggle button: switch to the other available language.
                   onClick={() => switchLanguage(nextLanguage)}
                   aria-label={`Switch language to ${currentLanguage === 'en' ? 'Dutch' : 'English'}`}
                   sx={{
@@ -255,7 +262,7 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
               </Box>
             </Stack>
 
-            {/* Burger button is shown whenever inline nav links are hidden (< lg). */}
+            {/* Mobile menu button */}
             <IconButton
               color="inherit"
               data-testid="mobile-menu-trigger"
@@ -267,7 +274,7 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
             </IconButton>
           </Toolbar>
 
-          {/* Mobile nav panel slides down below navbar and matches container width. */}
+          {/* Mobile navigation */}
           <Box>
             <Collapse
               in={isEffectivelyOpen}
@@ -276,14 +283,7 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
               data-testid="mobile-nav-panel"
               sx={{ display: { xs: 'block', lg: 'none' } }}
             >
-              <Stack
-                component="ul"
-                spacing={0.5}
-                sx={{
-                  ...baseListSx,
-                  py: 1,
-                }}
-              >
+              <Stack component="ul" spacing={0.5} sx={{ ...baseListSx, py: 1 }}>
                 {NAV_LINKS.map(({ labelKey, to }) => (
                   <Box component="li" key={`mobile-${to}`}>
                     <Button

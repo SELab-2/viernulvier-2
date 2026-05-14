@@ -13,6 +13,17 @@ import { getTranslatedRecord } from '../../../utils/translations'
 
 import type { BlogCardData } from '../../../types/Blogs'
 
+/**
+ * BlogGridCard
+ *
+ * Grid variant of a blog preview card.
+ *
+ * Features:
+ * - localized routing per blog detail page
+ * - translated title/excerpt support
+ * - HTML-safe excerpt rendering
+ * - responsive grid-friendly layout
+ */
 export interface BlogGridCardProps {
   blog: BlogCardData
 }
@@ -23,17 +34,37 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
   const { i18n, t } = useTranslation()
   const location = useLocation()
   const { language } = i18n
+
+  /**
+   * Resolve language based on URL + i18n state.
+   * Ensures correct localized route generation.
+   */
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
     i18n.language,
     i18n.resolvedLanguage,
   )
+
+  /**
+   * Localized detail page route for this blog.
+   */
   const detailPath = toLocalizedPath(`/blogs/${blog.id}`, currentLanguage)
 
+  /**
+   * Blog title with fallback support.
+   */
   const title =
     getTranslatedRecord(blog.title, language, blog.display_title) ||
     t('blogs.detail.noTitleAvailable', 'No title available')
+
+  /**
+   * Safe excerpt (HTML stripped + translated fallback).
+   */
   const excerpt = htmlToPlainText(getTranslatedRecord(blog.excerpt, language, blog.display_excerpt))
+
+  /**
+   * Formatted publication date (localized).
+   */
   const publishedDate = formatBlogPublishedDate(blog.published_at, language)
 
   return (
@@ -54,12 +85,14 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
         },
       }}
     >
+      {/* Cover image */}
       <ImageWithFallback
         src={blog.cover_image ?? undefined}
         alt={title || t('blogs.home.coverAltFallback')}
         sx={{ aspectRatio: 16 / 9 }}
       />
 
+      {/* Content section */}
       <Stack
         sx={{
           flex: 1,
@@ -68,6 +101,7 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
           p: tokens.spacing.numericLg,
         }}
       >
+        {/* Title + excerpt */}
         <Stack spacing={1}>
           <Typography
             component="h2"
@@ -78,6 +112,7 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
           >
             {title}
           </Typography>
+
           <Typography
             variant="body2"
             component="div"
@@ -95,6 +130,7 @@ const BlogGridCard = ({ blog }: BlogGridCardProps) => {
           </Typography>
         </Stack>
 
+        {/* Footer: publication date or fallback */}
         <Stack
           direction="row"
           spacing={1}

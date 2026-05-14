@@ -5,10 +5,19 @@ import GenericGrid from '../../../shared/components/GenericGrid'
 
 import type { MediaFile } from '../../../types/MediaFiles'
 
+/**
+ * Props for MediaFileGrid component.
+ */
 export interface MediaFileGridProps {
   mediaFiles: MediaFile[]
 }
 
+/**
+ * Renders a grid of media files using GenericGrid.
+ *
+ * Each item is rendered using MediaFileGridCard.
+ * The wrapper Box ensures centered alignment of grid items.
+ */
 const MediaFileGrid = ({ mediaFiles }: MediaFileGridProps) => {
   return (
     <Box
@@ -19,6 +28,7 @@ const MediaFileGrid = ({ mediaFiles }: MediaFileGridProps) => {
         },
       }}
     >
+      {/* Generic grid renderer for media files */}
       <GenericGrid
         items={mediaFiles}
         getKey={(mediaFile) => mediaFile.id}

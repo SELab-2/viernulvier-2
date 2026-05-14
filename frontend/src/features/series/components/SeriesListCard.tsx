@@ -1,3 +1,18 @@
+/*
+ * Displays a clickable list-card for a single series (Tag entity).
+ *
+ * Responsibilities:
+ * - Renders localized series title + excerpt
+ * - Displays optional date range (first -> last production)
+ * - Provides navigation to the series detail page
+ * - Uses full-card clickable layout via React Router link
+ *
+ * Notes:
+ * - All localization is derived from i18n + resolved language
+ * - HTML excerpts are sanitized and converted to plain text
+ * - Layout is optimized for horizontal list views
+ */
+
 import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Box, Stack, Typography } from '@mui/material'
@@ -16,13 +31,17 @@ export interface SeriesListCardProps {
   tag: Tag
 }
 
-// Function to get the localized tag name based on the current language.
+/**
+ * Returns localized series name based on active language.
+ */
 const getLocalizedTagName = (tag: Tag, language: string): string => {
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
   return getTranslatedRecord(tag.name, normalizedLanguage, tag.display_name)
 }
 
-// Function to get the localized tag excerpt based on the current language.
+/**
+ * Returns localized series excerpt based on active language.
+ */
 const getLocalizedTagExcerpt = (tag: Tag, language: string): string => {
   const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
   return getTranslatedRecord(tag.excerpt, normalizedLanguage, tag.display_excerpt)
@@ -32,19 +51,25 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
   const { i18n } = useTranslation()
   const location = useLocation()
   const { language } = i18n
+
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
     i18n.language,
     i18n.resolvedLanguage,
   )
+
   const detailPath = toLocalizedPath(`/series/${tag.id}`, currentLanguage)
 
   const title = getLocalizedTagName(tag, language)
   const excerpt = getLocalizedTagExcerpt(tag, language)
+
   const startLabel = formatDate(tag.first_production_start, language)
   const endLabel = formatDate(tag.last_production_end, language)
 
-  // Keep the date label compact when both endpoints are available.
+  /**
+   * Builds a compact human-readable date range label.
+   * Falls back gracefully when only one endpoint exists.
+   */
   const dateLabel =
     startLabel && endLabel
       ? startLabel === endLabel
@@ -53,7 +78,7 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
       : startLabel || endLabel
 
   return (
-    // Render the series as a full-card link.
+    // Entire card acts as navigation link to series detail page.
     <Stack
       component={RouterLink}
       to={detailPath}
@@ -73,6 +98,7 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
         },
       })}
     >
+      {/* Series thumbnail image */}
       <ImageWithFallback
         src={tag.image}
         alt={title}
@@ -80,6 +106,7 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
         sx={{ aspectRatio: 16 / 9, borderRadius: '4px' }}
       />
 
+      {/* Main content block (title, excerpt, metadata) */}
       <Stack
         sx={{
           flex: 1,
@@ -91,6 +118,7 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
         }}
       >
         <Stack>
+          {/* Series title */}
           <Typography
             component="h2"
             variant="h6"
@@ -101,6 +129,7 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
             {title}
           </Typography>
 
+          {/* Optional excerpt */}
           {excerpt ? (
             <Typography
               component="div"
@@ -118,6 +147,7 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
           ) : null}
         </Stack>
 
+        {/* Date range indicator */}
         {dateLabel ? (
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'text.secondary' }}>
             <DateRangeOutlinedIcon fontSize="inherit" />
@@ -128,7 +158,7 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
         ) : null}
       </Stack>
 
-      {/* Arrow affordance for the detail link. */}
+      {/* Navigation affordance icon */}
       <Box sx={{ alignSelf: 'center', pr: 2 }}>
         <ArrowForwardOutlinedIcon color="action" />
       </Box>

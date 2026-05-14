@@ -15,25 +15,49 @@ import BlogListCard from '../components/BlogListCard'
 
 import type { Blog } from '../../../types/Blogs'
 
+/**
+ * Number of items per page for pagination.
+ * This is used for both grid and list layouts to keep UI consistent.
+ */
 const PAGE_SIZE = 12
 
+/**
+ * Builds the ordering string used by the API based on UI sort state.
+ *
+ * - name -> sorts by title (title_sort)
+ * - date -> sorts by published_at
+ *
+ * Direction controls ascending/descending prefix.
+ */
 const getOrderingValue = (sortTarget: 'name' | 'date', sortDirection: 'asc' | 'desc'): string => {
   const targetField = sortTarget === 'name' ? 'title_sort' : 'published_at'
   return sortDirection === 'desc' ? `-${targetField}` : targetField
 }
 
 /**
- * Blog list page with shared collection lifecycle hooks.
+ * BlogsPage
  *
- * - {@link useCollectionQuery} handles loading/error/retry state.
- * - {@link useSearchDraft} keeps input value decoupled from URL state.
- * - Floating alerts worden centraal afgehandeld via {@link NotificationProvider}.
+ * Main container page for browsing blogs with:
+ * - server-side pagination
+ * - sorting (name/date)
+ * - search with draft input handling
+ * - grid/list view switching
+ *
+ * Data fetching is handled via useCollectionQuery which abstracts:
+ * - loading state
+ * - error state
+ * - retry logic
  */
 const BlogsPage = () => {
   const { t } = useTranslation()
   const theme = useTheme()
   const { showFloatingAlert } = useNotification()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
+
+  /**
+   * URL-synced state for search, sorting, view mode and pagination.
+   * Keeps UI state shareable via URL parameters.
+   */
   const {
     searchValue,
     sortTarget,
@@ -47,11 +71,22 @@ const BlogsPage = () => {
     setPage,
   } = useSearchBarUrlState({ isMobile })
 
+  /**
+   * Memoized ordering string to avoid recalculating on every render.
+   */
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
     [sortDirection, sortTarget],
   )
 
+  /**
+   * Main data fetching hook.
+   * Handles:
+   * - fetching blogs from API
+   * - mapping response format
+   * - error handling
+   * - retry logic
+   */
   const {
     isLoading,
     items: blogs,
@@ -80,6 +115,9 @@ const BlogsPage = () => {
     },
   })
 
+  /**
+   * Search draft handler keeps typing state separate from committed state.
+   */
   const searchDraft = useSearchDraft({
     value: searchValue,
     trackDirty: true,
@@ -87,8 +125,14 @@ const BlogsPage = () => {
     onSameQuery: () => retry(),
   })
 
+  /**
+   * Derived error message depending on whether fallback UI should be shown.
+   */
   const renderedErrorMessage = error.showFallback ? t('blogs.home.error.fallback') : error.message
 
+  /**
+   * Submits search from input field.
+   */
   const onSearchSubmit = (value: string) => {
     searchDraft.submit(value)
   }

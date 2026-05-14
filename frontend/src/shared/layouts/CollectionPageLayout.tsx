@@ -1,3 +1,24 @@
+/**
+ * Reusable collection page layout component.
+ *
+ * This component provides a standardized structure for pages that display
+ * searchable, sortable, and paginated collections of items (e.g. blogs,
+ * productions, media lists, etc.).
+ *
+ * It centralizes common UI concerns such as:
+ * - Search + filtering controls (via SearchControlsBar)
+ * - Sidebar rendering (desktop inline + mobile dialog variant)
+ * - Loading, error, and empty states
+ * - Results rendering
+ * - Pagination handling
+ *
+ * The layout is responsive and adapts between desktop and mobile:
+ * - Desktop: sidebar is shown inline next to results
+ * - Mobile: sidebar is moved into a full-screen dialog
+ *
+ * This ensures consistent UX across all collection-type pages.
+ */
+
 import CloseIcon from '@mui/icons-material/Close'
 import FilterAltIcon from '@mui/icons-material/FilterAlt'
 import {
@@ -29,34 +50,63 @@ import type {
   SearchViewMode,
 } from '../components/search/types'
 
-/* ------------------------------------------------------------------------- */
-/* Layout geometry                                                           */
-/* ------------------------------------------------------------------------- */
-
-/** Card width (px) shared with `createCommonStyles.gridContainer` tracks. */
+/**
+ * Fixed card width used across grid layouts.
+ * Must stay in sync with grid system defined in common styles.
+ */
 const CARD_WIDTH_PX = tokens.card.gridCardWidthPx
-/** Gap between cards within the grid (theme.spacing(3) = 24px). */
+
+/**
+ * Horizontal spacing between cards in grid layout.
+ */
 const CARD_GAP_PX = 24
-/** Spacing units for the sidebar width (theme.spacing(39) = 312px). */
+
+/**
+ * Sidebar width expressed in MUI spacing units.
+ */
 const SIDEBAR_WIDTH_SPACING = 39
+
+/**
+ * Sidebar width converted to pixels (8px per spacing unit).
+ */
 const SIDEBAR_WIDTH_PX = SIDEBAR_WIDTH_SPACING * 8
-/** Gap between the sidebar and the content column (theme.spacing(3) = 24px). */
+
+/**
+ * Gap between sidebar and main content column.
+ */
 const SIDEBAR_GAP_PX = 24
-/** Total horizontal padding applied by the surrounding `<Container>`. */
+
+/**
+ * Horizontal padding applied by the outer Container component.
+ */
 const CONTAINER_PADDING_PX = 24 * 2
 
-/** Pixel width occupied by N grid cards laid out in one row. */
+/**
+ * Calculates total pixel width of N cards in a row.
+ */
 const widthForCols = (n: number): number => n * CARD_WIDTH_PX + Math.max(0, n - 1) * CARD_GAP_PX
 
 /**
- * Smallest viewport width at which N grid cards still fit next to the
- * (optional) sidebar inside the page container. Drives the column-count
- * breakpoints below so the step from N to N+1 happens exactly when the next
- * card would actually fit on screen.
+ * Calculates viewport width threshold required to fit N columns
+ * plus optional sidebar.
+ *
+ * Used to dynamically switch max-width constraints for the content column
+ * so the layout only expands when space is actually available.
  */
 const viewportThresholdForCols = (n: number, withSidebar: boolean): number =>
   widthForCols(n) + (withSidebar ? SIDEBAR_WIDTH_PX + SIDEBAR_GAP_PX : 0) + CONTAINER_PADDING_PX
 
+/**
+ * Props for CollectionPageLayout.
+ *
+ * This defines all UI state required to render:
+ * - search controls
+ * - sorting
+ * - view mode switching
+ * - sidebar content
+ * - results and pagination
+ * - loading/error/empty states
+ */
 export interface CollectionPageLayoutProps {
   isMobile: boolean
   showSidebar?: boolean
@@ -92,43 +142,16 @@ export interface CollectionPageLayoutProps {
 }
 
 /**
- * Reusable layout component for collection pages that includes a search bar, sidebar, results area, and pagination.
- * Handles common UI states such as loading, error, and empty results. The layout is responsive and adapts to mobile screens.
+ * Main layout component for collection-based pages.
  *
- * Uses {@link SearchControlsBar} for the search and sorting controls, and {@link Pagination} for page navigation.
+ * Responsibilities:
+ * - Orchestrates search, sorting, and view controls
+ * - Handles loading / error / empty UI states
+ * - Manages sidebar rendering (responsive behavior)
+ * - Provides pagination at bottom of results
  *
- * @param props.isMobile Boolean indicating if the layout is being rendered on a mobile device.
- * @param props.searchPlaceholder Placeholder text for the search input.
- * @param props.searchValue Current value of the search input.
- * @param props.onSearchChange Callback function to update the search value.
- * @param props.onSearchSubmit Callback function when the search is submitted.
- * @param props.sortTarget Current sort target (e.g. 'date' or 'name').
- * @param props.onSortTargetChange Callback function to update the sort target.
- * @param props.sortDirection Current sort direction ('asc' or 'desc').
- * @param props.onSortDirectionChange Callback function to update the sort direction.
- * @param props.viewMode Current view mode ('list' or 'grid').
- * @param props.onViewModeChange Callback function to update the view mode.
- * @param props.resultCount Number of results found, used for display in the search controls bar.
- * @param props.sidebarContent ReactNode containing the content to display in the sidebar area.
- * @param props.resultsRegionAriaLabel ARIA label for the results region for accessibility.
- * @param props.isLoading Boolean indicating if the data is currently loading, used to show loading state.
- * @param props.loadingLabel Label text to display in the loading spinner.
- * @param props.errorMessage Error message to display if there was an error loading the data. If null, no error is shown.
- * @param props.retryLabel Label for the retry button shown when there is an error.
- * @param props.onRetry Callback function to call when the retry button is clicked.
- * @param props.emptyTitle Title text to display when there are no results.
- * @param props.emptyDescription Description text to display when there are no results.
- * @param props.hasResults Boolean indicating if there are results to display, used to determine whether to show results or empty state.
- * @param props.resultsContent ReactNode containing the content to display in the results area when there are results.
- * @param props.page Current page number for pagination.
- * @param props.pageSize Number of items per page for pagination.
- * @param props.totalItems Total number of items across all pages for pagination.
- * @param props.onPageChange Callback function to call when the page is changed, receives the new page number.
- * @param props.paginationI18nKeyPrefix Optional prefix for internationalization keys used in the Pagination component.
- *
- * @returns A React component that renders the collection page layout with the specified props.
+ * It does NOT fetch data itself; it is purely presentational.
  */
-
 const CollectionPageLayout = ({
   isMobile,
   showSidebar = true,
@@ -164,17 +187,29 @@ const CollectionPageLayout = ({
 }: CollectionPageLayoutProps) => {
   const { t } = useTranslation()
   const theme = useTheme()
+
+  /**
+   * Derived UI state flags controlling rendering branches.
+   */
   const isEmpty = !isLoading && !errorMessage && !hasResults
   const shouldRenderSidebar = Boolean(showSidebar && sidebarContent)
+
   /**
-   * The sidebar lives next to the content column on desktop. On mobile the
-   * same content becomes a full-screen dialog triggered by a filter button,
-   * so at that breakpoint the content column takes over the full width.
+   * Sidebar is inline only on desktop viewports.
+   * On mobile it is moved into a full-screen dialog.
    */
   const sidebarInline = shouldRenderSidebar && !isMobile
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
+  /**
+   * Button label for opening mobile filter sidebar.
+   */
   const mobileSidebarLabel = t('searchbar.filters')
+
+  /**
+   * Button used in mobile search controls to open sidebar dialog.
+   */
   const mobileSidebarButton =
     isMobile && shouldRenderSidebar ? (
       <Tooltip title={mobileSidebarLabel}>
@@ -201,6 +236,10 @@ const CollectionPageLayout = ({
         </IconButton>
       </Tooltip>
     ) : null
+
+  /**
+   * Close button rendered inside mobile sidebar dialog header.
+   */
   const mobileSidebarHeaderAction =
     isMobile && shouldRenderSidebar ? (
       <IconButton
@@ -222,6 +261,11 @@ const CollectionPageLayout = ({
         <CloseIcon fontSize="small" />
       </IconButton>
     ) : null
+
+  /**
+   * Injects extra props into sidebar component when rendered in mobile mode.
+   * This allows sidebar components to adapt to dialog usage (header actions, apply callbacks).
+   */
   const mobileSidebarContent =
     isMobile &&
     isValidElement<{ headerActions?: ReactNode; onMobileApply?: () => void }>(sidebarContent)
@@ -231,13 +275,15 @@ const CollectionPageLayout = ({
         })
       : sidebarContent
 
+  /**
+   * Main results section handling loading, error, empty, and success states.
+   */
   const resultsSection = (
     <Box component="section" aria-label={resultsRegionAriaLabel} sx={{ minWidth: 0 }}>
       {isLoading ? (
         <Box sx={{ py: 8 }}>{loadingContent ?? <LoadingSpinner label={loadingLabel} />}</Box>
       ) : null}
 
-      {/* Error */}
       {!isLoading && errorMessage ? (
         <Alert
           severity="error"
@@ -251,7 +297,6 @@ const CollectionPageLayout = ({
         </Alert>
       ) : null}
 
-      {/* Empty */}
       {isEmpty ? (
         <Paper variant="outlined" sx={{ p: 4, borderRadius: 2 }}>
           <Stack spacing={1}>
@@ -265,23 +310,15 @@ const CollectionPageLayout = ({
         </Paper>
       ) : null}
 
-      {/* Results */}
       {!isLoading && !errorMessage && hasResults ? resultsContent : null}
     </Box>
   )
 
   /**
-   * Width of the content column (search bar + results + pagination).
+   * Responsive width behavior for the main content column.
    *
-   * In grid view the column snaps to whole numbers of card tracks so a row
-   * never leaves a half-card gap: 100% below the two-column threshold, then
-   * two and three card widths as more cards fit next to the (optional)
-   * sidebar. At the narrowest step the grid itself centers its lone track
-   * via `commonStyles.gridContainer`.
-   *
-   * In list view rows don't need fixed tracks, so the column just scales
-   * gradually and caps at the three-card width - matching the grid's
-   * largest footprint without introducing an intermediate step.
+   * This ensures grid/list layouts only expand when enough space is available
+   * to fit additional card columns, preventing awkward partial rows.
    */
   const contentColumnSx: SxProps<Theme> = {
     flex: 1,

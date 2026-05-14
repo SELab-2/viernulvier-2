@@ -15,11 +15,29 @@ type NotificationProviderProps = {
   children: ReactNode
 }
 
+/**
+ * Global notification provider that manages floating alerts for the entire app.
+ *
+ * Responsibilities:
+ * - Stores active alerts in local state
+ * - Provides API to show and clear alerts
+ * - Handles route-based (navigation state) alerts
+ * - Renders grouped FloatingAlertStack components per screen position
+ */
 export const NotificationProvider = ({ children }: NotificationProviderProps) => {
   const location = useLocation()
   const navigate = useNavigate()
+
+  /**
+   * Internal alert queue.
+   * Each entry represents a single floating alert instance.
+   */
   const [alerts, setAlerts] = useState<FloatingAlertEntry[]>([])
 
+  /**
+   * Adds a new floating alert to the global stack.
+   * Automatically assigns a unique incremental id.
+   */
   const showFloatingAlert = useCallback((payload: FloatingAlertPayload) => {
     setAlerts((currentAlerts) => [
       ...currentAlerts,
@@ -31,16 +49,33 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     ])
   }, [])
 
+  /**
+   * Clears all active floating alerts.
+   */
   const clearFloatingAlert = useCallback(() => {
     setAlerts([])
   }, [])
 
+  /**
+   * Removes a single alert by id.
+   * Used when user closes an individual notification.
+   */
   const closeFloatingAlert = useCallback((id: number) => {
     setAlerts((currentAlerts) => currentAlerts.filter((currentAlert) => currentAlert.id !== id))
   }, [])
 
+  /**
+   * Prevents duplicate consumption of route-based alerts
+   * for the same navigation event.
+   */
   const consumedNavigationKeyRef = useRef<string | null>(null)
 
+  /**
+   * Listens for floating alerts passed via router navigation state.
+   *
+   * Example use case:
+   * navigate('/page', { state: { floatingAlert: {...} } })
+   */
   useEffect(() => {
     if (!location.key || consumedNavigationKeyRef.current === location.key) {
       return
@@ -79,15 +114,25 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     showFloatingAlert,
   ])
 
+  /**
+   * Public context API exposed to the app.
+   */
   const value = useMemo(
     () => ({ showFloatingAlert, clearFloatingAlert, isFallback: false }),
     [clearFloatingAlert, showFloatingAlert],
   )
+
+  /**
+   * Groups alerts by screen position (top-left, bottom-right, etc.)
+   * so multiple stacks can be rendered independently.
+   */
   const alertGroups = groupAlertsByPosition(alerts)
 
   return (
     <NotificationContext.Provider value={value}>
       {children}
+
+      {/* Render one FloatingAlertStack per position group */}
       {alertGroups.map(({ key, position, alerts: positionedAlerts }) => (
         <FloatingAlertStack
           key={key}

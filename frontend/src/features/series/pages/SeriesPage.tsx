@@ -212,7 +212,6 @@ const SeriesPage = () => {
     />
   )
 
-  // TODO: Fetch series list from API and display them here
   return (
     <CollectionPageLayout
       isMobile={isMobile}

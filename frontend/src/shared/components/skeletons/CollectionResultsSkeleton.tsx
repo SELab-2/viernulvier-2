@@ -6,6 +6,19 @@ import { tokens } from '../../../theme/tokens'
 
 import type { SearchViewMode } from '../search/types'
 
+/**
+ * CollectionResultsSkeleton
+ *
+ * Displays a loading placeholder for collection result pages (grid or list layout).
+ * This is used while data is being fetched to avoid layout shift and improve perceived performance.
+ *
+ * Behavior:
+ * - Switches between list and grid skeletons based on layout + mobile state
+ * - Uses consistent card dimensions to match real result cards
+ *
+ * This component only renders UI placeholders, no data logic involved.
+ */
+
 interface CollectionResultsSkeletonProps {
   layout: SearchViewMode
   isMobile: boolean
@@ -18,17 +31,30 @@ const CollectionResultsSkeleton = ({
   cards = 12,
 }: CollectionResultsSkeletonProps) => {
   const theme = useTheme()
+
+  // Shared grid layout styles used for consistency across collection pages
   const commonStyles = createCommonStyles(theme)
+
+  // On mobile we always force grid layout regardless of passed layout prop
   const activeLayout: SearchViewMode = isMobile ? 'grid' : layout
 
+  /**
+   * LIST SKELETON
+   * Used for vertical stacked results (e.g. mobile or list view mode)
+   */
   if (activeLayout === 'list') {
     return (
       <Stack spacing={2} data-testid="collection-results-skeleton">
         {Array.from({ length: cards }).map((_, index) => (
           <Paper key={index} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
             <Stack spacing={1.5}>
+              {/* Title placeholder */}
               <Skeleton variant="text" width="45%" height={30} />
+
+              {/* Secondary line placeholder */}
               <Skeleton variant="text" width="70%" height={24} />
+
+              {/* Tertiary line placeholder */}
               <Skeleton variant="text" width="55%" height={22} />
             </Stack>
           </Paper>
@@ -37,6 +63,10 @@ const CollectionResultsSkeleton = ({
     )
   }
 
+  /**
+   * GRID SKELETON
+   * Used for card-based layouts with image + text structure
+   */
   return (
     <Box
       data-testid="collection-results-skeleton"
@@ -59,6 +89,7 @@ const CollectionResultsSkeleton = ({
             overflow: 'hidden',
           }}
         >
+          {/* Image placeholder */}
           <Skeleton
             variant="rectangular"
             sx={{
@@ -67,6 +98,8 @@ const CollectionResultsSkeleton = ({
               flexShrink: 0,
             }}
           />
+
+          {/* Text content placeholder */}
           <Box sx={{ p: tokens.spacing.numericLg, flex: 1 }}>
             <Skeleton variant="text" width="70%" height={30} />
             <Skeleton variant="text" width="55%" height={22} sx={{ mb: 1.5 }} />

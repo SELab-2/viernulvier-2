@@ -14,24 +14,54 @@ import {
   type ReactNode,
 } from 'react'
 
+/**
+ * Props for the Carousel component.
+ *
+ * Controls layout, accessibility labels, navigation UI and styling.
+ */
 export interface CarouselProps {
+  /** Slides rendered inside the carousel */
   children: ReactNode
+
+  /** ARIA label for the carousel region */
   ariaLabel?: string
+
+  /** Maximum width of the carousel container */
   maxWidth?: number | string
+
+  /** Enables infinite looping behavior */
   loop?: boolean
+
+  /** Whether navigation arrows are visible */
   showArrows?: boolean
+
+  /** Whether dot navigation is visible */
   showDots?: boolean
+
+  /** ARIA label for the previous button */
   previousLabel?: string
+
+  /** ARIA label for the next button */
   nextLabel?: string
+
+  /** ARIA label prefix for individual dots */
   slideLabel?: string
+
+  /** Optional style overrides */
   sx?: SxProps<Theme>
 }
 
 /**
- * Generic Embla-based carousel with optional dots, and hover-revealed arrows.
+ * Generic Embla-based carousel with optional dots and hover-revealed arrows.
  *
- * The component only manages layout and navigation state, callers are responsible for rendering the
- * actual slide content.
+ * Responsibilities:
+ * - horizontal slide rendering
+ * - Embla scroll state management
+ * - navigation controls (arrows + dots)
+ * - accessibility labels
+ * - wheel gesture support
+ *
+ * Note: this component does not control slide content, only layout + navigation.
  */
 function Carousel({
   children,
@@ -51,6 +81,7 @@ function Carousel({
     { align: 'start', loop, skipSnaps: true, slidesToScroll: 'auto' },
     [WheelGesturesPlugin()],
   )
+
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
@@ -60,6 +91,9 @@ function Carousel({
   const dotRefs = useRef<Array<HTMLButtonElement | null>>([])
   const dotsScrollRef = useRef<HTMLDivElement | null>(null)
 
+  /**
+   * Syncs React state with Embla internal state.
+   */
   const updateControls = useCallback(() => {
     if (!emblaApi) {
       return
@@ -77,6 +111,7 @@ function Carousel({
 
     emblaApi.on('select', updateControls)
     emblaApi.on('reInit', updateControls)
+
     const frameId = requestAnimationFrame(updateControls)
 
     return () => {
@@ -86,6 +121,9 @@ function Carousel({
     }
   }, [emblaApi, updateControls])
 
+  /**
+   * Keeps the active dot centered in the dot container using smooth scrolling animation.
+   */
   useLayoutEffect(() => {
     const el = dotRefs.current[selectedIndex]
     const container = dotsScrollRef.current
@@ -115,11 +153,17 @@ function Carousel({
         requestAnimationFrame(animateScroll)
       }
     }
+
     requestAnimationFrame(animateScroll)
   }, [selectedIndex, snapCount])
 
+  /** Scrolls to previous slide */
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
+
+  /** Scrolls to next slide */
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
+
+  /** Scrolls directly to a specific slide index */
   const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi])
 
   if (slides.length === 0) {

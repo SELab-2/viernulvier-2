@@ -4,6 +4,14 @@ interface MediaFileCardSkeletonProps {
   variant?: 'grid' | 'list'
 }
 
+/**
+ * Skeleton placeholder for a single media file card.
+ *
+ * Purpose:
+ * - Used while media items are loading (images/videos/documents)
+ * - Mimics final layout to avoid layout shift when real content arrives
+ *
+ */
 const MediaFileCardSkeleton = ({ variant = 'grid' }: MediaFileCardSkeletonProps) => {
   if (variant === 'list') {
     return (
@@ -18,6 +26,7 @@ const MediaFileCardSkeleton = ({ variant = 'grid' }: MediaFileCardSkeletonProps)
           bgcolor: 'background.paper',
         }}
       >
+        {/* Media preview skeleton (image/video thumbnail area) */}
         <Stack sx={{ p: 2, flexShrink: 0 }}>
           <Skeleton
             variant="rounded"
@@ -29,6 +38,7 @@ const MediaFileCardSkeleton = ({ variant = 'grid' }: MediaFileCardSkeletonProps)
           />
         </Stack>
 
+        {/* Content skeleton (title + metadata lines) */}
         <Stack
           sx={{
             flex: 1,
@@ -38,6 +48,7 @@ const MediaFileCardSkeleton = ({ variant = 'grid' }: MediaFileCardSkeletonProps)
             minWidth: 0,
           }}
         >
+          {/* Title + description lines */}
           <Stack spacing={1}>
             <Skeleton width="55%" height={32} />
             <Skeleton width="100%" />
@@ -45,6 +56,7 @@ const MediaFileCardSkeleton = ({ variant = 'grid' }: MediaFileCardSkeletonProps)
             <Skeleton width="68%" />
           </Stack>
 
+          {/* Footer metadata row (e.g. date / tags / actions) */}
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
             spacing={1}
@@ -73,6 +85,7 @@ const MediaFileCardSkeleton = ({ variant = 'grid' }: MediaFileCardSkeletonProps)
         bgcolor: 'background.paper',
       }}
     >
+      {/* Media thumbnail skeleton (grid variant) */}
       <Skeleton
         variant="rectangular"
         sx={{
@@ -81,6 +94,7 @@ const MediaFileCardSkeleton = ({ variant = 'grid' }: MediaFileCardSkeletonProps)
         }}
       />
 
+      {/* Content section skeleton */}
       <Stack
         sx={{
           flex: 1,
@@ -90,6 +104,7 @@ const MediaFileCardSkeleton = ({ variant = 'grid' }: MediaFileCardSkeletonProps)
           minWidth: 0,
         }}
       >
+        {/* Title + text lines */}
         <Stack spacing={1}>
           <Skeleton width="72%" height={32} />
           <Skeleton width="100%" />
@@ -97,6 +112,7 @@ const MediaFileCardSkeleton = ({ variant = 'grid' }: MediaFileCardSkeletonProps)
           <Skeleton width="64%" />
         </Stack>
 
+        {/* Footer metadata row */}
         <Stack
           direction="row"
           sx={{
@@ -121,6 +137,17 @@ interface MediaFilesPageSkeletonProps {
   cards?: number
 }
 
+/**
+ * Skeleton layout for the full media files page.
+ *
+ * Purpose:
+ * - Simulates grid or list layout depending on current view mode
+ * - Ensures consistent loading experience across breakpoints
+ *
+ * Behaviour:
+ * - Mobile always forces grid layout for simplicity
+ * - Limits number of list skeletons to avoid overly tall loading screens
+ */
 const MediaFilesPageSkeleton = ({
   layout = 'grid',
   isMobile = false,
@@ -131,12 +158,14 @@ const MediaFilesPageSkeleton = ({
   return (
     <Box sx={{ width: '100%' }}>
       {activeLayout === 'list' ? (
+        // List layout skeleton (vertical stack)
         <Stack spacing={2}>
           {Array.from({ length: Math.min(cards, 8) }).map((_, index) => (
             <MediaFileCardSkeleton key={index} variant="list" />
           ))}
         </Stack>
       ) : (
+        // Grid layout skeleton (responsive CSS grid)
         <Box
           sx={{
             display: 'grid',

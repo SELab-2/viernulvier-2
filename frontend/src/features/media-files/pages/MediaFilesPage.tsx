@@ -36,9 +36,17 @@ const getOrderingValue = (
 }
 
 /**
- * Media files list page that uses shared collection hooks.
+ * Media files list page.
  *
- * This page keeps the search input trimmed on change to match previous UX.
+ * Purpose:
+ * - Displays paginated media library (images/videos/files)
+ * - Supports search, sorting, pagination, and grid/list views
+ *
+ * Key behaviour:
+ * - Search is URL-synced via useSearchBarUrlState
+ * - Sorting is translated into backend ordering parameters
+ * - Page resets automatically when ordering or search changes
+ * - Uses shared CollectionView for consistent rendering logic
  */
 const MediaFilesPage = () => {
   const { t } = useTranslation()
@@ -46,6 +54,7 @@ const MediaFilesPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const { showFloatingAlert } = useNotification()
 
+  // URL-synced state (keeps UI state in sync with query params)
   const {
     searchValue,
     sortTarget,
@@ -59,13 +68,23 @@ const MediaFilesPage = () => {
     setPage,
   } = useSearchBarUrlState({ isMobile })
 
+  // Tracks previous ordering to detect changes and reset pagination
   const previousOrderingRef = useRef<string | null>(null)
 
+  // Converts UI sort state into backend ordering string
   const ordering = useMemo(
     () => getOrderingValue(sortTarget, sortDirection),
     [sortTarget, sortDirection],
   )
 
+  /**
+   * Main data query for media files.
+   *
+   * Notes:
+   * - searchValue is trimmed before sending to API
+   * - API returns both results + total count for pagination
+   * - Errors trigger both UI fallback + floating notification
+   */
   const {
     isLoading,
     items: mediaFiles,
@@ -89,6 +108,7 @@ const MediaFilesPage = () => {
         message: t('media.error.notification'),
         severity: 'error',
       })
+
       return {
         message: error instanceof ApiError ? error.message : null,
         showFallback: true,
@@ -96,10 +116,12 @@ const MediaFilesPage = () => {
     },
   })
 
+  // Local draft state for search input (decouples typing from API calls)
   const searchDraft = useSearchDraft({
     value: searchValue,
     trackDirty: true,
     onCommit: (nextValue) => {
+      // Reset pagination when committing a new search
       if (page !== 1) {
         setPage(1)
       }
@@ -108,8 +130,13 @@ const MediaFilesPage = () => {
     onSameQuery: () => retry(),
   })
 
+  // Chooses which error message to render (fallback vs API message)
   const renderedErrorMessage = error.showFallback ? t('media.error.fallback') : error.message
 
+  /**
+   * Reset pagination when ordering changes.
+   * Ensures user always sees page 1 for a new sort order.
+   */
   useEffect(() => {
     const previousOrdering = previousOrderingRef.current
 
@@ -120,10 +147,12 @@ const MediaFilesPage = () => {
     previousOrderingRef.current = ordering
   }, [ordering, page, setPage])
 
+  // Search submit handler (commits draft to actual query state)
   const onSearchSubmit = (value: string) => {
     searchDraft.submit(value)
   }
 
+  // Renders collection results using shared abstraction
   const resultsContent = (
     <CollectionView
       items={mediaFiles}

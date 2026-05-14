@@ -15,16 +15,28 @@ import { getPublicMediaFileUrl } from '../../../utils/mediaFileUrls'
 
 import type { MediaFile } from '../../../types/MediaFiles'
 
+/**
+ * Props for MediaFileGridCard component.
+ */
 export interface MediaFileGridCardProps {
   mediaFile: MediaFile
 }
 
+/**
+ * Grid card representation of a MediaFile.
+ *
+ * Used in grid layouts (responsive cards).
+ * Shows preview + metadata in a vertical layout.
+ */
 const MediaFileGridCard = ({ mediaFile }: MediaFileGridCardProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
   const { t, i18n } = useTranslation()
   const { language } = i18n
 
+  /**
+   * Derived display values.
+   */
   const uploadedAt = formatMediaFileDate(mediaFile.created_at, language)
   const fileSize = formatMediaFileSize(mediaFile.size_bytes)
   const description = getMediaFileDescription(mediaFile, i18n.language, t)
@@ -49,10 +61,12 @@ const MediaFileGridCard = ({ mediaFile }: MediaFileGridCardProps) => {
         },
       }}
     >
+      {/* TOP: media preview */}
       <Stack sx={{ aspectRatio: 16 / 9, overflow: 'hidden' }}>
         <MediaFilePreview mediaFile={mediaFile} previewLabel={fileTypeLabel} />
       </Stack>
 
+      {/* BOTTOM: content section */}
       <Stack
         sx={{
           flex: 1,
@@ -62,6 +76,7 @@ const MediaFileGridCard = ({ mediaFile }: MediaFileGridCardProps) => {
           minWidth: 0,
         }}
       >
+        {/* filename + description */}
         <Stack spacing={1}>
           <Typography
             component="h2"
@@ -89,7 +104,7 @@ const MediaFileGridCard = ({ mediaFile }: MediaFileGridCardProps) => {
           </Typography>
         </Stack>
 
-        {/* Footer: links op mobiel, space-between op desktop */}
+        {/* FOOTER: metadata row */}
         <Stack
           direction="row"
           sx={{
@@ -102,6 +117,7 @@ const MediaFileGridCard = ({ mediaFile }: MediaFileGridCardProps) => {
             columnGap: 1,
           }}
         >
+          {/* upload date */}
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', minWidth: 0 }}>
             <DateRangeOutlinedIcon fontSize="inherit" />
             <Typography variant="body2" noWrap>
@@ -109,6 +125,7 @@ const MediaFileGridCard = ({ mediaFile }: MediaFileGridCardProps) => {
             </Typography>
           </Stack>
 
+          {/* file size (optional) */}
           {fileSize ? (
             <Typography variant="body2" noWrap>
               {t('media.size')}: {fileSize}

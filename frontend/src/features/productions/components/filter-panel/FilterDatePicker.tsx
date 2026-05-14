@@ -2,23 +2,47 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 
+/**
+ * FilterDatePicker
+ *
+ * Controlled date picker used inside filter panels.
+ *
+ * Key behavior:
+ * - Keeps a "draft" state separate from committed value
+ * - Only commits value on blur / Enter / calendar close
+ * - Clears immediately when user clears input
+ * - Resets draft when external value changes
+ */
+
 const DATE_PICKER_FORMAT = 'DD/MM/YYYY'
 
+/**
+ * Internal state model for managing controlled + draft behavior.
+ */
 type DateFieldState = {
   /** The external prop value at the time this state was last set. */
   sourceValue: string
+  /** Draft value shown in the picker before commit */
   draft: Dayjs | null
+  /** Whether current draft has validation errors */
   hasError: boolean
 }
 
+/**
+ * Parses ISO date string into Dayjs instance.
+ */
 const parseDateValue = (value: string): Dayjs | null => {
   if (!value) {
     return null
   }
+
   const parsed = dayjs(value)
   return parsed.isValid() ? parsed : null
 }
 
+/**
+ * Formats Dayjs into API-compatible ISO string.
+ */
 const formatDateValue = (value: Dayjs | null): string => {
   if (!value?.isValid()) {
     return ''
@@ -26,6 +50,9 @@ const formatDateValue = (value: Dayjs | null): string => {
   return value.format('YYYY-MM-DD')
 }
 
+/**
+ * Creates initial field state from external value.
+ */
 const createFieldState = (sourceValue: string): DateFieldState => ({
   sourceValue,
   draft: parseDateValue(sourceValue),
@@ -34,35 +61,53 @@ const createFieldState = (sourceValue: string): DateFieldState => ({
 
 type FilterDatePickerProps = {
   label: string
-  /** ISO date string (e.g. 'YYYY-MM-DD') or empty string for no value. */
+  /** ISO date string (YYYY-MM-DD) or empty string for no value */
   value: string
   onChange: (value: string) => void
 }
 
 /**
- * A controlled date picker that buffers edits as a draft and commits when the user
- * confirms (blur, Enter, or calendar close). Clearing via the field clear control or
- * calendar commits immediately. External `value` changes reset the draft.
+ * Controlled date picker with buffered draft state.
+ *
+ * Why this exists:
+ * MUI DatePicker updates can be noisy while typing/choosing dates.
+ * This component ensures:
+ * - controlled external state stays stable
+ * - internal edits are buffered until commit
  */
 const FilterDatePicker = ({ label, value, onChange }: FilterDatePickerProps) => {
+  // Local state holding draft value + validation state
   const [field, setField] = useState<DateFieldState>(() => createFieldState(value))
-  // Ref keeps the latest field state accessible from stale event-handler closures.
+
+  // Ref used to avoid stale closures in event handlers
   const fieldRef = useRef(field)
 
+  /**
+   * Track external value changes to reset internal draft state.
+   * (Ensures UI stays in sync with URL / parent state updates)
+   */
   const [prevExternalValue, setPrevExternalValue] = useState(value)
+
   if (value !== prevExternalValue) {
     setPrevExternalValue(value)
     const next = createFieldState(value)
     setField(next)
   }
 
+  /**
+   * Keep ref in sync with latest field state.
+   */
   useLayoutEffect(() => {
     fieldRef.current = field
   }, [field])
 
+  /**
+   * Commits draft value back to parent if valid.
+   */
   const applyDraft = () => {
     const latest =
       fieldRef.current.sourceValue === value ? fieldRef.current : createFieldState(value)
+
     if (!latest.hasError) {
       onChange(formatDateValue(latest.draft))
     }
@@ -80,8 +125,11 @@ const FilterDatePicker = ({ label, value, onChange }: FilterDatePickerProps) => 
           draft: newValue,
           hasError: context.validationError != null,
         }
+
         fieldRef.current = next
         setField(next)
+
+        // Immediate commit when cleared
         if (newValue === null) {
           onChange('')
         }
