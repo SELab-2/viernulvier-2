@@ -1,9 +1,11 @@
 /**
  * Reusable MUI sx Pattern Styles
  *
- * Exports common sx prop patterns used across components.
- * Centralized here to reduce duplication and ensure consistency.
- * Each function takes a theme and returns an SxProps<Theme> object.
+ * This module centralizes commonly used `sx` style objects for MUI components.
+ * It helps reduce duplication and ensures consistent styling across the app.
+ *
+ * Styles are grouped by usage domain (navbar, layout, cards, etc.) and are
+ * designed to be consumed via `sx={commonStyles.cardBase}` etc.
  */
 
 import { alpha } from '@mui/material/styles'
@@ -13,12 +15,26 @@ import { DarkMode } from '../types/Theme'
 
 import type { SxProps, SystemStyleObject, Theme } from '@mui/system'
 
+/**
+ * Creates reusable navbar-related style objects.
+ *
+ * These styles define layout and visual rules for navigation elements such as
+ * links, branding, and active states.
+ *
+ * @returns Object containing navbar-related sx style definitions
+ */
 export const createNavbarStyles = () => {
   return {
+    /**
+     * Style applied to the active navigation link.
+     */
     activeLink: {
       borderBottomColor: tokens.colors.neutral.white,
     } as SystemStyleObject<Theme>,
 
+    /**
+     * Base styling for navigation links.
+     */
     navLink: {
       textTransform: 'none',
       fontSize: '1.05rem',
@@ -30,6 +46,9 @@ export const createNavbarStyles = () => {
       '&:hover': { bgcolor: 'transparent' },
     } as SystemStyleObject<Theme>,
 
+    /**
+     * Branding link container styling.
+     */
     brandLink: {
       flex: '0 1 auto',
       width: 'fit-content',
@@ -47,6 +66,9 @@ export const createNavbarStyles = () => {
       mr: 'auto',
     } as SystemStyleObject<Theme>,
 
+    /**
+     * Logo image styling inside the brand area.
+     */
     brandLogo: {
       maxHeight: '2.45em',
       width: '100%',
@@ -57,6 +79,9 @@ export const createNavbarStyles = () => {
       filter: 'brightness(0) invert(1)',
     } as SystemStyleObject<Theme>,
 
+    /**
+     * Text styling for archive branding label.
+     */
     brandArchiveText: {
       display: 'block',
       color: tokens.colors.neutral.white,
@@ -71,11 +96,20 @@ export const createNavbarStyles = () => {
   }
 }
 
+/**
+ * Creates shared UI style patterns based on the active theme.
+ *
+ * These styles are used across components such as cards, grids, layout
+ * containers, and UI primitives like chips and links.
+ *
+ * @param theme Active MUI theme instance
+ * @returns Object containing reusable sx style definitions
+ */
 export const createCommonStyles = (theme: Theme) => {
   return {
     /**
      * Base card styling: shadow, rounded corners, background.
-     * Use as base for ProductionGridCard, ProductionListCard, etc.
+     * Used as foundation for card components across the app.
      */
     cardBase: {
       borderRadius: tokens.card.borderRadiusPx,
@@ -90,20 +124,9 @@ export const createCommonStyles = (theme: Theme) => {
     } as SxProps<Theme>,
 
     /**
-     * Grid container for wrapping card layouts.
+     * Grid container for card layouts using auto-fill behavior.
      *
-     * `auto-fill` preserves empty tracks, so when the parent column is sized
-     * to exactly N card widths a single card naturally lands in the first
-     * track with no bespoke `justify-content` switching required. When the
-     * parent column falls back to 100% width (viewports that can't fit two
-     * card columns), only one track fits and the alignment of that lone card
-     * becomes visible - centered by default, which suits mobile and narrow
-     * sidebar-less layouts.
-     *
-     * Ancestors (e.g. the collection page's content column when a filter
-     * sidebar is visible) can opt into start alignment by setting the
-     * `--grid-align` CSS custom property to `start`, which cascades down
-     * without requiring prop plumbing.
+     * Ensures responsive wrapping without manual breakpoint handling.
      */
     gridContainer: {
       display: 'grid',
@@ -114,7 +137,7 @@ export const createCommonStyles = (theme: Theme) => {
     } as SxProps<Theme>,
 
     /**
-     * Navbar styling: sticky positioning, dark background.
+     * Navbar container styling.
      */
     navbar: {
       bgcolor: tokens.colors.neutral.black,
@@ -125,7 +148,7 @@ export const createCommonStyles = (theme: Theme) => {
     } as SxProps<Theme>,
 
     /**
-     * Footer styling: dark background with contrast text.
+     * Footer container styling.
      */
     footer: {
       bgcolor: tokens.colors.neutral.gray900,
@@ -138,8 +161,7 @@ export const createCommonStyles = (theme: Theme) => {
     } as SxProps<Theme>,
 
     /**
-     * Responsive image placeholder (aspect ratio 16/9).
-     * Used in production cards for consistent image sizing.
+     * Responsive media image styling (16:9 ratio).
      */
     responseImage: {
       aspectRatio: '16 / 9',
@@ -159,7 +181,7 @@ export const createCommonStyles = (theme: Theme) => {
     } as SxProps<Theme>,
 
     /**
-     * Chip base: rounded, padded container.
+     * Base chip styling.
      */
     chipBase: {
       borderRadius: tokens.borderRadius.md,
@@ -169,7 +191,7 @@ export const createCommonStyles = (theme: Theme) => {
     } as SxProps<Theme>,
 
     /**
-     * Container with maximum width and centered content.
+     * Centered max-width layout container.
      */
     container: {
       maxWidth: '1264px',
@@ -182,7 +204,7 @@ export const createCommonStyles = (theme: Theme) => {
     } as SxProps<Theme>,
 
     /**
-     * Stack with vertical spacing and gap management.
+     * Vertical stack layout.
      */
     stack: {
       display: 'flex',
@@ -191,7 +213,7 @@ export const createCommonStyles = (theme: Theme) => {
     } as SxProps<Theme>,
 
     /**
-     * Text that should be truncated with ellipsis.
+     * Truncated text with ellipsis.
      */
     textTruncate: {
       overflow: 'hidden',
@@ -201,7 +223,7 @@ export const createCommonStyles = (theme: Theme) => {
     } as SxProps<Theme>,
 
     /**
-     * Base styling for loading spinners or empty states.
+     * Centered content container.
      */
     centerContent: {
       display: 'flex',
@@ -211,6 +233,15 @@ export const createCommonStyles = (theme: Theme) => {
   }
 }
 
+/**
+ * Creates home page specific style tokens derived from theme mode.
+ *
+ * These styles are used for hero sections, cards, inputs, and subtle UI
+ * effects that differ between light and dark mode.
+ *
+ * @param theme Active MUI theme instance
+ * @returns Object containing homepage-specific style values
+ */
 export const createHomePageStyles = (theme: Theme) => {
   const isDark = theme.palette.mode === DarkMode
 
@@ -251,4 +282,7 @@ export const createHomePageStyles = (theme: Theme) => {
   }
 }
 
+/**
+ * Type helper representing the return type of createCommonStyles.
+ */
 export type CommonStyles = ReturnType<typeof createCommonStyles>

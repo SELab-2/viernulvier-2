@@ -1,7 +1,9 @@
 import { useMediaQuery, useTheme } from '@mui/material'
 import { useMemo, type Key, type ReactNode } from 'react'
+
 import GenericGrid from './GenericGrid'
 import GenericList from './GenericList'
+
 import type { SearchViewMode } from './search/types'
 
 type CollectionViewItemProps<T> = {
