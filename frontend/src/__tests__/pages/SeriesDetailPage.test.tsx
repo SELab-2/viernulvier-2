@@ -151,6 +151,7 @@ describe('SeriesDetailPage', () => {
         makeProduction(1, {
           display_title: 'VIDEODROOM 2024',
           title: { nl: 'VIDEODROOM 2024' },
+          tags: [baseTag(), baseTag({ id: 2, name: { nl: 'Anders' }, display_name: 'Anders' })],
         }),
       ],
     })
@@ -165,6 +166,9 @@ describe('SeriesDetailPage', () => {
     expect(screen.getByText('1')).toBeInTheDocument()
     expect(screen.getByText('2020–2025')).toBeInTheDocument()
     expect(screen.getByText('festival')).toBeInTheDocument()
+    expect(
+      getComputedStyle(screen.getByRole('button', { name: 'VIDEODROOM' })).backgroundColor,
+    ).toBe('rgb(25, 118, 210)')
     expect(mockedGetProductions).toHaveBeenCalledWith({
       page: 1,
       pageSize: 12,
@@ -314,6 +318,14 @@ describe('SeriesDetailPage', () => {
         makeProduction(1, {
           display_title: 'VIDEODROOM 2024',
           title: { nl: 'VIDEODROOM 2024' },
+          tags: [
+            {
+              id: 21,
+              name: { nl: 'Reeks', en: 'Series' },
+              display_name: 'Reeks',
+              url_title: null,
+            },
+          ],
           genres: [
             {
               id: 10,
@@ -336,8 +348,14 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
+    const productionCard = await screen.findByRole('link', {
+      name: /videodroom 2024/i,
+    })
+
     expect(await screen.findByText('Audiovisueel')).toBeInTheDocument()
     expect(screen.getByText('Performance')).toBeInTheDocument()
+    expect(screen.getByText('Reeks')).toBeInTheDocument()
+    expect(productionCard.querySelectorAll('a')).toHaveLength(0)
   })
 
   it('sorts productions by event date and groups undated productions last', async () => {

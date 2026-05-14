@@ -162,6 +162,7 @@ const ProductionListCard = ({
                   context="series"
                   id={tag.id}
                   selected={selectedTagIds?.includes(tag.id) || false}
+                  disableLink
                 />
               ))}
               {genres.map((genre) => (
@@ -174,9 +175,10 @@ const ProductionListCard = ({
                   )}
                   labels={genre.name || {}}
                   chipType="genre"
-                  context={selectedGenreIds !== undefined ? 'static' : 'description'}
+                  context="description"
                   id={genre.id}
                   selected={selectedGenreIds?.includes(genre.id) || false}
+                  disableLink
                 />
               ))}
             </Stack>

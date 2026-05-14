@@ -253,6 +253,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
     t('series.noDescription')
   const hasMoreProductions = productions.length < totalProductions
+  const selectedTagIds = seriesTag ? [seriesTag.id] : undefined
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
@@ -341,7 +342,11 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                       pl: { xs: 3, md: 0 },
                     }}
                   >
-                    <ProductionView productions={yearProductions} layout="list" />
+                    <ProductionView
+                      productions={yearProductions}
+                      layout="list"
+                      selectedTagIds={selectedTagIds}
+                    />
                   </Box>
                 </Stack>
               ))}

@@ -28,6 +28,8 @@ export interface GenreAndTagChipProps {
   onToggle?: GenreAndTagChipToggle
   /** Optional explicit aria label override. */
   ariaLabel?: string
+  /** Optional flag to disable link behavior */
+  disableLink?: boolean
 }
 
 export interface SearchChipOption {

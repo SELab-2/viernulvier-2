@@ -1,7 +1,7 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import ProductionGridCard from '../../components/productions/ProductionGridCard'
 import i18n from '../../i18n'
@@ -76,7 +76,7 @@ const renderGridCard = (props: {
   selectedTagIds?: number[]
   onGenreClick?: (id: number) => void
 }) => {
-  const { production, selectedGenreIds = [], selectedTagIds = [] } = props
+  const { production, selectedGenreIds, selectedTagIds } = props
 
   const ui: ReactElement = (
     <ProductionGridCard
@@ -93,6 +93,28 @@ const renderGridCard = (props: {
       </I18nextProvider>
     </MemoryRouter>,
   )
+}
+
+const renderGridCardWithRoutes = (ui: ReactElement) =>
+  render(
+    <MemoryRouter initialEntries={['/nl/productions']}>
+      <I18nextProvider i18n={i18n}>
+        <ThemeProvider theme={accentTheme}>
+          <Routes>
+            <Route path="/nl/productions" element={ui} />
+            <Route path="/nl/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
+            <Route path="/nl/archief" element={<div>ARCHIVE PAGE</div>} />
+            <Route path="/nl/reeksen/:id" element={<div>SERIES PAGE</div>} />
+          </Routes>
+        </ThemeProvider>
+      </I18nextProvider>
+    </MemoryRouter>,
+  )
+
+const LocationEcho = () => {
+  const location = useLocation()
+
+  return <div>{`${location.pathname}${location.search}`}</div>
 }
 
 beforeEach(() => {
@@ -158,6 +180,62 @@ describe('ProductionGridCard', () => {
     expect(
       links.some((l) => l.getAttribute('href') === toLocalizedPath('/productions/42', 'nl')),
     ).toBe(true)
+  })
+
+  it('does not render nested anchors for chips inside the production card link', () => {
+    const production = baseProduction({
+      tags: [minimalTag(11, 'Reeks')],
+      genres: [minimalGenre(22, 'Genre')],
+    })
+
+    renderGridCard({ production, selectedGenreIds: undefined, selectedTagIds: undefined })
+
+    const cardLink = screen.getByRole('link', { name: /Voorstelling/ })
+
+    expect(screen.getByText('Reeks')).toBeInTheDocument()
+    expect(screen.getByText('Genre')).toBeInTheDocument()
+    expect(cardLink.querySelectorAll('a')).toHaveLength(0)
+  })
+
+  it('navigates genre chip clicks to the archive instead of the production detail page', () => {
+    const production = baseProduction({
+      id: 7,
+      genres: [minimalGenre(22, 'Genre')],
+    })
+
+    renderGridCardWithRoutes(<ProductionGridCard production={production} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Genre' }))
+
+    expect(screen.getByText('ARCHIVE PAGE')).toBeInTheDocument()
+    expect(screen.queryByText('PRODUCTION DETAIL')).not.toBeInTheDocument()
+  })
+
+  it('appends genre chips to the active genre filter in the archive url', () => {
+    const production = baseProduction({
+      id: 7,
+      genres: [minimalGenre(22, 'Genre')],
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/nl/productions?g=1']}>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider theme={accentTheme}>
+            <Routes>
+              <Route
+                path="/nl/productions"
+                element={<ProductionGridCard production={production} />}
+              />
+              <Route path="/nl/archief" element={<LocationEcho />} />
+            </Routes>
+          </ThemeProvider>
+        </I18nextProvider>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Genre' }))
+
+    expect(screen.getByText('/nl/archief?g=1-22')).toBeInTheDocument()
   })
 
   it('omits the artist line when there is no artist translation or display fallback', () => {
@@ -348,7 +426,7 @@ describe('ProductionGridCard', () => {
 
     renderGridCard({ production, selectedTagIds: [11] })
 
-    expect(screen.getByRole('link', { name: 'Festivalreeks' })).toHaveStyle({
+    expect(screen.getByText('Festivalreeks').closest('.MuiChip-root')).toHaveStyle({
       backgroundColor: '#1976d2',
       borderColor: '#1976d2',
     })
@@ -361,9 +439,12 @@ describe('ProductionGridCard', () => {
 
     renderGridCard({ production, selectedTagIds: [11] })
 
-    const tagLinks = screen.getAllByRole('link').map((link) => link.textContent)
-    expect(tagLinks).toEqual(expect.arrayContaining(['Geselecteerd', 'Oud']))
-    expect(tagLinks.indexOf('Geselecteerd')).toBeLessThan(tagLinks.indexOf('Oud'))
+    const selectedTag = screen.getByText('Geselecteerd')
+    const unselectedTag = screen.getByText('Oud')
+
+    expect(selectedTag.compareDocumentPosition(unselectedTag)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
   })
 
   it('sorts selected genres before unselected genres', () => {

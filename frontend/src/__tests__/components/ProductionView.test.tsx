@@ -13,11 +13,17 @@ jest.mock('../../components/ProductionGrid', () => ({
   default: ({
     productions,
     selectedGenreIds,
+    selectedTagIds,
   }: {
     productions: Array<{ id: number }>
     selectedGenreIds?: number[]
+    selectedTagIds?: number[]
   }) => (
-    <div data-selected-genres={selectedGenreIds?.join(',') ?? ''} data-testid="production-grid">
+    <div
+      data-selected-genres={selectedGenreIds?.join(',') ?? ''}
+      data-selected-tags={selectedTagIds?.join(',') ?? ''}
+      data-testid="production-grid"
+    >
       {productions.map((production) => production.id).join(',')}
     </div>
   ),
@@ -28,11 +34,17 @@ jest.mock('../../components/ProductionList', () => ({
   default: ({
     productions,
     selectedGenreIds,
+    selectedTagIds,
   }: {
     productions: Array<{ id: number }>
     selectedGenreIds?: number[]
+    selectedTagIds?: number[]
   }) => (
-    <div data-selected-genres={selectedGenreIds?.join(',') ?? ''} data-testid="production-list">
+    <div
+      data-selected-genres={selectedGenreIds?.join(',') ?? ''}
+      data-selected-tags={selectedTagIds?.join(',') ?? ''}
+      data-testid="production-list"
+    >
       {productions.map((production) => production.id).join(',')}
     </div>
   ),
@@ -158,6 +170,15 @@ describe('ProductionView', () => {
 
       expect(screen.getByTestId('production-list')).toHaveTextContent('2,1,3')
       expect(screen.getByTestId('production-list')).toHaveAttribute('data-selected-genres', '2')
+    })
+
+    it('passes selected tag ids through to the active layout', () => {
+      renderView({
+        productions: [baseProduction({ id: 1 })],
+        selectedTagIds: [11],
+      })
+
+      expect(screen.getByTestId('production-list')).toHaveAttribute('data-selected-tags', '11')
     })
   })
 

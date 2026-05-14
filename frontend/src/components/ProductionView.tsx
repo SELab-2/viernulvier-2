@@ -12,6 +12,7 @@ export interface ProductionViewProps {
   productions: Production[]
   layout?: LayoutMode
   selectedGenreIds?: number[]
+  selectedTagIds?: number[]
 }
 
 /**
@@ -36,6 +37,7 @@ const ProductionView = ({
   productions,
   layout = 'list',
   selectedGenreIds,
+  selectedTagIds,
 }: ProductionViewProps) => {
   const theme = useTheme()
   const isSmall = useMediaQuery(theme.breakpoints.down('md'))
@@ -61,10 +63,22 @@ const ProductionView = ({
   }, [productions, selectedGenreIds])
 
   if (activeLayout === 'list') {
-    return <ProductionList productions={sortedProductions} selectedGenreIds={selectedGenreIds} />
+    return (
+      <ProductionList
+        productions={sortedProductions}
+        selectedGenreIds={selectedGenreIds}
+        selectedTagIds={selectedTagIds}
+      />
+    )
   }
   if (activeLayout === 'grid') {
-    return <ProductionGrid productions={sortedProductions} selectedGenreIds={selectedGenreIds} />
+    return (
+      <ProductionGrid
+        productions={sortedProductions}
+        selectedGenreIds={selectedGenreIds}
+        selectedTagIds={selectedTagIds}
+      />
+    )
   }
 }
 

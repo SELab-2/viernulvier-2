@@ -1,7 +1,7 @@
 import CloseIcon from '@mui/icons-material/Close'
 import { Box, Chip, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink, useLocation } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 
 import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
 import { getQueryKeyForChipType } from './genreAndTagChipUtils'
@@ -10,6 +10,28 @@ import { getTranslatedRecord } from '../../utils/translations'
 
 import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
 import type { MouseEvent } from 'react'
+
+const readMultiParamValues = (searchParams: URLSearchParams, paramName: string): string[] => {
+  const repeatedValues = searchParams.getAll(paramName)
+  if (repeatedValues.length > 0) {
+    return repeatedValues.flatMap((value) =>
+      value
+        .split('-')
+        .map((part) => part.trim())
+        .filter(Boolean),
+    )
+  }
+
+  const serialized = searchParams.get(paramName)
+  if (!serialized) {
+    return []
+  }
+
+  return serialized
+    .split('-')
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
 
 /**
  * Generic chip component that supports both genre and series-tag scenarios.
@@ -20,7 +42,7 @@ import type { MouseEvent } from 'react'
  * - `series`: routes to the series detail page `/series/:id`
  * - `static`: visual-only non-clickable chip
  *
- * Chip label resolution priority:
+ * Chip label resolution priorit
  * 1. The translated value from `labels` based on the active locale
  * 2. The raw `name` as a fallback
  *
@@ -38,10 +60,12 @@ const GenreAndTagChip = ({
   context = 'static',
   onToggle,
   ariaLabel,
+  disableLink = false,
 }: GenreAndTagChipProps) => {
   const theme = useTheme()
   const { i18n, t } = useTranslation()
   const location = useLocation()
+  const navigate = useNavigate()
 
   const label = getTranslatedRecord(labels, i18n.language, name)
   const currentLanguage = resolveCurrentLanguage(
@@ -56,7 +80,25 @@ const GenreAndTagChip = ({
     context === 'series'
       ? toLocalizedPath(`/series/${String(id)}`, currentLanguage)
       : context === 'description'
-        ? `${toLocalizedPath('/archive', currentLanguage)}?${getQueryKeyForChipType(chipType)}=${encodeURIComponent(String(id))}`
+        ? (() => {
+            const archivePath = toLocalizedPath('/archive', currentLanguage)
+            const queryKey = getQueryKeyForChipType(chipType)
+
+            if (disableLink && chipType === 'genre') {
+              const searchParams = new URLSearchParams(location.search)
+              const currentGenreIds = readMultiParamValues(searchParams, queryKey)
+              const nextGenreIds = Array.from(new Set([...currentGenreIds, String(id)]))
+
+              if (nextGenreIds.length > 0) {
+                searchParams.set(queryKey, nextGenreIds.join('-'))
+              }
+
+              const nextSearch = searchParams.toString()
+              return nextSearch ? `${archivePath}?${nextSearch}` : archivePath
+            }
+
+            return `${archivePath}?${queryKey}=${encodeURIComponent(String(id))}`
+          })()
         : undefined
   const showSelectedIcon = context === 'search' && selected
 
@@ -68,17 +110,22 @@ const GenreAndTagChip = ({
 
   /** Handles click behavior for search context */
   const handleSearchClick = (event: MouseEvent) => {
+    event.preventDefault()
     event.stopPropagation()
     onToggle?.(id, chipType)
   }
 
   const handleLinkClick = (event: MouseEvent) => {
+    event.preventDefault()
     event.stopPropagation()
+    if (disableLink && linkTo) {
+      navigate(linkTo)
+    }
   }
 
   const chipOnClick = isSearchContext
     ? handleSearchClick
-    : isClickable
+    : disableLink && isClickable
       ? handleLinkClick
       : undefined
 
@@ -130,7 +177,11 @@ const GenreAndTagChip = ({
       aria-pressed={context === 'search' ? selected : undefined}
       aria-label={resolvedAriaLabel}
       tabIndex={isClickable ? 0 : -1}
-      {...(linkTo ? { component: RouterLink, to: linkTo } : { component: 'div' })}
+      {...(linkTo
+        ? disableLink
+          ? { component: 'div', onClick: handleLinkClick }
+          : { component: RouterLink, to: linkTo }
+        : { component: 'div' })}
     />
   )
 }
