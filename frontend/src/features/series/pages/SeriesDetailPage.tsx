@@ -28,6 +28,7 @@ import type { Production } from '../../../types/Productions'
 import type { Tag } from '../../../types/Tags'
 
 const PAGE_SIZE = 12
+const SERIES_PRODUCTIONS_ORDERING = '-first_event_start'
 
 type SeriesStat = {
   value: string
@@ -36,19 +37,58 @@ type SeriesStat = {
 
 type SeriesErrorKey = 'series.invalidId' | 'series.fetchError' | null
 
-/** Extracts the display year from a production based on its event dates. */
-function getProductionYear(production: Production): string {
-  if (production.first_event_start) {
-    return new Date(production.first_event_start).getFullYear().toString()
-  }
-  if (production.last_event_end) {
-    return new Date(production.last_event_end).getFullYear().toString()
-  }
-  return '—'
+type ProductionYearGroup = {
+  year: number
+  productions: Production[]
 }
 
 type SeriesDetailContentProps = {
   id: string
+}
+
+const getProductionDateTimestamp = (production: Production): number => {
+  const date = production.first_event_start ?? production.last_event_end
+  return date ? new Date(date).getTime() : Number.NEGATIVE_INFINITY
+}
+
+const sortProductionsByDateDesc = (productions: Production[]): Production[] =>
+  [...productions].sort((a, b) => {
+    const dateDifference = getProductionDateTimestamp(b) - getProductionDateTimestamp(a)
+
+    if (dateDifference !== 0) {
+      return dateDifference
+    }
+
+    return b.id - a.id
+  })
+
+const getProductionYear = (production: Production): number | null => {
+  const date = production.first_event_start ?? production.last_event_end
+
+  if (!date) {
+    return null
+  }
+
+  const year = new Date(date).getFullYear()
+  return Number.isNaN(year) ? null : year
+}
+
+const groupProductionsByYear = (productions: Production[]): ProductionYearGroup[] => {
+  const groupedProductions = new Map<number, Production[]>()
+
+  sortProductionsByDateDesc(productions).forEach((production) => {
+    const year = getProductionYear(production)
+
+    if (year === null) {
+      return
+    }
+
+    groupedProductions.set(year, [...(groupedProductions.get(year) ?? []), production])
+  })
+
+  return Array.from(groupedProductions.entries())
+    .sort(([yearA], [yearB]) => yearB - yearA)
+    .map(([year, yearProductions]) => ({ year, productions: yearProductions }))
 }
 
 const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
@@ -65,7 +105,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const currentPath = location.pathname
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
-  const [productions, setProductions] = useState<Production[]>([])
+  const [seriesProductions, setSeriesProductions] = useState<Production[]>([])
   const [totalProductions, setTotalProductions] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
@@ -96,7 +136,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     const fetchSeries = async () => {
       setIsLoading(true)
       setError(null)
-      setProductions([])
+      setSeriesProductions([])
       setTotalProductions(0)
       setCurrentPage(1)
 
@@ -106,7 +146,10 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
           getProductions({
             page: 1,
             pageSize: PAGE_SIZE,
-            filters: { tag: numericId },
+            filters: {
+              tag: numericId,
+              ordering: SERIES_PRODUCTIONS_ORDERING,
+            },
           }),
         ])
 
@@ -115,8 +158,9 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
         }
 
         setSeriesTag(tag)
-        setProductions(productionsResponse.results)
-        setTotalProductions(productionsResponse.count ?? productionsResponse.results.length)
+        setSeriesProductions(sortProductionsByDateDesc(productionsResponse.results ?? []))
+        setTotalProductions(productionsResponse.count ?? productionsResponse.results?.length ?? 0)
+        setCurrentPage(1)
       } catch (error: unknown) {
         if (!isActive) {
           return
@@ -144,7 +188,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   }, [numericId, showRateLimitAlert])
 
   const loadMoreProductions = async () => {
-    if (isLoadingMore || productions.length >= totalProductions) {
+    if (isLoadingMore || seriesProductions.length >= totalProductions) {
       return
     }
 
@@ -152,19 +196,19 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
     try {
       const nextPage = currentPage + 1
-      const productionsResponse = await getProductions({
+      const response = await getProductions({
         page: nextPage,
         pageSize: PAGE_SIZE,
-        filters: { tag: numericId },
+        filters: {
+          tag: numericId,
+          ordering: SERIES_PRODUCTIONS_ORDERING,
+        },
       })
 
-      setProductions((currentProductions) => [
-        ...currentProductions,
-        ...productionsResponse.results,
-      ])
-      setTotalProductions(
-        productionsResponse.count ?? productions.length + productionsResponse.results.length,
+      setSeriesProductions((currentProductions) =>
+        sortProductionsByDateDesc([...currentProductions, ...(response.results ?? [])]),
       )
+      setTotalProductions(response.count ?? totalProductions)
       setCurrentPage(nextPage)
     } catch (error: unknown) {
       if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {
@@ -175,41 +219,10 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     }
   }
 
-  /** Sorted most-recent first by start date; productions without a date fall to the end. */
-  const sortedProductions = useMemo(
-    () =>
-      [...productions].sort((a, b) => {
-        const aDate = a.first_event_start ?? a.last_event_end
-        const bDate = b.first_event_start ?? b.last_event_end
-
-        if (aDate && bDate) {
-          return new Date(bDate).getTime() - new Date(aDate).getTime()
-        }
-        if (aDate) {
-          return -1
-        }
-        if (bDate) {
-          return 1
-        }
-        return b.id - a.id
-      }),
-    [productions],
+  const productionsByYear = useMemo(
+    () => groupProductionsByYear(seriesProductions),
+    [seriesProductions],
   )
-
-  /** Productions grouped by year in display order, preserving sort within each group. */
-  const productionsByYear = useMemo(() => {
-    const groups = new Map<string, Production[]>()
-    for (const production of sortedProductions) {
-      const year = getProductionYear(production)
-      const existing = groups.get(year)
-      if (existing) {
-        existing.push(production)
-      } else {
-        groups.set(year, [production])
-      }
-    }
-    return Array.from(groups.entries())
-  }, [sortedProductions])
 
   const startYear = seriesTag?.first_production_start
     ? new Date(seriesTag.first_production_start).getFullYear()
@@ -254,7 +267,8 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const seriesDescription =
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
     t('series.noDescription')
-  const hasMoreProductions = productions.length < totalProductions
+
+  const hasMoreProductions = seriesProductions.length < totalProductions
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
@@ -280,7 +294,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
           </Typography>
         </Stack>
 
-        {sortedProductions.length === 0 ? (
+        {productionsByYear.length === 0 ? (
           <Alert severity="info" variant="outlined">
             {t('series.noProductions')}
           </Alert>
@@ -298,7 +312,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
             />
 
             <Stack spacing={4}>
-              {productionsByYear.map(([year, yearProductions]) => (
+              {productionsByYear.map(({ year, productions }) => (
                 <Stack
                   key={year}
                   direction={{ xs: 'column', md: 'row' }}
@@ -344,7 +358,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                     }}
                   >
                     <CollectionView
-                      items={yearProductions}
+                      items={productions}
                       layout="list"
                       getKey={(production) => production.id}
                       renderListItem={(production) => (
@@ -357,17 +371,21 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                   </Box>
                 </Stack>
               ))}
-
-              {hasMoreProductions && (
-                <Box sx={{ pl: { xs: 3, md: 12 } }}>
-                  <Button variant="outlined" onClick={loadMoreProductions} disabled={isLoadingMore}>
-                    {isLoadingMore
-                      ? t('common.loading', 'Loading…')
-                      : t('series.showMore', 'Show More')}
-                  </Button>
-                </Box>
-              )}
             </Stack>
+
+            {hasMoreProductions && (
+              <Box sx={{ mt: 4, pl: { xs: 3, md: 13 } }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => void loadMoreProductions()}
+                  disabled={isLoadingMore}
+                >
+                  {isLoadingMore
+                    ? t('common.loading', 'Loading…')
+                    : t('series.showMore', 'Show More')}
+                </Button>
+              </Box>
+            )}
           </Box>
         )}
       </Stack>
