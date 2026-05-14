@@ -92,6 +92,12 @@ def _handle_gallery_payload(
     extract_external_id_fn: Callable[[Any], str | None],
     on_progress: Callable[[int, int], None] | None,
 ) -> tuple[list[MediaGalleryItem], dict[int, int], dict[int, int], set[int], int, list[str], int]:
+    """Convert gallery API payloads into pending gallery/media relationship updates.
+
+    The function does not write to the database. It collects through-table rows,
+    tracks which galleries were touched, determines each media item's primary
+    gallery/position, and accumulates recoverable link-resolution errors.
+    """
     total = len(galleries)
     errors = 0
     error_messages: list[str] = []
@@ -134,6 +140,12 @@ def _estimate_gallery_media_changes(
     primary_item_to_gallery: dict[int, int],
     primary_item_to_position: dict[int, int],
 ) -> int:
+    """Estimate how many MediaItem rows would change during gallery-link sync.
+
+    Used for dry-run reporting: counts media items that would be detached from
+    touched galleries plus linked media items whose primary gallery or position
+    would change.
+    """
     media_items_to_clear = 0
     if touched_gallery_ids:
         media_items_to_clear = (
@@ -158,6 +170,12 @@ def _persist_gallery_links(
     primary_item_to_gallery: dict[int, int],
     primary_item_to_position: dict[int, int],
 ) -> int:
+    """Persist gallery/media links and update MediaItem primary gallery fields.
+
+    Existing through rows for touched galleries are replaced. Media items that
+    are no longer linked to a touched gallery have their primary gallery cleared,
+    while linked items receive the first gallery/position seen in the payload.
+    """
     actual_media_items_changed = 0
     with transaction.atomic():
         if touched_gallery_ids:
@@ -199,6 +217,11 @@ def _process_gallery_item(
     touched_gallery_ids: set[int],
     error_messages: list[str],
 ) -> int:
+    """Process one gallery payload and append relationship updates.
+
+    Invalid gallery objects and unresolved media references are recorded as
+    recoverable errors so other galleries can still be processed.
+    """
     if not isinstance(gallery_item, dict):
         append_limited_error(error_messages, f"Gallery item is not a dict: {gallery_item!r}")
         return 1
@@ -355,6 +378,12 @@ def sync_media_item_gallery_links_impl(
 def _apply_local_crop_filters(
     base_query: Any, params: dict[str, str], parse_datetime_fn: Callable[[str], Any | None]
 ) -> tuple[Any, dict[str, str]]:
+    """Apply supported local datetime filters to MediaItem crop candidates.
+
+    Crop sync accepts the same date filter syntax as the API sync command. If a
+    filter references a field that does not exist on ``MediaItem``, it is kept
+    for the API-side lookup but skipped locally.
+    """
     query = base_query
     api_filter_params: dict[str, str] = {}
     for param_key, param_value in params.items():
@@ -392,6 +421,12 @@ def _api_filtered_crop_candidates(
     foto_items: list[dict[str, Any]],
     extract_external_id_fn: Callable[[Any], str | None],
 ) -> list[dict[str, Any]]:
+    """Return crop candidates matching API-side filters.
+
+    This is used when local filtering alone is not reliable enough. The API is
+    queried with the original filter params, then returned media IDs are mapped
+    back to local rows when possible.
+    """
     api_items = fetch_fn(endpoint="/media/items", params=api_filter_params)
     existing_pk_by_external_id = {str(row["external_id"]).strip(): row["pk"] for row in foto_items if row.get("external_id")}
     candidates: list[dict[str, Any]] = []
@@ -414,6 +449,12 @@ def _upsert_missing_media_item(
     item_data: dict[str, Any],
     extract_external_id_fn: Callable[[Any], str | None],
 ) -> int:
+    """Create or update a minimal MediaItem dependency required for crop sync.
+
+    Crop-only runs can encounter image items that were not synced during an
+    earlier media item step. This helper stores enough metadata for the crop
+    relation to exist, without trying to sync all translated media fields.
+    """
     media_type_raw = str(item_data.get("type") or MediaItem.MediaItemType.IMAGE).strip().lower()
     type_field = MediaItem._meta.get_field("type")
     type_choices = cast("list[tuple[str, str]]", getattr(type_field, "choices", []))
@@ -455,6 +496,11 @@ def _save_single_crop(
     derive_crop_filename_fn: Callable[[str, str, str], str],
     error_messages: list[str],
 ) -> tuple[int, int]:
+    """Download and upsert one crop image when it is part of the wanted set.
+
+    Returns a ``(saved, errors)`` tuple so the caller can keep processing the
+    remaining crops even when one crop URL fails.
+    """
     crop_name: str = crop_data.get("name", "")
     if crop_name not in wanted_crops:
         return 0, 0
@@ -505,6 +551,12 @@ def _load_crop_candidates(
     parse_datetime_fn: Callable[[str], Any | None],
     params: dict[str, str] | None,
 ) -> list[dict[str, Any]]:
+    """Load local image MediaItems that should be considered for crop sync.
+
+    When API filter params are present, the local candidate list is narrowed by
+    intersecting it with the API response. This keeps filtered crop-only runs
+    aligned with the upstream API selection.
+    """
     foto_items_query = MediaItem.objects.filter(type=MediaItem.MediaItemType.IMAGE)
     api_filter_params: dict[str, str] = {}
     if params:
@@ -535,6 +587,7 @@ def _fetch_crop_item_data(
     fetch_with_retry_fn: Callable[..., tuple[Any | None, str | None]],
     error_messages: list[str],
 ) -> tuple[dict[str, Any] | None, int]:
+    """Fetch the full API payload for one media item before syncing crops."""
     item_url = external_id if external_id.startswith("http") else urljoin(BASE_DOMAIN, external_id)
     try:
         item_data, _ = fetch_with_retry_fn(session, item_url)
@@ -559,6 +612,12 @@ def _ensure_crop_item_pk(
     extract_external_id_fn: Callable[[Any], str | None],
     error_messages: list[str],
 ) -> tuple[int | None, int]:
+    """Return an existing MediaItem PK or upsert the missing dependency.
+
+    Normal full syncs should already have a local MediaItem. Filtered crop-only
+    syncs may not, so this helper creates the missing dependency unless running
+    in dry-run mode.
+    """
     if item_pk is not None:
         return item_pk, 0
     if dry_run:
@@ -585,6 +644,12 @@ def _process_crop_item(
     dry_run: bool,
     error_messages: list[str],
 ) -> tuple[int, int]:
+    """Fetch, validate, and sync all wanted crops for one MediaItem candidate.
+
+    Each candidate is processed independently so a failed fetch/download/save
+    only increments the error count for that item and does not stop the whole
+    crop sync run.
+    """
     item_pk = row.get("pk")
     external_id = str(row.get("external_id") or "")
     if not external_id:

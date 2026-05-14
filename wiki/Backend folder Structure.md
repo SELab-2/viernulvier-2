@@ -139,24 +139,29 @@ viernulvier_archive/
 │   └── imports/                        # Scraping logic
 │       ├── __init__.py
 │       ├── csv_importer/
-│       │   ├── __init__.py
-│       │   └── legacy_csv.py              # Legacy pre-API CSV importer (productions/events)
+│       │   ├── legacy_csv_constants.py         # CSV paths, headers, and language defaults
+│       │   ├── legacy_csv_handlers.py          # Row handlers for productions and events
+│       │   ├── legacy_csv_io.py                # CSV reading and dataset detection
+│       │   ├── legacy_csv_normalize.py         # Legacy value/date/text normalization
+│       │   ├── legacy_csv_relations.py         # Language, genre, hall relation helpers
+│       │   └── legacy_csv_sync.py              # CSV import orchestration and ImportLog handling
 │       ├── management/
 │       |   ├── __init__.py
 │       |   └── commands/
 │       |       ├── __init__.py
-│       |       ├── import_legacy_csv.py   # Imports bundled legacy CSV exports
-│       |       └── sync_viernulvier.py
+│       |       ├── import_legacy_csv.py        # Imports bundled legacy CSV exports
+│       |       └── sync_viernulvier.py         # Syncs configured Viernulvier API endpoints
 |       |
 │       └── scrapers/
 │           ├── __init__.py
 │           ├── viernulvier.py                 # Compatibility facade
 │           ├── viernulvier_constants.py       # API config, exceptions, dataclasses
-│           ├── viernulvier_http.py            # HTTP, retry, pagination
-│           ├── viernulvier_normalize.py       # Value normalization & coercion
-│           ├── viernulvier_relations.py       # FK resolution, translations, M2M
+│           ├── viernulvier_http.py            # HTTP sessions, retry, pagination, ETag handling
+│           ├── viernulvier_import_log.py      # Shared ImportLog finalization helpers
+│           ├── viernulvier_normalize.py       # Value normalization and field coercion
+│           ├── viernulvier_relations.py       # FK resolution, translations, M2M sync
 │           ├── viernulvier_sync.py            # Core sync loop & upsert logic
-│           └── viernulvier_media.py           # Media gallery & crop sync
+│           └── viernulvier_media.py           # Media gallery-link and crop sync
 │
 ├── api/    # OpenAPI / DRF router
 │   ├── urls.py          # Top-level API routing: versions + schema/docs endpoints
