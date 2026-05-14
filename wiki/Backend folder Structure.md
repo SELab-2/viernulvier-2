@@ -71,6 +71,7 @@ viernulvier_archive/
 │   ├── genres/                      # GENRE + GENRE_TRANSLATION tables
 │   │   ├── __init__.py
 │   │   ├── admin.py
+│   │   ├── filters.py
 │   │   ├── models.py
 │   │   ├── schemas.py
 │   │   ├── serializers.py
