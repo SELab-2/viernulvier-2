@@ -168,7 +168,7 @@ describe('SeriesDetailPage', () => {
     expect(mockedGetProductions).toHaveBeenCalledWith({
       page: 1,
       pageSize: 12,
-      filters: { tag: 1 },
+      filters: { tag: 1, ordering: '-first_event_start' },
     })
   })
 
@@ -272,6 +272,7 @@ describe('SeriesDetailPage', () => {
         makeProduction(42, {
           display_title: 'VIDEODROOM 2024',
           title: { nl: 'VIDEODROOM 2024' },
+          first_event_start: '2024-01-01T20:00:00Z',
         }),
       ],
     })
@@ -294,6 +295,7 @@ describe('SeriesDetailPage', () => {
         makeProduction(43, {
           display_title: 'Keyboard productie',
           title: { nl: 'Keyboard productie' },
+          first_event_start: '2024-01-02T20:00:00Z',
         }),
       ],
     })
@@ -342,7 +344,7 @@ describe('SeriesDetailPage', () => {
     expect(screen.getByText('Performance')).toBeInTheDocument()
   })
 
-  it('sorts productions by event date and groups undated productions last', async () => {
+  it('sorts the loaded productions by event date, groups them by year and ignores undated productions', async () => {
     mockedGetTag.mockResolvedValue(
       baseTag({
         name: null,
@@ -409,18 +411,11 @@ describe('SeriesDetailPage', () => {
     const onlyEndDate = screen.getByRole('heading', {
       name: 'Alleen einddatum',
     })
-    const undatedHigh = screen.getByRole('heading', {
-      name: 'Zonder datum hoog',
-    })
-    const undatedLow = screen.getByRole('heading', {
-      name: 'Zonder datum laag',
-    })
-
     expect(screen.getByText('2023')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Zonder datum hoog' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Zonder datum laag' })).not.toBeInTheDocument()
     expect(edition2025.compareDocumentPosition(edition2024)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(edition2024.compareDocumentPosition(onlyEndDate)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
-    expect(onlyEndDate.compareDocumentPosition(undatedHigh)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
-    expect(undatedHigh.compareDocumentPosition(undatedLow)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
   it('does not render Show More when the loaded amount matches the total amount', async () => {
@@ -466,7 +461,7 @@ describe('SeriesDetailPage', () => {
     expect(mockedGetProductions).toHaveBeenLastCalledWith({
       page: 2,
       pageSize: 12,
-      filters: { tag: 1 },
+      filters: { tag: 1, ordering: '-first_event_start' },
     })
     expect(screen.queryByRole('button', { name: 'Toon meer' })).not.toBeInTheDocument()
   })
