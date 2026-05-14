@@ -1,9 +1,7 @@
 import { useMediaQuery, useTheme } from '@mui/material'
 import { useMemo, type Key, type ReactNode } from 'react'
-
 import GenericGrid from './GenericGrid'
 import GenericList from './GenericList'
-
 import type { SearchViewMode } from './search/types'
 
 type CollectionViewItemProps<T> = {
@@ -12,6 +10,7 @@ type CollectionViewItemProps<T> = {
   renderGridItem: (item: T) => ReactNode
   listSpacing?: number
   transformItems?: (items: T[]) => T[]
+  sortItems?: (items: T[]) => T[]
 }
 
 export type CollectionViewProps<T> = {
@@ -20,15 +19,18 @@ export type CollectionViewProps<T> = {
 } & CollectionViewItemProps<T>
 
 const CollectionView = <T,>(props: CollectionViewProps<T>) => {
-  const { items, layout = 'list', transformItems } = props
+  const { items, layout = 'list', transformItems, sortItems } = props
   const theme = useTheme()
   const isSmall = useMediaQuery(theme.breakpoints.down('md'))
-
   const activeLayout: SearchViewMode = isSmall ? 'grid' : layout
-  const viewItems = useMemo(
-    () => (transformItems ? transformItems(items) : items),
-    [items, transformItems],
-  )
+
+  const viewItems = useMemo(() => {
+    let result = transformItems ? transformItems(items) : items
+    if (sortItems) {
+      result = sortItems(result)
+    }
+    return result
+  }, [items, transformItems, sortItems])
 
   if (activeLayout === 'list') {
     return (
