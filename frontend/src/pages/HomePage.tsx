@@ -404,6 +404,13 @@ const HomePage = () => {
                       '& .MuiOutlinedInput-notchedOutline': {
                         borderColor: homepageStyles.accentBorder,
                       },
+                      [theme.breakpoints.down('sm')]: {
+                        '& input': {
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        },
+                      },
                     }}
                   />
                 </Box>

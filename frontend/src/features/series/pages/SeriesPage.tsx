@@ -217,7 +217,7 @@ const SeriesPage = () => {
     <CollectionPageLayout
       isMobile={isMobile}
       searchPlaceholder={
-        isMobile ? t('searchbar.searchPlaceholderMobile') : t('searchbar.searchPlaceholder')
+        isMobile ? t('series.home.searchPlaceholderMobile') : t('series.home.searchPlaceholder')
       }
       searchValue={searchDraft.displayedValue}
       onSearchChange={searchDraft.setDraft}

@@ -310,6 +310,8 @@
     "home": {
       "loading": "Loading series",
       "resultsRegionLabel": "Series results",
+      "searchPlaceholder": "Search for your favorite series",
+      "searchPlaceholderMobile": "Search series...",
       "filterPanelLabel": "Series filter panel",
       "filterPanelTitle": "Series",
       "filterPanelDescription": "Select one or multiple series labels to filter bundles.",

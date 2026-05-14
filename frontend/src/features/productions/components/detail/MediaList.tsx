@@ -8,6 +8,7 @@ import Carousel from '../../../../shared/components/Carousel'
 import { tokens } from '../../../../theme/tokens'
 import { DarkMode } from '../../../../types/Theme'
 import { getTranslatedRecord } from '../../../../utils/translations'
+
 import type { MediaItem } from '../../../../types/Media'
 
 interface MediaListProps {

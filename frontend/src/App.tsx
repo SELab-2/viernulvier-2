@@ -1,6 +1,5 @@
 import { CssBaseline, ThemeProvider } from '@mui/material'
 import { useMemo, useState } from 'react'
-import { preload } from 'react-dom'
 
 import Router from './router'
 import { createAppTheme } from './theme/muiPalette'
@@ -28,8 +27,6 @@ const App = () => {
       return nextMode
     })
   }
-
-  preload('vnv_archive_logo.png', { as: 'image', fetchPriority: 'high' })
 
   return (
     <ThemeProvider theme={theme}>
