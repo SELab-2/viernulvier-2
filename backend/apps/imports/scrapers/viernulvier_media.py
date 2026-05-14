@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import contextlib
+from io import BytesIO
+
 import logging
+import os
 import re
 import time
 from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urljoin
 
+from PIL import Image, UnidentifiedImageError
 from django.core.exceptions import FieldDoesNotExist
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -442,6 +447,66 @@ def _upsert_missing_media_item(
     logger.info("Upserted missing MediaItem dependency for crops: %s (pk=%s)", external_id, obj.pk)
     return obj.pk
 
+def _maybe_convert_to_webp(image_bytes: bytes, image_url: str) -> tuple[bytes, bool]:
+    """
+    Attempt to convert image bytes to WebP.
+
+    Returns (result_bytes, was_converted).
+    Falls back silently to the original bytes when:
+    - Pillow is unavailable
+    - The image is already WebP
+    - The image is an animated GIF (would lose animation)
+    - The WebP output is larger than the source
+    - Any other conversion error
+    """
+    if Image is None:
+        return image_bytes, False
+
+    # Strip query-string for extension sniffing
+    clean_url = image_url.split("?", maxsplit=1)[0].lower()
+    if clean_url.endswith(".webp"):
+        return image_bytes, False  # already WebP - nothing to do
+
+    try:
+        with BytesIO(image_bytes) as buf_in:
+            img = Image.open(buf_in)
+            img.load()  # fully decode before the buffer closes
+
+        # Animated GIF -> skip (WebP animation is possible but out of scope here)
+        if getattr(img, "is_animated", False) or getattr(img, "n_frames", 1) > 1:
+            logger.debug("Skipping WebP conversion for animated image: %s", image_url)
+            img.close()
+            return image_bytes, False
+
+        # Preserve alpha; normalise palette modes
+        if img.mode in ("RGBA", "LA", "PA"):
+            img = img.convert("RGBA")
+        elif img.mode != "RGB":
+            img = img.convert("RGB")
+
+        with BytesIO() as buf_out:
+            img.save(buf_out, format="WEBP", quality=82, method=6)
+            webp_bytes = buf_out.getvalue()
+
+        img.close()
+
+        # Size guard: only adopt WebP if it actually saves space
+        if len(webp_bytes) >= len(image_bytes):
+            logger.debug(
+                "WebP larger than source (%d >= %d) - keeping original: %s",
+                len(webp_bytes), len(image_bytes), image_url,
+            )
+            return image_bytes, False
+
+        return webp_bytes, True
+
+    except UnidentifiedImageError:
+        logger.warning("Cannot identify image for WebP conversion: %s", image_url)
+    except Exception:
+        logger.exception("Unexpected error converting image to WebP: %s", image_url)
+
+    return image_bytes, False
+
 
 def _save_single_crop(
     *,
@@ -465,36 +530,71 @@ def _save_single_crop(
         return 0, 0
 
     if dry_run:
-        logger.info("[DRY RUN] Would save crop '%s' for MediaItem pk=%d from %s", crop_name, item_pk, image_url)
+        logger.info(
+            "[DRY RUN] Would save crop '%s' for MediaItem pk=%d from %s",
+            crop_name, item_pk, image_url,
+        )
         return 1, 0
 
     image_bytes = download_image_fn(session, image_url)
     if image_bytes is None:
-        append_limited_error(error_messages, f"Download failed for crop '{crop_name}' on {external_id}")
+        append_limited_error(
+            error_messages, f"Download failed for crop '{crop_name}' on {external_id}"
+        )
         return 0, 1
 
-    filename = derive_crop_filename_fn(crop_name, external_id, image_url)
+    # Convert to WebP when possible; fall back silently to original bytes.
+    image_bytes, converted_to_webp = _maybe_convert_to_webp(image_bytes, image_url)
+
+    base, ext = os.path.splitext(derive_crop_filename_fn(crop_name, external_id, image_url))
+    filename = f"{base}.webp" if converted_to_webp else f"{base}{ext}"
+
     try:
-        image_field = cast("models.ImageField", media_models.MediaItemCrop._meta.get_field("image"))
+        image_field = cast(
+            "models.ImageField",
+            media_models.MediaItemCrop._meta.get_field("image"),
+        )
+
+        # Fetch old path before overwriting so we can clean it up afterwards.
+        existing_image_path: str | None = (
+            media_models.MediaItemCrop.objects
+            .filter(media_item_id=item_pk, name=crop_name)
+            .values_list("image", flat=True)
+            .first()
+        )
+
         upload_name = image_field.generate_filename(None, filename)
         saved_path = image_field.storage.save(upload_name, ContentFile(image_bytes))
-        with transaction.atomic():
-            _, created = media_models.MediaItemCrop.objects.update_or_create(
-                media_item_id=item_pk,
-                name=crop_name,
-                defaults={"image": saved_path},
-            )
+
+        try:
+            with transaction.atomic():
+                _, created = media_models.MediaItemCrop.objects.update_or_create(
+                    media_item_id=item_pk,
+                    name=crop_name,
+                    defaults={"image": saved_path},
+                )
+                # Remove the old file now that the DB points to the new one.
+                if not created and existing_image_path and existing_image_path != saved_path:
+                    with contextlib.suppress(Exception):
+                        image_field.storage.delete(existing_image_path)
+        except Exception:
+            # Prevent orphaned files when the DB write fails.
+            with contextlib.suppress(Exception):
+                image_field.storage.delete(saved_path)
+            raise
+
         logger.debug(
             "%s crop '%s' for MediaItem pk=%d -> %s",
             "Created" if created else "Updated",
-            crop_name,
-            item_pk,
-            saved_path,
+            crop_name, item_pk, saved_path,
         )
         return 1, 0
+
     except Exception as exc:
         logger.exception("Error saving crop '%s' for MediaItem pk=%d", crop_name, item_pk)
-        append_limited_error(error_messages, f"Save failed for crop '{crop_name}' on {external_id}: {exc}")
+        append_limited_error(
+            error_messages, f"Save failed for crop '{crop_name}' on {external_id}: {exc}"
+        )
         return 0, 1
 
 
