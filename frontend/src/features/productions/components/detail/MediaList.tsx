@@ -2,11 +2,12 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded'
 import { Box, IconButton, Modal, Typography } from '@mui/material'
 import { useState, type KeyboardEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import Carousel from '../../../../shared/components/Carousel'
 import { tokens } from '../../../../theme/tokens'
 import { DarkMode } from '../../../../types/Theme'
-
+import { getTranslatedRecord } from '../../../../utils/translations'
 import type { MediaItem } from '../../../../types/Media'
 
 interface MediaListProps {
@@ -184,6 +185,24 @@ function toEmbedUrl(raw: string): string {
  * - Powered by Embla Carousel for smooth, touch-enabled sliding
  */
 export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps) {
+  const { i18n } = useTranslation()
+  const language = i18n.language || 'nl'
+
+  /**
+   * Normalize credits text by trimming and removing leading copyright markers
+   * or stray leading 'c' characters to avoid duplicated symbols like "© © Foo".
+   */
+  function normalizeCredits(raw: string): string {
+    if (!raw) {
+      return ''
+    }
+    let s = raw.trim()
+
+    // Remove any leading ©, (c), c., c) or lone c/C followed by optional punctuation/space
+    s = s.replace(/^(?:\u00A9|\(c\)|c[.)]?|C[.)]?)[\s\u00A0.:,-]*/i, '')
+
+    return s
+  }
   const [activeImage, setActiveImage] = useState<{ src: string; alt: string } | null>(null)
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null)
 
@@ -338,61 +357,99 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
             </Box>
           ))}
 
-          {mediaWithImage.map(({ item, imageUrl }) => (
-            <Box
-              key={item.id}
-              sx={{
-                width: { xs: 'calc(100vw - 80px)', sm: 350 },
-                maxWidth: 'calc(100vw - 80px)',
-              }}
-            >
+          {mediaWithImage.map(({ item, imageUrl }) => {
+            // Resolve credits for the active locale using the translation helper
+            const rawCredits = getTranslatedRecord(item.credits, language, item.display_title ?? '')
+            const creditsText = rawCredits ? normalizeCredits(rawCredits) : null
+
+            return (
               <Box
-                role="button"
-                tabIndex={0}
-                onClick={() =>
-                  openPreview(
-                    imageUrl as string,
-                    item.display_title || item.original_filename || 'Media item',
-                  )
-                }
-                onKeyDown={(event) =>
-                  handleKeyOpen(
-                    event,
-                    imageUrl as string,
-                    item.display_title || item.original_filename || 'Media item',
-                  )
-                }
-                sx={(theme) => ({
-                  width: '100%',
-                  aspectRatio: '16 / 9',
-                  overflow: 'hidden',
-                  borderRadius: tokens.borderRadius.md,
-                  backgroundColor:
-                    theme.palette.mode === DarkMode
-                      ? tokens.colors.media.darkBackground
-                      : tokens.colors.media.lightBackground,
-                  border: `1px solid ${theme.palette.divider}`,
-                  cursor: 'pointer',
-                  transition: 'transform 180ms ease, box-shadow 180ms ease',
-                  '&:hover, &:focus-visible': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: tokens.shadows.mediaControl,
-                  },
-                  '&:focus-visible': {
-                    outline: `2px solid ${theme.palette.primary.main}`,
-                    outlineOffset: 2,
-                  },
-                })}
+                key={item.id}
+                sx={{
+                  width: { xs: 'calc(100vw - 80px)', sm: 350 },
+                  maxWidth: 'calc(100vw - 80px)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
               >
+                {/* Media Image Container */}
                 <Box
-                  component="img"
-                  src={imageUrl as string}
-                  alt={item.display_title || item.original_filename || 'Media item'}
-                  sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
+                  role="button"
+                  tabIndex={0}
+                  onClick={() =>
+                    openPreview(
+                      imageUrl as string,
+                      item.display_title || item.original_filename || 'Media item',
+                    )
+                  }
+                  onKeyDown={(event) =>
+                    handleKeyOpen(
+                      event,
+                      imageUrl as string,
+                      item.display_title || item.original_filename || 'Media item',
+                    )
+                  }
+                  sx={(theme) => ({
+                    width: '100%',
+                    aspectRatio: '16 / 9',
+                    overflow: 'hidden',
+                    borderRadius: tokens.borderRadius.md,
+                    backgroundColor:
+                      theme.palette.mode === DarkMode
+                        ? tokens.colors.media.darkBackground
+                        : tokens.colors.media.lightBackground,
+                    border: `1px solid ${theme.palette.divider}`,
+                    cursor: 'pointer',
+                    transition: 'transform 180ms ease, box-shadow 180ms ease',
+                    '&:hover, &:focus-visible': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: tokens.shadows.mediaControl,
+                    },
+                    '&:focus-visible': {
+                      outline: `2px solid ${theme.palette.primary.main}`,
+                      outlineOffset: 2,
+                    },
+                  })}
+                >
+                  <Box
+                    component="img"
+                    src={imageUrl as string}
+                    alt={item.display_title || item.original_filename || 'Media item'}
+                    sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                </Box>
+
+                {/* Credits Section */}
+                {creditsText && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      minHeight: 40,
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontSize: tokens.typography.sizes.xs,
+                        color: 'text.secondary',
+                        fontStyle: 'italic',
+                        lineHeight: 1.4,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      © {creditsText}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
-            </Box>
-          ))}
+            )
+          })}
         </Carousel>
       </Box>
 
