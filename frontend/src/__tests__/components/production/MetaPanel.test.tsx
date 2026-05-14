@@ -7,7 +7,33 @@ import type { Production } from '../../../types/Productions'
 import type { ComponentProps } from 'react'
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),
+  useTranslation: () => ({
+    i18n: { language: 'nl' },
+    t: (key: string, defaultValueOrOptions?: any, maybeOptions?: { count?: number }) => {
+      const options =
+        typeof defaultValueOrOptions === 'string' ? maybeOptions : defaultValueOrOptions
+      const defaultValue: string =
+        typeof defaultValueOrOptions === 'string' ? defaultValueOrOptions : key
+
+      if (options?.count != null) {
+        const isSingular = options.count === 1
+
+        if (key === 'productions.detail.meta.venues') {
+          return isSingular ? 'Locatie' : 'Locaties'
+        }
+
+        if (key === 'productions.detail.meta.genres') {
+          return isSingular ? 'Genre' : 'Genres'
+        }
+
+        if (key === 'productions.detail.meta.series') {
+          return isSingular ? 'Reeks' : 'Reeksen'
+        }
+      }
+
+      return defaultValue
+    },
+  }),
 }))
 
 const mockNavigate = jest.fn()
@@ -92,8 +118,9 @@ describe('MetaPanel component', () => {
 
     expect(screen.getByText('Titel')).toBeInTheDocument()
     expect(screen.getByText('Periode')).toBeInTheDocument()
-    expect(screen.getByText('Locaties')).toBeInTheDocument()
+    expect(screen.getByText('Locatie')).toBeInTheDocument()
     expect(screen.getByText('Genre')).toBeInTheDocument()
+    expect(screen.getByText('Reeks')).toBeInTheDocument()
     expect(screen.getAllByText('Type').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Groep')).toBeInTheDocument()
     expect(screen.getByText('Fysiek')).toBeInTheDocument()
@@ -118,8 +145,9 @@ describe('MetaPanel component', () => {
 
     expect(screen.getByText('Titel')).toBeInTheDocument()
     expect(screen.queryByText('Periode')).not.toBeInTheDocument()
-    expect(screen.queryByText('Locaties')).not.toBeInTheDocument()
+    expect(screen.queryByText('Locatie')).not.toBeInTheDocument()
     expect(screen.queryByText('Genre')).not.toBeInTheDocument()
+    expect(screen.queryByText('Reeks')).not.toBeInTheDocument()
     expect(screen.queryByText('Type')).not.toBeInTheDocument()
     expect(screen.queryByText('Uitvoering')).not.toBeInTheDocument()
     expect(screen.queryByText('Aanwezigheid')).not.toBeInTheDocument()
@@ -203,6 +231,60 @@ describe('MetaPanel component', () => {
     expect(screen.getByText('Theaterzaal, Fallback hall')).toBeInTheDocument()
   })
 
+  it('renders plural meta labels when multiple venues, genres or series are present', () => {
+    renderMetaPanel({
+      ...productionStub,
+      events: [
+        ...(productionStub.events ?? []),
+        {
+          id: 4,
+          production: null as unknown as Production,
+          production_display: 'P2',
+          hall: null,
+          hall_display: 'Second hall',
+          starts_at: '2025-08-02T20:00:00Z',
+          ends_at: '2025-08-02T22:00:00Z',
+          prices: [],
+        },
+      ],
+      genres: [
+        ...productionStub.genres,
+        {
+          id: 2,
+          type: 'genre',
+          name: { nl: 'Muziek' },
+          display_name: 'Muziek',
+          vendor_id: null,
+        },
+      ],
+      tags: [
+        ...productionStub.tags,
+        {
+          id: 2,
+          url: '',
+          source: 'local',
+          type: 'tag',
+          is_enabled: true,
+          image: null,
+          display_name: 'Tag2',
+          display_short_description: null,
+          display_excerpt: null,
+          display_url_title: null,
+          first_production_start: null,
+          last_production_end: null,
+          name: null,
+          excerpt: null,
+          short_description: null,
+          url_title: null,
+        },
+      ],
+    })
+
+    expect(screen.getByText('Locaties')).toBeInTheDocument()
+    expect(screen.getByText('Genres')).toBeInTheDocument()
+    expect(screen.getByText('Reeksen')).toBeInTheDocument()
+  })
+
   it('uses localized fallbacks for genres and tags when display names are missing', () => {
     renderMetaPanel({
       ...productionStub,
@@ -240,7 +322,7 @@ describe('MetaPanel component', () => {
       ],
     })
 
-    expect(screen.getAllByText('Genre uit naam')).toHaveLength(2)
+    expect(screen.getAllByText('Genre uit naam')).toHaveLength(1)
     expect(screen.getByText('Naam-tag')).toBeInTheDocument()
     expect(screen.getByText('url-tag')).toBeInTheDocument()
     expect(screen.getByText('type-tag')).toBeInTheDocument()

@@ -15,6 +15,7 @@ import type {
 } from '../../types/GenreAndTagChip'
 import type { Production } from '../../types/Productions'
 import type { SxProps, Theme } from '@mui/material/styles'
+import type { ReactNode } from 'react'
 
 /**
  * Format an event list into a human-readable date range for production metadata.
@@ -51,15 +52,13 @@ function getDateRange(events: Production['events'] | null | undefined, lang: str
  * This avoids repeated venue descriptions by using a set.
  * Note: event.hall_display is expected to be a fallback provided by the API.
  */
-function getUniqueVenues(events: Production['events'] | null | undefined, lang: string): string {
+function getUniqueVenues(events: Production['events'] | null | undefined, lang: string): string[] {
   const list = events || []
-  const venues = [
+  return [
     ...new Set(
       list.map((event) => getHallDisplayName(event, lang) || event.hall_display).filter(Boolean),
     ),
   ] as string[]
-
-  return venues.join(', ')
 }
 
 interface ResolvedTag {
@@ -77,17 +76,12 @@ interface ResolvedTag {
 }
 
 /**
- * Build a list of translated tag objects from production data.
+ * Build a list of translated genre objects from production data.
  *
- * A production can have:
- * - explicit tags (`production.tags`)
- * - type (`production.uit_database_type`) as one pseudo-tag
- * - genres (`production.genres`)
- *
- * The output order preserves semantic priority: explicit tags first, then type, then genres.
+ * Genres are shown as a chip list in the metadata panel.
  */
-function formatAllTags(production: Production, lang: string): ResolvedTag[] {
-  const genreTags = (production.genres || [])
+function formatGenreTags(production: Production, lang: string): ResolvedTag[] {
+  return (production.genres || [])
     .map((genre) => ({
       tagName: genre.display_name || getLocalizedValue(genre.name || {}, lang),
       labels: genre.name || {},
@@ -96,8 +90,15 @@ function formatAllTags(production: Production, lang: string): ResolvedTag[] {
       context: 'description' as const,
     }))
     .filter((tag) => tag.tagName)
+}
 
-  const explicitTags = (production.tags || [])
+/**
+ * Build a list of translated series/tag objects from production data.
+ *
+ * These are rendered separately from genres to make the metadata easier to scan.
+ */
+function formatSeriesTags(production: Production, lang: string): ResolvedTag[] {
+  return (production.tags || [])
     .map((tag) => ({
       tagName:
         tag.display_name ||
@@ -111,20 +112,34 @@ function formatAllTags(production: Production, lang: string): ResolvedTag[] {
       context: 'series' as const,
     }))
     .filter((tag) => tag.tagName)
+}
 
-  const typeTag = production.uit_database_type?.name
-    ? [
-        {
-          tagName: production.uit_database_type.name,
-          labels: {},
-          chipType: 'genre' as const,
-          value: production.uit_database_type.name,
-          context: 'description' as const,
-        },
-      ]
-    : []
+function renderTagList(tags: ResolvedTag[]) {
+  if (!tags.length) {
+    return ''
+  }
 
-  return [...explicitTags, ...typeTag, ...genreTags]
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: tokens.spacing.numericSm,
+        alignItems: 'center',
+      }}
+    >
+      {tags.map((tag, index) => (
+        <GenreAndTagChip
+          key={`${tag.tagName}-${index}`}
+          name={tag.tagName}
+          labels={tag.labels}
+          chipType={tag.chipType}
+          id={tag.value}
+          context={tag.context}
+        />
+      ))}
+    </Box>
+  )
 }
 
 interface MetaPanelProps {
@@ -134,7 +149,7 @@ interface MetaPanelProps {
   showHeader?: boolean
 }
 
-function MetaRow({ label, value }: { label: string; value: string }) {
+function MetaRow({ label, value }: { label: string; value: ReactNode }) {
   if (!value) {
     return null
   }
@@ -167,6 +182,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
           fontSize: '0.92rem',
           color: 'text.primary',
           fontWeight: tokens.typography.weights.medium,
+          minWidth: 0,
         }}
       >
         {value}
@@ -186,8 +202,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
  * Data derivation by component:
  * - title, tagline, artistName are localized from production fields
  * - date range + venues come from production.events
- * - genres/type/etc. are derived and displayed in MetaRow
- * - tags are normalized via formatAllTags and rendered as Tag chips
+ * - genres and series are rendered as chip rows inside the metadata grid
  */
 export default function MetaPanel({
   production,
@@ -199,14 +214,14 @@ export default function MetaPanel({
 
   const resolvedTitle =
     getLocalizedValue(production.title, language) || production.display_title || ''
+  const resolvedArtistName =
+    getLocalizedValue(production.artist_name, language) || production.display_artist_name || ''
 
   const resolvedDateRange = getDateRange(production.events, language)
   const resolvedVenues = getUniqueVenues(production.events, language)
-
-  const resolvedGenres = (production.genres || [])
-    .map((genre) => getLocalizedValue(genre.name || {}, language) || genre.display_name || '')
-    .filter(Boolean)
-    .join(', ')
+  const resolvedVenueList = resolvedVenues.join(', ')
+  const genreTags = formatGenreTags(production, language)
+  const seriesTags = formatSeriesTags(production, language)
 
   const resolvedTypeName = production.uit_database_type?.name || ''
   const capitalizedResolvedTypeName = resolvedTypeName
@@ -215,8 +230,6 @@ export default function MetaPanel({
 
   const resolvedPerformerType = production.performer_type || ''
   const resolvedAttendanceMode = production.attendance_mode || ''
-  const resolvedTags = formatAllTags(production, language)
-  // TODO: use GenreChip for the genres now that the component is available?
 
   return (
     <Box
@@ -245,6 +258,20 @@ export default function MetaPanel({
             {resolvedTitle}
           </Typography>
 
+          {resolvedArtistName && (
+            <Typography
+              component="h2"
+              sx={{
+                fontSize: tokens.typography.sizes.lg,
+                fontWeight: tokens.typography.weights.medium,
+                color: 'text.secondary',
+                mb: 0.75,
+              }}
+            >
+              {resolvedArtistName}
+            </Typography>
+          )}
+
           <Box sx={(theme) => ({ borderTop: `1px solid ${theme.palette.divider}`, mb: 0.5 })} />
         </>
       )}
@@ -256,11 +283,14 @@ export default function MetaPanel({
             value={resolvedDateRange}
           />
         )}
-        {resolvedVenues && (
-          <MetaRow label={t('productions.detail.meta.venues', 'Locaties')} value={resolvedVenues} />
-        )}
-        {resolvedGenres && (
-          <MetaRow label={t('productions.detail.meta.genre', 'Genre')} value={resolvedGenres} />
+        {resolvedVenueList && (
+          <MetaRow
+            label={t('productions.detail.meta.venues', {
+              count: resolvedVenues.length,
+              defaultValue: 'Locaties',
+            })}
+            value={resolvedVenueList}
+          />
         )}
         {capitalizedResolvedTypeName && (
           <MetaRow
@@ -288,30 +318,25 @@ export default function MetaPanel({
                 : ''
           }
         />
+        {genreTags.length > 0 && (
+          <MetaRow
+            label={t('productions.detail.meta.genres', {
+              count: genreTags.length,
+              defaultValue: 'Genres',
+            })}
+            value={renderTagList(genreTags)}
+          />
+        )}
+        {seriesTags.length > 0 && (
+          <MetaRow
+            label={t('productions.detail.meta.series', {
+              count: seriesTags.length,
+              defaultValue: 'Reeksen',
+            })}
+            value={renderTagList(seriesTags)}
+          />
+        )}
       </Box>
-
-      {resolvedTags.length > 0 && (
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: tokens.spacing.numericSm,
-            mt: 3.5,
-          }}
-        >
-          {resolvedTags.map((tag, index) => (
-            /* TODO: fix this to use the tag correctly instead of just the name */
-            <GenreAndTagChip
-              key={`${tag.tagName}-${index}`}
-              name={tag.tagName}
-              labels={tag.labels}
-              chipType={tag.chipType}
-              id={tag.value}
-              context={tag.context}
-            />
-          ))}
-        </Box>
-      )}
     </Box>
   )
 }
