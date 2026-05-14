@@ -13,7 +13,17 @@ const languageState = { current: 'nl' }
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: languageState.current },
-    t: (_key: string, defaultValue: string) => defaultValue,
+    // Support both signature variants used in code/tests:
+    // t(key, defaultValueString) and t(key, { count, defaultValue })
+    t: (_key: string, options: any) => {
+      if (typeof options === 'string') {
+        return options
+      }
+      if (options && typeof options === 'object' && 'defaultValue' in options) {
+        return options.defaultValue
+      }
+      return _key
+    },
   }),
 }))
 
@@ -241,7 +251,7 @@ describe('ProductionDetailPage', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Productie NL')).toHaveLength(2)
       expect(screen.getByRole('heading', { name: 'Productie NL' })).toBeInTheDocument()
-      expect(screen.queryByText('Tagline NL')).not.toBeInTheDocument()
+      expect(screen.getByText('Kunstenaar NL')).toBeInTheDocument()
       expect(screen.getByText('Teaser NL')).toBeInTheDocument()
       expect(screen.getByText('Omschrijving NL')).toBeInTheDocument()
       expect(screen.getByText('Events')).toBeInTheDocument()
@@ -299,8 +309,8 @@ describe('ProductionDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(screen.queryByText('Tagline NL')).not.toBeInTheDocument()
       expect(screen.getByRole('heading', { name: 'Productie NL' })).toBeInTheDocument()
+      expect(screen.queryByText('Tagline NL')).not.toBeInTheDocument()
       expect(screen.getByText('Events')).toBeInTheDocument()
     })
 
