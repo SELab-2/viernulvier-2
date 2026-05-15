@@ -64,6 +64,7 @@ class TagTranslationInline(admin.StackedInline):
     classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related language to avoid N+1 queries in the translation inline."""
         return super().get_queryset(request).select_related("language")
 
 
@@ -79,6 +80,7 @@ class TagProductionInline(admin.TabularInline):
     classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related production to avoid N+1 queries in the production inline."""
         return super().get_queryset(request).select_related("production")
 
 
