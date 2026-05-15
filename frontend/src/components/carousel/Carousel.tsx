@@ -47,10 +47,9 @@ function Carousel({
 }: CarouselProps) {
   const slides = useMemo(() => Children.toArray(children), [children])
 
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    { align: 'start', loop, skipSnaps: true, slidesToScroll: 'auto' },
-    [WheelGesturesPlugin()],
-  )
+  const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'start', loop, duration: 28 }, [
+    WheelGesturesPlugin(),
+  ])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
@@ -58,7 +57,6 @@ function Carousel({
   const snapCount = emblaApi?.scrollSnapList().length ?? Math.max(1, slides.length)
 
   const dotRefs = useRef<Array<HTMLButtonElement | null>>([])
-  const dotsScrollRef = useRef<HTMLDivElement | null>(null)
 
   const updateControls = useCallback(() => {
     if (!emblaApi) {
@@ -88,35 +86,11 @@ function Carousel({
 
   useLayoutEffect(() => {
     const el = dotRefs.current[selectedIndex]
-    const container = dotsScrollRef.current
-    if (!el || !container) {
+    if (!el) {
       return
     }
-
-    // Calculate the scroll position so that the dot is centered in the container
-    // Doing it this way won't force a scroll towards the caroussel on a refresh
-    const elLeft = el.offsetLeft
-    const elWidth = el.offsetWidth
-    const containerWidth = container.offsetWidth
-    const targetScroll = elLeft - containerWidth / 2 + elWidth / 2
-
-    let startTime: number | null = null
-
-    function animateScroll(currentTime: number) {
-      if (!startTime) {
-        startTime = currentTime
-      }
-
-      const progress = Math.min((currentTime - startTime) / 650, 1)
-      const ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress
-      container!.scrollLeft = container!.scrollLeft + (targetScroll - container!.scrollLeft) * ease
-
-      if (progress < 1) {
-        requestAnimationFrame(animateScroll)
-      }
-    }
-    requestAnimationFrame(animateScroll)
-  }, [selectedIndex, snapCount])
+    el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }, [selectedIndex])
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
@@ -188,7 +162,8 @@ function Carousel({
               boxShadow: theme.shadows[1],
               opacity: 0,
               pointerEvents: 'none',
-              transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
+              transition:
+                'opacity 220ms ease, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease',
               '&:hover': {
                 backgroundColor: theme.palette.background.paper,
                 boxShadow: theme.shadows[3],
@@ -225,7 +200,8 @@ function Carousel({
               boxShadow: theme.shadows[1],
               opacity: 0,
               pointerEvents: 'none',
-              transition: 'opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease',
+              transition:
+                'opacity 220ms ease, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease',
               '&:hover': {
                 backgroundColor: theme.palette.background.paper,
                 boxShadow: theme.shadows[3],
@@ -253,7 +229,6 @@ function Carousel({
         >
           {showDots ? (
             <Box
-              ref={dotsScrollRef}
               sx={{
                 flex: 1,
                 minWidth: 0,
@@ -305,7 +280,7 @@ function Carousel({
                         cursor: 'pointer',
                         opacity: active ? 1 : 0.55,
                         transition:
-                          'transform 160ms ease, opacity 160ms ease, background-color 160ms ease',
+                          'transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease, background-color 200ms ease',
                         '&:hover': {
                           transform: 'scale(1.12)',
                           opacity: 1,
