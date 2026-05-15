@@ -125,6 +125,7 @@ viernulvier_archive/
 │   ├── pricing/                     # PRICE + PRICE_RANK + translations 
 │   │   ├── __init__.py
 │   │   ├── admin.py
+│   │   ├── filters.py
 │   │   ├── models.py
 │   │   ├── schemas.py
 │   │   ├── serializers.py

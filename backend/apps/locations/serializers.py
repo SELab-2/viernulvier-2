@@ -15,7 +15,7 @@ from apps.core.serializers import TranslatableSerializerMixin
 from .models import Hall, Location, Space
 
 
-class LocationSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
+class LocationSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """Represents a Location.
 
     The `name` field contains all available translations as a dictionary,
@@ -76,7 +76,7 @@ class LocationSerializer(TranslatableSerializerMixin, serializers.ModelSerialize
         return self.get_base_translated_value(obj, "name")
 
 
-class HallSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
+class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """Represents a Hall.
 
     Both `name` and `remark` contain all available translations
@@ -164,7 +164,7 @@ class HallNestedSerializer(HallSerializer):
         read_only_fields = [f for f in HallSerializer.Meta.read_only_fields if f != "space"]
 
 
-class SpaceSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
+class SpaceSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
     """Represents a Space.
 
     The `name` field contains all available translations as a dictionary,

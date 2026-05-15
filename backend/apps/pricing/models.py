@@ -183,8 +183,8 @@ class PriceRank(BaseModel):
     """An ordered availability tier for pricing.
 
     Price ranks control when a price level is considered sold out.
-    A ``sold_out_buffer`` allows a rank to be marked sold out slightly
-    earlier or later than its actual capacity.
+    A ``sold_out_buffer`` allows a rank to be marked sold out before its
+    actual capacity reaches zero.
 
     Attributes:
         position:        Rank position; lower values have higher priority.
@@ -200,10 +200,7 @@ class PriceRank(BaseModel):
 
     sold_out_buffer = models.PositiveIntegerField(
         default=0,
-        help_text=(
-            "Extra capacity offset used to consider this rank sold out "
-            "slightly earlier (positive) or later (negative) than actual capacity."
-        ),
+        help_text=("Positive capacity offset used to consider this rank sold out before actual capacity reaches zero."),
         db_comment="Extra buffer for sold-out determination.",
     )
 
