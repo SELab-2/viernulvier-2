@@ -152,6 +152,7 @@ const ProductionGridCard = ({
                   context="series"
                   id={tag.id}
                   selected={selectedTagIds?.includes(tag.id) || false}
+                  disableLink
                 />
               ))}
               {genres.map((genre) => (
