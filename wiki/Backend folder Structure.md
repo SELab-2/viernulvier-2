@@ -180,6 +180,11 @@ viernulvier_archive/
 │   └── v1/
 |       └── urls.py      # v1 router with all current viewset registrations
 │
+├── static/     # Shared static assets
+│   └── admin/
+|       └── js/
+│           └── media_file_upload.js    # Shared admin upload validation for file inputs
+│
 ├── tests/                           # Pytest test suite
 │   ├── core/
 │   │   ├── test_core_admin.py
