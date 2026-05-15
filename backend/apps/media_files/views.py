@@ -18,7 +18,12 @@ _MEDIA = "Media Files"
 @extend_schema(tags=[_MEDIA])
 @media_file_schema
 class MediaFileViewSet(ApiModelViewSet):
-    """CRUD endpoints for uploaded media files."""
+    """CRUD endpoints for uploaded media files.
+
+    Read actions return derived metadata and translated descriptions.
+    Write actions use MediaFileUploadSerializer so multipart uploads and
+    metadata-only PATCH requests are handled separately from read output.
+    """
 
     queryset = MediaFile.objects.prefetch_related(
         Prefetch(
