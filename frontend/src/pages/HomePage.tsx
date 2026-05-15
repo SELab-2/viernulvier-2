@@ -163,7 +163,7 @@ const HomePage = () => {
           alt=""
           aria-hidden
           onError={(e) => {
-            ; (e.currentTarget as HTMLImageElement).style.display = 'none'
+            ;(e.currentTarget as HTMLImageElement).style.display = 'none'
           }}
           sx={{
             position: 'absolute',
