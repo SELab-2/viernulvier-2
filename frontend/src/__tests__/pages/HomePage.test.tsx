@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import React from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 
@@ -43,6 +42,7 @@ const waitForStats = () => screen.findByText('1.200+')
 
 describe('HomePage', () => {
   beforeEach(async () => {
+    mockedGetLandingStats.mockReset()
     mockedGetLandingStats.mockResolvedValue({
       productions: 1200,
       series: 80,
@@ -163,7 +163,7 @@ describe('HomePage', () => {
   describe('stats bar', () => {
     it('shows a dash placeholder while the API call is in flight', () => {
       // Never resolve so we observe the loading state
-      mockedGetLandingStats.mockReturnValue(new Promise(() => {}))
+      mockedGetLandingStats.mockReturnValue(new Promise(() => { }))
       renderPage()
       // archiveStats starts as {} so every value is undefined -> '-'
       expect(screen.getAllByText('-')).toHaveLength(4)
