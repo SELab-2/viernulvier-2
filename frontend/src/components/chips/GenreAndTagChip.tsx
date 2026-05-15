@@ -85,13 +85,13 @@ const GenreAndTagChip = ({
             const archivePath = toLocalizedPath('/archive', currentLanguage)
             const queryKey = getQueryKeyForChipType(chipType)
 
-            if (disableLink && chipType === 'genre') {
+            if (disableLink) {
               const searchParams = new URLSearchParams(location.search)
-              const currentGenreIds = readMultiParamValues(searchParams, queryKey)
-              const nextGenreIds = Array.from(new Set([...currentGenreIds, String(id)]))
+              const currentIds = readMultiParamValues(searchParams, queryKey)
+              const nextIds = Array.from(new Set([...currentIds, String(id)]))
 
-              if (nextGenreIds.length > 0) {
-                searchParams.set(queryKey, nextGenreIds.join('-'))
+              if (nextIds.length > 0) {
+                searchParams.set(queryKey, nextIds.join('-'))
               }
 
               const nextSearch = searchParams.toString()

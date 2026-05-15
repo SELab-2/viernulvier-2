@@ -104,7 +104,6 @@ const renderGridCardWithRoutes = (ui: ReactElement) =>
             <Route path="/nl/productions" element={ui} />
             <Route path="/nl/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
             <Route path="/nl/archief" element={<div>ARCHIVE PAGE</div>} />
-            <Route path="/nl/reeksen/:id" element={<div>SERIES PAGE</div>} />
           </Routes>
         </ThemeProvider>
       </I18nextProvider>
@@ -236,6 +235,33 @@ describe('ProductionGridCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Genre' }))
 
     expect(screen.getByText('/nl/archief?g=1-22')).toBeInTheDocument()
+  })
+
+  it('appends series-tag chips to the active tag filter in the archive url', () => {
+    const production = baseProduction({
+      id: 7,
+      tags: [minimalTag(11, 'Reeks')],
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/nl/productions?t=2']}>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider theme={accentTheme}>
+            <Routes>
+              <Route
+                path="/nl/productions"
+                element={<ProductionGridCard production={production} />}
+              />
+              <Route path="/nl/archief" element={<LocationEcho />} />
+            </Routes>
+          </ThemeProvider>
+        </I18nextProvider>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reeks' }))
+
+    expect(screen.getByText('/nl/archief?t=2-11')).toBeInTheDocument()
   })
 
   it('omits the artist line when there is no artist translation or display fallback', () => {

@@ -95,22 +95,6 @@ const renderListCard = (props: {
   )
 }
 
-const renderListCardWithRoutes = (ui: ReactElement) =>
-  render(
-    <MemoryRouter initialEntries={['/nl/productions']}>
-      <I18nextProvider i18n={i18n}>
-        <ThemeProvider theme={accentTheme}>
-          <Routes>
-            <Route path="/nl/productions" element={ui} />
-            <Route path="/nl/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
-            <Route path="/nl/archief" element={<div>ARCHIVE PAGE</div>} />
-            <Route path="/nl/reeksen/:id" element={<div>SERIES PAGE</div>} />
-          </Routes>
-        </ThemeProvider>
-      </I18nextProvider>
-    </MemoryRouter>,
-  )
-
 const LocationEcho = () => {
   const location = useLocation()
 
@@ -232,17 +216,31 @@ describe('ProductionListCard', () => {
     expect(screen.getByRole('img', { name: 'Voorstelling' })).toHaveStyle({ height: '100%' })
   })
 
-  it('navigates series-tag chip clicks to the series page instead of the production detail page', () => {
+  it('navigates series-tag chip clicks to the archive instead of the production detail page', () => {
     const production = baseProduction({
       id: 7,
       tags: [minimalTag(11, 'Reeks')],
     })
 
-    renderListCardWithRoutes(<ProductionListCard production={production} />)
+    render(
+      <MemoryRouter initialEntries={['/nl/productions?t=3']}>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider theme={accentTheme}>
+            <Routes>
+              <Route
+                path="/nl/productions"
+                element={<ProductionListCard production={production} />}
+              />
+              <Route path="/nl/archief" element={<LocationEcho />} />
+            </Routes>
+          </ThemeProvider>
+        </I18nextProvider>
+      </MemoryRouter>,
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Reeks' }))
 
-    expect(screen.getByText('SERIES PAGE')).toBeInTheDocument()
+    expect(screen.getByText('/nl/archief?t=3-11')).toBeInTheDocument()
     expect(screen.queryByText('PRODUCTION DETAIL')).not.toBeInTheDocument()
   })
 

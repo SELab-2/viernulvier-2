@@ -149,7 +149,7 @@ const ProductionGridCard = ({
                   )}
                   labels={tag.name || tag.url_title || {}}
                   chipType="seriesTag"
-                  context="series"
+                  context="description"
                   id={tag.id}
                   selected={selectedTagIds?.includes(tag.id) || false}
                   disableLink
