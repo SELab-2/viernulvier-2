@@ -235,9 +235,21 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
                   sx={{ p: { xs: '2px 4px', sm: '4px 6px' } }}
                 >
                   {mode === DarkMode ? (
-                    <DarkModeOutlinedIcon sx={{ fontSize: { xs: '1.15rem', sm: '1.5rem' }, color: theme.palette.primary.light, transition: tokens.transitions.fast, }} />
+                    <DarkModeOutlinedIcon
+                      sx={{
+                        fontSize: { xs: '1.15rem', sm: '1.5rem' },
+                        color: theme.palette.primary.light,
+                        transition: tokens.transitions.fast,
+                      }}
+                    />
                   ) : (
-                    <LightModeOutlinedIcon sx={{ fontSize: { xs: '1.15rem', sm: '1.5rem' }, color: theme.palette.primary.contrastText, transition: tokens.transitions.fast, }} />
+                    <LightModeOutlinedIcon
+                      sx={{
+                        fontSize: { xs: '1.15rem', sm: '1.5rem' },
+                        color: theme.palette.primary.contrastText,
+                        transition: tokens.transitions.fast,
+                      }}
+                    />
                   )}
                 </IconButton>
               </Box>
