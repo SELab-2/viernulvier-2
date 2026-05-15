@@ -185,6 +185,15 @@ viernulvier_archive/
 |       └── js/
 │           └── media_file_upload.js    # Shared admin upload validation for file inputs
 │
+├── templates/  # Shared Django/admin templates
+│   ├── admin/
+│   |   ├── __init__.py
+│   |   ├── index.html                      # Custom admin dashboard
+│   |   ├── login.html                      # Custom admin login page
+│   |   ├── persistent_change_list.html     # Persistent cross-page admin selections
+│   |   └── two_step_action.html            # Confirmation form for two-step admin actions
+│   └── multiselect_search.html             # Searchable multi-select admin filter template
+│
 ├── tests/                           # Pytest test suite
 │   ├── core/
 │   │   ├── test_core_admin.py

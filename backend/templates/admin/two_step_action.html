@@ -75,6 +75,11 @@
   </style>
 
   <script>
+      /*
+       * Match the modal card to Django admin's active color scheme.
+       * Django versions/themes do not expose a single stable dark-mode hook, so
+       * this checks known dark classes first and falls back to background brightness.
+      */
     document.addEventListener('DOMContentLoaded', function () {
       var card = document.querySelector('.two-step-action-card');
       if (!card) {
