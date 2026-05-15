@@ -107,6 +107,7 @@ viernulvier_archive/
 │   ├── media_library/               # MEDIA_GALLERY + MEDIA_ITEM + CROP tables (+ translations)
 │   │   ├── __init__.py
 │   │   ├── admin.py
+│   │   ├── filters.py
 │   │   ├── models.py
 │   │   ├── schemas.py
 │   │   ├── serializers.py
