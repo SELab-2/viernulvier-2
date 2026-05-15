@@ -1,7 +1,9 @@
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded'
 import { Box, IconButton, Modal, Typography } from '@mui/material'
-import { useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { tokens } from '../../theme/tokens'
@@ -15,6 +17,17 @@ interface MediaListProps {
   mediaItems: MediaItem[]
   videoUrls?: string[]
 }
+
+type PreviewItem =
+  | {
+      kind: 'video'
+      url: string
+    }
+  | {
+      kind: 'image'
+      src: string
+      alt: string
+    }
 
 /**
  * Pick the most suitable image URL from crop metadata.
@@ -204,27 +217,96 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
 
     return s
   }
-  const [activeImage, setActiveImage] = useState<{ src: string; alt: string } | null>(null)
-  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null)
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   const mediaWithImage = mediaItems
     .map((item) => ({ item, imageUrl: getBestImageUrl(item) }))
     .filter((entry) => entry.imageUrl)
 
-  if (!mediaWithImage.length && !videoUrls.length) {
+  const allItems: PreviewItem[] = [
+    ...videoUrls.map((url) => ({ kind: 'video' as const, url })),
+    ...mediaWithImage.map(({ item, imageUrl }) => ({
+      kind: 'image' as const,
+      src: imageUrl as string,
+      alt: item.display_title || item.original_filename || 'Media item',
+    })),
+  ]
+  const itemCount = allItems.length
+
+  const activeItem = activeIndex !== null ? allItems[activeIndex] : null
+
+  const closePreview = useCallback(() => {
+    setActiveIndex(null)
+  }, [])
+
+  const openPreviewAtIndex = useCallback((index: number) => {
+    setActiveIndex(index)
+  }, [])
+
+  const navigatePrev = useCallback(() => {
+    if (activeIndex === null || itemCount <= 1) {
+      return
+    }
+
+    setActiveIndex((currentIndex) => {
+      if (currentIndex === null) {
+        return currentIndex
+      }
+
+      return (currentIndex - 1 + itemCount) % itemCount
+    })
+  }, [activeIndex, itemCount])
+
+  const navigateNext = useCallback(() => {
+    if (activeIndex === null || itemCount <= 1) {
+      return
+    }
+
+    setActiveIndex((currentIndex) => {
+      if (currentIndex === null) {
+        return currentIndex
+      }
+
+      return (currentIndex + 1) % itemCount
+    })
+  }, [activeIndex, itemCount])
+
+  useEffect(() => {
+    if (activeIndex === null) {
+      return undefined
+    }
+
+    const handleWindowKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        navigatePrev()
+      }
+
+      if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        navigateNext()
+      }
+
+      if (event.key === 'Escape') {
+        closePreview()
+      }
+    }
+
+    window.addEventListener('keydown', handleWindowKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleWindowKeyDown)
+    }
+  }, [activeIndex, closePreview, navigateNext, navigatePrev])
+
+  if (!itemCount) {
     return null
   }
 
-  const openPreview = (src: string, alt: string) => setActiveImage({ src, alt })
-  const closePreview = () => {
-    setActiveImage(null)
-    setActiveVideoUrl(null)
-  }
-
-  const handleKeyOpen = (event: KeyboardEvent<HTMLDivElement>, src: string, alt: string) => {
+  const handleKeyOpen = (event: ReactKeyboardEvent<HTMLDivElement>, index: number) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      openPreview(src, alt)
+      openPreviewAtIndex(index)
     }
   }
 
@@ -279,11 +361,11 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
                 role="button"
                 aria-label={`Video ${idx + 1}`}
                 tabIndex={0}
-                onClick={() => setActiveVideoUrl(url)}
+                onClick={() => openPreviewAtIndex(idx)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    setActiveVideoUrl(url)
+                    openPreviewAtIndex(idx)
                   }
                 }}
                 sx={(theme) => ({
@@ -309,25 +391,29 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
                   },
                 })}
               >
-                {getVideoThumbnail(url) ? (
-                  <Box
-                    component="img"
-                    src={getVideoThumbnail(url) as string}
-                    alt={`Video ${idx + 1}`}
-                    sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  />
-                ) : (
-                  <Box
-                    sx={(theme) => ({
-                      width: '100%',
-                      height: '100%',
-                      backgroundColor:
-                        theme.palette.mode === DarkMode
-                          ? tokens.colors.media.darkBackground
-                          : tokens.colors.media.lightBackground,
-                    })}
-                  />
-                )}
+                {(() => {
+                  const thumbnail = getVideoThumbnail(url)
+
+                  return thumbnail ? (
+                    <Box
+                      component="img"
+                      src={thumbnail}
+                      alt={`Video ${idx + 1}`}
+                      sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                  ) : (
+                    <Box
+                      sx={(theme) => ({
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor:
+                          theme.palette.mode === DarkMode
+                            ? tokens.colors.media.darkBackground
+                            : tokens.colors.media.lightBackground,
+                      })}
+                    />
+                  )
+                })()}
                 <Box
                   sx={{
                     position: 'absolute',
@@ -358,10 +444,11 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
             </Box>
           ))}
 
-          {mediaWithImage.map(({ item, imageUrl }) => {
+          {mediaWithImage.map(({ item, imageUrl }, idx) => {
             // Resolve credits for the active locale using the translation helper
             const rawCredits = getTranslatedRecord(item.credits, language, item.display_title ?? '')
             const creditsText = rawCredits ? normalizeCredits(rawCredits) : null
+            const previewIndex = videoUrls.length + idx
 
             return (
               <Box
@@ -377,19 +464,8 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
                 <Box
                   role="button"
                   tabIndex={0}
-                  onClick={() =>
-                    openPreview(
-                      imageUrl as string,
-                      item.display_title || item.original_filename || 'Media item',
-                    )
-                  }
-                  onKeyDown={(event) =>
-                    handleKeyOpen(
-                      event,
-                      imageUrl as string,
-                      item.display_title || item.original_filename || 'Media item',
-                    )
-                  }
+                  onClick={() => openPreviewAtIndex(previewIndex)}
+                  onKeyDown={(event) => handleKeyOpen(event, previewIndex)}
                   sx={(theme) => ({
                     width: '100%',
                     aspectRatio: '16 / 9',
@@ -455,7 +531,7 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
       </Box>
 
       <Modal
-        open={Boolean(activeImage) || Boolean(activeVideoUrl)}
+        open={Boolean(activeItem)}
         onClose={closePreview}
         slotProps={{
           backdrop: {
@@ -486,9 +562,51 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
               borderRadius: 1.5,
               overflow: 'hidden',
               boxShadow: (theme) => theme.shadows[4],
-              ...(activeVideoUrl && { aspectRatio: '16 / 9' }),
+              ...(activeItem?.kind === 'video' && { aspectRatio: '16 / 9' }),
             }}
           >
+            {allItems.length > 1 && (
+              <>
+                <IconButton
+                  aria-label="Previous media"
+                  onClick={navigatePrev}
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: 10,
+                    zIndex: 2,
+                    transform: 'translateY(-50%)',
+                    color: 'text.primary',
+                    backgroundColor: 'action.hover',
+                    '&:hover': {
+                      backgroundColor: 'action.selected',
+                    },
+                  }}
+                >
+                  <ChevronLeftRoundedIcon />
+                </IconButton>
+
+                <IconButton
+                  aria-label="Next media"
+                  onClick={navigateNext}
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: 10,
+                    zIndex: 2,
+                    transform: 'translateY(-50%)',
+                    color: 'text.primary',
+                    backgroundColor: 'action.hover',
+                    '&:hover': {
+                      backgroundColor: 'action.selected',
+                    },
+                  }}
+                >
+                  <ChevronRightRoundedIcon />
+                </IconButton>
+              </>
+            )}
+
             <IconButton
               aria-label="Close preview"
               onClick={closePreview}
@@ -507,11 +625,11 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
               <CloseRoundedIcon />
             </IconButton>
 
-            {activeImage && (
+            {activeItem?.kind === 'image' && (
               <Box
                 component="img"
-                src={activeImage.src}
-                alt={activeImage.alt}
+                src={activeItem.src}
+                alt={activeItem.alt}
                 sx={{
                   width: '100%',
                   maxHeight: '90vh',
@@ -522,13 +640,12 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
               />
             )}
 
-            {activeVideoUrl && (
+            {activeItem?.kind === 'video' && (
               <Box
                 component="iframe"
-                src={toEmbedUrl(activeVideoUrl)}
+                src={toEmbedUrl(activeItem.url)}
                 title="Video player"
                 allow="autoplay; fullscreen; picture-in-picture"
-                allowFullScreen
                 sx={{
                   display: 'block',
                   width: '100%',
