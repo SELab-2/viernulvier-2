@@ -150,8 +150,8 @@ const HomePage = () => {
       <Box
         sx={{
           position: 'relative',
-          height: { xs: '72vh', md: '84vh' },
-          minHeight: { xs: 440, md: 580 },
+          height: { xs: '72vh', md: '78vh' },
+          minHeight: { xs: 560, md: 580 },
           overflow: 'hidden',
           background: s.heroFallbackGradient,
         }}
@@ -189,6 +189,7 @@ const HomePage = () => {
             flexDirection: 'column',
             justifyContent: 'flex-end',
             pb: { xs: 6, md: 8 },
+            pt: { xs: '72px', md: '88px' },
           }}
         >
           <Stack spacing={3.5} sx={{ maxWidth: 660, animation: `${fadeUp} 600ms ease both` }}>
