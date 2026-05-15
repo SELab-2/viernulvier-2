@@ -2,13 +2,13 @@ import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 import { useNotification } from '../../../contexts/notificationContextShared'
 import { ApiError } from '../../../services/ApiTypes'
 import { getMediaFiles } from '../../../services/media_files/MediaFiles'
 import CollectionView from '../../../shared/components/CollectionView'
 import useCollectionQuery from '../../../shared/hooks/useCollectionQuery'
 import { useSearchBarUrlState } from '../../../shared/hooks/useSearchBarUrlState'
+import CollectionResultsSkeleton from '../../../shared/components/skeletons/CollectionResultsSkeleton'
 import useSearchDraft from '../../../shared/hooks/useSearchDraft'
 import CollectionPageLayout from '../../../shared/layouts/CollectionPageLayout'
 import MediaFileGridCard from '../components/MediaFileGridCard'
@@ -182,7 +182,7 @@ const MediaFilesPage = () => {
       isLoading={isLoading}
       loadingLabel={t('media.loading')}
       loadingContent={
-        <MediaFilesPageSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+        <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
       }
       errorMessage={renderedErrorMessage}
       retryLabel={t('media.error.retry')}
