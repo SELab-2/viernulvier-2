@@ -154,10 +154,10 @@ const MediaFilePreview = ({ mediaFile, previewLabel, pdfPageWidth }: MediaFilePr
             >
               <Document
                 file={mediaFile.file}
-                loading={<Typography variant="body2">{previewLabel}</Typography>}
-                error={<Typography variant="body2">{previewLabel}</Typography>}
-                noData={<Typography variant="body2">{previewLabel}</Typography>}
                 onLoadSuccess={(doc) => setNumPages(doc.numPages)}
+                loading={null}
+                error={null}
+                noData={null}
               >
                 {multiPage && numPages !== null ? (
                   Array.from({ length: numPages }, (_, i) => (
@@ -167,6 +167,7 @@ const MediaFilePreview = ({ mediaFile, previewLabel, pdfPageWidth }: MediaFilePr
                         renderTextLayer={false}
                         renderAnnotationLayer={false}
                         width={renderWidth}
+                        loading={null}
                       />
                     </Box>
                   ))
@@ -176,6 +177,7 @@ const MediaFilePreview = ({ mediaFile, previewLabel, pdfPageWidth }: MediaFilePr
                     renderTextLayer={false}
                     renderAnnotationLayer={false}
                     width={renderWidth}
+                    loading={null}
                   />
                 )}
               </Document>
