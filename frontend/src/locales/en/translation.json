@@ -18,7 +18,6 @@
       "description": "Explore decades of performances, concerts, and theatre at Kunstencentrum VIERNULVIER, carefully catalogued and enriched with context.",
       "primaryCta": "Open archive",
       "seriesCta": "Browse series",
-      "secondaryCta": "Read blogs",
       "websiteCta": "Visit official website"
     },
     "stats": {
@@ -27,72 +26,29 @@
       "years": "Years documented",
       "blogs": "Blogs"
     },
-    "statsSection": {
-      "eyebrow": "Archive at a glance",
-      "title": "A quick overview of the collection.",
-      "description": "Live counts for productions, series, documented years, and blogs."
-    },
-    "ticker": {
-      "brand": "VIERNULVIER",
-      "city": "GHENT",
-      "archive": "ARCHIVE",
-      "years": "{{value}} YEARS",
-      "productions": "{{value}} PRODUCTIONS",
-      "center": "ARTS CENTRE",
-      "collection": "COLLECTION",
-      "performances": "PERFORMANCES",
-      "theatre": "THEATRE",
-      "concert": "CONCERT",
-      "dance": "DANCE"
-    },
-    "side": {
-      "eyebrow": "What you can explore",
-      "title": "Four clear ways into the collection.",
-      "archive": {
-        "title": "Performances, concerts & theatre",
-        "description": "Search by artist, venue, or period. Every documented production in VIERNULVIER's history, searchable in one place."
-      },
-      "blogs": {
-        "title": "Blogs and context",
-        "description": "Editorial pieces that deepen the archive - interviews, essays, and notes by researchers and curators."
-      },
-      "series": {
-        "title": "Series and editions",
-        "description": "Productions grouped by recurring series. Follow how each edition evolves over time."
-      },
-      "prints": {
-        "title": "Posters and printed matter",
-        "description": "Scanned posters, programme booklets, and brochures from the physical collection."
-      }
-    },
     "cardsSection": {
-      "eyebrow": "Explore the collection",
-      "title": "Where do you want to start?",
-      "description": "Explore the VIERNULVIER archive through one of the four perspectives. Each gateway reveals a unique aspect of our rich collection."
+      "title": "Explore the collection",
+      "description": "Browse productions, series, blogs, and printed materials from VIERNULVIER."
     },
     "cards": {
       "archive": {
         "eyebrow": "01 - Archive",
         "title": "Explore the archive",
-        "description": "Search productions by artist, venue, or period. The full production history of VIERNULVIER.",
         "cta": "Open archive"
       },
       "series": {
         "eyebrow": "02 - Series",
         "title": "Browse series",
-        "description": "Productions grouped by recurring series. Follow linked editions in chronological order.",
         "cta": "Open series"
       },
       "blogs": {
         "eyebrow": "03 - Blogs",
         "title": "Read the blogs",
-        "description": "Interviews, essays, and research notes that add depth and context to the archive.",
         "cta": "Read blogs"
       },
       "prints": {
         "eyebrow": "04 - Prints",
         "title": "Explore printed materials",
-        "description": "Posters, programme booklets, and brochures from the physical collection.",
         "cta": "Open prints"
       }
     }
