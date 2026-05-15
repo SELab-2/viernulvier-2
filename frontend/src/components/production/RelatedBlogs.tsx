@@ -45,6 +45,11 @@ function RelatedBlogs({ blogs }: RelatedBlogsProps) {
             sx={{
               display: 'flex',
               alignItems: 'stretch',
+              // ensure slides keep a consistent width matching the grid card
+              flex: '0 0 auto',
+              minWidth: tokens.card.gridCardWidthPx,
+              width: tokens.card.gridCardWidthPx,
+              boxSizing: 'border-box',
               '& > a': {
                 display: 'flex',
                 flexDirection: 'column',
