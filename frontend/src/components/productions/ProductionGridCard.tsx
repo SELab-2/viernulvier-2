@@ -165,7 +165,7 @@ const ProductionGridCard = ({
                   )}
                   labels={genre.name || {}}
                   chipType="genre"
-                  context={selectedGenreIds !== undefined ? 'static' : 'description'}
+                  context="description"
                   id={genre.id}
                   selected={selectedGenreIds?.includes(genre.id) || false}
                   disableLink
