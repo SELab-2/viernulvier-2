@@ -120,7 +120,7 @@ const MediaFilePreview = ({ mediaFile, previewLabel, pdfPageWidth }: MediaFilePr
           height: '100%',
           objectFit: 'cover',
           display: 'block',
-          backgroundColor: 'grey.100',
+          backgroundColor: (theme) => theme.palette.background.paper,
         }}
       />
     )
@@ -137,7 +137,7 @@ const MediaFilePreview = ({ mediaFile, previewLabel, pdfPageWidth }: MediaFilePr
           width: '100%',
           height: '100%',
           overflow: 'hidden',
-          backgroundColor: 'grey.100',
+          backgroundColor: (theme) => theme.palette.background.paper,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
