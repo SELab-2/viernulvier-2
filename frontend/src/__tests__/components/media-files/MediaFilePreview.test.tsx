@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 
-// ─── Mocks ───────────────────────────────────────────────────────────────────
+// Mocks
 
 const useMediaQueryMock = jest.fn()
 
@@ -105,22 +105,22 @@ jest.mock('react-i18next', () => ({
   }),
 }))
 
-// getTranslatedRecord → return null so the description box is not rendered
+// getTranslatedRecord -> return null so the description box is not rendered
 jest.mock('../../../utils/translations', () => ({
   getTranslatedRecord: () => null,
 }))
 
 import MediaFileView from '../../../components/media-files/MediaFileView'
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// Helpers
 
 const file1 = { id: 1, filename: 'photo.jpg', file_type: 'image' }
 const file2 = { id: 2, filename: 'report.pdf', file_type: 'pdf' }
 const file3 = { id: 3, filename: 'notes.docx', file_type: 'document' }
 
-// ─── Layout selection ─────────────────────────────────────────────────────────
+// Layout selection
 
-describe('MediaFileView – layout selection', () => {
+describe('MediaFileView - layout selection', () => {
   it('renders list layout when layout="list" on desktop', () => {
     useMediaQueryMock.mockReturnValue(false)
 
@@ -157,9 +157,9 @@ describe('MediaFileView – layout selection', () => {
   })
 })
 
-// ─── Empty state ──────────────────────────────────────────────────────────────
+// Empty state
 
-describe('MediaFileView – empty state', () => {
+describe('MediaFileView - empty state', () => {
   it('renders the empty message when mediaFiles is empty', () => {
     useMediaQueryMock.mockReturnValue(false)
 
@@ -171,9 +171,9 @@ describe('MediaFileView – empty state', () => {
   })
 })
 
-// ─── Modal – open / close ────────────────────────────────────────────────────
+// Modal - open / close
 
-describe('MediaFileView – modal', () => {
+describe('MediaFileView - modal', () => {
   it('opens the modal with the selected file when a file is clicked', async () => {
     useMediaQueryMock.mockReturnValue(false)
 
@@ -214,7 +214,7 @@ describe('MediaFileView – modal', () => {
     expect(screen.queryByTestId('modal')).not.toBeInTheDocument()
   })
 
-  // ── Navigation ───────────────────────────────────────────────────────────────
+  // Navigation
 
   it('navigates to the next file when the Next button is clicked', async () => {
     useMediaQueryMock.mockReturnValue(false)
@@ -275,7 +275,7 @@ describe('MediaFileView – modal', () => {
 
     await userEvent.click(screen.getByRole('button', { name: file2.filename }))
 
-    // file2 is index 1 → displayed as "2 / 3"
+    // file2 is index 1 -> displayed as "2 / 3"
     expect(screen.getByTestId('modal')).toHaveTextContent('2 / 3')
   })
 
@@ -292,7 +292,7 @@ describe('MediaFileView – modal', () => {
     expect(screen.queryByText(/1 \/ 1/)).not.toBeInTheDocument()
   })
 
-  // ── Keyboard navigation ───────────────────────────────────────────────────
+  // Keyboard navigation
 
   it('navigates with the ArrowRight key', async () => {
     useMediaQueryMock.mockReturnValue(false)
