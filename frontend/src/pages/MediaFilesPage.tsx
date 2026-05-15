@@ -2,10 +2,10 @@ import { useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import MediaFilesPageSkeleton from './MediaFilesPageSkeleton'
 import CollectionPageLayout from '../components/CollectionPageLayout'
 import MediaFileView from '../components/media-files/MediaFileView'
 import { useSearchBarUrlState } from '../components/searchbar/useSearchBarUrlState'
+import CollectionResultsSkeleton from '../components/skeletons/CollectionResultsSkeleton'
 import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
 import { ApiError } from '../services/ApiTypes'
 import { getMediaFiles } from '../services/media_files/MediaFiles'
@@ -175,7 +175,7 @@ const MediaFilesPage = () => {
       isLoading={isLoading}
       loadingLabel={t('media.loading')}
       loadingContent={
-        <MediaFilesPageSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
+        <CollectionResultsSkeleton layout={viewMode} isMobile={isMobile} cards={PAGE_SIZE} />
       }
       errorMessage={renderedErrorMessage}
       retryLabel={t('media.error.retry')}

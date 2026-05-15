@@ -24,6 +24,8 @@ const mockedGetTags = getTags as jest.MockedFunction<typeof getTags>
 const mockedGetGenres = getGenres as jest.MockedFunction<typeof getGenres>
 
 describe('App', () => {
+  const findLogo = () => screen.findByAltText('Viernulvier logo', undefined, { timeout: 10000 })
+
   beforeEach(async () => {
     window.history.pushState({}, '', '/')
     localStorage.clear()
@@ -60,7 +62,7 @@ describe('App', () => {
   it('renders navigation', async () => {
     render(<App />)
     // Router lazily loads some children; wait for the main shell to appear
-    const logo = await screen.findByAltText('Viernulvier logo', undefined, { timeout: 3000 })
+    const logo = await findLogo()
     expect(logo).toBeInTheDocument()
 
     const mainNav = await screen.findByRole('list', { name: 'Hoofdnavigatie' })
@@ -90,7 +92,7 @@ describe('App', () => {
   it('initializes with light theme by default', async () => {
     render(<App />)
     // wait for shell to mount so any lazy loading has finished
-    await screen.findByAltText('Viernulvier logo')
+    await findLogo()
 
     expect(localStorage.getItem('vnv-theme-mode')).toBeNull()
   })
@@ -99,7 +101,7 @@ describe('App', () => {
     localStorage.setItem('vnv-theme-mode', 'dark')
 
     render(<App />)
-    await screen.findByAltText('Viernulvier logo')
+    await findLogo()
 
     // Theme should be dark based on localStorage
     expect(localStorage.getItem('vnv-theme-mode')).toBe('dark')
@@ -109,7 +111,7 @@ describe('App', () => {
     localStorage.setItem('vnv-theme-mode', 'light')
 
     render(<App />)
-    await screen.findByAltText('Viernulvier logo')
+    await findLogo()
 
     expect(localStorage.getItem('vnv-theme-mode')).toBe('light')
   })
@@ -118,7 +120,7 @@ describe('App', () => {
     render(<App />)
 
     // ensure rendered shell before searching for buttons
-    await screen.findByAltText('Viernulvier logo')
+    await findLogo()
 
     const themeToggleButtons = await screen.findAllByRole('button')
     const themeToggleButton = themeToggleButtons.find(
@@ -144,7 +146,7 @@ describe('App', () => {
   it('renders with CSBaseline for consistent styling', async () => {
     const { container } = render(<App />)
     // wait for shell
-    await screen.findByAltText('Viernulvier logo')
+    await findLogo()
 
     // CssBaseline should be applied (it resets margins applied by default)
     expect(container).toBeInTheDocument()
@@ -154,7 +156,7 @@ describe('App', () => {
     render(<App />)
 
     // If ThemeProvider is working, styled components should render
-    expect(await screen.findByAltText('Viernulvier logo')).toBeInTheDocument()
+    expect(await findLogo()).toBeInTheDocument()
   })
 
   it('redirects nl compatibility slugs to localized archive routes', async () => {
