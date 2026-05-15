@@ -43,7 +43,7 @@ const LANDING_CARDS: LandingCard[] = [
     titleKey: 'landing.cards.archive.title',
     ctaKey: 'landing.cards.archive.cta',
     to: '/archive',
-    image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80',
+    image: '/homepage_archive.webp',
     index: 0,
   },
   {
@@ -51,7 +51,7 @@ const LANDING_CARDS: LandingCard[] = [
     titleKey: 'landing.cards.series.title',
     ctaKey: 'landing.cards.series.cta',
     to: '/series',
-    image: 'https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?w=800&q=80',
+    image: '/homepage_series.webp',
     index: 1,
   },
   {
@@ -59,7 +59,7 @@ const LANDING_CARDS: LandingCard[] = [
     titleKey: 'landing.cards.blogs.title',
     ctaKey: 'landing.cards.blogs.cta',
     to: '/blogs',
-    image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80',
+    image: '/homepage_blogs.webp',
     index: 2,
   },
   {
@@ -67,7 +67,7 @@ const LANDING_CARDS: LandingCard[] = [
     titleKey: 'landing.cards.prints.title',
     ctaKey: 'landing.cards.prints.cta',
     to: '/media',
-    image: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1600&q=80',
+    image: '/homepage_media.webp',
     index: 3,
   },
 ]
@@ -159,7 +159,7 @@ const HomePage = () => {
         {/* Background image */}
         <Box
           component="img"
-          src="https://sel2-2.ugent.be/media/media_crops/api_v1_media_items_29280_FE3_header.jpg"
+          src="/homepage_hero.webp"
           alt=""
           aria-hidden
           onError={(e) => {
