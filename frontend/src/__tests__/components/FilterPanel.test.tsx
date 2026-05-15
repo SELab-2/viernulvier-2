@@ -305,7 +305,7 @@ describe('FilterPanel', () => {
     expect(screen.getByTestId('chip-seriesTag-12')).toHaveTextContent('Partial Tag')
   })
 
-  it('sorts selected genres first and toggles overflow visibility with show more and show less', () => {
+  it('sorts selected genres first and places overflow options in a scrollable region', () => {
     renderPanel({
       genres: [
         buildGenre({ id: 6, name: { nl: 'Alpha' } }),
@@ -324,37 +324,39 @@ describe('FilterPanel', () => {
       'Charlie',
       'Delta',
       'Echo',
-    ])
-    expect(screen.getByTestId('chip-genre-6')).toHaveAttribute('data-selected', 'true')
-    expect(screen.queryByTestId('chip-genre-5')).not.toBeInTheDocument()
-
-    fireEvent.click(
-      screen.getByRole('button', { name: i18n.t('productions.home.filters.showMore') }),
-    )
-
-    expect(screen.getAllByTestId(/chip-genre-/).map((chip) => chip.textContent)).toEqual([
-      'Alpha',
-      'Bravo',
-      'Charlie',
-      'Delta',
-      'Echo',
       'Foxtrot',
     ])
+    expect(screen.getByTestId('chip-genre-6')).toHaveAttribute('data-selected', 'true')
     expect(
-      screen.getByRole('button', { name: i18n.t('productions.home.filters.showLess') }),
+      screen.getByRole('region', { name: i18n.t('productions.home.filters.scrollHint') }),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t('productions.home.filters.scrollHint')),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: i18n.t('productions.home.filters.scrollHint') }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^(Meer|More)$/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^(Minder|Less)$/ })).not.toBeInTheDocument()
+  })
 
-    fireEvent.click(
-      screen.getByRole('button', { name: i18n.t('productions.home.filters.showLess') }),
-    )
+  it('does not create a scroll region when five or fewer chip options are available', () => {
+    renderPanel({
+      genres: [
+        buildGenre({ id: 1, name: { nl: 'Alpha' } }),
+        buildGenre({ id: 2, name: { nl: 'Bravo' } }),
+        buildGenre({ id: 3, name: { nl: 'Charlie' } }),
+        buildGenre({ id: 4, name: { nl: 'Delta' } }),
+        buildGenre({ id: 5, name: { nl: 'Echo' } }),
+      ],
+    })
 
-    expect(screen.getAllByTestId(/chip-genre-/).map((chip) => chip.textContent)).toEqual([
-      'Alpha',
-      'Bravo',
-      'Charlie',
-      'Delta',
-      'Echo',
-    ])
+    expect(
+      screen.queryByRole('region', { name: i18n.t('productions.home.filters.scrollHint') }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t('productions.home.filters.scrollHint')),
+    ).not.toBeInTheDocument()
   })
 
   it('adds and removes genre and tag ids when chips are toggled', () => {
