@@ -86,6 +86,7 @@ describe('SeriesPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Reeks Alpha' })).toBeInTheDocument()
 
+    expect(screen.getByText('Geen samenvatting beschikbaar.')).toBeInTheDocument()
     expect(screen.getByText(/1\s+jan\.?\s+2026/i)).toBeInTheDocument()
   })
 

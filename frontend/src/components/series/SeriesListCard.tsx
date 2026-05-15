@@ -29,7 +29,7 @@ const getLocalizedTagExcerpt = (tag: Tag, language: string): string => {
 }
 
 const SeriesListCard = ({ tag }: SeriesListCardProps) => {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const location = useLocation()
   const { language } = i18n
   const currentLanguage = resolveCurrentLanguage(
@@ -40,7 +40,7 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
   const detailPath = toLocalizedPath(`/series/${tag.id}`, currentLanguage)
 
   const title = getLocalizedTagName(tag, language)
-  const excerpt = getLocalizedTagExcerpt(tag, language)
+  const excerpt = htmlToPlainText(getLocalizedTagExcerpt(tag, language))
   const startLabel = formatDate(tag.first_production_start, language)
   const endLabel = formatDate(tag.last_production_end, language)
 
@@ -101,21 +101,19 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
             {title}
           </Typography>
 
-          {excerpt ? (
-            <Typography
-              component="div"
-              variant="body2"
-              sx={{
-                fontSize: 'inherit',
-                color: 'text.secondary',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {htmlToPlainText(excerpt)}
-            </Typography>
-          ) : null}
+          <Typography
+            component="div"
+            variant="body2"
+            sx={{
+              fontSize: 'inherit',
+              color: 'text.secondary',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {excerpt || t('blogs.home.noExcerpt')}
+          </Typography>
         </Stack>
 
         {dateLabel ? (

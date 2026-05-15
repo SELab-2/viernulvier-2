@@ -24,12 +24,12 @@ const getLocalizedTagName = (tag: Tag, language: string): string => {
 
 // Function to get the localized tag excerpt based on the current language.
 const getLocalizedTagExcerpt = (tag: Tag, language: string): string => {
-  const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
-  return getTranslatedRecord(tag.excerpt, normalizedLanguage, tag.display_excerpt)
+  // const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
+  return getTranslatedRecord(tag.excerpt, language, tag.display_excerpt)
 }
 
 const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const location = useLocation()
   const { language } = i18n
   const currentLanguage = resolveCurrentLanguage(
@@ -40,7 +40,7 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
   const detailPath = toLocalizedPath(`/series/${tag.id}`, currentLanguage)
 
   const title = getLocalizedTagName(tag, language)
-  const excerpt = getLocalizedTagExcerpt(tag, language)
+  const excerpt = htmlToPlainText(getLocalizedTagExcerpt(tag, language))
   const startLabel = formatDate(tag.first_production_start, language)
   const endLabel = formatDate(tag.last_production_end, language)
 
@@ -85,21 +85,19 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
             {title}
           </Typography>
 
-          {excerpt ? (
-            <Typography
-              component="div"
-              variant="body2"
-              sx={{
-                fontSize: 'inherit',
-                color: 'text.secondary',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {htmlToPlainText(excerpt)}
-            </Typography>
-          ) : null}
+          <Typography
+            component="div"
+            variant="body2"
+            sx={{
+              fontSize: 'inherit',
+              color: 'text.secondary',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {excerpt || t('blogs.home.noExcerpt')}
+          </Typography>
         </Stack>
 
         {dateLabel ? (
