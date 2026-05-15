@@ -218,7 +218,8 @@ export const createHomePageStyles = (theme: Theme) => {
       'linear-gradient(to bottom, rgba(8,10,14,0.08) 0%, rgba(8,10,14,0.52) 55%, rgba(8,10,14,0.88) 100%)',
     heroOverlayVignette:
       'radial-gradient(ellipse at 70% 40%, transparent 40%, rgba(8,10,14,0.30) 100%)',
-    /** Small decorative label above the main title */
+    heroFallbackGradient:
+      'linear-gradient(135deg, rgba(8,10,14,1) 0%, rgba(18,28,58,1) 45%, rgba(12,38,52,1) 75%, rgba(8,10,14,1) 100%)' /** Small decorative label above the main title */,
     heroEyebrowColor: 'rgba(255,255,255,0.65)' as const,
     heroTitleColor: theme.palette.common.white,
     heroDescriptionColor: alpha(theme.palette.common.white, 0.82),

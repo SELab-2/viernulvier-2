@@ -153,6 +153,7 @@ const HomePage = () => {
           height: { xs: '72vh', md: '84vh' },
           minHeight: { xs: 440, md: 580 },
           overflow: 'hidden',
+          background: s.heroFallbackGradient,
         }}
       >
         {/* Background image */}
@@ -161,6 +162,9 @@ const HomePage = () => {
           src="https://sel2-2.ugent.be/media/media_crops/api_v1_media_items_29280_FE3_header.jpg"
           alt=""
           aria-hidden
+          onError={(e) => {
+            ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+          }}
           sx={{
             position: 'absolute',
             inset: 0,
