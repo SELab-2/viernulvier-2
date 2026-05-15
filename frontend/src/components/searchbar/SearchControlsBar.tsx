@@ -177,7 +177,6 @@ const SearchControlsBar = ({
               exclusive
               size="small"
               value={viewMode}
-              aria-label={t('searchbar.layout.label')}
               onChange={(_event, nextMode: SearchViewMode | null) => {
                 if (nextMode) {
                   onViewModeChange(nextMode)
@@ -185,18 +184,25 @@ const SearchControlsBar = ({
               }}
               sx={{
                 height: 40,
+                backgroundColor: theme.palette.background.default,
+                borderRadius: '8px',
+                border: `1px solid ${theme.palette.divider}`,
                 '& .MuiToggleButton-root': {
+                  border: 'none',
                   px: 1.2,
-                  backgroundColor: theme.palette.background.default,
                   color: theme.palette.text.primary,
-                  borderColor: theme.palette.divider,
+                  '&:not(:first-of-type)': {
+                    borderLeft: `1px solid ${theme.palette.divider}`,
+                  },
                   '&:hover': {
-                    borderColor: interactionColor,
                     backgroundColor: interactionHoverBackground,
                   },
                   '&.Mui-selected': {
-                    color: theme.palette.text.primary,
+                    color: theme.palette.primary.main, // Of een andere accentkleur
                     backgroundColor: interactionHoverBackground,
+                    '&:hover': {
+                      backgroundColor: interactionHoverBackground,
+                    },
                   },
                 },
               }}
