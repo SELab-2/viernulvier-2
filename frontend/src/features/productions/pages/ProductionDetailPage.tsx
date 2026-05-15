@@ -149,7 +149,7 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     }
 
     fetchProduction()
-  }, [archivePath, currentLanguage, currentPath, id, navigate, t])
+  }, [id])
 
   // Loading state: show skeleton UI
   if (loading) {

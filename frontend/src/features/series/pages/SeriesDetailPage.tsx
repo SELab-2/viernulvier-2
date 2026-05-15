@@ -150,38 +150,13 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const numericId = Number(id)
 
   /**
-   * Handles rate-limit (429) errors by redirecting and attaching a floating alert.
-   */
-  const showRateLimitAlert = useCallback(
-    (rateLimitError: ApiError, fallbackPath = seriesPath) => {
-      const alertMessage =
-        Number(rateLimitError.message) === 429
-          ? String(rateLimitError.status)
-          : rateLimitError.message
-
-      navigate(fallbackPath, {
-        replace: true,
-        state: createFloatingAlertState({
-          message: alertMessage,
-          severity: ALERT_SEVERITIES.warning,
-        }),
-      })
-    },
-    [navigate, seriesPath],
-  )
-
-  /**
    * Initial fetch: loads tag + first page of productions.
    */
   useEffect(() => {
     let isActive = true
 
     const fetchSeries = async () => {
-      setIsLoading(true)
       setError(null)
-      setSeriesProductions([])
-      setTotalProductions(0)
-      setCurrentPage(1)
 
       try {
         const [tag, productionsResponse] = await Promise.all([
@@ -211,13 +186,21 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
         if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {
           isActive = false
-          showRateLimitAlert(error)
+          const alertMessage =
+            Number(error.message) === 429 ? String(error.status) : error.message
+          navigate(toLocalizedPath('/series', currentLanguage), {
+            replace: true,
+            state: createFloatingAlertState({
+              message: alertMessage,
+              severity: ALERT_SEVERITIES.warning,
+            }),
+          })
           return
         }
 
         setError('series.fetchError')
       } finally {
-        if (isActive) {
+        if (isActive && isLoading) {
           setIsLoading(false)
         }
       }
@@ -228,7 +211,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return () => {
       isActive = false
     }
-  }, [numericId, showRateLimitAlert])
+  }, [numericId])
 
   /**
    * Loads the next page of productions.
@@ -258,7 +241,15 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
       setCurrentPage(nextPage)
     } catch (error: unknown) {
       if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {
-        showRateLimitAlert(error, currentPath)
+        const alertMessage =
+          Number(error.message) === 429 ? String(error.status) : error.message
+        navigate(currentPath, {
+          replace: true,
+          state: createFloatingAlertState({
+            message: alertMessage,
+            severity: ALERT_SEVERITIES.warning,
+          }),
+        })
       }
     } finally {
       setIsLoadingMore(false)
