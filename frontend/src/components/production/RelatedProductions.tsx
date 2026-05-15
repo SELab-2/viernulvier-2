@@ -103,6 +103,11 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                     sx={{
                       display: 'flex',
                       alignItems: 'stretch',
+                      // ensure slides keep a consistent width matching the grid card
+                      flex: '0 0 auto',
+                      minWidth: tokens.card.gridCardWidthPx,
+                      width: tokens.card.gridCardWidthPx,
+                      boxSizing: 'border-box',
                       // make the inner ProductionGridCard fill the slide height
                       '& > a': {
                         display: 'flex',
