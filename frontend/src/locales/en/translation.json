@@ -311,6 +311,11 @@
       "fallback": "Could not load media files.",
       "notification": "Something went wrong while loading media files."
     },
+    "preview": {
+      "close": "Close preview",
+      "previous": "Previous file",
+      "next": "Next file"
+    },
     "empty": {
       "title": "No media files found.",
       "description": "Adjust your search and try again."

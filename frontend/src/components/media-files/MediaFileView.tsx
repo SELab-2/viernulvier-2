@@ -3,12 +3,14 @@ import NavigateBeforeRoundedIcon from '@mui/icons-material/NavigateBeforeRounded
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded'
 import { Box, IconButton, Modal, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import MediaFileGrid from './MediaFileGrid'
 import MediaFileList from './MediaFileList'
 import MediaFilePreview from './MediaFilePreview'
 import { tokens } from '../../theme/tokens'
 import { DarkMode } from '../../types/Theme'
+import { getTranslatedRecord } from '../../utils/translations'
 
 import type { MediaFile } from '../../types/MediaFiles'
 import type { SearchViewMode } from '../searchbar/types'
@@ -35,6 +37,7 @@ const MediaFileModal = ({
   onClose,
   onNavigate,
 }: MediaFileModalProps) => {
+  const { t, i18n } = useTranslation()
   const isOpen = selectedIndex !== null
   const selectedFile = selectedIndex !== null ? mediaFiles[selectedIndex] : null
 
@@ -96,7 +99,7 @@ const MediaFileModal = ({
               overflow: 'hidden',
             }}
           >
-            {/* ── Header ── */}
+            {/* Header */}
             <Box
               sx={{
                 display: 'flex',
@@ -130,7 +133,7 @@ const MediaFileModal = ({
               )}
 
               <IconButton
-                aria-label="Voorvertoning sluiten"
+                aria-label={t('media.preview.close', 'Close preview')}
                 onClick={onClose}
                 size="small"
                 sx={{
@@ -147,10 +150,11 @@ const MediaFileModal = ({
             {/* Optional description shown when opening a file */}
             {selectedFile &&
               (function getDescriptionBox() {
-                const desc =
-                  selectedFile.display_description ??
-                  (selectedFile.description && Object.values(selectedFile.description)[0]) ??
-                  null
+                const desc = getTranslatedRecord(
+                  selectedFile.description,
+                  i18n.language,
+                  selectedFile.display_description ?? null,
+                )
 
                 if (!desc) {
                   return null
@@ -178,7 +182,7 @@ const MediaFileModal = ({
                 )
               })()}
             <Box sx={{ display: 'flex', overflow: 'hidden', flex: 1, minHeight: 0 }}>
-              {/* Vorige knop */}
+              {/* Previous button */}
               {mediaFiles.length > 1 && (
                 <Box
                   sx={{
@@ -191,7 +195,7 @@ const MediaFileModal = ({
                   }}
                 >
                   <IconButton
-                    aria-label="Vorig bestand"
+                    aria-label={t('media.preview.previous', 'Previous file')}
                     disabled={!hasPrev}
                     onClick={() => onNavigate((selectedIndex as number) - 1)}
                     sx={{
@@ -205,7 +209,7 @@ const MediaFileModal = ({
                 </Box>
               )}
 
-              {/* Preview - eigen scroll met afgeronde scrollbar */}
+              {/* Preview */}
               <Box
                 sx={{
                   flex: 1,
@@ -223,10 +227,9 @@ const MediaFileModal = ({
                     backgroundClip: 'content-box',
                   },
                   '&::-webkit-scrollbar-thumb:hover': { bgcolor: 'action.focus' },
-                  // Afbeeldingen altijd inpassen in het zichtbare vlak
                   '& img': {
                     maxWidth: '100%',
-                    maxHeight: 'calc(90vh - 60px)', // modal hoogte min header
+                    maxHeight: 'calc(90vh - 60px)',
                     objectFit: 'contain',
                     display: 'block',
                     margin: '0 auto',
@@ -236,7 +239,7 @@ const MediaFileModal = ({
                 <MediaFilePreview mediaFile={selectedFile} previewLabel={selectedFile.filename} />
               </Box>
 
-              {/* Volgende knop */}
+              {/* Next button */}
               {mediaFiles.length > 1 && (
                 <Box
                   sx={{
@@ -249,7 +252,7 @@ const MediaFileModal = ({
                   }}
                 >
                   <IconButton
-                    aria-label="Volgend bestand"
+                    aria-label={t('media.preview.next', 'Next file')}
                     disabled={!hasNext}
                     onClick={() => onNavigate((selectedIndex as number) + 1)}
                     sx={{
@@ -274,6 +277,7 @@ const MediaFileModal = ({
 
 const MediaFileView = ({ mediaFiles, layout = 'list' }: MediaFileViewProps) => {
   const theme = useTheme()
+  const { t } = useTranslation()
   const isSmall = useMediaQuery(theme.breakpoints.down('md'))
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
@@ -297,7 +301,7 @@ const MediaFileView = ({ mediaFiles, layout = 'list' }: MediaFileViewProps) => {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 8 }}>
         <Typography variant="body2" color="text.secondary">
-          Geen mediabestanden gevonden.
+          {t('media.empty.title', 'No media files found')}
         </Typography>
       </Box>
     )

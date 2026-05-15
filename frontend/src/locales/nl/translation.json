@@ -311,6 +311,11 @@
       "fallback": "Kon mediabestanden niet laden.",
       "notification": "Er ging iets mis bij het laden van de mediabestanden."
     },
+    "preview": {
+      "close": "Sluit voorvertoning",
+      "previous": "Vorig bestand",
+      "next": "Volgend bestand"
+    },
     "empty": {
       "title": "Geen mediabestanden gevonden.",
       "description": "Geen mediabestanden die voldoen aan de huidige zoekopdracht."
