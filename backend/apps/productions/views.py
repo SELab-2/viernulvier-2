@@ -222,11 +222,13 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         return super().get_serializer(*args, **kwargs)
 
     def retrieve(self, request: HttpRequest, *args: tuple, **kwargs: dict) -> HttpRequest:
-        """Retrieve a production by its ID, with optional inclusion of related events.
+        """Retrieve a production by ID with optional include-driven prefetches.
 
-        When events are included, the queryset is extended with additional
-        prefetches for prices, hall, space, and location translations to
-        avoid N+1 queries on the detail response.
+        When `include=events` is passed, the queryset is extended with additional
+        prefetches for prices, hall, space, and location translations.
+
+        When `include=blogs` is passed, linked published blogs and their
+        translations are prefetched as `prefetched_related_blogs`.
         """
         if "events" in self.includes:
             self.queryset = self.queryset.prefetch_related(
