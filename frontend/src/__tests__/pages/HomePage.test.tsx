@@ -163,7 +163,7 @@ describe('HomePage', () => {
   describe('stats bar', () => {
     it('shows a dash placeholder while the API call is in flight', () => {
       // Never resolve so we observe the loading state
-      mockedGetLandingStats.mockReturnValue(new Promise(() => { }))
+      mockedGetLandingStats.mockReturnValue(new Promise(() => {}))
       renderPage()
       // archiveStats starts as {} so every value is undefined -> '-'
       expect(screen.getAllByText('-')).toHaveLength(4)
