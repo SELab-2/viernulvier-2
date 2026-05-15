@@ -57,16 +57,22 @@ function Carousel({
   const snapCount = emblaApi?.scrollSnapList().length ?? Math.max(1, slides.length)
 
   const dotRefs = useRef<Array<HTMLButtonElement | null>>([])
+  const hasInteracted = useRef(false)
 
   const updateControls = useCallback(() => {
     if (!emblaApi) {
       return
     }
 
-    setSelectedIndex(emblaApi.selectedScrollSnap())
+    const newIndex = emblaApi.selectedScrollSnap()
+    if (newIndex !== selectedIndex) {
+      hasInteracted.current = true
+    }
+
+    setSelectedIndex(newIndex)
     setCanScrollPrev(emblaApi.canScrollPrev())
     setCanScrollNext(emblaApi.canScrollNext())
-  }, [emblaApi])
+  }, [emblaApi, selectedIndex])
 
   useEffect(() => {
     if (!emblaApi) {
@@ -85,6 +91,9 @@ function Carousel({
   }, [emblaApi, updateControls])
 
   useLayoutEffect(() => {
+    if (!hasInteracted.current) {
+      return
+    }
     const el = dotRefs.current[selectedIndex]
     if (!el || typeof el.scrollIntoView !== 'function') {
       return
