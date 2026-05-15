@@ -155,7 +155,7 @@ const Navbar = ({ mode, onToggleMode }: ModeToggleProps) => {
             <Box component={Link} to={localizedPath('/')} sx={navbarStyles.brandLink}>
               <Box
                 component="img"
-                src="/vnv_archive_logo.png"
+                src="/vnv_archive_logo.webp"
                 alt="Viernulvier logo"
                 sx={navbarStyles.brandLogo}
               />
