@@ -22,7 +22,10 @@ Shared dependencies required in all environments (e.g. Django, DRF, database dri
 
 ### development.txt
 
-Extends base: -r base.txt
+Extends `base.txt` via:
+
+```txt
+-r base.txt
 
 Adds development-only tools such as:
 
@@ -65,11 +68,11 @@ pip install -r backend/requirements/production.txt
 pip install <package>
 ```
 
-1. Add it to the correct file:
+2. Add it to the correct file:
 
 - `base.txt` -> needed everywhere
 
 - `development.txt` -> testing/debugging only
 - `production.txt` -> deployment only
 
-1. Commit the updated file.
+3. Commit the updated file.
