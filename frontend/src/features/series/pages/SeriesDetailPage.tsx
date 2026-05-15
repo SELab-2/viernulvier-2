@@ -186,8 +186,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
         if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {
           isActive = false
-          const alertMessage =
-            Number(error.message) === 429 ? String(error.status) : error.message
+          const alertMessage = Number(error.message) === 429 ? String(error.status) : error.message
           navigate(toLocalizedPath('/series', currentLanguage), {
             replace: true,
             state: createFloatingAlertState({
@@ -241,8 +240,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
       setCurrentPage(nextPage)
     } catch (error: unknown) {
       if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {
-        const alertMessage =
-          Number(error.message) === 429 ? String(error.status) : error.message
+        const alertMessage = Number(error.message) === 429 ? String(error.status) : error.message
         navigate(currentPath, {
           replace: true,
           state: createFloatingAlertState({
