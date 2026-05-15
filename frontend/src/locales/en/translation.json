@@ -314,7 +314,8 @@
     "preview": {
       "close": "Close preview",
       "previous": "Previous file",
-      "next": "Next file"
+      "next": "Next file",
+      "downloadFailed": "Download failed"
     },
     "empty": {
       "title": "No media files found.",

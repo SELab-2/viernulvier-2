@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import MediaFileGrid from './MediaFileGrid'
 import MediaFileList from './MediaFileList'
 import MediaFilePreview from './MediaFilePreview'
+import { useCollectionPageNotification } from '../../hooks/useCollectionPageNotification'
 import { tokens } from '../../theme/tokens'
 import { DarkMode } from '../../types/Theme'
 import { getTranslatedRecord } from '../../utils/translations'
@@ -41,6 +42,7 @@ const MediaFileModal = ({
   const { t, i18n } = useTranslation()
   const isOpen = selectedIndex !== null
   const selectedFile = selectedIndex !== null ? mediaFiles[selectedIndex] : null
+  const { showFloatingAlert } = useCollectionPageNotification('media.preview.downloadFailed')
 
   const hasPrev = selectedIndex !== null && selectedIndex > 0
   const hasNext = selectedIndex !== null && selectedIndex < mediaFiles.length - 1
@@ -67,20 +69,23 @@ const MediaFileModal = ({
 
     try {
       const response = await fetch(selectedFile.file)
-      const blob = await response.blob()
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
 
-      const url = window.URL.createObjectURL(blob)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
 
       const link = document.createElement('a')
       link.href = url
       link.download = selectedFile.filename
-
       document.body.appendChild(link)
       link.click()
-
       link.remove()
-      window.URL.revokeObjectURL(url)
+
+      URL.revokeObjectURL(url)
     } catch (err) {
+      showFloatingAlert(err)
       console.error('Download failed', err)
     }
   }
@@ -248,7 +253,8 @@ const MediaFileModal = ({
                 </Box>
               )}
 
-              {/* Preview */}
+              {/* Preview - forceAllPages ensures mobile users can scroll all
+                    PDF pages; the overflow: auto on this Box is the scrollbar. */}
               <Box
                 sx={{
                   flex: 1,
@@ -257,6 +263,8 @@ const MediaFileModal = ({
                   overflow: 'auto',
                   scrollbarWidth: 'thin',
                   scrollbarColor: (theme) => `${theme.palette.action.selected} transparent`,
+                  WebkitOverflowScrolling: 'touch',
+                  touchAction: 'auto',
                   '&::-webkit-scrollbar': { width: 6, height: 6, borderRadius: 3 },
                   '&::-webkit-scrollbar-track': { background: 'transparent', borderRadius: 3 },
                   '&::-webkit-scrollbar-thumb': {
@@ -275,7 +283,11 @@ const MediaFileModal = ({
                   },
                 }}
               >
-                <MediaFilePreview mediaFile={selectedFile} previewLabel={selectedFile.filename} />
+                <MediaFilePreview
+                  mediaFile={selectedFile}
+                  previewLabel={selectedFile.filename}
+                  forceAllPages
+                />
               </Box>
 
               {/* Next button */}

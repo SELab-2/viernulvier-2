@@ -20,9 +20,19 @@ export interface MediaFilePreviewProps {
    * - eliminating CSS-stretch blur on card previews.
    */
   pdfPageWidth?: number
+  /**
+   * When true, all pages are always rendered regardless of container width.
+   * Use this in the modal so mobile users can scroll through the full PDF.
+   */
+  forceAllPages?: boolean
 }
 
-const MediaFilePreview = ({ mediaFile, previewLabel, pdfPageWidth }: MediaFilePreviewProps) => {
+const MediaFilePreview = ({
+  mediaFile,
+  previewLabel,
+  pdfPageWidth,
+  forceAllPages,
+}: MediaFilePreviewProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [renderWidth, setRenderWidth] = useState<number | null>(pdfPageWidth ?? null)
   const [shouldRenderPdf, setShouldRenderPdf] = useState(
@@ -128,14 +138,17 @@ const MediaFilePreview = ({ mediaFile, previewLabel, pdfPageWidth }: MediaFilePr
 
   // PDF
   if (mediaFile.file_type === 'pdf') {
-    const multiPage = renderWidth !== null && renderWidth >= MULTIPAGE_WIDTH_THRESHOLD
+    // forceAllPages overrides the width threshold - always show all pages in
+    // the modal so mobile users are not stuck on page 1 with no scroll.
+    const multiPage =
+      forceAllPages || (renderWidth !== null && renderWidth >= MULTIPAGE_WIDTH_THRESHOLD)
 
     return (
       <Box
         ref={containerRef}
         sx={{
           width: '100%',
-          height: '100%',
+          height: multiPage ? 'auto' : '100%',
           overflow: 'hidden',
           backgroundColor: (theme) => theme.palette.background.paper,
           display: 'flex',
@@ -148,8 +161,8 @@ const MediaFilePreview = ({ mediaFile, previewLabel, pdfPageWidth }: MediaFilePr
             <Box
               sx={{
                 width: '100%',
-                maxHeight: '100%',
-                overflowY: multiPage ? 'auto' : 'hidden',
+                maxHeight: multiPage ? 'none' : '100%',
+                overflowY: 'visible', // scrolling is handled by the modal container
               }}
             >
               <Document
