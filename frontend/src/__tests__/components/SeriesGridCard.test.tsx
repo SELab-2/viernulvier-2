@@ -94,6 +94,21 @@ describe('SeriesGridCard', () => {
     expect(screen.queryByText(/2026/)).not.toBeInTheDocument()
   })
 
+  it('falls back to untitled when no name or display_name exists', () => {
+    renderCard({
+      ...buildTag(),
+      image: null,
+      name: null,
+      display_name: null,
+      excerpt: null,
+      display_excerpt: null,
+      first_production_start: null,
+      last_production_end: null,
+    })
+
+    expect(screen.getByRole('heading', { name: 'Naamloze reeks' })).toBeInTheDocument()
+  })
+
   it('renders a single date when the start and end labels are equal or only one side exists', () => {
     const { rerender } = renderCard({
       ...buildTag(),

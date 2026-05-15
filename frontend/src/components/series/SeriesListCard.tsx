@@ -39,7 +39,7 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
   )
   const detailPath = toLocalizedPath(`/series/${tag.id}`, currentLanguage)
 
-  const title = getLocalizedTagName(tag, language)
+  const title = getLocalizedTagName(tag, language) || t('series.untitled')
   const excerpt = htmlToPlainText(getLocalizedTagExcerpt(tag, language))
   const startLabel = formatDate(tag.first_production_start, language)
   const endLabel = formatDate(tag.last_production_end, language)
