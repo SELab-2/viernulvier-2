@@ -38,8 +38,8 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = True
 
 # HSTS: tell browsers to only connect over HTTPS for one year.
-# includeSubDomains and preload are intentionally omitted until the full
-# domain inventory is confirmed.
+# includeSubDomains is enabled; preload is intentionally omitted until the
+# full domain inventory is confirmed.
 SECURE_HSTS_SECONDS = 31_536_000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 

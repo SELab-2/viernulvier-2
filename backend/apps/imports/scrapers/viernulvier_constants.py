@@ -40,9 +40,6 @@ USER_AGENT_POOL = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.3; rv:122.0) Gecko/20100101 Firefox/122.0",
 ]
 
-# String values treated as empty *only* in URL fields.
-_EMPTY_URL_VALUES: set[str] = {"", "0", "none", "null", "undefined", "-", "n/a", "nvt"}
-
 
 class ScraperError(Exception):
     """Raised when the scraper cannot fetch or normalize Viernulvier data."""

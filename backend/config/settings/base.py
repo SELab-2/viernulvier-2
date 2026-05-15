@@ -40,6 +40,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Security - no defaults for secrets
 # ---------------------------------------------------------------------------
 
+# The infrastructure folder sits next to backend/, so BASE_DIR.parent points
+# at the repository root used by Docker Compose and deployment scripts.
 load_dotenv(os.path.join(BASE_DIR.parent, "infrastructure", ".env"))
 
 SECRET_KEY = os.environ["SECRET_KEY"]

@@ -13,8 +13,10 @@ viernulvier_archive/
 │   │   ├── base.py                  # shared settings
 │   │   ├── dev.py                   # Dev-specific
 │   |   ├── test.py                  # SQLite db for tests
+│   |   ├── staging.py               # Local/pre-production staging settings
 │   │   └── prod.py                  # For production
 │   │
+│   ├── health.py                    # Health check endpoint
 │   ├── urls.py                      # Root URL config
 │   ├── wsgi.py
 │   └── asgi.py
