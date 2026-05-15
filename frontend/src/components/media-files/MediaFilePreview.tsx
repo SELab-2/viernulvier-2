@@ -198,7 +198,7 @@ const MediaFilePreview = ({ mediaFile, previewLabel, pdfPageWidth }: MediaFilePr
         alignItems: 'center',
         justifyContent: 'center',
         color: 'text.secondary',
-        backgroundColor: 'action.hover',
+        backgroundColor: (theme) => theme.palette.action.hover,
       }}
     >
       {mediaFile.file_type === 'other' ? (

@@ -1,4 +1,5 @@
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import NavigateBeforeRoundedIcon from '@mui/icons-material/NavigateBeforeRounded'
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded'
 import { Box, IconButton, Modal, Typography, useMediaQuery, useTheme } from '@mui/material'
@@ -59,6 +60,31 @@ const MediaFileModal = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, hasPrev, hasNext, selectedIndex, onNavigate])
 
+  const handleDownload = async () => {
+    if (!selectedFile) {
+      return
+    }
+
+    try {
+      const response = await fetch(selectedFile.file)
+      const blob = await response.blob()
+
+      const url = window.URL.createObjectURL(blob)
+
+      const link = document.createElement('a')
+      link.href = url
+      link.download = selectedFile.filename
+
+      document.body.appendChild(link)
+      link.click()
+
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Download failed', err)
+    }
+  }
+
   return (
     <Modal
       open={isOpen}
@@ -115,6 +141,19 @@ const MediaFileModal = ({
               <Typography variant="body1" noWrap sx={{ flex: 1, color: 'text.primary' }}>
                 {selectedFile.filename}
               </Typography>
+
+              <IconButton
+                aria-label={t('media.preview.download', 'Download file')}
+                onClick={handleDownload}
+                size="medium"
+                sx={{
+                  flexShrink: 0,
+                  color: 'text.primary',
+                  '&:hover': { bgcolor: 'action.selected' },
+                }}
+              >
+                <FileDownloadOutlinedIcon fontSize="small" />
+              </IconButton>
 
               {mediaFiles.length > 1 && (
                 <Typography
