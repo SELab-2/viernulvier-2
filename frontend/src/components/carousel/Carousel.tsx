@@ -86,7 +86,7 @@ function Carousel({
 
   useLayoutEffect(() => {
     const el = dotRefs.current[selectedIndex]
-    if (!el) {
+    if (!el || typeof el.scrollIntoView !== 'function') {
       return
     }
     el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
