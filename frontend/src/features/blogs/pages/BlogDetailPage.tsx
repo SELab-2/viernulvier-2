@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useParams, useNavigate } from 'react-router-dom'
 
@@ -42,11 +42,34 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     i18n.language,
     i18n.resolvedLanguage,
   )
-  const blogsPath = toLocalizedPath('/blogs', currentLanguage)
-  const currentPath = location.pathname
 
   const [blog, setBlog] = useState<Blog | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
+
+  // Keep the latest route and translation context available for redirects
+  // without making the fetch effect rerun on language changes.
+  const navigateRef = useRef(navigate)
+  const currentLanguageRef = useRef(currentLanguage)
+  const currentPathRef = useRef(location.pathname)
+  const tRef = useRef(t)
+  const blogsPathRef = useRef(toLocalizedPath('/blogs', currentLanguage))
+
+  useEffect(() => {
+    navigateRef.current = navigate
+  }, [navigate])
+
+  useEffect(() => {
+    currentLanguageRef.current = currentLanguage
+    blogsPathRef.current = toLocalizedPath('/blogs', currentLanguage)
+  }, [currentLanguage])
+
+  useEffect(() => {
+    currentPathRef.current = location.pathname
+  }, [location.pathname])
+
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
 
   /**
    * Effect: fetch blog by id when the route param changes.
@@ -56,8 +79,8 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
   useEffect(() => {
     const parsed = Number(id)
     if (Number.isNaN(parsed)) {
-      const errMsg = t('blog.invalidId', 'Invalid blog ID')
-      redirectWithFloatingAlert(navigate, blogsPath, {
+      const errMsg = tRef.current('blog.invalidId', 'Invalid blog ID')
+      redirectWithFloatingAlert(navigateRef.current, blogsPathRef.current, {
         message: errMsg,
         severity: ALERT_SEVERITIES.error,
       })
@@ -67,7 +90,7 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     const handleError = (error?: unknown) => {
       // If the failure is a rate-limit, show a warning and return to the listing.
       if (error instanceof ApiError && error.status === 429) {
-        redirectWithFloatingAlert(navigate, currentPath, {
+        redirectWithFloatingAlert(navigateRef.current, currentPathRef.current, {
           message: error.message,
           severity: ALERT_SEVERITIES.warning,
         })
@@ -75,11 +98,15 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
       }
 
       // For other failures, redirect to the site-wide localized 404 page.
-      const errMsg = t('blog.couldNotLoad', 'Could not load blog')
-      redirectWithFloatingAlert(navigate, toLocalizedPath('/404', currentLanguage), {
-        message: errMsg,
-        severity: ALERT_SEVERITIES.error,
-      })
+      const errMsg = tRef.current('blog.couldNotLoad', 'Could not load blog')
+      redirectWithFloatingAlert(
+        navigateRef.current,
+        toLocalizedPath('/404', currentLanguageRef.current),
+        {
+          message: errMsg,
+          severity: ALERT_SEVERITIES.error,
+        },
+      )
     }
 
     const fetchBlog = async () => {
@@ -101,7 +128,7 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     }
 
     fetchBlog()
-  }, [blogsPath, currentLanguage, id, navigate, t, currentPath])
+  }, [id])
 
   if (loading) {
     return <BlogDetailPageSkeleton />

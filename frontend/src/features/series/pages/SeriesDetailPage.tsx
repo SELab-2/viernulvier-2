@@ -13,7 +13,7 @@
  */
 
 import { Alert, Box, Button, Container, Divider, Stack, Typography } from '@mui/material'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 
@@ -136,9 +136,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     i18n.language,
     i18n.resolvedLanguage,
   )
-  const seriesPath = toLocalizedPath('/series', currentLanguage)
   const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
-  const currentPath = location.pathname
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [seriesProductions, setSeriesProductions] = useState<Production[]>([])
@@ -149,9 +147,34 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   const [error, setError] = useState<SeriesErrorKey>(null)
   const numericId = Number(id)
 
+  // Keep the latest navigation and localization values in refs so the fetch
+  // effect can stay tied to the route id only.
+  const navigateRef = useRef(navigate)
+  const currentLanguageRef = useRef(currentLanguage)
+  const currentPathRef = useRef(location.pathname)
+  const tRef = useRef(t)
+
+  useEffect(() => {
+    navigateRef.current = navigate
+  }, [navigate])
+
+  useEffect(() => {
+    currentLanguageRef.current = currentLanguage
+  }, [currentLanguage])
+
+  useEffect(() => {
+    currentPathRef.current = location.pathname
+  }, [location.pathname])
+
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
+
   /**
    * Initial fetch: loads tag + first page of productions.
    */
+  // Refetch only when the series id changes; language switches should only
+  // update labels and redirects, not restart the API request.
   useEffect(() => {
     let isActive = true
 
@@ -187,7 +210,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
         if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {
           isActive = false
           const alertMessage = Number(error.message) === 429 ? String(error.status) : error.message
-          navigate(toLocalizedPath('/series', currentLanguage), {
+          navigateRef.current(toLocalizedPath('/series', currentLanguageRef.current), {
             replace: true,
             state: createFloatingAlertState({
               message: alertMessage,
@@ -210,10 +233,13 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return () => {
       isActive = false
     }
-  }, [numericId])
+  }, [numericId, isLoading])
 
   /**
    * Loads the next page of productions.
+   *
+   * Uses the latest route values from refs so error redirects still stay
+   * localized without broadening the fetch dependencies.
    */
   const loadMoreProductions = async () => {
     if (isLoadingMore || seriesProductions.length >= totalProductions) {
@@ -241,7 +267,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     } catch (error: unknown) {
       if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {
         const alertMessage = Number(error.message) === 429 ? String(error.status) : error.message
-        navigate(currentPath, {
+        navigateRef.current(currentPathRef.current, {
           replace: true,
           state: createFloatingAlertState({
             message: alertMessage,

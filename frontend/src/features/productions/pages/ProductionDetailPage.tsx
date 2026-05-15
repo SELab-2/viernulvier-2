@@ -9,7 +9,7 @@
  */
 
 import { Box, Typography, useMediaQuery } from '@mui/material'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useParams, useNavigate } from 'react-router-dom'
 
@@ -94,12 +94,34 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     i18n.resolvedLanguage,
   )
 
-  const archivePath = toLocalizedPath('/archive', currentLanguage)
-  const currentPath = location.pathname
-
   // Local state for production data + loading
   const [prod, setProd] = useState<Production | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
+
+  // Keep the latest navigation and localization values available without
+  // turning language changes into refetch triggers.
+  const navigateRef = useRef(navigate)
+  const currentLanguageRef = useRef(currentLanguage)
+  const currentPathRef = useRef(location.pathname)
+  const tRef = useRef(t)
+  const archivePathRef = useRef(toLocalizedPath('/archive', currentLanguage))
+
+  useEffect(() => {
+    navigateRef.current = navigate
+  }, [navigate])
+
+  useEffect(() => {
+    currentLanguageRef.current = currentLanguage
+    archivePathRef.current = toLocalizedPath('/archive', currentLanguage)
+  }, [currentLanguage])
+
+  useEffect(() => {
+    currentPathRef.current = location.pathname
+  }, [location.pathname])
+
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
 
   /**
    * Fetch production data when component mounts or ID changes.
@@ -115,8 +137,8 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
 
     // Validate numeric ID before API call
     if (Number.isNaN(parsed)) {
-      const errMsg = t('productions.detail.error.invalidId', 'Invalid production ID')
-      redirectWithFloatingAlert(navigate, archivePath, {
+      const errMsg = tRef.current('productions.detail.error.invalidId', 'Invalid production ID')
+      redirectWithFloatingAlert(navigateRef.current, archivePathRef.current, {
         message: errMsg,
         severity: ALERT_SEVERITIES.error,
       })
@@ -131,17 +153,24 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
         // Handle API rate limiting explicitly
         if (error instanceof ApiError && error.status === 429) {
           const errMsg = error.message
-          redirectWithFloatingAlert(navigate, currentPath, {
+          redirectWithFloatingAlert(navigateRef.current, currentPathRef.current, {
             message: errMsg,
             severity: ALERT_SEVERITIES.warning,
           })
         } else {
           // Fallback for all other errors -> redirect to 404
-          const errMsg = t('productions.detail.error.loadFailed', 'Could not load production')
-          redirectWithFloatingAlert(navigate, toLocalizedPath('/404', currentLanguage), {
-            message: errMsg,
-            severity: ALERT_SEVERITIES.error,
-          })
+          const errMsg = tRef.current(
+            'productions.detail.error.loadFailed',
+            'Could not load production',
+          )
+          redirectWithFloatingAlert(
+            navigateRef.current,
+            toLocalizedPath('/404', currentLanguageRef.current),
+            {
+              message: errMsg,
+              severity: ALERT_SEVERITIES.error,
+            },
+          )
         }
       } finally {
         setLoading(false)
@@ -151,7 +180,7 @@ const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
     fetchProduction()
   }, [id])
 
-  // Loading state: show skeleton UI
+  // Loading state: show skeleton UI while the initial request is in flight.
   if (loading) {
     return <ProductionDetailPageSkeleton />
   }
