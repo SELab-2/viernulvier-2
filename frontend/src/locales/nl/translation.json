@@ -18,7 +18,6 @@
       "description": "Verken decennia aan voorstellingen, concerten en theater van Kunstencentrum VIERNULVIER, zorgvuldig gecatalogiseerd en verrijkt met context.",
       "primaryCta": "Open het archief",
       "seriesCta": "Bekijk reeksen",
-      "secondaryCta": "Lees blogs",
       "websiteCta": "Bezoek de officiële website"
     },
     "stats": {
@@ -27,72 +26,29 @@
       "years": "Gedocumenteerde jaren",
       "blogs": "Blogs"
     },
-    "statsSection": {
-      "eyebrow": "Archief in cijfers",
-      "title": "Een snel overzicht van de collectie.",
-      "description": "Live tellingen van producties, reeksen, gedocumenteerde jaren en blogs."
-    },
-    "ticker": {
-      "brand": "VIERNULVIER",
-      "city": "GENT",
-      "archive": "ARCHIEF",
-      "years": "{{value}} JAAR",
-      "productions": "{{value}} PRODUCTIES",
-      "center": "KUNSTENCENTRUM",
-      "collection": "COLLECTIE",
-      "performances": "VOORSTELLINGEN",
-      "theatre": "THEATER",
-      "concert": "CONCERT",
-      "dance": "DANS"
-    },
-    "side": {
-      "eyebrow": "Wat je hier vindt",
-      "title": "Vier heldere ingangen in de collectie.",
-      "archive": {
-        "title": "Voorstellingen, concerten & theater",
-        "description": "Zoek op artiest, locatie of periode. Elke gedocumenteerde productie uit de geschiedenis van VIERNULVIER, doorzoekbaar op een plek."
-      },
-      "blogs": {
-        "title": "Blogs en context",
-        "description": "Redactionele stukken die het archief verdiepen: interviews, essays en notities van onderzoekers en curatoren."
-      },
-      "series": {
-        "title": "Reeksen en edities",
-        "description": "Producties gegroepeerd per terugkerende reeks. Volg hoe edities door de jaren heen evolueren."
-      },
-      "prints": {
-        "title": "Affiches en drukwerk",
-        "description": "Gescande affiches, programmaboekjes en brochures uit de fysieke collectie."
-      }
-    },
     "cardsSection": {
-      "eyebrow": "Verken de collectie",
-      "title": "Waar wil je beginnen?",
-      "description": "Verken het VIERNULVIER-archief via een van de vier invalshoeken. Elke toegangspoort onthult een unieke laag van onze rijke collectie."
+      "title": "Ontdek de collectie",
+      "description": "Blader door producties, reeksen, blogs en drukwerk van VIERNULVIER."
     },
     "cards": {
       "archive": {
         "eyebrow": "01 - Archief",
         "title": "Verken het archief",
-        "description": "Zoek producties op artiest, locatie of periode. De volledige productiegeschiedenis van VIERNULVIER.",
         "cta": "Open het archief"
       },
       "series": {
         "eyebrow": "02 - Reeksen",
         "title": "Ontdek reeksen",
-        "description": "Producties gegroepeerd per terugkerende reeks. Volg gekoppelde edities in chronologische volgorde.",
         "cta": "Open reeksen"
       },
       "blogs": {
         "eyebrow": "03 - Blogs",
         "title": "Lees de blogs",
-        "description": "Interviews, essays en onderzoeksnotities die extra context geven aan het archief.",
         "cta": "Lees blogs"
       },
       "prints": {
         "eyebrow": "04 - Drukwerk",
         "title": "Ontdek drukwerk",
-        "description": "Affiches, programmaboekjes en brochures uit de fysieke collectie.",
         "cta": "Bekijk drukwerk"
       }
     }

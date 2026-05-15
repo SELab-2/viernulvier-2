@@ -212,42 +212,82 @@ export const createCommonStyles = (theme: Theme) => {
 }
 
 export const createHomePageStyles = (theme: Theme) => {
-  const isDark = theme.palette.mode === DarkMode
-
   return {
-    heroBackground: isDark
-      ? 'linear-gradient(160deg, rgba(255,255,255,0.05) 0%, transparent 60%)'
-      : 'linear-gradient(160deg, rgba(0,0,0,0.03) 0%, transparent 60%)',
-    heroAccentLine: isDark
-      ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25) 40%, rgba(255,255,255,0.1) 70%, transparent)'
-      : 'linear-gradient(90deg, transparent, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.06) 70%, transparent)',
-    heroPanelBackground: isDark
-      ? alpha(theme.palette.common.white, 0.03)
-      : alpha(theme.palette.common.white, 0.82),
-    heroPanelEyebrowText: isDark
-      ? alpha(theme.palette.common.white, 0.5)
-      : alpha(theme.palette.common.black, 0.56),
-    inputBackground: isDark
-      ? alpha(theme.palette.common.white, 0.04)
-      : theme.palette.background.paper,
-    tickerBackground: isDark
-      ? alpha(theme.palette.common.white, 0.04)
-      : alpha(theme.palette.common.black, 0.03),
-    tickerText: isDark
-      ? alpha(theme.palette.common.white, 0.38)
-      : alpha(theme.palette.common.black, 0.42),
-    subtleSurface: isDark
-      ? alpha(theme.palette.common.white, 0.03)
-      : alpha(theme.palette.common.black, 0.02),
-    cardHoverBackground: isDark
-      ? alpha(theme.palette.common.white, 0.04)
-      : alpha(theme.palette.common.black, 0.02),
-    cardHoverBorder: isDark
-      ? alpha(theme.palette.common.white, 0.2)
-      : alpha(theme.palette.common.black, 0.18),
-    accentBorder: isDark
-      ? alpha(theme.palette.common.white, 0.12)
-      : alpha(theme.palette.common.black, 0.1),
+    // Hero
+    heroOverlay:
+      'linear-gradient(to bottom, rgba(8,10,14,0.08) 0%, rgba(8,10,14,0.52) 55%, rgba(8,10,14,0.88) 100%)',
+    heroOverlayVignette:
+      'radial-gradient(ellipse at 70% 40%, transparent 40%, rgba(8,10,14,0.30) 100%)',
+    /** Small decorative label above the main title */
+    heroEyebrowColor: 'rgba(255,255,255,0.65)' as const,
+    heroTitleColor: theme.palette.common.white,
+    heroDescriptionColor: alpha(theme.palette.common.white, 0.82),
+
+    // Search
+    searchIconColor: 'rgba(0,0,0,0.40)',
+    searchInputBg: 'rgba(255,255,255,0.96)',
+    searchInputText: 'rgba(0,0,0,0.87)',
+    searchInputPlaceholder: 'rgba(0,0,0,0.40)',
+    searchInputBorder: 'rgba(0,0,0,0.12)',
+    searchInputBorderHover: 'rgba(0,0,0,0.28)',
+    searchInputBorderFocus: 'rgba(0,0,0,0.54)',
+    searchButtonBg: tokens.colors.neutral.black,
+    searchButtonBgHover: '#333333',
+    searchButtonText: tokens.colors.neutral.white,
+
+    // CTA buttons
+    primaryButtonBg: theme.palette.common.white,
+    primaryButtonText: tokens.colors.neutral.black,
+    primaryButtonBgHover: alpha(theme.palette.common.white, 0.88),
+
+    secondaryButtonBorder: alpha(theme.palette.common.white, 0.5),
+    secondaryButtonBorderHover: alpha(theme.palette.common.white, 0.8),
+    secondaryButtonBgHover: alpha(theme.palette.common.white, 0.1),
+    secondaryButtonText: theme.palette.common.white,
+
+    tertiaryButtonText: alpha(theme.palette.common.white, 0.8),
+    tertiaryButtonTextHover: theme.palette.common.white,
+
+    // Stats bar
+    statBarBg: theme.palette.background.paper,
+    statValueColor: theme.palette.text.primary,
+    statLabelColor: theme.palette.text.secondary,
+
+    // Photo cards
+    cardOverlay:
+      'linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.20) 55%, transparent 100%)',
+    cardOverlayHover:
+      'linear-gradient(to top, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.35) 60%, transparent 100%)',
+
+    // Misc utility (mode-aware)
+    inputBackground:
+      theme.palette.mode === DarkMode
+        ? alpha(theme.palette.common.white, 0.04)
+        : theme.palette.background.paper,
+    tickerBackground:
+      theme.palette.mode === DarkMode
+        ? alpha(theme.palette.common.white, 0.04)
+        : alpha(theme.palette.common.black, 0.03),
+    tickerText:
+      theme.palette.mode === DarkMode
+        ? alpha(theme.palette.common.white, 0.38)
+        : alpha(theme.palette.common.black, 0.42),
+    subtleSurface:
+      theme.palette.mode === DarkMode
+        ? alpha(theme.palette.common.white, 0.03)
+        : alpha(theme.palette.common.black, 0.02),
+    cardHoverBackground:
+      theme.palette.mode === DarkMode
+        ? alpha(theme.palette.common.white, 0.04)
+        : alpha(theme.palette.common.black, 0.02),
+    cardHoverBorder:
+      theme.palette.mode === DarkMode
+        ? alpha(theme.palette.common.white, 0.2)
+        : alpha(theme.palette.common.black, 0.18),
+    accentBorder:
+      theme.palette.mode === DarkMode
+        ? alpha(theme.palette.common.white, 0.12)
+        : alpha(theme.palette.common.black, 0.1),
   }
 }
 
