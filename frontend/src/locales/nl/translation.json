@@ -28,7 +28,7 @@
     },
     "cardsSection": {
       "title": "Ontdek de collectie",
-      "description": "Blader door producties, reeksen, blogs en drukwerk van VIERNULVIER."
+      "description": "Blader door producties, reeksen, blogs en media van VIERNULVIER."
     },
     "cards": {
       "archive": {
@@ -47,9 +47,9 @@
         "cta": "Lees blogs"
       },
       "prints": {
-        "eyebrow": "04 - Drukwerk",
-        "title": "Ontdek drukwerk",
-        "cta": "Bekijk drukwerk"
+        "eyebrow": "04 - Media",
+        "title": "Ontdek media",
+        "cta": "Bekijk media"
       }
     }
   },

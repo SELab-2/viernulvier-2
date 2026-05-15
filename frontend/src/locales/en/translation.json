@@ -28,7 +28,7 @@
     },
     "cardsSection": {
       "title": "Explore the collection",
-      "description": "Browse productions, series, blogs, and printed materials from VIERNULVIER."
+      "description": "Browse productions, series, blogs, and media from VIERNULVIER."
     },
     "cards": {
       "archive": {
@@ -46,10 +46,10 @@
         "title": "Read the blogs",
         "cta": "Read blogs"
       },
-      "prints": {
-        "eyebrow": "04 - Prints",
-        "title": "Explore printed materials",
-        "cta": "Open prints"
+      "media": {
+        "eyebrow": "04 - Media",
+        "title": "Explore media",
+        "cta": "Open media"
       }
     }
   },
