@@ -101,6 +101,8 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                   <Box
                     key={production.id}
                     sx={{
+                      width: { xs: 'calc(100vw - 80px)', sm: tokens.card.gridCardWidthPx },
+                      maxWidth: 'calc(100vw - 80px)',
                       display: 'flex',
                       alignItems: 'stretch',
                       // make the inner ProductionGridCard fill the slide height
