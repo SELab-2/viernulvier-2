@@ -16,14 +16,16 @@ HTTP access matrix
 ─────────────────────────────────────────────────────────────────────
 Method          internal key    public key      wrong key   no header
 ─────────────────────────────────────────────────────────────────────
-GET  (list)         200             200           401         401
-GET  (retrieve)     200             200           401         401
-POST                201             403           401         401
-PUT                 200             403           401         401
-PATCH               200             403           401         401
-DELETE              204             403           401         401
+GET  (list)         200             200           403         401
+GET  (retrieve)     200             200           403         401
+POST                201             403           403         401
+PUT                 200             403           403         401
+PATCH               200             403           403         401
+DELETE              204             403           403         401
 ─────────────────────────────────────────────────────────────────────
-Note: wrong keys raise AuthenticationFailed and are returned as 401 by the custom exception handler.
+Note: "wrong key" triggers AuthenticationFailed -> 403 (DRF default when
+      no WWW-Authenticate is set). "no header" -> auth returns None ->
+      anonymous -> 401 (DRF sends WWW-Authenticate).
 """
 
 from unittest.mock import MagicMock

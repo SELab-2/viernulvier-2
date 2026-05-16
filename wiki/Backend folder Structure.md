@@ -225,8 +225,7 @@ viernulvier_archive/
 ├── Dockerfile
 ├── manage.py
 ├── pyproject.toml                                      # Tooling configuration
-├── pytest.ini                                          # Pytest/pytest-django configuration
-└── viernulvier_dev                                     # Local helper/virtual environment artifact (not committed)
+└── pytest.ini                                          # Pytest/pytest-django configuration
 ```
 
 ---
