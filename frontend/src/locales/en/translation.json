@@ -135,7 +135,9 @@
         "showMore": "More",
         "showLess": "Less",
         "noGenres": "No genres available.",
-        "noTags": "No tags available."
+        "noTags": "No tags available.",
+        "searchGenres": "Search genres...",
+        "searchTags": "Search tags..."
       },
       "empty": {
         "title": "No productions found",
