@@ -5,7 +5,7 @@ import type { Hall } from '../types/Halls'
 /**
  * Resolves a short venue label for a {@link Hall} for map/list UI.
  *
- * Order of precedence: translated **location** name → **space** name → **hall** name. Empty strings
+ * Order of precedence: translated **location** name -> **space** name -> **hall** name. Empty strings
  * at each step fall through to the next source (see {@link getTranslatedRecord}).
  *
  * @param hall The hall (may include nested `space` / `location`); `null` / `undefined` yields `''`.

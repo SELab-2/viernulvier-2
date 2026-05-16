@@ -10,6 +10,7 @@ function mountShell() {
   const rootEl = document.getElementById('root')!
   // Render an empty StrictMode shell so the page can paint quickly.
   const root = ReactDOM.createRoot(rootEl)
+  ;(window as Window & { __vnv_root__?: ReactDOM.Root }).__vnv_root__ = root
   root.render(
     <React.StrictMode>
       {/* intentionally empty; main.tsx will re-render the real App */}
