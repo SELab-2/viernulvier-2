@@ -1,12 +1,9 @@
 """Tests for the UitDatabaseTheme-to-Genre data migration."""
 
-from types import SimpleNamespace
 import importlib
+from types import SimpleNamespace
 
-
-migration = importlib.import_module(
-    "apps.productions.migrations.0002_merge_uitdatabank_theme_into_genre"
-)
+migration = importlib.import_module("apps.productions.migrations.0002_merge_uitdatabank_theme_into_genre")
 
 
 class QuerySetStub:
