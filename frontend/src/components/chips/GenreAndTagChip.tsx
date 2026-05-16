@@ -4,41 +4,21 @@ import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 
 import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
-import { getQueryKeyForChipType } from './genreAndTagChipUtils'
+import { getQueryKeyForChipType, readMultiParamValues } from './genreAndTagChipUtils'
 import { resolveCurrentLanguage, toLocalizedPath } from '../../utils/localizedRoutes'
 import { getTranslatedRecord } from '../../utils/translations'
 
 import type { GenreAndTagChipProps } from '../../types/GenreAndTagChip'
 import type { MouseEvent } from 'react'
 
-const readMultiParamValues = (searchParams: URLSearchParams, paramName: string): string[] => {
-  const repeatedValues = searchParams.getAll(paramName)
-  if (repeatedValues.length > 0) {
-    return repeatedValues.flatMap((value) =>
-      value
-        .split('-')
-        .map((part) => part.trim())
-        .filter(Boolean),
-    )
-  }
-
-  const serialized = searchParams.get(paramName)
-  if (!serialized) {
-    return []
-  }
-
-  return serialized
-    .split('-')
-    .map((part) => part.trim())
-    .filter(Boolean)
-}
-
 /**
  * Generic chip component that supports both genre and series-tag scenarios.
  *
  * Context behavior:
  * - `search`: toggles the selected value via `onToggle`
- * - `description`: routes to the archive with the chip value in URL query
+ * - `description`: routes to the archive with the chip value in the URL query
+ *   and, when `disableLink` is enabled, preserves any existing genre/tag filters
+ *   already present in the current location search string
  * - `series`: routes to the series detail page `/series/:id`
  * - `static`: visual-only non-clickable chip
  *
@@ -180,7 +160,7 @@ const GenreAndTagChip = ({
       tabIndex={isClickable ? 0 : -1}
       {...(linkTo
         ? disableLink
-          ? { component: 'div', onClick: handleLinkClick }
+          ? { component: 'div' }
           : { component: RouterLink, to: linkTo }
         : { component: 'div' })}
     />

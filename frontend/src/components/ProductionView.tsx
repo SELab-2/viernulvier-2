@@ -24,7 +24,9 @@ export interface ProductionViewProps {
  * fit comfortably on small screens.
  *
  * When `selectedGenreIds` is provided, productions whose genres include at least
- * one selected id are sorted to the front of the list.
+ * one selected id are sorted to the front of the list. Chip interactivity is
+ * handled by the card components themselves, so this view only controls layout
+ * and genre-based sorting.
  *
  * @param props.productions List of productions to display.
  * @param props.selectedGenreIds Genre ids currently active in the parent filter state.
