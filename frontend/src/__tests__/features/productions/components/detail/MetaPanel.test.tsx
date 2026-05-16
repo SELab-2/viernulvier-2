@@ -1,0 +1,337 @@
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+
+import MetaPanel from '../../../../../features/productions/components/detail/MetaPanel'
+
+import type { Production } from '../../../../../types/Productions'
+import type { ComponentProps } from 'react'
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: { language: 'nl' },
+    t: (key: string, defaultValueOrOptions?: any, maybeOptions?: { count?: number }) => {
+      const options =
+        typeof defaultValueOrOptions === 'string' ? maybeOptions : defaultValueOrOptions
+      const defaultValue: string =
+        typeof defaultValueOrOptions === 'string' ? defaultValueOrOptions : key
+
+      if (options?.count != null) {
+        const isSingular = options.count === 1
+
+        if (key === 'productions.detail.meta.venues') {
+          return isSingular ? 'Locatie' : 'Locaties'
+        }
+
+        if (key === 'productions.detail.meta.genres') {
+          return isSingular ? 'Genre' : 'Genres'
+        }
+
+        if (key === 'productions.detail.meta.series') {
+          return isSingular ? 'Reeks' : 'Reeksen'
+        }
+      }
+
+      return defaultValue
+    },
+  }),
+}))
+
+const mockNavigate = jest.fn()
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
+}))
+
+const renderMetaPanel = (
+  production: Production,
+  props: Partial<ComponentProps<typeof MetaPanel>> = {},
+) =>
+  render(
+    <MemoryRouter>
+      <MetaPanel production={production} {...props} />
+    </MemoryRouter>,
+  )
+
+afterEach(() => jest.clearAllMocks())
+
+describe('MetaPanel component', () => {
+  const productionStub: Production = {
+    id: 1,
+    title: { nl: 'Titel' },
+    display_title: 'Display titel',
+    artist_name: { nl: 'Kunstenaar' },
+    display_artist_name: 'Artist display',
+    tagline: { nl: 'Tag' },
+    description: { nl: 'Omschrijving' },
+    teaser: { nl: 'Teaser' },
+    media_gallery: { id: 0, name: null, media_items: [] },
+    events: [
+      {
+        id: 1,
+        production: null as unknown as Production,
+        production_display: 'P1',
+        hall: null,
+        hall_display: 'Main hall',
+        starts_at: '2025-08-01T20:00:00Z',
+        ends_at: '2025-08-01T22:00:00Z',
+        prices: [],
+      },
+    ],
+    genres: [
+      {
+        id: 1,
+        type: 'genre',
+        name: { nl: 'Drama' },
+        display_name: 'Drama',
+        vendor_id: null,
+      },
+    ],
+    tags: [
+      {
+        id: 1,
+        url: '',
+        source: 'local',
+        type: 'tag',
+        is_enabled: true,
+        image: null,
+        display_name: 'Tag1',
+        display_short_description: null,
+        display_excerpt: null,
+        display_url_title: null,
+        first_production_start: null,
+        last_production_end: null,
+        name: null,
+        excerpt: null,
+        short_description: null,
+        url_title: null,
+      },
+    ],
+    uit_database_type: { id: 1, name: 'Type' },
+    performer_type: 'group',
+    attendance_mode: 'offline',
+    first_event_start: null,
+    last_event_end: null,
+  }
+
+  it('renders production meta panel with production data', () => {
+    renderMetaPanel(productionStub)
+
+    expect(screen.getByText('Titel')).toBeInTheDocument()
+    expect(screen.getByText('Periode')).toBeInTheDocument()
+    expect(screen.getByText('Locatie')).toBeInTheDocument()
+    expect(screen.getByText('Genre')).toBeInTheDocument()
+    expect(screen.getByText('Reeks')).toBeInTheDocument()
+    expect(screen.getAllByText('Type').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('Groep')).toBeInTheDocument()
+    expect(screen.getByText('Fysiek')).toBeInTheDocument()
+    expect(screen.getByText('Tag1')).toBeInTheDocument()
+  })
+
+  it('does not render empty fields and no tags section for empty production', () => {
+    renderMetaPanel({
+      ...productionStub,
+      title: {},
+      display_title: 'Titel',
+      tagline: {},
+      artist_name: {},
+      display_artist_name: '',
+      events: [],
+      genres: [],
+      tags: [],
+      uit_database_type: null,
+      performer_type: '',
+      attendance_mode: '',
+    })
+
+    expect(screen.getByText('Titel')).toBeInTheDocument()
+    expect(screen.queryByText('Periode')).not.toBeInTheDocument()
+    expect(screen.queryByText('Locatie')).not.toBeInTheDocument()
+    expect(screen.queryByText('Genre')).not.toBeInTheDocument()
+    expect(screen.queryByText('Reeks')).not.toBeInTheDocument()
+    expect(screen.queryByText('Type')).not.toBeInTheDocument()
+    expect(screen.queryByText('Uitvoering')).not.toBeInTheDocument()
+    expect(screen.queryByText('Aanwezigheid')).not.toBeInTheDocument()
+  })
+
+  it('renders solo/online labels when production has performer/attendance', () => {
+    renderMetaPanel({
+      ...productionStub,
+      title: {},
+      display_title: 'Titel',
+      artist_name: {},
+      display_artist_name: '',
+      tagline: {},
+      performer_type: 'solo',
+      attendance_mode: 'online',
+      events: [],
+      genres: [],
+      tags: [],
+      uit_database_type: null,
+    })
+
+    expect(screen.getByText('Titel')).toBeInTheDocument()
+    expect(screen.getByText('Solo')).toBeInTheDocument()
+    expect(screen.getByText('Online')).toBeInTheDocument()
+  })
+
+  it('formats multi-day dates and de-duplicates localized venue names', () => {
+    renderMetaPanel({
+      ...productionStub,
+      events: [
+        {
+          id: 1,
+          production: null as unknown as Production,
+          production_display: 'P1',
+          hall: {
+            id: 1,
+            space: null,
+            seat_selection: false,
+            open_seating: true,
+            name: { nl: 'Theaterzaal' },
+            display_name: 'Theaterzaal',
+            remark: null,
+          },
+          hall_display: 'Fallback hall',
+          starts_at: '2025-08-03T20:00:00Z',
+          ends_at: '2025-08-03T22:00:00Z',
+          prices: [],
+        },
+        {
+          id: 2,
+          production: null as unknown as Production,
+          production_display: 'P1',
+          hall: {
+            id: 1,
+            space: null,
+            seat_selection: false,
+            open_seating: true,
+            name: { nl: 'Theaterzaal' },
+            display_name: 'Theaterzaal',
+            remark: null,
+          },
+          hall_display: 'Fallback hall',
+          starts_at: '2025-08-01T20:00:00Z',
+          ends_at: '2025-08-01T22:00:00Z',
+          prices: [],
+        },
+        {
+          id: 3,
+          production: null as unknown as Production,
+          production_display: 'P1',
+          hall: null,
+          hall_display: 'Fallback hall',
+          starts_at: null,
+          ends_at: null,
+          prices: [],
+        },
+      ],
+    })
+
+    expect(screen.getByText(/1 aug 2025 - 3 aug 2025/)).toBeInTheDocument()
+    expect(screen.getByText('Theaterzaal, Fallback hall')).toBeInTheDocument()
+  })
+
+  it('renders plural meta labels when multiple venues, genres or series are present', () => {
+    renderMetaPanel({
+      ...productionStub,
+      events: [
+        ...(productionStub.events ?? []),
+        {
+          id: 4,
+          production: null as unknown as Production,
+          production_display: 'P2',
+          hall: null,
+          hall_display: 'Second hall',
+          starts_at: '2025-08-02T20:00:00Z',
+          ends_at: '2025-08-02T22:00:00Z',
+          prices: [],
+        },
+      ],
+      genres: [
+        ...productionStub.genres,
+        {
+          id: 2,
+          type: 'genre',
+          name: { nl: 'Muziek' },
+          display_name: 'Muziek',
+          vendor_id: null,
+        },
+      ],
+      tags: [
+        ...productionStub.tags,
+        {
+          id: 2,
+          url: '',
+          source: 'local',
+          type: 'tag',
+          is_enabled: true,
+          image: null,
+          display_name: 'Tag2',
+          display_short_description: null,
+          display_excerpt: null,
+          display_url_title: null,
+          first_production_start: null,
+          last_production_end: null,
+          name: null,
+          excerpt: null,
+          short_description: null,
+          url_title: null,
+        },
+      ],
+    })
+
+    expect(screen.getByText('Locaties')).toBeInTheDocument()
+    expect(screen.getByText('Genres')).toBeInTheDocument()
+    expect(screen.getByText('Reeksen')).toBeInTheDocument()
+  })
+
+  it('uses localized fallbacks for genres and tags when display names are missing', () => {
+    renderMetaPanel({
+      ...productionStub,
+      tags: [
+        {
+          ...productionStub.tags[0],
+          id: 2,
+          display_name: null,
+          name: { nl: 'Naam-tag' },
+        },
+        {
+          ...productionStub.tags[0],
+          id: 3,
+          display_name: null,
+          name: null,
+          url_title: { nl: 'url-tag' },
+        },
+        {
+          ...productionStub.tags[0],
+          id: 4,
+          display_name: null,
+          name: null,
+          url_title: null,
+          type: 'type-tag',
+        },
+      ],
+      genres: [
+        {
+          id: 2,
+          type: 'genre',
+          name: { nl: 'Genre uit naam' },
+          display_name: null,
+          vendor_id: null,
+        },
+      ],
+    })
+
+    expect(screen.getAllByText('Genre uit naam')).toHaveLength(1)
+    expect(screen.getByText('Naam-tag')).toBeInTheDocument()
+    expect(screen.getByText('url-tag')).toBeInTheDocument()
+    expect(screen.getByText('type-tag')).toBeInTheDocument()
+  })
+
+  it('can hide the header while still rendering metadata rows', () => {
+    renderMetaPanel(productionStub, { showHeader: false, sx: [{ pt: 0 }] })
+
+    expect(screen.queryByRole('heading', { name: 'Titel' })).not.toBeInTheDocument()
+    expect(screen.getByText('Periode')).toBeInTheDocument()
+  })
+})

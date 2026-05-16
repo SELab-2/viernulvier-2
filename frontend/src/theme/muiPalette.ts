@@ -1,8 +1,9 @@
 /**
  * Material-UI Theme Configuration
  *
- * Centralizes all theme creation and palette configuration using design tokens.
- * Supports light and dark modes with semantic color mapping.
+ * Centralizes theme creation using design tokens and supports both light
+ * and dark modes. Defines palette, typography, spacing, and component-level
+ * overrides for consistent styling across the application.
  */
 
 import { alpha, createTheme, type ThemeOptions } from '@mui/material/styles'
@@ -10,7 +11,7 @@ import { alpha, createTheme, type ThemeOptions } from '@mui/material/styles'
 import { tokens } from './tokens'
 import { DarkMode, LightMode, type AppThemeMode } from '../types/Theme'
 
-// Type augmentation for custom accent palette
+// Type augmentation for custom accent palette support in MUI
 declare module '@mui/material/styles' {
   interface Palette {
     accent: Palette['primary']
@@ -20,6 +21,7 @@ declare module '@mui/material/styles' {
   }
 }
 
+// Enable `color="accent"` usage in MUI Button component
 declare module '@mui/material/Button' {
   interface ButtonPropsColorOverrides {
     accent: true
@@ -27,11 +29,17 @@ declare module '@mui/material/Button' {
 }
 
 /**
- * Creates a Material-UI theme for the given mode (light or dark).
- * All colors reference design tokens for consistency.
+ * Creates a fully configured Material UI theme based on the selected mode.
  *
- * @param mode - 'light' or 'dark'
- * @returns MUI Theme object ready to use with ThemeProvider
+ * The theme is built from design tokens and includes:
+ * - Light/dark palette switching
+ * - Semantic accent colors
+ * - Typography scale
+ * - Responsive breakpoints
+ * - Component overrides
+ *
+ * @param mode UI theme mode ('light' or 'dark')
+ * @returns Fully configured MUI Theme instance
  */
 export const createAppTheme = (mode: AppThemeMode = LightMode) => {
   const isDark = mode === DarkMode
@@ -128,7 +136,7 @@ export const createAppTheme = (mode: AppThemeMode = LightMode) => {
     shape: {
       borderRadius: parseInt(tokens.borderRadius.md),
     },
-    spacing: 8, // 8px base unit for MUI spacing scale
+    spacing: 8,
     shadows: [
       'none',
       tokens.shadows.sm,
@@ -193,5 +201,5 @@ export const createAppTheme = (mode: AppThemeMode = LightMode) => {
   return createTheme(themeOptions)
 }
 
-// Export augmentation marker
+// Export augmentation marker (keeps TS module augmentation valid)
 export {}
