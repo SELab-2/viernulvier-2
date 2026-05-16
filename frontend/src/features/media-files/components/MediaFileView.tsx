@@ -6,17 +6,17 @@ import { Box, IconButton, Modal, Typography } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import MediaFilePreview from './MediaFilePreview'
-import CollectionView from '../../../shared/components/CollectionView'
 import MediaFileGridCard from './MediaFileGridCard'
 import MediaFileListCard from './MediaFileListCard'
+import MediaFilePreview from './MediaFilePreview'
+import CollectionView from '../../../shared/components/CollectionView'
 import { useCollectionPageNotification } from '../../../shared/hooks/useCollectionPageNotification'
 import { tokens } from '../../../theme/tokens'
 import { DarkMode } from '../../../types/Theme'
 import { getTranslatedRecord } from '../../../utils/translations'
 
-import type { MediaFile } from '../../../types/MediaFiles'
 import type { SearchViewMode } from '../../../shared/components/search/types'
+import type { MediaFile } from '../../../types/MediaFiles'
 
 // Types
 

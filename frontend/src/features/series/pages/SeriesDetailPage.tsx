@@ -173,8 +173,6 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
   /**
    * Initial fetch: loads tag + first page of productions.
    */
-  // Refetch only when the series id changes; language switches should only
-  // update labels and redirects, not restart the API request.
   useEffect(() => {
     let isActive = true
 
@@ -222,7 +220,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
 
         setError('series.fetchError')
       } finally {
-        if (isActive && isLoading) {
+        if (isActive) {
           setIsLoading(false)
         }
       }
@@ -233,7 +231,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     return () => {
       isActive = false
     }
-  }, [numericId, isLoading])
+  }, [numericId])
 
   /**
    * Loads the next page of productions.
@@ -259,10 +257,12 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
         },
       })
 
+      const nextResults = response?.results ?? []
+
       setSeriesProductions((currentProductions) =>
-        sortProductionsByDateDesc([...currentProductions, ...(response.results ?? [])]),
+        sortProductionsByDateDesc([...currentProductions, ...nextResults]),
       )
-      setTotalProductions(response.count ?? totalProductions)
+      setTotalProductions(response?.count ?? totalProductions)
       setCurrentPage(nextPage)
     } catch (error: unknown) {
       if (error instanceof ApiError && (error.status === 429 || Number(error.message) === 429)) {

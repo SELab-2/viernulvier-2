@@ -34,47 +34,75 @@ jest.mock('@mui/material', () => {
   }
 })
 
-jest.mock('../../../components/media-files/MediaFileGrid', () => ({
+jest.mock('../../../../shared/components/GenericList', () => ({
   __esModule: true,
   default: ({
-    mediaFiles,
-    onOpenMediaFile,
+    items,
+    getKey,
+    renderItem,
   }: {
-    mediaFiles: Array<{ id: number; filename: string }>
-    onOpenMediaFile: (f: { id: number; filename: string }) => void
-  }) => (
-    <div data-testid="grid-view">
-      {mediaFiles.map((f) => (
-        <button key={f.id} onClick={() => onOpenMediaFile(f)}>
-          {f.filename}
-        </button>
-      ))}
-      grid:{mediaFiles.length}
-    </div>
-  ),
-}))
-
-jest.mock('../../../components/media-files/MediaFileList', () => ({
-  __esModule: true,
-  default: ({
-    mediaFiles,
-    onOpenMediaFile,
-  }: {
-    mediaFiles: Array<{ id: number; filename: string }>
-    onOpenMediaFile: (f: { id: number; filename: string }) => void
+    items: Array<{ id: number }>
+    getKey: (item: { id: number }) => React.Key
+    renderItem: (item: { id: number }) => React.ReactNode
   }) => (
     <div data-testid="list-view">
-      {mediaFiles.map((f) => (
-        <button key={f.id} onClick={() => onOpenMediaFile(f)}>
-          {f.filename}
-        </button>
+      {items.map((item) => (
+        <React.Fragment key={String(getKey(item))}>{renderItem(item)}</React.Fragment>
       ))}
-      list:{mediaFiles.length}
     </div>
   ),
 }))
 
-jest.mock('../../../components/media-files/MediaFilePreview', () => ({
+jest.mock('../../../../shared/components/GenericGrid', () => ({
+  __esModule: true,
+  default: ({
+    items,
+    getKey,
+    renderItem,
+  }: {
+    items: Array<{ id: number }>
+    getKey: (item: { id: number }) => React.Key
+    renderItem: (item: { id: number }) => React.ReactNode
+  }) => (
+    <div data-testid="grid-view">
+      {items.map((item) => (
+        <React.Fragment key={String(getKey(item))}>{renderItem(item)}</React.Fragment>
+      ))}
+    </div>
+  ),
+}))
+
+jest.mock('../../../../features/media-files/components/MediaFileGridCard', () => ({
+  __esModule: true,
+  default: ({
+    mediaFile,
+    onOpen,
+  }: {
+    mediaFile: { id: number; filename: string }
+    onOpen?: (f: { id: number; filename: string }) => void
+  }) => (
+    <button type="button" onClick={() => onOpen?.(mediaFile)}>
+      {mediaFile.filename}
+    </button>
+  ),
+}))
+
+jest.mock('../../../../features/media-files/components/MediaFileListCard', () => ({
+  __esModule: true,
+  default: ({
+    mediaFile,
+    onOpen,
+  }: {
+    mediaFile: { id: number; filename: string }
+    onOpen?: (f: { id: number; filename: string }) => void
+  }) => (
+    <button type="button" onClick={() => onOpen?.(mediaFile)}>
+      {mediaFile.filename}
+    </button>
+  ),
+}))
+
+jest.mock('../../../../features/media-files/components/MediaFilePreview', () => ({
   __esModule: true,
   default: ({ mediaFile }: { mediaFile: { filename: string } }) => (
     <div data-testid="media-preview">{mediaFile.filename}</div>
@@ -104,11 +132,11 @@ jest.mock('react-i18next', () => ({
 }))
 
 // getTranslatedRecord -> return null so the description box is not rendered
-jest.mock('../../../utils/translations', () => ({
+jest.mock('../../../../utils/translations', () => ({
   getTranslatedRecord: () => null,
 }))
 
-import MediaFileView from '../../../components/media-files/MediaFileView'
+import MediaFileView from '../../../../features/media-files/components/MediaFileView'
 
 // Helpers
 
@@ -124,7 +152,8 @@ describe('MediaFileView - layout selection', () => {
 
     render(<MediaFileView mediaFiles={[file1 as never]} layout="list" />)
 
-    expect(screen.getByTestId('list-view')).toHaveTextContent('list:1')
+    expect(screen.getByTestId('list-view')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: file1.filename })).toBeInTheDocument()
     expect(screen.queryByTestId('grid-view')).not.toBeInTheDocument()
   })
 
@@ -133,7 +162,9 @@ describe('MediaFileView - layout selection', () => {
 
     render(<MediaFileView mediaFiles={[file1, file2] as never} layout="grid" />)
 
-    expect(screen.getByTestId('grid-view')).toHaveTextContent('grid:2')
+    expect(screen.getByTestId('grid-view')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: file1.filename })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: file2.filename })).toBeInTheDocument()
     expect(screen.queryByTestId('list-view')).not.toBeInTheDocument()
   })
 
@@ -158,14 +189,13 @@ describe('MediaFileView - layout selection', () => {
 // Empty state
 
 describe('MediaFileView - empty state', () => {
-  it('renders the empty message when mediaFiles is empty', () => {
+  it('renders an empty collection when mediaFiles is empty', () => {
     useMediaQueryMock.mockReturnValue(false)
 
     render(<MediaFileView mediaFiles={[]} />)
 
-    expect(screen.getByText('No media files found')).toBeInTheDocument()
-    expect(screen.queryByTestId('list-view')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('grid-view')).not.toBeInTheDocument()
+    expect(screen.getByTestId('list-view')).toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 })
 

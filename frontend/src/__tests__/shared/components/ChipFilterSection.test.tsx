@@ -3,10 +3,12 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 import { I18nextProvider } from 'react-i18next'
 
-import ChipFilterSection, { type ChipOption } from '../../../features/productions/components/filter-panel/ChipFilterSection'
+import ChipFilterSection, {
+  type ChipOption,
+} from '../../../features/productions/components/filter-panel/ChipFilterSection'
 import i18n from '../../../i18n'
 
-jest.mock('../../components/chips/GenreAndTagChip', () => ({
+jest.mock('../../../shared/components/chips/GenreAndTagChip', () => ({
   __esModule: true,
   default: ({
     id,

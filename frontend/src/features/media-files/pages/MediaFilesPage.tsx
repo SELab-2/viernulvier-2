@@ -5,18 +5,15 @@ import { useTranslation } from 'react-i18next'
 import { useNotification } from '../../../contexts/notificationContextShared'
 import { ApiError } from '../../../services/ApiTypes'
 import { getMediaFiles } from '../../../services/media_files/MediaFiles'
-import CollectionView from '../../../shared/components/CollectionView'
 import CollectionResultsSkeleton from '../../../shared/components/skeletons/CollectionResultsSkeleton'
 import useCollectionQuery from '../../../shared/hooks/useCollectionQuery'
 import { useSearchBarUrlState } from '../../../shared/hooks/useSearchBarUrlState'
 import useSearchDraft from '../../../shared/hooks/useSearchDraft'
 import CollectionPageLayout from '../../../shared/layouts/CollectionPageLayout'
-import MediaFileGridCard from '../components/MediaFileGridCard'
-import MediaFileListCard from '../components/MediaFileListCard'
+import MediaFileView from '../components/MediaFileView'
 
 import type { SearchSortDirection, SearchSortTarget } from '../../../shared/components/search/types'
 import type { MediaFile } from '../../../types/MediaFiles'
-import MediaFileView from '../components/MediaFileView'
 
 const PAGE_SIZE = 12
 
@@ -154,12 +151,7 @@ const MediaFilesPage = () => {
   }
 
   // Renders collection results using shared abstraction
-  const resultsContent = (
-    <MediaFileView
-      mediaFiles={mediaFiles}
-      layout={viewMode}
-    />
-  )
+  const resultsContent = <MediaFileView mediaFiles={mediaFiles} layout={viewMode} />
 
   return (
     <CollectionPageLayout
