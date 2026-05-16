@@ -16,6 +16,7 @@ import MediaFileListCard from '../components/MediaFileListCard'
 
 import type { SearchSortDirection, SearchSortTarget } from '../../../shared/components/search/types'
 import type { MediaFile } from '../../../types/MediaFiles'
+import MediaFileView from '../components/MediaFileView'
 
 const PAGE_SIZE = 12
 
@@ -154,12 +155,9 @@ const MediaFilesPage = () => {
 
   // Renders collection results using shared abstraction
   const resultsContent = (
-    <CollectionView
-      items={mediaFiles}
+    <MediaFileView
+      mediaFiles={mediaFiles}
       layout={viewMode}
-      getKey={(mediaFile) => mediaFile.id}
-      renderListItem={(mediaFile) => <MediaFileListCard mediaFile={mediaFile} />}
-      renderGridItem={(mediaFile) => <MediaFileGridCard mediaFile={mediaFile} />}
     />
   )
 
