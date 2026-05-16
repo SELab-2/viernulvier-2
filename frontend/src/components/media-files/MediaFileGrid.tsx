@@ -7,9 +7,10 @@ import type { MediaFile } from '../../types/MediaFiles'
 
 export interface MediaFileGridProps {
   mediaFiles: MediaFile[]
+  onOpenMediaFile?: (mediaFile: MediaFile) => void
 }
 
-const MediaFileGrid = ({ mediaFiles }: MediaFileGridProps) => {
+const MediaFileGrid = ({ mediaFiles, onOpenMediaFile }: MediaFileGridProps) => {
   return (
     <Box
       sx={{
@@ -22,7 +23,9 @@ const MediaFileGrid = ({ mediaFiles }: MediaFileGridProps) => {
       <GenericGrid
         items={mediaFiles}
         getKey={(mediaFile) => mediaFile.id}
-        renderItem={(mediaFile) => <MediaFileGridCard mediaFile={mediaFile} />}
+        renderItem={(mediaFile) => (
+          <MediaFileGridCard mediaFile={mediaFile} onOpen={onOpenMediaFile} />
+        )}
       />
     </Box>
   )

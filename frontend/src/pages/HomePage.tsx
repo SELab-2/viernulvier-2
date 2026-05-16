@@ -63,9 +63,9 @@ const LANDING_CARDS: LandingCard[] = [
     index: 2,
   },
   {
-    eyebrowKey: 'landing.cards.prints.eyebrow',
-    titleKey: 'landing.cards.prints.title',
-    ctaKey: 'landing.cards.prints.cta',
+    eyebrowKey: 'landing.cards.media.eyebrow',
+    titleKey: 'landing.cards.media.title',
+    ctaKey: 'landing.cards.media.cta',
     to: '/media',
     image: '/homepage_media.webp',
     index: 3,
