@@ -18,7 +18,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin
-from apps.core.admin_widgets import enable_rich_text_for_fields
+
 from apps.productions.models import ProductionTag
 
 from .models import Tag, TagTranslation
@@ -46,11 +46,6 @@ class TagAdminForm(forms.ModelForm):
         }
 
 
-@enable_rich_text_for_fields(
-    "short_description",
-    "excerpt",
-    widget_attrs={"data-richtext-headings": "h1,h2,h3,h4"},
-)
 class TagTranslationInline(admin.StackedInline):
     """
     Inline for editing localised tag fields directly inside the Tag change page.
