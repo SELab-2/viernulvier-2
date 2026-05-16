@@ -8,7 +8,6 @@ from django.utils.html import format_html
 
 from apps.core.admin import BaseAdmin
 
-
 from .models import Blog, BlogTranslation
 
 

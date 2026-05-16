@@ -18,7 +18,6 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from apps.core.admin import BaseAdmin
-
 from apps.productions.models import ProductionTag
 
 from .models import Tag, TagTranslation

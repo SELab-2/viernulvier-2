@@ -21,7 +21,6 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 
 from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
-
 from apps.genres.models import Genre
 from apps.tags.models import Tag
 
