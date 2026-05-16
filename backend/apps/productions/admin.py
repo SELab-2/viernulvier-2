@@ -21,7 +21,6 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 
 from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
-from apps.core.admin_widgets import enable_rich_text_for_fields
 from apps.genres.models import Genre
 from apps.tags.models import Tag
 
@@ -71,11 +70,6 @@ class ProductionTranslationForm(forms.ModelForm):
         }
 
 
-@enable_rich_text_for_fields(
-    "teaser",
-    "description",
-    widget_attrs={"data-richtext-headings": "h1,h2,h3,h4"},
-)
 class ProductionTranslationInline(admin.StackedInline):
     """
     Inline for editing localised text fields directly inside the
