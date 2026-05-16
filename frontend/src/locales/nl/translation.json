@@ -28,7 +28,7 @@
     },
     "cardsSection": {
       "title": "Ontdek de collectie",
-      "description": "Blader door producties, reeksen, blogs en drukwerk van VIERNULVIER."
+      "description": "Blader door producties, reeksen, blogs en media van VIERNULVIER."
     },
     "cards": {
       "archive": {
@@ -46,10 +46,10 @@
         "title": "Lees de blogs",
         "cta": "Lees blogs"
       },
-      "prints": {
-        "eyebrow": "04 - Drukwerk",
-        "title": "Ontdek drukwerk",
-        "cta": "Bekijk drukwerk"
+      "media": {
+        "eyebrow": "04 - Media",
+        "title": "Ontdek media",
+        "cta": "Bekijk media"
       }
     }
   },
@@ -312,6 +312,12 @@
       "retry": "Opnieuw proberen",
       "fallback": "Kon mediabestanden niet laden.",
       "notification": "Er ging iets mis bij het laden van de mediabestanden."
+    },
+    "preview": {
+      "close": "Sluit voorvertoning",
+      "previous": "Vorig bestand",
+      "next": "Volgend bestand",
+      "downloadFailed": "Download mislukt"
     },
     "empty": {
       "title": "Geen mediabestanden gevonden.",

@@ -20,8 +20,11 @@ function loadIndexCssDeferred() {
   document.head.appendChild(link)
 }
 
-const existingRoot = (window as Window & { __vnv_root__?: ReactDOM.Root }).__vnv_root__
-const root = existingRoot ?? ReactDOM.createRoot(document.getElementById('root')!)
+// Reuse the root created by bootstrap.tsx to avoid calling createRoot() twice
+const existingRoot = (window as Window & { __reactRoot?: ReturnType<typeof ReactDOM.createRoot> })
+  .__reactRoot
+const root = existingRoot || ReactDOM.createRoot(document.getElementById('root')!)
+
 root.render(
   <React.StrictMode>
     <App />

@@ -10,6 +10,7 @@ import type { MediaFile } from '../../../types/MediaFiles'
  */
 export interface MediaFileGridProps {
   mediaFiles: MediaFile[]
+  onOpenMediaFile?: (mediaFile: MediaFile) => void
 }
 
 /**
@@ -18,7 +19,7 @@ export interface MediaFileGridProps {
  * Each item is rendered using MediaFileGridCard.
  * The wrapper Box ensures centered alignment of grid items.
  */
-const MediaFileGrid = ({ mediaFiles }: MediaFileGridProps) => {
+const MediaFileGrid = ({ mediaFiles, onOpenMediaFile }: MediaFileGridProps) => {
   return (
     <Box
       sx={{
@@ -32,7 +33,9 @@ const MediaFileGrid = ({ mediaFiles }: MediaFileGridProps) => {
       <GenericGrid
         items={mediaFiles}
         getKey={(mediaFile) => mediaFile.id}
-        renderItem={(mediaFile) => <MediaFileGridCard mediaFile={mediaFile} />}
+        renderItem={(mediaFile) => (
+          <MediaFileGridCard mediaFile={mediaFile} onOpen={onOpenMediaFile} />
+        )}
       />
     </Box>
   )

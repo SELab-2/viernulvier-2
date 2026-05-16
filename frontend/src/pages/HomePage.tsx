@@ -63,9 +63,9 @@ const LANDING_CARDS: LandingCard[] = [
     index: 2,
   },
   {
-    eyebrowKey: 'landing.cards.prints.eyebrow',
-    titleKey: 'landing.cards.prints.title',
-    ctaKey: 'landing.cards.prints.cta',
+    eyebrowKey: 'landing.cards.media.eyebrow',
+    titleKey: 'landing.cards.media.title',
+    ctaKey: 'landing.cards.media.cta',
     to: '/media',
     image: '/homepage_media.webp',
     index: 3,
@@ -150,8 +150,8 @@ const HomePage = () => {
       <Box
         sx={{
           position: 'relative',
-          height: { xs: '72vh', md: '84vh' },
-          minHeight: { xs: 440, md: 580 },
+          height: { xs: '72vh', md: '78vh' },
+          minHeight: { xs: 560, md: 580 },
           overflow: 'hidden',
           background: s.heroFallbackGradient,
         }}
@@ -189,6 +189,7 @@ const HomePage = () => {
             flexDirection: 'column',
             justifyContent: 'flex-end',
             pb: { xs: 6, md: 8 },
+            pt: { xs: '72px', md: '88px' },
           }}
         >
           <Stack spacing={3.5} sx={{ maxWidth: 660, animation: `${fadeUp} 600ms ease both` }}>

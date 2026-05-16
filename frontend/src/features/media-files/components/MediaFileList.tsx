@@ -8,6 +8,7 @@ import type { MediaFile } from '../../../types/MediaFiles'
  */
 export interface MediaFileListProps {
   mediaFiles: MediaFile[]
+  onOpenMediaFile?: (mediaFile: MediaFile) => void
 }
 
 /**
@@ -16,12 +17,14 @@ export interface MediaFileListProps {
  * Each item is rendered via MediaFileListCard.
  * The list is keyed by mediaFile.id to ensure stable rendering.
  */
-const MediaFileList = ({ mediaFiles }: MediaFileListProps) => {
+const MediaFileList = ({ mediaFiles, onOpenMediaFile }: MediaFileListProps) => {
   return (
     <GenericList
       items={mediaFiles}
       getKey={(mediaFile) => mediaFile.id}
-      renderItem={(mediaFile) => <MediaFileListCard mediaFile={mediaFile} />}
+      renderItem={(mediaFile) => (
+        <MediaFileListCard mediaFile={mediaFile} onOpen={onOpenMediaFile} />
+      )}
     />
   )
 }

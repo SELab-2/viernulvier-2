@@ -16,6 +16,8 @@ function mountShell() {
       {/* intentionally empty; main.tsx will re-render the real App */}
     </React.StrictMode>,
   )
+  // Store the root globally so main.tsx can reuse it instead of creating a new one
+  ;(window as Window & { __reactRoot?: ReturnType<typeof ReactDOM.createRoot> }).__reactRoot = root
 }
 
 mountShell()

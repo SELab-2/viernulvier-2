@@ -20,6 +20,7 @@ import type { MediaFile } from '../../../types/MediaFiles'
  */
 export interface MediaFileGridCardProps {
   mediaFile: MediaFile
+  onOpen?: (mediaFile: MediaFile) => void
 }
 
 /**
@@ -28,7 +29,7 @@ export interface MediaFileGridCardProps {
  * Used in grid layouts (responsive cards).
  * Shows preview + metadata in a vertical layout.
  */
-const MediaFileGridCard = ({ mediaFile }: MediaFileGridCardProps) => {
+const MediaFileGridCard = ({ mediaFile, onOpen }: MediaFileGridCardProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
   const { t, i18n } = useTranslation()
@@ -47,6 +48,15 @@ const MediaFileGridCard = ({ mediaFile }: MediaFileGridCardProps) => {
     <Stack
       component="a"
       href={fileUrl}
+      onClick={(event) => {
+        if (!onOpen) {
+          return
+        }
+
+        event.preventDefault()
+        onOpen(mediaFile)
+      }}
+      aria-label={mediaFile.filename}
       sx={{
         ...commonStyles.cardBase,
         width: { xs: '100%', sm: 350 },
@@ -90,14 +100,15 @@ const MediaFileGridCard = ({ mediaFile }: MediaFileGridCardProps) => {
 
           <Typography
             variant="body2"
-            color="text.secondary"
+            component="div"
             sx={{
               display: '-webkit-box',
               WebkitLineClamp: 3,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
               minHeight: 60,
-              wordBreak: 'break-word',
+              fontSize: 'inherit',
+              color: 'text.secondary',
             }}
           >
             {description || fileTypeLabel}
