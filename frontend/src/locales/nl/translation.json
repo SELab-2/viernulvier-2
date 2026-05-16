@@ -135,7 +135,9 @@
         "showMore": "Meer",
         "showLess": "Minder",
         "noGenres": "Geen genres beschikbaar.",
-        "noTags": "Geen tags beschikbaar."
+        "noTags": "Geen tags beschikbaar.",
+        "searchGenres": "Zoek genres...",
+        "searchTags": "Zoek tags..."
       },
       "empty": {
         "title": "Geen producties gevonden",
