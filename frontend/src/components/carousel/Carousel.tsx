@@ -47,9 +47,10 @@ function Carousel({
 }: CarouselProps) {
   const slides = useMemo(() => Children.toArray(children), [children])
 
-  const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'start', loop, duration: 28 }, [
-    WheelGesturesPlugin(),
-  ])
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { align: 'start', loop, duration: 28, slidesToScroll: 'auto' },
+    [WheelGesturesPlugin()],
+  )
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
@@ -144,7 +145,13 @@ function Carousel({
           {slides.map((slide, index) => (
             <Box
               key={index}
-              sx={{ px: 1, boxSizing: 'border-box', display: 'flex', alignItems: 'stretch' }}
+              sx={{
+                flex: '0 0 auto',
+                px: 1,
+                boxSizing: 'border-box',
+                display: 'flex',
+                alignItems: 'stretch',
+              }}
             >
               {slide}
             </Box>

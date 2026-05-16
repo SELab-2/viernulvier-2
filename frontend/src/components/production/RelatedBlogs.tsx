@@ -43,6 +43,8 @@ function RelatedBlogs({ blogs }: RelatedBlogsProps) {
           <Box
             key={blog.id}
             sx={{
+              width: { xs: 'calc(100vw - 80px)', sm: tokens.card.gridCardWidthPx },
+              maxWidth: 'calc(100vw - 80px)',
               display: 'flex',
               alignItems: 'stretch',
               '& > a': {
