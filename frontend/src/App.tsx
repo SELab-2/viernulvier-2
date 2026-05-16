@@ -29,7 +29,7 @@ const App = () => {
     })
   }
 
-  preload('vnv_archive_logo.webp', { as: 'image', fetchPriority: 'high' })
+  preload('/vnv_archive_logo.png', { as: 'image', fetchPriority: 'high' })
 
   return (
     <ThemeProvider theme={theme}>
