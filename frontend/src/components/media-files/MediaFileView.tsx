@@ -56,11 +56,14 @@ const MediaFileModal = ({
         onNavigate((selectedIndex as number) - 1)
       } else if (e.key === 'ArrowRight' && hasNext) {
         onNavigate((selectedIndex as number) + 1)
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        onClose()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, hasPrev, hasNext, selectedIndex, onNavigate])
+  }, [isOpen, hasPrev, hasNext, selectedIndex, onNavigate, onClose])
 
   const handleDownload = async () => {
     if (!selectedFile) {
@@ -94,6 +97,7 @@ const MediaFileModal = ({
     <Modal
       open={isOpen}
       onClose={onClose}
+      disableRestoreFocus
       slotProps={{
         backdrop: {
           sx: (theme) => ({
@@ -345,7 +349,17 @@ const MediaFileView = ({ mediaFiles, layout = 'list' }: MediaFileViewProps) => {
     [mediaFiles],
   )
 
-  const handleClose = useCallback(() => setSelectedIndex(null), [])
+  const handleClose = useCallback(() => {
+    setSelectedIndex(null)
+    // Defer the blur so it runs after MUI's internal focus-restoring logic
+    // which happens asynchronously after the modal unmounts.
+    requestAnimationFrame(() => {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
+    })
+  }, [])
+
   const handleNavigate = useCallback((index: number) => setSelectedIndex(index), [])
 
   if (mediaFiles.length === 0) {

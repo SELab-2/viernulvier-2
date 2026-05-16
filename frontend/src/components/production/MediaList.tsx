@@ -271,6 +271,14 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
 
   const closePreview = useCallback(() => {
     setActiveIndex(null)
+
+    // Defer the blur so it runs after MUI's internal focus-restoring logic
+    // which happens asynchronously after the modal unmounts.
+    requestAnimationFrame(() => {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
+    })
   }, [])
 
   const openPreviewAtIndex = useCallback(
@@ -553,6 +561,7 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
       <Modal
         open={Boolean(activeItem)}
         onClose={closePreview}
+        disableRestoreFocus
         slotProps={{
           backdrop: {
             sx: (theme) => ({
@@ -582,7 +591,7 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
               borderRadius: 1.5,
               overflow: 'hidden',
               boxShadow: (theme) => theme.shadows[4],
-              ...(activeItem?.kind === 'video' && { aspectRatio: '16 / 9' }),
+              aspectRatio: '16 / 9',
             }}
           >
             {allItems.length > 1 && (
@@ -637,7 +646,8 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
                 alt={activeItem.alt}
                 sx={{
                   width: '100%',
-                  maxHeight: '90vh',
+                  maxHeight: '100%',
+                  height: '100%',
                   objectFit: 'contain',
                   backgroundColor: 'background.paper',
                   display: 'block',
