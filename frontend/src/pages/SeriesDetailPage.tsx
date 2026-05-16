@@ -260,7 +260,8 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     getTranslatedRecord(seriesTag.name, lang, seriesTag.display_name) || t('series.untitled')
 
   const seriesExcerpt =
-    getTranslatedRecord(seriesTag.excerpt, lang, seriesTag.display_excerpt) || ''
+    getTranslatedRecord(seriesTag.excerpt, lang, seriesTag.display_excerpt) ||
+    t('blogs.home.noExcerpt', 'No excerpt available')
 
   const seriesDescription =
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||

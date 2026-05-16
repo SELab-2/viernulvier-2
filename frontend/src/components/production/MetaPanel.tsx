@@ -213,7 +213,9 @@ export default function MetaPanel({
   const { t } = useTranslation()
 
   const resolvedTitle =
-    getLocalizedValue(production.title, language) || production.display_title || ''
+    getLocalizedValue(production.title, language) ||
+    production.display_title ||
+    t('productions.detail.unknownProduction', 'Unknown production')
   const resolvedArtistName =
     getLocalizedValue(production.artist_name, language) || production.display_artist_name || ''
 

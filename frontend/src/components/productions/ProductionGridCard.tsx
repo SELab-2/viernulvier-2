@@ -41,7 +41,7 @@ const ProductionGridCard = ({
 }: ProductionGridCardProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const { language } = i18n
@@ -53,7 +53,9 @@ const ProductionGridCard = ({
   const detailPath = toLocalizedPath(`/productions/${production.id}`, currentLanguage)
 
   const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url
-  const title = getTranslatedRecord(production.title, language, production.display_title)
+  const title =
+    getTranslatedRecord(production.title, language, production.display_title) ||
+    t('productions.detail.unknownProduction', 'Unknown production')
   const artistName = getTranslatedRecord(
     production.artist_name,
     language,
