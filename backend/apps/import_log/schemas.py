@@ -1,4 +1,7 @@
-"""OpenAPI schema decorators and examples for the read-only Imports app."""
+"""OpenAPI schema decorators and examples for the read-only Imports app.
+The imports app exposes a read-only endpoint. Only ``list`` and ``retrieve``
+actions are available - write operations are not supported by design.
+"""
 
 from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 
