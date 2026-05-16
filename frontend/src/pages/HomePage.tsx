@@ -249,6 +249,11 @@ const HomePage = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('searchbar.searchPlaceholder')}
+                inputProps={{
+                  style: {
+                    textOverflow: 'ellipsis',
+                  },
+                }}
                 startAdornment={
                   <InputAdornment position="start">
                     <SearchOutlinedIcon sx={{ color: s.searchIconColor, fontSize: 19 }} />
