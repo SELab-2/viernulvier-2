@@ -17,9 +17,10 @@ import type { MediaFile } from '../../types/MediaFiles'
 
 export interface MediaFileListCardProps {
   mediaFile: MediaFile
+  onOpen?: (mediaFile: MediaFile) => void
 }
 
-const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
+const MediaFileListCard = ({ mediaFile, onOpen }: MediaFileListCardProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
   const { t, i18n } = useTranslation()
@@ -36,6 +37,15 @@ const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
       component="a"
       href={fileUrl}
       direction={{ xs: 'column', sm: 'row' }}
+      onClick={(event) => {
+        if (!onOpen) {
+          return
+        }
+
+        event.preventDefault()
+        onOpen(mediaFile)
+      }}
+      aria-label={mediaFile.filename}
       sx={{
         ...commonStyles.cardBase,
         width: '100%',
@@ -93,13 +103,15 @@ const MediaFileListCard = ({ mediaFile }: MediaFileListCardProps) => {
 
           <Typography
             variant="body2"
-            color="text.secondary"
+            component="div"
             sx={{
               display: '-webkit-box',
               WebkitLineClamp: 3,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
-              wordBreak: 'break-word',
+              minHeight: 60,
+              fontSize: 'inherit',
+              color: 'text.secondary',
             }}
           >
             {description || fileTypeLabel}

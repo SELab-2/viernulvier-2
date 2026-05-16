@@ -9,11 +9,14 @@ import ReactDOM from 'react-dom/client'
 function mountShell() {
   const rootEl = document.getElementById('root')!
   // Render an empty StrictMode shell so the page can paint quickly.
-  ReactDOM.createRoot(rootEl).render(
+  const root = ReactDOM.createRoot(rootEl)
+  root.render(
     <React.StrictMode>
       {/* intentionally empty; main.tsx will re-render the real App */}
     </React.StrictMode>,
   )
+  // Store the root globally so main.tsx can reuse it instead of creating a new one
+  ;(window as Window & { __reactRoot?: ReturnType<typeof ReactDOM.createRoot> }).__reactRoot = root
 }
 
 mountShell()
