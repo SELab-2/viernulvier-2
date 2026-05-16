@@ -1,3 +1,5 @@
+"""Tests for apps.core.admin_widgets."""
+
 from django.contrib import admin
 from django.test import RequestFactory, TestCase
 

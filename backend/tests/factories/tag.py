@@ -1,3 +1,5 @@
+"""Factory Boy factories for tag test data."""
+
 import factory
 from factory.declarations import LazyAttribute, LazyFunction, SubFactory
 from faker import Faker

@@ -1,3 +1,5 @@
+"""Tests for apps/blogs/views.py."""
+
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 

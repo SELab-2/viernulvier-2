@@ -1,8 +1,8 @@
+"""Tests for Genre and GenreTranslation model behaviour."""
+
 import pytest
 
 from apps.genres.models import GenreTranslation
-
-# Use the factories to create test data
 from tests.factories.genre import (
     GenreFactory,
     GenreTranslationFactory,
@@ -78,10 +78,8 @@ class TestCascadeBehaviour:
         language = LanguageFactory()
         GenreTranslationFactory(language=language)
 
-        # Check if the setup is correct
         assert GenreTranslation.objects.count() == 1
 
         language.delete()
 
-        # Check if the translation was deleted
         assert GenreTranslation.objects.count() == 0

@@ -1,3 +1,5 @@
+"""Tests for shared API cache decorators and cache invalidation helpers."""
+
 from types import SimpleNamespace
 
 import api.cache as cache_utils

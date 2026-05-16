@@ -25,18 +25,22 @@ DEFAULT_WRONG_API_KEY = "completely-wrong-key"
 
 
 def api_key_headers(api_key: str) -> dict[str, str]:
+    """Build Django test-client headers for X-API-Key authentication."""
     return {"HTTP_X_API_KEY": api_key}
 
 
 def public_headers(public_api_key: str | None = None) -> dict[str, str]:
+    """Build headers for the configured or provided public API key."""
     return api_key_headers(public_api_key or settings.PUBLIC_API_KEY)
 
 
 def internal_headers(internal_api_key: str | None = None) -> dict[str, str]:
+    """Build headers for the configured or provided internal API key."""
     return api_key_headers(internal_api_key or settings.INTERNAL_API_KEY)
 
 
 def wrong_headers(value: str = DEFAULT_WRONG_API_KEY) -> dict[str, str]:
+    """Build headers with an intentionally invalid API key."""
     return api_key_headers(value)
 
 
@@ -48,10 +52,12 @@ def paginated_results(response):
 
 
 def v1_list_url(resource: str) -> str:
+    """Return the named v1 list URL for a registered viewset resource."""
     return reverse(f"v1:{resource}-list")
 
 
 def v1_detail_url(resource: str, **kwargs) -> str:
+    """Return the named v1 detail URL for a registered viewset resource."""
     return reverse(f"v1:{resource}-detail", kwargs=kwargs)
 
 

@@ -68,6 +68,7 @@ class TestGenreViewSetPrefetch(TestCase):
         assert len(ctx) == 4
 
     def pub_headers(self):
+        """Return public API key headers for this standalone TestCase."""
         return {"HTTP_X_API_KEY": PUBLIC_API_KEY}
 
 
