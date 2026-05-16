@@ -24,6 +24,7 @@ export interface CarouselProps {
   previousLabel?: string
   nextLabel?: string
   slideLabel?: string
+  navVerticalOffset?: number
   sx?: SxProps<Theme>
 }
 
@@ -43,6 +44,7 @@ function Carousel({
   previousLabel = 'Previous slide',
   nextLabel = 'Next slide',
   slideLabel = 'Go to slide',
+  navVerticalOffset = 0,
   sx,
 }: CarouselProps) {
   const slides = useMemo(() => Children.toArray(children), [children])
@@ -132,104 +134,106 @@ function Carousel({
         ...(Array.isArray(sx) ? sx : sx != null ? [sx] : []),
       ]}
     >
-      <Box
-        ref={emblaRef}
-        sx={{
-          overflow: 'hidden',
-          pb: '4px',
-          mb: '-4px',
-        }}
-      >
-        <Box sx={{ display: 'flex', gap: 0, mx: -1, alignItems: 'stretch' }}>
-          {slides.map((slide, index) => (
-            <Box
-              key={index}
-              sx={{ px: 1, boxSizing: 'border-box', display: 'flex', alignItems: 'stretch' }}
-            >
-              {slide}
-            </Box>
-          ))}
+      <Box sx={{ position: 'relative' }}>
+        <Box
+          ref={emblaRef}
+          sx={{
+            overflow: 'hidden',
+            pb: '4px',
+            mb: '-4px',
+          }}
+        >
+          <Box sx={{ display: 'flex', gap: 0, mx: -1, alignItems: 'stretch' }}>
+            {slides.map((slide, index) => (
+              <Box
+                key={index}
+                sx={{ px: 1, boxSizing: 'border-box', display: 'flex', alignItems: 'stretch' }}
+              >
+                {slide}
+              </Box>
+            ))}
+          </Box>
         </Box>
+
+        {showArrows && hasMultipleSlides ? (
+          <>
+            <IconButton
+              type="button"
+              aria-label={previousLabel}
+              onClick={scrollPrev}
+              onPointerUp={() => (document.activeElement as HTMLElement | null)?.blur()}
+              disabled={!canScrollPrev && !loop}
+              className="carousel-nav"
+              sx={(theme) => ({
+                position: 'absolute',
+                top: navVerticalOffset ? `calc(50% - ${navVerticalOffset}px)` : '50%',
+                left: 0,
+                transform: 'translate(-50%, -50%)',
+                zIndex: 2,
+                backgroundColor: theme.palette.background.paper,
+                boxShadow: theme.shadows[1],
+                opacity: 0,
+                pointerEvents: 'none',
+                transition:
+                  'opacity 220ms ease, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease',
+                '&:hover': {
+                  backgroundColor: theme.palette.background.paper,
+                  boxShadow: theme.shadows[3],
+                  transform: 'translate(-56%, -50%)',
+                },
+                '@media (hover: none)': {
+                  opacity: 1,
+                  pointerEvents: 'auto',
+                },
+                '&:focus-visible': {
+                  opacity: 1,
+                  pointerEvents: 'auto',
+                },
+              })}
+            >
+              <ChevronLeftRoundedIcon />
+            </IconButton>
+
+            <IconButton
+              type="button"
+              aria-label={nextLabel}
+              onClick={scrollNext}
+              onPointerUp={() => (document.activeElement as HTMLElement | null)?.blur()}
+              disabled={!canScrollNext && !loop}
+              className="carousel-nav"
+              sx={(theme) => ({
+                position: 'absolute',
+                top: navVerticalOffset ? `calc(50% - ${navVerticalOffset}px)` : '50%',
+                right: 0,
+                transform: 'translate(50%, -50%)',
+                zIndex: 2,
+                border: `1px solid ${theme.palette.divider}`,
+                backgroundColor: theme.palette.background.paper,
+                boxShadow: theme.shadows[1],
+                opacity: 0,
+                pointerEvents: 'none',
+                transition:
+                  'opacity 220ms ease, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease',
+                '&:hover': {
+                  backgroundColor: theme.palette.background.paper,
+                  boxShadow: theme.shadows[3],
+                  transform: 'translate(56%, -50%)',
+                },
+                '@media (hover: none)': {
+                  opacity: 1,
+                  pointerEvents: 'auto',
+                },
+                '&:focus-visible': {
+                  opacity: 1,
+                  pointerEvents: 'auto',
+                },
+              })}
+            >
+              <ChevronRightRoundedIcon />
+            </IconButton>
+          </>
+        ) : null}
       </Box>
-
-      {showArrows && hasMultipleSlides ? (
-        <>
-          <IconButton
-            type="button"
-            aria-label={previousLabel}
-            onClick={scrollPrev}
-            onPointerUp={() => (document.activeElement as HTMLElement | null)?.blur()}
-            disabled={!canScrollPrev && !loop}
-            className="carousel-nav"
-            sx={(theme) => ({
-              position: 'absolute',
-              top: '50%',
-              left: 0,
-              transform: 'translate(-50%, -50%)',
-              zIndex: 2,
-              backgroundColor: theme.palette.background.paper,
-              boxShadow: theme.shadows[1],
-              opacity: 0,
-              pointerEvents: 'none',
-              transition:
-                'opacity 220ms ease, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease',
-              '&:hover': {
-                backgroundColor: theme.palette.background.paper,
-                boxShadow: theme.shadows[3],
-                transform: 'translate(-56%, -50%)',
-              },
-              '@media (hover: none)': {
-                opacity: 1,
-                pointerEvents: 'auto',
-              },
-              '&:focus-visible': {
-                opacity: 1,
-                pointerEvents: 'auto',
-              },
-            })}
-          >
-            <ChevronLeftRoundedIcon />
-          </IconButton>
-
-          <IconButton
-            type="button"
-            aria-label={nextLabel}
-            onClick={scrollNext}
-            onPointerUp={() => (document.activeElement as HTMLElement | null)?.blur()}
-            disabled={!canScrollNext && !loop}
-            className="carousel-nav"
-            sx={(theme) => ({
-              position: 'absolute',
-              top: '50%',
-              right: 0,
-              transform: 'translate(50%, -50%)',
-              zIndex: 2,
-              border: `1px solid ${theme.palette.divider}`,
-              backgroundColor: theme.palette.background.paper,
-              boxShadow: theme.shadows[1],
-              opacity: 0,
-              pointerEvents: 'none',
-              transition:
-                'opacity 220ms ease, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease',
-              '&:hover': {
-                backgroundColor: theme.palette.background.paper,
-                boxShadow: theme.shadows[3],
-                transform: 'translate(56%, -50%)',
-              },
-              '@media (hover: none)': {
-                opacity: 1,
-                pointerEvents: 'auto',
-              },
-              '&:focus-visible': {
-                opacity: 1,
-                pointerEvents: 'auto',
-              },
-            })}
-          >
-            <ChevronRightRoundedIcon />
-          </IconButton>
-        </>
-      ) : null}
 
       {hasMultipleSlides && (showArrows || showDots) ? (
         <Stack

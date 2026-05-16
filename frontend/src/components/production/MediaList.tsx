@@ -29,6 +29,33 @@ type PreviewItem =
       alt: string
     }
 
+const previewTileSx = {
+  position: 'relative',
+  width: '100%',
+  aspectRatio: '16 / 9',
+  overflow: 'hidden',
+  borderRadius: tokens.borderRadius.md,
+  backgroundColor: 'transparent',
+  cursor: 'pointer',
+  transition: 'transform 180ms ease, box-shadow 180ms ease',
+  '&:hover, &:focus-visible': {
+    transform: 'translateY(-2px)',
+    boxShadow: tokens.shadows.mediaControl,
+  },
+  '&:focus-visible': {
+    outlineOffset: 2,
+  },
+} as const
+
+const modalNavButtonSx = {
+  pointerEvents: 'auto',
+  color: 'text.primary',
+  backgroundColor: 'action.hover',
+  '&:hover': {
+    backgroundColor: 'action.selected',
+  },
+} as const
+
 /**
  * Pick the most suitable image URL from crop metadata.
  *
@@ -223,6 +250,11 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
     .map((item) => ({ item, imageUrl: getBestImageUrl(item) }))
     .filter((entry) => entry.imageUrl)
 
+  const hasImageCredits = mediaWithImage.some(({ item }) => {
+    const rawCredits = getTranslatedRecord(item.credits, language, item.display_title ?? '')
+    return Boolean(rawCredits && normalizeCredits(rawCredits))
+  })
+
   const allItems: PreviewItem[] = [
     ...videoUrls.map((url) => ({ kind: 'video' as const, url })),
     ...mediaWithImage.map(({ item, imageUrl }) => ({
@@ -232,19 +264,27 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
     })),
   ]
   const itemCount = allItems.length
+  const safeActiveIndex =
+    activeIndex !== null && activeIndex >= 0 && activeIndex < itemCount ? activeIndex : null
 
-  const activeItem = activeIndex !== null ? allItems[activeIndex] : null
+  const activeItem = safeActiveIndex !== null ? allItems[safeActiveIndex] : null
 
   const closePreview = useCallback(() => {
     setActiveIndex(null)
   }, [])
 
-  const openPreviewAtIndex = useCallback((index: number) => {
-    setActiveIndex(index)
-  }, [])
+  const openPreviewAtIndex = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= itemCount) {
+        return
+      }
+      setActiveIndex(index)
+    },
+    [itemCount],
+  )
 
   const navigatePrev = useCallback(() => {
-    if (activeIndex === null || itemCount <= 1) {
+    if (safeActiveIndex === null || itemCount <= 1) {
       return
     }
 
@@ -255,10 +295,10 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
 
       return (currentIndex - 1 + itemCount) % itemCount
     })
-  }, [activeIndex, itemCount])
+  }, [safeActiveIndex, itemCount])
 
   const navigateNext = useCallback(() => {
-    if (activeIndex === null || itemCount <= 1) {
+    if (safeActiveIndex === null || itemCount <= 1) {
       return
     }
 
@@ -269,10 +309,10 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
 
       return (currentIndex + 1) % itemCount
     })
-  }, [activeIndex, itemCount])
+  }, [safeActiveIndex, itemCount])
 
   useEffect(() => {
-    if (activeIndex === null) {
+    if (activeItem === null) {
       return undefined
     }
 
@@ -297,7 +337,7 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
     return () => {
       window.removeEventListener('keydown', handleWindowKeyDown)
     }
-  }, [activeIndex, closePreview, navigateNext, navigatePrev])
+  }, [activeItem, closePreview, navigateNext, navigatePrev])
 
   if (!itemCount) {
     return null
@@ -347,6 +387,7 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
           showArrows
           previousLabel="Previous media"
           nextLabel="Next media"
+          navVerticalOffset={hasImageCredits ? 24 : 0}
           sx={{ width: '100%' }}
         >
           {videoUrls.map((url, idx) => (
@@ -369,25 +410,14 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
                   }
                 }}
                 sx={(theme) => ({
-                  position: 'relative',
-                  width: '100%',
-                  aspectRatio: '16 / 9',
-                  overflow: 'hidden',
-                  borderRadius: tokens.borderRadius.md,
+                  ...previewTileSx,
                   backgroundColor:
                     theme.palette.mode === DarkMode
                       ? tokens.colors.media.darkBackground
                       : tokens.colors.media.lightBackground,
                   border: `1px solid ${theme.palette.divider}`,
-                  cursor: 'pointer',
-                  transition: 'transform 180ms ease, box-shadow 180ms ease',
-                  '&:hover, &:focus-visible': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: tokens.shadows.mediaControl,
-                  },
                   '&:focus-visible': {
                     outline: `2px solid ${theme.palette.primary.main}`,
-                    outlineOffset: 2,
                   },
                 })}
               >
@@ -467,24 +497,14 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
                   onClick={() => openPreviewAtIndex(previewIndex)}
                   onKeyDown={(event) => handleKeyOpen(event, previewIndex)}
                   sx={(theme) => ({
-                    width: '100%',
-                    aspectRatio: '16 / 9',
-                    overflow: 'hidden',
-                    borderRadius: tokens.borderRadius.md,
+                    ...previewTileSx,
                     backgroundColor:
                       theme.palette.mode === DarkMode
                         ? tokens.colors.media.darkBackground
                         : tokens.colors.media.lightBackground,
                     border: `1px solid ${theme.palette.divider}`,
-                    cursor: 'pointer',
-                    transition: 'transform 180ms ease, box-shadow 180ms ease',
-                    '&:hover, &:focus-visible': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: tokens.shadows.mediaControl,
-                    },
                     '&:focus-visible': {
                       outline: `2px solid ${theme.palette.primary.main}`,
-                      outlineOffset: 2,
                     },
                   })}
                 >
@@ -566,45 +586,30 @@ export default function MediaList({ mediaItems, videoUrls = [] }: MediaListProps
             }}
           >
             {allItems.length > 1 && (
-              <>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  px: 1,
+                  pointerEvents: 'none',
+                }}
+              >
                 <IconButton
                   aria-label="Previous media"
                   onClick={navigatePrev}
-                  sx={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: 10,
-                    zIndex: 2,
-                    transform: 'translateY(-50%)',
-                    color: 'text.primary',
-                    backgroundColor: 'action.hover',
-                    '&:hover': {
-                      backgroundColor: 'action.selected',
-                    },
-                  }}
+                  sx={modalNavButtonSx}
                 >
                   <ChevronLeftRoundedIcon />
                 </IconButton>
 
-                <IconButton
-                  aria-label="Next media"
-                  onClick={navigateNext}
-                  sx={{
-                    position: 'absolute',
-                    top: '50%',
-                    right: 10,
-                    zIndex: 2,
-                    transform: 'translateY(-50%)',
-                    color: 'text.primary',
-                    backgroundColor: 'action.hover',
-                    '&:hover': {
-                      backgroundColor: 'action.selected',
-                    },
-                  }}
-                >
+                <IconButton aria-label="Next media" onClick={navigateNext} sx={modalNavButtonSx}>
                   <ChevronRightRoundedIcon />
                 </IconButton>
-              </>
+              </Box>
             )}
 
             <IconButton
