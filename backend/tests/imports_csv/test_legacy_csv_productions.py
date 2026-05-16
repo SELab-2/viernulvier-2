@@ -1,3 +1,5 @@
+"""Tests for importing legacy production CSV rows."""
+
 from __future__ import annotations
 
 import pytest

@@ -1,3 +1,5 @@
+"""Tests for importing bundled legacy CSV files."""
+
 from __future__ import annotations
 
 import pytest
