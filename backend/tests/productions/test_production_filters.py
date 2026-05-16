@@ -1,6 +1,4 @@
-"""
-Tests for apps/productions/filters.py and apps/productions/views.py.
-"""
+"""Tests for ProductionFilter behaviour and production API filtering/search/ordering."""
 
 from datetime import UTC, datetime
 

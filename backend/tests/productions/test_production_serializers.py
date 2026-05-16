@@ -567,11 +567,13 @@ class TestProductionSerializerTagsMultipleTags(TestCase):
 # ---------------------------------------------------------------------------
 
 
-def _dt(year, month, day, hour=0):
+def _dt(year: int, month: int, day: int, hour: int = 0) -> datetime:
+    """Return a UTC datetime used by production serializer tests."""
     return datetime(year, month, day, hour, tzinfo=UTC)
 
 
-def _annotated(production):
+def _annotated(production: Production) -> dict:
+    """Serialize a production annotated with first and last event timestamps."""
     qs = Production.objects.annotate(
         first_event_start=Min("events__starts_at"),
         last_event_end=Max("events__ends_at"),

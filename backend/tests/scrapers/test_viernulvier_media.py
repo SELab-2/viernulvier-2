@@ -1,7 +1,11 @@
+"""Tests for Viernulvier media image conversion helpers."""
+
 from apps.imports.scrapers import viernulvier_media as vmedia
 
 
 class _DummyImg:
+    """Minimal Pillow-like image object used for WebP conversion tests."""
+
     def __init__(self, *, mode="RGB", is_animated=False, n_frames=1, webp_bytes=b"WEBP"):
         self.mode = mode
         self.is_animated = is_animated
@@ -23,6 +27,8 @@ class _DummyImg:
 
 
 class _DummyImageModule:
+    """Minimal Pillow-like module exposing open() for conversion tests."""
+
     def __init__(self, webp_bytes=b"WEBP", img_mode="RGB", is_animated=False, n_frames=1):
         self._webp = webp_bytes
         self._img_mode = img_mode
@@ -34,7 +40,7 @@ class _DummyImageModule:
         return _DummyImg(mode=self._img_mode, is_animated=self._is_animated, n_frames=self._n_frames, webp_bytes=self._webp)
 
 
-def test_maybe_convert_to_webp_short_circuits_for_webp_extension(monkeypatch):
+def test_maybe_convert_to_webp_short_circuits_for_webp_extension(monkeypatch) -> None:
     src = b"originalbytes"
     # Ensure Image.open would raise if called; function should short-circuit on URL
     monkeypatch.setattr(vmedia, "Image", None)

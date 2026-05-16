@@ -6,22 +6,22 @@ Domain logic is organized into dedicated apps under `apps/`, while project confi
 ```text
 viernulvier_archive/
 │
-├── config/                          # Django project configuration
+├── config/                                             # Django project configuration
 │   ├── __init__.py
 │   ├── settings/
 │   │   ├── __init__.py
-│   │   ├── base.py                  # Shared settings
-│   │   ├── dev.py                   # Local development settings
-│   │   ├── test.py                  # Test settings
-│   │   ├── staging.py               # Local/pre-production staging settings
-│   │   └── prod.py                  # Production settings
-│   ├── health.py                    # Health check endpoint
-│   ├── urls.py                      # Root URL config
+│   │   ├── base.py                                     # Shared settings
+│   │   ├── dev.py                                      # Local development settings
+│   │   ├── test.py                                     # Test settings
+│   │   ├── staging.py                                  # Local/pre-production staging settings
+│   │   └── prod.py                                     # Production settings
+│   ├── health.py                                       # Health check endpoint
+│   ├── urls.py                                         # Root URL config
 │   ├── wsgi.py
 │   └── asgi.py
 │
-├── apps/
-│   ├── blogs/                       # BLOG + BLOG_TRANSLATION tables
+├── apps/                                               # Domain Django apps
+│   ├── blogs/                                          # BLOG + BLOG_TRANSLATION tables
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── filters.py
@@ -30,30 +30,30 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── core/                        # Shared base classes & utilities
+│   ├── core/                                           # Shared base classes and utilities
 │   │   ├── __init__.py
-│   │   ├── admin.py                     # BaseAdmin, persistent selections, two-step actions
-│   │   ├── admin_filters.py             # Searchable multi-select admin filters
-│   │   ├── admin_widgets.py             # Rich-text admin widget and decorator
-│   │   ├── authentications.py           # API-key authentication
-│   │   ├── exceptions.py                # RFC 7807 exception handler
-│   │   ├── filters.py                   # BaseModelFilter
-│   │   ├── media_validation.py          # MIME/signature/size validation helpers
-│   │   ├── mixins.py                    # Shared ViewSet mixins
-│   │   ├── models.py                    # BaseModel
-│   │   ├── openapi.py                   # Reusable OpenAPI error responses
-│   │   ├── ordering.py                  # Nulls-last ordering filter
-│   │   ├── permissions.py               # API-key permission matrix
-│   │   ├── serializers.py               # TranslatableSerializerMixin
-│   │   ├── spectacular_extensions.py    # OpenAPI API-key auth extension
-│   │   ├── throttles.py                 # API-key throttling classes
-│   │   ├── views.py                     # Base API ViewSets
+│   │   ├── admin.py                                    # BaseAdmin, persistent selections, two-step actions
+│   │   ├── admin_filters.py                            # Searchable multi-select admin filters
+│   │   ├── admin_widgets.py                            # Rich-text admin widget and decorator
+│   │   ├── authentications.py                          # API-key authentication
+│   │   ├── exceptions.py                               # RFC 7807 exception handler
+│   │   ├── filters.py                                  # BaseModelFilter
+│   │   ├── media_validation.py                         # MIME/signature/size validation helpers
+│   │   ├── mixins.py                                   # Shared ViewSet mixins
+│   │   ├── models.py                                   # BaseModel
+│   │   ├── openapi.py                                  # Reusable OpenAPI error responses
+│   │   ├── ordering.py                                 # Nulls-last ordering filter
+│   │   ├── permissions.py                              # API-key permission matrix
+│   │   ├── serializers.py                              # TranslatableSerializerMixin
+│   │   ├── spectacular_extensions.py                   # OpenAPI API-key auth extension
+│   │   ├── throttles.py                                # API-key throttling classes
+│   │   ├── views.py                                    # Base API ViewSets
 │   │   ├── templatetags/
-│   │   │   └── admin_dashboard.py       # Custom admin dashboard cards
+│   │   │   └── admin_dashboard.py                      # Custom admin dashboard cards
 │   │   └── static/admin/js/
-│   │       └── rich_text_admin_widget_*.js # Rich-text admin widget modules
+│   │       └── rich_text_admin_widget_*.js             # Rich-text admin widget modules
 │   │
-│   ├── languages/                   # LANGUAGE table
+│   ├── languages/                                      # LANGUAGE table
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── filters.py
@@ -62,7 +62,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── productions/                 # PRODUCTION + PRODUCTION_TRANSLATION + production classification tables
+│   ├── productions/                                    # PRODUCTION + translations + classifications
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── admin_filters.py
@@ -72,7 +72,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── genres/                      # GENRE + GENRE_TRANSLATION tables
+│   ├── genres/                                         # GENRE + GENRE_TRANSLATION tables
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── filters.py
@@ -81,7 +81,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── tags/                        # TAG + TAG_TRANSLATION + PRODUCTION_TAG tables
+│   ├── tags/                                           # TAG + TAG_TRANSLATION tables
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── filters.py
@@ -90,7 +90,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── events/                      # EVENT + EVENT_PRICE tables
+│   ├── events/                                         # EVENT + EVENT_PRICE tables
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── filters.py
@@ -99,7 +99,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── locations/                   # LOCATION + SPACE + HALL tables (+ translations)
+│   ├── locations/                                      # LOCATION + SPACE + HALL tables (+ translations)
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── filters.py
@@ -108,7 +108,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── media_library/               # MEDIA_GALLERY + MEDIA_ITEM + CROP tables (+ translations)
+│   ├── media_library/                                  # MEDIA_GALLERY + MEDIA_ITEM + CROP tables
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── filters.py
@@ -117,7 +117,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── media_files/                 # Uploaded files (images/PDF) with derived metadata
+│   ├── media_files/                                    # Uploaded files with derived metadata
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── filters.py
@@ -126,7 +126,7 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── pricing/                     # PRICE + PRICE_RANK + translations
+│   ├── pricing/                                        # PRICE + PRICE_RANK + translations
 │   │   ├── __init__.py
 │   │   ├── admin.py
 │   │   ├── filters.py
@@ -135,99 +135,98 @@ viernulvier_archive/
 │   │   ├── serializers.py
 │   │   └── views.py
 │   │
-│   ├── import_log/                  # IMPORT_LOG table
+│   ├── import_log/                                     # IMPORT_LOG table
 │   │   ├── __init__.py
-│   │   ├── admin.py                 # Read-only admin for import audit logs
-│   │   ├── filters.py               # API filters for status, source, timestamps, and errors
-│   │   ├── models.py                # ImportLog audit model
-│   │   ├── schemas.py               # OpenAPI docs for read-only endpoints
-│   │   ├── serializers.py           # Read-only serializer with duration/warning fields
-│   │   └── views.py                 # Read-only ImportLog API ViewSet
+│   │   ├── admin.py                                    # Read-only admin for import audit logs
+│   │   ├── filters.py                                  # API filters for status/source/timestamps/errors
+│   │   ├── models.py                                   # ImportLog audit model
+│   │   ├── schemas.py                                  # OpenAPI docs for read-only endpoints
+│   │   ├── serializers.py                              # Read-only serializer with duration/warnings
+│   │   └── views.py                                    # Read-only ImportLog API ViewSet
 │   │
-│   └── imports/                     # Import and sync pipelines
+│   └── imports/                                        # Import and sync pipelines
 │       ├── __init__.py
-│       ├── csv_importer/            # Legacy CSV import pipeline
+│       ├── csv_importer/                               # Legacy CSV import pipeline
 │       │   ├── __init__.py
-│       │   ├── legacy_csv_constants.py # CSV paths, headers, and language defaults
-│       │   ├── legacy_csv_handlers.py  # Row handlers for productions and events
-│       │   ├── legacy_csv_io.py        # CSV reading and dataset detection
-│       │   ├── legacy_csv_normalize.py # Legacy value/date/text normalization
-│       │   ├── legacy_csv_relations.py # Language, genre, hall relation helpers
-│       │   └── legacy_csv_sync.py      # CSV import orchestration and ImportLog handling
+│       │   ├── legacy_csv_constants.py                 # CSV paths, headers, defaults
+│       │   ├── legacy_csv_handlers.py                  # Row handlers for productions/events
+│       │   ├── legacy_csv_io.py                        # CSV reading and dataset detection
+│       │   ├── legacy_csv_normalize.py                 # Legacy value/date/text normalization
+│       │   ├── legacy_csv_relations.py                 # Language, genre, hall helpers
+│       │   └── legacy_csv_sync.py                      # Import orchestration and ImportLog handling
 │       ├── management/
 │       │   ├── __init__.py
 │       │   └── commands/
 │       │       ├── __init__.py
-│       │       ├── import_legacy_csv.py # Imports bundled legacy CSV exports
-│       │       └── sync_viernulvier.py  # Syncs configured Viernulvier API endpoints
+│       │       ├── import_legacy_csv.py                # Imports bundled legacy CSV exports
+│       │       └── sync_viernulvier.py                 # Syncs Viernulvier API endpoints
 │       └── scrapers/
 │           ├── __init__.py
-│           ├── viernulvier.py           # Compatibility facade
-│           ├── viernulvier_constants.py # API config, exceptions, dataclasses
-│           ├── viernulvier_http.py      # HTTP sessions, retry, pagination, ETag handling
-│           ├── viernulvier_import_log.py # Shared ImportLog finalization helpers
-│           ├── viernulvier_media.py     # Media gallery-link and crop sync
-│           ├── viernulvier_normalize.py # Value normalization and field coercion
-│           ├── viernulvier_relations.py # FK resolution, translations, M2M sync
-│           └── viernulvier_sync.py      # Core sync loop and upsert logic
+│           ├── viernulvier.py                          # Compatibility facade
+│           ├── viernulvier_constants.py                # API config, exceptions, dataclasses
+│           ├── viernulvier_http.py                     # HTTP sessions, retry, pagination, ETags
+│           ├── viernulvier_import_log.py               # Shared ImportLog finalization helpers
+│           ├── viernulvier_media.py                    # Media gallery-link and crop sync
+│           ├── viernulvier_normalize.py                # Value normalization and field coercion
+│           ├── viernulvier_relations.py                # FK resolution, translations, M2M sync
+│           └── viernulvier_sync.py                     # Core sync loop and upsert logic
 │
-├── api/                             # API routing, versioning, docs, caching, and pagination
+├── api/                                                # API routing, versioning, docs, caching, pagination
 │   ├── __init__.py
-│   ├── urls.py                      # Top-level API routing: versions + schema/docs endpoints
-│   ├── versioning.py                # DRF URL path versioning config
-│   ├── cache.py                     # Shared API caching decorators and invalidation helpers
-│   ├── pagination.py                # Shared pagination presets
+│   ├── urls.py                                         # Top-level API routing
+│   ├── versioning.py                                   # DRF URL path versioning config
+│   ├── cache.py                                        # Shared API caching helpers
+│   ├── pagination.py                                   # Shared pagination presets
 │   └── v1/
-│       └── urls.py                  # v1 router with all current viewset registrations
+│       └── urls.py                                     # v1 router with current ViewSet registrations
 │
-├── static/                          # Shared static assets
+├── static/                                             # Shared static assets
 │   └── admin/
 │       └── js/
-│           └── media_file_upload.js # Shared admin upload validation for file inputs
+│           └── media_file_upload.js                    # Shared admin upload validation
 │
-├── templates/                       # Shared Django/admin templates
+├── templates/                                          # Shared Django/admin templates
 │   ├── admin/
-│   │   ├── index.html               # Custom admin dashboard
-│   │   ├── login.html               # Custom admin login page
-│   │   ├── persistent_change_list.html # Persistent cross-page admin selections
-│   │   └── two_step_action.html     # Confirmation form for two-step admin actions
-│   └── multiselect_search.html      # Searchable multi-select admin filter template
+│   │   ├── index.html                                  # Custom admin dashboard
+│   │   ├── login.html                                  # Custom admin login page
+│   │   ├── persistent_change_list.html                 # Persistent cross-page selections
+│   │   └── two_step_action.html                        # Confirmation form for two-step actions
+│   └── multiselect_search.html                         # Searchable multi-select admin filter template
 │
-├── tests/                           # Pytest test suite
-│   ├── api/                         # Tests for shared API helpers
-│   │   └── test_cache.py
-│   ├── blogs/                       # Blog app tests
-│   ├── config/                      # Project configuration tests
-│   ├── core/                        # Shared core utility tests
-│   ├── events/                      # Event app tests
-│   ├── factories/                   # Test data factories
-│   ├── genres/                      # Genre app tests
-│   ├── helpers/                     # Shared test helpers
-│   ├── import_logs/                 # ImportLog app tests
-│   ├── imports_csv/                 # Legacy CSV importer tests
-│   ├── languages/                   # Language app tests
-│   ├── locations/                   # Location app tests
-│   ├── media_files/                 # Media files app tests
-│   ├── media_library/               # Media library app tests
-│   ├── pricing/                     # Pricing app tests
-│   ├── productions/                 # Production app tests
-│   ├── scrapers/                    # Viernulvier scraper tests
-│   └── tags/                        # Tag app tests
+├── tests/                                              # Pytest test suite
+│   ├── __init__.py
+│   ├── api/                                            # Shared API helper tests
+│   ├── blogs/                                          # Blog app tests
+│   ├── config/                                         # Project configuration tests
+│   ├── core/                                           # Shared core utility tests
+│   ├── events/                                         # Event app tests
+│   ├── factories/                                      # Test data factories
+│   ├── genres/                                         # Genre app tests
+│   ├── helpers/                                        # Shared test helpers
+│   ├── import_logs/                                    # ImportLog app tests
+│   ├── imports_csv/                                    # Legacy CSV importer tests
+│   ├── languages/                                      # Language app tests
+│   ├── locations/                                      # Location app tests
+│   ├── media_files/                                    # Media files app tests
+│   ├── media_library/                                  # Media library app tests
+│   ├── pricing/                                        # Pricing app tests
+│   ├── productions/                                    # Production app tests
+│   ├── scrapers/                                       # Viernulvier scraper tests
+│   └── tags/                                           # Tag app tests
 │
-├── requirements/                    # Environment-specific dependency sets
-│   ├── base.txt                     # Shared runtime dependencies
-│   ├── development.txt              # Development and test dependencies
-│   └── production.txt               # Production-only dependencies
+├── requirements/                                       # Environment-specific dependency sets
+│   ├── base.txt                                        # Shared runtime dependencies
+│   ├── development.txt                                 # Development and test dependencies
+│   └── production.txt                                  # Production-only dependencies
 │
-├── .env
+├── media/                                              # Local uploaded media files (ignored in git)
 ├── .gitignore
 ├── .dockerignore
 ├── Dockerfile
-├── db.sqlite3
 ├── manage.py
-├── pyproject.toml                   # Tooling configuration
-├── pytest.ini
-└── README.md
+├── pyproject.toml                                      # Tooling configuration
+├── pytest.ini                                          # Pytest/pytest-django configuration
+└── viernulvier_dev                                     # Local helper/virtual environment artifact (not committed)
 ```
 
 ---

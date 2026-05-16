@@ -244,7 +244,7 @@ class TestProductionViewSetDetail(TestCase):
         assert response.status_code == 404
 
     def test_retrieve_with_include_related_no_n_plus_one(self) -> None:
-        """Related productions + hun translations mogen geen N+1 veroorzaken."""
+        """Related productions and their translations must not cause N+1 queries."""
         nl = LanguageFactory.create(code="nl", name="Dutch")
         en = LanguageFactory.create(code="en", name="English")
         tag = TagFactory.create(type="theme")
@@ -885,7 +885,7 @@ class TestProductionEventDateFieldsInResponse(TestCase):
             .get(pk=self.production.pk)
             .first_event_start
         )
-        assert val == _dt(2025, 9, 15)  # onveranderd
+        assert val == _dt(2025, 9, 15)  # unchanged
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)

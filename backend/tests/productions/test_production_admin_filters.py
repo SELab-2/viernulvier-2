@@ -1,3 +1,5 @@
+"""Tests for custom production admin filters."""
+
 from django.contrib import admin
 from django.test import RequestFactory, TestCase
 
@@ -11,6 +13,8 @@ from tests.factories.tag import TagFactory, TagTranslationFactory
 
 
 class TestProductionAdminFilters(TestCase):
+    """Tests for searchable production admin filters and multi-select semantics."""
+
     def setUp(self) -> None:
         self.factory = RequestFactory()
         self.admin = ProductionAdmin(Production, admin.site)
@@ -54,6 +58,7 @@ class TestProductionAdminFilters(TestCase):
         )
 
     def _build_filter(self, filter_class, query_string):
+        """Instantiate an admin list filter with the given query string."""
         request = self.factory.get(f"/admin/productions/production/?{query_string}")
         params = request.GET.copy()
         return filter_class(request, params, Production, self.admin)

@@ -1,11 +1,11 @@
+"""Tests for Tag and TagTranslation model behaviour."""
+
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
 
 from apps.tags.models import TagTranslation
 from tests.factories.language import LanguageFactory
-
-# Use the factories to create test data
 from tests.factories.tag import (
     TagFactory,
     TagTranslationFactory,

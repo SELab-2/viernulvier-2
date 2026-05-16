@@ -1,3 +1,12 @@
+"""Tests for apps/pricing/views.py.
+
+Covers:
+- PriceViewSet and PriceRankViewSet class configuration
+- API authentication and authorization behaviour
+- list/retrieve/create/update/delete responses
+- translation prefetching and bounded query counts
+"""
+
 from django.db import connection
 from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext

@@ -1,6 +1,4 @@
-"""
-Tests for apps/pricing/filters.py and apps/pricing/views.py.
-"""
+"""Tests for pricing filters and price/rank API filtering/search/ordering."""
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
