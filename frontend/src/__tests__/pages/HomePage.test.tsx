@@ -237,7 +237,7 @@ describe('HomePage', () => {
       expect(screen.getByRole('heading', { level: 3, name: 'Verken het archief' })).toBeTruthy()
       expect(screen.getByRole('heading', { level: 3, name: 'Ontdek reeksen' })).toBeTruthy()
       expect(screen.getByRole('heading', { level: 3, name: 'Lees de blogs' })).toBeTruthy()
-      expect(screen.getByRole('heading', { level: 3, name: 'Ontdek drukwerk' })).toBeTruthy()
+      expect(screen.getByRole('heading', { level: 3, name: 'Ontdek media' })).toBeTruthy()
     })
 
     it('renders exactly four card links', async () => {
@@ -251,7 +251,7 @@ describe('HomePage', () => {
       ['Verken het archief', '/nl/archief'],
       ['Ontdek reeksen', '/nl/reeksen'],
       ['Lees de blogs', '/nl/blogs'],
-      ['Ontdek drukwerk', '/nl/media'],
+      ['Ontdek media', '/nl/media'],
     ])('"%s" card links to %s', async (cardTitle, expectedHref) => {
       renderPage()
       await waitForStats()
@@ -268,7 +268,7 @@ describe('HomePage', () => {
       expect(screen.getByAltText('Verken het archief')).toBeTruthy()
       expect(screen.getByAltText('Ontdek reeksen')).toBeTruthy()
       expect(screen.getByAltText('Lees de blogs')).toBeTruthy()
-      expect(screen.getByAltText('Ontdek drukwerk')).toBeTruthy()
+      expect(screen.getByAltText('Ontdek media')).toBeTruthy()
     })
   })
 })
