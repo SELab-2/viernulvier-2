@@ -24,6 +24,31 @@ export function formatDate(iso: string | null | undefined, locale: string): stri
 }
 
 /**
+ * Formats an ISO date string for blog publication display using {@link Intl.DateTimeFormat}
+ * (2-digit day, short month, numeric year).
+ *
+ * @param value An ISO 8601 string, or `null` (returns `null`).
+ * @param language A BCP 47 language tag (e.g. `nl`, `en-US`); should match the active UI locale.
+ * @returns The formatted date string, or `null` if `value` is missing or not parseable.
+ */
+export const formatBlogPublishedDate = (value: string | null, language: string): string | null => {
+  if (!value) {
+    return null
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  return new Intl.DateTimeFormat(language, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
+}
+
+/**
  * Formats an ISO time string for display (hour + minute).
  *
  * @param iso An ISO 8601 string, or `null` / `undefined`.
