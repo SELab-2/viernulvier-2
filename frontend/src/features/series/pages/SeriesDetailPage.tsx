@@ -431,10 +431,16 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                       layout="list"
                       getKey={(production) => production.id}
                       renderListItem={(production) => (
-                        <ProductionListCard production={production} selectedTagIds={selectedTagIds} />
+                        <ProductionListCard
+                          production={production}
+                          selectedTagIds={selectedTagIds}
+                        />
                       )}
                       renderGridItem={(production) => (
-                        <ProductionGridCard production={production} selectedTagIds={selectedTagIds} />
+                        <ProductionGridCard
+                          production={production}
+                          selectedTagIds={selectedTagIds}
+                        />
                       )}
                     />
                   </Box>
