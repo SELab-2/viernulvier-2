@@ -3,8 +3,8 @@ import { lazy, Suspense, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 
-import LoadingSpinner from './components/LoadingSpinner'
 import { NotificationProvider } from './contexts/NotificationContext'
+import LoadingSpinner from './shared/components/LoadingSpinner'
 import { ALERT_SEVERITIES } from './types/FloatingAlertConfig'
 import {
   DEFAULT_LANGUAGE,
@@ -19,19 +19,19 @@ import { createFloatingAlertState } from './utils/navigation'
 import type { ModeToggleProps } from './types/Theme'
 
 // Lazy-load UI chrome (navbar/footer) and the home page to reduce initial bundle size.
-const Navbar = lazy(() => import('./components/Navbar'))
-const Footer = lazy(() => import('./components/Footer'))
+const Navbar = lazy(() => import('./shared/Navbar'))
+const Footer = lazy(() => import('./shared/Footer'))
 const HomePage = lazy(() => import('./pages/HomePage'))
 
 // Lazy-load route pages to reduce initial bundle size
-const BlogDetailPage = lazy(() => import('./pages/BlogDetailPage'))
-const BlogsPage = lazy(() => import('./pages/BlogsPage'))
-const MediaFilesPage = lazy(() => import('./pages/MediaFilesPage'))
+const BlogDetailPage = lazy(() => import('./features/blogs/pages/BlogDetailPage'))
+const BlogsPage = lazy(() => import('./features/blogs/pages/BlogsPage'))
+const MediaFilesPage = lazy(() => import('./features/media-files/pages/MediaFilesPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
-const ProductionDetailPage = lazy(() => import('./pages/ProductionDetailPage'))
-const ProductionsPage = lazy(() => import('./pages/ProductionsPage'))
-const SeriesDetailPage = lazy(() => import('./pages/SeriesDetailPage'))
-const SeriesPage = lazy(() => import('./pages/SeriesPage'))
+const ProductionDetailPage = lazy(() => import('./features/productions/pages/ProductionDetailPage'))
+const ProductionsPage = lazy(() => import('./features/productions/pages/ProductionsPage'))
+const SeriesDetailPage = lazy(() => import('./features/series/pages/SeriesDetailPage'))
+const SeriesPage = lazy(() => import('./features/series/pages/SeriesPage'))
 
 const ScrollToTop = () => {
   const location = useLocation()

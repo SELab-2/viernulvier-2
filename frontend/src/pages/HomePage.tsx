@@ -14,8 +14,8 @@ import { type SyntheticEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 
-import { useCollectionPageNotification } from '../hooks/useCollectionPageNotification'
 import { getLandingStats, type LandingStatsResponse } from '../services/productions/Productions'
+import { useCollectionPageNotification } from '../shared/hooks/useCollectionPageNotification'
 import { createHomePageStyles } from '../theme/styles'
 import { resolveCurrentLanguage, toLocalizedPath } from '../utils/localizedRoutes'
 
@@ -249,6 +249,11 @@ const HomePage = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('searchbar.searchPlaceholder')}
+                inputProps={{
+                  style: {
+                    textOverflow: 'ellipsis',
+                  },
+                }}
                 startAdornment={
                   <InputAdornment position="start">
                     <SearchOutlinedIcon sx={{ color: s.searchIconColor, fontSize: 19 }} />
