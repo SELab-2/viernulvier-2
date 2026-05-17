@@ -45,6 +45,7 @@ _TAG = "Productions"
 # Used in the base queryset to filter productions to those with only past events or no events at all.
 past_or_no_end = Q(ends_at__lte=Now()) | Q(ends_at__isnull=True, starts_at__isnull=False)
 
+# Used in annotations to filter related events to those with only past events or no events at all.
 events_past_or_no_end = Q(events__ends_at__lte=Now()) | Q(events__ends_at__isnull=True, events__starts_at__isnull=False)
 
 
@@ -224,11 +225,13 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         return super().get_serializer(*args, **kwargs)
 
     def retrieve(self, request: HttpRequest, *args: tuple, **kwargs: dict) -> HttpRequest:
-        """Retrieve a production by its ID, with optional inclusion of related events.
+        """Retrieve a production by ID with optional include-driven prefetches.
 
-        When events are included, the queryset is extended with additional
-        prefetches for prices, hall, space, and location translations to
-        avoid N+1 queries on the detail response.
+        When `include=events` is passed, the queryset is extended with additional
+        prefetches for prices, hall, space, and location translations.
+
+        When `include=blogs` is passed, linked published blogs and their
+        translations are prefetched as `prefetched_related_blogs`.
         """
         if "events" in self.includes:
             self.queryset = self.queryset.prefetch_related(

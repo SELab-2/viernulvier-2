@@ -50,13 +50,20 @@ INT_KEY = "int-production-view-test-key"
 
 
 def _dt(year, month, day, hour=0):
+    """Helper to create timezone-aware datetimes in UTC."""
     return datetime(year, month, day, hour, tzinfo=UTC)
 
 
 def _past_event(production, **kwargs):
+    """Helper to create a past event for a production with default start and end times."""
     kwargs.setdefault("starts_at", _dt(2025, 1, 1))
     kwargs.setdefault("ends_at", _dt(2025, 1, 1, 22))
     return EventFactory.create(production=production, **kwargs)
+
+
+# ---------------------------------------------------------------------------
+# Class-level tests
+# ---------------------------------------------------------------------------
 
 
 class TestProductionViewSetClass(TestCase):
@@ -68,6 +75,11 @@ class TestProductionViewSetClass(TestCase):
 
     def test_serializer_class_is_production_serializer(self) -> None:
         assert ProductionViewSet.serializer_class == ProductionSerializer
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/productions/ - list
+# ---------------------------------------------------------------------------
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
@@ -176,6 +188,11 @@ class TestProductionLandingStatsAction(TestCase):
         assert self.client.get("/api/v1/productions/landing-stats/", **wrong_headers()).status_code in (401, 403)
 
 
+# ---------------------------------------------------------------------------
+# GET /api/v1/productions/<id>/ - detail
+# ---------------------------------------------------------------------------
+
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetDetail(TestCase):
     def setUp(self) -> None:
@@ -265,6 +282,11 @@ class TestProductionViewSetDetail(TestCase):
         assert len(five_related_queries) == len(one_related_queries)
 
 
+# ---------------------------------------------------------------------------
+# POST /api/v1/productions/ - create
+# ---------------------------------------------------------------------------
+
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetCreate(TestCase):
     def setUp(self) -> None:
@@ -294,6 +316,11 @@ class TestProductionViewSetCreate(TestCase):
         assert response.data["performer_type"] == "group"
 
 
+# ---------------------------------------------------------------------------
+# PUT /api/v1/productions/<id>/ - full update
+# ---------------------------------------------------------------------------
+
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetUpdate(TestCase):
     def setUp(self) -> None:
@@ -320,6 +347,11 @@ class TestProductionViewSetUpdate(TestCase):
         self.client.put(f"/api/v1/productions/{self.production.pk}/", self.payload, **int_headers())
         self.production.refresh_from_db()
         assert self.production.attendance_mode == "online"
+
+
+# ---------------------------------------------------------------------------
+# PATCH /api/v1/productions/<id>/ - partial update
+# ---------------------------------------------------------------------------
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
@@ -354,6 +386,11 @@ class TestProductionViewSetPartialUpdate(TestCase):
         assert self.production.performer_type == "solo"
 
 
+# ---------------------------------------------------------------------------
+# DELETE /api/v1/productions/<id>/ - destroy
+# ---------------------------------------------------------------------------
+
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetDelete(TestCase):
     def setUp(self) -> None:
@@ -377,6 +414,11 @@ class TestProductionViewSetDelete(TestCase):
         pk = self.production.pk
         self.client.delete(f"/api/v1/productions/{pk}/", **int_headers())
         assert not Production.objects.filter(pk=pk).exists()
+
+
+# ---------------------------------------------------------------------------
+# Response structure - nested and translated fields
+# ---------------------------------------------------------------------------
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
@@ -548,6 +590,11 @@ class TestProductionViewSetResponseStructure(TestCase):
         assert draft_blog.id not in blog_ids
 
 
+# ---------------------------------------------------------------------------
+# N+1 guard - prefetch translations
+# ---------------------------------------------------------------------------
+
+
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
 class TestProductionViewSetPrefetch(TestCase):
     def setUp(self) -> None:
@@ -568,6 +615,11 @@ class TestProductionViewSetPrefetch(TestCase):
         with self.assertNumQueries(7):
             response = self.client.get("/api/v1/productions/", **pub_headers())
         assert response.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# N+1 guard - prefetch tag translations
+# ---------------------------------------------------------------------------
 
 
 @override_settings(PUBLIC_API_KEY=PUB_KEY, INTERNAL_API_KEY=INT_KEY)
