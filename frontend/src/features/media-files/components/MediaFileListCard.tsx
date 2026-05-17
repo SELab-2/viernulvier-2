@@ -1,5 +1,6 @@
+import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
-import { Stack, Typography, useTheme } from '@mui/material'
+import { Stack, Typography, useTheme, Box } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
 import MediaFilePreview from './MediaFilePreview'
@@ -163,6 +164,10 @@ const MediaFileListCard = ({ mediaFile, onOpen }: MediaFileListCardProps) => {
           ) : null}
         </Stack>
       </Stack>
+      {/* Arrow indicator */}
+      <Box sx={{ alignSelf: 'center', pr: 2 }}>
+        <ArrowForwardOutlinedIcon color="action" />
+      </Box>
     </Stack>
   )
 }
