@@ -7,7 +7,6 @@ from django.http import HttpRequest
 from django.utils.html import format_html
 
 from apps.core.admin import BaseAdmin
-from apps.core.admin_widgets import enable_rich_text_for_fields
 
 from .models import Blog, BlogTranslation
 
@@ -32,11 +31,6 @@ class BlogAdminForm(forms.ModelForm):
         }
 
 
-@enable_rich_text_for_fields(
-    "excerpt",
-    "body",
-    widget_attrs={"data-richtext-headings": "h1,h2,h3,h4"},
-)
 class BlogTranslationInline(admin.StackedInline):
     """Inline admin for blog translations."""
 
