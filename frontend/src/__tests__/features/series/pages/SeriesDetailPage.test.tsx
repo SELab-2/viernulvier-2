@@ -43,7 +43,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string) => {
       const translations: Record<string, string> = {
-        'common.loading': 'Loading…',
+        'common.loading': 'Laden…',
         'series.loading': 'Reeks laden',
         'series.backToSeries': 'Terug naar reeksen',
         'series.allEditions': 'Alle edities',
@@ -487,7 +487,7 @@ describe('SeriesDetailPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Toon meer' }))
 
     const loadingButton = await screen.findByRole('button', {
-      name: 'Loading…',
+      name: 'Laden…',
     })
     expect(loadingButton).toBeDisabled()
 
