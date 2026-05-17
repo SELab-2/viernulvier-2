@@ -23,31 +23,11 @@ import ImageWithFallback from '../../../shared/components/ImageWithFallback'
 import { formatDate } from '../../../utils/dateUtils'
 import { resolveCurrentLanguage, toLocalizedPath } from '../../../utils/localizedRoutes'
 import { htmlToPlainText } from '../../../utils/SanitizeHtml'
-import { getTranslatedRecord } from '../../../utils/translations'
+import { getLocalizedTagName, getLocalizedTagExcerpt } from '../../../utils/translations'
 
-import type { Tag } from '../../../types/Tags'
+import type { SeriesCardProps } from '../../../types/SeriesCardProps'
 
-export interface SeriesListCardProps {
-  tag: Tag
-}
-
-/**
- * Returns localized series name based on active language.
- */
-const getLocalizedTagName = (tag: Tag, language: string): string => {
-  const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
-  return getTranslatedRecord(tag.name, normalizedLanguage, tag.display_name)
-}
-
-/**
- * Returns localized series excerpt based on active language.
- */
-const getLocalizedTagExcerpt = (tag: Tag, language: string): string => {
-  const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
-  return getTranslatedRecord(tag.excerpt, normalizedLanguage, tag.display_excerpt)
-}
-
-const SeriesListCard = ({ tag }: SeriesListCardProps) => {
+const SeriesListCard = ({ tag }: SeriesCardProps) => {
   const { i18n, t } = useTranslation()
   const location = useLocation()
   const { language } = i18n
