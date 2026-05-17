@@ -42,6 +42,12 @@ from .serializers import (
 
 _TAG = "Productions"
 
+# Used in the base queryset to filter productions to those with only past events or no events at all.
+past_or_no_end = Q(ends_at__lte=Now()) | Q(ends_at__isnull=True, starts_at__isnull=False)
+
+# Used in annotations to filter related events to those with only past events or no events at all.
+events_past_or_no_end = Q(events__ends_at__lte=Now()) | Q(events__ends_at__isnull=True, events__starts_at__isnull=False)
+
 
 @extend_schema(tags=[_TAG])
 @production_schema
@@ -135,13 +141,10 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                 ).order_by("position"),
             ),
         )
-        .filter(
-            Exists(Event.objects.filter(production=OuterRef("pk"), ends_at__lte=Now()))
-            | ~Exists(Event.objects.filter(production=OuterRef("pk")))
-        )
+        .filter(Exists(Event.objects.filter(production=OuterRef("pk")).filter(past_or_no_end)))
         .annotate(
-            first_event_start=Min("events__starts_at", filter=Q(events__ends_at__lte=Now())),
-            last_event_end=Max("events__ends_at", filter=Q(events__ends_at__lte=Now())),
+            first_event_start=Min("events__starts_at", filter=events_past_or_no_end),
+            last_event_end=Max("events__ends_at", filter=events_past_or_no_end),
         )
     )
 
@@ -234,7 +237,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
             self.queryset = self.queryset.prefetch_related(
                 Prefetch(
                     "events",
-                    queryset=Event.objects.filter(ends_at__lte=Now())
+                    queryset=Event.objects.filter(past_or_no_end)
                     .prefetch_related(
                         Prefetch(
                             "prices",
@@ -300,8 +303,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         """Return pre-aggregated counters used by the frontend homepage."""
         payload = {
             "productions": Production.objects.filter(
-                Exists(Event.objects.filter(production=OuterRef("pk"), ends_at__lte=Now()))
-                | ~Exists(Event.objects.filter(production=OuterRef("pk")))
+                Exists(Event.objects.filter(production=OuterRef("pk")).filter(past_or_no_end))
             ).count(),
             "series": Tag.objects.filter(productions__isnull=False).distinct().count(),
             "years": self._get_documented_years_count(),

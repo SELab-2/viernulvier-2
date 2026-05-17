@@ -151,7 +151,7 @@ export const createCommonStyles = (theme: Theme) => {
      * Footer container styling.
      */
     footer: {
-      bgcolor: tokens.colors.neutral.gray900,
+      bgcolor: tokens.colors.neutral.black,
       color: tokens.colors.neutral.white,
       borderTop: `1px solid ${tokens.colors.overlay.footerBorder}`,
       mt: tokens.spacing.numericLg,
