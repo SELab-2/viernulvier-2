@@ -1,6 +1,6 @@
 import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
-import { Stack, Typography, useTheme, Box } from '@mui/material'
+import { Stack, Typography, Box } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
 import MediaFilePreview from './MediaFilePreview'
@@ -10,7 +10,6 @@ import {
   getMediaFileDescription,
   getMediaFileTypeLabel,
 } from './MediaFileUtils'
-import { createCommonStyles } from '../../../theme/styles'
 import { tokens } from '../../../theme/tokens'
 import { getPublicMediaFileUrl } from '../../../utils/mediaFileUrls'
 
@@ -34,8 +33,6 @@ export interface MediaFileListCardProps {
  * Clicking the card opens the public file URL.
  */
 const MediaFileListCard = ({ mediaFile, onOpen }: MediaFileListCardProps) => {
-  const theme = useTheme()
-  const commonStyles = createCommonStyles(theme)
   const { t, i18n } = useTranslation()
   const { language } = i18n
 
@@ -52,7 +49,7 @@ const MediaFileListCard = ({ mediaFile, onOpen }: MediaFileListCardProps) => {
     <Stack
       component="a"
       href={fileUrl}
-      direction={{ xs: 'column', sm: 'row' }}
+      direction="row"
       onClick={(event) => {
         if (!onOpen) {
           return
@@ -62,47 +59,49 @@ const MediaFileListCard = ({ mediaFile, onOpen }: MediaFileListCardProps) => {
         onOpen(mediaFile)
       }}
       aria-label={mediaFile.filename}
-      sx={{
-        ...commonStyles.cardBase,
+      sx={(theme) => ({
+        gap: 3,
+        height: 170,
+        p: 3,
         width: '100%',
         minWidth: 0,
         borderRadius: tokens.borderRadius.sm,
         overflow: 'hidden',
+        backgroundColor: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
         textDecoration: 'none',
         color: 'inherit',
+        transition: 'box-shadow 0.2s ease',
         '&:hover': {
+          boxShadow: theme.shadows[3],
+          color: 'inherit',
           textDecoration: 'none',
         },
-      }}
+      })}
     >
       {/* LEFT: preview container */}
       <Stack
         sx={{
-          p: tokens.spacing.numericMd,
+          aspectRatio: '16 / 9',
+          height: '100%',
           flexShrink: 0,
+          borderRadius: tokens.borderRadius.sm,
+          overflow: 'hidden',
+          backgroundColor: 'action.hover',
         }}
       >
-        <Stack
-          sx={{
-            width: { xs: '100%', sm: 220 },
-            aspectRatio: '16 / 9',
-            borderRadius: tokens.borderRadius.sm,
-            overflow: 'hidden',
-            backgroundColor: 'action.hover',
-          }}
-        >
-          <MediaFilePreview mediaFile={mediaFile} previewLabel={fileTypeLabel} />
-        </Stack>
+        <MediaFilePreview mediaFile={mediaFile} previewLabel={fileTypeLabel} />
       </Stack>
 
       {/* RIGHT: metadata content */}
       <Stack
         sx={{
           flex: 1,
-          justifyContent: 'space-between',
-          gap: tokens.spacing.numericSm,
-          p: tokens.spacing.numericLg,
           minWidth: 0,
+          height: '100%',
+          justifyContent: 'space-between',
+          gap: 1,
+          overflow: 'hidden',
         }}
       >
         {/* Filename + description */}
