@@ -30,6 +30,11 @@ class Tag(BaseModel):
     external systems (e.g. UiTdatabank). The ``source`` field records
     the origin of the tag.
 
+    Every tag must have at least one ``TagTranslation`` once it has been
+    persisted. New tags can be created without translations, but any
+    subsequent save of an existing tag that has no translations will raise
+    a ``ValidationError``.
+
     Attributes:
         url:         Public URL of the tag in the originating system.
         source:      Identifier of the system that created this tag
@@ -74,8 +79,12 @@ class Tag(BaseModel):
     )
 
     def clean(self) -> None:
-        """Validate uploaded image files."""
+        """Validate uploaded image files and enforce at least one translation."""
         super().clean()
+
+        if self.pk and not self.translations.exists():
+            raise ValidationError({"translations": "A tag must have at least one translation."})
+
         uploaded_image = getattr(self.image, "_file", None)
         if isinstance(uploaded_image, UploadedFile):
             try:
@@ -108,13 +117,14 @@ class TagTranslation(BaseModel):
     """Localised text fields for a Tag.
 
     Each tag can have at most one translation per language. The ``name``
-    field is the primary display label; ``excerpt``, ``short_description``
-    and ``url_title`` are optional supplementary fields.
+    field is required and serves as the primary display label;
+    ``excerpt``, ``short_description`` and ``url_title`` are optional
+    supplementary fields.
 
     Attributes:
         tag:               The tag this translation belongs to.
         language:          The language of this translation.
-        name:              Localised display name of the tag.
+        name:              Localised display name of the tag (required).
         excerpt:          Optional excerpt or summary of the tag.
         short_description: Optional short description of the tag.
         url_title:         URL-safe title used in slugs or links.
@@ -138,6 +148,8 @@ class TagTranslation(BaseModel):
 
     name = models.CharField(
         max_length=255,
+        null=False,
+        blank=False,
         help_text="Localised display name of the tag (e.g. `Contemporary`, `Family friendly`).",
         db_comment="The name of the tag in the specified language.",
     )
