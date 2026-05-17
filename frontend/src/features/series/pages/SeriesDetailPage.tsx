@@ -136,7 +136,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     i18n.language,
     i18n.resolvedLanguage,
   )
-  const notFoundPath = toLocalizedPath('/not-found', currentLanguage)
+  const notFoundPath = toLocalizedPath('/404', currentLanguage)
 
   const [seriesTag, setSeriesTag] = useState<Tag | null>(null)
   const [seriesProductions, setSeriesProductions] = useState<Production[]>([])

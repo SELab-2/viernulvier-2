@@ -128,7 +128,7 @@ describe('SeriesDetailPage', () => {
           <Route path="/:lang/reeksen/:id" element={<SeriesDetailPage />} />
           <Route path="/:lang/reeksen" element={<SeriesPageMock />} />
           <Route path="/:lang/producties/:id" element={<div>PRODUCTION DETAIL</div>} />
-          <Route path="/:lang/not-found" element={<div>404 PAGE</div>} />
+          <Route path="/:lang/404" element={<div>404 PAGE</div>} />
         </Routes>
       </MemoryRouter>,
     )

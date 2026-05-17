@@ -16,19 +16,19 @@ export default ({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: 'http://localhost:8000',
+          target: 'https://sel2-2.ugent.be',
           changeOrigin: true,
         },
         '/admin': {
-          target: 'http://localhost:8000',
+          target: 'https://sel2-2.ugent.be',
           changeOrigin: true,
         },
         '/static': {
-          target: 'http://localhost:8000',
+          target: 'https://sel2-2.ugent.be',
           changeOrigin: true,
         },
         '/media': {
-          target: 'http://localhost:8000',
+          target: 'https://sel2-2.ugent.be',
           changeOrigin: true,
         },
       },
