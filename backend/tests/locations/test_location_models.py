@@ -1,3 +1,5 @@
+"""Tests for Location, Space, Hall, and their translation models."""
+
 from django.forms import ValidationError
 import pytest
 

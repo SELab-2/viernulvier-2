@@ -1,3 +1,5 @@
+"""Tests for apps.core.throttles."""
+
 import hashlib
 from unittest.mock import MagicMock
 

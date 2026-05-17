@@ -1,6 +1,4 @@
-"""
-Tests for apps/events/filters.py and apps/events/views.py.
-"""
+"""Tests for EventFilter behaviour and event API filtering/search/ordering."""
 
 from django.test import override_settings
 from django.utils import timezone

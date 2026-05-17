@@ -45,6 +45,7 @@ from tests.factories.production import (
 
 
 def make_superuser(username="admin"):
+    """Create a superuser for production admin HTTP tests."""
     return User.objects.create_superuser(username=username, password="password", email=f"{username}@example.com")
 
 

@@ -25,6 +25,7 @@ def make_file(
     content: bytes = b"dummy",
     content_type: str = "application/pdf",
 ) -> SimpleUploadedFile:
+    """Create a SimpleUploadedFile for MediaFile API tests."""
     return SimpleUploadedFile(name, content, content_type=content_type)
 
 
@@ -96,6 +97,7 @@ class TestMediaFileViewSetListAndDetail(TestCase):
 
     def test_list_without_auth_returns_401_or_403(self) -> None:
         response = self.client.get("/api/v1/media/")
+        # Accept both because authentication and permission checks may run in different order.
         assert response.status_code in (401, 403)
 
     def test_list_with_wrong_key_returns_401_or_403(self) -> None:

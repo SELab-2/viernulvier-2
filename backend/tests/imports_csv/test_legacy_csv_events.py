@@ -1,3 +1,5 @@
+"""Tests for importing legacy event CSV rows."""
+
 from __future__ import annotations
 
 from datetime import UTC, datetime

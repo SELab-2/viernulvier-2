@@ -1,6 +1,4 @@
-"""
-Tests for apps/genres/filters.py and apps/genres/views.py.
-"""
+"""Tests for GenreFilter behaviour and genre API filtering/search/ordering."""
 
 from django.test import override_settings
 import pytest

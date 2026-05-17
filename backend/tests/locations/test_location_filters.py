@@ -1,6 +1,4 @@
-"""
-Tests for apps/locations/filters.py and apps/locations/views.py.
-"""
+"""Tests for location filters and location/space/hall API filtering/search/ordering."""
 
 from django.test import TestCase, override_settings
 from django.urls import reverse

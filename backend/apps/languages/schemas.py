@@ -1,9 +1,4 @@
-"""
-apps/language/schema.py
-
-OpenAPI schema decorators for the Language app.
-Views.py imports `language_schema` and applies it as a class decorator.
-"""
+"""OpenAPI schema decorators and examples for the Language app."""
 
 from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 

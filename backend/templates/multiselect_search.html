@@ -130,6 +130,11 @@
 </details>
 
 <script>
+    /*
+    * Client-side narrowing for the currently rendered option list.
+    * Selected rows stay visible even when they do not match the search term,
+    * so users can always see and uncheck active filters.
+    */
   (function () {
     const container = document.currentScript.previousElementSibling;
     if (!container) return;

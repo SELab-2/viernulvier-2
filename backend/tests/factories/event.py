@@ -1,3 +1,5 @@
+"""Factory Boy factories for event test data."""
+
 from datetime import timedelta
 
 from django.utils import timezone

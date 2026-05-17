@@ -32,42 +32,18 @@ Access matrix
 +------------------+---------------------+---------------------+
 """
 
-from collections.abc import Callable
-from typing import Any
-
 from django.utils.cache import patch_cache_control
 from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_headers
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
-from api.cache import clear_api_cache
+from api.cache import cache_api_view, clear_api_cache
 from apps.core.ordering import NullsLastOrderingFilter
 
 from .authentications import ApiKeyAuthentication
 from .permissions import ApiKeyPermission
-
-CACHE_TTL_API = 60 * 15
-API_CACHE_KEY_PREFIX = "api"
-API_CACHE_VARY_HEADERS = ("Accept-Language",)
-
-
-def cache_api_view(timeout: int = CACHE_TTL_API) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """Cache an API handler while keeping language-aware responses separate.
-
-    Django's ``cache_page`` caches per URL, including query parameters. The
-    additional ``Vary: Accept-Language`` ensures endpoints with language-aware
-    ordering/search annotations do not reuse a response generated for another
-    preferred language.
-    """
-
-    def decorator(view_func: Callable[..., Any]) -> Callable[..., Any]:
-        return cache_page(timeout, key_prefix=API_CACHE_KEY_PREFIX)(vary_on_headers(*API_CACHE_VARY_HEADERS)(view_func))
-
-    return decorator
 
 
 @method_decorator(cache_api_view(), name="list")

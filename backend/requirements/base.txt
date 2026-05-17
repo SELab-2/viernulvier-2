@@ -1,3 +1,6 @@
+# Shared runtime dependencies used by all backend environments.
+# Environment-specific files extend this file with -r base.txt.
+
 Django==6.0.5
 djangorestframework==3.17.1
 drf-spectacular==0.29.0

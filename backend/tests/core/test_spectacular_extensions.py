@@ -1,3 +1,5 @@
+"""Tests for apps.core.spectacular_extensions."""
+
 from unittest.mock import MagicMock
 
 import pytest

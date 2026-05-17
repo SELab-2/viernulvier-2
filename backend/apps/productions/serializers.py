@@ -412,7 +412,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         )
 
     def get_related(self, obj: Production) -> list | None:
-        """Return related productions grouped by the tags on this production."""
+        """Return productions sharing each tag on this production when requested."""
         if "related" not in self.context.get("include", set()):
             return None
 
@@ -457,7 +457,7 @@ class ProductionSerializer(TranslatableSerializerMixin, serializers.ModelSeriali
         return ProductionRelatedBlogSerializer(blogs, many=True, context=self.context).data
 
     def to_representation(self, instance: Production) -> dict:
-        """Conditionally strip ``events`` and ``related`` when not requested."""
+        """Remove optional include-driven fields from the response unless requested."""
         rep = super().to_representation(instance)
         if "events" not in self.context.get("include", set()):
             rep.pop("events", None)

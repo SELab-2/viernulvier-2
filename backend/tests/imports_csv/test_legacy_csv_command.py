@@ -1,3 +1,5 @@
+"""Tests for the import_legacy_csv management command."""
+
 from __future__ import annotations
 
 from io import StringIO

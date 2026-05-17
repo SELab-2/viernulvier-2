@@ -1,3 +1,5 @@
+"""Factory Boy factories for production test data."""
+
 import factory
 from factory.declarations import LazyFunction, SubFactory
 from faker import Faker

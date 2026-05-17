@@ -24,6 +24,7 @@ def make_uploaded_file(
     content: bytes = b"dummy content",
     content_type: str = "application/pdf",
 ) -> SimpleUploadedFile:
+    """Create a SimpleUploadedFile for media-file tests."""
     return SimpleUploadedFile(name, content, content_type=content_type)
 
 

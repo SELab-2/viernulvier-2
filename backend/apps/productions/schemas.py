@@ -1,6 +1,4 @@
-"""
-OpenAPI schema decorators for the Productions app.
-"""
+"""OpenAPI schema decorators and examples for the Productions app."""
 
 from drf_spectacular.utils import (
     OpenApiExample,

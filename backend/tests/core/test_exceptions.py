@@ -762,7 +762,7 @@ class TestUnknownExceptionWithDRFResponse:
     This branch is reached when drf_exception_handler returns a Response for
     an exception that is not an APIException subclass (and was not converted
     to one by the Django-exception guard at the top of the handler).
-    In production this path shoould be unreachable, but we can force it via a mock.
+    In production this path should be unreachable, but we can force it via a mock.
     """
 
     def test_returns_none_for_unrecognised_exc_with_drf_response(self) -> None:
