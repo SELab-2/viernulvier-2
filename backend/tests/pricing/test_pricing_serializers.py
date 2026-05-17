@@ -1,4 +1,5 @@
-"""
+"""Tests for apps/pricing/serializers.py.
+
 Covers:
 - PriceSerializer serialization (model -> dict)
 - PriceSerializer description translation behavior (dict of translations)
@@ -217,8 +218,7 @@ class TestPriceSerializerTranslationEdgeCases(TestCase):
         assert serializer.data["description"] == {}
 
     def test_description_skips_missing_language_keys(self) -> None:
-        """Test case for test_description_skips_missing_language_keys."""
-        """
+        """Test case for test_description_skips_missing_language_keys.
         If only one translation exists, the dict contains only that language.
         """
         price = PriceFactory.create(
@@ -279,8 +279,7 @@ class TestPriceSerializerDeserialization(TestCase):
     # -- Read-only behavior ---------------------------------------------------
 
     def test_description_is_read_only(self) -> None:
-        """Test case for test_description_is_read_only."""
-        """
+        """Test case for test_description_is_read_only.
         If `description` is SerializerMethodField, it should not be writable.
         """
         data = {
@@ -397,6 +396,7 @@ class TestPriceRankSerializer(TestCase):
 
 
 def _display_ctx():
+    """Return serializer context with a minimal request object."""
     factory = APIRequestFactory()
     return {"request": factory.get("/dummy")}
 

@@ -1,3 +1,5 @@
+"""Tests for production admin bulk actions."""
+
 from django.contrib import admin
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.auth.models import AnonymousUser
@@ -20,6 +22,7 @@ class TestProductionAdminActions(TestCase):
         self.production_2 = ProductionFactory()
 
     def _request_with_messages(self, method, path, data=None):
+        """Build an admin-like request with session and messages support."""
         request = getattr(self.factory, method)(path, data=data or {})
         SessionMiddleware(lambda _: None).process_request(request)
         request.session.save()

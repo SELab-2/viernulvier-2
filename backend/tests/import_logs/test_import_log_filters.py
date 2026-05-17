@@ -1,6 +1,4 @@
-"""
-Tests for apps/import_log/filters.py
-"""
+"""Tests for apps/import_log/filters.py."""
 
 from django.test import TestCase
 from django.utils import timezone

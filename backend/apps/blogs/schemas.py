@@ -1,6 +1,4 @@
-"""
-OpenAPI schema decorators for the Blog app.
-"""
+"""OpenAPI schema decorators and examples for the Blog app."""
 
 from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 

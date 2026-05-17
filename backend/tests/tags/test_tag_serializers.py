@@ -319,7 +319,8 @@ class TestTagSerializerQueryset(TestCase):
 class TestTagSerializerDeserialization(TestCase):
     """dict -> model (create / update)."""
 
-    def _valid_payload(self, **overrides):
+    def _valid_payload(self, **overrides) -> dict:
+        """Return a valid TagSerializer input payload with optional overrides."""
         payload = {
             "type": "genre",
             "source": "system",
@@ -377,6 +378,7 @@ class TestTagSerializerDeserialization(TestCase):
 
 
 def _display_ctx():
+    """Return serializer context with a minimal request object."""
     factory = APIRequestFactory()
     return {"request": factory.get("/dummy")}
 

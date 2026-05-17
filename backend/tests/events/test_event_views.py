@@ -1,3 +1,5 @@
+"""Tests for apps/events/views.py."""
+
 from datetime import timedelta
 
 from django.db import connection

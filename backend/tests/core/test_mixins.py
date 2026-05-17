@@ -1,3 +1,5 @@
+"""Tests for apps.core.mixins."""
+
 from types import SimpleNamespace
 
 from django.test import SimpleTestCase, override_settings

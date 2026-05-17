@@ -1,6 +1,4 @@
-"""
-Tests for apps/languages/filters.py and apps/languages/views.py.
-"""
+"""Tests for LanguageFilter behaviour and language API filtering/search/ordering."""
 
 from django.test import override_settings
 from django.urls import reverse

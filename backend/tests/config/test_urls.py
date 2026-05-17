@@ -1,3 +1,5 @@
+"""Tests for root URL routing and DEBUG-only URL patterns."""
+
 import importlib
 import tempfile
 

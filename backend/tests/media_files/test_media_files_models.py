@@ -30,6 +30,7 @@ def make_uploaded_file(
 
 
 def make_png_bytes() -> bytes:
+    """Return valid PNG bytes for content-signature validation tests."""
     buffer = BytesIO()
     Image.new("RGB", (1, 1), color=(255, 0, 0)).save(buffer, format="PNG")
     return buffer.getvalue()

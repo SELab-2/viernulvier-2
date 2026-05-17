@@ -65,6 +65,7 @@ def _mock_build_session(monkeypatch, response_sequence=None, *, raise_exc=None):
 
 
 def _make_ok_response(data, etag=None):
+    """Return a successful mock response with optional ETag header."""
     r = Mock()
     r.status_code = 200
     r.ok = True
@@ -75,6 +76,7 @@ def _make_ok_response(data, etag=None):
 
 
 def _make_status_response(status, headers=None):
+    """Return a mock response for a specific HTTP status."""
     r = Mock()
     r.status_code = status
     r.ok = status < 400
@@ -142,6 +144,8 @@ class _PassThroughConfig(ModelSyncConfig):
 
 
 def _fake_trans_model(call_log):
+    """Return a fake translation model that records update_or_create calls."""
+
     class FakeMeta:
         def get_field(self, name):
             return models.CharField(name=name, max_length=255)
@@ -165,6 +169,7 @@ def _fake_trans_model(call_log):
 
 
 def _make_m2m_setup():
+    """Return fake M2M classes and a list collecting created through rows."""
     created_rows = []
 
     class FakeRelated:

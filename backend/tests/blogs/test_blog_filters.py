@@ -1,3 +1,5 @@
+"""Tests for apps/blogs/filters.py."""
+
 import pytest
 
 from apps.blogs.filters import BlogFilter
