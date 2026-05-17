@@ -2,13 +2,12 @@
 Admin configuration for the Tags app.
 
 The admin is structured around the ``Tag`` model as the primary entry point,
-with an inline for translations. A standalone ``TagTranslationAdmin`` is
-provided for filtering translations by language across all tags.
+with an inline for translations.
 
 Queryset optimisation
 ---------------------
 ``TagAdmin`` prefetches translations to prevent N+1 queries on the list page.
-``TagTranslationAdmin`` uses ``select_related`` to join the parent tag and
+``TagTranslationInline`` uses ``select_related`` to join the parent tag and
 language in a single query.
 """
 
@@ -45,6 +44,18 @@ class TagAdminForm(forms.ModelForm):
         }
 
 
+class TagTranslationInlineFormSet(forms.models.BaseInlineFormSet):
+    """Inline formset that enforces at least one non-deleted translation."""
+
+    def clean(self) -> None:
+        """Raise an error if all translations are marked for deletion."""
+        super().clean()
+
+        non_deleted_count = sum(1 for form in self.forms if form.cleaned_data and not form.cleaned_data.get("DELETE", False))
+        if non_deleted_count < 1:
+            raise forms.ValidationError("A tag must have at least one translation.")
+
+
 class TagTranslationInline(admin.StackedInline):
     """
     Inline for editing localised tag fields directly inside the Tag change page.
@@ -52,10 +63,10 @@ class TagTranslationInline(admin.StackedInline):
 
     model = TagTranslation
     extra = 1
+    formset = TagTranslationInlineFormSet
     autocomplete_fields = ("language",)
     fields = ("language", "name", "excerpt", "short_description", "url_title")
     ordering = ("language__code",)
-    classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Select related language to avoid N+1 queries in the translation inline."""
