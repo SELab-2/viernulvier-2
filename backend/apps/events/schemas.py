@@ -1,6 +1,4 @@
-"""
-OpenAPI schema decorators for the Events app.
-"""
+"""OpenAPI schema decorators and examples for the Events app."""
 
 from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 
@@ -194,7 +192,7 @@ _EVENT_CREATE = extend_schema(
         "Creates a new **Event** for an existing production.\n\n"
         "- `production_id` is required (integer FK).\n"
         "- `hall_id` is optional (integer FK); omit or set to `null` for online events.\n"
-        "- `ends_at` must be strictly later than `starts_at`.\n"
+        "- `ends_at` must be later than or equal to `starts_at`.\n"
         "- Prices must be added separately via the **Event Price** endpoints "
         "after creation.\n\n"
         "On write, use `*_id` fields for related objects. On read, nested objects are returned.\n\n"

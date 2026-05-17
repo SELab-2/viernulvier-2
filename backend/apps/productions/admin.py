@@ -36,6 +36,8 @@ from .models import (
 
 
 class AddTagToProductionsForm(forms.Form):
+    """Confirmation form for selecting the tag to add to selected productions."""
+
     tag = forms.ModelChoiceField(
         queryset=Tag.objects.order_by("type"),
         required=True,
@@ -44,6 +46,8 @@ class AddTagToProductionsForm(forms.Form):
 
 
 class AddGenreToProductionsForm(forms.Form):
+    """Confirmation form for selecting the genre to add to selected productions."""
+
     genre = forms.ModelChoiceField(
         queryset=Genre.objects.order_by("type"),
         required=True,
@@ -96,6 +100,7 @@ class ProductionTranslationInline(admin.StackedInline):
     )
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related language to avoid N+1 queries in the translation inline."""
         return super().get_queryset(request).select_related("language")
 
 
@@ -116,6 +121,7 @@ class ProductionGenreInline(admin.TabularInline):
     classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related genre to avoid N+1 queries in the genre inline."""
         return super().get_queryset(request).select_related("genre")
 
 
@@ -132,6 +138,7 @@ class ProductionTagInline(admin.TabularInline):
     classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related tag to avoid N+1 queries in the tag inline."""
         return super().get_queryset(request).select_related("tag")
 
 
@@ -151,6 +158,7 @@ class ProductionTagTranslationInline(admin.TabularInline):
     fields = ("language", "description")
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related language to avoid N+1 queries in the translation inline."""
         return super().get_queryset(request).select_related("language")
 
 
@@ -268,6 +276,11 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         return self.model.objects.filter(pk__in=selected_ids)
 
     def _apply_add_tag_to_productions(self, selected_qs: QuerySet, cleaned_data: dict) -> str:
+        """Attach the selected tag to all selected productions using bulk_create.
+
+        Existing production-tag links are ignored so the action can be safely
+        repeated without raising duplicate constraint errors.
+        """
         tag = cleaned_data["tag"]
         production_ids = list(selected_qs.values_list("id", flat=True))
         through_model = Production.tags.through
@@ -280,6 +293,11 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         return f"Tag '{tag!s}' added to {len(production_ids)} selected productions."
 
     def _apply_add_genre_to_productions(self, selected_qs: QuerySet, cleaned_data: dict) -> str:
+        """Attach the selected genre to selected productions at the next position.
+
+        Existing production-genre links are skipped. For new links, the next
+        position is calculated per production so genre ordering remains stable.
+        """
         genre = cleaned_data["genre"]
         production_ids = list(selected_qs.values_list("id", flat=True))
 

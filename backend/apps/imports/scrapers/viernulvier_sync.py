@@ -25,6 +25,11 @@ logger = logging.getLogger("apps.imports.scrapers.viernulvier")
 
 
 def _build_import_source(endpoint: str, params: dict[str, str] | None) -> str:
+    """Build a compact ImportLog source string for one API endpoint and filter set.
+
+    The ImportLog ``source`` field is limited, so long parameterized sources are
+    truncated before the query-string suffix is appended.
+    """
     source = f"viernulvier:{endpoint}"
     if not params:
         return source
@@ -39,6 +44,13 @@ def _validate_item(
     extract_lookup_value_fn: Callable[[Mapping[str, Any], ModelSyncConfig], str | None],
     seen: set[str],
 ) -> tuple[dict[str, Any] | None, str | None, str | None]:
+    """Validate one raw API item before it enters the persistence step.
+
+    Non-dict payloads, missing lookup values, duplicates, and items rejected by
+    ``config.item_filter`` are handled here. Validation errors are returned as
+    strings so the caller can include them in the ImportLog without aborting the
+    full sync.
+    """
     if not isinstance(item, dict):
         msg = f"Item is not a dict: {item!r}"
         logger.error(msg)
@@ -71,6 +83,12 @@ def _sync_single_item(
     sync_translations_fn: Callable[[models.Model, Mapping[str, Any], list], None],
     sync_m2m_fn: Callable[[models.Model, Mapping[str, Any], Any, Any], None],
 ) -> tuple[bool, str | None]:
+    """Persist one API item inside a savepoint and return success/error state.
+
+    The savepoint keeps one bad record from rolling back the entire sync run.
+    After the parent object is upserted, translations and M2M links are synced
+    within the same transaction boundary.
+    """
     sid = transaction_module.savepoint()
     try:
         defaults = build_defaults_fn(model, item, config, fk_cache)
@@ -121,6 +139,12 @@ def _process_items(
     sync_translations_fn: Callable[[models.Model, Mapping[str, Any], list], None],
     sync_m2m_fn: Callable[[models.Model, Mapping[str, Any], Any, Any], None],
 ) -> tuple[int, int, list[str], int]:
+    """Process all fetched API items and collect ImportLog counters.
+
+    The loop separates validation, dry-run reporting, persistence, and progress
+    callbacks. Recoverable item-level errors are accumulated instead of raising
+    immediately, so later records can still be synced.
+    """
     saved = 0
     errors = 0
     error_messages: list[str] = []
@@ -185,6 +209,13 @@ def sync_viernulvier_impl(
     etag_cache: dict[str, str] | None = None,
     on_progress: Callable[[int, int], None] | None = None,
 ) -> int:
+    """Fetch Viernulvier API data, sync it to one Django model, and update ImportLog.
+
+    This is the generic sync entry point used by the management command. It
+    creates an ImportLog, fetches all items for one endpoint, warms FK caches
+    for configured M2M relations, processes items, and finalizes the log with
+    success/partial/failure counters.
+    """
     """Fetch Viernulvier API data and persist it to a Django model."""
     source = _build_import_source(endpoint, params)
 

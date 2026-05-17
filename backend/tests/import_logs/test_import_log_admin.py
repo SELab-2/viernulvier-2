@@ -34,6 +34,7 @@ def make_superuser(username="admin"):
 
 
 def make_import_log(**kwargs):
+    """Create a persisted ImportLog with stable defaults for tests."""
     defaults = {
         "source": "test_import.json",
         "status": ImportLog.Status.SUCCESS,

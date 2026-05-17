@@ -1,3 +1,5 @@
+"""Tests for environment-specific Django settings profiles."""
+
 import importlib
 import sys
 
@@ -62,7 +64,7 @@ def test_prod_settings_enable_security_and_build_csrf_origins(monkeypatch: pytes
     assert prod.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] == EXPECTED_THROTTLE_RATES
 
 
-def test_staging_settings_use_short_hsts_and_prod_like_throttling(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_staging_settings_disable_hsts_and_use_prod_like_throttling(monkeypatch: pytest.MonkeyPatch) -> None:
     staging = _fresh_import("config.settings.staging")
 
     assert staging.DEBUG is False

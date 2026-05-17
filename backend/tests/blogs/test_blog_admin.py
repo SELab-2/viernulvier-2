@@ -1,13 +1,4 @@
-"""
-Tests for apps/blogs/admin.py
-
-Covers:
-- Admin registration for Blog and BlogTranslation
-- Admin classes inherit from BaseAdmin
-- Admin configuration (list/search/filter/ordering/inlines/autocomplete)
-- Custom BlogAdmin helper methods
-- Functional admin pages with a superuser
-"""
+"""Tests for apps/blogs/admin.py."""
 
 from django.contrib import admin
 from django.contrib.auth.models import User

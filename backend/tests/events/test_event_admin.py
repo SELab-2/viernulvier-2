@@ -183,7 +183,7 @@ class TestEventsAdminChangelists(TestCase):
         assert response.status_code == 200
 
     def test_event_changeform_returns_200(self) -> None:
-        """Test case for test_event_changeform_returns_200."""
+        """Event change form should load for superusers."""
         response = self.client.get(admin_change_url(Event, self.event.pk))
         assert response.status_code == 200
 

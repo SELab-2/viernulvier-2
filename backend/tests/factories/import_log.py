@@ -1,3 +1,5 @@
+"""Factory Boy factories for import log test data."""
+
 from datetime import timedelta
 
 from django.utils import timezone
@@ -6,7 +8,7 @@ from factory.declarations import LazyAttribute, LazyFunction
 from factory.helpers import post_generation
 from faker import Faker
 
-from apps.import_log.models import ImportLog  # pas pad aan indien nodig
+from apps.import_log.models import ImportLog
 
 faker = Faker()
 
@@ -43,9 +45,7 @@ class ImportLogFactory(factory.django.DjangoModelFactory):
 
     @post_generation
     def adjust_counts(self, create, _) -> None:
-        """
-        Zorgt dat imported + failed <= total
-        """
+        """Keep imported + failed counts within the total record count."""
         if not create:
             return
 
@@ -59,9 +59,7 @@ class ImportLogFactory(factory.django.DjangoModelFactory):
 
     @post_generation
     def adjust_status_logic(self, create, _, **__) -> None:
-        """
-        Logische status-afhandeling.
-        """
+        """Adjust timestamps and error messages so they match the selected status."""
         if not create:
             return
 

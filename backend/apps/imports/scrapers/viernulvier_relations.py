@@ -112,6 +112,16 @@ def _apply_default_value(
     fk_cache: FKCache,
     resolve_fk_fn: Callable[[models.Field, Any, FKCache], Any | None],
 ) -> None:
+    """Convert one raw API value and write it into ``update_or_create`` defaults.
+
+    Foreign keys are resolved to ``<field>_id`` values through the FK cache,
+    optionally using a custom resolver from the sync config. Scalar values are
+    coerced through ``parse_field_value`` and then passed through any configured
+    per-field transform before being included in ``defaults``.
+
+    Values that cannot be resolved or coerced are skipped instead of failing the
+    whole item, allowing the sync loop to continue with partial data.
+    """
     if model_field.is_relation and model_field.many_to_one:
         custom = config.fk_resolvers.get(field_name)
         pk = custom(raw_value) if custom else resolve_fk_fn(model_field, raw_value, fk_cache)
@@ -132,6 +142,15 @@ def _resolve_model_field(
     api_key: str,
     raw_value: Any,
 ) -> models.Field | None:
+    """Infer a model field for an unmapped scalar API key.
+
+    Explicit ``field_map`` entries are preferred, but this fallback allows
+    simple API keys to sync automatically when they match a model field either
+    directly or after camelCase-to-snake_case conversion.
+
+    Nested lists and dictionaries are ignored here because they usually
+    represent relations or translated fields that need explicit handling.
+    """
     if isinstance(raw_value, (list, dict)):
         return None
     snake_key = camel_to_snake(api_key)
@@ -146,6 +165,7 @@ def _resolve_model_field(
 
 
 def _mapped_fields(config: ModelSyncConfig, item: Mapping[str, Any]) -> list[tuple[str, str, Any]]:
+    """Return explicitly mapped API fields that are present in the current item."""
     mapped: list[tuple[str, str, Any]] = []
     for api_key, model_field_name in config.field_map.items():
         if model_field_name is None:
@@ -194,6 +214,11 @@ def build_defaults(
 def _group_translation_configs(
     translation_configs: list[TranslationConfig],
 ) -> dict[tuple[type[models.Model], str, str], list[TranslationConfig]]:
+    """Group translation configs by target model and parent/language FK fields.
+
+    Grouping lets all translated fields for the same parent/language pair be
+    written with a single ``update_or_create`` call.
+    """
     groups: dict[tuple[type[models.Model], str, str], list[TranslationConfig]] = defaultdict(list)
     for cfg in translation_configs:
         groups[(cfg.model, cfg.parent_fk, cfg.language_fk)].append(cfg)
@@ -201,6 +226,7 @@ def _group_translation_configs(
 
 
 def _collect_languages(item: Mapping[str, Any], cfgs: list[TranslationConfig]) -> set[str]:
+    """Collect all language codes present in the configured translated API fields."""
     all_languages: set[str] = set()
     for cfg in cfgs:
         raw_dict = item.get(cfg.api_key)
@@ -215,6 +241,12 @@ def _build_translation_updates(
     cfgs: list[TranslationConfig],
     lang_code: str,
 ) -> dict[str, Any]:
+    """Build the translated field update dict for one language.
+
+    Empty values for non-blank model fields are skipped so an incomplete API
+    translation does not overwrite required database fields with invalid data.
+    Field-level transforms are applied after type coercion.
+    """
     updates: dict[str, Any] = {}
     for cfg in cfgs:
         raw_dict = item.get(cfg.api_key)
@@ -287,6 +319,12 @@ def _resolve_related_pk(
     m2m_config: M2MConfig,
     fk_cache: FKCache,
 ) -> Any | None:
+    """Resolve the related object PK for an M2M through-row.
+
+    The FK cache is checked first, then the database. If the related object is
+    missing and the sync config provides ``create_related_fn``, that callback
+    can create a minimal dependency on demand.
+    """
     pk = fk_cache.get(related_model, ext_id)
     if pk is not None:
         return pk
@@ -317,6 +355,13 @@ def _build_through_kwargs(
     position: int,
     related_pk: Any,
 ) -> dict[str, Any]:
+    """Build keyword arguments for one explicit through-model instance.
+
+    The parent and related objects are assigned as lightweight model instances
+    using their primary keys. Any configured ``extra_fields`` are copied from
+    the API item, with ``position`` falling back to the list index when the API
+    does not provide an explicit value.
+    """
     through_kwargs: dict[str, Any] = {
         m2m_config.parent_fk: parent_obj,
         m2m_config.related_fk: related_model(pk=related_pk),

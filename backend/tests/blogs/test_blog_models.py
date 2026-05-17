@@ -1,3 +1,5 @@
+"""Tests for apps/blogs/models.py."""
+
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest

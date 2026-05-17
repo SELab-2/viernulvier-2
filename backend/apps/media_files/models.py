@@ -1,4 +1,9 @@
-"""Model for Media Files."""
+"""Models for uploaded media files.
+
+The Media Files app stores user-uploaded images and PDFs, derives metadata
+such as MIME type, size, filename and normalized file type, and keeps
+localised descriptions in MediaFileTranslation.
+"""
 
 import os
 from typing import Any
@@ -106,7 +111,13 @@ class MediaFile(BaseModel):
         return previous_name != current_name
 
     def _populate_derived_fields(self) -> None:
-        """Fill metadata fields derived from the uploaded file."""
+        """Fill metadata fields derived from the uploaded file.
+
+        The filename is only replaced automatically when it was empty, or when the
+        binary file changed and the current filename still matches the previous
+        stored filename. This preserves manually edited filenames across metadata
+        updates.
+        """
         if not self.file:
             return
 
@@ -144,6 +155,7 @@ class MediaFile(BaseModel):
             raise ValidationError({"file": "This field is required."})
 
         try:
+            # Validation performs binary signature/MIME/size checks and returns trusted metadata.
             validation = validate_media_file(
                 self.file,
                 allowed_mime_types=ALLOWED_MEDIA_MIME_TYPES,

@@ -1,3 +1,5 @@
+"""Tests for Language model validation and reverse translation relations."""
+
 from django.core.exceptions import ValidationError
 import pytest
 

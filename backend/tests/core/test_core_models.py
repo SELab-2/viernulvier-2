@@ -1,3 +1,5 @@
+"""Tests for apps.core.models."""
+
 from unittest.mock import MagicMock, patch
 
 from django.core.exceptions import ValidationError

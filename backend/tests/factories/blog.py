@@ -1,3 +1,5 @@
+"""Factory Boy factories for blog test data."""
+
 from django.utils import timezone
 import factory
 from factory.declarations import LazyFunction, Sequence, SubFactory

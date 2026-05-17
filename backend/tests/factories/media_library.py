@@ -1,3 +1,5 @@
+"""Factory Boy factories for media library test data."""
+
 import factory
 from faker import Faker
 
@@ -48,4 +50,6 @@ class MediaItemCropFactory(factory.django.DjangoModelFactory):
 
     media_item = factory.SubFactory(MediaItemFactory)
     name = factory.Sequence(lambda n: f"crop_{n}")
-    image = factory.LazyAttribute(lambda _: faker.url())
+    image = factory.LazyAttribute(
+        lambda _: faker.url()
+    )  # Store a URL-like string because most tests only inspect the rendered path/url.

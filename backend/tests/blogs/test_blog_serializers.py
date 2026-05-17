@@ -1,3 +1,5 @@
+"""Tests for apps/blogs/serializers.py."""
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 import pytest
@@ -107,7 +109,7 @@ class TestBlogSerializer(TestCase):
         assert not serializer.is_valid()
         assert "production_ids" in serializer.errors
 
-    def test_create_with_invalid_language_id_is_invalid(self) -> None:
+    def test_create_with_invalid_language_id_raises_on_save(self) -> None:
         payload = {
             "slug": "invalid-lang",
             "translations_data": [

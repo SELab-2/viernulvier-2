@@ -1,6 +1,4 @@
-"""
-OpenAPI schema decorators for the Tags app.
-"""
+"""OpenAPI schema decorators and examples for the Tags app."""
 
 from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 

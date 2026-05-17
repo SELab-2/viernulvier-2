@@ -126,7 +126,7 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
             "display_name",
             "remark",
         ]
-        read_only_fields = ["id", "name", "display_remark", "remark", "space"]
+        read_only_fields = ["id", "name", "display_name", "remark", "space"]
         extra_kwargs = {
             "space": {},
             "seat_selection": {
@@ -151,6 +151,8 @@ class HallSerializer(serializers.ModelSerializer, TranslatableSerializerMixin):
 
     def get_space(self, obj: Hall) -> dict | None:
         """Return a nested representation of the parent Space."""
+        if obj.space is None:
+            return None
         return SpaceNestedSerializer(obj.space, context=self.context).data
 
 

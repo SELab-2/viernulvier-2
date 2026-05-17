@@ -187,3 +187,15 @@ class TestHallDisplayNameBaseLanguage:
 
         data = HallSerializer(hall, context=_display_ctx()).data
         assert data["display_name"] == "Main Hall"
+
+
+class TestHallSerializerSpaceFallback(TestCase):
+    """Fallback behaviour for HallSerializer.get_space()."""
+
+    def test_get_space_returns_none_when_hall_has_no_space(self) -> None:
+        """A hall-like object without a parent space serializes space as None."""
+
+        class HallWithoutSpace:
+            space = None
+
+        assert HallSerializer().get_space(HallWithoutSpace()) is None

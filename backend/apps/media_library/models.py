@@ -10,7 +10,7 @@ The media hierarchy is two levels deep:
 - A **MediaItemTranslation** stores localised metadata (title, description,
   credits, link) for a media item.
 - A **MediaItemCrop** stores a named, pre-rendered crop (e.g. thumbnail,
-  banner) of a media item together with its URL.
+  banner) of a media item as a local image file.
 """
 
 from django.core.exceptions import ValidationError

@@ -172,19 +172,19 @@ class TagSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
     # SerializerMethodField implementations
     # ---------------------------------------------------------------------------
 
-    def get_name(self, obj: Tag) -> str:
+    def get_name(self, obj: Tag) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "name")
 
-    def get_short_description(self, obj: Tag) -> str:
+    def get_short_description(self, obj: Tag) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "short_description")
 
-    def get_excerpt(self, obj: Tag) -> str:
+    def get_excerpt(self, obj: Tag) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "excerpt")
 
-    def get_url_title(self, obj: Tag) -> str:
+    def get_url_title(self, obj: Tag) -> dict[str, str] | None:
         """Return all available translations as a language-code dictionary."""
         return self.get_translated_field(obj, "url_title")
 

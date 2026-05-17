@@ -1,4 +1,5 @@
-"""
+"""Tests for apps/media_library/models.py.
+
 Covers:
 - __str__ output
 - Meta ordering
@@ -35,6 +36,7 @@ pytestmark = pytest.mark.django_db
 
 
 def make_png_bytes() -> bytes:
+    """Return valid PNG bytes for MediaItemCrop image validation tests."""
     buffer = BytesIO()
     Image.new("RGB", (1, 1), color=(255, 0, 0)).save(buffer, format="PNG")
     return buffer.getvalue()

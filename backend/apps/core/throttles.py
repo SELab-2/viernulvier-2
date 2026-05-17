@@ -1,3 +1,5 @@
+"""Rate throttling classes for public and internal API-key requests."""
+
 import hashlib
 
 from django.core.cache import caches

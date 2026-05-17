@@ -24,6 +24,7 @@ def _mock_media_item_gallery_link_step():
 
 
 def _make_command() -> Command:
+    """Create a command instance with in-memory stdout and stderr."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
     cmd.stderr = OutputWrapper(StringIO())
