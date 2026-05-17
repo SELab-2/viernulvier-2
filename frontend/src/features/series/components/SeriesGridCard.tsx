@@ -51,11 +51,8 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
   )
   const detailPath = toLocalizedPath(`/series/${tag.id}`, currentLanguage)
 
-  // Localized content fields
-  const title = getLocalizedTagName(tag, language)
-  const excerpt = getLocalizedTagExcerpt(tag, language)
-
-  // Date formatting for display range
+  const title = getLocalizedTagName(tag, language) || t('series.untitled')
+  const excerpt = htmlToPlainText(getLocalizedTagExcerpt(tag, language))
   const startLabel = formatDate(tag.first_production_start, language)
   const endLabel = formatDate(tag.last_production_end, language)
 
@@ -108,22 +105,19 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
             {title}
           </Typography>
 
-          {/* Excerpt (sanitized to plain text) */}
-          {excerpt ? (
-            <Typography
-              component="div"
-              variant="body2"
-              sx={{
-                fontSize: 'inherit',
-                color: 'text.secondary',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {htmlToPlainText(excerpt)}
-            </Typography>
-          ) : null}
+          <Typography
+            component="div"
+            variant="body2"
+            sx={{
+              fontSize: 'inherit',
+              color: 'text.secondary',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {excerpt || t('blogs.home.noExcerpt')}
+          </Typography>
         </Stack>
 
         {/* Date range indicator */}

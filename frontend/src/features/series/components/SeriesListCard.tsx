@@ -60,9 +60,8 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
 
   const detailPath = toLocalizedPath(`/series/${tag.id}`, currentLanguage)
 
-  const title = getLocalizedTagName(tag, language)
-  const excerpt = getLocalizedTagExcerpt(tag, language)
-
+  const title = getLocalizedTagName(tag, language) || t('series.untitled')
+  const excerpt = htmlToPlainText(getLocalizedTagExcerpt(tag, language))
   const startLabel = formatDate(tag.first_production_start, language)
   const endLabel = formatDate(tag.last_production_end, language)
 
@@ -129,22 +128,19 @@ const SeriesListCard = ({ tag }: SeriesListCardProps) => {
             {title}
           </Typography>
 
-          {/* Optional excerpt */}
-          {excerpt ? (
-            <Typography
-              component="div"
-              variant="body2"
-              sx={{
-                fontSize: 'inherit',
-                color: 'text.secondary',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {htmlToPlainText(excerpt)}
-            </Typography>
-          ) : null}
+          <Typography
+            component="div"
+            variant="body2"
+            sx={{
+              fontSize: 'inherit',
+              color: 'text.secondary',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {excerpt || t('blogs.home.noExcerpt')}
+          </Typography>
         </Stack>
 
         {/* Date range indicator */}
