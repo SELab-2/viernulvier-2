@@ -217,7 +217,9 @@ export default function MetaPanel({
     production.display_title ||
     t('productions.detail.unknownProduction', 'Unknown production')
   const resolvedArtistName =
-    getLocalizedValue(production.artist_name, language) || production.display_artist_name || ''
+    getLocalizedValue(production.artist_name, language) ||
+    production.display_artist_name ||
+    t('productions.detail.unknownArtist', 'Unknown artist')
 
   const resolvedDateRange = getDateRange(production.events, language)
   const resolvedVenues = getUniqueVenues(production.events, language)
@@ -260,19 +262,17 @@ export default function MetaPanel({
             {resolvedTitle}
           </Typography>
 
-          {resolvedArtistName && (
-            <Typography
-              component="h2"
-              sx={{
-                fontSize: tokens.typography.sizes.lg,
-                fontWeight: tokens.typography.weights.medium,
-                color: 'text.secondary',
-                mb: 0.75,
-              }}
-            >
-              {resolvedArtistName}
-            </Typography>
-          )}
+          <Typography
+            component="h2"
+            sx={{
+              fontSize: tokens.typography.sizes.lg,
+              fontWeight: tokens.typography.weights.medium,
+              color: 'text.secondary',
+              mb: 0.75,
+            }}
+          >
+            {resolvedArtistName}
+          </Typography>
 
           <Box sx={(theme) => ({ borderTop: `1px solid ${theme.palette.divider}`, mb: 0.5 })} />
         </>
