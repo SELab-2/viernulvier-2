@@ -1,3 +1,5 @@
+import type { Tag } from '../types/Tags'
+
 /**
  * Reads a per-language string from an API “record” object (e.g. `{ nl: '…', en: '…' }`).
  *
@@ -28,4 +30,20 @@ export function getTranslatedRecord(
   }
 
   return fallback
+}
+
+/**
+ * Get the localized tag name based on the current language.
+ */
+export const getLocalizedTagName = (tag: Tag, language: string): string => {
+  const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
+  return getTranslatedRecord(tag.name, normalizedLanguage, tag.display_name)
+}
+
+/**
+ * Get the localized tag excerpt based on the current language.
+ */
+export const getLocalizedTagExcerpt = (tag: Tag, language: string): string => {
+  const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
+  return getTranslatedRecord(tag.excerpt, normalizedLanguage, tag.display_excerpt)
 }
