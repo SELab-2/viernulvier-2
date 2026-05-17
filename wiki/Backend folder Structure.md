@@ -34,7 +34,6 @@ viernulvier_archive/
 │   │   ├── __init__.py
 │   │   ├── admin.py                                    # BaseAdmin, persistent selections, two-step actions
 │   │   ├── admin_filters.py                            # Searchable multi-select admin filters
-│   │   ├── admin_widgets.py                            # Rich-text admin widget and decorator
 │   │   ├── authentications.py                          # API-key authentication
 │   │   ├── exceptions.py                               # RFC 7807 exception handler
 │   │   ├── filters.py                                  # BaseModelFilter
@@ -48,10 +47,8 @@ viernulvier_archive/
 │   │   ├── spectacular_extensions.py                   # OpenAPI API-key auth extension
 │   │   ├── throttles.py                                # API-key throttling classes
 │   │   ├── views.py                                    # Base API ViewSets
-│   │   ├── templatetags/
-│   │   │   └── admin_dashboard.py                      # Custom admin dashboard cards
-│   │   └── static/admin/js/
-│   │       └── rich_text_admin_widget_*.js             # Rich-text admin widget modules
+│   │   └── templatetags/
+│   │       └── admin_dashboard.py                      # Custom admin dashboard cards
 │   │
 │   ├── languages/                                      # LANGUAGE table
 │   │   ├── __init__.py
