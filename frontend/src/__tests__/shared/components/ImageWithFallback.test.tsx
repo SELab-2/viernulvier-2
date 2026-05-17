@@ -23,7 +23,7 @@ describe('ImageWithFallback', () => {
     renderWithTheme(<ImageWithFallback src={null} alt="No art" />)
 
     expect(screen.getByRole('img', { name: 'No art' })).toHaveAttribute('aria-label', 'No art')
-    expect(screen.getByAltText('Fallback image')).toHaveAttribute('src', '/vnv_logo.png')
+    expect(screen.getByAltText('Fallback image')).toHaveAttribute('src', '/vnv_logo.webp')
   })
 
   it('renders the placeholder when src is undefined', () => {
