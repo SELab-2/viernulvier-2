@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { render, screen, waitFor } from '@testing-library/react'
 
 import Router from '../router'
@@ -6,12 +7,12 @@ import Router from '../router'
 const createMockPage = (testid: string) => () => <div data-testid={testid} />
 
 // Mock the navbar and footer (not lazy loaded in the actual app, but mocked in tests)
-jest.mock('../components/Navbar', () => ({
+jest.mock('../shared/Navbar', () => ({
   __esModule: true,
   default: createMockPage('navbar-mock'),
 }))
 
-jest.mock('../components/Footer', () => ({
+jest.mock('../shared/Footer', () => ({
   __esModule: true,
   default: createMockPage('footer-mock'),
 }))
@@ -22,37 +23,37 @@ jest.mock('../pages/HomePage', () => ({
   default: createMockPage('home-page-mock'),
 }))
 
-jest.mock('../pages/ProductionsPage', () => ({
+jest.mock('../features/productions/pages/ProductionsPage', () => ({
   __esModule: true,
   default: createMockPage('productions-page-mock'),
 }))
 
-jest.mock('../pages/ProductionDetailPage', () => ({
+jest.mock('../features/productions/pages/ProductionDetailPage', () => ({
   __esModule: true,
   default: createMockPage('production-detail-page-mock'),
 }))
 
-jest.mock('../pages/SeriesPage', () => ({
+jest.mock('../features/series/pages/SeriesPage', () => ({
   __esModule: true,
   default: createMockPage('series-page-mock'),
 }))
 
-jest.mock('../pages/SeriesDetailPage', () => ({
+jest.mock('../features/series/pages/SeriesDetailPage', () => ({
   __esModule: true,
   default: createMockPage('series-detail-page-mock'),
 }))
 
-jest.mock('../pages/BlogsPage', () => ({
+jest.mock('../features/blogs/pages/BlogsPage', () => ({
   __esModule: true,
   default: createMockPage('blogs-page-mock'),
 }))
 
-jest.mock('../pages/BlogDetailPage', () => ({
+jest.mock('../features/blogs/pages/BlogDetailPage', () => ({
   __esModule: true,
   default: createMockPage('blog-detail-page-mock'),
 }))
 
-jest.mock('../pages/MediaFilesPage', () => ({
+jest.mock('../features/media-files/pages/MediaFilesPage', () => ({
   __esModule: true,
   default: createMockPage('media-files-page-mock'),
 }))

@@ -7,3 +7,9 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+declare global {
+  interface Window {
+    __vnv_root__?: import('react-dom/client').Root
+  }
+}

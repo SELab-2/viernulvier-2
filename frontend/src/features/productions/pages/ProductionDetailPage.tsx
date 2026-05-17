@@ -1,0 +1,363 @@
+/*
+ * Production Details Page
+ *
+ * This file is responsible for rendering the full production detail view.
+ * It handles:
+ * - Fetching production data based on URL parameter
+ * - Error handling and redirects
+ * - Displaying hero content, metadata, events, media, and related content
+ */
+
+import { Box, Typography, useMediaQuery } from '@mui/material'
+import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useLocation, useParams, useNavigate } from 'react-router-dom'
+
+import ProductionDetailPageSkeleton from './ProductionDetailPageSkeleton'
+import { ApiError } from '../../../services/ApiTypes'
+import { getProduction } from '../../../services/productions/Productions'
+import ImageWithFallback from '../../../shared/components/ImageWithFallback'
+import { tokens } from '../../../theme/tokens'
+import { ALERT_SEVERITIES } from '../../../types/FloatingAlertConfig'
+import { getLocalizedValue } from '../../../utils/localization'
+import { resolveCurrentLanguage, toLocalizedPath } from '../../../utils/localizedRoutes'
+import { redirectWithFloatingAlert } from '../../../utils/navigation'
+import Breadcrumbs from '../components/detail/Breadcrumbs'
+import Description from '../components/detail/Description'
+import EventsList from '../components/detail/EventList'
+import MediaList from '../components/detail/MediaList'
+import MetaPanel from '../components/detail/MetaPanel'
+import RelatedBlogs from '../components/detail/RelatedBlogs'
+import RelatedProductions from '../components/detail/RelatedProductions'
+
+import type { Production } from '../../../types/Productions'
+
+/**
+ * Helper function to select the best possible hero image for a production.
+ *
+ * Strategy:
+ * 1. Find first media item of type 'foto'
+ * 2. Prefer crops in order: FE3_header -> hd_ready
+ * 3. Fallback to first available crop
+ * 4. Return null if no valid image exists
+ */
+function getProductionHeroImageUrl(production: Production): string | null {
+  const mediaItems = production.media_gallery?.media_items
+  const firstPhoto = mediaItems?.find((item) => item.type === 'foto')
+
+  if (!firstPhoto) {
+    return null
+  }
+
+  const cropPriority = ['FE3_header', 'hd_ready']
+  const bestCrop = cropPriority
+    .map((name) => firstPhoto.crops.find((crop) => crop.name === name && !!crop.image_url))
+    .find(Boolean)
+
+  if (bestCrop?.image_url) {
+    return bestCrop.image_url
+  }
+
+  if (firstPhoto.crops.length > 0 && firstPhoto.crops[0].image_url) {
+    return firstPhoto.crops[0].image_url
+  }
+
+  return null
+}
+
+type ProductionDetailContentProps = {
+  id: string
+}
+
+/**
+ * Main production detail content component.
+ *
+ * Responsibilities:
+ * - Fetch production data
+ * - Handle loading + error states
+ * - Render full page layout sections
+ */
+const ProductionDetailContent = ({ id }: ProductionDetailContentProps) => {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { i18n, t } = useTranslation()
+
+  // Detect mobile layout breakpoint
+  const isMobile = useMediaQuery('(max-width:900px)')
+
+  const lang = i18n.language
+
+  // Resolve localized routing context
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+
+  // Local state for production data + loading
+  const [prod, setProd] = useState<Production | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+
+  // Keep the latest navigation and localization values available without
+  // turning language changes into refetch triggers.
+  const navigateRef = useRef(navigate)
+  const currentLanguageRef = useRef(currentLanguage)
+  const currentPathRef = useRef(location.pathname)
+  const tRef = useRef(t)
+  const archivePathRef = useRef(toLocalizedPath('/archive', currentLanguage))
+
+  useEffect(() => {
+    navigateRef.current = navigate
+  }, [navigate])
+
+  useEffect(() => {
+    currentLanguageRef.current = currentLanguage
+    archivePathRef.current = toLocalizedPath('/archive', currentLanguage)
+  }, [currentLanguage])
+
+  useEffect(() => {
+    currentPathRef.current = location.pathname
+  }, [location.pathname])
+
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
+
+  /**
+   * Fetch production data when component mounts or ID changes.
+   *
+   * Includes:
+   * - ID validation
+   * - API request
+   * - Rate limit handling (429)
+   * - Generic error fallback redirect
+   */
+  useEffect(() => {
+    const parsed = Number(id)
+
+    // Validate numeric ID before API call
+    if (Number.isNaN(parsed)) {
+      const errMsg = tRef.current('productions.detail.error.invalidId', 'Invalid production ID')
+      redirectWithFloatingAlert(navigateRef.current, archivePathRef.current, {
+        message: errMsg,
+        severity: ALERT_SEVERITIES.error,
+      })
+      return
+    }
+
+    const fetchProduction = async () => {
+      try {
+        const data = await getProduction(parsed, ['events', 'related', 'blogs'])
+        setProd(data)
+      } catch (error: unknown) {
+        // Handle API rate limiting explicitly
+        if (error instanceof ApiError && error.status === 429) {
+          const errMsg = error.message
+          redirectWithFloatingAlert(navigateRef.current, currentPathRef.current, {
+            message: errMsg,
+            severity: ALERT_SEVERITIES.warning,
+          })
+        } else {
+          // Fallback for all other errors -> redirect to 404
+          const errMsg = tRef.current(
+            'productions.detail.error.loadFailed',
+            'Could not load production',
+          )
+          redirectWithFloatingAlert(
+            navigateRef.current,
+            toLocalizedPath('/404', currentLanguageRef.current),
+            {
+              message: errMsg,
+              severity: ALERT_SEVERITIES.error,
+            },
+          )
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProduction()
+  }, [id])
+
+  // Loading state: show skeleton UI while the initial request is in flight.
+  if (loading) {
+    return <ProductionDetailPageSkeleton />
+  }
+
+  // Safety fallback if no production was loaded
+  if (!prod) {
+    return (
+      <Box sx={{ p: 5 }}>
+        <Box>{t('productions.detail.notFound', 'Productie niet gevonden.')}</Box>
+      </Box>
+    )
+  }
+
+  const production = prod
+
+  // Localized content resolution
+  const title =
+    getLocalizedValue(production.title, lang) ||
+    production.display_title ||
+    t('productions.detail.unknownProduction', 'Unknown production')
+
+  const description = getLocalizedValue(production.description, lang) || ''
+  const teaser = getLocalizedValue(production.teaser, lang) || ''
+
+  // Hero image selection logic result
+  const heroImage = getProductionHeroImageUrl(production)
+
+  const events = production.events ?? []
+  const relatedProductions = production.related ?? []
+  const relatedBlogs = production.blogs ?? []
+
+  const video1 = getLocalizedValue(production.video_1, lang) || null
+  const video2 = getLocalizedValue(production.video_2, lang) || null
+
+  const videoUrls = [video1, video2].filter(Boolean) as string[]
+
+  return (
+    <Box
+      className="production-details-page"
+      sx={(theme) => ({
+        backgroundColor: theme.palette.background.default,
+        color: theme.palette.text.primary,
+      })}
+    >
+      {/* Main layout container */}
+      <Box
+        className="production-details-container"
+        sx={(theme) => ({ backgroundColor: theme.palette.background.default })}
+      >
+        {/* LEFT COLUMN: Breadcrumb + Hero + Description */}
+        <Box
+          className="production-details-left"
+          sx={(theme) => ({ backgroundColor: theme.palette.background.default })}
+        >
+          <Breadcrumbs
+            items={[
+              { label: 'Home', translationKey: 'nav.home', to: '/' },
+              { label: 'Producties', translationKey: 'productions.title', to: '/productions' },
+              { label: title },
+            ]}
+          />
+
+          {/* Mobile-only title rendering */}
+          {isMobile && (
+            <Typography
+              component="h1"
+              sx={{
+                fontSize: tokens.typography.sizes['3xl'],
+                fontWeight: tokens.typography.weights.bold,
+                lineHeight: 1.15,
+                letterSpacing: '-0.02em',
+                color: 'text.primary',
+                mt: 3,
+                mb: 3,
+              }}
+            >
+              {title}
+            </Typography>
+          )}
+
+          {/* Hero image section */}
+          <Box
+            className="hero-image"
+            sx={{
+              width: '100%',
+              aspectRatio: '16 / 7',
+              backgroundColor: 'transparent',
+              borderRadius: tokens.borderRadius.sm,
+              overflow: 'hidden',
+              mb: 4,
+            }}
+          >
+            <ImageWithFallback
+              src={heroImage ?? null}
+              alt={title}
+              loading="eager"
+              sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          </Box>
+
+          {/* Description block */}
+          <Description teaser={teaser} description={description} />
+        </Box>
+
+        {/* RIGHT COLUMN: Metadata + Events */}
+        <Box
+          className="production-details-right"
+          sx={(theme) => ({
+            backgroundColor: theme.palette.background.default,
+            borderLeft: `1px solid ${theme.palette.divider}`,
+          })}
+        >
+          {/* Metadata panel */}
+          <MetaPanel
+            production={production}
+            language={lang}
+            showHeader={!isMobile}
+            sx={{ borderLeft: 'none' }}
+          />
+
+          {/* Events section */}
+          <Box
+            sx={(theme) => ({
+              mt: 3,
+              p: 2,
+              border: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
+              borderRadius: tokens.borderRadius.sm,
+            })}
+          >
+            <Typography
+              variant="subtitle1"
+              sx={{ mb: 1, color: 'text.primary', fontWeight: tokens.typography.weights.bold }}
+            >
+              {t('productions.detail.events', 'Events')}
+            </Typography>
+            <EventsList events={events} />
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Media section (videos + gallery) */}
+      {(videoUrls.length > 0 || (production.media_gallery?.media_items?.length ?? 0) > 0) && (
+        <Box sx={{ pb: 4 }}>
+          <MediaList
+            mediaItems={production.media_gallery?.media_items ?? []}
+            videoUrls={videoUrls}
+          />
+        </Box>
+      )}
+
+      {/* Related productions */}
+      {relatedProductions.length > 0 && (
+        <Box sx={{ px: 2, pb: 4 }}>
+          <RelatedProductions related={relatedProductions} lang={lang} />
+        </Box>
+      )}
+
+      {/* Related blogs */}
+      {relatedBlogs.length > 0 && (
+        <Box sx={{ px: 2, pb: 4 }}>
+          <RelatedBlogs blogs={relatedBlogs} />
+        </Box>
+      )}
+    </Box>
+  )
+}
+
+const ProductionDetailsPage = () => {
+  const { id } = useParams()
+
+  // Guard against missing route param
+  if (!id) {
+    return null
+  }
+
+  return <ProductionDetailContent key={id} id={id} />
+}
+
+export default ProductionDetailsPage

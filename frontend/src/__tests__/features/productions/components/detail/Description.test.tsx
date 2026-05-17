@@ -1,0 +1,29 @@
+import { render, screen } from '@testing-library/react'
+
+import Description from '../../../../../features/productions/components/detail/Description'
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ i18n: { language: 'nl' }, t: (_k: string, d: string) => d }),
+}))
+
+jest.mock('../../../../../utils/SanitizeHtml', () => ({
+  __esModule: true,
+  sanitizeHtml: (html: string) => html,
+  forbidImagesRule: jest.fn(),
+  forbidEmbedsRule: jest.fn(),
+}))
+
+describe('Description component', () => {
+  it('renders teaser and description with sanitized HTML', () => {
+    render(<Description teaser="<p>Teaser</p>" description="<p>Desc</p>" />)
+
+    expect(screen.getByText('Teaser')).toBeInTheDocument()
+    expect(screen.getByText('Desc')).toBeInTheDocument()
+  })
+
+  it('renders fallback text when description is empty', () => {
+    render(<Description teaser="" description="" />)
+
+    expect(screen.getByText('No description available.')).toBeInTheDocument()
+  })
+})
