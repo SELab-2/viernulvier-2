@@ -98,7 +98,8 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                       maxWidth: 'calc(100vw - 80px)',
                       display: 'flex',
                       alignItems: 'stretch',
-                      // make the inner ProductionGridCard fill the slide height
+
+                      // Ensure internal anchor/card fills full height for consistent layout
                       '& > a': {
                         display: 'flex',
                         flexDirection: 'column',

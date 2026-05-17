@@ -33,25 +33,25 @@ def _import_legacy_csv_rows(
     total_rows: int | None = None,
     progress_callback: Callable[[int, int | None], None] | None = None,
 ) -> int:
-    """Import a collection of CSV rows with error handling and progress tracking.
+    """Import a collection of CSV rows with per-row error handling and progress tracking.
 
-    Creates an import log, processes each row with the provided handler, and finalizes the log.
+    An ``ImportLog`` is created for every run, including dry-run mode, so
+    validation-only imports remain visible in the audit trail. Each row is
+    processed inside its own transaction; a failed row is counted and logged
+    without rolling back previously imported rows.
 
     Args:
-        source_name: Name of the CSV source for logging.
+        source_name: Human-readable source name stored in the ImportLog.
         rows: Iterable of dictionaries representing CSV rows.
-        row_handler: Callable that processes individual rows.
+        row_handler: Callable that validates/imports one row.
         partial_error_label: Label used when some rows fail.
         failed_error_label: Label used when all rows fail.
-        dry_run: If True, validate rows without saving to database.
-        total_rows: Total number of rows expected (for progress tracking).
-        progress_callback: Optional callback for progress updates (processed_count, total_count).
+        dry_run: If True, validate rows without saving row data to the database.
+        total_rows: Total number of expected rows for progress display.
+        progress_callback: Optional callback receiving ``processed`` and ``total``.
 
     Returns:
-        Number of successfully imported rows.
-
-    Raises:
-        Exception: If a critical error occurs during import.
+        Number of rows successfully imported or validated.
     """
     import_log = ImportLog.objects.create(
         source=f"legacy_csv:{source_name}",
@@ -111,20 +111,12 @@ def _import_legacy_csv_file(
     dry_run: bool,
     progress_callback: Callable[[int, int | None], None] | None = None,
 ) -> int:
-    """Import all rows from a single legacy CSV file.
+    """Import all rows from one legacy CSV file.
 
-    Counts rows if a progress callback is provided, then delegates to _import_legacy_csv_rows.
-
-    Args:
-        csv_path: Path to the CSV file to import.
-        row_handler: Callable that processes individual rows.
-        partial_error_label: Label used when some rows fail.
-        failed_error_label: Label used when all rows fail.
-        dry_run: If True, validate rows without saving to database.
-        progress_callback: Optional callback for progress updates (processed_count, total_count).
-
-    Returns:
-        Number of successfully imported rows.
+    The file is counted first only when a progress callback is provided,
+    avoiding an unnecessary second file read in non-interactive contexts.
+    Actual row processing is delegated to ``_import_legacy_csv_rows`` so both
+    bundled and custom CSV imports share the same ImportLog/error semantics.
     """
     total_rows = _io._count_csv_rows(csv_path) if progress_callback else None
     return _import_legacy_csv_rows(
@@ -145,7 +137,11 @@ def import_legacy_csv_file(
     dry_run: bool = False,
     progress_callback: Callable[[int, int | None], None] | None = None,
 ) -> int:
-    """Import a single legacy CSV export into the Django database."""
+    """Import a single legacy CSV export into the Django database.
+
+    The CSV kind is detected from its headers, then dispatched to the matching
+    production or event row handler.
+    """
     path = Path(csv_path)
     kind = _io.detect_legacy_csv_kind(path)
     if kind == "productions":
@@ -176,7 +172,13 @@ def import_bundled_legacy_csv_files(
     only: str | None = None,
     progress_callback: Callable[[int, int | None], None] | None = None,
 ) -> int:
-    """Import the legacy CSV files bundled with the backend package."""
+    """Import the legacy CSV files bundled with the backend package.
+
+    By default both productions and events are imported, with productions first
+    because event rows reference productions by external ID. ``only`` can limit
+    the run to one dataset. When progress is enabled, progress from individual
+    files is converted into one combined counter.
+    """
     root = base_dir or _constants.PACKAGE_ROOT
     productions_original_path = root / _constants.LEGACY_PRODUCTION_ORIGINAL_CSV.name
     productions_fallback_path = root / _constants.LEGACY_PRODUCTION_CSV.name

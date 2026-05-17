@@ -1,3 +1,5 @@
+"""Factory Boy factories for pricing test data."""
+
 import factory
 from faker import Faker
 

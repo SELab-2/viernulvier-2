@@ -298,7 +298,7 @@ class TestSyncM2M:
         _sync_m2m(SimpleNamespace(pk=1), {"items": ["ext-miss"]}, cfg, cache)
         assert created_rows
 
-    def test_sync_m2m_ignores_missing_api_key(self):
+    def test_sync_m2m_ignores_missing_api_key(self) -> None:
         """If the item does not contain the m2m api key, the function returns early."""
 
         class DummyRelated:
@@ -319,7 +319,7 @@ class TestSyncM2M:
         result = rel.sync_m2m(object(), {}, cfg, rel.FKCache())
         assert result is None
 
-    def test_resolve_related_pk_with_create_fn_sets_cache(self):
+    def test_resolve_related_pk_with_create_fn_sets_cache(self) -> None:
         fk = rel.FKCache()
 
         class RelModel:
@@ -352,7 +352,7 @@ class TestSyncM2M:
         assert fk.get(RelModel, "missing-id") == 777
         assert created["val"] == "missing-id"
 
-    def test_sync_m2m_bulk_create_fallback_and_save_exception(self, caplog):
+    def test_sync_m2m_bulk_create_fallback_and_save_exception(self, caplog) -> None:
         fk = rel.FKCache()
 
         class DummyRelated:

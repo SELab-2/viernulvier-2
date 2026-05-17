@@ -1,3 +1,5 @@
+"""Tests for core admin two-step actions and persistent selections."""
+
 from unittest.mock import Mock
 
 from django import forms
@@ -40,6 +42,7 @@ class TestTwoStepBulkActionMixin(TestCase):
         self.production = ProductionFactory()
 
     def _request_with_messages(self, method, path, data=None):
+        """Build an admin-like request with session and messages support."""
         request = getattr(self.factory, method)(path, data=data or {})
         SessionMiddleware(lambda _: None).process_request(request)
         request.session.save()

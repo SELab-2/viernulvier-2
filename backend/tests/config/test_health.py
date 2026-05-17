@@ -1,4 +1,4 @@
-# tests/test_health_view.py
+"""Tests for the project health check endpoint."""
 
 import json
 from unittest.mock import MagicMock, patch
@@ -10,9 +10,7 @@ from config.health import health
 
 
 class HealthViewTests(TestCase):
-    """
-    Tests for the health endpoint.
-    """
+    """Tests for the health endpoint."""
 
     def setUp(self) -> None:
         self.factory = RequestFactory()

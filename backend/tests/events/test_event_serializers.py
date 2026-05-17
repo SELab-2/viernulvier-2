@@ -371,7 +371,7 @@ class TestEventSerializerNestedPricesReadOnly(TestCase):
         cls.ep = EventPriceFactory(event=cls.event, price_rank=cls.rank, amount="10.00", available=5)
 
     def test_nested_prices_read_only_on_partial_update(self) -> None:
-        # Attempt to update prices via EventSerializer (read-only)
+        # EventSerializer ignores nested price updates because prices are read-only here.
         payload = {
             "prices": [{"price_rank": self.rank.id, "amount": "20.00", "available": 1}],
         }

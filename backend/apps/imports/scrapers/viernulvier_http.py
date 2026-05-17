@@ -94,6 +94,15 @@ def _request_with_retriable_errors(
     sleep_fn: Callable[[float], None],
     backoff_fn: Callable[[int], float],
 ) -> requests.Response | None:
+    """Perform one HTTP GET attempt and handle network-level retry cases.
+
+    Connection and timeout errors are retried until ``max_retries`` is reached.
+    Returning ``None`` signals to the caller that a retry delay was already
+    applied and the retry loop should continue.
+
+    Non-retriable ``requests`` exceptions are wrapped in ``ScraperError`` so
+    callers receive a consistent scraper-specific exception type.
+    """
     try:
         return session.get(url, params=params, headers=headers, timeout=timeout)
     except requests.ConnectionError as exc:
@@ -125,6 +134,12 @@ def _handle_retriable_status(
     backoff_fn: Callable[[int], float],
     parse_retry_after_fn: Callable[[requests.Response], int | None],
 ) -> bool:
+    """Return True when the response was retriable and a retry was scheduled.
+
+    Handles HTTP 429 separately so Retry-After is respected before falling
+    back to exponential backoff. Other configured retry status codes use the
+    generic backoff strategy.
+    """
     if response.status_code == 429:
         retry_after = parse_retry_after_fn(response)
         if attempt == max_retries:
@@ -239,6 +254,11 @@ def discover_extra_pages(data: dict, *, base_domain: str = BASE_DOMAIN) -> list[
 
 
 def _normalize_absolute_url(raw_url: str | None, base_domain: str) -> str | None:
+    """Convert a relative API pagination URL to an absolute URL.
+
+    Viernulvier pagination links may be returned as relative paths. Normalizing
+    them here keeps the fetch loop independent of how the API formats links.
+    """
     if not raw_url:
         return None
     if raw_url.startswith("http"):
@@ -247,6 +267,7 @@ def _normalize_absolute_url(raw_url: str | None, base_domain: str) -> str | None
 
 
 def _collect_page_members(page_data: Any) -> list[Any]:
+    """Extract item members from either JSON-LD page objects or plain lists."""
     if isinstance(page_data, dict):
         return page_data.get("member", [])
     if isinstance(page_data, list):
@@ -261,6 +282,12 @@ def _fetch_remaining_pages(
     cache: dict[str, str],
     fetch_with_retry_fn: Callable[..., tuple[Any | None, str | None]],
 ) -> None:
+    """Fetch numbered pagination pages concurrently and append results in page order.
+
+    Futures can complete out of order, so page results are collected by URL
+    first. The final append loop follows ``extra_pages`` to preserve the API's
+    deterministic page order in ``all_items``.
+    """
     page_results: dict[str, list[Any]] = {}
     with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_PAGES) as executor:
         future_to_url = {
@@ -291,6 +318,12 @@ def _fetch_next_chain(
     base_domain: str,
     fetch_with_retry_fn: Callable[..., tuple[Any | None, str | None]],
 ) -> None:
+    """Follow ``view.next`` pagination links sequentially until no next page remains.
+
+    This is the fallback path for API responses that do not expose a final
+    numbered page URL. ETags are reused per page URL so unchanged pages can
+    return ``304 Not Modified`` and stop the chain early.
+    """
     view = first_data.get("view") or {}
     current_url = _normalize_absolute_url(view.get("next"), base_domain)
     while current_url:
@@ -307,6 +340,12 @@ def _fetch_next_chain(
 
 
 def _extract_initial_members(data: dict[str, Any]) -> list[Any]:
+    """Extract the first page of items from an API response.
+
+    Standard collection responses expose items under ``member``. Some endpoints
+    can return a single JSON-LD object instead; those are wrapped in a one-item
+    list so the sync pipeline can process both shapes uniformly.
+    """
     members = data.get("member", [])
     if not members and "@context" in data:
         return [data]

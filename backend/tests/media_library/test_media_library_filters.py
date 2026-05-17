@@ -1,6 +1,4 @@
-"""
-Tests for apps/media_library/filters.py and apps/media_library/views.py.
-"""
+"""Tests for media library filters and gallery/item API filtering/search/ordering."""
 
 from django.test import TestCase, override_settings
 from django.urls import reverse

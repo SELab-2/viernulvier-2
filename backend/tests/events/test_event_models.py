@@ -2,7 +2,7 @@
 Covers:
 - Meta ordering
 - constraint names present
-- Event.clean validation (ends_at > starts_at)
+- Event.clean validation (ends_at >= starts_at)
 - EventPrice uniqueness constraint (event + price_rank + price)
 - indexes presence (by fields)
 - reverse relations (event.prices)

@@ -1,6 +1,4 @@
-"""
-Tests for apps/tags/filters.py and apps/tags/views.py.
-"""
+"""Tests for TagFilter behaviour and tag API filtering/search/ordering."""
 
 from django.test import override_settings
 import pytest

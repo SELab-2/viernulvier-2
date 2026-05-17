@@ -42,6 +42,12 @@ from .serializers import (
 
 _TAG = "Productions"
 
+# Used in the base queryset to filter productions to those with only past events or no events at all.
+past_or_no_end = Q(ends_at__lte=Now()) | Q(ends_at__isnull=True, starts_at__isnull=False)
+
+# Used in annotations to filter related events to those with only past events or no events at all.
+events_past_or_no_end = Q(events__ends_at__lte=Now()) | Q(events__ends_at__isnull=True, events__starts_at__isnull=False)
+
 
 @extend_schema(tags=[_TAG])
 @production_schema
@@ -135,13 +141,10 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                 ).order_by("position"),
             ),
         )
-        .filter(
-            Exists(Event.objects.filter(production=OuterRef("pk"), ends_at__lte=Now()))
-            | ~Exists(Event.objects.filter(production=OuterRef("pk")))
-        )
+        .filter(Exists(Event.objects.filter(production=OuterRef("pk")).filter(past_or_no_end)))
         .annotate(
-            first_event_start=Min("events__starts_at", filter=Q(events__ends_at__lte=Now())),
-            last_event_end=Max("events__ends_at", filter=Q(events__ends_at__lte=Now())),
+            first_event_start=Min("events__starts_at", filter=events_past_or_no_end),
+            last_event_end=Max("events__ends_at", filter=events_past_or_no_end),
         )
     )
 
@@ -222,17 +225,19 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         return super().get_serializer(*args, **kwargs)
 
     def retrieve(self, request: HttpRequest, *args: tuple, **kwargs: dict) -> HttpRequest:
-        """Retrieve a production by its ID, with optional inclusion of related events.
+        """Retrieve a production by ID with optional include-driven prefetches.
 
-        When events are included, the queryset is extended with additional
-        prefetches for prices, hall, space, and location translations to
-        avoid N+1 queries on the detail response.
+        When `include=events` is passed, the queryset is extended with additional
+        prefetches for prices, hall, space, and location translations.
+
+        When `include=blogs` is passed, linked published blogs and their
+        translations are prefetched as `prefetched_related_blogs`.
         """
         if "events" in self.includes:
             self.queryset = self.queryset.prefetch_related(
                 Prefetch(
                     "events",
-                    queryset=Event.objects.filter(ends_at__lte=Now())
+                    queryset=Event.objects.filter(past_or_no_end)
                     .prefetch_related(
                         Prefetch(
                             "prices",
@@ -298,8 +303,7 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         """Return pre-aggregated counters used by the frontend homepage."""
         payload = {
             "productions": Production.objects.filter(
-                Exists(Event.objects.filter(production=OuterRef("pk"), ends_at__lte=Now()))
-                | ~Exists(Event.objects.filter(production=OuterRef("pk")))
+                Exists(Event.objects.filter(production=OuterRef("pk")).filter(past_or_no_end))
             ).count(),
             "series": Tag.objects.filter(productions__isnull=False).distinct().count(),
             "years": self._get_documented_years_count(),

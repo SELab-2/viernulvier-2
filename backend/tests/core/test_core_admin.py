@@ -1,6 +1,4 @@
-"""
-Tests for PersistentSelectionMixin — covering lines 56-62, 71, 101.
-"""
+"""Tests for BaseAdmin persistent selections and cache invalidation hooks."""
 
 from unittest.mock import MagicMock, patch
 

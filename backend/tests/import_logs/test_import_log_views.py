@@ -57,6 +57,7 @@ def make_import_log(**kwargs):
 
 
 def make_finished_log(source="finished.json", duration_seconds=60, **kwargs):
+    """Create a successful ImportLog with a deterministic duration."""
     start = timezone.now()
     return make_import_log(
         source=source,
