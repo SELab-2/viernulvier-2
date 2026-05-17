@@ -22,7 +22,6 @@ viernulvier_archive/
 │   ├── core/                        # Shared base classes & utilities
 │   │   ├── __init__.py
 │   │   ├── admin.py                 # Base admin mixins
-│   │   ├── admin_widgets.py         # Shared admin widgets and rich text editor decorator
 │   │   ├── authentications.py       # Authentication validation
 │   │   ├── permissions.py           # Internal/public Api-Key validation
 │   │   ├── serializers.py           # TranslatableSerializerMixin
