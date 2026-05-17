@@ -75,7 +75,7 @@ export default function EventsList({ events }: EventsListProps) {
   return (
     <Box
       sx={{
-        maxHeight: 380,
+        maxHeight: 345,
         overflowY: 'auto',
         scrollbarWidth: 'thin',
         scrollbarColor: (theme) => `${theme.palette.action.selected} transparent`,
