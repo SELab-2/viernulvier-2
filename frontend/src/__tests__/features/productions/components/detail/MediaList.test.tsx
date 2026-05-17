@@ -465,6 +465,84 @@ describe('MediaList - videoUrls prop', () => {
     expect(screen.getAllByAltText('My photo')).toHaveLength(2)
   })
 
+  it('navigates mixed media with buttons and wraps around', () => {
+    mockMatchMedia('desktop')
+
+    render(
+      <MediaList
+        mediaItems={[baseMediaItem({ display_title: 'My photo' })]}
+        videoUrls={['https://www.youtube.com/watch?v=abc123']}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /video 1/i }))
+
+    expect(screen.getByTitle('Video player')).toBeInTheDocument()
+
+    const modalNextButton = screen.getAllByRole('button', { name: /next media/i }).slice(-1)[0]
+    const modalPreviousButton = screen
+      .getAllByRole('button', { name: /previous media/i })
+      .slice(-1)[0]
+
+    fireEvent.click(modalNextButton)
+
+    expect(screen.queryByTitle('Video player')).not.toBeInTheDocument()
+    expect(screen.getAllByAltText('My photo')).toHaveLength(2)
+
+    fireEvent.click(modalNextButton)
+
+    const iframe = screen.getByTitle('Video player') as HTMLIFrameElement
+
+    expect(iframe.src).toContain('youtube.com/embed/abc123')
+
+    fireEvent.click(modalPreviousButton)
+
+    expect(screen.queryByTitle('Video player')).not.toBeInTheDocument()
+    expect(screen.getAllByAltText('My photo')).toHaveLength(2)
+  })
+
+  it('navigates mixed media with arrow keys and wraps around', () => {
+    mockMatchMedia('desktop')
+
+    render(
+      <MediaList
+        mediaItems={[baseMediaItem({ display_title: 'My photo' })]}
+        videoUrls={['https://www.youtube.com/watch?v=abc123']}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /video 1/i }))
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+
+    expect(screen.queryByTitle('Video player')).not.toBeInTheDocument()
+    expect(screen.getAllByAltText('My photo')).toHaveLength(2)
+
+    fireEvent.keyDown(window, { key: 'ArrowLeft' })
+
+    const iframe = screen.getByTitle('Video player') as HTMLIFrameElement
+
+    expect(iframe.src).toContain('youtube.com/embed/abc123')
+  })
+
+  it('closes the preview when the active item is removed on rerender', () => {
+    mockMatchMedia('desktop')
+
+    const { rerender } = render(
+      <MediaList
+        mediaItems={[baseMediaItem({ display_title: 'My photo' })]}
+        videoUrls={['https://www.youtube.com/watch?v=abc123']}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'My photo' }))
+
+    expect(screen.getAllByAltText('My photo')).toHaveLength(2)
+
+    rerender(<MediaList mediaItems={[]} videoUrls={['https://www.youtube.com/watch?v=abc123']} />)
+
+    expect(screen.queryByAltText('My photo')).not.toBeInTheDocument()
+  })
+
   it('renders correctly in dark mode', () => {
     mockMatchMedia('desktop')
 
