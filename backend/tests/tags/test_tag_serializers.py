@@ -364,6 +364,7 @@ class TestTagSerializerDeserialization(TestCase):
 
     def test_partial_update_with_single_field(self) -> None:
         tag = TagFactory.create(type="genre", is_enabled=True)
+        TagTranslationFactory(tag=tag, language__code="en", name="Genre")
         serializer = TagSerializer(tag, data={"is_enabled": False}, partial=True)
         assert serializer.is_valid(), serializer.errors
         updated = serializer.save()
@@ -371,6 +372,7 @@ class TestTagSerializerDeserialization(TestCase):
 
     def test_partial_update_does_not_touch_other_fields(self) -> None:
         tag = TagFactory.create(type="genre", source="manual")
+        TagTranslationFactory(tag=tag, language__code="en", name="Genre")
         serializer = TagSerializer(tag, data={"is_enabled": False}, partial=True)
         assert serializer.is_valid()
         updated = serializer.save()
