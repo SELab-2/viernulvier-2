@@ -54,7 +54,7 @@ const ImageWithFallback = (props: ImageWithFallbackProps) => {
     >
       <Box
         component="img"
-        src="/vnv_logo.png"
+        src="/vnv_logo.webp"
         alt="Fallback image"
         aria-hidden="true"
         sx={(theme) => ({
