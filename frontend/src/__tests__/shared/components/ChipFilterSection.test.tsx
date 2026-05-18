@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 import { I18nextProvider } from 'react-i18next'
 
@@ -262,5 +262,61 @@ describe('ChipFilterSection', () => {
 
     expect(screen.getByTestId('chip-seriesTag-2')).toHaveTextContent('Festival')
     expect(screen.queryByTestId('chip-seriesTag-1')).not.toBeInTheDocument()
+  })
+
+  it('filters using the active language label instead of the fallback name', () => {
+    renderSection({
+      options: [
+        { id: 1, name: 'Dance', labels: { en: 'Dance', nl: 'Dans' }, chipType: 'genre' },
+        { id: 2, name: 'Music', labels: { en: 'Music', nl: 'Muziek' }, chipType: 'genre' },
+        { id: 3, name: 'Theatre', labels: { en: 'Theatre', nl: 'Theater' }, chipType: 'genre' },
+        {
+          id: 4,
+          name: 'Visual Arts',
+          labels: { en: 'Visual Arts', nl: 'Beeldende kunst' },
+          chipType: 'genre',
+        },
+        {
+          id: 5,
+          name: 'Literature',
+          labels: { en: 'Literature', nl: 'Literatuur' },
+          chipType: 'genre',
+        },
+        { id: 6, name: 'Circus', labels: { en: 'Circus', nl: 'Circus' }, chipType: 'genre' },
+      ],
+    })
+
+    const search = screen.getByPlaceholderText(i18n.t('productions.home.filters.searchGenres'))
+    fireEvent.change(search, { target: { value: 'muz' } })
+
+    expect(screen.getByTestId('chip-genre-2')).toBeInTheDocument()
+    expect(screen.queryByTestId('chip-genre-1')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('chip-genre-3')).not.toBeInTheDocument()
+  })
+
+  it('re-sorts chips when the active language changes', async () => {
+    renderSection({
+      options: [
+        { id: 1, name: 'Alpha', labels: { en: 'Alpha', nl: 'Zebra' }, chipType: 'genre' },
+        { id: 2, name: 'Beta', labels: { en: 'Beta', nl: 'Aap' }, chipType: 'genre' },
+        { id: 3, name: 'Gamma', labels: { en: 'Gamma', nl: 'Mier' }, chipType: 'genre' },
+      ],
+    })
+
+    expect(screen.getAllByTestId(/chip-genre-/).map((chip) => chip.textContent)).toEqual([
+      'Beta',
+      'Gamma',
+      'Alpha',
+    ])
+
+    await act(async () => {
+      await i18n.changeLanguage('en')
+    })
+
+    expect(screen.getAllByTestId(/chip-genre-/).map((chip) => chip.textContent)).toEqual([
+      'Alpha',
+      'Beta',
+      'Gamma',
+    ])
   })
 })
