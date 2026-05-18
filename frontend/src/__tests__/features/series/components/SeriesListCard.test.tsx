@@ -94,7 +94,6 @@ describe('SeriesListCard', () => {
     expect(screen.queryByText(/2026/)).not.toBeInTheDocument()
   })
 
-
   it('renders a single date when the start and end labels are equal or only one side exists', () => {
     const { rerender } = renderCard({
       ...buildTag(),
