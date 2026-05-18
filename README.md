@@ -2,7 +2,7 @@
 
 <img src="https://sel2-2.ugent.be/favicon.ico" width="80" alt="VIERNULVIER logo" />
 
-# VIERNULVIER
+# VIERNULVIER Archive
 
 **The digital archive of arts centre VIERNULVIER - search decades of culture in Ghent.**
 
