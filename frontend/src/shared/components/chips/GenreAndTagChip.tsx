@@ -7,6 +7,7 @@ import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
 import { getQueryKeyForChipType, readMultiParamValues } from './genreAndTagChipUtils'
 import { resolveCurrentLanguage, toLocalizedPath } from '../../../utils/localizedRoutes'
 import { getTranslatedRecord } from '../../../utils/translations'
+import { PARAM_PAGE } from '../../hooks/useSearchBarUrlState'
 
 import type { GenreAndTagChipProps } from '../../../types/GenreAndTagChip'
 import type { MouseEvent } from 'react'
@@ -17,8 +18,9 @@ import type { MouseEvent } from 'react'
  * Context behavior:
  * - `search`: toggles the selected value via `onToggle`
  * - `description`: routes to the archive with the chip value in the URL query
- *   and, when `disableLink` is enabled, preserves any existing genre/tag filters
- *   already present in the current location search string
+ *   and, when `disableLink` is enabled, preserves other query params (including
+ *   existing genre/tag filters) but clears pagination so a narrower filter does
+ *   not keep an out-of-range page index
  * - `series`: routes to the series detail page `/series/:id`
  * - `static`: visual-only non-clickable chip
  *
@@ -74,6 +76,8 @@ const GenreAndTagChip = ({
               if (nextIds.length > 0) {
                 searchParams.set(queryKey, nextIds.join('-'))
               }
+
+              searchParams.delete(PARAM_PAGE)
 
               const nextSearch = searchParams.toString()
               return nextSearch ? `${archivePath}?${nextSearch}` : archivePath
