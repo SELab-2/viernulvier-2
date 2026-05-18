@@ -104,10 +104,10 @@ describe('ProductionList', () => {
 
     const links = screen.getAllByRole('link')
     expect(
-      links.some((l) => l.getAttribute('data-to') === toLocalizedPath('/productions/10', 'nl')),
+      links.some((l) => l.getAttribute('href') === toLocalizedPath('/productions/10', 'nl')),
     ).toBe(true)
     expect(
-      links.some((l) => l.getAttribute('data-to') === toLocalizedPath('/productions/20', 'nl')),
+      links.some((l) => l.getAttribute('href') === toLocalizedPath('/productions/20', 'nl')),
     ).toBe(true)
   })
 
