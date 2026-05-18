@@ -255,7 +255,7 @@ npm run format:fix     # automatically fix formatting
 
 ## Data synchronisation
 
-The `sync_viernulvier` management command fetches data from the Viernulvier/Peppered API:
+The `sync_viernulvier` management command fetches data from the VIERNULVIER/Peppered API:
 
 ```bash
 # Synchronise everything
