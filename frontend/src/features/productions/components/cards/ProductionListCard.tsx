@@ -2,7 +2,7 @@ import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Box, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
 import ImageWithFallback from '../../../../shared/components/ImageWithFallback'
@@ -27,8 +27,10 @@ export interface ProductionListCardProps {
  * first crop of the first gallery image when present; otherwise {@link ImageWithFallback} shows the
  * branded placeholder.
  *
- * Genre chips use `context="static"` (non-interactive) whenever `selectedGenreIds` is defined,
- * so that genre filtering is controlled exclusively by the parent rather than navigating away.
+ * Chips inside the card are rendered with `disableLink` so they stay interactive without
+ * creating nested anchors inside the outer card link. `selectedGenreIds` and `selectedTagIds`
+ * only influence chip ordering and selected styling; the chips still navigate to the archive
+ * with their filters appended.
  *
  * @param props.production Full API payload (title, artist, media gallery, genres, events, etc.).
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
@@ -41,7 +43,6 @@ const ProductionListCard = ({
 }: ProductionListCardProps) => {
   const { i18n, t } = useTranslation()
   const location = useLocation()
-  const navigate = useNavigate()
   const { language } = i18n
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
@@ -79,19 +80,9 @@ const ProductionListCard = ({
 
   return (
     <Stack
+      component={RouterLink}
+      to={detailPath}
       direction="row"
-      role="link"
-      tabIndex={0}
-      data-to={detailPath}
-      onClick={() => {
-        navigate(detailPath)
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          navigate(detailPath)
-        }
-      }}
       sx={(theme) => ({
         gap: 3,
         height: 170,
@@ -168,9 +159,10 @@ const ProductionListCard = ({
                   )}
                   labels={tag.name || tag.url_title || {}}
                   chipType="seriesTag"
-                  context="series"
+                  context="description"
                   id={tag.id}
                   selected={selectedTagIds?.includes(tag.id) || false}
+                  disableLink
                 />
               ))}
               {genres.map((genre) => (
@@ -183,9 +175,10 @@ const ProductionListCard = ({
                   )}
                   labels={genre.name || {}}
                   chipType="genre"
-                  context={selectedGenreIds !== undefined ? 'static' : 'description'}
+                  context="description"
                   id={genre.id}
                   selected={selectedGenreIds?.includes(genre.id) || false}
+                  disableLink
                 />
               ))}
             </Stack>

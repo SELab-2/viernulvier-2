@@ -337,6 +337,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
     getTranslatedRecord(seriesTag.short_description, lang, seriesTag.display_short_description) ||
     t('series.noDescription')
 
+  const selectedTagIds = seriesTag ? [seriesTag.id] : undefined
   const hasMoreProductions = seriesProductions.length < totalProductions
 
   return (
@@ -388,7 +389,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                   spacing={2}
                   sx={{ alignItems: { md: 'flex-start' } }}
                 >
-                  {/* Year marker — dot on timeline + bold year label */}
+                  {/* Year marker for the timeline grouping. */}
                   <Stack
                     direction="row"
                     spacing={1.5}
@@ -431,10 +432,16 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                       layout="list"
                       getKey={(production) => production.id}
                       renderListItem={(production) => (
-                        <ProductionListCard production={production} />
+                        <ProductionListCard
+                          production={production}
+                          selectedTagIds={selectedTagIds}
+                        />
                       )}
                       renderGridItem={(production) => (
-                        <ProductionGridCard production={production} />
+                        <ProductionGridCard
+                          production={production}
+                          selectedTagIds={selectedTagIds}
+                        />
                       )}
                     />
                   </Box>

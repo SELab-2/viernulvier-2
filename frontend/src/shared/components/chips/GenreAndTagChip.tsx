@@ -1,10 +1,10 @@
 import CloseIcon from '@mui/icons-material/Close'
 import { Box, Chip, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink, useLocation } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 
 import { getGenreAndTagChipStyles } from './genreAndTagChipStyles'
-import { getQueryKeyForChipType } from './genreAndTagChipUtils'
+import { getQueryKeyForChipType, readMultiParamValues } from './genreAndTagChipUtils'
 import { resolveCurrentLanguage, toLocalizedPath } from '../../../utils/localizedRoutes'
 import { getTranslatedRecord } from '../../../utils/translations'
 
@@ -16,18 +16,21 @@ import type { MouseEvent } from 'react'
  *
  * Context behavior:
  * - `search`: toggles the selected value via `onToggle`
- * - `description`: routes to homepage with the chip value in URL query
+ * - `description`: routes to the archive with the chip value in the URL query
+ *   and, when `disableLink` is enabled, preserves any existing genre/tag filters
+ *   already present in the current location search string
  * - `series`: routes to the series detail page `/series/:id`
  * - `static`: visual-only non-clickable chip
+ *
+ * When `disableLink` is set, the chip renders as a `div` and navigates programmatically,
+ * which keeps it interactive without creating nested anchors inside card links.
  *
  * Chip label resolution priority:
  * 1. The translated value from `labels` based on the active locale
  * 2. The raw `name` as a fallback
  *
- * The selected state and click behavior are only relevant in the 'search' context,
- * where chips act as filters.
- * In 'description' and 'series' contexts, chips function as navigation links.
- * The 'static' context renders a non-interactive chip for display purposes.
+ * Search chips act as filters. Description and series chips act as navigation targets.
+ * Static chips are rendered for display only.
  */
 const GenreAndTagChip = ({
   name,
@@ -38,10 +41,12 @@ const GenreAndTagChip = ({
   context = 'static',
   onToggle,
   ariaLabel,
+  disableLink = false,
 }: GenreAndTagChipProps) => {
   const theme = useTheme()
   const { i18n, t } = useTranslation()
   const location = useLocation()
+  const navigate = useNavigate()
 
   const label =
     getTranslatedRecord(labels, i18n.language, name) || name || t('common.unknown', 'Unknown')
@@ -57,7 +62,25 @@ const GenreAndTagChip = ({
     context === 'series'
       ? toLocalizedPath(`/series/${String(id)}`, currentLanguage)
       : context === 'description'
-        ? `${toLocalizedPath('/archive', currentLanguage)}?${getQueryKeyForChipType(chipType)}=${encodeURIComponent(String(id))}`
+        ? (() => {
+            const archivePath = toLocalizedPath('/archive', currentLanguage)
+            const queryKey = getQueryKeyForChipType(chipType)
+
+            if (disableLink) {
+              const searchParams = new URLSearchParams(location.search)
+              const currentIds = readMultiParamValues(searchParams, queryKey)
+              const nextIds = Array.from(new Set([...currentIds, String(id)]))
+
+              if (nextIds.length > 0) {
+                searchParams.set(queryKey, nextIds.join('-'))
+              }
+
+              const nextSearch = searchParams.toString()
+              return nextSearch ? `${archivePath}?${nextSearch}` : archivePath
+            }
+
+            return `${archivePath}?${queryKey}=${encodeURIComponent(String(id))}`
+          })()
         : undefined
   const showSelectedIcon = context === 'search' && selected
 
@@ -67,19 +90,24 @@ const GenreAndTagChip = ({
       ? t('genreChip.filterByGenre', { genre: label })
       : undefined)
 
-  /** Handles click behavior for search context */
+  /** Handles filter toggles in search context. */
   const handleSearchClick = (event: MouseEvent) => {
+    event.preventDefault()
     event.stopPropagation()
     onToggle?.(id, chipType)
   }
 
   const handleLinkClick = (event: MouseEvent) => {
+    event.preventDefault()
     event.stopPropagation()
+    if (disableLink && linkTo) {
+      navigate(linkTo)
+    }
   }
 
   const chipOnClick = isSearchContext
     ? handleSearchClick
-    : isClickable
+    : disableLink && isClickable
       ? handleLinkClick
       : undefined
 
@@ -131,7 +159,11 @@ const GenreAndTagChip = ({
       aria-pressed={context === 'search' ? selected : undefined}
       aria-label={resolvedAriaLabel}
       tabIndex={isClickable ? 0 : -1}
-      {...(linkTo ? { component: RouterLink, to: linkTo } : { component: 'div' })}
+      {...(linkTo
+        ? disableLink
+          ? { component: 'div' }
+          : { component: RouterLink, to: linkTo }
+        : { component: 'div' })}
     />
   )
 }
