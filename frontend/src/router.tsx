@@ -80,6 +80,8 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
   const { i18n, t } = useTranslation()
   const location = useLocation()
   const normalizedLanguage = normalizeLanguage(lang)
+  const notFoundLanguage = normalizedLanguage ?? DEFAULT_LANGUAGE
+  const notFoundPath = `${toLocalizedPath('/404', notFoundLanguage)}${location.search}${location.hash}`
 
   useLayoutEffect(() => {
     if (!normalizedLanguage || i18n.resolvedLanguage === normalizedLanguage) {
@@ -138,6 +140,7 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
                 <Navigate to={localizedPath('/media')} replace state={mediaDetailAlertState} />
               }
             />
+            <Route path="404" element={<NotFoundPage />} />
             {/* Compatibility aliases from untranslated slug paths. */}
             {archiveSlug !== 'archive' && (
               <Route path="archive" element={<Navigate to={localizedPath('/archive')} replace />} />
@@ -216,7 +219,7 @@ const LocalizedLayout = ({ mode, onToggleMode }: ModeToggleProps) => {
                 }
               />
             )}
-            <Route path="*" element={<NotFoundPage />} />
+            <Route path="*" element={<Navigate to={notFoundPath} replace />} />
           </Routes>
         </Suspense>
       </Box>

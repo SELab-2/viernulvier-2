@@ -78,7 +78,12 @@ describe('App', () => {
 
     render(<App />)
 
-    // Not-found route is lazy loaded; wait for the heading to appear
+    // Unknown routes should settle on the localized 404 page.
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/nl/404')
+    })
+
+    // Not-found route is lazy loaded; wait for the heading to appear.
     expect(await screen.findByRole('heading', { name: 'Pagina niet gevonden' })).toBeInTheDocument()
     expect(
       await screen.findByText('De pagina die je zoekt bestaat niet of is verplaatst.'),
