@@ -35,7 +35,7 @@
 
 VIERNULVIER is an arts centre in Ghent with a rich history of performances. That archive data was until now not publicly available via the main website - this application solves that.
 
-**viernulvier-archive** provides a searchable archive website where visitors can discover decades of cultural history: performances, series, locations, media and more - synchronised directly from the [Viernulvier/Peppered API](https://www.viernulvier.gent/api/docs#/).
+**VIERNULVIER Archive** provides a searchable archive website where visitors can discover decades of cultural history: performances, series, locations, media and more - synchronised directly from the [VIERNULVIER/Peppered API](https://www.viernulvier.gent/api/docs#/).
 
 ```
 viernulvier-2/
