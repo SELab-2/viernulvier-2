@@ -455,9 +455,7 @@ const SeriesDetailContent = ({ id }: SeriesDetailContentProps) => {
                   onClick={() => void loadMoreProductions()}
                   disabled={isLoadingMore}
                 >
-                  {isLoadingMore
-                    ? t('common.loading', 'Loading…')
-                    : t('series.showMore', 'Show More')}
+                  {isLoadingMore ? t('common.loading') : t('series.showMore', 'Show More')}
                 </Button>
               </Box>
             )}
