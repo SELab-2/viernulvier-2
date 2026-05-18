@@ -65,7 +65,7 @@ viernulvier-2/
 └──────────┬──────────────┘     └───────────────────────────┘
            │
 ┌──────────▼──────────────┐     ┌───────────────────────────┐
-│      PostgreSQL         │     │  Viernulvier/Peppered API │
+│      PostgreSQL         │     │  VIERNULVIER/Peppered API │
 │      (database)         │     │  (external data source)   │
 └─────────────────────────┘     └───────────────────────────┘
 ```
