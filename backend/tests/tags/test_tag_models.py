@@ -70,6 +70,33 @@ class TestTag:
 
         assert "image" in exc.value.message_dict
 
+    def test_new_tag_can_be_created_without_translations(self) -> None:
+        """New tags are exempt from the translation requirement because
+        translations are added after creation."""
+        tag = TagFactory()
+        assert tag.pk is not None
+        assert tag.translations.count() == 0
+
+    def test_existing_tag_cannot_be_saved_without_translations(self) -> None:
+        """Once a tag exists, it must retain at least one translation."""
+        tag = TagFactory()
+        # Tag was created without translations (new-tag exemption)
+        assert tag.translations.count() == 0
+
+        with pytest.raises(ValidationError) as exc:
+            tag.save()
+
+        assert "translations" in exc.value.message_dict
+
+    def test_existing_tag_with_translations_can_be_saved(self) -> None:
+        """A tag that has translations can be saved normally."""
+        tag = TagFactory()
+        TagTranslationFactory(tag=tag, language__code="en", name="Rock")
+
+        tag.save()  # should not raise
+
+        assert tag.translations.count() == 1
+
 
 # =====================================================
 # TagTranslation

@@ -95,7 +95,7 @@ describe('theme/styles - createCommonStyles', () => {
     const footerSx = commonStyles.footer as SxProps<Theme>
     const footerRecord = footerSx as Record<string, unknown>
 
-    expect(footerRecord.bgcolor).toBe(tokens.colors.neutral.gray900)
+    expect(footerRecord.bgcolor).toBe(tokens.colors.neutral.black)
     expect(footerRecord.color).toBe(tokens.colors.neutral.white)
     expect(footerRecord.mt).toBe(tokens.spacing.numericLg)
   })
