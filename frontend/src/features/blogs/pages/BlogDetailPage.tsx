@@ -143,7 +143,10 @@ const BlogDetailContent = ({ id }: BlogDetailContentProps) => {
     getLocalizedValue(blog.title, lang) ||
     blog.display_title ||
     t('blogs.detail.noTitleAvailable', 'No title available')
-  const excerpt = getLocalizedValue(blog.excerpt, lang) || blog.display_excerpt || ''
+  const excerpt =
+    getLocalizedValue(blog.excerpt, lang) ||
+    blog.display_excerpt ||
+    t('blogs.home.noExcerpt', 'No excerpt available')
   const body = getLocalizedValue(blog.body, lang) || ''
   const cover = blog.cover_image ?? null
 

@@ -90,7 +90,7 @@ describe('SeriesGridCard', () => {
 
     expect(screen.getByRole('heading', { name: 'Display reeks' })).toBeInTheDocument()
     expect(screen.getByAltText('Fallback image')).toBeInTheDocument()
-    expect(screen.queryByText('Een korte samenvatting')).not.toBeInTheDocument()
+    expect(screen.getByText('Geen samenvatting beschikbaar.')).toBeInTheDocument()
     expect(screen.queryByText(/2026/)).not.toBeInTheDocument()
   })
 

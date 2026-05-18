@@ -12,34 +12,12 @@ import { tokens } from '../../../theme/tokens'
 import { formatDate } from '../../../utils/dateUtils'
 import { resolveCurrentLanguage, toLocalizedPath } from '../../../utils/localizedRoutes'
 import { htmlToPlainText } from '../../../utils/SanitizeHtml'
-import { getTranslatedRecord } from '../../../utils/translations'
+import { getLocalizedTagName, getLocalizedTagExcerpt } from '../../../utils/translations'
 
-import type { Tag } from '../../../types/Tags'
+import type { SeriesCardProps } from '../../../types/SeriesCardProps'
 
-export interface SeriesGridCardProps {
-  tag: Tag
-}
-
-/**
- * Returns the localized name for a tag based on current UI language.
- * Falls back to default display values if translation is missing.
- */
-const getLocalizedTagName = (tag: Tag, language: string): string => {
-  const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
-  return getTranslatedRecord(tag.name, normalizedLanguage, tag.display_name)
-}
-
-/**
- * Returns the localized excerpt for a tag based on current UI language.
- * Used for short preview text in card layouts.
- */
-const getLocalizedTagExcerpt = (tag: Tag, language: string): string => {
-  const normalizedLanguage = language.startsWith('en') ? 'en' : 'nl'
-  return getTranslatedRecord(tag.excerpt, normalizedLanguage, tag.display_excerpt)
-}
-
-const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
-  const { i18n } = useTranslation()
+const SeriesGridCard = ({ tag }: SeriesCardProps) => {
+  const { i18n, t } = useTranslation()
   const location = useLocation()
   const { language } = i18n
 
@@ -51,11 +29,8 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
   )
   const detailPath = toLocalizedPath(`/series/${tag.id}`, currentLanguage)
 
-  // Localized content fields
   const title = getLocalizedTagName(tag, language)
-  const excerpt = getLocalizedTagExcerpt(tag, language)
-
-  // Date formatting for display range
+  const excerpt = htmlToPlainText(getLocalizedTagExcerpt(tag, language))
   const startLabel = formatDate(tag.first_production_start, language)
   const endLabel = formatDate(tag.last_production_end, language)
 
@@ -108,22 +83,19 @@ const SeriesGridCard = ({ tag }: SeriesGridCardProps) => {
             {title}
           </Typography>
 
-          {/* Excerpt (sanitized to plain text) */}
-          {excerpt ? (
-            <Typography
-              component="div"
-              variant="body2"
-              sx={{
-                fontSize: 'inherit',
-                color: 'text.secondary',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {htmlToPlainText(excerpt)}
-            </Typography>
-          ) : null}
+          <Typography
+            component="div"
+            variant="body2"
+            sx={{
+              fontSize: 'inherit',
+              color: 'text.secondary',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {excerpt || t('blogs.home.noExcerpt')}
+          </Typography>
         </Stack>
 
         {/* Date range indicator */}
