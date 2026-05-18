@@ -1,7 +1,7 @@
 import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
 import { Box, Stack, Typography, useTheme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, Link as RouterLink } from 'react-router-dom'
 
 import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
 import ImageWithFallback from '../../../../shared/components/ImageWithFallback'
@@ -27,8 +27,10 @@ export interface ProductionGridCardProps {
  * first crop of the first gallery image when present; otherwise {@link ImageWithFallback} shows the
  * branded placeholder.
  *
- * Genre chips use `context="static"` (non-interactive) whenever `selectedGenreIds` is defined,
- * so that genre filtering is controlled exclusively by the parent rather than navigating away.
+ * Chips inside the card are rendered with `disableLink` so they stay interactive without
+ * creating nested anchors inside the outer card link. `selectedGenreIds` and `selectedTagIds`
+ * only influence chip ordering and selected styling; the chips still navigate to the archive
+ * with their filters appended.
  *
  * @param props.production Full API payload (title, artist, media gallery, genres, events, etc.).
  * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
@@ -43,7 +45,6 @@ const ProductionGridCard = ({
   const commonStyles = createCommonStyles(theme)
   const { i18n } = useTranslation()
   const location = useLocation()
-  const navigate = useNavigate()
   const { language } = i18n
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
@@ -81,18 +82,8 @@ const ProductionGridCard = ({
 
   return (
     <Stack
-      role="link"
-      tabIndex={0}
-      data-to={detailPath}
-      onClick={() => {
-        navigate(detailPath)
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          navigate(detailPath)
-        }
-      }}
+      component={RouterLink}
+      to={detailPath}
       sx={{
         ...commonStyles.cardBase,
         width: '100%',
@@ -159,9 +150,10 @@ const ProductionGridCard = ({
                   )}
                   labels={tag.name || tag.url_title || {}}
                   chipType="seriesTag"
-                  context="series"
+                  context="description"
                   id={tag.id}
                   selected={selectedTagIds?.includes(tag.id) || false}
+                  disableLink
                 />
               ))}
               {genres.map((genre) => (
@@ -174,9 +166,10 @@ const ProductionGridCard = ({
                   )}
                   labels={genre.name || {}}
                   chipType="genre"
-                  context={selectedGenreIds !== undefined ? 'static' : 'description'}
+                  context="description"
                   id={genre.id}
                   selected={selectedGenreIds?.includes(genre.id) || false}
+                  disableLink
                 />
               ))}
             </Stack>

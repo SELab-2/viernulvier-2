@@ -151,6 +151,7 @@ describe('SeriesDetailPage', () => {
         makeProduction(1, {
           display_title: 'VIDEODROOM 2024',
           title: { nl: 'VIDEODROOM 2024' },
+          tags: [baseTag(), baseTag({ id: 2, name: { nl: 'Anders' }, display_name: 'Anders' })],
         }),
       ],
     })
@@ -165,6 +166,9 @@ describe('SeriesDetailPage', () => {
     expect(screen.getByText('1')).toBeInTheDocument()
     expect(screen.getByText('2020–2025')).toBeInTheDocument()
     expect(screen.getByText('festival')).toBeInTheDocument()
+    expect(
+      getComputedStyle(screen.getByRole('button', { name: 'VIDEODROOM' })).backgroundColor,
+    ).toBe('rgb(25, 118, 210)')
     expect(mockedGetProductions).toHaveBeenCalledWith({
       page: 1,
       pageSize: 12,
@@ -287,7 +291,7 @@ describe('SeriesDetailPage', () => {
     expect(await screen.findByText('PRODUCTION DETAIL')).toBeInTheDocument()
   })
 
-  it('navigates to production detail with keyboard activation', async () => {
+  it('links production cards to the production detail route', async () => {
     mockedGetTag.mockResolvedValue(baseTag())
     mockedGetProductions.mockResolvedValue({
       count: 1,
@@ -305,9 +309,7 @@ describe('SeriesDetailPage', () => {
     const productionCard = await screen.findByRole('link', {
       name: /keyboard productie/i,
     })
-    fireEvent.keyDown(productionCard, { key: 'Enter' })
-
-    expect(await screen.findByText('PRODUCTION DETAIL')).toBeInTheDocument()
+    expect(productionCard).toHaveAttribute('href', '/nl/producties/43')
   })
 
   it('renders production genre chips on the production card when genres have display names', async () => {
@@ -318,6 +320,14 @@ describe('SeriesDetailPage', () => {
         makeProduction(1, {
           display_title: 'VIDEODROOM 2024',
           title: { nl: 'VIDEODROOM 2024' },
+          tags: [
+            {
+              id: 21,
+              name: { nl: 'Reeks', en: 'Series' },
+              display_name: 'Reeks',
+              url_title: null,
+            },
+          ],
           genres: [
             {
               id: 10,
@@ -340,8 +350,14 @@ describe('SeriesDetailPage', () => {
 
     renderPage()
 
+    const productionCard = await screen.findByRole('link', {
+      name: /videodroom 2024/i,
+    })
+
     expect(await screen.findByText('Audiovisueel')).toBeInTheDocument()
     expect(screen.getByText('Performance')).toBeInTheDocument()
+    expect(screen.getByText('Reeks')).toBeInTheDocument()
+    expect(productionCard.querySelectorAll('a')).toHaveLength(0)
   })
 
   it('sorts the loaded productions by event date, groups them by year and ignores undated productions', async () => {
