@@ -129,7 +129,18 @@ describe('Router', () => {
     render(<Router mode="light" onToggleMode={jest.fn()} />)
 
     await waitFor(() => {
-      expect(window.location.pathname).toBe('/en/xx')
+      expect(window.location.pathname).toBe('/en/404')
+    })
+    expect(await screen.findByTestId('not-found-page-mock')).toBeInTheDocument()
+  })
+
+  it('redirects unknown localized routes to the localized 404 path', async () => {
+    window.history.pushState({}, '', '/nl/does-not-exist')
+
+    render(<Router mode="light" onToggleMode={jest.fn()} />)
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/nl/404')
     })
     expect(await screen.findByTestId('not-found-page-mock')).toBeInTheDocument()
   })
