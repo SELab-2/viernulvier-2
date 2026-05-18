@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 import { I18nextProvider } from 'react-i18next'
 
@@ -292,5 +292,31 @@ describe('ChipFilterSection', () => {
     expect(screen.getByTestId('chip-genre-2')).toBeInTheDocument()
     expect(screen.queryByTestId('chip-genre-1')).not.toBeInTheDocument()
     expect(screen.queryByTestId('chip-genre-3')).not.toBeInTheDocument()
+  })
+
+  it('re-sorts chips when the active language changes', async () => {
+    renderSection({
+      options: [
+        { id: 1, name: 'Alpha', labels: { en: 'Alpha', nl: 'Zebra' }, chipType: 'genre' },
+        { id: 2, name: 'Beta', labels: { en: 'Beta', nl: 'Aap' }, chipType: 'genre' },
+        { id: 3, name: 'Gamma', labels: { en: 'Gamma', nl: 'Mier' }, chipType: 'genre' },
+      ],
+    })
+
+    expect(screen.getAllByTestId(/chip-genre-/).map((chip) => chip.textContent)).toEqual([
+      'Beta',
+      'Gamma',
+      'Alpha',
+    ])
+
+    await act(async () => {
+      await i18n.changeLanguage('en')
+    })
+
+    expect(screen.getAllByTestId(/chip-genre-/).map((chip) => chip.textContent)).toEqual([
+      'Alpha',
+      'Beta',
+      'Gamma',
+    ])
   })
 })

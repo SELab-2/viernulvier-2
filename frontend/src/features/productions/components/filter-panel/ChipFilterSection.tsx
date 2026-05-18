@@ -53,7 +53,7 @@ const ChipFilterSection = ({
       ? t('productions.home.filters.searchGenres')
       : t('productions.home.filters.searchTags')
 
-  // Sort selected items first, then alphabetically by name
+  // Sort selected items first, then alphabetically by localized label
   const sortedOptions = useMemo(
     () =>
       [...options].sort((a, b) => {
@@ -64,9 +64,12 @@ const ChipFilterSection = ({
           return aSelected ? -1 : 1
         }
 
-        return a.name.localeCompare(b.name)
+        const aLabel = getTranslatedRecord(a.labels, i18n.language, a.name)
+        const bLabel = getTranslatedRecord(b.labels, i18n.language, b.name)
+
+        return aLabel.localeCompare(bLabel, i18n.language, { sensitivity: 'base' })
       }),
-    [options, selectedIds],
+    [options, selectedIds, i18n.language],
   )
 
   const filteredOptions = useMemo(() => {
