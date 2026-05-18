@@ -329,5 +329,8 @@
     "loading": "Loading media files",
     "resultsRegionLabel": "Media files results",
     "noDescription": "No description available."
+  },
+  "common": {
+    "loading": "Loading…"
   }
 }
