@@ -2,7 +2,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import i18n from '../../../../i18n'
 import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
@@ -53,6 +53,12 @@ const renderChip = (ui: ReactElement) =>
 beforeEach(() => {
   void i18n.changeLanguage('nl')
 })
+
+const LocationEcho = () => {
+  const location = useLocation()
+
+  return <div>{`${location.pathname}${location.search}`}</div>
+}
 
 afterEach(() => {
   void i18n.changeLanguage('nl')
@@ -222,6 +228,69 @@ describe('GenreAndTagChip in genre mode', () => {
     )
   })
 
+  it('navigates to the archive when a description chip is clicked', () => {
+    render(
+      <MemoryRouter initialEntries={['/nl/producties/7']}>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider theme={accentTheme}>
+            <Routes>
+              <Route
+                path="/nl/producties/7"
+                element={
+                  <GenreAndTagChip
+                    name="Dans"
+                    labels={{}}
+                    chipType="genre"
+                    id={7}
+                    context="description"
+                  />
+                }
+              />
+              <Route path="/nl/archief" element={<LocationEcho />} />
+            </Routes>
+          </ThemeProvider>
+        </I18nextProvider>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('link', { name: 'Dans' }))
+
+    expect(screen.getByText('/nl/archief?g=7')).toBeInTheDocument()
+  })
+
+  it('clears page when merging filters in description context with disableLink', () => {
+    render(
+      <MemoryRouter initialEntries={['/nl/archief?g=5&p=100']}>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider theme={accentTheme}>
+            <Routes>
+              <Route
+                path="/nl/archief"
+                element={
+                  <>
+                    <GenreAndTagChip
+                      name="Dans"
+                      labels={{}}
+                      chipType="genre"
+                      id={7}
+                      context="description"
+                      disableLink
+                    />
+                    <LocationEcho />
+                  </>
+                }
+              />
+            </Routes>
+          </ThemeProvider>
+        </I18nextProvider>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dans' }))
+
+    expect(screen.getByText('/nl/archief?g=5-7')).toBeInTheDocument()
+  })
+
   it('renders static context as non-clickable', () => {
     renderChip(<GenreAndTagChip name="Statisch" labels={{}} id={7} context="static" />)
 
@@ -287,6 +356,36 @@ describe('GenreAndTagChip in series tag mode', () => {
     )
 
     expect(screen.getByRole('link')).toHaveAttribute('href', toLocalizedPath('/series/12', 'nl'))
+  })
+
+  it('navigates to the series page when a series chip is clicked', () => {
+    render(
+      <MemoryRouter initialEntries={['/nl/producties/7']}>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider theme={accentTheme}>
+            <Routes>
+              <Route
+                path="/nl/producties/7"
+                element={
+                  <GenreAndTagChip
+                    name="reekstag"
+                    labels={{}}
+                    chipType="seriesTag"
+                    id={12}
+                    context="series"
+                  />
+                }
+              />
+              <Route path="/nl/reeksen/12" element={<LocationEcho />} />
+            </Routes>
+          </ThemeProvider>
+        </I18nextProvider>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('link', { name: 'reekstag' }))
+
+    expect(screen.getByText('/nl/reeksen/12')).toBeInTheDocument()
   })
 
   it('gives static chips a colored border', () => {

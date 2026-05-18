@@ -55,6 +55,8 @@ export interface GenreAndTagChipProps {
 
   /** Optional accessibility label override. */
   ariaLabel?: string
+  /** Optional flag to disable link behavior */
+  disableLink?: boolean
 }
 
 /**

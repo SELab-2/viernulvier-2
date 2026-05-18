@@ -328,5 +328,8 @@
     "loading": "Mediabestanden laden",
     "resultsRegionLabel": "Resultaten van mediabestanden",
     "noDescription": "Geen beschrijving beschikbaar."
+  },
+  "common": {
+    "loading": "Laden…"
   }
 }

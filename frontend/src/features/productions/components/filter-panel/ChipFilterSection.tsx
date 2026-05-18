@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 
 import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
 import { tokens } from '../../../../theme/tokens'
+import { getTranslatedRecord } from '../../../../utils/translations'
 
 const VISIBLE_CHIP_COUNT = 5
 const CHIP_ROW_HEIGHT_PX = 32
@@ -40,7 +41,7 @@ const ChipFilterSection = ({
   emptyLabel,
   onToggle,
 }: ChipFilterSectionProps) => {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const [query, setQuery] = useState('')
 
   const hasOverflow = options.length > VISIBLE_CHIP_COUNT
@@ -52,7 +53,7 @@ const ChipFilterSection = ({
       ? t('productions.home.filters.searchGenres')
       : t('productions.home.filters.searchTags')
 
-  // Sort selected items first, then alphabetically by name
+  // Sort selected items first, then alphabetically by localized label
   const sortedOptions = useMemo(
     () =>
       [...options].sort((a, b) => {
@@ -63,9 +64,12 @@ const ChipFilterSection = ({
           return aSelected ? -1 : 1
         }
 
-        return a.name.localeCompare(b.name)
+        const aLabel = getTranslatedRecord(a.labels, i18n.language, a.name)
+        const bLabel = getTranslatedRecord(b.labels, i18n.language, b.name)
+
+        return aLabel.localeCompare(bLabel, i18n.language, { sensitivity: 'base' })
       }),
-    [options, selectedIds],
+    [options, selectedIds, i18n.language],
   )
 
   const filteredOptions = useMemo(() => {
@@ -73,8 +77,11 @@ const ChipFilterSection = ({
     if (!trimmed) {
       return sortedOptions
     }
-    return sortedOptions.filter((option) => option.name.toLowerCase().includes(trimmed))
-  }, [sortedOptions, query])
+    return sortedOptions.filter((option) => {
+      const localizedLabel = getTranslatedRecord(option.labels, i18n.language, option.name)
+      return localizedLabel.toLowerCase().includes(trimmed)
+    })
+  }, [sortedOptions, query, i18n.language])
 
   if (!sortedOptions.length) {
     return (

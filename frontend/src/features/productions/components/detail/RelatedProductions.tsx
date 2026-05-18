@@ -126,6 +126,8 @@ function RelatedProductions({ lang = 'nl', related, showTag = true }: RelatedPro
                         display_title: production.display_title ?? null,
                         display_artist_name: production.display_artist_name ?? null,
                       }}
+                      selectedGenreIds={[]}
+                      selectedTagIds={entry.tag.id ? [entry.tag.id] : []}
                     />
                   </Box>
                 )

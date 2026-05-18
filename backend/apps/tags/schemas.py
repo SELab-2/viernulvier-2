@@ -120,7 +120,8 @@ _TAG_CREATE = extend_schema(
         "Creates a new **Tag**.\n\n"
         "- `type` is used as a classification label (e.g. `theme`, `audience`).\n"
         "- Localised fields (`name`, `excerpt`, `short_description`, `url_title`) must be added "
-        "via the **Tag Translation** endpoints after creation.\n\n"
+        "via the **Tag Translation** endpoints after creation. "
+        "`name` is mandatory for every translation.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=TagSerializer,
@@ -131,7 +132,10 @@ _TAG_CREATE = extend_schema(
 _TAG_UPDATE = extend_schema(
     summary="Replace a tag",
     description=(
-        "Fully replaces an existing **Tag**. All writable fields must be supplied.\n\n> **Requires an internal API key.**"
+        "Fully replaces an existing **Tag**. All writable fields must be supplied.\n\n"
+        "Existing tags must have at least one translation; attempting to update a tag "
+        "that has no translations will fail with a validation error.\n\n"
+        "> **Requires an internal API key.**"
     ),
     request=TagSerializer,
     responses={200: TagSerializer, **MUTATE_ERRORS},
@@ -143,6 +147,8 @@ _TAG_PARTIAL_UPDATE = extend_schema(
     description=(
         "Updates one or more fields of an existing **Tag** without "
         "requiring a full payload.\n\n"
+        "Existing tags must have at least one translation; attempting to update a tag "
+        "that has no translations will fail with a validation error.\n\n"
         "> **Requires an internal API key.**"
     ),
     request=TagSerializer,
