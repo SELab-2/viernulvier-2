@@ -1,3 +1,5 @@
+"""Factory Boy factories for location, space, and hall test data."""
+
 import factory
 from faker import Faker
 

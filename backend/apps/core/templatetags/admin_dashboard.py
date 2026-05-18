@@ -48,7 +48,7 @@ CARD_SPECS = (
         model=Tag,
     ),
     DashboardCardSpec(
-        title="Media files",
+        title="Media Files",
         description="Uploaded files used across the platform.",
         model=MediaFile,
     ),

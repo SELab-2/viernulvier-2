@@ -1,3 +1,5 @@
+"""Tests for production admin bulk actions."""
+
 from django.contrib import admin
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.auth.models import AnonymousUser
@@ -20,6 +22,7 @@ class TestProductionAdminActions(TestCase):
         self.production_2 = ProductionFactory()
 
     def _request_with_messages(self, method, path, data=None):
+        """Build an admin-like request with session and messages support."""
         request = getattr(self.factory, method)(path, data=data or {})
         SessionMiddleware(lambda _: None).process_request(request)
         request.session.save()
@@ -95,3 +98,20 @@ class TestProductionAdminActions(TestCase):
 
         assert response.status_code == 200
         assert response.template_name == "admin/two_step_action.html"
+
+    def test_add_tag_action_uses_posted_selection_even_if_queryset_is_empty(self) -> None:
+        request = self._request_with_messages(
+            "post",
+            "/admin/productions/production/",
+            data={
+                "action": "add_tag_to_selected_productions",
+                ACTION_CHECKBOX_NAME: [str(self.production_1.pk)],
+            },
+        )
+
+        response = self.admin.add_tag_to_selected_productions(request, Production.objects.none())
+
+        assert response.status_code == 200
+        assert response.template_name == "admin/two_step_action.html"
+        assert len(response.context_data["queryset"]) == 1
+        assert response.context_data["queryset"].first().pk == self.production_1.pk

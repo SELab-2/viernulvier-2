@@ -124,7 +124,7 @@ class ImportLog(BaseModel):
         verbose_name = "Import Log"
         verbose_name_plural = "Import Logs"
         ordering = ["-started_at"]
-        # If both timestamps are set, finished_at must be after started_at
+        # If both timestamps are set, finished_at must be after or equal to started_at.
         constraints = [
             models.CheckConstraint(
                 condition=(Q(started_at__isnull=True) | Q(finished_at__isnull=True) | Q(finished_at__gte=F("started_at"))),

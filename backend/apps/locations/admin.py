@@ -17,10 +17,13 @@ from .models import (
 
 
 class LocationTranslationInline(admin.TabularInline):
+    """Inline admin for managing translated location names."""
+
     model = LocationTranslation
     extra = 1
     fields = ("language", "name")
     autocomplete_fields = ("language",)
+    classes = ("collapse",)
 
 
 @admin.register(Location)
@@ -39,15 +42,18 @@ class LocationAdmin(BaseAdmin):
     inlines = [LocationTranslationInline]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        "Avoiding N+1 queries by prefetching related translations."
+        """Prefetch translations to avoid N+1 queries in the admin."""
         return super().get_queryset(request).prefetch_related("translations")
 
 
 class SpaceTranslationInline(admin.TabularInline):
+    """Inline admin for managing translated space names."""
+
     model = SpaceTranslation
     extra = 1
     fields = ("language", "name")
     autocomplete_fields = ("language",)
+    classes = ("collapse",)
 
 
 @admin.register(Space)
@@ -62,15 +68,18 @@ class SpaceAdmin(BaseAdmin):
     inlines = [SpaceTranslationInline]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        "Avoiding N+1 queries by prefetching related translations."
+        """Prefetch translations to avoid N+1 queries in the admin."""
         return super().get_queryset(request).prefetch_related("translations")
 
 
 class HallTranslationInline(admin.TabularInline):
+    """Inline admin for managing translated hall names and remarks."""
+
     model = HallTranslation
     extra = 1
     fields = ("language", "name", "remark")
     autocomplete_fields = ("language",)
+    classes = ("collapse",)
 
 
 @admin.register(Hall)
@@ -91,5 +100,5 @@ class HallAdmin(BaseAdmin):
     inlines = [HallTranslationInline]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        "Avoiding N+1 queries by prefetching related translations."
+        """Prefetch translations to avoid N+1 queries in the admin."""
         return super().get_queryset(request).prefetch_related("translations")

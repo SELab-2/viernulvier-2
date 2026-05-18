@@ -12,6 +12,7 @@ hard-coded fallback in this file. See ``infrastructure/.env.example``
 for the full list of required variables.
 """
 
+import mimetypes
 import os
 from pathlib import Path
 import textwrap
@@ -19,6 +20,15 @@ import textwrap
 from dotenv import load_dotenv
 
 from api.versioning import VERSIONING_SETTINGS
+
+# ---------------------------------------------------------------------------
+# MIME type overrides
+# ---------------------------------------------------------------------------
+# Python's mimetypes module does not include image/webp on all platforms
+# (notably absent on Windows and some Linux distros). Without this,
+# Django's file server falls back to application/octet-stream for .webp
+# files, causing browsers to download them instead of displaying inline.
+mimetypes.add_type("image/webp", ".webp")
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -30,6 +40,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Security - no defaults for secrets
 # ---------------------------------------------------------------------------
 
+# The infrastructure folder sits next to backend/, so BASE_DIR.parent points
+# at the repository root used by Docker Compose and deployment scripts.
 load_dotenv(os.path.join(BASE_DIR.parent, "infrastructure", ".env"))
 
 SECRET_KEY = os.environ["SECRET_KEY"]
@@ -164,6 +176,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -341,5 +356,28 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+    },
+}
+
+# ---------------------------------------------------------------------------
+# CACHING
+# ---------------------------------------------------------------------------
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ["REDIS_URL"],
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "IGNORE_EXCEPTIONS": True,
+            "SOCKET_CONNECT_TIMEOUT": 1,
+            "SOCKET_TIMEOUT": 1,
+            "RETRY_ON_TIMEOUT": False,
+        },
+        "KEY_PREFIX": "viernulvier",
+    },
+    "throttling": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "throttling",
     },
 }

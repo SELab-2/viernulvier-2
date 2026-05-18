@@ -1,4 +1,6 @@
-from unittest.mock import patch
+"""Tests for apps.core.models."""
+
+from unittest.mock import MagicMock, patch
 
 from django.core.exceptions import ValidationError
 import pytest
@@ -74,3 +76,95 @@ class TestBaseModel:
     def test_get_base_translation_returns_none_without_related_manager(self) -> None:
         obj = CoreDummyFactory.build(name="valid")
         assert obj.get_base_translation(related_name="translations") is None
+
+
+def test_base_language_code_with_region(settings):
+    settings.LANGUAGE_CODE = "nl-BE"
+    assert BaseModel.base_language_code() == "nl"
+
+
+def test_base_language_code_without_region(settings):
+    settings.LANGUAGE_CODE = "fr"
+    assert BaseModel.base_language_code() == "fr"
+
+
+def test_get_base_translation_prefers_base_language():
+    obj = CoreDummyFactory.build(name="valid")
+
+    base_translation = MagicMock()
+    base_translation.language.code = "nl"
+
+    fallback_translation = MagicMock()
+    fallback_translation.language.code = "en"
+
+    qs = MagicMock()
+    qs.filter.return_value.first.return_value = base_translation
+    qs.first.return_value = fallback_translation
+
+    manager = MagicMock()
+    manager.all.return_value = qs
+    obj.translations = manager
+
+    with patch.object(CoreDummy, "base_language_code", return_value="nl"):
+        result = obj.get_base_translation("translations")
+
+    assert result == base_translation
+
+
+def test_get_base_translation_fallback_first():
+    obj = CoreDummyFactory.build(name="valid")
+
+    fallback_translation = MagicMock()
+    fallback_translation.language.code = "fr"
+
+    qs = MagicMock()
+    qs.filter.return_value.first.return_value = None
+    qs.first.return_value = fallback_translation
+
+    manager = MagicMock()
+    manager.all.return_value = qs
+    obj.translations = manager
+
+    with patch.object(CoreDummy, "base_language_code", return_value="nl"):
+        result = obj.get_base_translation("translations")
+
+    assert result == fallback_translation
+
+
+def test_get_base_display_name_returns_value():
+    obj = CoreDummyFactory.build(name="valid")
+
+    translation = MagicMock()
+    translation.name = "Hello"
+
+    with patch.object(obj, "get_base_translation", return_value=translation):
+        result = obj.get_base_display_name(
+            related_name="translations",
+            name_field="name",
+        )
+
+    assert result == "Hello"
+
+
+def test_get_base_display_name_fallback_when_no_translation():
+    obj = CoreDummyFactory.build(name="valid")
+
+    with patch.object(obj, "get_base_translation", return_value=None):
+        result = obj.get_base_display_name(fallback="DEFAULT")
+
+    assert result == "DEFAULT"
+
+
+def test_get_base_display_name_fallback_when_value_empty():
+    obj = CoreDummyFactory.build(name="valid")
+
+    translation = MagicMock()
+    translation.name = ""
+
+    with patch.object(obj, "get_base_translation", return_value=translation):
+        result = obj.get_base_display_name(
+            name_field="name",
+            fallback="DEFAULT",
+        )
+
+    assert result == "DEFAULT"

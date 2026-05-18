@@ -132,7 +132,15 @@ class TestTagViewSetList(TestCase):
             "source",
             "type",
             "is_enabled",
+            "image",
+            "display_name",
+            "display_short_description",
+            "display_excerpt",
+            "display_url_title",
+            "first_production_start",
+            "last_production_end",
             "name",
+            "excerpt",
             "short_description",
             "url_title",
         ):
@@ -188,11 +196,16 @@ class TestTagViewSetRetrieve(TestCase):
             tag=self.tag,
             language=lang,
             name="Genre",
+            excerpt="Korte samenvatting",
             url_title="genre",
         )
         response = self.client.get(f"/api/v1/tags/{self.tag.id}/", **pub_headers())
         assert isinstance(response.data["name"], dict)
         assert "nl" in response.data["name"]
+        assert isinstance(response.data["excerpt"], dict)
+        assert "nl" in response.data["excerpt"]
+        assert "first_production_start" in response.data
+        assert "last_production_end" in response.data
 
 
 # ---------------------------------------------------------------------------
@@ -241,6 +254,7 @@ class TestTagViewSetUpdate(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.tag = TagFactory.create(type="genre")
+        TagTranslationFactory(tag=self.tag, language__code="en", name="Genre")
         self.payload = {
             "type": "updated-genre",
             "source": "system",
@@ -275,6 +289,7 @@ class TestTagViewSetPartialUpdate(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.tag = TagFactory.create(type="genre", is_enabled=True)
+        TagTranslationFactory(tag=self.tag, language__code="en", name="Genre")
 
     def test_patch_with_internal_key_returns_200(self):
         response = self.client.patch(

@@ -1,6 +1,4 @@
-"""
-OpenAPI schema decorators for the Pricing app.
-"""
+"""OpenAPI schema decorators and examples for the Pricing app."""
 
 from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 

@@ -17,6 +17,8 @@ from django import forms
 from django.contrib import admin
 from django.db.models import Max, QuerySet
 from django.http import HttpRequest
+from django.urls import reverse
+from django.utils.html import format_html, format_html_join
 
 from apps.core.admin import BaseAdmin, TwoStepBulkActionMixin
 from apps.genres.models import Genre
@@ -34,6 +36,8 @@ from .models import (
 
 
 class AddTagToProductionsForm(forms.Form):
+    """Confirmation form for selecting the tag to add to selected productions."""
+
     tag = forms.ModelChoiceField(
         queryset=Tag.objects.order_by("type"),
         required=True,
@@ -42,6 +46,8 @@ class AddTagToProductionsForm(forms.Form):
 
 
 class AddGenreToProductionsForm(forms.Form):
+    """Confirmation form for selecting the genre to add to selected productions."""
+
     genre = forms.ModelChoiceField(
         queryset=Genre.objects.order_by("type"),
         required=True,
@@ -54,7 +60,21 @@ class AddGenreToProductionsForm(forms.Form):
 # ===========================================================================
 
 
-class ProductionTranslationInline(admin.TabularInline):
+class ProductionTranslationForm(forms.ModelForm):
+    """
+    Custom form to adjust the layout of fields in ProductionTranslationInline.
+    """
+
+    class Meta:
+        model = ProductionTranslation
+        fields = ["artist_name", "tagline"]
+        widgets = {
+            "artist_name": forms.TextInput(attrs={"rows": 1, "style": "width: 256px;"}),
+            "tagline": forms.TextInput(attrs={"rows": 1, "style": "width: 256px;"}),
+        }
+
+
+class ProductionTranslationInline(admin.StackedInline):
     """
     Inline for editing localised text fields directly inside the
     Production change page.
@@ -64,6 +84,7 @@ class ProductionTranslationInline(admin.TabularInline):
     """
 
     model = ProductionTranslation
+    form = ProductionTranslationForm
     extra = 1
     autocomplete_fields = ("language",)
     classes = ("collapse",)
@@ -73,9 +94,13 @@ class ProductionTranslationInline(admin.TabularInline):
         "artist_name",
         "tagline",
         "teaser",
+        "description",
+        "video_1",
+        "video_2",
     )
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related language to avoid N+1 queries in the translation inline."""
         return super().get_queryset(request).select_related("language")
 
 
@@ -93,8 +118,10 @@ class ProductionGenreInline(admin.TabularInline):
     autocomplete_fields = ("genre",)
     fields = ("genre", "position")
     ordering = ("position",)
+    classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related genre to avoid N+1 queries in the genre inline."""
         return super().get_queryset(request).select_related("genre")
 
 
@@ -108,8 +135,10 @@ class ProductionTagInline(admin.TabularInline):
     extra = 1
     autocomplete_fields = ("tag",)
     fields = ("tag",)
+    classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related tag to avoid N+1 queries in the tag inline."""
         return super().get_queryset(request).select_related("tag")
 
 
@@ -129,6 +158,7 @@ class ProductionTagTranslationInline(admin.TabularInline):
     fields = ("language", "description")
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related language to avoid N+1 queries in the translation inline."""
         return super().get_queryset(request).select_related("language")
 
 
@@ -172,6 +202,7 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
 
     list_display = (
         "id",
+        "display_title",
         "attendance_mode",
         "performer_type",
         "uit_database_type",
@@ -212,6 +243,19 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         ProductionTagInline,
     ]
 
+    readonly_fields = ("media_items_admin",)
+    two_step_empty_selection_message = "No productions selected."
+
+    @admin.display(description="Title")
+    def display_title(self, obj: Production) -> str:
+        """Return the best available title for changelist display."""
+        title = obj.get_base_display_name(
+            related_name="translations",
+            name_field="title",
+            fallback=None,
+        )
+        return title or f"Production #{obj.id}"
+
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Optimise the queryset with select_related and prefetch_related."""
         return (
@@ -224,9 +268,19 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
             .prefetch_related("translations")
         )
 
-    two_step_empty_selection_message = "No productions selected."
+    def _selected_productions_from_request(self, request: HttpRequest, fallback_qs: QuerySet) -> QuerySet:
+        """Resolve selected productions from POST ids, independent of current changelist filters."""
+        selected_ids = request.POST.getlist("_selected_action")
+        if not selected_ids:
+            return fallback_qs
+        return self.model.objects.filter(pk__in=selected_ids)
 
     def _apply_add_tag_to_productions(self, selected_qs: QuerySet, cleaned_data: dict) -> str:
+        """Attach the selected tag to all selected productions using bulk_create.
+
+        Existing production-tag links are ignored so the action can be safely
+        repeated without raising duplicate constraint errors.
+        """
         tag = cleaned_data["tag"]
         production_ids = list(selected_qs.values_list("id", flat=True))
         through_model = Production.tags.through
@@ -239,6 +293,11 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         return f"Tag '{tag!s}' added to {len(production_ids)} selected productions."
 
     def _apply_add_genre_to_productions(self, selected_qs: QuerySet, cleaned_data: dict) -> str:
+        """Attach the selected genre to selected productions at the next position.
+
+        Existing production-genre links are skipped. For new links, the next
+        position is calculated per production so genre ordering remains stable.
+        """
         genre = cleaned_data["genre"]
         production_ids = list(selected_qs.values_list("id", flat=True))
 
@@ -276,13 +335,49 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
 
         return f"Genre '{genre!s}' added to {len(to_create)} selected productions."
 
+    @admin.display(description="Media items")
+    def media_items_admin(self, obj: Production) -> str:
+        """Render a small admin widget linking to media items and add action.
+
+        Shows the list of media items attached to the production's gallery
+        (if any) with links to edit each item and a button to add a new
+        MediaItem prefilled with the gallery via GET params.
+        """
+        if not obj or not obj.media_gallery:
+            return "-"
+
+        gallery = obj.media_gallery
+        items = gallery.media_items.all()
+        if not items:
+            add_url = reverse("admin:media_library_mediaitem_add") + f"?gallery={gallery.id}"
+            return format_html(
+                '<div>No images in gallery.</div><div style="margin-top:0.5em"><a class="button" href="{}">Add image</a></div>',
+                add_url,
+            )
+
+        rows = format_html_join(
+            "\n",
+            '<div><a href="{}">{}</a></div>',
+            (
+                (reverse("admin:media_library_mediaitem_change", args=(i.id,)), i.original_filename or str(i.id))
+                for i in items
+            ),
+        )
+
+        add_url = reverse("admin:media_library_mediaitem_add") + f"?gallery={gallery.id}"
+        return format_html(
+            '{}<div style="margin-top:0.5em"><a class="button" href="{}">Add image to gallery</a></div>', rows, add_url
+        )
+
     @admin.action(description="Add tag to selected productions")
     def add_tag_to_selected_productions(self, request: HttpRequest, queryset: QuerySet) -> HttpRequest:
         """Two-step admin action to attach one tag to selected productions."""
 
+        selected_qs = self._selected_productions_from_request(request, queryset)
+
         return self._run_two_step_bulk_action(
             request,
-            queryset,
+            selected_qs,
             form_class=AddTagToProductionsForm,
             action_name="add_tag_to_selected_productions",
             title="Add tag to selected productions",
@@ -294,9 +389,11 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
     def add_genre_to_selected_productions(self, request: HttpRequest, queryset: QuerySet) -> HttpRequest:
         """Two-step admin action to attach one genre to selected productions."""
 
+        selected_qs = self._selected_productions_from_request(request, queryset)
+
         return self._run_two_step_bulk_action(
             request,
-            queryset,
+            selected_qs,
             form_class=AddGenreToProductionsForm,
             action_name="add_genre_to_selected_productions",
             title="Add genre to selected productions",

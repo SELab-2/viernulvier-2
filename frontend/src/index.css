@@ -17,6 +17,7 @@
   src: url('/fonts/ABCMonumentGrotesk-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -24,8 +25,10 @@
   src: url('/fonts/ABCMonumentGrotesk-Heavy.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
 
+Grotesk
 /* ============================================================================
    ROOT & THEME VARIABLES (Light Mode, MUI-compatible)
    ============================================================================ */
@@ -205,6 +208,7 @@ body {
   .production-details-container {
     grid-template-columns: 1fr;
     padding: 16px;
+    max-width: 100%;
   }
 
   .production-details-left,
@@ -218,22 +222,19 @@ body {
     border-top: 1px solid var(--border);
     margin-top: 24px;
     padding-top: 24px;
-    margin-left: auto;
-    margin-right: auto;
     width: 100%;
-    max-width: 460px;
+    max-width: none;
   }
 
   .meta-panel {
     border-left: none !important;
-    margin-left: auto;
-    margin-right: auto;
     width: 100%;
-    max-width: 460px;
+    max-width: none;
   }
 
   .production-details-page {
     min-height: auto;
+    overflow-x: hidden;
   }
 
   .meta-panel h1 {

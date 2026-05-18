@@ -1,2 +1,5 @@
+# Production-only dependencies.
+# Includes all shared runtime dependencies from base.txt.
+
 -r base.txt
-gunicorn==25.3.0
+gunicorn==26.0.0

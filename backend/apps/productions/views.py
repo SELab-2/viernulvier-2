@@ -14,9 +14,10 @@ containing all available translations (e.g., {"nl": "...", "en": "..."}).
 responses still include all translations in a single payload.
 """
 
-from django.db.models import Max, Min, OuterRef, Prefetch, Q, QuerySet, Subquery
-from django.db.models.functions import Coalesce, Lower
+from django.db.models import Exists, Max, Min, OuterRef, Prefetch, Q, QuerySet
+from django.db.models.functions import Coalesce, Lower, Now
 from django.http import HttpRequest
+from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.request import Request
@@ -24,23 +25,28 @@ from rest_framework.response import Response
 
 from apps.blogs.models import Blog
 from apps.core.mixins import LanguageAwareMixin
-from apps.core.views import ApiModelViewSet
+from apps.core.views import ApiModelViewSet, cache_api_view
 from apps.events.models import Event, EventPrice
 from apps.locations.models import HallTranslation, LocationTranslation, SpaceTranslation
 from apps.media_library.models import MediaItem
 from apps.pricing.models import PriceRankTranslation, PriceTranslation
-from apps.tags.models import Tag, TagTranslation
+from apps.tags.models import Tag
 
 from .filters import ProductionFilter
-from .models import Production, ProductionGenre, ProductionTag
+from .models import Production, ProductionGenre
 from .schemas import production_schema
 from .serializers import (
     ProductionLandingStatsSerializer,
     ProductionSerializer,
-    ProductionSeriesSerializer,
 )
 
 _TAG = "Productions"
+
+# Used in the base queryset to filter productions to those with only past events or no events at all.
+past_or_no_end = Q(ends_at__lte=Now()) | Q(ends_at__isnull=True, starts_at__isnull=False)
+
+# Used in annotations to filter related events to those with only past events or no events at all.
+events_past_or_no_end = Q(events__ends_at__lte=Now()) | Q(events__ends_at__isnull=True, events__starts_at__isnull=False)
 
 
 @extend_schema(tags=[_TAG])
@@ -123,14 +129,9 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                 to_attr="prefetched_production_genres",
             ),
             Prefetch(
-                "productiontag_set",
-                queryset=ProductionTag.objects.select_related("tag")
-                .prefetch_related(
-                    "translations__language",
-                    "tag__translations__language",
-                )
-                .order_by("tag__type", "id"),
-                to_attr="prefetched_production_tags",
+                "tags",
+                queryset=Tag.objects.prefetch_related("translations__language").order_by("type", "id"),
+                to_attr="prefetched_tags",
             ),
             Prefetch(
                 "media_gallery__media_items",
@@ -140,10 +141,10 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                 ).order_by("position"),
             ),
         )
+        .filter(Exists(Event.objects.filter(production=OuterRef("pk")).filter(past_or_no_end)))
         .annotate(
-            # Computed once at the queryset level — not language-dependent.
-            first_event_start=Min("events__starts_at"),
-            last_event_end=Max("events__ends_at"),
+            first_event_start=Min("events__starts_at", filter=events_past_or_no_end),
+            last_event_end=Max("events__ends_at", filter=events_past_or_no_end),
         )
     )
 
@@ -214,7 +215,8 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
     @property
     def includes(self) -> set[str]:
         """Parse the 'include' query parameter into a set of related fields to include."""
-        return set(self.request.query_params.get("include", "").split(","))
+        raw_includes = self.request.query_params.get("include", "")
+        return {value.strip() for value in raw_includes.split(",") if value.strip()}
 
     def get_serializer(self, *args: tuple, **kwargs: dict) -> ProductionSerializer:
         """Pass the 'include' query parameter to the serializer context for dynamic field inclusion."""
@@ -223,17 +225,20 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         return super().get_serializer(*args, **kwargs)
 
     def retrieve(self, request: HttpRequest, *args: tuple, **kwargs: dict) -> HttpRequest:
-        """Retrieve a production by its ID, with optional inclusion of related events.
+        """Retrieve a production by ID with optional include-driven prefetches.
 
-        When events are included, the queryset is extended with additional
-        prefetches for prices, hall, space, and location translations to
-        avoid N+1 queries on the detail response.
+        When `include=events` is passed, the queryset is extended with additional
+        prefetches for prices, hall, space, and location translations.
+
+        When `include=blogs` is passed, linked published blogs and their
+        translations are prefetched as `prefetched_related_blogs`.
         """
         if "events" in self.includes:
             self.queryset = self.queryset.prefetch_related(
                 Prefetch(
                     "events",
-                    queryset=Event.objects.prefetch_related(
+                    queryset=Event.objects.filter(past_or_no_end)
+                    .prefetch_related(
                         Prefetch(
                             "prices",
                             queryset=EventPrice.objects.select_related("price_rank", "price"),
@@ -258,7 +263,20 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
                             "hall__space__location__translations",
                             queryset=LocationTranslation.objects.select_related("language"),
                         ),
-                    ).select_related("hall__space__location"),
+                    )
+                    .select_related("hall__space__location"),
+                    to_attr="prefetched_past_events",
+                ),
+            )
+
+        if "blogs" in self.includes:
+            self.queryset = self.queryset.prefetch_related(
+                Prefetch(
+                    "blogs",
+                    queryset=Blog.objects.filter(published_at__isnull=False)
+                    .prefetch_related("translations__language")
+                    .order_by("-published_at", "-id"),
+                    to_attr="prefetched_related_blogs",
                 ),
             )
 
@@ -279,100 +297,18 @@ class ProductionViewSet(LanguageAwareMixin, ApiModelViewSet):
         ),
         responses={200: ProductionLandingStatsSerializer},
     )
+    @method_decorator(cache_api_view())
     @action(detail=False, methods=["get"], url_path="landing-stats")
     def landing_stats(self, _request: Request) -> Response:
         """Return pre-aggregated counters used by the frontend homepage."""
         payload = {
-            "productions": Production.objects.count(),
+            "productions": Production.objects.filter(
+                Exists(Event.objects.filter(production=OuterRef("pk")).filter(past_or_no_end))
+            ).count(),
             "series": Tag.objects.filter(productions__isnull=False).distinct().count(),
             "years": self._get_documented_years_count(),
             "blogs": Blog.objects.filter(published_at__isnull=False).count(),
         }
 
         serializer = ProductionLandingStatsSerializer(payload)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=["get"], url_path="series")
-    def series(self, request: Request) -> Response:
-        """Return production-tag series summaries in a single aggregated endpoint.
-
-        Each result item contains:
-        - the tag payload (`tag`)
-        - first production start date across the bundle
-        - last production end date across the bundle
-        - image URL from the most recent production in the bundle
-        """
-        search_query = (request.query_params.get("search") or "").strip()
-
-        latest_production_id = Subquery(
-            Production.objects.filter(tags__id=OuterRef("pk"))
-            .annotate(
-                latest_end=Max("events__ends_at"),
-                latest_start=Max("events__starts_at"),
-                latest_timestamp=Coalesce("latest_end", "latest_start"),
-            )
-            .order_by("-latest_timestamp", "-id")
-            .values("id")[:1]
-        )
-
-        queryset = (
-            Tag.objects.filter(productions__isnull=False)
-            .prefetch_related(
-                Prefetch(
-                    "translations",
-                    queryset=TagTranslation.objects.select_related("language"),
-                )
-            )
-            .annotate(
-                first_production_start=Min("productions__events__starts_at"),
-                last_production_end=Max("productions__events__ends_at"),
-                last_production_id=latest_production_id,
-            )
-            .distinct()
-            .order_by("id")
-        )
-
-        if search_query:
-            queryset = queryset.filter(translations__name__icontains=search_query).distinct()
-
-        page = self.paginate_queryset(queryset)
-        series_items = page if page is not None else queryset
-
-        production_ids = [item.last_production_id for item in series_items if item.last_production_id is not None]
-        image_by_production_id: dict[int, str | None] = {}
-
-        if production_ids:
-            image_query = (
-                Production.objects.filter(id__in=production_ids)
-                .select_related("media_gallery")
-                .prefetch_related(
-                    Prefetch(
-                        "media_gallery__media_items",
-                        queryset=MediaItem.objects.prefetch_related("crops").order_by("position"),
-                    )
-                )
-                .only("id", "media_gallery")
-            )
-
-            for production in image_query:
-                image_url = None
-                media_items = production.media_gallery.media_items.all() if production.media_gallery else []
-                if media_items:
-                    first_item = media_items[0]
-                    first_crop = next(iter(first_item.crops.all()), None)
-                    if first_crop and first_crop.image:
-                        image_url = request.build_absolute_uri(first_crop.image.url)
-                image_by_production_id[production.id] = image_url
-
-        serializer = ProductionSeriesSerializer(
-            series_items,
-            many=True,
-            context={
-                **self.get_serializer_context(),
-                "last_production_image_by_production_id": image_by_production_id,
-            },
-        )
-
-        if page is not None:
-            return self.get_paginated_response(serializer.data)
         return Response(serializer.data)

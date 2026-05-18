@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-import Footer from '../components/Footer'
 import i18n from '../i18n'
+import Footer from '../shared/Footer'
 
 const renderFooter = () =>
   render(
@@ -24,11 +24,11 @@ describe('Footer', () => {
     renderFooter()
 
     expect(screen.getByText('Kunstencentrum VIERNULVIER vzw')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('href', '/archive')
-    expect(screen.getByRole('link', { name: 'Reeksen' })).toHaveAttribute('href', '/series')
-    expect(screen.getByRole('link', { name: 'Blogs' })).toHaveAttribute('href', '/blogs')
-    expect(screen.getByRole('link', { name: 'Media' })).toHaveAttribute('href', '/media')
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/nl')
+    expect(screen.getByRole('link', { name: 'Archief' })).toHaveAttribute('href', '/nl/archief')
+    expect(screen.getByRole('link', { name: 'Reeksen' })).toHaveAttribute('href', '/nl/reeksen')
+    expect(screen.getByRole('link', { name: 'Blogs' })).toHaveAttribute('href', '/nl/blogs')
+    expect(screen.getByRole('link', { name: 'Media' })).toHaveAttribute('href', '/nl/media')
     expect(screen.getByText('blijf op de hoogte')).toBeInTheDocument()
   })
 
@@ -36,11 +36,11 @@ describe('Footer', () => {
     await i18n.changeLanguage('en')
     renderFooter()
 
-    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'Archive' })).toHaveAttribute('href', '/archive')
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/en')
+    expect(screen.getByRole('link', { name: 'Archive' })).toHaveAttribute('href', '/en/archive')
     expect(screen.getByRole('link', { name: 'Series' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Blogs' })).toHaveAttribute('href', '/blogs')
-    expect(screen.getByRole('link', { name: 'Media' })).toHaveAttribute('href', '/media')
+    expect(screen.getByRole('link', { name: 'Blogs' })).toHaveAttribute('href', '/en/blogs')
+    expect(screen.getByRole('link', { name: 'Media' })).toHaveAttribute('href', '/en/media')
     expect(screen.getByText('stay up to date')).toBeInTheDocument()
   })
 })

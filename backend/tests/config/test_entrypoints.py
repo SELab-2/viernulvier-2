@@ -1,3 +1,5 @@
+"""Tests for Django project entrypoints: manage.py, ASGI, and WSGI."""
+
 import builtins
 import importlib
 import os

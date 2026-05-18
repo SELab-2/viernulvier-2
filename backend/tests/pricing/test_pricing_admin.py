@@ -36,14 +36,17 @@ from tests.factories.pricing import (
 
 
 def make_superuser(username="admin"):
+    """Create a superuser for admin HTTP tests."""
     return User.objects.create_superuser(username=username, password="password", email=f"{username}@example.com")
 
 
 def admin_changelist_url(model):
+    """Return the admin changelist URL for a model."""
     return reverse(f"admin:{model._meta.app_label}_{model._meta.model_name}_changelist")
 
 
 def admin_change_url(model, pk):
+    """Return the admin change URL for a model instance."""
     return reverse(f"admin:{model._meta.app_label}_{model._meta.model_name}_change", args=[pk])
 
 

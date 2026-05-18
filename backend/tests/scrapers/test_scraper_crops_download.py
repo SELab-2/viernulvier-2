@@ -24,6 +24,7 @@ def _make_ok_response(content: bytes = b"img-bytes", status: int = 200):
 
 
 def _make_status_response(status: int, headers: dict | None = None):
+    """Return a mock response for a non-success or custom HTTP status."""
     r = Mock()
     r.status_code = status
     r.ok = status < 400

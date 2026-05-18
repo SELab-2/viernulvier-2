@@ -189,7 +189,7 @@ class EventSerializer(TranslatableSerializerMixin, serializers.ModelSerializer):
                 "help_text": "ISO 8601 UTC datetime at which the event begins.",
             },
             "ends_at": {
-                "help_text": ("ISO 8601 UTC datetime at which the event ends. Must be strictly later than `starts_at`."),
+                "help_text": ("ISO 8601 UTC datetime at which the event ends. Must be later than or equal to `starts_at`."),
             },
         }
 

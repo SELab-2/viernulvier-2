@@ -10,12 +10,16 @@ from .models import Genre, GenreTranslation
 
 
 class GenreTranslationInline(admin.TabularInline):
+    """Inline admin for managing translated genre names."""
+
     model = GenreTranslation
     extra = 1
     fields = ("language", "name")
     autocomplete_fields = ("language",)
+    classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[GenreTranslation]:
+        """Select related language to avoid N+1 queries."""
         return super().get_queryset(request).select_related("language")
 
 
@@ -41,6 +45,7 @@ class GenreAdmin(BaseAdmin):
 
     @admin.display(description="Name")
     def name(self, obj: Genre) -> str:
+        """Return the display name used in the admin changelist."""
         return str(obj)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Genre]:

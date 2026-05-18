@@ -1,6 +1,4 @@
-"""
-Tests for apps/locations/filters.py and apps/locations/views.py.
-"""
+"""Tests for location filters and location/space/hall API filtering/search/ordering."""
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -267,11 +265,22 @@ class TestLocationViewSet(TestCase):
         assert cities == sorted(cities)
 
     def test_search_by_city(self):
-        LocationFactory(city="Gent")
-        LocationFactory(city="Brussel")
+        LocationFactory(
+            city="Gent",
+            street="Main Street",
+            country="BE",
+        )
+        LocationFactory(
+            city="Brussel",
+            street="Another Street",
+            country="BE",
+        )
+
         response = self.client.get(self.list_url(), {"search": "Gent"}, **pub_headers())
         results = response.data.get("results", response.data)
+
         assert len(results) == 1
+        assert results[0]["city"] == "Gent"
 
 
 # =====================================================

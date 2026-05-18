@@ -1,0 +1,196 @@
+import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
+import DateRangeOutlinedIcon from '@mui/icons-material/DateRangeOutlined'
+import { Box, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
+
+import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
+import ImageWithFallback from '../../../../shared/components/ImageWithFallback'
+import { tokens } from '../../../../theme/tokens'
+import { getProductionDateLabel } from '../../../../utils/dateUtils'
+import { resolveCurrentLanguage, toLocalizedPath } from '../../../../utils/localizedRoutes'
+import { getTranslatedRecord } from '../../../../utils/translations'
+
+import type { Production } from '../../../../types/Productions'
+
+export interface ProductionListCardProps {
+  production: Production
+  selectedGenreIds?: number[]
+  selectedTagIds?: number[]
+}
+
+/**
+ * Horizontal card for a {@link Production} or {@link Event}: image, title, artist, optional date and venue,
+ * genre filters, and a full-card link to the detail route (genre chips stay separate filters).
+ *
+ * Text is resolved with the active i18n locale via {@link getTranslatedRecord}. The image uses the
+ * first crop of the first gallery image when present; otherwise {@link ImageWithFallback} shows the
+ * branded placeholder.
+ *
+ * Chips inside the card are rendered with `disableLink` so they stay interactive without
+ * creating nested anchors inside the outer card link. `selectedGenreIds` and `selectedTagIds`
+ * only influence chip ordering and selected styling; the chips still navigate to the archive
+ * with their filters appended.
+ *
+ * @param props.production Full API payload (title, artist, media gallery, genres, events, etc.).
+ * @param props.selectedGenreIds Genre ids selected in parent filter state (drives chip style).
+ * @returns The list row element.
+ */
+const ProductionListCard = ({
+  production,
+  selectedGenreIds,
+  selectedTagIds,
+}: ProductionListCardProps) => {
+  const { i18n, t } = useTranslation()
+  const location = useLocation()
+  const { language } = i18n
+  const currentLanguage = resolveCurrentLanguage(
+    location.pathname,
+    i18n.language,
+    i18n.resolvedLanguage,
+  )
+  const detailPath = toLocalizedPath(`/productions/${production.id}`, currentLanguage)
+
+  const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url
+  const title =
+    getTranslatedRecord(production.title, language, production.display_title) ||
+    t('productions.detail.unknownProduction', 'Unknown production')
+  const artistName =
+    getTranslatedRecord(production.artist_name, language, production.display_artist_name) ||
+    t('productions.detail.unknownArtist', 'Unknown artist')
+  const dateLabel = getProductionDateLabel(
+    production.first_event_start,
+    production.last_event_end,
+    language,
+  )
+  const genres = production.genres
+    .filter((genre) => genre.display_name)
+    .sort((a, b) => {
+      const aSelected = selectedGenreIds?.includes(a.id) ? 1 : 0
+      const bSelected = selectedGenreIds?.includes(b.id) ? 1 : 0
+      return bSelected - aSelected
+    })
+  const tags = production.tags
+    .filter((tag) => tag.display_name || tag.name || tag.url_title)
+    .sort((a, b) => {
+      const aSelected = selectedTagIds?.includes(a.id) ? 1 : 0
+      const bSelected = selectedTagIds?.includes(b.id) ? 1 : 0
+      return bSelected - aSelected
+    })
+
+  return (
+    <Stack
+      component={RouterLink}
+      to={detailPath}
+      direction="row"
+      sx={(theme) => ({
+        gap: 3,
+        height: 170,
+        p: 3,
+        borderRadius: tokens.borderRadius.sm,
+        overflow: 'hidden',
+        backgroundColor: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
+        textDecoration: 'none',
+        transition: 'box-shadow 0.2s ease',
+        cursor: 'pointer',
+        '&:hover': {
+          boxShadow: theme.shadows[3],
+        },
+      })}
+    >
+      <ImageWithFallback
+        src={imageSrc}
+        alt={title}
+        sx={{ height: '100%', aspectRatio: 16 / 9, borderRadius: tokens.borderRadius.sm }}
+      />
+
+      <Stack
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          height: '100%',
+          justifyContent: 'space-between',
+          gap: 1,
+          overflow: 'hidden',
+        }}
+      >
+        <Stack>
+          <Typography
+            component="h2"
+            variant="h6"
+            color="textPrimary"
+            noWrap
+            sx={{ fontWeight: 'bold' }}
+          >
+            {title}
+          </Typography>
+
+          <Typography component="p" color="textSecondary" noWrap>
+            {artistName}
+          </Typography>
+        </Stack>
+
+        <Stack spacing={1} sx={{ color: 'text.secondary', minHeight: 48 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minHeight: 20 }}>
+            {dateLabel ? (
+              <>
+                <DateRangeOutlinedIcon fontSize="inherit" />
+                <Typography variant="body2" noWrap>
+                  {dateLabel}
+                </Typography>
+              </>
+            ) : null}
+          </Stack>
+
+          <Box onClick={(e) => e.stopPropagation()}>
+            <Stack
+              direction="row"
+              spacing={0.75}
+              sx={{ flexWrap: 'wrap', height: 32, overflow: 'hidden' }}
+            >
+              {tags.map((tag) => (
+                <GenreAndTagChip
+                  key={`tag-${tag.id}`}
+                  name={getTranslatedRecord(
+                    tag.name || tag.url_title || {},
+                    language,
+                    tag.display_name ?? tag.type ?? String(tag.id),
+                  )}
+                  labels={tag.name || tag.url_title || {}}
+                  chipType="seriesTag"
+                  context="description"
+                  id={tag.id}
+                  selected={selectedTagIds?.includes(tag.id) || false}
+                  disableLink
+                />
+              ))}
+              {genres.map((genre) => (
+                <GenreAndTagChip
+                  key={genre.id}
+                  name={getTranslatedRecord(
+                    genre.name,
+                    language,
+                    genre.display_name ?? String(genre.id),
+                  )}
+                  labels={genre.name || {}}
+                  chipType="genre"
+                  context="description"
+                  id={genre.id}
+                  selected={selectedGenreIds?.includes(genre.id) || false}
+                  disableLink
+                />
+              ))}
+            </Stack>
+          </Box>
+        </Stack>
+      </Stack>
+
+      <Box sx={{ alignSelf: 'center', pr: 2 }}>
+        <ArrowForwardOutlinedIcon color="action" />
+      </Box>
+    </Stack>
+  )
+}
+
+export default ProductionListCard

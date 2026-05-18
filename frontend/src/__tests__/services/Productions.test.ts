@@ -1,10 +1,6 @@
 import { api } from '../../services/Api'
 import { ApiError } from '../../services/ApiTypes'
-import {
-  getProduction,
-  getProductions,
-  getProductionSeries,
-} from '../../services/productions/Productions'
+import { getProduction, getProductions } from '../../services/productions/Productions'
 
 import type { AttendanceMode, PerformerType } from '../../types/Productions'
 
@@ -128,6 +124,16 @@ describe('productions service', () => {
       expect(mockedGet).toHaveBeenCalledWith('/productions/42/', { params: { include: 'events' } })
       expect(result).toEqual(productionWithEvents)
     })
+
+    it('joins multiple include values in one query parameter', async () => {
+      mockedGet.mockResolvedValue({ data: mockProduction })
+
+      await getProduction(42, ['events', 'related', 'blogs'])
+
+      expect(mockedGet).toHaveBeenCalledWith('/productions/42/', {
+        params: { include: 'events,related,blogs' },
+      })
+    })
   })
 
   describe('getProductions', () => {
@@ -161,7 +167,9 @@ describe('productions service', () => {
       { performer_type: 'solo' as PerformerType },
       { uit_database_type: 7 },
       { genre: 3 },
+      { genre: [3, 4] },
       { tag: 9 },
+      { tag: [8, 9] },
       { has_media: true },
       { title: 'hamlet' },
       { artist_name: 'royal' },
@@ -173,7 +181,12 @@ describe('productions service', () => {
 
       await getProductions({ filters })
 
-      expect(mockedGet).toHaveBeenCalledWith('/productions/', { params: filters })
+      const expectedParams = {
+        ...filters,
+        ...(Array.isArray(filters.genre) ? { genre: filters.genre.join(',') } : {}),
+        ...(Array.isArray(filters.tag) ? { tag: filters.tag.join(',') } : {}),
+      }
+      expect(mockedGet).toHaveBeenCalledWith('/productions/', { params: expectedParams })
     })
 
     it('combines pagination and filters in params', async () => {
@@ -186,8 +199,8 @@ describe('productions service', () => {
           attendance_mode: 'online' as AttendanceMode,
           performer_type: 'group' as PerformerType,
           uit_database_type: 5,
-          genre: 3,
-          tag: 8,
+          genre: [3, 4],
+          tag: [8, 9],
           has_media: false,
           title: 'concert',
           artist_name: 'ensemble',
@@ -204,8 +217,8 @@ describe('productions service', () => {
           attendance_mode: 'online',
           performer_type: 'group',
           uit_database_type: 5,
-          genre: 3,
-          tag: 8,
+          genre: '3,4',
+          tag: '8,9',
           has_media: false,
           title: 'concert',
           artist_name: 'ensemble',
@@ -221,54 +234,6 @@ describe('productions service', () => {
       mockedGet.mockRejectedValue(error)
 
       await expect(getProductions({ filters: { title: 'hamlet' } })).rejects.toBe(error)
-    })
-  })
-
-  describe('getProductionSeries', () => {
-    it('fetches aggregated series rows and maps snake_case to camelCase', async () => {
-      mockedGet.mockResolvedValue({
-        data: {
-          count: 1,
-          next: null,
-          previous: null,
-          results: [
-            {
-              tag: mockProduction.tags[0],
-              first_production_start: '2026-01-01T10:00:00Z',
-              last_production_end: '2026-04-01T10:00:00Z',
-              last_production_image: 'https://example.test/image.jpg',
-            },
-          ],
-        },
-      })
-
-      const result = await getProductionSeries({
-        page: 2,
-        pageSize: 25,
-        filters: { search: 'alpha' },
-      })
-
-      expect(mockedGet).toHaveBeenCalledWith('/productions/series/', {
-        params: {
-          page: 2,
-          page_size: 25,
-          search: 'alpha',
-        },
-      })
-
-      expect(result).toEqual({
-        count: 1,
-        next: null,
-        previous: null,
-        results: [
-          {
-            tag: mockProduction.tags[0],
-            firstProductionStart: '2026-01-01T10:00:00Z',
-            lastProductionEnd: '2026-04-01T10:00:00Z',
-            lastProductionImage: 'https://example.test/image.jpg',
-          },
-        ],
-      })
     })
   })
 })

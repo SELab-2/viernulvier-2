@@ -1,4 +1,5 @@
-"""
+"""Tests for apps/pricing/models.py.
+
 Covers:
 - __str__ output
 - Meta ordering

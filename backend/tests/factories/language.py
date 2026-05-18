@@ -1,3 +1,5 @@
+"""Factory Boy factories for language test data."""
+
 import factory
 from faker import Faker
 
@@ -12,6 +14,7 @@ class LanguageFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Language
 
+    # Keep a small deterministic language set; override code=... in tests that need unique values.
     code = factory.Iterator(["nl", "en", "de", "fr"])  # Repeatable codes for testing
     name = factory.LazyAttribute(
         lambda o: {"nl": "Dutch", "en": "English", "de": "German", "fr": "French"}.get(o.code)

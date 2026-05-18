@@ -25,6 +25,7 @@ class MediaItemInline(admin.TabularInline):
     classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Limit selected columns to keep the gallery inline lightweight."""
         return super().get_queryset(request).only("type", "format", "original_filename", "position", "gallery_id")
 
 
@@ -38,6 +39,7 @@ class MediaItemTranslationInline(admin.TabularInline):
     classes = ("collapse",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related language to avoid N+1 queries."""
         return super().get_queryset(request).select_related("language")
 
 
@@ -47,10 +49,12 @@ class MediaItemCropInline(admin.TabularInline):
     model = MediaItemCrop
     extra = 1
     fields = ("name", "image", "get_url")
+    classes = ("collapse",)
     readonly_fields = ("get_url",)
 
     @admin.display(description="URL")
     def get_url(self, obj: MediaItemCrop) -> str:
+        """Return the raw stored crop URL for the inline preview."""
         if obj.image:
             return obj.image.url
         return "-"
@@ -92,6 +96,19 @@ class MediaItemAdmin(BaseAdmin):
         """Select related gallery to avoid N+1 queries on the list page."""
         return super().get_queryset(request).select_related("gallery")
 
+    def get_changeform_initial_data(self, request: HttpRequest) -> dict:
+        """Prefill the add-form with a `gallery` GET parameter when present.
+
+        This allows other admins (for example `ProductionAdmin`) to provide
+        a direct "Add image" link that opens the MediaItem add form with the
+        correct gallery preselected.
+        """
+        initial = super().get_changeform_initial_data(request)
+        gallery_id = request.GET.get("gallery")
+        if gallery_id:
+            initial["gallery"] = gallery_id
+        return initial
+
 
 @admin.register(MediaItemCrop)
 class MediaItemCropAdmin(BaseAdmin):
@@ -105,8 +122,9 @@ class MediaItemCropAdmin(BaseAdmin):
 
     @admin.display(description="Asset URL")
     def get_url(self, obj: MediaItemCrop) -> str:
+        """Render a clickable link to the stored crop asset."""
         if obj.image:
-            # Maakt de URL klikbaar in het overzicht
+            # Makes the URL clickable in the overview.
             return format_html('<a href="{0}" target="_blank">Bekijk bestand</a>', obj.image.url)
         return "-"
 

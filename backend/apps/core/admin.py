@@ -9,11 +9,134 @@ or injecting request-scoped context) only need to be made in one place.
 
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.db.models import Model, QuerySet
+from django.forms import BaseModelForm
+from django.http import HttpRequest, JsonResponse
+from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 
+from api.cache import clear_api_cache
 
-class BaseAdmin(admin.ModelAdmin):
+
+class PersistentSelectionMixin:
+    """Persist admin action selections in session across changelist pages and searches."""
+
+    persistent_selection_session_prefix = "admin_persistent_selection"
+
+    def _persistent_selection_session_key(self) -> str:
+        return f"{self.persistent_selection_session_prefix}:{self.model._meta.label_lower}"
+
+    def _get_persisted_selected_ids(self, request: any) -> set[str]:
+        return set(request.session.get(self._persistent_selection_session_key(), []))
+
+    def _set_persisted_selected_ids(self, request: any, selected_ids: set[str]) -> None:
+        request.session[self._persistent_selection_session_key()] = sorted(selected_ids)
+        request.session.modified = True
+
+    def _clear_persisted_selected_ids(self, request: any) -> None:
+        request.session.pop(self._persistent_selection_session_key(), None)
+        request.session.modified = True
+
+    def _update_persisted_selection_from_snapshot(
+        self,
+        request: any,
+        *,
+        selected_ids: set[str],
+        visible_ids: set[str],
+    ) -> set[str]:
+        """Update session selection using current page snapshot.
+
+        Visible but unselected rows are removed from the persisted set; selected
+        rows are added.
+        """
+        stored_ids = self._get_persisted_selected_ids(request)
+        stored_ids.difference_update(visible_ids - selected_ids)
+        stored_ids.update(selected_ids)
+        self._set_persisted_selected_ids(request, stored_ids)
+        return stored_ids
+
+    def _persist_current_posted_selection(self, request: any) -> None:
+        posted_ids = set(request.POST.getlist(ACTION_CHECKBOX_NAME))
+        if not posted_ids:
+            return
+
+        stored_ids = self._get_persisted_selected_ids(request)
+        stored_ids.update(posted_ids)
+        self._set_persisted_selected_ids(request, stored_ids)
+
+    def _inject_persisted_selection_into_post(self, request: any) -> set[str]:
+        """Merge current POST selection with session selection and write it back to POST."""
+        posted_ids = set(request.POST.getlist(ACTION_CHECKBOX_NAME))
+        stored_ids = self._get_persisted_selected_ids(request)
+        merged_ids = posted_ids | stored_ids
+
+        if not merged_ids:
+            return set()
+
+        mutable_state = getattr(request.POST, "_mutable", None)
+        if mutable_state is not None:
+            request.POST._mutable = True
+
+        request.POST.setlist(ACTION_CHECKBOX_NAME, sorted(merged_ids))
+
+        if mutable_state is not None:
+            request.POST._mutable = mutable_state
+
+        self._set_persisted_selected_ids(request, merged_ids)
+        return merged_ids
+
+    def changelist_view(self, request: any, extra_context: dict | None = None) -> JsonResponse:
+        if request.method == "POST" and request.POST.get("clear_persistent_selection") == "1":
+            self._clear_persisted_selected_ids(request)
+            return JsonResponse({"ok": True, "count": 0})
+
+        if request.method == "POST" and request.POST.get("persist_selection") == "1":
+            selected_ids = set(request.POST.getlist("selected_ids"))
+            visible_ids = set(request.POST.getlist("visible_ids"))
+            stored_ids = self._update_persisted_selection_from_snapshot(
+                request,
+                selected_ids=selected_ids,
+                visible_ids=visible_ids,
+            )
+            return JsonResponse({"ok": True, "count": len(stored_ids)})
+
+        if request.method == "POST":
+            self._persist_current_posted_selection(request)
+
+        stored_ids = sorted(self._get_persisted_selected_ids(request))
+        if extra_context is None:
+            extra_context = {}
+        extra_context.update(
+            {
+                "persistent_selected_ids": stored_ids,
+                "persistent_selected_count": len(stored_ids),
+            }
+        )
+
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def response_action(self, request: any, queryset: any) -> HttpResponseRedirect:
+        """Apply actions on persisted+posted selections, not only current changelist page queryset."""
+        merged_ids: set[str] = set()
+        is_select_across = False
+
+        if request.method == "POST":
+            merged_ids = self._inject_persisted_selection_into_post(request)
+            is_select_across = request.POST.get("select_across") == "1"
+
+            if merged_ids and not is_select_across:
+                queryset = self.model.objects.filter(pk__in=merged_ids)
+
+        response = super().response_action(request, queryset)
+
+        if isinstance(response, HttpResponseRedirect) and request.method == "POST" and not is_select_across and merged_ids:
+            self._clear_persisted_selected_ids(request)
+
+        return response
+
+
+class BaseAdmin(PersistentSelectionMixin, admin.ModelAdmin):
     """
     Project-wide base class for all ``ModelAdmin`` registrations.
 
@@ -35,6 +158,7 @@ class BaseAdmin(admin.ModelAdmin):
     # Default pagination and performance settings for all admin changelists.
     list_per_page = 50
     show_full_result_count = False
+    change_list_template = "admin/persistent_change_list.html"
 
     def get_queryset(self, request: any) -> any:
         """
@@ -45,6 +169,27 @@ class BaseAdmin(admin.ModelAdmin):
         prevent N+1 queries on list and detail pages.
         """
         return super().get_queryset(request)
+
+    def save_model(
+        self,
+        request: HttpRequest,
+        obj: Model,
+        form: BaseModelForm,
+        change: bool,
+    ) -> None:
+        """Save a model instance and invalidate API cache."""
+        super().save_model(request, obj, form, change)
+        clear_api_cache()
+
+    def delete_model(self, request: HttpRequest, obj: Model) -> None:
+        """Delete a model instance and invalidate API cache."""
+        super().delete_model(request, obj)
+        clear_api_cache()
+
+    def delete_queryset(self, request: HttpRequest, queryset: QuerySet) -> None:
+        """Delete multiple model instances and invalidate API cache."""
+        super().delete_queryset(request, queryset)
+        clear_api_cache()
 
 
 class TwoStepBulkActionMixin:

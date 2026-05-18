@@ -199,27 +199,20 @@ This returns only productions that have both genres `2` and `9` and both tags `5
 
 ---
 
-## Series Aggregation Endpoint
+## Production Detail Includes
 
-To support fast series overviews in the frontend, the productions API exposes an aggregated read endpoint:
+The production detail endpoint supports optional includes to embed related data in a single request:
 
-- `GET /api/v1/productions/series/`
+- `GET /api/v1/productions/:id/?include=events`
+- `GET /api/v1/productions/:id/?include=related`
+- `GET /api/v1/productions/:id/?include=blogs`
+- Includes can be combined: `?include=events,related,blogs`
 
-### What it returns
+Behavior:
 
-Each row represents one production-tag bundle (a "series") and includes:
-
-- `tag`: full tag payload
-- `first_production_start`: earliest start date across productions in the bundle
-- `last_production_end`: latest end date across productions in the bundle
-- `last_production_image`: image URL of the most recent production in the bundle, when available
-
-### Supported query params
-
-- `search`: case-insensitive match on translated tag names
-- `page`, `page_size`: standard DRF pagination controls
-
-This endpoint avoids expensive per-tag fan-out requests from clients.
+- When an include is present, the corresponding field is embedded in the detail response.
+- When an include is absent, the field is omitted from the payload.
+- `include=blogs` returns only published blogs linked to the production.
 
 ---
 

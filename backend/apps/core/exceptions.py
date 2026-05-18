@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 def _flatten_errors(detail: Any, field_prefix: str = "") -> list[dict]:
-    """Add recursively flatten DRF's nested error structures into a flat list of error dicts with JSON Pointer paths.
+    """Recursively flatten DRF's nested error structures into RFC 7807 error dicts.
 
     Recursively walk DRF's nested error structure and return a flat list of
     RFC 7807-style error dicts:

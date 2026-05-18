@@ -23,6 +23,7 @@ The production deployment uses multiple Docker containers on a single server.
 flowchart TD
     GH[GitHub Actions] --> R[Self-hosted runner]
     R --> C[Docker Compose on server]
+    R -.daily cron.-> B
 
     subgraph Server
         N[nginx container]
@@ -46,7 +47,9 @@ flowchart TD
 - `frontend` builds the static frontend assets
 - `database` stores persistent data
 - `certbot` manages TLS certificate renewal
-- the self-hosted runner executes CI and deployment workflows on the server
+- the self-hosted runner executes CI, deployment, and the scheduled
+  `sync_viernulvier` scrape against the `backend` container (see
+  [Scraper — Scheduled Runs](./Scraper.md#scheduled-runs))
 
 ## Runtime Architecture
 

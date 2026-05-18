@@ -1,12 +1,18 @@
 """Management command argument/filter and main loop coverage tests."""
 
+from datetime import UTC, datetime, timedelta
 from io import StringIO
 from unittest.mock import patch
 
 from django.core.management.base import CommandParser, OutputWrapper
 import pytest
 
-from apps.imports.management.commands.sync_viernulvier import SYNC_STEPS, Command
+from apps.import_log.models import ImportLog
+from apps.imports.management.commands.sync_viernulvier import (
+    SINCE_LAST_SUCCESS_SAFETY_BUFFER,
+    SYNC_STEPS,
+    Command,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -18,6 +24,7 @@ def _mock_media_item_gallery_link_step():
 
 
 def _make_command() -> Command:
+    """Create a command instance with in-memory stdout and stderr."""
     cmd = Command()
     cmd.stdout = OutputWrapper(StringIO())
     cmd.stderr = OutputWrapper(StringIO())
@@ -152,3 +159,125 @@ def test_total_saved_count_in_summary() -> None:
         cmd.handle(only="events")
 
     assert "42" in cmd.stdout.getvalue()
+
+
+# ---------------------------------------------------------------------------
+# --since-last-success
+# ---------------------------------------------------------------------------
+
+
+def _expected_updated_after(started_at: datetime) -> str:
+    """Mirror the command's --updated-after derivation (for asserting params)."""
+    return (started_at - SINCE_LAST_SUCCESS_SAFETY_BUFFER).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+@pytest.mark.django_db
+def test_since_last_success_uses_latest_successful_import_log_started_at() -> None:
+    """Derive --updated-after from the most recent non-failed viernulvier:* ImportLog row."""
+    older_success = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+    latest_success = datetime(2025, 1, 5, 3, 30, 0, tzinfo=UTC)
+    ImportLog.objects.create(
+        source="viernulvier:/events",
+        status=ImportLog.Status.SUCCESS,
+        started_at=older_success,
+        finished_at=older_success + timedelta(minutes=2),
+    )
+    ImportLog.objects.create(
+        source="viernulvier:/productions",
+        status=ImportLog.Status.PARTIAL_SUCCESS,
+        started_at=latest_success,
+        finished_at=latest_success + timedelta(minutes=2),
+    )
+
+    cmd = _make_command()
+    with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0) as sync_mock:
+        cmd.handle(only="events", since_last_success=True)
+
+    assert sync_mock.called
+    params = sync_mock.call_args.kwargs["params"]
+    assert params == {"updated_at[after]": _expected_updated_after(latest_success)}
+
+
+@pytest.mark.django_db
+def test_since_last_success_skips_failed_imports() -> None:
+    """FAILED rows must not contribute to --updated-after."""
+    failed_at = datetime(2025, 1, 10, 0, 0, 0, tzinfo=UTC)
+    success_at = datetime(2025, 1, 1, 0, 0, 0, tzinfo=UTC)
+    ImportLog.objects.create(
+        source="viernulvier:/events",
+        status=ImportLog.Status.FAILED,
+        started_at=failed_at,
+    )
+    ImportLog.objects.create(
+        source="viernulvier:/productions",
+        status=ImportLog.Status.SUCCESS,
+        started_at=success_at,
+        finished_at=success_at + timedelta(minutes=1),
+    )
+
+    cmd = _make_command()
+    with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier", return_value=0) as sync_mock:
+        cmd.handle(only="events", since_last_success=True)
+
+    params = sync_mock.call_args.kwargs["params"]
+    assert params == {"updated_at[after]": _expected_updated_after(success_at)}
+
+
+@pytest.mark.django_db
+def test_since_last_success_ignores_non_viernulvier_sources() -> None:
+    """Only source rows prefixed with 'viernulvier:' count as prior runs."""
+    legacy_at = datetime(2025, 1, 10, 0, 0, 0, tzinfo=UTC)
+    ImportLog.objects.create(
+        source="legacy_csv:productions",
+        status=ImportLog.Status.SUCCESS,
+        started_at=legacy_at,
+        finished_at=legacy_at + timedelta(minutes=1),
+    )
+
+    cmd = _make_command()
+    with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier") as sync_mock:
+        cmd.handle(only="events", since_last_success=True)
+
+    sync_mock.assert_not_called()
+    assert "No prior successful Viernulvier import" in cmd.stderr.getvalue()
+
+
+@pytest.mark.django_db
+def test_since_last_success_errors_when_no_prior_successful_run() -> None:
+    """Empty ImportLog must produce a clear error and not run any sync."""
+    cmd = _make_command()
+    with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier") as sync_mock:
+        cmd.handle(only="events", since_last_success=True)
+
+    sync_mock.assert_not_called()
+    assert "No prior successful Viernulvier import" in cmd.stderr.getvalue()
+
+
+@pytest.mark.django_db
+def test_since_last_success_rejects_conflicting_updated_after() -> None:
+    """Combining --since-last-success with --updated-after must fail explicitly."""
+    success_at = datetime(2025, 1, 5, 3, 30, 0, tzinfo=UTC)
+    ImportLog.objects.create(
+        source="viernulvier:/events",
+        status=ImportLog.Status.SUCCESS,
+        started_at=success_at,
+        finished_at=success_at + timedelta(minutes=1),
+    )
+
+    cmd = _make_command()
+    with patch("apps.imports.management.commands.sync_viernulvier.sync_viernulvier") as sync_mock:
+        cmd.handle(
+            only="events",
+            since_last_success=True,
+            updated_after="2024-01-01T00:00:00Z",
+        )
+
+    sync_mock.assert_not_called()
+    assert "--since-last-success cannot be combined" in cmd.stderr.getvalue()
+
+
+def test_add_arguments_registers_since_last_success() -> None:
+    parser = CommandParser(prog="manage.py")
+    Command().add_arguments(parser)
+    option_strings = {option for action in parser._actions for option in action.option_strings}
+    assert "--since-last-success" in option_strings

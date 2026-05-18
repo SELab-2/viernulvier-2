@@ -1,6 +1,4 @@
-"""
-OpenAPI schema decorators for the Locations app.
-"""
+"""OpenAPI schema decorators and examples for the Locations app."""
 
 from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 

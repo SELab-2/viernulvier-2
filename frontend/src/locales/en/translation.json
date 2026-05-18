@@ -18,7 +18,6 @@
       "description": "Explore decades of performances, concerts, and theatre at Kunstencentrum VIERNULVIER, carefully catalogued and enriched with context.",
       "primaryCta": "Open archive",
       "seriesCta": "Browse series",
-      "secondaryCta": "Read blogs",
       "websiteCta": "Visit official website"
     },
     "stats": {
@@ -27,73 +26,30 @@
       "years": "Years documented",
       "blogs": "Blogs"
     },
-    "statsSection": {
-      "eyebrow": "Archive at a glance",
-      "title": "A quick overview of the collection.",
-      "description": "Live counts for productions, series, documented years, and blogs."
-    },
-    "ticker": {
-      "brand": "VIERNULVIER",
-      "city": "GHENT",
-      "archive": "ARCHIVE",
-      "years": "{{value}} YEARS",
-      "productions": "{{value}} PRODUCTIONS",
-      "center": "ARTS CENTRE",
-      "collection": "COLLECTION",
-      "performances": "PERFORMANCES",
-      "theatre": "THEATRE",
-      "concert": "CONCERT",
-      "dance": "DANCE"
-    },
-    "side": {
-      "eyebrow": "What you can explore",
-      "title": "Four clear ways into the collection.",
-      "archive": {
-        "title": "Performances, concerts & theatre",
-        "description": "Search by artist, venue, or period. Every documented production in VIERNULVIER's history, searchable in one place."
-      },
-      "blogs": {
-        "title": "Blogs and context",
-        "description": "Editorial pieces that deepen the archive - interviews, essays, and notes by researchers and curators."
-      },
-      "series": {
-        "title": "Series and editions",
-        "description": "Productions grouped by recurring series. Follow how each edition evolves over time."
-      },
-      "prints": {
-        "title": "Posters and printed matter",
-        "description": "Scanned posters, programme booklets, and brochures from the physical collection."
-      }
-    },
     "cardsSection": {
-      "eyebrow": "Explore the collection",
-      "title": "Where do you want to start?",
-      "description": "Explore the VIERNULVIER archive through one of the four perspectives. Each gateway reveals a unique aspect of our rich collection."
+      "title": "Explore the collection",
+      "description": "Browse productions, series, blogs, and media from VIERNULVIER."
     },
     "cards": {
       "archive": {
         "eyebrow": "01 - Archive",
         "title": "Explore the archive",
-        "description": "Search productions by artist, venue, or period. The full production history of VIERNULVIER.",
         "cta": "Open archive"
       },
       "series": {
         "eyebrow": "02 - Series",
         "title": "Browse series",
-        "description": "Productions grouped by recurring series. Follow linked editions in chronological order.",
         "cta": "Open series"
       },
       "blogs": {
         "eyebrow": "03 - Blogs",
         "title": "Read the blogs",
-        "description": "Interviews, essays, and research notes that add depth and context to the archive.",
         "cta": "Read blogs"
       },
-      "prints": {
-        "eyebrow": "04 - Prints",
-        "title": "Explore printed materials",
-        "description": "Posters, programme booklets, and brochures from the physical collection.",
-        "cta": "Open prints"
+      "media": {
+        "eyebrow": "04 - Media",
+        "title": "Explore media",
+        "cta": "Open media"
       }
     }
   },
@@ -123,6 +79,7 @@
       "400": "Invalid request parameters.",
       "401": "Not authenticated. Please log in.",
       "403": "You do not have permission to perform this action.",
+      "429": "Too many requests. Please try again later.",
       "404": "The requested resource was not found.",
       "500": "An internal server error occurred. Please try again later.",
       "genericWithCode": "Request failed with status {{status}}."
@@ -178,7 +135,9 @@
         "showMore": "More",
         "showLess": "Less",
         "noGenres": "No genres available.",
-        "noTags": "No tags available."
+        "noTags": "No tags available.",
+        "searchGenres": "Search genres...",
+        "searchTags": "Search tags..."
       },
       "empty": {
         "title": "No productions found",
@@ -192,21 +151,25 @@
     },
     "pagination": {
       "navigationLabel": "Production pagination",
-      "pageXofY": "Page {{page}} of {{totalPages}}",
       "firstPage": "Go to first page",
       "lastPage": "Go to last page",
       "nextPage": "Go to next page",
       "previousPage": "Go to previous page",
       "currentPage": "Current page, page {{page}}",
-      "goToPage": "Go to page {{page}}"
+      "ofPages": "of {{count}}"
     },
     "detail": {
       "related": "Related productions",
       "relatedBlogs": "Related blogs",
       "meta": {
+        "artist": "Artist",
         "period": "Period",
-        "venues": "Venues",
-        "genre": "Genre",
+        "venues_one": "Venue",
+        "venues_other": "Venues",
+        "genres_one": "Genre",
+        "genres_other": "Genres",
+        "series_one": "Series",
+        "series_other": "Series",
         "type": "Type",
         "performerType": "Performer type",
         "group": "Group",
@@ -217,10 +180,11 @@
       },
       "notFound": "Production not found.",
       "unknownProduction": "Unknown production",
+      "unknownArtist": "Unknown artist",
       "noDescription": "No description available.",
       "error": {
-        "invalidId": "Invalid production ID",
-        "loadFailed": "Could not load production"
+        "invalidId": "Invalid production ID.",
+        "loadFailed": "Could not load production."
       },
       "events": "Events"
     }
@@ -244,8 +208,19 @@
         "notification": "Something went wrong while loading blogs."
       }
     },
+    "pagination": {
+      "navigationLabel": "Blog pagination",
+      "firstPage": "Go to first page",
+      "lastPage": "Go to last page",
+      "nextPage": "Go to next page",
+      "previousPage": "Go to previous page",
+      "currentPage": "Current page, page {{page}}",
+      "ofPages": "of {{count}}"
+    },
     "detail": {
-      "noTitleAvailable": "No title available"
+      "noTitleAvailable": "No title available",
+      "publishedOn": "Published on",
+      "notPublished": "Not published"
     }
   },
   "notFound": {
@@ -278,6 +253,7 @@
     "listPlaceholder": "List of series will be displayed here.",
     "allEditions": "All editions",
     "allEditionsSubtitle": "Chronological overview of the productions within this series.",
+    "showMore": "Show more",
     "noDescription": "No description available.",
     "noProductions": "There are no productions linked to this series.",
     "loading": "Loading series",
@@ -293,6 +269,8 @@
     "home": {
       "loading": "Loading series",
       "resultsRegionLabel": "Series results",
+      "searchPlaceholder": "Search for your favorite series",
+      "searchPlaceholderMobile": "Search series...",
       "filterPanelLabel": "Series filter panel",
       "filterPanelTitle": "Series",
       "filterPanelDescription": "Select one or multiple series labels to filter bundles.",
@@ -312,17 +290,47 @@
     },
     "pagination": {
       "navigationLabel": "Series pagination",
-      "pageXofY": "Page {{page}} of {{totalPages}}",
       "firstPage": "Go to first page",
       "lastPage": "Go to last page",
       "nextPage": "Go to next page",
       "previousPage": "Go to previous page",
       "currentPage": "Current page, page {{page}}",
-      "goToPage": "Go to page {{page}}"
+      "ofPages": "of {{count}}"
     }
   },
   "blog": {
-    "couldNotLoad": "Could not load blog",
-    "invalidId": "Invalid blog ID"
+    "couldNotLoad": "Could not load blog.",
+    "invalidId": "Invalid blog ID."
+  },
+  "media": {
+    "couldNotLoad": "Could not load media file.",
+    "searchPlaceholder": "Search files by name, description or type...",
+    "fileType": {
+      "image": "Image",
+      "pdf": "PDF",
+      "file": "File"
+    },
+    "size": "Size",
+    "error": {
+      "retry": "Retry",
+      "fallback": "Could not load media files.",
+      "notification": "Something went wrong while loading media files."
+    },
+    "preview": {
+      "close": "Close preview",
+      "previous": "Previous file",
+      "next": "Next file",
+      "downloadFailed": "Download failed"
+    },
+    "empty": {
+      "title": "No media files found.",
+      "description": "Adjust your search and try again."
+    },
+    "loading": "Loading media files",
+    "resultsRegionLabel": "Media files results",
+    "noDescription": "No description available."
+  },
+  "common": {
+    "loading": "Loading…"
   }
 }

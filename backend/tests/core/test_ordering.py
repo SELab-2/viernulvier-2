@@ -1,3 +1,5 @@
+"""Tests for apps.core.ordering."""
+
 from unittest.mock import MagicMock
 
 from django.test import SimpleTestCase

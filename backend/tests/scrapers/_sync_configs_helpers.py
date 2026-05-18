@@ -17,14 +17,12 @@ from apps.imports.management.commands.sync_viernulvier import (
     PRODUCTION_CONFIG,
     SPACE_CONFIG,
     SYNC_STEPS,
-    TAG_CONFIG,
     UITDATABASE_TYPE_CONFIG,
 )
 from apps.locations.models import Hall, Location, Space
 from apps.media_library.models import MediaGallery, MediaItem
 from apps.pricing.models import Price, PriceRank
 from apps.productions.models import Production, UitDatabaseType
-from apps.tags.models import Tag
 
 
 def get_model_field_names(model):
@@ -37,7 +35,6 @@ def get_model_field_names(model):
 ALL_CONFIGS = [
     UITDATABASE_TYPE_CONFIG,
     GENRE_CONFIG,
-    TAG_CONFIG,
     LOCATION_CONFIG,
     SPACE_CONFIG,
     HALL_CONFIG,
@@ -53,13 +50,11 @@ ALL_CONFIGS = [
 BASE_CONFIGS = [
     UITDATABASE_TYPE_CONFIG,
     GENRE_CONFIG,
-    TAG_CONFIG,
     LOCATION_CONFIG,
 ]
 
 CONFIGS_WITH_TRANSLATIONS = [
     GENRE_CONFIG,
-    TAG_CONFIG,
     LOCATION_CONFIG,
     SPACE_CONFIG,
     HALL_CONFIG,
@@ -72,7 +67,6 @@ CONFIGS_WITH_TRANSLATIONS = [
 CONFIGS_AND_MODELS = [
     (UITDATABASE_TYPE_CONFIG, UitDatabaseType),
     (GENRE_CONFIG, Genre),
-    (TAG_CONFIG, Tag),
     (LOCATION_CONFIG, Location),
     (MEDIA_GALLERY_CONFIG, MediaGallery),
     (MEDIA_ITEM_CONFIG, MediaItem),
@@ -84,7 +78,6 @@ CONFIGS_AND_MODELS = [
 ]
 
 VALUE_TRANSFORM_CONFIGS = [
-    (TAG_CONFIG, Tag),
     (LOCATION_CONFIG, Location),
     (HALL_CONFIG, Hall),
 ]
@@ -94,7 +87,6 @@ FK_RESOLVER_CONFIGS = []
 EXTERNAL_ID_CONFIGS = [
     ("UitDatabaseType", UitDatabaseType, UITDATABASE_TYPE_CONFIG),
     ("Genre", Genre, GENRE_CONFIG),
-    ("Tag", Tag, TAG_CONFIG),
     ("Location", Location, LOCATION_CONFIG),
     ("Space", Space, SPACE_CONFIG),
     ("Hall", Hall, HALL_CONFIG),

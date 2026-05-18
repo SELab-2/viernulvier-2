@@ -1,21 +1,60 @@
 """Admin configuration for the Media Files app."""
 
+from django import forms
 from django.contrib import admin
+from django.db.models import QuerySet
+from django.http import HttpRequest
 from django.utils.html import format_html
 
 from apps.core.admin import BaseAdmin
 
-from .models import MediaFile
+from .models import MediaFile, MediaFileTranslation
+
+
+class MediaFileAdminForm(forms.ModelForm):
+    """Admin form that restricts selectable upload file types."""
+
+    class Meta:
+        model = MediaFile
+        fields = [
+            "external_id",
+            "file",
+            "filename",
+        ]
+        widgets = {
+            "file": forms.FileInput(
+                attrs={
+                    "accept": ".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf",
+                },
+            ),
+        }
+
+
+class MediaFileTranslationInline(admin.TabularInline):
+    """Inline for editing localised media descriptions inside the MediaFile admin."""
+
+    model = MediaFileTranslation
+    extra = 1
+    autocomplete_fields = ("language",)
+    fields = ("language", "description")
+    classes = ("collapse",)
+    ordering = ("language__code",)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Select related language to avoid N+1 queries."""
+        return super().get_queryset(request).select_related("language")
 
 
 @admin.register(MediaFile)
 class MediaFileAdmin(BaseAdmin):
     """Admin configuration for the MediaFile model."""
 
+    form = MediaFileAdminForm
+
     list_display = (
         "id",
         "filename",
-        "description_preview",
+        "display_description_preview",
         "file_type",
         "mime_type",
         "size_bytes",
@@ -31,7 +70,7 @@ class MediaFileAdmin(BaseAdmin):
 
     search_fields = (
         "filename",
-        "description",
+        "translations__description",
         "mime_type",
         "external_id",
     )
@@ -53,21 +92,34 @@ class MediaFileAdmin(BaseAdmin):
         "file",
         "file_link",
         "filename",
-        "description",
         "mime_type",
         "size_bytes",
         "file_type",
         "created_at",
     )
 
+    inlines = [MediaFileTranslationInline]
+
+    class Media:
+        js = ("admin/js/media_file_upload.js",)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """Prefetch translations to avoid N+1 queries in admin screens."""
+        return super().get_queryset(request).prefetch_related("translations__language")
+
     @admin.display(description="Description")
-    def description_preview(self, obj: MediaFile) -> str:
-        """Render a shortened description in admin list view."""
-        if not obj.description:
+    def display_description_preview(self, obj: MediaFile) -> str:
+        """Render a shortened base-language description in admin list view."""
+        description = obj.get_base_display_name(
+            related_name="translations",
+            name_field="description",
+            fallback=None,
+        )
+        if not description:
             return "-"
-        if len(obj.description) <= 80:
-            return obj.description
-        return f"{obj.description[:77]}..."
+        if len(description) <= 80:
+            return description
+        return f"{description[:77]}..."
 
     @admin.display(description="File")
     def file_link(self, obj: MediaFile) -> str:

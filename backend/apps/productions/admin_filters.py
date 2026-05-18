@@ -1,3 +1,5 @@
+"""Custom searchable admin filters for the Productions app."""
+
 from django.db.models import Q
 
 from apps.core.admin_filters import SearchableMultiSelectFilter

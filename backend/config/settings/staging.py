@@ -1,10 +1,7 @@
-"""Staging settings for the viernulvier_archive project.
+"""Local staging settings for the viernulvier_archive project.
 
-Mirrors production as closely as possible so that staging catches
-configuration drift before it reaches prod. The main differences are:
-- HSTS is intentionally shorter (5 minutes) so the domain can be
-  reassigned without browsers being locked out for a year.
-- Throttle rates are lower to simplify manual and automated testing.
+Approximates production behaviour for manual testing, while still allowing
+plain HTTP on localhost. Use config.settings.prod for real HTTPS deployments.
 
 Usage:
 
@@ -36,9 +33,9 @@ X_FRAME_OPTIONS = "SAMEORIGIN"
 
 CSRF_TRUSTED_ORIGINS = [f"http://{host}" for host in ALLOWED_HOSTS if host]
 
-# ---------------------------------------------------------------------------
-# REST Framework - throttle rates lower than prod for easier manual testing
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+# REST Framework - enforce the same public API throttling policy as production
+# ----------------------------------------------------------------------------
 
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,

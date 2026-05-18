@@ -17,7 +17,6 @@ class Genre(BaseModel):
 
     - A vendor-specific ``vendor_id`` (optional) provided by the upstream Viernulvier API
     - A technical ``type`` (internal snake_case identifier)
-    - An optional ``vendor_id`` provided by the upstream Viernulvier API
     - One or more ``translations`` (localised display names)
     """
 

@@ -1,3 +1,5 @@
+"""Factory Boy factories for tag test data."""
+
 import factory
 from factory.declarations import LazyAttribute, LazyFunction, SubFactory
 from faker import Faker
@@ -35,6 +37,8 @@ class TagTranslationFactory(factory.django.DjangoModelFactory):
     language = SubFactory(LanguageFactory)
 
     name = LazyAttribute(lambda o: f"{faker.word().capitalize()} ({o.language.code})")
+
+    excerpt = LazyFunction(faker.sentence)
 
     short_description = LazyFunction(faker.sentence)
 

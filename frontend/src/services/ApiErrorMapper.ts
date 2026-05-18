@@ -6,6 +6,7 @@ const STATUS_MESSAGE_KEYS: Record<number, string> = {
   400: 'apiErrors.status.400',
   401: 'apiErrors.status.401',
   403: 'apiErrors.status.403',
+  429: 'apiErrors.status.429',
   404: 'apiErrors.status.404',
   500: 'apiErrors.status.500',
 }

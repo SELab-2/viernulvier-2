@@ -1,7 +1,12 @@
+"""Tests for apps/blogs/views.py."""
+
+from datetime import UTC, datetime
+
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 from tests.factories.blog import BlogFactory, BlogTranslationFactory
+from tests.factories.event import EventFactory
 from tests.factories.language import LanguageFactory
 from tests.factories.production import ProductionFactory, ProductionTranslationFactory
 from tests.helpers.api import internal_headers as int_headers
@@ -20,6 +25,11 @@ class TestBlogViewSet(TestCase):
         self.language = LanguageFactory(code="en", name="English")
         self.production = ProductionFactory()
         ProductionTranslationFactory(production=self.production, language=self.language, title="Prod EN")
+        EventFactory(
+            production=self.production,
+            starts_at=datetime(2025, 11, 1, 0, tzinfo=UTC),
+            ends_at=datetime(2025, 11, 1, 2, tzinfo=UTC),
+        )
 
         self.blog = BlogFactory(slug="blog-view")
         self.blog.productions.add(self.production)

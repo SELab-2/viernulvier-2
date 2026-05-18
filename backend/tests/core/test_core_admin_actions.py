@@ -1,3 +1,5 @@
+"""Tests for core admin two-step actions and persistent selections."""
+
 from unittest.mock import Mock
 
 from django import forms
@@ -17,6 +19,14 @@ class _DummyTwoStepAdmin(TwoStepBulkActionMixin, BaseAdmin):
     pass
 
 
+class _DummyPersistentSelectionAdmin(BaseAdmin):
+    actions = ("remember_selected",)
+
+    @admin.action(description="Remember selected")
+    def remember_selected(self, _request, queryset):
+        self.captured_ids = sorted(queryset.values_list("id", flat=True))
+
+
 class DummyForm(forms.Form):
     note = forms.CharField(required=False)
 
@@ -32,6 +42,7 @@ class TestTwoStepBulkActionMixin(TestCase):
         self.production = ProductionFactory()
 
     def _request_with_messages(self, method, path, data=None):
+        """Build an admin-like request with session and messages support."""
         request = getattr(self.factory, method)(path, data=data or {})
         SessionMiddleware(lambda _: None).process_request(request)
         request.session.save()
@@ -137,3 +148,92 @@ class TestTwoStepBulkActionMixin(TestCase):
         )
 
         assert response is None
+
+
+class TestPersistentSelectionMixin(TestCase):
+    def setUp(self) -> None:
+        self.factory = RequestFactory()
+        self.admin = _DummyPersistentSelectionAdmin(Production, admin.site)
+        self.production_1 = ProductionFactory()
+        self.production_2 = ProductionFactory()
+
+    def _request_with_messages(self, method, path, data=None):
+        request = getattr(self.factory, method)(path, data=data or {})
+        SessionMiddleware(lambda _: None).process_request(request)
+        request.session.save()
+        request._messages = FallbackStorage(request)
+        request.user = AnonymousUser()
+        return request
+
+    def test_response_action_merges_session_selection_with_posted_selection(self) -> None:
+        request = self._request_with_messages(
+            "post",
+            "/admin/productions/production/",
+            data={
+                "action": "remember_selected",
+                "index": "0",
+                "select_across": "0",
+                ACTION_CHECKBOX_NAME: [str(self.production_1.pk)],
+            },
+        )
+
+        session_key = self.admin._persistent_selection_session_key()
+        request.session[session_key] = [str(self.production_2.pk)]
+        request.session.save()
+
+        response = self.admin.response_action(request, Production.objects.filter(pk=self.production_1.pk))
+
+        assert response.status_code == 302
+        assert self.admin.captured_ids == sorted([self.production_1.pk, self.production_2.pk])
+
+    def test_response_action_persists_posted_selection_to_session(self) -> None:
+        request = self._request_with_messages(
+            "post",
+            "/admin/productions/production/",
+            data={
+                "action": "remember_selected",
+                "index": "0",
+                "select_across": "0",
+                ACTION_CHECKBOX_NAME: [str(self.production_1.pk)],
+            },
+        )
+
+        self.admin.response_action(request, Production.objects.filter(pk=self.production_1.pk))
+
+        session_key = self.admin._persistent_selection_session_key()
+        assert session_key not in request.session
+
+    def test_changelist_view_persist_selection_endpoint_updates_session(self) -> None:
+        request = self._request_with_messages(
+            "post",
+            "/admin/productions/production/",
+            data={
+                "persist_selection": "1",
+                "visible_ids": [str(self.production_1.pk), str(self.production_2.pk)],
+                "selected_ids": [str(self.production_1.pk)],
+            },
+        )
+
+        response = self.admin.changelist_view(request)
+
+        assert response.status_code == 200
+        session_key = self.admin._persistent_selection_session_key()
+        assert request.session[session_key] == [str(self.production_1.pk)]
+
+    def test_changelist_view_clear_selection_endpoint_clears_session(self) -> None:
+        request = self._request_with_messages(
+            "post",
+            "/admin/productions/production/",
+            data={
+                "clear_persistent_selection": "1",
+            },
+        )
+
+        session_key = self.admin._persistent_selection_session_key()
+        request.session[session_key] = [str(self.production_1.pk), str(self.production_2.pk)]
+        request.session.save()
+
+        response = self.admin.changelist_view(request)
+
+        assert response.status_code == 200
+        assert session_key not in request.session

@@ -94,7 +94,6 @@ The following sync steps are available (listed in dependency order):
 |------------------------|--------------------|-------------------------|---------------------------------------|
 | `uitdatabank_types`    | UitDatabaseType    | `/uitdatabank/types`    | UiTdatabank types                     |
 | `genres`               | Genre              | `/genres`               | Production genres                     |
-| `tags`                 | Tag                | `/tags`                 | Tags for categorization               |
 | `locations`            | Location           | `/locations`            | Physical locations/venues             |
 | `spaces`               | Space              | `/spaces`               | Spaces within locations               |
 | `halls`                | Hall               | `/halls`                | Halls within spaces                   |
@@ -235,6 +234,116 @@ To do a daily incremental sync of all new/updated data from the previous day:
 ```bash
 python manage.py sync_viernulvier --updated-after 2024-06-01T00:00:00Z
 ```
+
+---
+
+### 9. Incremental Sync Since the Last Successful Run
+
+To sync everything that has changed since the last successful run,
+without needing to know or pass a specific timestamp:
+
+```bash
+python manage.py sync_viernulvier --since-last-success
+```
+
+This reads the most recent non-failed `ImportLog` row for Viernulvier,
+subtracts a 1-hour safety buffer from its `started_at`, and uses the
+result as `--updated-after`. It is the same mechanism the scheduled
+GitHub Actions workflow uses, so running it manually on the server
+produces identical behaviour. Fails with a clear error if no prior
+successful import exists (e.g. on a fresh database).
+
+---
+
+## Scheduled Runs
+
+In production the scraper runs automatically via the
+`.github/workflows/sync-viernulvier.yml` workflow on the self-hosted
+runner. It calls `docker exec backend python manage.py sync_viernulvier`
+against the already-running `backend` container, so it reuses the
+container's environment and needs no extra configuration.
+
+- **Schedule:** daily at `01:30 UTC`. GitHub Actions cron is always UTC.
+- **Overlap protection:** a `concurrency` group prevents a new run from
+  starting while the previous one is still in progress.
+- **Preflight:** the workflow fails fast if the `backend` container is
+  not running.
+
+### Incremental by default
+
+Scheduled runs only fetch new and changed records, not the full catalog.
+Under the hood they pass `--since-last-success` to the command, which
+reads the most recent non-failed `ImportLog` row (sources prefixed with
+`viernulvier:`), subtracts a 1-hour safety buffer from its `started_at`,
+and uses the result as `--updated-after` for every sync step. The API
+exposes this as `updated_at[after]`, so every record touched since the
+last good run comes back.
+
+Why this is resilient: if the workflow is skipped or fails for several
+days, `--updated-after` is automatically set further back to cover the
+gap, because it is derived from the last successful run, not from a
+fixed time window. You will never miss records as long as one
+successful (or partial-success) import exists somewhere in the log.
+Re-processing overlapping records is free because every row upserts by
+`external_id`.
+
+`--updated-after` (via `updated_at`) is preferred over `--created-after`
+because it also catches edits to existing productions and events, not
+only newly created ones.
+
+**First run on a fresh database:** `--since-last-success` fails fast
+with a clear error if no prior successful Viernulvier import exists.
+Do a one-time full sync first on the server with
+`docker exec -it backend python manage.py sync_viernulvier`. After that
+the daily incremental run is enough.
+
+### Changing the schedule
+
+Edit the `cron` line in `.github/workflows/sync-viernulvier.yml`. Times
+are UTC, and scheduled workflows may be delayed slightly by GitHub under
+load. No other constants need tuning when changing the interval —
+`--since-last-success` adapts automatically.
+
+### Running manually
+
+From the GitHub UI: **Actions → Sync Viernulvier data → Run workflow**.
+The manual trigger accepts two optional inputs:
+
+| Workflow input | Passed as              | Purpose                                           |
+| -------------- | ---------------------- | ------------------------------------------------- |
+| `only`         | `--only <value>`       | Limit to a single sync step (e.g. `events`).      |
+| `full_sync`    | `--since-last-success` is omitted | Re-fetch everything regardless of time. |
+
+Leaving both empty/unticked is the same as a scheduled run: an
+incremental sync via `--since-last-success`. `full_sync` and `only` can
+be combined (e.g. re-fetch every event unconditionally).
+
+For anything else — a dry run, an explicit `--updated-after`, a
+specific date range — run the command directly on the server:
+
+```bash
+docker exec -it backend python manage.py sync_viernulvier [flags...]
+```
+
+All flags documented elsewhere in this page work there.
+
+### Partial manual runs and `--since-last-success`
+
+`--since-last-success` looks at the latest non-failed viernulvier
+`ImportLog` row **regardless of which step produced it**. That means if
+you run `--only events --updated-after <some_old_ts>` by hand and it
+succeeds, the next nightly incremental will use that run's `started_at`
+as the starting point for every endpoint — including ones that were not
+part of your `--only` run. If you need strict consistency after a
+partial manual sync, follow it up with a full re-sync (tick `full_sync`
+in the workflow UI, or run without `--since-last-success` on the
+server) before relying on the nightly incremental again.
+
+### Logs
+
+Each run's full output is captured under **Actions → Sync Viernulvier
+data**. For deeper inspection, `docker logs backend` on the server shows
+the Django-side logs.
 
 ---
 
@@ -419,24 +528,25 @@ LOGGING = {
 
 ### All Filter Options
 
-| Option                   | Description                                          |
-|--------------------------|------------------------------------------------------|
-| `--created-after`        | Records created on or after this timestamp           |
-| `--created-before`       | Records created on or before this timestamp          |
-| `--created-after-x`      | Records created strictly after this timestamp        |
-| `--created-before-x`     | Records created strictly before this timestamp       |
-| `--updated-after`        | Records updated on or after this timestamp           |
-| `--updated-before`       | Records updated on or before this timestamp          |
-| `--updated-after-x`      | Records updated strictly after this timestamp        |
-| `--updated-before-x`     | Records updated strictly before this timestamp       |
-| `--starts-after`         | Events starting on or after this timestamp           |
-| `--starts-before`        | Events starting on or before this timestamp          |
-| `--starts-after-x`       | Events starting strictly after this timestamp        |
-| `--starts-before-x`      | Events starting strictly before this timestamp       |
-| `--ends-after`           | Events ending on or after this timestamp             |
-| `--ends-before`          | Events ending on or before this timestamp            |
-| `--ends-after-x`         | Events ending strictly after this timestamp          |
-| `--ends-before-x`        | Events ending strictly before this timestamp         |
+| Option                 | Description                                                                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--created-after`      | Records created on or after this timestamp                                                                                                                               |
+| `--created-before`     | Records created on or before this timestamp                                                                                                                              |
+| `--created-after-x`    | Records created strictly after this timestamp                                                                                                                            |
+| `--created-before-x`   | Records created strictly before this timestamp                                                                                                                           |
+| `--updated-after`      | Records updated on or after this timestamp                                                                                                                               |
+| `--updated-before`     | Records updated on or before this timestamp                                                                                                                              |
+| `--updated-after-x`    | Records updated strictly after this timestamp                                                                                                                            |
+| `--updated-before-x`   | Records updated strictly before this timestamp                                                                                                                           |
+| `--since-last-success` | Set `--updated-after` from the last non-failed `ImportLog` minus 1h, so missed runs are caught up automatically. Cannot combine with an explicit `--updated-after`/`-x`. |
+| `--starts-after`       | Events starting on or after this timestamp                                                                                                                               |
+| `--starts-before`      | Events starting on or before this timestamp                                                                                                                              |
+| `--starts-after-x`     | Events starting strictly after this timestamp                                                                                                                            |
+| `--starts-before-x`    | Events starting strictly before this timestamp                                                                                                                           |
+| `--ends-after`         | Events ending on or after this timestamp                                                                                                                                 |
+| `--ends-before`        | Events ending on or before this timestamp                                                                                                                                |
+| `--ends-after-x`       | Events ending strictly after this timestamp                                                                                                                              |
+| `--ends-before-x`      | Events ending strictly before this timestamp                                                                                                                             |
 
 ---
 

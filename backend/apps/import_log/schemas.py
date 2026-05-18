@@ -1,6 +1,4 @@
-"""
-OpenAPI schema decorators for the Imports app.
-
+"""OpenAPI schema decorators and examples for the read-only Imports app.
 The imports app exposes a read-only endpoint. Only ``list`` and ``retrieve``
 actions are available - write operations are not supported by design.
 """

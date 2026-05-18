@@ -1,93 +1,179 @@
-"""
-Tests for apps/core/admin.py
+"""Tests for BaseAdmin persistent selections and cache invalidation hooks."""
 
-Covers:
-- BaseAdmin class inheritance and configuration
-"""
+from unittest.mock import MagicMock, patch
 
 from django.contrib import admin
-from django.contrib.admin import ModelAdmin
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.auth.models import User
+from django.contrib.sessions.backends.cache import SessionStore
+from django.template.response import TemplateResponse
 from django.test import RequestFactory, TestCase
 
 from apps.core.admin import BaseAdmin
 
 
-class TestBaseAdmin(TestCase):
-    """Tests for BaseAdmin."""
+def _make_admin():
+    return BaseAdmin(User, admin.site)
 
-    def setUp(self) -> None:
+
+def _make_session():
+    """Return a session instance that supports .modified (mirrors real Django sessions)."""
+    s = SessionStore()
+    s.create()
+    return s
+
+
+class TestPersistentSelectionMixin(TestCase):
+    def setUp(self):
         self.factory = RequestFactory()
+        self.admin = _make_admin()
 
-    def test_inherits_from_model_admin(self) -> None:
-        assert issubclass(BaseAdmin, ModelAdmin)
+    def _get_get_request(self):
+        request = self.factory.get("/")
+        request.session = _make_session()
+        request.user = User(is_active=True, is_staff=True, is_superuser=True)
+        return request
 
-    def test_is_registered_as_admin_class(self) -> None:
-        """BaseAdmin should be a proper ModelAdmin subclass, usable in admin."""
-        assert issubclass(BaseAdmin, admin.ModelAdmin)
+    def _get_post_request(self, posted_ids=None):
+        data = {ACTION_CHECKBOX_NAME: posted_ids or []}
 
-    def test_can_be_instantiated_with_model_and_site(self) -> None:
-        """BaseAdmin can be instantiated without error."""
-        instance = BaseAdmin(User, admin.site)
-        assert isinstance(instance, BaseAdmin)
+        request = self.factory.post("/", data=data)
+        request.session = _make_session()
+        request.user = User(is_active=True, is_staff=True, is_superuser=True)
+        request._dont_enforce_csrf_checks = True
+        return request
 
-    def test_has_no_extra_list_display_by_default(self) -> None:
-        """BaseAdmin should not add any list_display columns by default."""
-        instance = BaseAdmin(User, admin.site)
-        # The default ModelAdmin list_display is ('__str__',)
-        assert instance.list_display == ("__str__",)
+    def test_update_adds_selected_ids_to_empty_session(self):
+        """Selected IDs that were not in the session are stored."""
+        request = self._get_get_request()
+        result = self.admin._update_persisted_selection_from_snapshot(
+            request,
+            selected_ids={"1", "2"},
+            visible_ids={"1", "2", "3"},
+        )
+        assert "1" in result
+        assert "2" in result
 
-    def test_has_no_list_filter_by_default(self) -> None:
-        instance = BaseAdmin(User, admin.site)
-        assert list(instance.list_filter) == []
+    def test_update_removes_visible_but_unselected_ids(self):
+        """IDs that are visible but not selected are removed from the session."""
+        request = self._get_get_request()
+        self.admin._set_persisted_selected_ids(request, {"1", "2", "3"})
 
-    def test_has_no_search_fields_by_default(self) -> None:
-        instance = BaseAdmin(User, admin.site)
-        assert list(instance.search_fields) == []
+        result = self.admin._update_persisted_selection_from_snapshot(
+            request,
+            selected_ids={"1"},
+            visible_ids={"1", "2"},
+        )
+        assert "1" in result
+        assert "2" not in result
+        assert "3" in result
 
-    def test_subclassing_works(self) -> None:
-        """Other admin classes should be able to extend BaseAdmin."""
+    def test_update_preserves_non_visible_stored_ids(self):
+        """IDs stored from a previous page (not visible now) are kept untouched."""
+        request = self._get_get_request()
+        self.admin._set_persisted_selected_ids(request, {"99", "100"})
 
-        class MyAdmin(BaseAdmin):
-            list_display = ("id",)
+        result = self.admin._update_persisted_selection_from_snapshot(
+            request,
+            selected_ids=set(),
+            visible_ids={"1", "2"},
+        )
+        assert "99" in result
+        assert "100" in result
 
-        assert issubclass(MyAdmin, BaseAdmin)
-        assert MyAdmin.list_display == ("id",)
+    def test_update_returns_merged_set(self):
+        """Return value reflects the full post-update stored set."""
+        request = self._get_get_request()
+        self.admin._set_persisted_selected_ids(request, {"5"})
 
-    def test_list_per_page_default(self) -> None:
-        """BaseAdmin should have a default list_per_page value."""
-        instance = BaseAdmin(User, admin.site)
-        assert instance.list_per_page == 50
+        result = self.admin._update_persisted_selection_from_snapshot(
+            request,
+            selected_ids={"7"},
+            visible_ids={"7"},
+        )
+        assert result == {"5", "7"}
 
-    def test_list_per_page_can_be_overridden(self) -> None:
-        """Subclasses should be able to override list_per_page."""
+    def test_update_persists_session_after_update(self):
+        """After the call the session contains the updated selection."""
+        request = self._get_get_request()
+        self.admin._update_persisted_selection_from_snapshot(
+            request,
+            selected_ids={"42"},
+            visible_ids={"42"},
+        )
+        stored = self.admin._get_persisted_selected_ids(request)
+        assert "42" in stored
 
-        class MyAdmin(BaseAdmin):
-            list_per_page = 100
+    def test_persist_current_posted_selection_adds_posted_ids_to_session(self):
+        """POSTed selection is merged into the persisted session state."""
+        request = self._get_post_request(["1", "2"])
 
-        instance = MyAdmin(User, admin.site)
-        assert instance.list_per_page == 100
+        self.admin._persist_current_posted_selection(request)
 
-    def test_show_full_result_count_default(self) -> None:
-        """BaseAdmin should have show_full_result_count set to False by default."""
-        instance = BaseAdmin(User, admin.site)
-        assert not instance.show_full_result_count
+        assert self.admin._get_persisted_selected_ids(request) == {"1", "2"}
 
-    def test_show_full_result_count_can_be_overridden(self) -> None:
-        """Subclasses should be able to override show_full_result_count."""
+    def test_persist_current_posted_selection_returns_early_when_empty(self):
+        """Empty POST data must short-circuit before touching the session."""
+        request = self._get_post_request()
+        self.admin._set_persisted_selected_ids(request, {"10"})
 
-        class MyAdmin(BaseAdmin):
-            show_full_result_count = True
+        with patch.object(self.admin, "_set_persisted_selected_ids") as mock_set:
+            self.admin._persist_current_posted_selection(request)
 
-        instance = MyAdmin(User, admin.site)
-        assert instance.show_full_result_count
+        mock_set.assert_not_called()
+        assert self.admin._get_persisted_selected_ids(request) == {"10"}
 
-    def test_get_queryset_returns_model_queryset(self) -> None:
-        User.objects.create_user(username="u1", password="secret")
+    def test_inject_persisted_selection_into_post_returns_empty_set_when_no_selection_exists(self):
+        """An empty POST and empty session short-circuit without changes."""
+        request = self._get_post_request()
+
+        result = self.admin._inject_persisted_selection_into_post(request)
+
+        assert result == set()
+        assert self.admin._get_persisted_selected_ids(request) == set()
+
+    def test_changelist_view_post_no_action(self):
+        """Test changelist_view with a POST request that has no specific action."""
+        request = self._get_post_request()
+        response = self.admin.changelist_view(request)
+
+        assert isinstance(response, TemplateResponse)
+
+        assert "persistent_selected_ids" in response.context_data
+        assert "persistent_selected_count" in response.context_data
+
+        assert response.context_data["persistent_selected_ids"] == []
+        assert response.context_data["persistent_selected_count"] == 0
+
+    def test_save_model_clears_api_cache(self) -> None:
         instance = BaseAdmin(User, admin.site)
         request = self.factory.get("/admin/auth/user/")
+        obj = User(username="test-user")
+        form = MagicMock()
 
-        queryset = instance.get_queryset(request)
+        with patch("apps.core.admin.clear_api_cache") as clear_cache:
+            instance.save_model(request, obj, form, change=False)
 
-        assert queryset.model == User
-        assert queryset.filter(username="u1").exists()
+        clear_cache.assert_called_once()
+
+    def test_delete_model_clears_api_cache(self) -> None:
+        instance = BaseAdmin(User, admin.site)
+        request = self.factory.get("/admin/auth/user/")
+        obj = User.objects.create_user(username="delete-me", password="secret")
+
+        with patch("apps.core.admin.clear_api_cache") as clear_cache:
+            instance.delete_model(request, obj)
+
+        clear_cache.assert_called_once()
+
+    def test_delete_queryset_clears_api_cache(self) -> None:
+        instance = BaseAdmin(User, admin.site)
+        request = self.factory.get("/admin/auth/user/")
+        User.objects.create_user(username="delete-me-1", password="secret")
+        User.objects.create_user(username="delete-me-2", password="secret")
+        queryset = User.objects.filter(username__startswith="delete-me")
+
+        with patch("apps.core.admin.clear_api_cache") as clear_cache:
+            instance.delete_queryset(request, queryset)
+
+        clear_cache.assert_called_once()

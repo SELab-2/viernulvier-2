@@ -1,6 +1,4 @@
-"""
-OpenAPI schema decorators for the Genre app.
-"""
+"""OpenAPI schema decorators and examples for the Genre app."""
 
 from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 

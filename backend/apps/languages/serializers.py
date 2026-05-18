@@ -11,9 +11,9 @@ from .models import Language
 
 
 class LanguageSerializer(serializers.ModelSerializer):
-    """Represents a Language object.
+    """Represents a supported platform language.
 
-    All fields are exposed.
+    The language ``code`` is the primary key and is used as the URL lookup key.
     """
 
     class Meta:

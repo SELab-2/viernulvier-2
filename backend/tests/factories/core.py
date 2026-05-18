@@ -1,3 +1,5 @@
+"""Factory Boy factories for core test models."""
+
 from django.db import models
 import factory
 
