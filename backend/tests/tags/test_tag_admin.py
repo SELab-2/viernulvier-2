@@ -3,24 +3,30 @@ Tests for apps/tags/admin.py
 
 Covers:
 - TagAdmin is registered
-- TagTranslationAdmin is registered
-- list_display configuration for both admins
-- list_filter configuration for both admins
-- search_fields configuration for both admins
+- list_display configuration
+- list_filter configuration
+- search_fields configuration
 - autocomplete_fields configuration
 - TagTranslationInline is present on TagAdmin
-- Both admins inherit from BaseAdmin
+- TagAdmin inherits from BaseAdmin
 - Functional admin changelist and changeform (with superuser)
+- TagTranslationInline formset enforces at least one translation
 """
 
 from django.contrib import admin
 from django.contrib.auth.models import User
+from django.forms.models import inlineformset_factory
 from django.test import TestCase
 from django.urls import reverse
 
 from apps.core.admin import BaseAdmin
 from apps.productions.models import ProductionTag
-from apps.tags.admin import TagAdmin, TagProductionInline, TagTranslationInline
+from apps.tags.admin import (
+    TagAdmin,
+    TagProductionInline,
+    TagTranslationInline,
+    TagTranslationInlineFormSet,
+)
 from apps.tags.models import Tag, TagTranslation
 from tests.factories.language import LanguageFactory
 from tests.factories.tag import TagFactory
@@ -125,6 +131,38 @@ class TestTagTranslationInlineConfiguration(TestCase):
 
     def test_inline_autocomplete_fields_contains_language(self) -> None:
         assert "language" in self.inline.autocomplete_fields
+
+    def test_inline_formset_requires_at_least_one_translation(self) -> None:
+        """Submitting a changeform that deletes the only translation must fail."""
+        tag = TagFactory.create(type="genre")
+        lang = LanguageFactory(code="en", name="English")
+        translation = TagTranslation.objects.create(tag=tag, language=lang, name="Test")
+
+        formset_class = inlineformset_factory(
+            Tag,
+            TagTranslation,
+            formset=TagTranslationInlineFormSet,
+            fields=("language", "name"),
+            extra=0,
+        )
+
+        # Simulate a formset with the existing translation marked for deletion
+        data = {
+            "translations-TOTAL_FORMS": "1",
+            "translations-INITIAL_FORMS": "1",
+            "translations-MIN_NUM_FORMS": "0",
+            "translations-MAX_NUM_FORMS": "1000",
+            "translations-0-id": str(translation.id),
+            "translations-0-tag": str(tag.id),
+            "translations-0-language": str(lang.code),
+            "translations-0-name": "Test",
+            "translations-0-DELETE": "on",
+        }
+
+        formset = formset_class(data, instance=tag, prefix="translations")
+
+        assert not formset.is_valid()
+        assert "A tag must have at least one translation." in str(formset.non_form_errors())
 
 
 class TestTagProductionInlineConfiguration(TestCase):

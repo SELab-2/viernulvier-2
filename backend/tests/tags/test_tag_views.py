@@ -254,6 +254,7 @@ class TestTagViewSetUpdate(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.tag = TagFactory.create(type="genre")
+        TagTranslationFactory(tag=self.tag, language__code="en", name="Genre")
         self.payload = {
             "type": "updated-genre",
             "source": "system",
@@ -288,6 +289,7 @@ class TestTagViewSetPartialUpdate(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.tag = TagFactory.create(type="genre", is_enabled=True)
+        TagTranslationFactory(tag=self.tag, language__code="en", name="Genre")
 
     def test_patch_with_internal_key_returns_200(self):
         response = self.client.patch(
