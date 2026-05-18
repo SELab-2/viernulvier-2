@@ -1,6 +1,8 @@
 # Frontend Components
 
-This document describes the React components organized by feature domain, followed by the shared components, hooks, and contexts that are reused across the application.
+This page documents the main frontend components and how they fit together. The focus is on the reusable UI parts in `frontend/src/shared/` and `src/features/`, and the shared patterns that power the archive, blog, series, and media pages.
+
+For the folder layout and configuration files, see [Frontend folder Structure](./Frontend%20folder%20Structure.md). For the tech stack, routing, styling system, and API layer, see [Frontend](./Frontend.md).
 
 ---
 

@@ -470,103 +470,27 @@ API clients and transport layer.
 
 ## Theme
 
-### `src/theme/tokens.ts`
+The theme system is documented in detail in [Frontend](./Frontend.md#styling-system). Key files:
 
-Design system source of truth.
-
-Defines as a single `tokens` export:
-- **Colors:** `accent` (`#8224E3` family: main/light/dark/contrastText), `series` (`#1976d2` family: main/light/dark/contrastText), `light` (background/surface/text/textMuted/border/divider/hover), `dark` (background/surface/text/textMuted/border/divider/hover), `neutral` (black/white/gray50-gray900), `overlay` (black05/white05/footerBorder/mediaNavDark/mediaNavLight/modalBackdropDark/modalBackdropLight), `media` (darkBackground/lightBackground), `semantic` (success/error/warning/info)
-- **Spacing:** `xs` (4px) through `3xl` (64px), with numeric variants (0.5 through 8 in 8px units)
-- **Typography:** fontFamily (`'ABC Monument Grotesk', Helvetica, Arial, sans-serif`), weights (light=300, regular=400, medium=500, bold=700, heavy=900), sizes (xs=12px through 5xl=48px), lineHeights (tight=1.2, normal=1.5, relaxed=1.7)
-- **Shadows:** subtle, sm, md, lg, xl, navbar, mediaControl
-- **Border radius:** none through full (`9999px`)
-- **Transitions:** fast (150ms), base (200ms), slow (300ms), verySlow (500ms) - all `ease`
-- **Z-index:** hide (-1), base (0), dropdown (1000), sticky (1050), modal (1060), overlay (1070), tooltip (1080)
-- **Breakpoints:** xs (0px), sm (600px), md (960px), lg (1264px), xl (1920px)
-- **Component-specific:** `navbar` (minHeight=64), `card` (borderRadius=4, padding=3, borderRadiusPx=16px, paddingPx=24px, gridCardWidthPx=350), `chip` (borderRadius=2, paddingY=1, paddingX=2)
-
-### `src/theme/muiPalette.ts`
-
-MUI Theme factory exporting `createAppTheme(mode: AppThemeMode = 'light')`. Returns a fully configured MUI Theme:
-- Palette: mode-aware (light: primary=black, dark: primary=white; accent=`#8224E3` family)
-- Typography: h1–h6, body1, body2, button (mapped from tokens)
-- Breakpoints: parsed from tokens
-- Shape: `borderRadius=8`
-- Spacing: 8px base unit
-- Shadows: 25 entries (mostly `'none'` except indices 1–4)
-- Component overrides: MuiButton (no textTransform, md borderRadius), MuiCard (lg borderRadius, border), MuiPaper (no backgroundImage), MuiChip (md borderRadius)
-- TypeScript augmentation via `muiPalette.d.ts` extends `Palette` + `PaletteOptions` with `accent` and `ButtonPropsColorOverrides` with `accent`
-
-### `src/theme/styles.ts`
-
-Shared `sx` recipe factories:
-- `createNavbarStyles()`: returns `{ activeLink, navLink, brandLink, brandLogo, brandArchiveText }`
-- `createCommonStyles(theme)`: returns `{ cardBase, gridContainer, navbar, footer, responseImage, linkHover, chipBase, container, stack, textTruncate, centerContent }`
-- `createHomePageStyles(theme)`: returns mode-aware styles: `{ heroOverlay, heroOverlayVignette, heroFallbackGradient, heroEyebrowColor, heroTitleColor, heroDescriptionColor, searchIconColor, searchInputBg, searchInputText, searchInputPlaceholder, searchInputBorder, searchInputBorderHover, searchInputBorderFocus, searchButtonBg, searchButtonBgHover, searchButtonText, primaryButtonBg, primaryButtonText, primaryButtonBgHover, secondaryButtonBorder, secondaryButtonBorderHover, secondaryButtonBgHover, secondaryButtonText, tertiaryButtonText, tertiaryButtonTextHover, statBarBg, statValueColor, statLabelColor, cardOverlay, cardOverlayHover, inputBackground, tickerBackground, tickerText, subtleSurface, cardHoverBackground, cardHoverBorder, accentBorder }`
+- `src/theme/tokens.ts` - design system source of truth (colors, spacing, typography, shadows, etc.)
+- `src/theme/muiPalette.ts` - MUI theme factory (`createAppTheme`)
+- `src/theme/muiPalette.d.ts` - TypeScript augmentation for accent color
+- `src/theme/styles.ts` - shared `sx` recipe factories (`createNavbarStyles`, `createCommonStyles`, `createHomePageStyles`)
 
 ## Types
 
-### `src/types/`
-
-TypeScript interfaces for domain models. Each file exports typed interfaces and list-response types:
-
-| File | Key exports |
-|------|-----------|
-| `Blogs.ts` | `BlogCardData`, `Blog`, `BlogListResponse` |
-| `Events.ts` | `Event`, `EventPrice`, `EventListResponse` |
-| `FloatingAlertConfig.ts` | `FloatingAlertSeverity`, `FloatingAlertProps`, `ALERT_SEVERITIES` |
-| `GenreAndTagChip.ts` | `ChipLabels`, `GenreAndTagChipContext` (`'search' \| 'description' \| 'series' \| 'static'`), `GenreAndTagChipType` (`'genre' \| 'seriesTag'`), `GenreAndTagChipId`, `GenreAndTagChipToggle`, `GenreAndTagChipProps`, `SearchChipOption`, `GetGenreAndTagChipStylesInput` |
-| `Genres.ts` | `Genre`, `GenreListResponse` |
-| `Halls.ts` | `Hall`, `HallListResponse` |
-| `Languages.ts` | `Language`, `LanguageListResponse` |
-| `Locations.ts` | `Location`, `LocationListResponse` |
-| `Media.ts` | `MediaItem`, `MediaItemCrop`, `MediaGallery`, `MediaGalleryListResponse`, `MediaItemListResponse` |
-| `MediaFiles.ts` | `MediaFile`, `MediaFileListResponse` |
-| `Pricing.ts` | `Price`, `PriceRank`, `PriceListResponse`, `PriceRankListResponse` |
-| `Productions.ts` | `AttendanceMode` (`'offline' \| 'online'`), `PerformerType` (`'group' \| 'solo'`), `ProductionClassification`, `RelatedTag`, `RelatedProduction`, `ProductionRelated`, `Production`, `ProductionListResponse` |
-| `SeriesCardProps.ts` | `SeriesCardProps` (tag-based) |
-| `Spaces.ts` | `Space`, `SpaceListResponse` |
-| `Tags.ts` | `Tag`, `TagListResponse` |
-| `Theme.ts` | `DarkMode`, `LightMode`, `AppThemeMode`, `ModeToggleProps` |
+All TypeScript interfaces for domain models live in `src/types/`. See [Frontend](./Frontend.md#types) for the full type table. Key files: `Blogs.ts`, `Events.ts`, `FloatingAlertConfig.ts`, `GenreAndTagChip.ts`, `Genres.ts`, `Halls.ts`, `Languages.ts`, `Locations.ts`, `Media.ts`, `MediaFiles.ts`, `Pricing.ts`, `Productions.ts`, `SeriesCardProps.ts`, `Spaces.ts`, `Tags.ts`, `Theme.ts`.
 
 ## Utils
 
-### `src/utils/`
-
-Small, pure helper functions:
-
-- **`SanitizeHtml.ts`** - DOMPurify wrapper. Exports: `SanitizeHtmlRule` (type), `forbidImagesRule`, `sanitizeImagesStrictRule`, `forbidEmbedsRule`, `htmlToPlainText()`, `sanitizeHtml()`. Default rules: `USE_PROFILES.html`, `FORBID_TAGS [br, script]`, `ADD_TAGS [img]`, `ADD_ATTR [alt, height, src, style, title, width]`, `FORBID_ATTR [onblur, onclick, onerror, onfocus, onkeydown, onkeypress, onkeyup, onmouseleave, onmouseenter, onmouseover, onload]`.
-- **`dateUtils.ts`** - Date/datetime formatters: `formatDate()`, `formatBlogPublishedDate()`, `formatTime()`, `formatDateTime()`, `getProductionDateLabel()` (returns single date or range).
-- **`hall.ts`** - `getHallDisplayName(event, lang)`: resolves hall name from `event.hall.name[locale]`, falls back to `event.hall_display`.
-- **`localization.ts`** - `getLocalizedValue(obj, lang)`: returns `obj[lang]` or first available value; empty string for null/undefined.
-- **`localizedRoutes.ts`** - URL slug localization. Exports: `SUPPORTED_LANGUAGES`, `SupportedLanguage`, `DEFAULT_LANGUAGE`, `normalizeLanguage()`, `getLanguageFromPathname()`, `resolveCurrentLanguage()`, `inferLanguageFromPathname()`, `stripLanguagePrefix()`, `toLocalizedPath()`, `getLocalizedSegment()`. Defines `CanonicalRouteSegment` type and maps canonical slugs to localized segments (en: archive, series, blogs, media, productions; nl: archief, reeksen, blogs, media, producties).
-- **`locations.ts`** - Default export `getLocationName(hall, language)`: resolves venue label (location > space > hall name) using `getTranslatedRecord`.
-- **`mediaFileUrls.ts`** - `getPublicMediaFileUrl(fileUrl)`: converts absolute URLs to same-origin; root-relative kept as-is; relative URLs get `/` prepended.
-- **`navigation.ts`** - `createFloatingAlertState(alert)`: creates router state for floating alerts. Default export `redirectWithFloatingAlert(navigate, to, alert, options?)`: navigates with alert state.
-- **`translations.ts`** - `getTranslatedRecord(record, language, fallback)`, `getLocalizedTagName(tag, language)`, `getLocalizedTagExcerpt(tag, language)`: normalize language, return translated fields with fallback.
+Utility functions are documented in [Frontend](./Frontend.md). Key files: `SanitizeHtml.ts`, `dateUtils.ts`, `hall.ts`, `localization.ts`, `localizedRoutes.ts`, `locations.ts`, `mediaFileUrls.ts`, `navigation.ts`, `translations.ts`.
 
 ## Contexts
 
-### `src/contexts/NotificationContext.tsx`
+The notification system is documented in [Frontend Components](./Frontend%20Components.md#contexts). Key files:
 
-Global notification management. Exports `NotificationProvider`:
-- Manages `alerts: FloatingAlertEntry[]` state
-- `showFloatingAlert(payload)`: adds alert with auto-incremented id
-- `clearFloatingAlert()`: clears all alerts
-- `closeFloatingAlert(id)`: removes single alert
-- Listens for `location.state.floatingAlert` from router navigation and auto-shows alerts (consumes once per navigation key)
-- Renders grouped `<FloatingAlertStack>` components per position
-
-### `src/contexts/notificationContextShared.tsx`
-
-Shared types and utilities for NotificationContext. Exports:
-- `FloatingAlertPosition`, `FloatingAlertPayload`, `FloatingAlertEntry`
-- `DEFAULT_FLOATING_ALERT_POSITION` (`{ vertical: 'top', horizontal: 'right' }`)
-- `getFloatingAlertPositionKey()`, `groupAlertsByPosition()` helpers
-- `NotificationContextValue` type: `{ showFloatingAlert, clearFloatingAlert, isFallback }`
-- `NotificationContext`: React context
-- `fallbackShowFloatingAlert`, `fallbackClearFloatingAlert`: creates a React root in `#notification-fallback-root` when context is unavailable (uses `requestIdleCallback` in production)
-- `useNotification()`: returns context value or fallback
+- `src/contexts/NotificationContext.tsx` - global notification provider
+- `src/contexts/notificationContextShared.tsx` - context types, fallback, and `useNotification()` hook
 
 ## Locales
 

@@ -62,36 +62,36 @@ Styling is intentionally split into **layers**:
 
 ### Layer 1: Design Tokens (`src/theme/tokens.ts`)
 
-**Source of truth** for all reusable values - exported as a single `tokens` constant:
-- **Colors**: accent (`#8224E3` family: main/light/dark/contrastText), series (`#1976d2` family), light (background/surface/text/textMuted/border/divider/hover), dark (background/surface/text/textMuted/border/divider/hover), neutral (black/white/gray50–gray900), overlay (black05/white05/footerBorder/mediaNavDark/mediaNavLight/modalBackdropDark/modalBackdropLight), media (darkBackground/lightBackground), semantic (success/error/warning/info)
-- **Spacing**: `xs` (4px) to `3xl` (64px) in string and numeric variants (0.5 through 8 in 8px units)
-- **Typography**: fontFamily (`'ABC Monument Grotesk', Helvetica, Arial, sans-serif`), weights (light=300, regular=400, medium=500, bold=700, heavy=900), sizes (xs=12px through 5xl=48px), lineHeights (tight=1.2, normal=1.5, relaxed=1.7)
-- **Shadows**: subtle, sm, md, lg, xl, navbar, mediaControl
-- **Border radius**: none through full (`9999px`)
-- **Transitions**: fast (150ms), base (200ms), slow (300ms), verySlow (500ms) - all `ease`
-- **Z-index**: hide (-1), base (0), dropdown (1000), sticky (1050), modal (1060), overlay (1070), tooltip (1080)
-- **Breakpoints**: xs (0px), sm (600px), md (960px), lg (1264px), xl (1920px)
-- **Component-specific**: navbar (minHeight=64), card (borderRadius=4, padding=3, borderRadiusPx=16px, paddingPx=24px, gridCardWidthPx=350), chip (borderRadius=2, paddingY=1, paddingX=2)
+**Source of truth** for all reusable values, exported as a single `tokens` constant. Key categories:
+
+- **Colors** - accent, series, light/dark mode palettes, neutral scale, overlays, media backgrounds, semantic colors
+- **Spacing** - `xs` (4px) to `3xl` (64px), with numeric variants
+- **Typography** - fontFamily, weights, sizes, lineHeights
+- **Shadows** - subtle through xl, plus navbar and mediaControl
+- **Transitions** - fast (150ms) to verySlow (500ms)
+- **Breakpoints** - xs (0) to xl (1920px)
+- **Z-index** - base (0) to tooltip (1080)
+- **Component-specific** - navbar height, card dimensions, chip padding
 
 ### Layer 2: MUI Theme Factory (`src/theme/muiPalette.ts`)
 
 Converts tokens into a Material UI `Theme` supporting light/dark modes via `createAppTheme(mode)`.
 
-Includes:
-- Palette generation (light: primary=black, dark: primary=white; accent=`#8224E3` family; background, text, divider, action)
-- Typography scale mapping (h1–h6, body1, body2, button)
-- Responsive breakpoint values (parsed from tokens)
-- Shape: borderRadius=8, spacing: 8px base
-- Shadows: 25 entries (mostly `'none'` except indices 1–4)
-- Component-level overrides (MuiButton: no textTransform, md borderRadius; MuiCard: lg borderRadius + border; MuiPaper: no backgroundImage; MuiChip: md borderRadius)
-- Custom accent color augmentation via `muiPalette.d.ts` (extends `Palette` + `PaletteOptions` with `accent` and `ButtonPropsColorOverrides`)
+- **Palette** - mode-aware, light mode and darkmode have different palattes.
+- **Typography** - h1–h6, body1, body2, button (mapped from tokens)
+- **Breakpoints** - parsed from tokens
+- **Shape** - borderRadius and spacing
+- **Shadows** - 25 entries
+- **Component overrides** - MuiButton, MuiCard, MuiPaper, MuiChip
+- **TypeScript augmentation** - via `muiPalette.d.ts` extends `Palette` + `PaletteOptions` with `accent`, and `ButtonPropsColorOverrides` with `accent`
 
 ### Layer 3: Shared Styles (`src/theme/styles.ts`)
 
 Reusable `sx` recipe factories:
-- `createNavbarStyles()`: returns `{ activeLink, navLink, brandLink, brandLogo, brandArchiveText }`
-- `createCommonStyles(theme)`: returns `{ cardBase, gridContainer, navbar, footer, responseImage, linkHover, chipBase, container, stack, textTruncate, centerContent }`
-- `createHomePageStyles(theme)`: returns extensive mode-aware style map for the landing page (hero overlays, search input colors, button styles, stat bar colors, card overlays, etc.)
+
+- **`createNavbarStyles()`** - returns a style-map specifically for the navigation bar
+- **`createCommonStyles(theme)`** - returns a mode-aware style map for common components that are reused in the codebase. 
+- **`createHomePageStyles(theme)`** - returns a mode-aware style map for the landing page
 
 ## Routing
 
@@ -293,59 +293,7 @@ Frontend tests use **Jest 30** + **jsdom** + **React Testing Library**.
 - `tsconfig.jest.json` - TS config for tests (CommonJS module, Node resolution, includes test files)
 - `src/setupTests.ts` - Registers testing-library matchers, polyfills (TextEncoder, TextDecoder, ResizeObserver, IntersectionObserver, matchMedia), mocks axios, sets `process.env.PUBLIC_API_KEY = 'test-api-key'`, suppresses XMLHttpRequest console.error
 
-### Test Structure
-
-```
-src/__tests__/
-├── App.test.tsx
-├── Footer.test.tsx
-├── Navbar.test.tsx
-├── router.test.tsx
-├── contexts/
-│   └── NotificationContext.test.tsx
-├── features/
-│   ├── blogs/         # BlogGridCard, BlogGrid, BlogListCard, BlogList, BlogDetailPage, BlogsPage
-│   ├── media-files/   # MediaFileGridCard, MediaFileGrid, MediaFileListCard, MediaFileList, MediaFilePreview, MediaFileUtils, MediaFilesPage
-│   ├── productions/   # ProductionsPage
-│   └── series/        # SeriesPage
-├── pages/
-│   └── HomePage.test.tsx
-├── services/
-│   ├── Api.test.tsx
-│   ├── ApiErrorMapper.test.ts
-│   ├── ApiParams.test.ts
-│   └── (feature service tests: Blogs, Events, Genres, Halls, Languages, Locations, Media, MediaFiles, Pricing, Productions, Spaces, Tags)
-├── shared/
-│   ├── Navbar.test.tsx
-│   └── components/
-│       ├── Carousel.test.tsx
-│       ├── ChipFilterSection.test.tsx
-│       ├── FloatingAlert.test.tsx
-│       ├── FloatingAlertStack.test.tsx
-│       ├── GenericGrid.test.tsx
-│       ├── GenreAndTagChip.test.tsx
-│       ├── HtmlText.test.tsx
-│       ├── ImageWithFallback.test.tsx
-│       ├── LoadingSpinner.test.tsx
-│       ├── Pagination.test.tsx
-│       ├── SearchBar.test.tsx
-│       ├── SearchControlsBar.test.tsx
-│       ├── CollectionResultsSkeleton.test.tsx
-│       └── search/
-│           └── useSearchBarUrlState.test.tsx
-├── theme/
-│   ├── muiPalette.test.ts
-│   ├── styles.test.ts
-│   └── tokens.test.ts
-└── utils/
-    ├── dateUtils.test.ts
-    ├── localization.test.ts
-    ├── localizedRoutes.test.ts
-    ├── locations.test.ts
-    ├── mediaFileUrls.test.ts
-    ├── SanitizeHtml.test.tsx
-    └── translations.test.ts
-```
+The test directory mirrors the source structure. See [Frontend folder Structure](./Frontend%20folder%20Structure.md).
 
 ### Test Conventions
 
