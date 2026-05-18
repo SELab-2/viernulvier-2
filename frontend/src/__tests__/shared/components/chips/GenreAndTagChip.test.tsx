@@ -258,6 +258,39 @@ describe('GenreAndTagChip in genre mode', () => {
     expect(screen.getByText('/nl/archief?g=7')).toBeInTheDocument()
   })
 
+  it('clears page when merging filters in description context with disableLink', () => {
+    render(
+      <MemoryRouter initialEntries={['/nl/archief?g=5&p=100']}>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider theme={accentTheme}>
+            <Routes>
+              <Route
+                path="/nl/archief"
+                element={
+                  <>
+                    <GenreAndTagChip
+                      name="Dans"
+                      labels={{}}
+                      chipType="genre"
+                      id={7}
+                      context="description"
+                      disableLink
+                    />
+                    <LocationEcho />
+                  </>
+                }
+              />
+            </Routes>
+          </ThemeProvider>
+        </I18nextProvider>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dans' }))
+
+    expect(screen.getByText('/nl/archief?g=5-7')).toBeInTheDocument()
+  })
+
   it('renders static context as non-clickable', () => {
     renderChip(<GenreAndTagChip name="Statisch" labels={{}} id={7} context="static" />)
 
