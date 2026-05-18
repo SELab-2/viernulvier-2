@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 
 import GenreAndTagChip from '../../../../shared/components/chips/GenreAndTagChip'
 import { tokens } from '../../../../theme/tokens'
+import { getTranslatedRecord } from '../../../../utils/translations'
 
 const VISIBLE_CHIP_COUNT = 5
 const CHIP_ROW_HEIGHT_PX = 32
@@ -40,7 +41,7 @@ const ChipFilterSection = ({
   emptyLabel,
   onToggle,
 }: ChipFilterSectionProps) => {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const [query, setQuery] = useState('')
 
   const hasOverflow = options.length > VISIBLE_CHIP_COUNT
@@ -73,8 +74,11 @@ const ChipFilterSection = ({
     if (!trimmed) {
       return sortedOptions
     }
-    return sortedOptions.filter((option) => option.name.toLowerCase().includes(trimmed))
-  }, [sortedOptions, query])
+    return sortedOptions.filter((option) => {
+      const localizedLabel = getTranslatedRecord(option.labels, i18n.language, option.name)
+      return localizedLabel.toLowerCase().includes(trimmed)
+    })
+  }, [sortedOptions, query, i18n.language])
 
   if (!sortedOptions.length) {
     return (
