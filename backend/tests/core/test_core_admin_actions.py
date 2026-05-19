@@ -237,3 +237,55 @@ class TestPersistentSelectionMixin(TestCase):
 
         assert response.status_code == 200
         assert session_key not in request.session
+
+    def test_response_action_select_across_uses_full_queryset(self) -> None:
+        """When select_across=1 the action must receive the full queryset, not
+        a subset limited to previously-persisted or current-page IDs."""
+        request = self._request_with_messages(
+            "post",
+            "/admin/productions/production/",
+            data={
+                "action": "remember_selected",
+                "index": "0",
+                "select_across": "1",
+                ACTION_CHECKBOX_NAME: [str(self.production_1.pk)],
+            },
+        )
+
+        # Pre-populate the session with a different production - this must
+        # NOT restrict the queryset when select_across is active.
+        session_key = self.admin._persistent_selection_session_key()
+        request.session[session_key] = [str(self.production_2.pk)]
+        request.session.save()
+
+        full_qs = Production.objects.all()
+        response = self.admin.response_action(request, full_qs)
+
+        assert response.status_code == 302
+        # The action should have received the full queryset, not filtered by
+        # persisted or POSTed IDs.
+        assert self.admin.captured_ids == sorted(
+            Production.objects.values_list("id", flat=True)
+        )
+
+    def test_response_action_select_across_clears_persisted_session(self) -> None:
+        """Persisted selections are cleared when select_across=1 because
+        'select all' supersedes any previous per-page selection."""
+        request = self._request_with_messages(
+            "post",
+            "/admin/productions/production/",
+            data={
+                "action": "remember_selected",
+                "index": "0",
+                "select_across": "1",
+                ACTION_CHECKBOX_NAME: [str(self.production_1.pk)],
+            },
+        )
+
+        session_key = self.admin._persistent_selection_session_key()
+        request.session[session_key] = [str(self.production_2.pk)]
+        request.session.save()
+
+        self.admin.response_action(request, Production.objects.all())
+
+        assert session_key not in request.session

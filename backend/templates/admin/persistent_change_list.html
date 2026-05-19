@@ -132,6 +132,21 @@
         return match ? Number(match[0]) : null;
       }
 
+      function ensureSelectAcrossInput(value) {
+        var inputs = changelistForm.querySelectorAll('input.select-across');
+        if (!inputs.length) {
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'select_across';
+          input.className = 'select-across';
+          changelistForm.appendChild(input);
+          inputs = [input];
+        }
+        inputs.forEach(function (input) {
+          input.value = value;
+        });
+      }
+
       function setCheckedByPersistedIds() {
         // Ensure visible rows reflect persisted session state when page loads.
         getActionCheckboxes().forEach(function (checkbox) {
@@ -294,9 +309,29 @@
       // Sync when Django's "select across pages" link is used.
       document.querySelectorAll('div.actions span.question a').forEach(function (acrossLink) {
         acrossLink.addEventListener('click', function () {
+          ensureSelectAcrossInput(1);
           selectAcrossCount = readSelectAcrossTotal();
           updateSelectionSummary();
         });
+      });
+
+      // Ensure select-across is honored on action submit.
+      changelistForm.addEventListener('submit', function () {
+        var existingSelectAcross = changelistForm.querySelector('input[name="select_across"]');
+        var isSelectAcross = existingSelectAcross && existingSelectAcross.value === '1';
+
+        var spanAllVisible = false;
+        document.querySelectorAll('div.actions span.all').forEach(function (el) {
+          if (!el.classList.contains('hidden')) {
+            spanAllVisible = true;
+          }
+        });
+
+        if (isSelectAcross || spanAllVisible) {
+          ensureSelectAcrossInput(1);
+          selectAcrossCount = readSelectAcrossTotal();
+          updateSelectionSummary();
+        }
       });
     })();
   </script>

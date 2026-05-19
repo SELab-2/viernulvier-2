@@ -122,11 +122,18 @@ class PersistentSelectionMixin:
         is_select_across = False
 
         if request.method == "POST":
-            merged_ids = self._inject_persisted_selection_into_post(request)
             is_select_across = request.POST.get("select_across") == "1"
 
-            if merged_ids and not is_select_across:
-                queryset = self.model.objects.filter(pk__in=merged_ids)
+            if is_select_across:
+                # "Select all" supersedes persisted selections - Django already
+                # provides the full queryset.  Do NOT inject incomplete persisted
+                # IDs into POST; they would mislead action implementations that
+                # read _selected_action from POST.
+                self._clear_persisted_selected_ids(request)
+            else:
+                merged_ids = self._inject_persisted_selection_into_post(request)
+                if merged_ids:
+                    queryset = self.model.objects.filter(pk__in=merged_ids)
 
         response = super().response_action(request, queryset)
 
