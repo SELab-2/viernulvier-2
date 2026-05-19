@@ -264,9 +264,7 @@ class TestPersistentSelectionMixin(TestCase):
         assert response.status_code == 302
         # The action should have received the full queryset, not filtered by
         # persisted or POSTed IDs.
-        assert self.admin.captured_ids == sorted(
-            Production.objects.values_list("id", flat=True)
-        )
+        assert self.admin.captured_ids == sorted(Production.objects.values_list("id", flat=True))
 
     def test_response_action_select_across_clears_persisted_session(self) -> None:
         """Persisted selections are cleared when select_across=1 because
