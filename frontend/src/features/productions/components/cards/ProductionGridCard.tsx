@@ -43,7 +43,7 @@ const ProductionGridCard = ({
 }: ProductionGridCardProps) => {
   const theme = useTheme()
   const commonStyles = createCommonStyles(theme)
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const location = useLocation()
   const { language } = i18n
   const currentLanguage = resolveCurrentLanguage(
@@ -54,12 +54,12 @@ const ProductionGridCard = ({
   const detailPath = toLocalizedPath(`/productions/${production.id}`, currentLanguage)
 
   const imageSrc = production.media_gallery?.media_items[0]?.crops[0]?.image_url
-  const title = getTranslatedRecord(production.title, language, production.display_title)
-  const artistName = getTranslatedRecord(
-    production.artist_name,
-    language,
-    production.display_artist_name,
-  )
+  const title =
+    getTranslatedRecord(production.title, language, production.display_title) ||
+    t('productions.detail.unknownProduction', 'Unknown production')
+  const artistName =
+    getTranslatedRecord(production.artist_name, language, production.display_artist_name) ||
+    t('productions.detail.unknownArtist', 'Unknown artist')
   const dateLabel = getProductionDateLabel(
     production.first_event_start,
     production.last_event_end,
@@ -115,11 +115,9 @@ const ProductionGridCard = ({
             {title}
           </Typography>
 
-          {artistName ? (
-            <Typography component="p" color="textSecondary" noWrap>
-              {artistName}
-            </Typography>
-          ) : null}
+          <Typography component="p" color="textSecondary" noWrap>
+            {artistName}
+          </Typography>
         </Stack>
 
         <Stack spacing={1} sx={{ color: 'text.secondary', minHeight: 56 }}>
