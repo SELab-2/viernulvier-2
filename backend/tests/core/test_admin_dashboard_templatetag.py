@@ -134,3 +134,51 @@ class TestAdminDashboardTemplateTag(TestCase):
         assert cards[0]["count"] == 2
         assert cards[0]["url"] == reverse("admin:productions_production_changelist")
         assert cards[0]["add_url"] == reverse("admin:productions_production_add")
+
+    def test_build_multiselect_options_without_facets(self) -> None:
+        class DummySpec:
+            lookup_choices = [("a", "Alpha"), ("b", "Beta")]
+            selected_values = ("b",)
+
+        class DummyChangeList:
+            add_facets = False
+
+        options = admin_dashboard._build_multiselect_options(DummyChangeList(), DummySpec())
+
+        assert options == [
+            {"value": "a", "label": "Alpha", "selected": False, "count": None},
+            {"value": "b", "label": "Beta", "selected": True, "count": None},
+        ]
+
+    def test_build_multiselect_options_with_facets(self) -> None:
+        class DummySpec:
+            lookup_choices = [("a", "Alpha"), ("b", "Beta")]
+            selected_values = ()
+
+            def get_facet_queryset(self, _cl):
+                return {"0__c": 4, "1__c": 2}
+
+        class DummyChangeList:
+            add_facets = True
+
+        options = admin_dashboard._build_multiselect_options(DummyChangeList(), DummySpec())
+
+        assert options == [
+            {"value": "a", "label": "Alpha", "selected": False, "count": 4},
+            {"value": "b", "label": "Beta", "selected": False, "count": 2},
+        ]
+
+    def test_multiselect_options_tag_passthrough(self) -> None:
+        class DummySpec:
+            lookup_choices = [("a", "Alpha")]
+            selected_values = ()
+
+            def get_facet_queryset(self, _cl):
+                return {"0__c": 1}
+
+        class DummyChangeList:
+            add_facets = True
+
+        assert admin_dashboard.multiselect_options(DummyChangeList(), DummySpec()) == [
+            {"value": "a", "label": "Alpha", "selected": False, "count": 1}
+        ]
