@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from django import template
 from django.contrib import admin
@@ -109,3 +110,33 @@ def dashboard_cards(context: dict) -> list[dict[str, str | int]]:
         )
 
     return cards
+
+
+def _build_multiselect_options(cl: Any, spec: Any) -> list[dict[str, Any]]:
+    """Return renderable option data for a searchable multiselect filter.
+
+    Counts are obtained through Django's facet queryset machinery so the
+    admin's ``_facets`` toggle controls when they are calculated.
+    """
+    facet_counts: dict[str, Any] = {}
+    if getattr(cl, "add_facets", False):
+        facet_counts = spec.get_facet_queryset(cl)
+
+    options: list[dict[str, Any]] = []
+    for index, (value, label) in enumerate(spec.lookup_choices):
+        options.append(
+            {
+                "value": value,
+                "label": label,
+                "selected": value in spec.selected_values,
+                "count": facet_counts.get(f"{index}__c"),
+            }
+        )
+
+    return options
+
+
+@register.simple_tag
+def multiselect_options(cl: Any, spec: Any) -> list[dict[str, Any]]:
+    """Return option dictionaries for the multiselect filter template."""
+    return _build_multiselect_options(cl, spec)

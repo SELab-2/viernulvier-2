@@ -78,6 +78,37 @@ class TestSearchableMultiSelectFilter(TestCase):
         filter_instance, _ = self._build_filter("code=nl&code=en")
         assert filter_instance.value() == ["nl", "en"]
 
+    def test_get_facet_counts_returns_annotations(self) -> None:
+        filter_instance, _ = self._build_filter("")
+        counts = filter_instance.get_facet_counts(Language._meta.pk.attname, Language.objects.order_by("code"))
+
+        assert set(counts) == {"0__c", "1__c"}
+        assert Language.objects.order_by("code").aggregate(**counts) == {"0__c": 1, "1__c": 1}
+
+    def test_get_facet_counts_caps_when_too_many_options(self) -> None:
+        filter_instance, _ = self._build_filter("")
+        filter_instance.lookup_choices = [
+            (str(index), f"Option {index}") for index in range(filter_instance.max_facet_options + 1)
+        ]
+
+        counts = filter_instance.get_facet_counts(Language._meta.pk.attname, Language.objects.order_by("code"))
+
+        assert counts == {}
+
+    def test_choices_returns_all_entry(self) -> None:
+        filter_instance, _ = self._build_filter("")
+
+        class DummyChangeList:
+            def get_query_string(self, *args, **kwargs):
+                return "?"
+
+        choices = list(filter_instance.choices(DummyChangeList()))
+        assert choices == [{"selected": True, "query_string": "?", "display": "All"}]
+
+        filter_instance.selected_values = ("nl",)
+        choices = list(filter_instance.choices(DummyChangeList()))
+        assert choices == [{"selected": False, "query_string": "?", "display": "All"}]
+
     def test_base_get_option_queryset_raises_not_implemented(self) -> None:
         with pytest.raises(NotImplementedError):
             SearchableMultiSelectFilter.get_option_queryset(object())

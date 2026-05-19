@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n admin_dashboard %}
 <style>
   .generic-multiselect-filter {
     box-sizing: border-box;
@@ -55,7 +55,7 @@
         value="{{ spec.search_value }}"
         list="{{ spec.parameter_name }}_suggestions"
         autocomplete="off"
-        placeholder="{% trans 'Search in list...' %}"
+        placeholder="{% trans 'Search in list (English name)...' %}"
         aria-label="{% trans 'Search in list' %}"
         class="vTextField"
         style="flex:1 1 auto; min-width:0; margin:0;"
@@ -72,20 +72,21 @@
     </datalist>
 
     <div style="max-height: 220px; overflow: auto; margin:0 0 6px;" data-multiselect-options>
-      {% if spec.lookup_choices %}
+      {% multiselect_options cl spec as multiselect_options %}
+      {% if multiselect_options %}
         {% if spec.selected_values %}
           <div style="margin:4px 0; color:#666; font-size:11px; text-transform:uppercase; letter-spacing:.02em;">{% trans "Selected" %}</div>
-          {% for val, label in spec.lookup_choices %}
-            {% if val in spec.selected_values %}
-              <div data-option-row data-selected-row="1" data-option-label="{{ label|lower }}" style="margin:0 0 2px;">
+          {% for option in multiselect_options %}
+            {% if option.selected %}
+              <div data-option-row data-selected-row="1" data-option-label="{{ option.label|lower }}" style="margin:0 0 2px;">
                 <label style="display:flex; flex-wrap:nowrap; gap:6px; align-items:flex-start; cursor:pointer; min-width:0; width:100%;">
                   <input
                     type="checkbox"
                     name="{{ spec.parameter_name }}"
-                    value="{{ val }}"
+                    value="{{ option.value }}"
                     checked
                   >
-                  <span style="flex:1 1 auto; min-width:0; word-break:break-word; overflow-wrap:anywhere; white-space:normal;">{{ label }}</span>
+                  <span style="flex:1 1 auto; min-width:0; word-break:break-word; overflow-wrap:anywhere; white-space:normal;">{{ option.label }}{% if cl.add_facets and option.count is not None %} ({{ option.count }}){% endif %}</span>
                 </label>
               </div>
             {% endif %}
@@ -95,16 +96,16 @@
         {% endif %}
 
         <div style="margin:4px 0; color:#666; font-size:11px; text-transform:uppercase; letter-spacing:.02em;">{% trans "Available" %}</div>
-        {% for val, label in spec.lookup_choices %}
-          {% if val not in spec.selected_values %}
-            <div data-option-row data-option-label="{{ label|lower }}" style="margin:0 0 2px;">
+        {% for option in multiselect_options %}
+          {% if not option.selected %}
+            <div data-option-row data-option-label="{{ option.label|lower }}" style="margin:0 0 2px;">
               <label>
                 <input
                   type="checkbox"
                   name="{{ spec.parameter_name }}"
-                  value="{{ val }}"
+                  value="{{ option.value }}"
                 >
-                <span>{{ label }}</span>
+                <span>{{ option.label }}{% if cl.add_facets and option.count is not None %} ({{ option.count }}){% endif %}</span>
               </label>
             </div>
           {% endif %}

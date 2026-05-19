@@ -32,6 +32,8 @@ Typical usage in a ModelAdmin:
 """
 
 from django.contrib.admin import SimpleListFilter
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class SearchableMultiSelectFilter(SimpleListFilter):
@@ -61,6 +63,7 @@ class SearchableMultiSelectFilter(SimpleListFilter):
     clear_search_url = "?"
     reset_url = "?"
     is_open = False
+    max_facet_options = 1500
 
     def __init__(self, request: any, params: dict, model: any, model_admin: any) -> None:
         """Initialize filter state and sanitize custom query params.
@@ -110,6 +113,44 @@ class SearchableMultiSelectFilter(SimpleListFilter):
     def expected_parameters(self) -> list[str]:
         """Declare all query params this filter owns."""
         return [self.parameter_name, self.search_param, self.open_param]
+
+    def get_facet_counts(self, pk_attname: str, filtered_qs: any) -> dict[str, models.Count]:
+        """Build Django facet annotations for the current multiselect options.
+
+        Django's admin facet support expects a single aggregate query that
+        returns one count per choice. That is the correct integration point
+        for the custom checkbox filter, because the admin can then decide when
+        to add counts via its own ``_facets`` toggle.
+        """
+        if len(self.lookup_choices) > self.max_facet_options:
+            # Prevent PostgreSQL "target list can have at most 1664 entries".
+            return {}
+
+        original_selected_values = self.selected_values
+        counts: dict[str, models.Count] = {}
+
+        try:
+            for index, (choice_value, _choice_label) in enumerate(self.lookup_choices):
+                self.selected_values = (str(choice_value),)
+                lookup_qs = self.filter_queryset(filtered_qs)
+                counts[f"{index}__c"] = models.Count(pk_attname, filter=models.Q(pk__in=lookup_qs))
+        finally:
+            self.selected_values = original_selected_values
+
+        return counts
+
+    def choices(self, changelist: any):
+        """Return minimal choices without forcing facet aggregation.
+
+        The custom multiselect template renders options independently, so we
+        avoid Django's default facet query here to prevent oversized target
+        lists when many options are present.
+        """
+        yield {
+            "selected": not self.selected_values,
+            "query_string": changelist.get_query_string(remove=[self.parameter_name]),
+            "display": _("All"),
+        }
 
     def get_option_queryset(self) -> list[tuple[str, str]]:
         """Return list of selectable options as ``[(value, label), ...]``."""
