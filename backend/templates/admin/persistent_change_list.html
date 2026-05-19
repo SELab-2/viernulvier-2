@@ -71,6 +71,7 @@
       // Parsed from server-rendered context; represents persisted IDs in session.
       var persistedScript = document.getElementById('persistent-selected-ids');
       var persistedIds = new Set();
+      var selectAcrossCount = null;
       if (persistedScript && persistedScript.textContent) {
         try {
           JSON.parse(persistedScript.textContent).forEach(function (id) {
@@ -114,10 +115,35 @@
           return checkbox.checked;
         }).length;
 
-        // Total count derives from our persisted set.
+        // Total count derives from our persisted set unless select-across is active.
+        var totalAcrossPages = selectAcrossCount !== null ? selectAcrossCount : persistedIds.size;
         document.querySelectorAll('#changelist-form .actions .persistent-selection-inline').forEach(function (el) {
           el.textContent =
-            'Selected: ' + selectedOnPage + ' on this page, ' + persistedIds.size + ' total across pages';
+            'Selected: ' + selectedOnPage + ' on this page, ' + totalAcrossPages + ' total across pages';
+        });
+      }
+
+      function readSelectAcrossTotal() {
+        var allLabel = document.querySelector('div.actions span.all');
+        if (!allLabel || !allLabel.textContent) {
+          return null;
+        }
+        var match = allLabel.textContent.match(/\d+/);
+        return match ? Number(match[0]) : null;
+      }
+
+      function ensureSelectAcrossInput(value) {
+        var inputs = changelistForm.querySelectorAll('input.select-across');
+        if (!inputs.length) {
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'select_across';
+          input.className = 'select-across';
+          changelistForm.appendChild(input);
+          inputs = [input];
+        }
+        inputs.forEach(function (input) {
+          input.value = value;
         });
       }
 
@@ -195,6 +221,7 @@
 
       function clearAllSelections() {
         // Clear visible state immediately for responsive UX.
+        selectAcrossCount = null;
         persistedIds.clear();
         getActionCheckboxes().forEach(function (checkbox) {
           checkbox.checked = false;
@@ -208,6 +235,19 @@
         if (allToggle) {
           allToggle.checked = false;
         }
+
+        // Clear Django's select-across state and UI.
+        document.querySelectorAll('div.actions input.select-across').forEach(function (input) {
+          input.value = 0;
+        });
+        document.querySelectorAll('div.actions span.all, div.actions span.clear, div.actions span.question').forEach(
+          function (el) {
+            el.classList.add('hidden');
+          }
+        );
+        document.querySelectorAll('div.actions span.action-counter').forEach(function (el) {
+          el.classList.remove('hidden');
+        });
 
         updateSelectionSummary();
         syncPersistedSelection({ clearAll: true });
@@ -225,6 +265,9 @@
           return;
         }
 
+        // Manual row toggles cancel any select-across state.
+        selectAcrossCount = null;
+
         if (target.checked) {
           persistedIds.add(String(target.value));
         } else {
@@ -240,6 +283,8 @@
         allToggle.addEventListener('click', function () {
           // Django updates row checkboxes after click; sync on next tick.
           window.setTimeout(function () {
+            // Selecting all on page is not select-across.
+            selectAcrossCount = null;
             getActionCheckboxes().forEach(function (checkbox) {
               if (checkbox.checked) {
                 persistedIds.add(String(checkbox.value));
@@ -256,8 +301,37 @@
       // Mirror Django's built-in clear link with our persisted clear behavior.
       document.querySelectorAll('div.actions span.clear a').forEach(function (clearLink) {
         clearLink.addEventListener('click', function () {
+          selectAcrossCount = null;
           clearAllSelections();
         });
+      });
+
+      // Sync when Django's "select across pages" link is used.
+      document.querySelectorAll('div.actions span.question a').forEach(function (acrossLink) {
+        acrossLink.addEventListener('click', function () {
+          ensureSelectAcrossInput(1);
+          selectAcrossCount = readSelectAcrossTotal();
+          updateSelectionSummary();
+        });
+      });
+
+      // Ensure select-across is honored on action submit.
+      changelistForm.addEventListener('submit', function () {
+        var existingSelectAcross = changelistForm.querySelector('input[name="select_across"]');
+        var isSelectAcross = existingSelectAcross && existingSelectAcross.value === '1';
+
+        var spanAllVisible = false;
+        document.querySelectorAll('div.actions span.all').forEach(function (el) {
+          if (!el.classList.contains('hidden')) {
+            spanAllVisible = true;
+          }
+        });
+
+        if (isSelectAcross || spanAllVisible) {
+          ensureSelectAcrossInput(1);
+          selectAcrossCount = readSelectAcrossTotal();
+          updateSelectionSummary();
+        }
       });
     })();
   </script>

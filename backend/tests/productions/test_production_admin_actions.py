@@ -115,3 +115,21 @@ class TestProductionAdminActions(TestCase):
         assert response.template_name == "admin/two_step_action.html"
         assert len(response.context_data["queryset"]) == 1
         assert response.context_data["queryset"].first().pk == self.production_1.pk
+
+    def test_selected_productions_respects_select_across(self) -> None:
+        request = self._request_with_messages(
+            "post",
+            "/admin/productions/production/",
+            data={
+                "select_across": "1",
+                ACTION_CHECKBOX_NAME: [str(self.production_1.pk)],
+            },
+        )
+        fallback_qs = Production.objects.filter(pk__in=[self.production_1.pk, self.production_2.pk])
+
+        selected_qs = self.admin._selected_productions_from_request(request, fallback_qs)
+
+        assert list(selected_qs.order_by("pk").values_list("pk", flat=True)) == [
+            self.production_1.pk,
+            self.production_2.pk,
+        ]

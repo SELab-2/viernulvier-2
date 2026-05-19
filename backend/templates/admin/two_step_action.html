@@ -135,7 +135,7 @@
   <div class="two-step-action-card-wrapper">
     <div class="two-step-action-card">
       <h1>{{ title }}</h1>
-      <p>{{ selected_label|default:_('Selected items') }}: {{ queryset|length }}</p>
+      <p>{{ selected_label|default:_('Selected items') }}: {{ persistent_selected_count|default:queryset|length }}</p>
 
       <form method="post">
         {% csrf_token %}

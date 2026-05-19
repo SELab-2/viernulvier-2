@@ -269,7 +269,14 @@ class ProductionAdmin(TwoStepBulkActionMixin, BaseAdmin):
         )
 
     def _selected_productions_from_request(self, request: HttpRequest, fallback_qs: QuerySet) -> QuerySet:
-        """Resolve selected productions from POST ids, independent of current changelist filters."""
+        """Resolve selected productions from POST ids, independent of current changelist filters.
+
+        When ``select_across`` is active Django already provides the full
+        queryset as *fallback_qs*, so the incomplete per-page POST ids must
+        be ignored.
+        """
+        if request.POST.get("select_across") == "1":
+            return fallback_qs
         selected_ids = request.POST.getlist("_selected_action")
         if not selected_ids:
             return fallback_qs
