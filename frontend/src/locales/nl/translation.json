@@ -180,6 +180,7 @@
       },
       "notFound": "Productie niet gevonden.",
       "unknownProduction": "Onbekende productie",
+      "unknownArtist": "Onbekende artiest",
       "noDescription": "Geen beschrijving beschikbaar.",
       "error": {
         "invalidId": "Ongeldige productie-id.",
