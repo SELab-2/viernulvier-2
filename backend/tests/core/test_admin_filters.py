@@ -99,7 +99,7 @@ class TestSearchableMultiSelectFilter(TestCase):
         filter_instance, _ = self._build_filter("")
 
         class DummyChangeList:
-            def get_query_string(self, *args, **kwargs):
+            def get_query_string(self, **_kwargs):
                 return "?"
 
         choices = list(filter_instance.choices(DummyChangeList()))

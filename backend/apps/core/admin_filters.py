@@ -139,7 +139,7 @@ class SearchableMultiSelectFilter(SimpleListFilter):
 
         return counts
 
-    def choices(self, changelist: any):
+    def choices(self, changelist: any) -> any:
         """Return minimal choices without forcing facet aggregation.
 
         The custom multiselect template renders options independently, so we
