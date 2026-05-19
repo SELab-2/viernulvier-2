@@ -50,7 +50,8 @@ const GenreAndTagChip = ({
   const location = useLocation()
   const navigate = useNavigate()
 
-  const label = getTranslatedRecord(labels, i18n.language, name)
+  const label =
+    getTranslatedRecord(labels, i18n.language, name) || name || t('common.unknown', 'Unknown')
   const currentLanguage = resolveCurrentLanguage(
     location.pathname,
     i18n.language,

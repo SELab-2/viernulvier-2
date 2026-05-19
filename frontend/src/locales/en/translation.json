@@ -180,6 +180,7 @@
       },
       "notFound": "Production not found.",
       "unknownProduction": "Unknown production",
+      "unknownArtist": "Unknown artist",
       "noDescription": "No description available.",
       "error": {
         "invalidId": "Invalid production ID.",
