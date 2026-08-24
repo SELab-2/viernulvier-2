@@ -1,15 +1,15 @@
 # Shared runtime dependencies used by all backend environments.
 # Environment-specific files extend this file with -r base.txt.
 
-Django==6.0.7
-djangorestframework==3.17.1
-drf-spectacular==0.29.0
+Django==6.1
+djangorestframework==3.18.0
+drf-spectacular==0.30.0
 django-filter==25.2
 django-cors-headers==4.9.0
 psycopg2-binary==2.9.12
-python-dotenv==1.2.2
+python-dotenv==1.2.3
 requests==2.34.2
 bleach==6.4.0
-tqdm==4.67.3
+tqdm==4.70.0
 Pillow==12.3.0
 django-redis==6.0.0

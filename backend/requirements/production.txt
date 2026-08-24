@@ -2,4 +2,4 @@
 # Includes all shared runtime dependencies from base.txt.
 
 -r base.txt
-gunicorn==26.0.0
+gunicorn==26.1.0
