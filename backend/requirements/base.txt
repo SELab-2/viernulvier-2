@@ -2,7 +2,7 @@
 # Environment-specific files extend this file with -r base.txt.
 
 Django==6.0.7
-djangorestframework==3.17.1
+djangorestframework==3.17.2
 drf-spectacular==0.29.0
 django-filter==25.2
 django-cors-headers==4.9.0
