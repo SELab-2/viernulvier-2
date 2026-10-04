@@ -24,7 +24,7 @@
     "@types/dompurify": "^3.2.0",
     "axios": "^1.19.0",
     "dayjs": "^1.11.21",
-    "dompurify": "^3.4.13",
+    "dompurify": "^3.4.16",
     "embla-carousel-react": "^8.6.0",
     "embla-carousel-wheel-gestures": "^8.1.0",
     "i18next": "^26.3.6",
