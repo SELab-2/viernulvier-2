@@ -22,7 +22,7 @@
     "@mui/system": "^9.0.0",
     "@mui/x-date-pickers": "^9.11.0",
     "@types/dompurify": "^3.2.0",
-    "axios": "^1.19.0",
+    "axios": "^1.20.0",
     "dayjs": "^1.11.21",
     "dompurify": "^3.4.13",
     "embla-carousel-react": "^8.6.0",
